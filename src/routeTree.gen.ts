@@ -14,8 +14,16 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedResellerRouteRouteImport } from './routes/_authenticated/reseller/route'
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
+import { Route as AuthenticatedResellerIndexRouteImport } from './routes/_authenticated/reseller/index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
+import { Route as AuthenticatedResellerPayoutsRouteImport } from './routes/_authenticated/reseller/payouts'
+import { Route as AuthenticatedResellerOrdersRouteImport } from './routes/_authenticated/reseller/orders'
+import { Route as AuthenticatedResellerListingsRouteImport } from './routes/_authenticated/reseller/listings'
+import { Route as AuthenticatedResellerDomainRouteImport } from './routes/_authenticated/reseller/domain'
+import { Route as AuthenticatedResellerDesignRouteImport } from './routes/_authenticated/reseller/design'
+import { Route as AuthenticatedResellerCatalogRouteImport } from './routes/_authenticated/reseller/catalog'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin/settings'
 import { Route as AuthenticatedAdminResellersRouteImport } from './routes/_authenticated/admin/resellers'
 import { Route as AuthenticatedAdminProductsRouteImport } from './routes/_authenticated/admin/products'
@@ -51,16 +59,64 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedResellerRouteRoute =
+  AuthenticatedResellerRouteRouteImport.update({
+    id: '/reseller',
+    path: '/reseller',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminRouteRoute = AuthenticatedAdminRouteRouteImport.update({
   id: '/admin',
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedResellerIndexRoute =
+  AuthenticatedResellerIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedResellerRouteRoute,
+  } as any)
 const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthenticatedAdminRouteRoute,
 } as any)
+const AuthenticatedResellerPayoutsRoute =
+  AuthenticatedResellerPayoutsRouteImport.update({
+    id: '/payouts',
+    path: '/payouts',
+    getParentRoute: () => AuthenticatedResellerRouteRoute,
+  } as any)
+const AuthenticatedResellerOrdersRoute =
+  AuthenticatedResellerOrdersRouteImport.update({
+    id: '/orders',
+    path: '/orders',
+    getParentRoute: () => AuthenticatedResellerRouteRoute,
+  } as any)
+const AuthenticatedResellerListingsRoute =
+  AuthenticatedResellerListingsRouteImport.update({
+    id: '/listings',
+    path: '/listings',
+    getParentRoute: () => AuthenticatedResellerRouteRoute,
+  } as any)
+const AuthenticatedResellerDomainRoute =
+  AuthenticatedResellerDomainRouteImport.update({
+    id: '/domain',
+    path: '/domain',
+    getParentRoute: () => AuthenticatedResellerRouteRoute,
+  } as any)
+const AuthenticatedResellerDesignRoute =
+  AuthenticatedResellerDesignRouteImport.update({
+    id: '/design',
+    path: '/design',
+    getParentRoute: () => AuthenticatedResellerRouteRoute,
+  } as any)
+const AuthenticatedResellerCatalogRoute =
+  AuthenticatedResellerCatalogRouteImport.update({
+    id: '/catalog',
+    path: '/catalog',
+    getParentRoute: () => AuthenticatedResellerRouteRoute,
+  } as any)
 const AuthenticatedAdminSettingsRoute =
   AuthenticatedAdminSettingsRouteImport.update({
     id: '/settings',
@@ -126,6 +182,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
+  '/reseller': typeof AuthenticatedResellerRouteRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/admin/brands': typeof AuthenticatedAdminBrandsRoute
@@ -137,7 +194,14 @@ export interface FileRoutesByFullPath {
   '/admin/products': typeof AuthenticatedAdminProductsRouteWithChildren
   '/admin/resellers': typeof AuthenticatedAdminResellersRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
+  '/reseller/catalog': typeof AuthenticatedResellerCatalogRoute
+  '/reseller/design': typeof AuthenticatedResellerDesignRoute
+  '/reseller/domain': typeof AuthenticatedResellerDomainRoute
+  '/reseller/listings': typeof AuthenticatedResellerListingsRoute
+  '/reseller/orders': typeof AuthenticatedResellerOrdersRoute
+  '/reseller/payouts': typeof AuthenticatedResellerPayoutsRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
+  '/reseller/': typeof AuthenticatedResellerIndexRoute
   '/admin/products/new': typeof AuthenticatedAdminProductsNewRoute
 }
 export interface FileRoutesByTo {
@@ -154,7 +218,14 @@ export interface FileRoutesByTo {
   '/admin/products': typeof AuthenticatedAdminProductsRouteWithChildren
   '/admin/resellers': typeof AuthenticatedAdminResellersRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
+  '/reseller/catalog': typeof AuthenticatedResellerCatalogRoute
+  '/reseller/design': typeof AuthenticatedResellerDesignRoute
+  '/reseller/domain': typeof AuthenticatedResellerDomainRoute
+  '/reseller/listings': typeof AuthenticatedResellerListingsRoute
+  '/reseller/orders': typeof AuthenticatedResellerOrdersRoute
+  '/reseller/payouts': typeof AuthenticatedResellerPayoutsRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
+  '/reseller': typeof AuthenticatedResellerIndexRoute
   '/admin/products/new': typeof AuthenticatedAdminProductsNewRoute
 }
 export interface FileRoutesById {
@@ -163,6 +234,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
+  '/_authenticated/reseller': typeof AuthenticatedResellerRouteRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/admin/brands': typeof AuthenticatedAdminBrandsRoute
@@ -174,7 +246,14 @@ export interface FileRoutesById {
   '/_authenticated/admin/products': typeof AuthenticatedAdminProductsRouteWithChildren
   '/_authenticated/admin/resellers': typeof AuthenticatedAdminResellersRoute
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
+  '/_authenticated/reseller/catalog': typeof AuthenticatedResellerCatalogRoute
+  '/_authenticated/reseller/design': typeof AuthenticatedResellerDesignRoute
+  '/_authenticated/reseller/domain': typeof AuthenticatedResellerDomainRoute
+  '/_authenticated/reseller/listings': typeof AuthenticatedResellerListingsRoute
+  '/_authenticated/reseller/orders': typeof AuthenticatedResellerOrdersRoute
+  '/_authenticated/reseller/payouts': typeof AuthenticatedResellerPayoutsRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
+  '/_authenticated/reseller/': typeof AuthenticatedResellerIndexRoute
   '/_authenticated/admin/products/new': typeof AuthenticatedAdminProductsNewRoute
 }
 export interface FileRouteTypes {
@@ -183,6 +262,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/admin'
+    | '/reseller'
     | '/dashboard'
     | '/onboarding'
     | '/admin/brands'
@@ -194,7 +274,14 @@ export interface FileRouteTypes {
     | '/admin/products'
     | '/admin/resellers'
     | '/admin/settings'
+    | '/reseller/catalog'
+    | '/reseller/design'
+    | '/reseller/domain'
+    | '/reseller/listings'
+    | '/reseller/orders'
+    | '/reseller/payouts'
     | '/admin/'
+    | '/reseller/'
     | '/admin/products/new'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -211,7 +298,14 @@ export interface FileRouteTypes {
     | '/admin/products'
     | '/admin/resellers'
     | '/admin/settings'
+    | '/reseller/catalog'
+    | '/reseller/design'
+    | '/reseller/domain'
+    | '/reseller/listings'
+    | '/reseller/orders'
+    | '/reseller/payouts'
     | '/admin'
+    | '/reseller'
     | '/admin/products/new'
   id:
     | '__root__'
@@ -219,6 +313,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/admin'
+    | '/_authenticated/reseller'
     | '/_authenticated/dashboard'
     | '/_authenticated/onboarding'
     | '/_authenticated/admin/brands'
@@ -230,7 +325,14 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/products'
     | '/_authenticated/admin/resellers'
     | '/_authenticated/admin/settings'
+    | '/_authenticated/reseller/catalog'
+    | '/_authenticated/reseller/design'
+    | '/_authenticated/reseller/domain'
+    | '/_authenticated/reseller/listings'
+    | '/_authenticated/reseller/orders'
+    | '/_authenticated/reseller/payouts'
     | '/_authenticated/admin/'
+    | '/_authenticated/reseller/'
     | '/_authenticated/admin/products/new'
   fileRoutesById: FileRoutesById
 }
@@ -277,6 +379,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/reseller': {
+      id: '/_authenticated/reseller'
+      path: '/reseller'
+      fullPath: '/reseller'
+      preLoaderRoute: typeof AuthenticatedResellerRouteRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin': {
       id: '/_authenticated/admin'
       path: '/admin'
@@ -284,12 +393,61 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/reseller/': {
+      id: '/_authenticated/reseller/'
+      path: '/'
+      fullPath: '/reseller/'
+      preLoaderRoute: typeof AuthenticatedResellerIndexRouteImport
+      parentRoute: typeof AuthenticatedResellerRouteRoute
+    }
     '/_authenticated/admin/': {
       id: '/_authenticated/admin/'
       path: '/'
       fullPath: '/admin/'
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/reseller/payouts': {
+      id: '/_authenticated/reseller/payouts'
+      path: '/payouts'
+      fullPath: '/reseller/payouts'
+      preLoaderRoute: typeof AuthenticatedResellerPayoutsRouteImport
+      parentRoute: typeof AuthenticatedResellerRouteRoute
+    }
+    '/_authenticated/reseller/orders': {
+      id: '/_authenticated/reseller/orders'
+      path: '/orders'
+      fullPath: '/reseller/orders'
+      preLoaderRoute: typeof AuthenticatedResellerOrdersRouteImport
+      parentRoute: typeof AuthenticatedResellerRouteRoute
+    }
+    '/_authenticated/reseller/listings': {
+      id: '/_authenticated/reseller/listings'
+      path: '/listings'
+      fullPath: '/reseller/listings'
+      preLoaderRoute: typeof AuthenticatedResellerListingsRouteImport
+      parentRoute: typeof AuthenticatedResellerRouteRoute
+    }
+    '/_authenticated/reseller/domain': {
+      id: '/_authenticated/reseller/domain'
+      path: '/domain'
+      fullPath: '/reseller/domain'
+      preLoaderRoute: typeof AuthenticatedResellerDomainRouteImport
+      parentRoute: typeof AuthenticatedResellerRouteRoute
+    }
+    '/_authenticated/reseller/design': {
+      id: '/_authenticated/reseller/design'
+      path: '/design'
+      fullPath: '/reseller/design'
+      preLoaderRoute: typeof AuthenticatedResellerDesignRouteImport
+      parentRoute: typeof AuthenticatedResellerRouteRoute
+    }
+    '/_authenticated/reseller/catalog': {
+      id: '/_authenticated/reseller/catalog'
+      path: '/catalog'
+      fullPath: '/reseller/catalog'
+      preLoaderRoute: typeof AuthenticatedResellerCatalogRouteImport
+      parentRoute: typeof AuthenticatedResellerRouteRoute
     }
     '/_authenticated/admin/settings': {
       id: '/_authenticated/admin/settings'
@@ -411,14 +569,42 @@ const AuthenticatedAdminRouteRouteWithChildren =
     AuthenticatedAdminRouteRouteChildren,
   )
 
+interface AuthenticatedResellerRouteRouteChildren {
+  AuthenticatedResellerCatalogRoute: typeof AuthenticatedResellerCatalogRoute
+  AuthenticatedResellerDesignRoute: typeof AuthenticatedResellerDesignRoute
+  AuthenticatedResellerDomainRoute: typeof AuthenticatedResellerDomainRoute
+  AuthenticatedResellerListingsRoute: typeof AuthenticatedResellerListingsRoute
+  AuthenticatedResellerOrdersRoute: typeof AuthenticatedResellerOrdersRoute
+  AuthenticatedResellerPayoutsRoute: typeof AuthenticatedResellerPayoutsRoute
+  AuthenticatedResellerIndexRoute: typeof AuthenticatedResellerIndexRoute
+}
+
+const AuthenticatedResellerRouteRouteChildren: AuthenticatedResellerRouteRouteChildren =
+  {
+    AuthenticatedResellerCatalogRoute: AuthenticatedResellerCatalogRoute,
+    AuthenticatedResellerDesignRoute: AuthenticatedResellerDesignRoute,
+    AuthenticatedResellerDomainRoute: AuthenticatedResellerDomainRoute,
+    AuthenticatedResellerListingsRoute: AuthenticatedResellerListingsRoute,
+    AuthenticatedResellerOrdersRoute: AuthenticatedResellerOrdersRoute,
+    AuthenticatedResellerPayoutsRoute: AuthenticatedResellerPayoutsRoute,
+    AuthenticatedResellerIndexRoute: AuthenticatedResellerIndexRoute,
+  }
+
+const AuthenticatedResellerRouteRouteWithChildren =
+  AuthenticatedResellerRouteRoute._addFileChildren(
+    AuthenticatedResellerRouteRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRouteRoute: typeof AuthenticatedAdminRouteRouteWithChildren
+  AuthenticatedResellerRouteRoute: typeof AuthenticatedResellerRouteRouteWithChildren
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRouteRoute: AuthenticatedAdminRouteRouteWithChildren,
+  AuthenticatedResellerRouteRoute: AuthenticatedResellerRouteRouteWithChildren,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
 }
