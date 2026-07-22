@@ -18,21 +18,21 @@ export const Route = createFileRoute("/_authenticated/onboarding")({
 function Onboarding() {
   const { user, roles, loading } = useAuth();
   const nav = useNavigate();
-  const [storeName, setStoreName] = useState("");
-  const [slug, setSlug] = useState("");
+  const [businessName, setBusinessName] = useState("");
+  const [code, setCode] = useState("");
   const [phone, setPhone] = useState("");
   const [busy, setBusy] = useState(false);
-  const [status, setStatus] = useState<"none" | "pending" | "approved">("none");
+  const [status, setStatus] = useState<"none" | "pending" | "approved" | "suspended" | "rejected">("none");
 
   useEffect(() => {
     if (!user) return;
     supabase
       .from("resellers")
       .select("status")
-      .eq("owner_id", user.id)
+      .eq("user_id", user.id)
       .maybeSingle()
       .then(({ data }) => {
-        if (data) setStatus(data.status as "pending" | "approved");
+        if (data) setStatus(data.status);
       });
   }, [user]);
 
@@ -48,17 +48,17 @@ function Onboarding() {
     setBusy(true);
     try {
       const { error } = await supabase.from("resellers").insert({
-        owner_id: user.id,
-        store_name: storeName,
-        slug: slug.toLowerCase().replace(/[^a-z0-9-]/g, "-"),
-        phone,
+        user_id: user.id,
+        business_name: businessName,
+        code: code.toLowerCase().replace(/[^a-z0-9-]/g, "-"),
+        contact_phone: phone,
         status: "pending",
       });
       if (error) throw error;
       setStatus("pending");
       toast.success("Application submitted! Admin will review it shortly.");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed");
     } finally {
       setBusy(false);
     }
