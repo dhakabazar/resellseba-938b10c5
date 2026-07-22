@@ -22,7 +22,7 @@ function Onboarding() {
   const [code, setCode] = useState("");
   const [phone, setPhone] = useState("");
   const [busy, setBusy] = useState(false);
-  const [status, setStatus] = useState<"none" | "pending" | "approved" | "suspended" | "rejected">("none");
+  const [status, setStatus] = useState<"none" | "pending" | "active" | "suspended" | "rejected">("none");
 
   useEffect(() => {
     if (!user) return;
@@ -103,17 +103,17 @@ function Onboarding() {
           </div>
           <form onSubmit={submit} className="space-y-3">
             <div>
-              <label className="mb-1 block text-xs font-medium">Store name</label>
+              <label className="mb-1 block text-xs font-medium">Business name</label>
               <input
                 required
                 className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-                value={storeName}
-                onChange={(e) => setStoreName(e.target.value)}
+                value={businessName}
+                onChange={(e) => setBusinessName(e.target.value)}
                 placeholder="My Fashion Store"
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium">Store slug</label>
+              <label className="mb-1 block text-xs font-medium">Store code</label>
               <div className="flex items-center rounded-md border bg-background focus-within:ring-2 focus-within:ring-ring">
                 <span className="border-r bg-muted px-3 py-2 text-xs text-muted-foreground">
                   resellhub.com/s/
@@ -121,8 +121,8 @@ function Onboarding() {
                 <input
                   required
                   className="flex-1 bg-transparent px-3 py-2 text-sm outline-none"
-                  value={slug}
-                  onChange={(e) => setSlug(e.target.value)}
+                  value={code}
+                  onChange={(e) => setCode(e.target.value)}
                   placeholder="my-store"
                   pattern="[a-z0-9-]+"
                 />
