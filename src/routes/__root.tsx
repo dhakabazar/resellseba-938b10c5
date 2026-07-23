@@ -134,6 +134,24 @@ function RootComponent() {
     return () => sub.subscription.unsubscribe();
   }, [router, queryClient]);
 
+  useEffect(() => {
+    supabase
+      .from("global_settings")
+      .select("favicon_url, site_name")
+      .eq("id", 1)
+      .maybeSingle()
+      .then(({ data }) => {
+        const url = (data as { favicon_url?: string | null } | null)?.favicon_url;
+        if (url) {
+          document.querySelectorAll("link[rel~='icon']").forEach((el) => el.remove());
+          const link = document.createElement("link");
+          link.rel = "icon";
+          link.href = url;
+          document.head.appendChild(link);
+        }
+      });
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <Outlet />
