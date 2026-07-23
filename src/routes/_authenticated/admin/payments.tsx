@@ -48,7 +48,7 @@ function PaymentsPage() {
     if (!draft.label || !draft.method) return;
     setBusy(true);
     const { error } = await supabase.from("payment_configs").insert({
-      method: draft.method,
+      method: draft.method as any,
       label: draft.label,
       mode: draft.mode || "manual",
       is_active: true,

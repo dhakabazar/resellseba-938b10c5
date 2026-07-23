@@ -71,14 +71,14 @@ function Checkout() {
       _reseller_code: code,
       _customer_name: form.name,
       _customer_phone: form.phone,
-      _customer_email: form.email || null,
+      _customer_email: form.email || (null as any),
       _address_line: form.address,
-      _city: form.city || null,
+      _city: form.city || (null as any),
       _area: form.area,
-      _landmark: form.landmark || null,
+      _landmark: form.landmark || (null as any),
       _payment_method: "cod",
-      _notes: form.notes || null,
-      _items: [{ listing_id: listing.id, quantity: qty }],
+      _notes: form.notes || (null as any),
+      _items: [{ listing_id: listing.id, quantity: qty }] as any,
     });
     setBusy(false);
     if (error) {
