@@ -16,12 +16,14 @@ export function AppShell({
   brand,
   nav,
   user,
+  headerRight,
   children,
 }: {
   title: string;
   brand: { name: string; sub?: string; logoUrl?: string | null };
   nav: NavItem[];
   user: { name: string; email: string };
+  headerRight?: ReactNode;
   children: ReactNode;
 }) {
   return (
@@ -84,8 +86,9 @@ export function AppShell({
           </div>
         </aside>
         <main className="flex-1 md:ml-64">
-          <header className="sticky top-0 z-10 flex h-16 items-center border-b bg-background/80 px-6 backdrop-blur">
+          <header className="sticky top-0 z-10 flex h-16 items-center justify-between gap-3 border-b bg-background/80 px-6 backdrop-blur">
             <h1 className="text-lg font-semibold tracking-tight">{title}</h1>
+            {headerRight}
           </header>
           <div className="p-6">{children}</div>
         </main>

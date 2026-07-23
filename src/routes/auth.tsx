@@ -1,11 +1,13 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
+  validateSearch: z.object({ redirect: z.string().optional() }),
   head: () => ({
     meta: [
       { title: "Sign in — ResellHub" },
@@ -19,12 +21,25 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const nav = useNavigate();
+  const { redirect: redirectTo } = Route.useSearch();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session?.user) {
+        const target =
+          redirectTo && redirectTo.startsWith("/") && !redirectTo.startsWith("/auth")
+            ? redirectTo
+            : "/dashboard";
+        nav({ to: target, replace: true });
+      }
+    });
+  }, [nav, redirectTo]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -46,7 +61,11 @@ function AuthPage() {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         toast.success("Welcome back!");
-        nav({ to: "/dashboard" });
+        const target =
+          redirectTo && redirectTo.startsWith("/") && !redirectTo.startsWith("/auth")
+            ? redirectTo
+            : "/dashboard";
+        nav({ to: target, replace: true });
       }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Auth failed");
