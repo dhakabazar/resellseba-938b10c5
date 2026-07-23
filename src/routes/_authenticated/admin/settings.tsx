@@ -12,6 +12,8 @@ export const Route = createFileRoute("/_authenticated/admin/settings")({
 
 function SettingsPage() {
   const [siteName, setSiteName] = useState("");
+  const [flagshipCode, setFlagshipCode] = useState("");
+  const [resellers, setResellers] = useState<{ code: string; business_name: string }[]>([]);
   const [tagline, setTagline] = useState("");
   const [metaTitle, setMetaTitle] = useState("");
   const [metaDesc, setMetaDesc] = useState("");
@@ -36,9 +38,12 @@ function SettingsPage() {
         setAccent(data.accent_color ?? "#f59e0b");
         setPhone(data.contact_phone ?? "");
         setEmail(data.contact_email ?? "");
+        setFlagshipCode((data as any).flagship_reseller_code ?? "");
         if (data.logo_url) setLogo([{ path: "", url: data.logo_url, bytes: 0 }]);
         if (data.og_image_url) setOg([{ path: "", url: data.og_image_url, bytes: 0 }]);
       }
+      const { data: rs } = await supabase.from("resellers").select("code,business_name").eq("status", "active").order("business_name");
+      setResellers(rs ?? []);
       setLoading(false);
     })();
   }, []);
