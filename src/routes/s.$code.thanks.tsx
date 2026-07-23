@@ -3,6 +3,8 @@ import { useEffect, useRef } from "react";
 import { CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { trackPurchase } from "@/lib/tracking";
+import { useServerFn } from "@tanstack/react-start";
+import { trackPurchaseServer } from "@/lib/capi.functions";
 
 export const Route = createFileRoute("/s/$code/thanks")({
   validateSearch: (s: Record<string, unknown>) => ({ n: typeof s.n === "string" ? s.n : "" }),
@@ -13,6 +15,7 @@ function Thanks() {
   const { code } = Route.useParams();
   const { n } = Route.useSearch();
   const fired = useRef(false);
+  const capi = useServerFn(trackPurchaseServer);
 
   useEffect(() => {
     if (!n || fired.current) return;
@@ -20,10 +23,11 @@ function Thanks() {
     (async () => {
       const { data } = await supabase
         .from("orders")
-        .select("total,order_items(product_id,product_name,reseller_price,quantity)")
+        .select("id,total,order_items(product_id,product_name,reseller_price,quantity)")
         .eq("order_number", n)
         .maybeSingle();
       if (!data) return;
+      const eventId = `purchase_${data.id}`;
       trackPurchase({
         orderNumber: n,
         total: Number(data.total),
@@ -33,9 +37,13 @@ function Thanks() {
           price: Number(i.reseller_price),
           qty: i.quantity,
         })),
+        eventId,
       });
+      // fire server-side CAPI (deduped by eventId)
+      capi({ data: { orderNumber: n, code, eventId } }).catch(() => {});
     })();
-  }, [n]);
+  }, [n, code, capi]);
+
 
   return (
     <div className="mx-auto max-w-md px-4 py-16 text-center">

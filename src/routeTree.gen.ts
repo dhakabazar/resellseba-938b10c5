@@ -25,6 +25,7 @@ import { Route as SCodeCheckoutRouteImport } from './routes/s.$code.checkout'
 import { Route as ApiPublicRobotsRouteImport } from './routes/api/public/robots'
 import { Route as AuthenticatedResellerPayoutsRouteImport } from './routes/_authenticated/reseller/payouts'
 import { Route as AuthenticatedResellerOrdersRouteImport } from './routes/_authenticated/reseller/orders'
+import { Route as AuthenticatedResellerMarketingRouteImport } from './routes/_authenticated/reseller/marketing'
 import { Route as AuthenticatedResellerListingsRouteImport } from './routes/_authenticated/reseller/listings'
 import { Route as AuthenticatedResellerDomainRouteImport } from './routes/_authenticated/reseller/domain'
 import { Route as AuthenticatedResellerDesignRouteImport } from './routes/_authenticated/reseller/design'
@@ -129,6 +130,12 @@ const AuthenticatedResellerOrdersRoute =
   AuthenticatedResellerOrdersRouteImport.update({
     id: '/orders',
     path: '/orders',
+    getParentRoute: () => AuthenticatedResellerRouteRoute,
+  } as any)
+const AuthenticatedResellerMarketingRoute =
+  AuthenticatedResellerMarketingRouteImport.update({
+    id: '/marketing',
+    path: '/marketing',
     getParentRoute: () => AuthenticatedResellerRouteRoute,
   } as any)
 const AuthenticatedResellerListingsRoute =
@@ -287,6 +294,7 @@ export interface FileRoutesByFullPath {
   '/reseller/design': typeof AuthenticatedResellerDesignRoute
   '/reseller/domain': typeof AuthenticatedResellerDomainRoute
   '/reseller/listings': typeof AuthenticatedResellerListingsRoute
+  '/reseller/marketing': typeof AuthenticatedResellerMarketingRoute
   '/reseller/orders': typeof AuthenticatedResellerOrdersRouteWithChildren
   '/reseller/payouts': typeof AuthenticatedResellerPayoutsRoute
   '/api/public/robots': typeof ApiPublicRobotsRoute
@@ -323,6 +331,7 @@ export interface FileRoutesByTo {
   '/reseller/design': typeof AuthenticatedResellerDesignRoute
   '/reseller/domain': typeof AuthenticatedResellerDomainRoute
   '/reseller/listings': typeof AuthenticatedResellerListingsRoute
+  '/reseller/marketing': typeof AuthenticatedResellerMarketingRoute
   '/reseller/orders': typeof AuthenticatedResellerOrdersRouteWithChildren
   '/reseller/payouts': typeof AuthenticatedResellerPayoutsRoute
   '/api/public/robots': typeof ApiPublicRobotsRoute
@@ -364,6 +373,7 @@ export interface FileRoutesById {
   '/_authenticated/reseller/design': typeof AuthenticatedResellerDesignRoute
   '/_authenticated/reseller/domain': typeof AuthenticatedResellerDomainRoute
   '/_authenticated/reseller/listings': typeof AuthenticatedResellerListingsRoute
+  '/_authenticated/reseller/marketing': typeof AuthenticatedResellerMarketingRoute
   '/_authenticated/reseller/orders': typeof AuthenticatedResellerOrdersRouteWithChildren
   '/_authenticated/reseller/payouts': typeof AuthenticatedResellerPayoutsRoute
   '/api/public/robots': typeof ApiPublicRobotsRoute
@@ -405,6 +415,7 @@ export interface FileRouteTypes {
     | '/reseller/design'
     | '/reseller/domain'
     | '/reseller/listings'
+    | '/reseller/marketing'
     | '/reseller/orders'
     | '/reseller/payouts'
     | '/api/public/robots'
@@ -441,6 +452,7 @@ export interface FileRouteTypes {
     | '/reseller/design'
     | '/reseller/domain'
     | '/reseller/listings'
+    | '/reseller/marketing'
     | '/reseller/orders'
     | '/reseller/payouts'
     | '/api/public/robots'
@@ -481,6 +493,7 @@ export interface FileRouteTypes {
     | '/_authenticated/reseller/design'
     | '/_authenticated/reseller/domain'
     | '/_authenticated/reseller/listings'
+    | '/_authenticated/reseller/marketing'
     | '/_authenticated/reseller/orders'
     | '/_authenticated/reseller/payouts'
     | '/api/public/robots'
@@ -616,6 +629,13 @@ declare module '@tanstack/react-router' {
       path: '/orders'
       fullPath: '/reseller/orders'
       preLoaderRoute: typeof AuthenticatedResellerOrdersRouteImport
+      parentRoute: typeof AuthenticatedResellerRouteRoute
+    }
+    '/_authenticated/reseller/marketing': {
+      id: '/_authenticated/reseller/marketing'
+      path: '/marketing'
+      fullPath: '/reseller/marketing'
+      preLoaderRoute: typeof AuthenticatedResellerMarketingRouteImport
       parentRoute: typeof AuthenticatedResellerRouteRoute
     }
     '/_authenticated/reseller/listings': {
@@ -851,6 +871,7 @@ interface AuthenticatedResellerRouteRouteChildren {
   AuthenticatedResellerDesignRoute: typeof AuthenticatedResellerDesignRoute
   AuthenticatedResellerDomainRoute: typeof AuthenticatedResellerDomainRoute
   AuthenticatedResellerListingsRoute: typeof AuthenticatedResellerListingsRoute
+  AuthenticatedResellerMarketingRoute: typeof AuthenticatedResellerMarketingRoute
   AuthenticatedResellerOrdersRoute: typeof AuthenticatedResellerOrdersRouteWithChildren
   AuthenticatedResellerPayoutsRoute: typeof AuthenticatedResellerPayoutsRoute
   AuthenticatedResellerIndexRoute: typeof AuthenticatedResellerIndexRoute
@@ -864,6 +885,7 @@ const AuthenticatedResellerRouteRouteChildren: AuthenticatedResellerRouteRouteCh
     AuthenticatedResellerDesignRoute: AuthenticatedResellerDesignRoute,
     AuthenticatedResellerDomainRoute: AuthenticatedResellerDomainRoute,
     AuthenticatedResellerListingsRoute: AuthenticatedResellerListingsRoute,
+    AuthenticatedResellerMarketingRoute: AuthenticatedResellerMarketingRoute,
     AuthenticatedResellerOrdersRoute:
       AuthenticatedResellerOrdersRouteWithChildren,
     AuthenticatedResellerPayoutsRoute: AuthenticatedResellerPayoutsRoute,

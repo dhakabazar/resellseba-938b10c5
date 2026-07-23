@@ -5,7 +5,7 @@ import { PageHeader, EmptyState } from "@/components/ui-kit";
 import { Loader2, Truck, X, Download, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
-import { bookSteadfast } from "@/lib/couriers.functions";
+import { bookSteadfast, bookPathao, syncSteadfastStatus } from "@/lib/couriers.functions";
 
 type OrderRow = {
   id: string;
@@ -224,6 +224,8 @@ function OrderDrawer({
   const [adminNote, setAdminNote] = useState(order.admin_note ?? "");
   const [busy, setBusy] = useState(false);
   const bookAuto = useServerFn(bookSteadfast);
+  const bookPathaoFn = useServerFn(bookPathao);
+  const syncStatus = useServerFn(syncSteadfastStatus);
 
   // shipment form
   const [provider, setProvider] = useState("steadfast");
@@ -374,14 +376,33 @@ function OrderDrawer({
           {shipments.length > 0 ? (
             <div className="mb-4 divide-y">
               {shipments.map((s) => (
-                <div key={s.id} className="flex justify-between py-2 text-sm">
+                <div key={s.id} className="flex items-center justify-between gap-2 py-2 text-sm">
                   <div>
                     <div className="font-medium capitalize">{s.provider}</div>
                     <div className="text-xs text-muted-foreground">
                       {s.tracking_id ?? "—"} · {s.status}
                     </div>
                   </div>
-                  <div className="text-right text-sm">৳{Number(s.cost).toFixed(0)}</div>
+                  <div className="flex items-center gap-2">
+                    <div className="text-right text-sm">৳{Number(s.cost).toFixed(0)}</div>
+                    {s.provider === "steadfast" && (
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={async () => {
+                          setBusy(true);
+                          try {
+                            const r = await syncStatus({ data: { shipmentId: s.id } });
+                            toast.success(`Status: ${r.shipStatus}`);
+                            onChanged();
+                          } catch (e) {
+                            toast.error(e instanceof Error ? e.message : "Sync failed");
+                          } finally { setBusy(false); }
+                        }}
+                        className="rounded-md border px-2 py-1 text-xs hover:bg-accent"
+                      >Sync</button>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -433,13 +454,30 @@ function OrderDrawer({
                     onChanged();
                   } catch (e) {
                     toast.error(e instanceof Error ? e.message : "Booking failed");
-                  } finally {
-                    setBusy(false);
-                  }
+                  } finally { setBusy(false); }
                 }}
                 className="col-span-2 inline-flex items-center justify-center gap-2 rounded-md border border-primary/40 bg-primary/10 px-4 py-2 text-sm font-medium text-primary"
               >
                 <Zap className="h-4 w-4" /> Auto-book with Steadfast API
+              </button>
+            )}
+            {provider === "pathao" && (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={async () => {
+                  setBusy(true);
+                  try {
+                    const r = await bookPathaoFn({ data: { orderId: order.id } });
+                    toast.success(`Booked · ${r.trackingId}`);
+                    onChanged();
+                  } catch (e) {
+                    toast.error(e instanceof Error ? e.message : "Booking failed");
+                  } finally { setBusy(false); }
+                }}
+                className="col-span-2 inline-flex items-center justify-center gap-2 rounded-md border border-primary/40 bg-primary/10 px-4 py-2 text-sm font-medium text-primary"
+              >
+                <Zap className="h-4 w-4" /> Auto-book with Pathao API
               </button>
             )}
           </form>
