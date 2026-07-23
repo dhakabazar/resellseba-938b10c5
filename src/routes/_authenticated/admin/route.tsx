@@ -11,6 +11,9 @@ import {
   Wallet,
   ShoppingCart,
   Megaphone,
+  Percent,
+  Award,
+  ScrollText,
 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { useAuth } from "@/lib/use-auth";
@@ -26,11 +29,14 @@ const NAV = [
   { label: "Brands", to: "/admin/brands", icon: <Tag className="h-4 w-4" /> },
   { label: "Categories", to: "/admin/categories", icon: <FolderTree className="h-4 w-4" /> },
   { label: "Orders", to: "/admin/orders", icon: <ShoppingCart className="h-4 w-4" /> },
+  { label: "Delivery rules", to: "/admin/delivery", icon: <Percent className="h-4 w-4" /> },
   { label: "Resellers", to: "/admin/resellers", icon: <Users className="h-4 w-4" /> },
   { label: "Couriers", to: "/admin/couriers", icon: <Truck className="h-4 w-4" /> },
   { label: "Payments", to: "/admin/payments", icon: <Wallet className="h-4 w-4" /> },
   { label: "Payouts", to: "/admin/payouts", icon: <Wallet className="h-4 w-4" /> },
+  { label: "Commissions", to: "/admin/commissions", icon: <Award className="h-4 w-4" /> },
   { label: "Marketing", to: "/admin/marketing", icon: <Megaphone className="h-4 w-4" /> },
+  { label: "Audit log", to: "/admin/audit", icon: <ScrollText className="h-4 w-4" /> },
   { label: "Settings", to: "/admin/settings", icon: <Settings className="h-4 w-4" /> },
 ];
 

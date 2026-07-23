@@ -8,6 +8,7 @@ import {
   Globe,
   Wallet,
   Package,
+  Award,
   Loader2,
 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
@@ -24,6 +25,7 @@ const NAV = [
   { label: "My listings", to: "/reseller/listings", icon: <ShoppingBag className="h-4 w-4" /> },
   { label: "Orders", to: "/reseller/orders", icon: <ClipboardList className="h-4 w-4" /> },
   { label: "Payouts", to: "/reseller/payouts", icon: <Wallet className="h-4 w-4" /> },
+  { label: "Leader commissions", to: "/reseller/commissions", icon: <Award className="h-4 w-4" /> },
   { label: "Store design", to: "/reseller/design", icon: <Palette className="h-4 w-4" /> },
   { label: "Domain", to: "/reseller/domain", icon: <Globe className="h-4 w-4" /> },
 ];
