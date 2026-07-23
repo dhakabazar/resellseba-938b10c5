@@ -31,9 +31,9 @@ export function AppShell({
     <div className="min-h-screen bg-background">
       <div className="flex">
         <aside className="fixed inset-y-0 left-0 hidden w-64 flex-col border-r bg-sidebar md:flex">
-          <div className="flex min-h-20 items-center gap-3 border-b border-sidebar-border px-5 py-3">
+          <div className="flex min-h-24 items-center gap-3 border-b border-sidebar-border px-5 py-4">
             {brand.logoUrl ? (
-              <img src={brand.logoUrl} alt={brand.name} className="h-14 w-14 shrink-0 rounded-lg object-contain" />
+              <img src={brand.logoUrl} alt={brand.name} className="h-12 max-w-28 shrink-0 object-contain" />
             ) : (
               <div className="grid h-14 w-14 shrink-0 place-items-center rounded-lg bg-gradient-to-br from-primary to-primary/70 text-xl font-bold text-primary-foreground">
                 {brand.name.charAt(0)}
