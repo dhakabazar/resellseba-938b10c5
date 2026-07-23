@@ -63,7 +63,8 @@ function SettingsPage() {
       contact_email: email || null,
       logo_url: logo[0]?.url ?? null,
       og_image_url: og[0]?.url ?? null,
-    });
+      flagship_reseller_code: flagshipCode || null,
+    } as any);
     setBusy(false);
     if (error) toast.error(error.message);
     else toast.success("Settings saved — apply hote page refresh lagbe");
@@ -113,6 +114,20 @@ function SettingsPage() {
           </Field>
           <Field label="OG image (default share image)">
             <ImageUploader bucket="branding" folder="og" value={og} onChange={setOg} />
+          </Field>
+        </div>
+        <div className="surface-card space-y-3 p-6 lg:col-span-2">
+          <h3 className="text-sm font-semibold">Flagship storefront</h3>
+          <p className="text-xs text-muted-foreground">
+            Main domain + preview URL e ei reseller er store dekhabe. Blank rakhle sign-in panel dekhabe.
+          </p>
+          <Field label="Flagship reseller">
+            <select value={flagshipCode} onChange={(e) => setFlagshipCode(e.target.value)} className={inp}>
+              <option value="">— None (show sign-in) —</option>
+              {resellers.map((r) => (
+                <option key={r.code} value={r.code}>{r.business_name} ({r.code})</option>
+              ))}
+            </select>
           </Field>
         </div>
         <div className="surface-card space-y-3 p-6 lg:col-span-2">
