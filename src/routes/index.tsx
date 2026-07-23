@@ -174,9 +174,9 @@ function Landing({ c, siteName }: { c: LandingContent; siteName: string }) {
             <Sparkles className="h-3.5 w-3.5 shrink-0 text-primary" />
             <span className="truncate">{c.hero.badge}</span>
           </div>
-          <h1 className="mx-auto mt-5 max-w-3xl text-balance text-3xl font-bold leading-[1.1] tracking-tight sm:mt-6 sm:text-5xl lg:text-6xl">
+          <h1 className="mx-auto mt-5 max-w-3xl text-balance text-3xl font-bold leading-[1.5] tracking-tight sm:mt-6 sm:text-5xl sm:leading-[1.4] lg:text-6xl lg:leading-[1.35]">
             {c.hero.titleStart}{" "}
-            <span className="bg-gradient-to-r from-primary via-primary to-accent bg-clip-text text-transparent">
+            <span className="inline-block bg-gradient-to-r from-primary via-primary to-accent bg-clip-text text-transparent">
               {c.hero.titleHighlight}
             </span>
           </h1>
