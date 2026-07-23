@@ -223,6 +223,7 @@ function OrderDrawer({
   const [status, setStatus] = useState(order.status);
   const [adminNote, setAdminNote] = useState(order.admin_note ?? "");
   const [busy, setBusy] = useState(false);
+  const bookAuto = useServerFn(bookSteadfast);
 
   // shipment form
   const [provider, setProvider] = useState("steadfast");
