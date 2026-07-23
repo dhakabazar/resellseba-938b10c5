@@ -1,9 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/use-auth";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
-import { Loader2, Plus, Send, X, Trash2 } from "lucide-react";
+import { Loader2, Plus, Send, X, Trash2, FileText } from "lucide-react";
 import { toast } from "sonner";
 
 type Listing = {
@@ -161,6 +161,14 @@ function OrdersPage() {
                 </span>
               </div>
               <div className="flex justify-end gap-2">
+                <Link
+                  to="/reseller/orders/$id/invoice"
+                  params={{ id: o.id }}
+                  target="_blank"
+                  className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs hover:bg-accent"
+                >
+                  <FileText className="h-3.5 w-3.5" /> Invoice
+                </Link>
                 {!o.forwarded_to_admin && o.status !== "cancelled" && (
                   <button
                     onClick={() => forward(o.id)}
