@@ -36,6 +36,7 @@ function ResellerLayout() {
   const { user, roles, loading } = useAuth();
   const nav = useNavigate();
   const [storeName, setStoreName] = useState("My store");
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (loading) return;
@@ -50,12 +51,31 @@ function ResellerLayout() {
 
   useEffect(() => {
     if (!user) return;
-    supabase
-      .from("resellers")
-      .select("business_name")
-      .eq("user_id", user.id)
-      .maybeSingle()
-      .then(({ data }) => data && setStoreName(data.business_name));
+    (async () => {
+      const { data: r } = await supabase
+        .from("resellers")
+        .select("id, business_name")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (r) {
+        setStoreName(r.business_name);
+        const { data: s } = await supabase
+          .from("reseller_settings")
+          .select("logo_url")
+          .eq("reseller_id", r.id)
+          .maybeSingle();
+        if (s?.logo_url) {
+          setLogoUrl(s.logo_url);
+          return;
+        }
+      }
+      const { data: g } = await supabase
+        .from("global_settings")
+        .select("logo_url")
+        .eq("id", 1)
+        .maybeSingle();
+      if (g?.logo_url) setLogoUrl(g.logo_url);
+    })();
   }, [user]);
 
   if (loading || !user || (!roles.includes("reseller") && !roles.includes("leader"))) {
@@ -69,7 +89,7 @@ function ResellerLayout() {
   return (
     <AppShell
       title="Reseller panel"
-      brand={{ name: storeName, sub: "Reseller" }}
+      brand={{ name: storeName, sub: "Reseller", logoUrl }}
       nav={NAV}
       user={{
         name: user.user_metadata?.full_name ?? "Reseller",
