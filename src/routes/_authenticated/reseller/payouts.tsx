@@ -10,7 +10,7 @@ export const Route = createFileRoute("/_authenticated/reseller/payouts")({
   component: PayoutsPage,
 });
 
-type Payout = { id: string; amount: number; status: string; method: string; note: string | null; created_at: string; paid_at: string | null };
+type Payout = { id: string; amount: number; status: string; method: string | null; notes: string | null; reference: string | null; created_at: string; paid_at: string | null };
 
 function PayoutsPage() {
   const { user } = useAuth();
