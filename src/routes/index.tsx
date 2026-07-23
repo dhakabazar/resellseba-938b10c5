@@ -139,10 +139,10 @@ function Landing({ c, siteName }: { c: LandingContent; siteName: string }) {
             <a href="#pricing" className="hover:text-foreground">{c.nav.pricing}</a>
           </nav>
           <div className="flex items-center gap-2">
-            <Link to="/auth" className="hidden rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground sm:inline">
+            <Link to="/login" className="hidden rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground sm:inline">
               {c.nav.signIn}
             </Link>
-            <Link to="/auth" className="btn-brand inline-flex items-center gap-1 rounded-md px-4 py-2 text-sm font-medium">
+            <Link to="/login" className="btn-brand inline-flex items-center gap-1 rounded-md px-4 py-2 text-sm font-medium">
               {c.nav.cta} <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
@@ -169,10 +169,10 @@ function Landing({ c, siteName }: { c: LandingContent; siteName: string }) {
             {c.hero.subtitle}
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Link to="/auth" className="btn-brand inline-flex items-center gap-2 rounded-md px-6 py-3 text-sm font-semibold shadow-lg shadow-primary/20">
+            <Link to="/login" className="btn-brand inline-flex items-center gap-2 rounded-md px-6 py-3 text-sm font-semibold shadow-lg shadow-primary/20">
               {c.hero.ctaPrimary} <ArrowRight className="h-4 w-4" />
             </Link>
-            <Link to="/auth" className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-6 py-3 text-sm font-semibold hover:bg-muted">
+            <Link to="/login" className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-6 py-3 text-sm font-semibold hover:bg-muted">
               {c.hero.ctaSecondary}
             </Link>
           </div>
@@ -239,7 +239,7 @@ function Landing({ c, siteName }: { c: LandingContent; siteName: string }) {
           <h2 className="mt-6 text-3xl font-bold tracking-tight sm:text-5xl">{c.cta.title}</h2>
           <p className="mx-auto mt-5 max-w-xl text-muted-foreground">{c.cta.subtitle}</p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Link to="/auth" className="btn-brand inline-flex items-center gap-2 rounded-md px-7 py-3 text-sm font-semibold shadow-lg shadow-primary/20">
+            <Link to="/login" className="btn-brand inline-flex items-center gap-2 rounded-md px-7 py-3 text-sm font-semibold shadow-lg shadow-primary/20">
               {c.cta.button} <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
@@ -255,7 +255,7 @@ function Landing({ c, siteName }: { c: LandingContent; siteName: string }) {
             © {new Date().getFullYear()} {siteName} · {c.footer.tagline}
           </div>
           <div className="flex gap-5">
-            <Link to="/auth" className="hover:text-foreground">{c.nav.signIn}</Link>
+            <Link to="/login" className="hover:text-foreground">{c.nav.signIn}</Link>
             <a href="#features" className="hover:text-foreground">{c.nav.features}</a>
             <a href="#how" className="hover:text-foreground">{c.nav.how}</a>
           </div>
