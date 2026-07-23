@@ -29,6 +29,7 @@ const NAV = [
   { label: "Resellers", to: "/admin/resellers", icon: <Users className="h-4 w-4" /> },
   { label: "Couriers", to: "/admin/couriers", icon: <Truck className="h-4 w-4" /> },
   { label: "Payments", to: "/admin/payments", icon: <Wallet className="h-4 w-4" /> },
+  { label: "Payouts", to: "/admin/payouts", icon: <Wallet className="h-4 w-4" /> },
   { label: "Marketing", to: "/admin/marketing", icon: <Megaphone className="h-4 w-4" /> },
   { label: "Settings", to: "/admin/settings", icon: <Settings className="h-4 w-4" /> },
 ];

@@ -12,12 +12,16 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SCodeRouteImport } from './routes/s.$code'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedResellerRouteRouteImport } from './routes/_authenticated/reseller/route'
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
+import { Route as SCodeIndexRouteImport } from './routes/s.$code.index'
 import { Route as AuthenticatedResellerIndexRouteImport } from './routes/_authenticated/reseller/index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
+import { Route as SCodeThanksRouteImport } from './routes/s.$code.thanks'
+import { Route as SCodeCheckoutRouteImport } from './routes/s.$code.checkout'
 import { Route as AuthenticatedResellerPayoutsRouteImport } from './routes/_authenticated/reseller/payouts'
 import { Route as AuthenticatedResellerOrdersRouteImport } from './routes/_authenticated/reseller/orders'
 import { Route as AuthenticatedResellerListingsRouteImport } from './routes/_authenticated/reseller/listings'
@@ -27,12 +31,14 @@ import { Route as AuthenticatedResellerCatalogRouteImport } from './routes/_auth
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin/settings'
 import { Route as AuthenticatedAdminResellersRouteImport } from './routes/_authenticated/admin/resellers'
 import { Route as AuthenticatedAdminProductsRouteImport } from './routes/_authenticated/admin/products'
+import { Route as AuthenticatedAdminPayoutsRouteImport } from './routes/_authenticated/admin/payouts'
 import { Route as AuthenticatedAdminPaymentsRouteImport } from './routes/_authenticated/admin/payments'
 import { Route as AuthenticatedAdminOrdersRouteImport } from './routes/_authenticated/admin/orders'
 import { Route as AuthenticatedAdminMarketingRouteImport } from './routes/_authenticated/admin/marketing'
 import { Route as AuthenticatedAdminCouriersRouteImport } from './routes/_authenticated/admin/couriers'
 import { Route as AuthenticatedAdminCategoriesRouteImport } from './routes/_authenticated/admin/categories'
 import { Route as AuthenticatedAdminBrandsRouteImport } from './routes/_authenticated/admin/brands'
+import { Route as SCodePSlugRouteImport } from './routes/s.$code.p.$slug'
 import { Route as AuthenticatedAdminProductsNewRouteImport } from './routes/_authenticated/admin/products.new'
 
 const AuthRoute = AuthRouteImport.update({
@@ -47,6 +53,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SCodeRoute = SCodeRouteImport.update({
+  id: '/s/$code',
+  path: '/s/$code',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
@@ -70,6 +81,11 @@ const AuthenticatedAdminRouteRoute = AuthenticatedAdminRouteRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const SCodeIndexRoute = SCodeIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => SCodeRoute,
+} as any)
 const AuthenticatedResellerIndexRoute =
   AuthenticatedResellerIndexRouteImport.update({
     id: '/',
@@ -80,6 +96,16 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthenticatedAdminRouteRoute,
+} as any)
+const SCodeThanksRoute = SCodeThanksRouteImport.update({
+  id: '/thanks',
+  path: '/thanks',
+  getParentRoute: () => SCodeRoute,
+} as any)
+const SCodeCheckoutRoute = SCodeCheckoutRouteImport.update({
+  id: '/checkout',
+  path: '/checkout',
+  getParentRoute: () => SCodeRoute,
 } as any)
 const AuthenticatedResellerPayoutsRoute =
   AuthenticatedResellerPayoutsRouteImport.update({
@@ -135,6 +161,12 @@ const AuthenticatedAdminProductsRoute =
     path: '/products',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
+const AuthenticatedAdminPayoutsRoute =
+  AuthenticatedAdminPayoutsRouteImport.update({
+    id: '/payouts',
+    path: '/payouts',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
 const AuthenticatedAdminPaymentsRoute =
   AuthenticatedAdminPaymentsRouteImport.update({
     id: '/payments',
@@ -171,6 +203,11 @@ const AuthenticatedAdminBrandsRoute =
     path: '/brands',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
+const SCodePSlugRoute = SCodePSlugRouteImport.update({
+  id: '/p/$slug',
+  path: '/p/$slug',
+  getParentRoute: () => SCodeRoute,
+} as any)
 const AuthenticatedAdminProductsNewRoute =
   AuthenticatedAdminProductsNewRouteImport.update({
     id: '/new',
@@ -185,12 +222,14 @@ export interface FileRoutesByFullPath {
   '/reseller': typeof AuthenticatedResellerRouteRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/s/$code': typeof SCodeRouteWithChildren
   '/admin/brands': typeof AuthenticatedAdminBrandsRoute
   '/admin/categories': typeof AuthenticatedAdminCategoriesRoute
   '/admin/couriers': typeof AuthenticatedAdminCouriersRoute
   '/admin/marketing': typeof AuthenticatedAdminMarketingRoute
   '/admin/orders': typeof AuthenticatedAdminOrdersRoute
   '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
+  '/admin/payouts': typeof AuthenticatedAdminPayoutsRoute
   '/admin/products': typeof AuthenticatedAdminProductsRouteWithChildren
   '/admin/resellers': typeof AuthenticatedAdminResellersRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
@@ -200,9 +239,13 @@ export interface FileRoutesByFullPath {
   '/reseller/listings': typeof AuthenticatedResellerListingsRoute
   '/reseller/orders': typeof AuthenticatedResellerOrdersRoute
   '/reseller/payouts': typeof AuthenticatedResellerPayoutsRoute
+  '/s/$code/checkout': typeof SCodeCheckoutRoute
+  '/s/$code/thanks': typeof SCodeThanksRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/reseller/': typeof AuthenticatedResellerIndexRoute
+  '/s/$code/': typeof SCodeIndexRoute
   '/admin/products/new': typeof AuthenticatedAdminProductsNewRoute
+  '/s/$code/p/$slug': typeof SCodePSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -215,6 +258,7 @@ export interface FileRoutesByTo {
   '/admin/marketing': typeof AuthenticatedAdminMarketingRoute
   '/admin/orders': typeof AuthenticatedAdminOrdersRoute
   '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
+  '/admin/payouts': typeof AuthenticatedAdminPayoutsRoute
   '/admin/products': typeof AuthenticatedAdminProductsRouteWithChildren
   '/admin/resellers': typeof AuthenticatedAdminResellersRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
@@ -224,9 +268,13 @@ export interface FileRoutesByTo {
   '/reseller/listings': typeof AuthenticatedResellerListingsRoute
   '/reseller/orders': typeof AuthenticatedResellerOrdersRoute
   '/reseller/payouts': typeof AuthenticatedResellerPayoutsRoute
+  '/s/$code/checkout': typeof SCodeCheckoutRoute
+  '/s/$code/thanks': typeof SCodeThanksRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/reseller': typeof AuthenticatedResellerIndexRoute
+  '/s/$code': typeof SCodeIndexRoute
   '/admin/products/new': typeof AuthenticatedAdminProductsNewRoute
+  '/s/$code/p/$slug': typeof SCodePSlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -237,12 +285,14 @@ export interface FileRoutesById {
   '/_authenticated/reseller': typeof AuthenticatedResellerRouteRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
+  '/s/$code': typeof SCodeRouteWithChildren
   '/_authenticated/admin/brands': typeof AuthenticatedAdminBrandsRoute
   '/_authenticated/admin/categories': typeof AuthenticatedAdminCategoriesRoute
   '/_authenticated/admin/couriers': typeof AuthenticatedAdminCouriersRoute
   '/_authenticated/admin/marketing': typeof AuthenticatedAdminMarketingRoute
   '/_authenticated/admin/orders': typeof AuthenticatedAdminOrdersRoute
   '/_authenticated/admin/payments': typeof AuthenticatedAdminPaymentsRoute
+  '/_authenticated/admin/payouts': typeof AuthenticatedAdminPayoutsRoute
   '/_authenticated/admin/products': typeof AuthenticatedAdminProductsRouteWithChildren
   '/_authenticated/admin/resellers': typeof AuthenticatedAdminResellersRoute
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
@@ -252,9 +302,13 @@ export interface FileRoutesById {
   '/_authenticated/reseller/listings': typeof AuthenticatedResellerListingsRoute
   '/_authenticated/reseller/orders': typeof AuthenticatedResellerOrdersRoute
   '/_authenticated/reseller/payouts': typeof AuthenticatedResellerPayoutsRoute
+  '/s/$code/checkout': typeof SCodeCheckoutRoute
+  '/s/$code/thanks': typeof SCodeThanksRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/reseller/': typeof AuthenticatedResellerIndexRoute
+  '/s/$code/': typeof SCodeIndexRoute
   '/_authenticated/admin/products/new': typeof AuthenticatedAdminProductsNewRoute
+  '/s/$code/p/$slug': typeof SCodePSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -265,12 +319,14 @@ export interface FileRouteTypes {
     | '/reseller'
     | '/dashboard'
     | '/onboarding'
+    | '/s/$code'
     | '/admin/brands'
     | '/admin/categories'
     | '/admin/couriers'
     | '/admin/marketing'
     | '/admin/orders'
     | '/admin/payments'
+    | '/admin/payouts'
     | '/admin/products'
     | '/admin/resellers'
     | '/admin/settings'
@@ -280,9 +336,13 @@ export interface FileRouteTypes {
     | '/reseller/listings'
     | '/reseller/orders'
     | '/reseller/payouts'
+    | '/s/$code/checkout'
+    | '/s/$code/thanks'
     | '/admin/'
     | '/reseller/'
+    | '/s/$code/'
     | '/admin/products/new'
+    | '/s/$code/p/$slug'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -295,6 +355,7 @@ export interface FileRouteTypes {
     | '/admin/marketing'
     | '/admin/orders'
     | '/admin/payments'
+    | '/admin/payouts'
     | '/admin/products'
     | '/admin/resellers'
     | '/admin/settings'
@@ -304,9 +365,13 @@ export interface FileRouteTypes {
     | '/reseller/listings'
     | '/reseller/orders'
     | '/reseller/payouts'
+    | '/s/$code/checkout'
+    | '/s/$code/thanks'
     | '/admin'
     | '/reseller'
+    | '/s/$code'
     | '/admin/products/new'
+    | '/s/$code/p/$slug'
   id:
     | '__root__'
     | '/'
@@ -316,12 +381,14 @@ export interface FileRouteTypes {
     | '/_authenticated/reseller'
     | '/_authenticated/dashboard'
     | '/_authenticated/onboarding'
+    | '/s/$code'
     | '/_authenticated/admin/brands'
     | '/_authenticated/admin/categories'
     | '/_authenticated/admin/couriers'
     | '/_authenticated/admin/marketing'
     | '/_authenticated/admin/orders'
     | '/_authenticated/admin/payments'
+    | '/_authenticated/admin/payouts'
     | '/_authenticated/admin/products'
     | '/_authenticated/admin/resellers'
     | '/_authenticated/admin/settings'
@@ -331,15 +398,20 @@ export interface FileRouteTypes {
     | '/_authenticated/reseller/listings'
     | '/_authenticated/reseller/orders'
     | '/_authenticated/reseller/payouts'
+    | '/s/$code/checkout'
+    | '/s/$code/thanks'
     | '/_authenticated/admin/'
     | '/_authenticated/reseller/'
+    | '/s/$code/'
     | '/_authenticated/admin/products/new'
+    | '/s/$code/p/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  SCodeRoute: typeof SCodeRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -363,6 +435,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/s/$code': {
+      id: '/s/$code'
+      path: '/s/$code'
+      fullPath: '/s/$code'
+      preLoaderRoute: typeof SCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/onboarding': {
@@ -393,6 +472,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/s/$code/': {
+      id: '/s/$code/'
+      path: '/'
+      fullPath: '/s/$code/'
+      preLoaderRoute: typeof SCodeIndexRouteImport
+      parentRoute: typeof SCodeRoute
+    }
     '/_authenticated/reseller/': {
       id: '/_authenticated/reseller/'
       path: '/'
@@ -406,6 +492,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/s/$code/thanks': {
+      id: '/s/$code/thanks'
+      path: '/thanks'
+      fullPath: '/s/$code/thanks'
+      preLoaderRoute: typeof SCodeThanksRouteImport
+      parentRoute: typeof SCodeRoute
+    }
+    '/s/$code/checkout': {
+      id: '/s/$code/checkout'
+      path: '/checkout'
+      fullPath: '/s/$code/checkout'
+      preLoaderRoute: typeof SCodeCheckoutRouteImport
+      parentRoute: typeof SCodeRoute
     }
     '/_authenticated/reseller/payouts': {
       id: '/_authenticated/reseller/payouts'
@@ -470,6 +570,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminProductsRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/_authenticated/admin/payouts': {
+      id: '/_authenticated/admin/payouts'
+      path: '/payouts'
+      fullPath: '/admin/payouts'
+      preLoaderRoute: typeof AuthenticatedAdminPayoutsRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
     '/_authenticated/admin/payments': {
       id: '/_authenticated/admin/payments'
       path: '/payments'
@@ -512,6 +619,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminBrandsRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/s/$code/p/$slug': {
+      id: '/s/$code/p/$slug'
+      path: '/p/$slug'
+      fullPath: '/s/$code/p/$slug'
+      preLoaderRoute: typeof SCodePSlugRouteImport
+      parentRoute: typeof SCodeRoute
+    }
     '/_authenticated/admin/products/new': {
       id: '/_authenticated/admin/products/new'
       path: '/new'
@@ -543,6 +657,7 @@ interface AuthenticatedAdminRouteRouteChildren {
   AuthenticatedAdminMarketingRoute: typeof AuthenticatedAdminMarketingRoute
   AuthenticatedAdminOrdersRoute: typeof AuthenticatedAdminOrdersRoute
   AuthenticatedAdminPaymentsRoute: typeof AuthenticatedAdminPaymentsRoute
+  AuthenticatedAdminPayoutsRoute: typeof AuthenticatedAdminPayoutsRoute
   AuthenticatedAdminProductsRoute: typeof AuthenticatedAdminProductsRouteWithChildren
   AuthenticatedAdminResellersRoute: typeof AuthenticatedAdminResellersRoute
   AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
@@ -557,6 +672,7 @@ const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren
     AuthenticatedAdminMarketingRoute: AuthenticatedAdminMarketingRoute,
     AuthenticatedAdminOrdersRoute: AuthenticatedAdminOrdersRoute,
     AuthenticatedAdminPaymentsRoute: AuthenticatedAdminPaymentsRoute,
+    AuthenticatedAdminPayoutsRoute: AuthenticatedAdminPayoutsRoute,
     AuthenticatedAdminProductsRoute:
       AuthenticatedAdminProductsRouteWithChildren,
     AuthenticatedAdminResellersRoute: AuthenticatedAdminResellersRoute,
@@ -612,10 +728,27 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface SCodeRouteChildren {
+  SCodeCheckoutRoute: typeof SCodeCheckoutRoute
+  SCodeThanksRoute: typeof SCodeThanksRoute
+  SCodeIndexRoute: typeof SCodeIndexRoute
+  SCodePSlugRoute: typeof SCodePSlugRoute
+}
+
+const SCodeRouteChildren: SCodeRouteChildren = {
+  SCodeCheckoutRoute: SCodeCheckoutRoute,
+  SCodeThanksRoute: SCodeThanksRoute,
+  SCodeIndexRoute: SCodeIndexRoute,
+  SCodePSlugRoute: SCodePSlugRoute,
+}
+
+const SCodeRouteWithChildren = SCodeRoute._addFileChildren(SCodeRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  SCodeRoute: SCodeRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
