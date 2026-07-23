@@ -95,8 +95,11 @@ function SettingsPage() {
           <Field label="Tagline">
             <input value={tagline} onChange={(e) => setTagline(e.target.value)} className={inp} />
           </Field>
-          <Field label="Logo">
+          <Field label="Logo (sidebar + storefront header)">
             <ImageUploader bucket="branding" folder="global" value={logo} onChange={setLogo} />
+          </Field>
+          <Field label="Favicon (browser tab icon — square PNG/WebP)">
+            <ImageUploader bucket="branding" folder="favicon" value={favicon} onChange={setFavicon} />
           </Field>
           <div className="grid grid-cols-2 gap-3">
             <Field label="Primary color">
