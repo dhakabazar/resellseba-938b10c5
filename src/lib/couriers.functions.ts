@@ -84,7 +84,7 @@ export const syncSteadfastStatus = createServerFn({ method: "POST" })
     const body = (await res.json().catch(() => ({}))) as any;
     if (!res.ok) throw new Response(body.message || "Status fetch failed", { status: 502 });
     const providerStatus: string = (body.delivery_status || body.status || "").toLowerCase();
-    const map: Record<string, string> = {
+    const map: Record<string, "booked" | "in_transit" | "delivered" | "returned" | "cancelled"> = {
       delivered: "delivered", partial_delivered: "delivered",
       in_review: "booked", pending: "booked", hold: "booked",
       in_transit: "in_transit", returned: "returned",
