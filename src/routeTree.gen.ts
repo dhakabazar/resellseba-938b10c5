@@ -52,6 +52,7 @@ import { Route as ApiPublicPaymentSslcommerzIpnRouteImport } from './routes/api/
 import { Route as ApiPublicPaymentBkashCallbackRouteImport } from './routes/api/public/payment.bkash-callback'
 import { Route as AuthenticatedAdminProductsNewRouteImport } from './routes/_authenticated/admin/products.new'
 import { Route as AuthenticatedResellerOrdersIdInvoiceRouteImport } from './routes/_authenticated/reseller/orders.$id.invoice'
+import { Route as AuthenticatedAdminProductsIdEditRouteImport } from './routes/_authenticated/admin/products.$id.edit'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -295,6 +296,12 @@ const AuthenticatedResellerOrdersIdInvoiceRoute =
     path: '/$id/invoice',
     getParentRoute: () => AuthenticatedResellerOrdersRoute,
   } as any)
+const AuthenticatedAdminProductsIdEditRoute =
+  AuthenticatedAdminProductsIdEditRouteImport.update({
+    id: '/products/$id/edit',
+    path: '/products/$id/edit',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -338,6 +345,7 @@ export interface FileRoutesByFullPath {
   '/api/public/sitemap/$code': typeof ApiPublicSitemapCodeRoute
   '/s/$code/p/$slug': typeof SCodePSlugRoute
   '/admin/products/': typeof AuthenticatedAdminProductsIndexRoute
+  '/admin/products/$id/edit': typeof AuthenticatedAdminProductsIdEditRoute
   '/reseller/orders/$id/invoice': typeof AuthenticatedResellerOrdersIdInvoiceRoute
 }
 export interface FileRoutesByTo {
@@ -379,6 +387,7 @@ export interface FileRoutesByTo {
   '/api/public/sitemap/$code': typeof ApiPublicSitemapCodeRoute
   '/s/$code/p/$slug': typeof SCodePSlugRoute
   '/admin/products': typeof AuthenticatedAdminProductsIndexRoute
+  '/admin/products/$id/edit': typeof AuthenticatedAdminProductsIdEditRoute
   '/reseller/orders/$id/invoice': typeof AuthenticatedResellerOrdersIdInvoiceRoute
 }
 export interface FileRoutesById {
@@ -425,6 +434,7 @@ export interface FileRoutesById {
   '/api/public/sitemap/$code': typeof ApiPublicSitemapCodeRoute
   '/s/$code/p/$slug': typeof SCodePSlugRoute
   '/_authenticated/admin/products/': typeof AuthenticatedAdminProductsIndexRoute
+  '/_authenticated/admin/products/$id/edit': typeof AuthenticatedAdminProductsIdEditRoute
   '/_authenticated/reseller/orders/$id/invoice': typeof AuthenticatedResellerOrdersIdInvoiceRoute
 }
 export interface FileRouteTypes {
@@ -471,6 +481,7 @@ export interface FileRouteTypes {
     | '/api/public/sitemap/$code'
     | '/s/$code/p/$slug'
     | '/admin/products/'
+    | '/admin/products/$id/edit'
     | '/reseller/orders/$id/invoice'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -512,6 +523,7 @@ export interface FileRouteTypes {
     | '/api/public/sitemap/$code'
     | '/s/$code/p/$slug'
     | '/admin/products'
+    | '/admin/products/$id/edit'
     | '/reseller/orders/$id/invoice'
   id:
     | '__root__'
@@ -557,6 +569,7 @@ export interface FileRouteTypes {
     | '/api/public/sitemap/$code'
     | '/s/$code/p/$slug'
     | '/_authenticated/admin/products/'
+    | '/_authenticated/admin/products/$id/edit'
     | '/_authenticated/reseller/orders/$id/invoice'
   fileRoutesById: FileRoutesById
 }
@@ -874,6 +887,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedResellerOrdersIdInvoiceRouteImport
       parentRoute: typeof AuthenticatedResellerOrdersRoute
     }
+    '/_authenticated/admin/products/$id/edit': {
+      id: '/_authenticated/admin/products/$id/edit'
+      path: '/products/$id/edit'
+      fullPath: '/admin/products/$id/edit'
+      preLoaderRoute: typeof AuthenticatedAdminProductsIdEditRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
   }
 }
 
@@ -895,6 +915,7 @@ interface AuthenticatedAdminRouteRouteChildren {
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
   AuthenticatedAdminProductsNewRoute: typeof AuthenticatedAdminProductsNewRoute
   AuthenticatedAdminProductsIndexRoute: typeof AuthenticatedAdminProductsIndexRoute
+  AuthenticatedAdminProductsIdEditRoute: typeof AuthenticatedAdminProductsIdEditRoute
 }
 
 const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren =
@@ -916,6 +937,8 @@ const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren
     AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
     AuthenticatedAdminProductsNewRoute: AuthenticatedAdminProductsNewRoute,
     AuthenticatedAdminProductsIndexRoute: AuthenticatedAdminProductsIndexRoute,
+    AuthenticatedAdminProductsIdEditRoute:
+      AuthenticatedAdminProductsIdEditRoute,
   }
 
 const AuthenticatedAdminRouteRouteWithChildren =
