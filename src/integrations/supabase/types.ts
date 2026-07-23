@@ -398,6 +398,107 @@ export type Database = {
           },
         ]
       }
+      notification_configs: {
+        Row: {
+          channel: string
+          config: Json
+          created_at: string
+          from_name: string | null
+          from_value: string | null
+          id: string
+          is_active: boolean
+          provider: string
+          reseller_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          channel: string
+          config?: Json
+          created_at?: string
+          from_name?: string | null
+          from_value?: string | null
+          id?: string
+          is_active?: boolean
+          provider: string
+          reseller_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          channel?: string
+          config?: Json
+          created_at?: string
+          from_name?: string | null
+          from_value?: string | null
+          id?: string
+          is_active?: boolean
+          provider?: string
+          reseller_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_configs_reseller_id_fkey"
+            columns: ["reseller_id"]
+            isOneToOne: false
+            referencedRelation: "resellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_logs: {
+        Row: {
+          channel: string
+          created_at: string
+          error: string | null
+          id: string
+          order_id: string | null
+          payload: Json | null
+          recipient: string
+          reseller_id: string | null
+          status: string
+          template: string | null
+        }
+        Insert: {
+          channel: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          order_id?: string | null
+          payload?: Json | null
+          recipient: string
+          reseller_id?: string | null
+          status?: string
+          template?: string | null
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          order_id?: string | null
+          payload?: Json | null
+          recipient?: string
+          reseller_id?: string | null
+          status?: string
+          template?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_logs_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_logs_reseller_id_fkey"
+            columns: ["reseller_id"]
+            isOneToOne: false
+            referencedRelation: "resellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_items: {
         Row: {
           created_at: string
