@@ -16,12 +16,14 @@ export function AppShell({
   brand,
   nav,
   user,
+  headerRight,
   children,
 }: {
   title: string;
   brand: { name: string; sub?: string; logoUrl?: string | null };
   nav: NavItem[];
   user: { name: string; email: string };
+  headerRight?: ReactNode;
   children: ReactNode;
 }) {
   return (
