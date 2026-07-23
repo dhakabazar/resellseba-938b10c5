@@ -93,8 +93,8 @@ function EditProduct() {
       setMetaTitle(p.meta_title ?? "");
       setMetaDesc(p.meta_description ?? "");
       setKeywords(p.keywords ?? "");
-      const existing = (imgs ?? []).map((r) => ({ url: r.url, path: "" }) as UploadedImage);
-      if (existing.length === 0 && p.og_image_url) existing.push({ url: p.og_image_url, path: "" });
+      const existing: UploadedImage[] = (imgs ?? []).map((r) => ({ url: r.url, path: "", bytes: 0 }));
+      if (existing.length === 0 && p.og_image_url) existing.push({ url: p.og_image_url, path: "", bytes: 0 });
       setImages(existing);
       setLoading(false);
     })();
