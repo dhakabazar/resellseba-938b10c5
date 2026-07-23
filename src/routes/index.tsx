@@ -39,11 +39,13 @@ const ICON_MAP: Record<string, LucideIcon> = {
 
 type Feature = { icon: string; title: string; desc: string };
 type Step = { title: string; desc: string };
+type HeroImage = { path: string; url: string; bytes: number } | null;
 type LandingContent = {
   nav: { features: string; how: string; pricing: string; signIn: string; cta: string };
   hero: {
     badge: string; titleStart: string; titleHighlight: string; subtitle: string;
     ctaPrimary: string; ctaSecondary: string; badges: string[];
+    bannerImage?: HeroImage;
   };
   features: { title: string; subtitle: string; items: Feature[] };
   how: { title: string; subtitle: string; steps: Step[] };
@@ -61,6 +63,7 @@ const FALLBACK: LandingContent = {
     ctaPrimary: "সাইনআপ করুন",
     ctaSecondary: "অ্যাডমিন সাইন ইন",
     badges: ["সেটআপ ফি নেই"],
+    bannerImage: null,
   },
   features: { title: "ফিচার", subtitle: "", items: [] },
   how: { title: "কীভাবে শুরু করবেন", subtitle: "", steps: [] },
@@ -123,26 +126,27 @@ function RootResolver() {
 }
 
 function Landing({ c, siteName }: { c: LandingContent; siteName: string }) {
+  const banner = c.hero.bannerImage?.url;
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen overflow-x-hidden bg-background text-foreground">
       <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
-          <Link to="/" className="flex items-center gap-2 font-semibold tracking-tight">
-            <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-primary-foreground">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
+          <Link to="/" className="flex min-w-0 items-center gap-2 font-semibold tracking-tight">
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground">
               {siteName.charAt(0).toUpperCase()}
             </span>
-            {siteName}
+            <span className="truncate">{siteName}</span>
           </Link>
           <nav className="hidden gap-8 text-sm text-muted-foreground md:flex">
             <a href="#features" className="hover:text-foreground">{c.nav.features}</a>
             <a href="#how" className="hover:text-foreground">{c.nav.how}</a>
             <a href="#pricing" className="hover:text-foreground">{c.nav.pricing}</a>
           </nav>
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2">
             <Link to="/login" className="hidden rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground sm:inline">
               {c.nav.signIn}
             </Link>
-            <Link to="/login" className="btn-brand inline-flex items-center gap-1 rounded-md px-4 py-2 text-sm font-medium">
+            <Link to="/login" className="btn-brand inline-flex items-center gap-1 rounded-md px-3 py-2 text-sm font-medium sm:px-4">
               {c.nav.cta} <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
@@ -151,57 +155,90 @@ function Landing({ c, siteName }: { c: LandingContent; siteName: string }) {
 
       <section className="relative overflow-hidden">
         <div className="pointer-events-none absolute inset-0 -z-10">
-          <div className="absolute left-1/2 top-[-10%] h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-primary/25 blur-[120px]" />
-          <div className="absolute right-[-10%] top-[30%] h-[380px] w-[380px] rounded-full bg-accent/30 blur-[120px]" />
+          <div className="absolute left-1/2 top-[-10%] h-[420px] w-[420px] -translate-x-1/2 rounded-full bg-primary/25 blur-[120px] sm:h-[520px] sm:w-[520px]" />
+          <div className="absolute right-[-10%] top-[30%] h-[320px] w-[320px] rounded-full bg-accent/30 blur-[120px] sm:h-[380px] sm:w-[380px]" />
         </div>
-        <div className="mx-auto max-w-6xl px-6 pt-20 pb-24 text-center sm:pt-28 sm:pb-32">
-          <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/50 px-4 py-1.5 text-xs text-muted-foreground shadow-sm backdrop-blur">
-            <Sparkles className="h-3.5 w-3.5 text-primary" />
-            {c.hero.badge}
-          </div>
-          <h1 className="mx-auto mt-6 max-w-3xl text-4xl font-bold tracking-tight sm:text-6xl">
-            {c.hero.titleStart}{" "}
-            <span className="bg-gradient-to-r from-primary via-primary to-accent bg-clip-text text-transparent">
-              {c.hero.titleHighlight}
-            </span>
-          </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-base text-muted-foreground sm:text-lg">
-            {c.hero.subtitle}
-          </p>
-          <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Link to="/login" className="btn-brand inline-flex items-center gap-2 rounded-md px-6 py-3 text-sm font-semibold shadow-lg shadow-primary/20">
-              {c.hero.ctaPrimary} <ArrowRight className="h-4 w-4" />
-            </Link>
-            <Link to="/login" className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-6 py-3 text-sm font-semibold hover:bg-muted">
-              {c.hero.ctaSecondary}
-            </Link>
-          </div>
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-xs text-muted-foreground">
-            {c.hero.badges.map((b) => (
-              <span key={b} className="inline-flex items-center gap-1.5">
-                <Check className="h-3.5 w-3.5 text-primary" /> {b}
+        <div className="mx-auto grid max-w-6xl gap-10 px-4 pt-14 pb-16 sm:px-6 sm:pt-20 sm:pb-24 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-center lg:gap-14 lg:pt-24">
+          <div className="min-w-0 text-center lg:text-left">
+            <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/50 px-3 py-1.5 text-[11px] text-muted-foreground shadow-sm backdrop-blur sm:px-4 sm:text-xs">
+              <Sparkles className="h-3.5 w-3.5 shrink-0 text-primary" />
+              <span className="truncate">{c.hero.badge}</span>
+            </div>
+            <h1 className="mt-5 text-balance text-3xl font-bold leading-[1.1] tracking-tight sm:mt-6 sm:text-5xl lg:text-6xl">
+              {c.hero.titleStart}{" "}
+              <span className="bg-gradient-to-r from-primary via-primary to-accent bg-clip-text text-transparent">
+                {c.hero.titleHighlight}
               </span>
-            ))}
+            </h1>
+            <p className="mt-5 text-pretty text-sm leading-relaxed text-muted-foreground sm:mt-6 sm:text-base lg:text-lg">
+              {c.hero.subtitle}
+            </p>
+            <div className="mt-7 flex flex-wrap justify-center gap-3 sm:mt-8 lg:justify-start">
+              <Link to="/login" className="btn-brand inline-flex items-center gap-2 rounded-md px-5 py-2.5 text-sm font-semibold shadow-lg shadow-primary/20 sm:px-6 sm:py-3">
+                {c.hero.ctaPrimary} <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link to="/login" className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-5 py-2.5 text-sm font-semibold hover:bg-muted sm:px-6 sm:py-3">
+                {c.hero.ctaSecondary}
+              </Link>
+            </div>
+            {c.hero.badges.length > 0 && (
+              <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[11px] text-muted-foreground sm:gap-x-8 sm:text-xs lg:justify-start">
+                {c.hero.badges.map((b) => (
+                  <span key={b} className="inline-flex items-center gap-1.5">
+                    <Check className="h-3.5 w-3.5 shrink-0 text-primary" /> {b}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="relative mx-auto w-full max-w-md lg:max-w-none">
+            <div className="pointer-events-none absolute -inset-6 -z-10 rounded-[2rem] bg-gradient-to-tr from-primary/20 via-transparent to-accent/20 blur-2xl" />
+            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-card to-muted shadow-2xl shadow-primary/10 sm:aspect-[5/4] lg:aspect-[4/3]">
+              {banner ? (
+                <img
+                  src={banner}
+                  alt={c.hero.titleStart}
+                  loading="eager"
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="grid h-full w-full place-items-center p-6 text-center">
+                  <div className="space-y-3">
+                    <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-primary/10 text-primary">
+                      <Sparkles className="h-7 w-7" />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Hero banner add korte /admin/landing e jaan
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </section>
 
+
+
       <section id="features" className="border-t border-border/60 bg-muted/30">
-        <div className="mx-auto max-w-6xl px-6 py-20">
+        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
           <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">{c.features.title}</h2>
-            <p className="mt-3 text-muted-foreground">{c.features.subtitle}</p>
+            <h2 className="text-balance text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl">{c.features.title}</h2>
+            {c.features.subtitle && (
+              <p className="mt-3 text-pretty text-sm text-muted-foreground sm:text-base">{c.features.subtitle}</p>
+            )}
           </div>
-          <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-10 grid gap-4 sm:mt-12 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
             {c.features.items.map((f, i) => {
               const Icon = ICON_MAP[f.icon] ?? Sparkles;
               return (
-                <div key={i} className="group surface-card p-6 transition-all hover:-translate-y-0.5 hover:shadow-lg">
+                <div key={i} className="group surface-card p-5 transition-all hover:-translate-y-0.5 hover:shadow-lg sm:p-6">
                   <div className="mb-4 grid h-11 w-11 place-items-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
                     <Icon className="h-5 w-5" />
                   </div>
                   <h3 className="text-base font-semibold">{f.title}</h3>
-                  <p className="mt-1.5 text-sm text-muted-foreground">{f.desc}</p>
+                  <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{f.desc}</p>
                 </div>
               );
             })}
@@ -210,19 +247,21 @@ function Landing({ c, siteName }: { c: LandingContent; siteName: string }) {
       </section>
 
       <section id="how" className="border-t border-border/60">
-        <div className="mx-auto max-w-6xl px-6 py-20">
+        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
           <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">{c.how.title}</h2>
-            <p className="mt-3 text-muted-foreground">{c.how.subtitle}</p>
+            <h2 className="text-balance text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl">{c.how.title}</h2>
+            {c.how.subtitle && (
+              <p className="mt-3 text-pretty text-sm text-muted-foreground sm:text-base">{c.how.subtitle}</p>
+            )}
           </div>
-          <div className="mt-12 grid gap-6 md:grid-cols-3">
+          <div className="mt-10 grid gap-6 sm:mt-12 md:grid-cols-3">
             {c.how.steps.map((s, i) => (
-              <div key={i} className="relative surface-card p-6">
+              <div key={i} className="relative surface-card p-5 sm:p-6">
                 <div className="absolute -top-3 -left-3 grid h-9 w-9 place-items-center rounded-full bg-primary text-sm font-bold text-primary-foreground shadow-md">
                   {i + 1}
                 </div>
-                <h3 className="mt-2 text-lg font-semibold">{s.title}</h3>
-                <p className="mt-2 text-sm text-muted-foreground">{s.desc}</p>
+                <h3 className="mt-2 text-base font-semibold sm:text-lg">{s.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{s.desc}</p>
               </div>
             ))}
           </div>
@@ -230,37 +269,41 @@ function Landing({ c, siteName }: { c: LandingContent; siteName: string }) {
       </section>
 
       <section id="pricing" className="border-t border-border/60 bg-muted/30">
-        <div className="mx-auto max-w-4xl px-6 py-24 text-center">
+        <div className="mx-auto max-w-4xl px-4 py-16 text-center sm:px-6 sm:py-24">
           {c.cta.badge && (
-            <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-border/60 bg-card px-4 py-1.5 text-xs text-muted-foreground">
+            <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-border/60 bg-card px-3 py-1.5 text-[11px] text-muted-foreground sm:px-4 sm:text-xs">
               {c.cta.badge}
             </div>
           )}
-          <h2 className="mt-6 text-3xl font-bold tracking-tight sm:text-5xl">{c.cta.title}</h2>
-          <p className="mx-auto mt-5 max-w-xl text-muted-foreground">{c.cta.subtitle}</p>
-          <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Link to="/login" className="btn-brand inline-flex items-center gap-2 rounded-md px-7 py-3 text-sm font-semibold shadow-lg shadow-primary/20">
+          <h2 className="mt-5 text-balance text-2xl font-bold tracking-tight sm:mt-6 sm:text-4xl lg:text-5xl">{c.cta.title}</h2>
+          {c.cta.subtitle && (
+            <p className="mx-auto mt-4 max-w-xl text-pretty text-sm text-muted-foreground sm:mt-5 sm:text-base">{c.cta.subtitle}</p>
+          )}
+          <div className="mt-7 flex flex-wrap justify-center gap-3 sm:mt-8">
+            <Link to="/login" className="btn-brand inline-flex items-center gap-2 rounded-md px-6 py-2.5 text-sm font-semibold shadow-lg shadow-primary/20 sm:px-7 sm:py-3">
               {c.cta.button} <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
         </div>
       </section>
 
+
       <footer className="border-t border-border/60 bg-background">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-6 py-8 text-xs text-muted-foreground sm:flex-row">
-          <div className="flex items-center gap-2">
-            <span className="grid h-6 w-6 place-items-center rounded bg-primary text-[10px] font-bold text-primary-foreground">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 py-8 text-xs text-muted-foreground sm:flex-row sm:px-6">
+          <div className="flex min-w-0 items-center gap-2 text-center sm:text-left">
+            <span className="grid h-6 w-6 shrink-0 place-items-center rounded bg-primary text-[10px] font-bold text-primary-foreground">
               {siteName.charAt(0).toUpperCase()}
             </span>
-            © {new Date().getFullYear()} {siteName} · {c.footer.tagline}
+            <span className="truncate">© {new Date().getFullYear()} {siteName} · {c.footer.tagline}</span>
           </div>
-          <div className="flex gap-5">
+          <div className="flex flex-wrap justify-center gap-4 sm:gap-5">
             <Link to="/login" className="hover:text-foreground">{c.nav.signIn}</Link>
             <a href="#features" className="hover:text-foreground">{c.nav.features}</a>
             <a href="#how" className="hover:text-foreground">{c.nav.how}</a>
           </div>
         </div>
       </footer>
+
     </div>
   );
 }

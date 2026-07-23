@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/ui-kit";
+import { ImageUploader, type UploadedImage } from "@/components/ImageUploader";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -21,6 +22,7 @@ type LandingContent = {
     ctaPrimary: string;
     ctaSecondary: string;
     badges: string[];
+    bannerImage?: UploadedImage | null;
   };
   features: { title: string; subtitle: string; items: Feature[] };
   how: { title: string; subtitle: string; steps: Step[] };
@@ -29,6 +31,7 @@ type LandingContent = {
 };
 
 const ICONS = ["Boxes", "Truck", "Wallet", "Megaphone", "Globe", "BarChart3", "ShieldCheck", "Sparkles"];
+
 
 function LandingEditor() {
   const [c, setC] = useState<LandingContent | null>(null);
@@ -89,7 +92,17 @@ function LandingEditor() {
         <F label="Trust badges (comma separated)">
           <I value={c.hero.badges.join(", ")} onChange={(v) => update((d) => { d.hero.badges = v.split(",").map(s => s.trim()).filter(Boolean); })} />
         </F>
+        <F label="Hero banner image (auto-compressed to WebP ≤200KB)">
+          <ImageUploader
+            bucket="branding"
+            folder="landing-hero"
+            value={c.hero.bannerImage ? [c.hero.bannerImage] : []}
+            onChange={(v) => update((d) => { d.hero.bannerImage = v[0] ?? null; })}
+            label="Upload banner"
+          />
+        </F>
       </Section>
+
 
       <Section title="Features section">
         <F label="Title"><I value={c.features.title} onChange={(v) => update((d) => { d.features.title = v; })} /></F>
