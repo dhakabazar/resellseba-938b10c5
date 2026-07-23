@@ -123,7 +123,7 @@ function Onboarding() {
                   required
                   className="flex-1 bg-transparent px-3 py-2 text-sm outline-none"
                   value={code}
-                  onChange={(e) => setCode(e.target.value)}
+                  onChange={(e) => setCode(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-"))}
                   placeholder="my-store"
                   pattern="[a-z0-9-]+"
                 />

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -11,57 +11,77 @@ export interface AuthState {
   loading: boolean;
 }
 
+const listeners = new Set<(state: AuthState) => void>();
+let initialized = false;
+let authVersion = 0;
+
+let authState: AuthState = {
+  session: null,
+  user: null,
+  roles: [],
+  loading: true,
+};
+
+function publish(next: AuthState) {
+  authState = next;
+  listeners.forEach((listener) => listener(authState));
+}
+
+async function loadRoles(userId: string): Promise<Role[]> {
+  const { data, error } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId);
+
+  if (error) return [];
+  return (data ?? []).map((row) => row.role as Role);
+}
+
+function applySession(session: Session | null) {
+  const version = ++authVersion;
+
+  if (!session?.user) {
+    publish({ session: null, user: null, roles: [], loading: false });
+    return;
+  }
+
+  publish({ session, user: session.user, roles: authState.roles, loading: true });
+
+  void loadRoles(session.user.id).then((roles) => {
+    if (version !== authVersion) return;
+    publish({ session, user: session.user, roles, loading: false });
+  });
+}
+
+function initAuth() {
+  if (initialized) return;
+  initialized = true;
+
+  supabase.auth.getSession().then(({ data }) => applySession(data.session));
+
+  supabase.auth.onAuthStateChange((event, session) => {
+    if (event === "TOKEN_REFRESHED") {
+      publish({ ...authState, session, user: session?.user ?? null });
+      return;
+    }
+    applySession(session);
+  });
+}
+
 export function useAuth(): AuthState {
-  const [session, setSession] = useState<Session | null>(null);
-  const [roles, setRoles] = useState<Role[]>([]);
-  const [loading, setLoading] = useState(true);
-  const lastUserId = useRef<string | null>(null);
+  const [state, setState] = useState<AuthState>(authState);
 
   useEffect(() => {
-    let mounted = true;
-
-    async function loadRoles(userId: string) {
-      if (lastUserId.current === userId) return;
-      lastUserId.current = userId;
-      const { data } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", userId);
-      if (!mounted) return;
-      setRoles((data ?? []).map((r) => r.role as Role));
-    }
-
-    const { data: sub } = supabase.auth.onAuthStateChange((event, s) => {
-      if (!mounted) return;
-      setSession(s);
-      if (s?.user) {
-        void loadRoles(s.user.id);
-      } else {
-        lastUserId.current = null;
-        setRoles([]);
-      }
-      if (event === "INITIAL_SESSION") setLoading(false);
-    });
-
-    supabase.auth.getSession().then(({ data }) => {
-      if (!mounted) return;
-      setSession(data.session);
-      if (data.session?.user) void loadRoles(data.session.user.id);
-      setLoading(false);
-    });
+    initAuth();
+    listeners.add(setState);
+    setState(authState);
 
     return () => {
-      mounted = false;
-      sub.subscription.unsubscribe();
+      listeners.delete(setState);
     };
   }, []);
 
-  return {
-    session,
-    user: session?.user ?? null,
-    roles,
-    loading,
-  };
+  return state;
 }
 
 export function hasRole(roles: Role[], r: Role) {

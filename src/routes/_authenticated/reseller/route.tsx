@@ -36,11 +36,11 @@ function ResellerLayout() {
   useEffect(() => {
     if (loading) return;
     if (roles.includes("super_admin")) {
-      nav({ to: "/admin" });
+      nav({ to: "/admin", replace: true });
       return;
     }
     if (!roles.includes("reseller") && !roles.includes("leader")) {
-      nav({ to: "/onboarding" });
+      nav({ to: "/onboarding", replace: true });
     }
   }, [loading, roles, nav]);
 
