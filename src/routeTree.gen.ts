@@ -9,7 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as AuthRouteImport } from './routes/auth'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SCodeRouteImport } from './routes/s.$code'
@@ -54,9 +54,9 @@ import { Route as AuthenticatedAdminProductsNewRouteImport } from './routes/_aut
 import { Route as AuthenticatedResellerOrdersIdInvoiceRouteImport } from './routes/_authenticated/reseller/orders.$id.invoice'
 import { Route as AuthenticatedAdminProductsIdEditRouteImport } from './routes/_authenticated/admin/products.$id.edit'
 
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
@@ -305,7 +305,7 @@ const AuthenticatedAdminProductsIdEditRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRoute
+  '/login': typeof LoginRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/reseller': typeof AuthenticatedResellerRouteRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -350,7 +350,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRoute
+  '/login': typeof LoginRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
@@ -394,7 +394,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
-  '/auth': typeof AuthRoute
+  '/login': typeof LoginRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/_authenticated/reseller': typeof AuthenticatedResellerRouteRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
@@ -441,7 +441,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/auth'
+    | '/login'
     | '/admin'
     | '/reseller'
     | '/dashboard'
@@ -486,7 +486,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/auth'
+    | '/login'
     | '/dashboard'
     | '/onboarding'
     | '/admin/audit'
@@ -529,7 +529,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
-    | '/auth'
+    | '/login'
     | '/_authenticated/admin'
     | '/_authenticated/reseller'
     | '/_authenticated/dashboard'
@@ -576,7 +576,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
-  AuthRoute: typeof AuthRoute
+  LoginRoute: typeof LoginRoute
   SCodeRoute: typeof SCodeRouteWithChildren
   ApiPublicRobotsRoute: typeof ApiPublicRobotsRoute
   ApiPublicPaymentBkashCallbackRoute: typeof ApiPublicPaymentBkashCallbackRoute
@@ -586,11 +586,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -1029,7 +1029,7 @@ const SCodeRouteWithChildren = SCodeRoute._addFileChildren(SCodeRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
-  AuthRoute: AuthRoute,
+  LoginRoute: LoginRoute,
   SCodeRoute: SCodeRouteWithChildren,
   ApiPublicRobotsRoute: ApiPublicRobotsRoute,
   ApiPublicPaymentBkashCallbackRoute: ApiPublicPaymentBkashCallbackRoute,
