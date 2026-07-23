@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/ui-kit";
+import { ImageUploader, type UploadedImage } from "@/components/ImageUploader";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -21,6 +22,7 @@ type LandingContent = {
     ctaPrimary: string;
     ctaSecondary: string;
     badges: string[];
+    bannerImage?: UploadedImage | null;
   };
   features: { title: string; subtitle: string; items: Feature[] };
   how: { title: string; subtitle: string; steps: Step[] };
@@ -29,6 +31,7 @@ type LandingContent = {
 };
 
 const ICONS = ["Boxes", "Truck", "Wallet", "Megaphone", "Globe", "BarChart3", "ShieldCheck", "Sparkles"];
+
 
 function LandingEditor() {
   const [c, setC] = useState<LandingContent | null>(null);
