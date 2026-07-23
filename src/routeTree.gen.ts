@@ -46,6 +46,8 @@ import { Route as AuthenticatedAdminBrandsRouteImport } from './routes/_authenti
 import { Route as AuthenticatedAdminAuditRouteImport } from './routes/_authenticated/admin/audit'
 import { Route as SCodePSlugRouteImport } from './routes/s.$code.p.$slug'
 import { Route as ApiPublicSitemapCodeRouteImport } from './routes/api/public/sitemap.$code'
+import { Route as ApiPublicPaymentSslcommerzIpnRouteImport } from './routes/api/public/payment.sslcommerz-ipn'
+import { Route as ApiPublicPaymentBkashCallbackRouteImport } from './routes/api/public/payment.bkash-callback'
 import { Route as AuthenticatedAdminProductsNewRouteImport } from './routes/_authenticated/admin/products.new'
 import { Route as AuthenticatedResellerOrdersIdInvoiceRouteImport } from './routes/_authenticated/reseller/orders.$id.invoice'
 
@@ -255,6 +257,18 @@ const ApiPublicSitemapCodeRoute = ApiPublicSitemapCodeRouteImport.update({
   path: '/api/public/sitemap/$code',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicPaymentSslcommerzIpnRoute =
+  ApiPublicPaymentSslcommerzIpnRouteImport.update({
+    id: '/api/public/payment/sslcommerz-ipn',
+    path: '/api/public/payment/sslcommerz-ipn',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicPaymentBkashCallbackRoute =
+  ApiPublicPaymentBkashCallbackRouteImport.update({
+    id: '/api/public/payment/bkash-callback',
+    path: '/api/public/payment/bkash-callback',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedAdminProductsNewRoute =
   AuthenticatedAdminProductsNewRouteImport.update({
     id: '/new',
@@ -304,6 +318,8 @@ export interface FileRoutesByFullPath {
   '/reseller/': typeof AuthenticatedResellerIndexRoute
   '/s/$code/': typeof SCodeIndexRoute
   '/admin/products/new': typeof AuthenticatedAdminProductsNewRoute
+  '/api/public/payment/bkash-callback': typeof ApiPublicPaymentBkashCallbackRoute
+  '/api/public/payment/sslcommerz-ipn': typeof ApiPublicPaymentSslcommerzIpnRoute
   '/api/public/sitemap/$code': typeof ApiPublicSitemapCodeRoute
   '/s/$code/p/$slug': typeof SCodePSlugRoute
   '/reseller/orders/$id/invoice': typeof AuthenticatedResellerOrdersIdInvoiceRoute
@@ -341,6 +357,8 @@ export interface FileRoutesByTo {
   '/reseller': typeof AuthenticatedResellerIndexRoute
   '/s/$code': typeof SCodeIndexRoute
   '/admin/products/new': typeof AuthenticatedAdminProductsNewRoute
+  '/api/public/payment/bkash-callback': typeof ApiPublicPaymentBkashCallbackRoute
+  '/api/public/payment/sslcommerz-ipn': typeof ApiPublicPaymentSslcommerzIpnRoute
   '/api/public/sitemap/$code': typeof ApiPublicSitemapCodeRoute
   '/s/$code/p/$slug': typeof SCodePSlugRoute
   '/reseller/orders/$id/invoice': typeof AuthenticatedResellerOrdersIdInvoiceRoute
@@ -383,6 +401,8 @@ export interface FileRoutesById {
   '/_authenticated/reseller/': typeof AuthenticatedResellerIndexRoute
   '/s/$code/': typeof SCodeIndexRoute
   '/_authenticated/admin/products/new': typeof AuthenticatedAdminProductsNewRoute
+  '/api/public/payment/bkash-callback': typeof ApiPublicPaymentBkashCallbackRoute
+  '/api/public/payment/sslcommerz-ipn': typeof ApiPublicPaymentSslcommerzIpnRoute
   '/api/public/sitemap/$code': typeof ApiPublicSitemapCodeRoute
   '/s/$code/p/$slug': typeof SCodePSlugRoute
   '/_authenticated/reseller/orders/$id/invoice': typeof AuthenticatedResellerOrdersIdInvoiceRoute
@@ -425,6 +445,8 @@ export interface FileRouteTypes {
     | '/reseller/'
     | '/s/$code/'
     | '/admin/products/new'
+    | '/api/public/payment/bkash-callback'
+    | '/api/public/payment/sslcommerz-ipn'
     | '/api/public/sitemap/$code'
     | '/s/$code/p/$slug'
     | '/reseller/orders/$id/invoice'
@@ -462,6 +484,8 @@ export interface FileRouteTypes {
     | '/reseller'
     | '/s/$code'
     | '/admin/products/new'
+    | '/api/public/payment/bkash-callback'
+    | '/api/public/payment/sslcommerz-ipn'
     | '/api/public/sitemap/$code'
     | '/s/$code/p/$slug'
     | '/reseller/orders/$id/invoice'
@@ -503,6 +527,8 @@ export interface FileRouteTypes {
     | '/_authenticated/reseller/'
     | '/s/$code/'
     | '/_authenticated/admin/products/new'
+    | '/api/public/payment/bkash-callback'
+    | '/api/public/payment/sslcommerz-ipn'
     | '/api/public/sitemap/$code'
     | '/s/$code/p/$slug'
     | '/_authenticated/reseller/orders/$id/invoice'
@@ -514,6 +540,8 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   SCodeRoute: typeof SCodeRouteWithChildren
   ApiPublicRobotsRoute: typeof ApiPublicRobotsRoute
+  ApiPublicPaymentBkashCallbackRoute: typeof ApiPublicPaymentBkashCallbackRoute
+  ApiPublicPaymentSslcommerzIpnRoute: typeof ApiPublicPaymentSslcommerzIpnRoute
   ApiPublicSitemapCodeRoute: typeof ApiPublicSitemapCodeRoute
 }
 
@@ -778,6 +806,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicSitemapCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/payment/sslcommerz-ipn': {
+      id: '/api/public/payment/sslcommerz-ipn'
+      path: '/api/public/payment/sslcommerz-ipn'
+      fullPath: '/api/public/payment/sslcommerz-ipn'
+      preLoaderRoute: typeof ApiPublicPaymentSslcommerzIpnRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/payment/bkash-callback': {
+      id: '/api/public/payment/bkash-callback'
+      path: '/api/public/payment/bkash-callback'
+      fullPath: '/api/public/payment/bkash-callback'
+      preLoaderRoute: typeof ApiPublicPaymentBkashCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/admin/products/new': {
       id: '/_authenticated/admin/products/new'
       path: '/new'
@@ -936,6 +978,8 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   SCodeRoute: SCodeRouteWithChildren,
   ApiPublicRobotsRoute: ApiPublicRobotsRoute,
+  ApiPublicPaymentBkashCallbackRoute: ApiPublicPaymentBkashCallbackRoute,
+  ApiPublicPaymentSslcommerzIpnRoute: ApiPublicPaymentSslcommerzIpnRoute,
   ApiPublicSitemapCodeRoute: ApiPublicSitemapCodeRoute,
 }
 export const routeTree = rootRouteImport

@@ -3,6 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { initSslcommerz, initBkash } from "@/lib/payments.functions";
 
 type Search = { l?: string; q?: number };
 
@@ -22,6 +24,10 @@ function Checkout() {
   const [listing, setListing] = useState<any>(null);
   const [product, setProduct] = useState<any>(null);
   const [busy, setBusy] = useState(false);
+  const [methods, setMethods] = useState<Array<{ method: string; label: string; instructions: string | null }>>([]);
+  const [payMethod, setPayMethod] = useState<"cod" | "bkash" | "sslcommerz">("cod");
+  const runSsl = useServerFn(initSslcommerz);
+  const runBkash = useServerFn(initBkash);
   const [form, setForm] = useState({
     name: "",
     phone: "",
@@ -39,15 +45,31 @@ function Checkout() {
       return;
     }
     (async () => {
-      const { data } = await supabase
-        .from("reseller_listings")
-        .select("id,selling_price,extra_delivery_inside,extra_delivery_outside,custom_title, product:products(id,name,delivery_inside,delivery_outside,product_images(url,is_primary))")
-        .eq("id", listingId)
-        .eq("is_active", true)
-        .maybeSingle();
+      const [{ data }, listingResellerRes] = await Promise.all([
+        supabase
+          .from("reseller_listings")
+          .select("id,reseller_id,selling_price,extra_delivery_inside,extra_delivery_outside,custom_title, product:products(id,name,delivery_inside,delivery_outside,product_images(url,is_primary))")
+          .eq("id", listingId)
+          .eq("is_active", true)
+          .maybeSingle(),
+        Promise.resolve(null),
+      ]);
+      void listingResellerRes;
       if (data) {
         setListing(data);
         setProduct((data as any).product);
+        // load active payment methods (reseller override + global)
+        const { data: pms } = await supabase
+          .from("payment_configs")
+          .select("method,label,instructions,is_active,reseller_id")
+          .eq("is_active", true)
+          .or(`reseller_id.eq.${(data as any).reseller_id},reseller_id.is.null`);
+        const byMethod = new Map<string, any>();
+        for (const r of pms ?? []) {
+          const existing = byMethod.get(r.method);
+          if (!existing || (r.reseller_id && !existing.reseller_id)) byMethod.set(r.method, r);
+        }
+        setMethods(Array.from(byMethod.values()).map((r) => ({ method: r.method, label: r.label ?? r.method, instructions: r.instructions })));
       }
       setLoading(false);
     })();
@@ -76,20 +98,44 @@ function Checkout() {
       _city: form.city || (null as any),
       _area: form.area,
       _landmark: form.landmark || (null as any),
-      _payment_method: "cod",
+      _payment_method: payMethod,
       _notes: form.notes || (null as any),
       _items: [{ listing_id: listing.id, quantity: qty }] as any,
     });
-    setBusy(false);
     if (error) {
+      setBusy(false);
       toast.error(error.message);
       return;
     }
     const row = Array.isArray(data) ? data[0] : data;
-    if (row?.order_number) {
-      nav({ to: "/s/$code/thanks", params: { code }, search: { n: row.order_number } });
+    if (!row?.order_number) { setBusy(false); return; }
+
+    if (payMethod === "sslcommerz") {
+      try {
+        const r = await runSsl({ data: { orderNumber: row.order_number, code } });
+        window.location.href = r.redirectUrl;
+        return;
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Gateway init failed");
+        setBusy(false);
+        return;
+      }
     }
+    if (payMethod === "bkash") {
+      try {
+        const r = await runBkash({ data: { orderNumber: row.order_number, code } });
+        window.location.href = r.redirectUrl;
+        return;
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "bKash init failed");
+        setBusy(false);
+        return;
+      }
+    }
+    setBusy(false);
+    nav({ to: "/s/$code/thanks", params: { code }, search: { n: row.order_number } });
   }
+
 
   if (loading)
     return (
@@ -111,7 +157,7 @@ function Checkout() {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-6">
-      <h1 className="mb-4 text-xl font-semibold">Checkout — Cash on delivery</h1>
+      <h1 className="mb-4 text-xl font-semibold">Checkout</h1>
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
         <form onSubmit={submit} className="space-y-4 rounded-xl border bg-card p-5">
           <div className="grid gap-3 md:grid-cols-2">
@@ -146,6 +192,28 @@ function Checkout() {
           <Field label="Order notes">
             <textarea rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} className={inp} />
           </Field>
+          <div>
+            <label className="mb-2 block text-xs font-medium">Payment method</label>
+            <div className="grid gap-2 md:grid-cols-2">
+              {["cod", ...methods.map((m) => m.method).filter((m) => m !== "cod")].map((m) => {
+                const meta = methods.find((x) => x.method === m);
+                const label = m === "cod" ? "Cash on Delivery" : meta?.label ?? m;
+                const active = payMethod === m;
+                if (m !== "cod" && !meta) return null;
+                return (
+                  <button
+                    type="button"
+                    key={m}
+                    onClick={() => setPayMethod(m as any)}
+                    className={`rounded-md border px-3 py-2 text-left text-sm ${active ? "border-primary bg-primary/5" : ""}`}
+                  >
+                    <div className="font-medium capitalize">{label}</div>
+                    {meta?.instructions && <div className="text-xs text-muted-foreground">{meta.instructions}</div>}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
           <button
             disabled={busy}
             className="inline-flex w-full items-center justify-center gap-2 rounded-md py-3 text-sm font-semibold text-white disabled:opacity-50"
@@ -171,7 +239,13 @@ function Checkout() {
             <Row label="Total" value={`৳${totals.total.toLocaleString()}`} bold />
           </div>
           <p className="text-xs text-muted-foreground">
-            Payment method: Cash on Delivery. Courier apnar order verify korar por deliver hobe.
+            {payMethod === "cod"
+              ? "Cash on Delivery — courier verify korar por deliver hobe."
+              : payMethod === "bkash"
+              ? "bKash — apnake bKash Checkout page e pathano hobe."
+              : payMethod === "sslcommerz"
+              ? "SSLCommerz — card / mobile banking / net banking sob support kore."
+              : "Payment gateway e redirect kora hobe."}
           </p>
         </aside>
       </div>
