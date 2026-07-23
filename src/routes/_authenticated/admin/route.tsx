@@ -39,7 +39,7 @@ function AdminLayout() {
 
   useEffect(() => {
     if (loading) return;
-    if (!roles.includes("super_admin")) nav({ to: "/dashboard" });
+    if (!roles.includes("super_admin")) nav({ to: "/dashboard", replace: true });
   }, [loading, roles, nav]);
 
   if (loading || !user || !roles.includes("super_admin")) {
