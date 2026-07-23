@@ -11,6 +11,7 @@ import {
   Award,
   Megaphone,
   Loader2,
+  ExternalLink,
 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { useAuth } from "@/lib/use-auth";
