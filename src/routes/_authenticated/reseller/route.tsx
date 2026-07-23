@@ -38,6 +38,7 @@ function ResellerLayout() {
   const nav = useNavigate();
   const [storeName, setStoreName] = useState("My store");
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [storeCode, setStoreCode] = useState<string | null>(null);
 
   useEffect(() => {
     if (loading) return;
@@ -55,11 +56,12 @@ function ResellerLayout() {
     (async () => {
       const { data: r } = await supabase
         .from("resellers")
-        .select("id, business_name")
+        .select("id, business_name, code")
         .eq("user_id", user.id)
         .maybeSingle();
       if (r) {
         setStoreName(r.business_name);
+        setStoreCode(r.code);
         const { data: s } = await supabase
           .from("reseller_settings")
           .select("logo_url")
@@ -96,6 +98,18 @@ function ResellerLayout() {
         name: user.user_metadata?.full_name ?? "Reseller",
         email: user.email ?? "",
       }}
+      headerRight={
+        storeCode ? (
+          <a
+            href={`/s/${storeCode}`}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-2 rounded-md border bg-background px-3 py-1.5 text-sm font-medium transition hover:bg-muted"
+          >
+            <ExternalLink className="h-4 w-4" /> Visit store
+          </a>
+        ) : null
+      }
     >
       <Outlet />
     </AppShell>
