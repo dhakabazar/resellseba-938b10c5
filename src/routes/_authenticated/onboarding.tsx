@@ -37,9 +37,10 @@ function Onboarding() {
   }, [user]);
 
   useEffect(() => {
-    if (!loading && roles.includes("super_admin")) nav({ to: "/admin" });
-    if (!loading && (roles.includes("reseller") || roles.includes("leader")))
-      nav({ to: "/reseller" });
+    if (loading) return;
+    if (roles.includes("super_admin")) nav({ to: "/admin", replace: true });
+    else if (roles.includes("reseller") || roles.includes("leader"))
+      nav({ to: "/reseller", replace: true });
   }, [loading, roles, nav]);
 
   async function submit(e: React.FormEvent) {
