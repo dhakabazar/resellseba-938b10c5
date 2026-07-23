@@ -56,6 +56,34 @@ export const Route = createFileRoute("/_authenticated/admin/orders")({
   component: AdminOrdersPage,
 });
 
+function exportCsv(rows: OrderRow[]) {
+  const head = ["Order", "Date", "Reseller", "Customer", "Phone", "Area", "Address", "Payment", "Status", "Total"];
+  const csv = [head.join(",")]
+    .concat(
+      rows.map((o) =>
+        [
+          o.order_number,
+          new Date(o.created_at).toISOString().slice(0, 10),
+          o.resellers?.business_name ?? "",
+          o.customer_name,
+          o.customer_phone,
+          o.area,
+          `"${(o.address_line ?? "").replace(/"/g, '""')}"`,
+          o.payment_method,
+          o.status,
+          Number(o.total).toFixed(0),
+        ].join(","),
+      ),
+    )
+    .join("\n");
+  const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `orders-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 function AdminOrdersPage() {
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(true);
