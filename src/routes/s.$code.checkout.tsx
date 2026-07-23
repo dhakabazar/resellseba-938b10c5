@@ -157,7 +157,7 @@ function Checkout() {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-6">
-      <h1 className="mb-4 text-xl font-semibold">Checkout — Cash on delivery</h1>
+      <h1 className="mb-4 text-xl font-semibold">Checkout</h1>
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
         <form onSubmit={submit} className="space-y-4 rounded-xl border bg-card p-5">
           <div className="grid gap-3 md:grid-cols-2">
@@ -192,6 +192,28 @@ function Checkout() {
           <Field label="Order notes">
             <textarea rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} className={inp} />
           </Field>
+          <div>
+            <label className="mb-2 block text-xs font-medium">Payment method</label>
+            <div className="grid gap-2 md:grid-cols-2">
+              {["cod", ...methods.map((m) => m.method).filter((m) => m !== "cod")].map((m) => {
+                const meta = methods.find((x) => x.method === m);
+                const label = m === "cod" ? "Cash on Delivery" : meta?.label ?? m;
+                const active = payMethod === m;
+                if (m !== "cod" && !meta) return null;
+                return (
+                  <button
+                    type="button"
+                    key={m}
+                    onClick={() => setPayMethod(m as any)}
+                    className={`rounded-md border px-3 py-2 text-left text-sm ${active ? "border-primary bg-primary/5" : ""}`}
+                  >
+                    <div className="font-medium capitalize">{label}</div>
+                    {meta?.instructions && <div className="text-xs text-muted-foreground">{meta.instructions}</div>}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
           <button
             disabled={busy}
             className="inline-flex w-full items-center justify-center gap-2 rounded-md py-3 text-sm font-semibold text-white disabled:opacity-50"
@@ -217,7 +239,13 @@ function Checkout() {
             <Row label="Total" value={`৳${totals.total.toLocaleString()}`} bold />
           </div>
           <p className="text-xs text-muted-foreground">
-            Payment method: Cash on Delivery. Courier apnar order verify korar por deliver hobe.
+            {payMethod === "cod"
+              ? "Cash on Delivery — courier verify korar por deliver hobe."
+              : payMethod === "bkash"
+              ? "bKash — apnake bKash Checkout page e pathano hobe."
+              : payMethod === "sslcommerz"
+              ? "SSLCommerz — card / mobile banking / net banking sob support kore."
+              : "Payment gateway e redirect kora hobe."}
           </p>
         </aside>
       </div>
