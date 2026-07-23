@@ -27,7 +27,7 @@ export const Route = createFileRoute("/api/public/sitemap/$code")({
         const urls = [
           `<url><loc>${base}</loc><changefreq>daily</changefreq><priority>1.0</priority></url>`,
           ...(listings ?? []).map((l) => {
-            const p = l.products as { slug: string; updated_at: string } | null;
+            const p = (Array.isArray(l.products) ? l.products[0] : l.products) as { slug: string; updated_at: string } | null;
             if (!p) return "";
             const path = r.custom_domain ? `/p/${p.slug}` : `/s/${r.code}/p/${p.slug}`;
             const loc = r.custom_domain ? `https://${r.custom_domain}${path}` : `https://example.com${path}`;
