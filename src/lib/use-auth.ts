@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -15,37 +15,45 @@ export function useAuth(): AuthState {
   const [session, setSession] = useState<Session | null>(null);
   const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
+  const lastUserId = useRef<string | null>(null);
 
   useEffect(() => {
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
+    let mounted = true;
+
+    async function loadRoles(userId: string) {
+      if (lastUserId.current === userId) return;
+      lastUserId.current = userId;
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId);
+      if (!mounted) return;
+      setRoles((data ?? []).map((r) => r.role as Role));
+    }
+
+    const { data: sub } = supabase.auth.onAuthStateChange((event, s) => {
+      if (!mounted) return;
       setSession(s);
       if (s?.user) {
-        // defer role fetch to avoid deadlocks per Supabase docs
-        setTimeout(() => {
-          supabase
-            .from("user_roles")
-            .select("role")
-            .eq("user_id", s.user.id)
-            .then(({ data }) => setRoles((data ?? []).map((r) => r.role as Role)));
-        }, 0);
+        void loadRoles(s.user.id);
       } else {
+        lastUserId.current = null;
         setRoles([]);
       }
+      if (event === "INITIAL_SESSION") setLoading(false);
     });
 
     supabase.auth.getSession().then(({ data }) => {
+      if (!mounted) return;
       setSession(data.session);
-      if (data.session?.user) {
-        supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", data.session.user.id)
-          .then(({ data: r }) => setRoles((r ?? []).map((x) => x.role as Role)));
-      }
+      if (data.session?.user) void loadRoles(data.session.user.id);
       setLoading(false);
     });
 
-    return () => sub.subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      sub.subscription.unsubscribe();
+    };
   }, []);
 
   return {
