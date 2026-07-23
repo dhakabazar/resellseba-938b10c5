@@ -22,6 +22,7 @@ function SettingsPage() {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [logo, setLogo] = useState<UploadedImage[]>([]);
+  const [favicon, setFavicon] = useState<UploadedImage[]>([]);
   const [og, setOg] = useState<UploadedImage[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -40,6 +41,7 @@ function SettingsPage() {
         setEmail(data.contact_email ?? "");
         setFlagshipCode((data as any).flagship_reseller_code ?? "");
         if (data.logo_url) setLogo([{ path: "", url: data.logo_url, bytes: 0 }]);
+        if ((data as any).favicon_url) setFavicon([{ path: "", url: (data as any).favicon_url, bytes: 0 }]);
         if (data.og_image_url) setOg([{ path: "", url: data.og_image_url, bytes: 0 }]);
       }
       const { data: rs } = await supabase.from("resellers").select("code,business_name").eq("status", "active").order("business_name");
@@ -62,6 +64,7 @@ function SettingsPage() {
       contact_phone: phone || null,
       contact_email: email || null,
       logo_url: logo[0]?.url ?? null,
+      favicon_url: favicon[0]?.url ?? null,
       og_image_url: og[0]?.url ?? null,
       flagship_reseller_code: flagshipCode || null,
     } as any);
@@ -92,8 +95,11 @@ function SettingsPage() {
           <Field label="Tagline">
             <input value={tagline} onChange={(e) => setTagline(e.target.value)} className={inp} />
           </Field>
-          <Field label="Logo">
+          <Field label="Logo (sidebar + storefront header)">
             <ImageUploader bucket="branding" folder="global" value={logo} onChange={setLogo} />
+          </Field>
+          <Field label="Favicon (browser tab icon — square PNG/WebP)">
+            <ImageUploader bucket="branding" folder="favicon" value={favicon} onChange={setFavicon} />
           </Field>
           <div className="grid grid-cols-2 gap-3">
             <Field label="Primary color">

@@ -76,6 +76,7 @@ function RootResolver() {
   const [checking, setChecking] = useState(true);
   const [content, setContent] = useState<LandingContent>(FALLBACK);
   const [siteName, setSiteName] = useState("Reseller");
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -102,11 +103,12 @@ function RootResolver() {
 
       const { data } = await supabase
         .from("global_settings")
-        .select("site_name, landing_content")
+        .select("site_name, logo_url, landing_content")
         .eq("id", 1)
         .maybeSingle();
       if (data) {
         setSiteName(data.site_name ?? "Reseller");
+        setLogoUrl((data as { logo_url?: string | null }).logo_url ?? null);
         const lc = (data as unknown as { landing_content?: LandingContent }).landing_content;
         if (lc) setContent(lc);
       }
@@ -122,19 +124,23 @@ function RootResolver() {
     );
   }
 
-  return <Landing c={content} siteName={siteName} />;
+  return <Landing c={content} siteName={siteName} logoUrl={logoUrl} />;
 }
 
-function Landing({ c, siteName }: { c: LandingContent; siteName: string }) {
+function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string; logoUrl: string | null }) {
   const banner = c.hero.bannerImage?.url;
   return (
     <div className="min-h-screen overflow-x-hidden bg-background text-foreground">
       <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
           <Link to="/" className="flex min-w-0 items-center gap-2 font-semibold tracking-tight">
-            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground">
-              {siteName.charAt(0).toUpperCase()}
-            </span>
+            {logoUrl ? (
+              <img src={logoUrl} alt={siteName} className="h-8 w-8 shrink-0 rounded-lg object-cover" />
+            ) : (
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground">
+                {siteName.charAt(0).toUpperCase()}
+              </span>
+            )}
             <span className="truncate">{siteName}</span>
           </Link>
           <nav className="hidden gap-8 text-sm text-muted-foreground md:flex">
@@ -276,9 +282,13 @@ function Landing({ c, siteName }: { c: LandingContent; siteName: string }) {
       <footer className="border-t border-border/60 bg-background">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 py-8 text-xs text-muted-foreground sm:flex-row sm:px-6">
           <div className="flex min-w-0 items-center gap-2 text-center sm:text-left">
-            <span className="grid h-6 w-6 shrink-0 place-items-center rounded bg-primary text-[10px] font-bold text-primary-foreground">
-              {siteName.charAt(0).toUpperCase()}
-            </span>
+            {logoUrl ? (
+              <img src={logoUrl} alt={siteName} className="h-6 w-6 shrink-0 rounded object-cover" />
+            ) : (
+              <span className="grid h-6 w-6 shrink-0 place-items-center rounded bg-primary text-[10px] font-bold text-primary-foreground">
+                {siteName.charAt(0).toUpperCase()}
+              </span>
+            )}
             <span className="truncate">© {new Date().getFullYear()} {siteName} · {c.footer.tagline}</span>
           </div>
           <div className="flex flex-wrap justify-center gap-4 sm:gap-5">
