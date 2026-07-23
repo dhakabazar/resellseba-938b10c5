@@ -289,20 +289,21 @@ function Landing({ c, siteName }: { c: LandingContent; siteName: string }) {
 
 
       <footer className="border-t border-border/60 bg-background">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-6 py-8 text-xs text-muted-foreground sm:flex-row">
-          <div className="flex items-center gap-2">
-            <span className="grid h-6 w-6 place-items-center rounded bg-primary text-[10px] font-bold text-primary-foreground">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 py-8 text-xs text-muted-foreground sm:flex-row sm:px-6">
+          <div className="flex min-w-0 items-center gap-2 text-center sm:text-left">
+            <span className="grid h-6 w-6 shrink-0 place-items-center rounded bg-primary text-[10px] font-bold text-primary-foreground">
               {siteName.charAt(0).toUpperCase()}
             </span>
-            © {new Date().getFullYear()} {siteName} · {c.footer.tagline}
+            <span className="truncate">© {new Date().getFullYear()} {siteName} · {c.footer.tagline}</span>
           </div>
-          <div className="flex gap-5">
+          <div className="flex flex-wrap justify-center gap-4 sm:gap-5">
             <Link to="/login" className="hover:text-foreground">{c.nav.signIn}</Link>
             <a href="#features" className="hover:text-foreground">{c.nav.features}</a>
             <a href="#how" className="hover:text-foreground">{c.nav.how}</a>
           </div>
         </div>
       </footer>
+
     </div>
   );
 }
