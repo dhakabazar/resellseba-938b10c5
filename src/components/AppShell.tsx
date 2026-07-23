@@ -77,7 +77,7 @@ export function AppShell({
             <button
               onClick={async () => {
                 await supabase.auth.signOut();
-                window.location.href = "/auth";
+                window.location.href = "/login";
               }}
               className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
             >

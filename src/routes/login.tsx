@@ -6,7 +6,7 @@ import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
-export const Route = createFileRoute("/auth")({
+export const Route = createFileRoute("/login")({
   validateSearch: z.object({ redirect: z.string().optional() }),
   head: () => ({
     meta: [
@@ -33,7 +33,7 @@ function AuthPage() {
     supabase.auth.getSession().then(({ data }) => {
       if (data.session?.user) {
         const target =
-          redirectTo && redirectTo.startsWith("/") && !redirectTo.startsWith("/auth")
+          redirectTo && redirectTo.startsWith("/") && !redirectTo.startsWith("/login")
             ? redirectTo
             : "/dashboard";
         nav({ to: target, replace: true });
@@ -62,7 +62,7 @@ function AuthPage() {
         if (error) throw error;
         toast.success("Welcome back!");
         const target =
-          redirectTo && redirectTo.startsWith("/") && !redirectTo.startsWith("/auth")
+          redirectTo && redirectTo.startsWith("/") && !redirectTo.startsWith("/login")
             ? redirectTo
             : "/dashboard";
         nav({ to: target, replace: true });

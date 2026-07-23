@@ -126,7 +126,7 @@ function RootComponent() {
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_OUT") {
         queryClient.clear();
-        router.navigate({ to: "/auth", replace: true });
+        router.navigate({ to: "/login", replace: true });
       } else if (event === "SIGNED_IN" || event === "USER_UPDATED") {
         queryClient.invalidateQueries();
       }
