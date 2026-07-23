@@ -2,8 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
-import { Loader2, Truck, X, Download } from "lucide-react";
+import { Loader2, Truck, X, Download, Zap } from "lucide-react";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { bookSteadfast } from "@/lib/couriers.functions";
 
 type OrderRow = {
   id: string;
@@ -416,8 +418,29 @@ function OrderDrawer({
               disabled={busy}
               className="btn-brand col-span-2 inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium"
             >
-              {busy && <Loader2 className="h-4 w-4 animate-spin" />} Book shipment
+              {busy && <Loader2 className="h-4 w-4 animate-spin" />} Book manually
             </button>
+            {provider === "steadfast" && (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={async () => {
+                  setBusy(true);
+                  try {
+                    const r = await bookAuto({ data: { orderId: order.id } });
+                    toast.success(`Booked · ${r.trackingId}`);
+                    onChanged();
+                  } catch (e) {
+                    toast.error(e instanceof Error ? e.message : "Booking failed");
+                  } finally {
+                    setBusy(false);
+                  }
+                }}
+                className="col-span-2 inline-flex items-center justify-center gap-2 rounded-md border border-primary/40 bg-primary/10 px-4 py-2 text-sm font-medium text-primary"
+              >
+                <Zap className="h-4 w-4" /> Auto-book with Steadfast API
+              </button>
+            )}
           </form>
         </div>
       </div>
