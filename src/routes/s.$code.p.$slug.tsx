@@ -69,12 +69,29 @@ function ProductPage() {
   const activeImg = images[imgIdx]?.url;
   const title = listing.custom_title || product.name;
 
+  const primaryImage = images.find((i: { is_primary?: boolean; url: string }) => i.is_primary)?.url ?? images[0]?.url;
+  const jsonLd = {
+    "@context": "https://schema.org/",
+    "@type": "Product",
+    name: title,
+    description: listing.custom_description || product.short_description || product.name,
+    image: primaryImage ? [primaryImage] : undefined,
+    offers: {
+      "@type": "Offer",
+      priceCurrency: "BDT",
+      price: Number(listing.selling_price),
+      availability: "https://schema.org/InStock",
+    },
+  };
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-6">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <Link to="/s/$code" params={{ code }} className="mb-4 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
         <ChevronLeft className="h-3 w-3" /> Back
       </Link>
       <div className="grid gap-6 lg:grid-cols-2">
+
         <div>
           <div className="aspect-square overflow-hidden rounded-xl border bg-muted">
             {activeImg ? (
