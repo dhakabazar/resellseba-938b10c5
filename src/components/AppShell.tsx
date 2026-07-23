@@ -19,7 +19,7 @@ export function AppShell({
   children,
 }: {
   title: string;
-  brand: { name: string; sub?: string };
+  brand: { name: string; sub?: string; logoUrl?: string | null };
   nav: NavItem[];
   user: { name: string; email: string };
   children: ReactNode;
