@@ -157,6 +157,256 @@ export type Database = {
         }
         Relationships: []
       }
+      order_items: {
+        Row: {
+          created_at: string
+          id: string
+          line_total: number
+          listing_id: string | null
+          order_id: string
+          product_id: string | null
+          product_image: string | null
+          product_name: string
+          profit: number
+          quantity: number
+          reseller_price: number
+          sa_price: number
+          sku: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          line_total?: number
+          listing_id?: string | null
+          order_id: string
+          product_id?: string | null
+          product_image?: string | null
+          product_name: string
+          profit?: number
+          quantity?: number
+          reseller_price?: number
+          sa_price?: number
+          sku?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          line_total?: number
+          listing_id?: string | null
+          order_id?: string
+          product_id?: string | null
+          product_image?: string | null
+          product_name?: string
+          profit?: number
+          quantity?: number
+          reseller_price?: number
+          sa_price?: number
+          sku?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "reseller_listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_status_history: {
+        Row: {
+          changed_by: string | null
+          created_at: string
+          id: string
+          note: string | null
+          order_id: string
+          status: Database["public"]["Enums"]["order_status"]
+        }
+        Insert: {
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          note?: string | null
+          order_id: string
+          status: Database["public"]["Enums"]["order_status"]
+        }
+        Update: {
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          note?: string | null
+          order_id?: string
+          status?: Database["public"]["Enums"]["order_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_status_history_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          address_line: string
+          admin_note: string | null
+          area: Database["public"]["Enums"]["delivery_area"]
+          city: string | null
+          created_at: string
+          customer_email: string | null
+          customer_name: string
+          customer_phone: string
+          discount: number
+          forwarded_at: string | null
+          forwarded_to_admin: boolean
+          id: string
+          landmark: string | null
+          notes: string | null
+          order_number: string
+          payment_method: Database["public"]["Enums"]["payment_method"]
+          payment_status: Database["public"]["Enums"]["payment_status"]
+          reseller_id: string
+          reseller_note: string | null
+          reseller_profit: number
+          sa_cost_total: number
+          shipping_cost: number
+          status: Database["public"]["Enums"]["order_status"]
+          subtotal: number
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          address_line: string
+          admin_note?: string | null
+          area?: Database["public"]["Enums"]["delivery_area"]
+          city?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_name: string
+          customer_phone: string
+          discount?: number
+          forwarded_at?: string | null
+          forwarded_to_admin?: boolean
+          id?: string
+          landmark?: string | null
+          notes?: string | null
+          order_number?: string
+          payment_method?: Database["public"]["Enums"]["payment_method"]
+          payment_status?: Database["public"]["Enums"]["payment_status"]
+          reseller_id: string
+          reseller_note?: string | null
+          reseller_profit?: number
+          sa_cost_total?: number
+          shipping_cost?: number
+          status?: Database["public"]["Enums"]["order_status"]
+          subtotal?: number
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          address_line?: string
+          admin_note?: string | null
+          area?: Database["public"]["Enums"]["delivery_area"]
+          city?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string
+          customer_phone?: string
+          discount?: number
+          forwarded_at?: string | null
+          forwarded_to_admin?: boolean
+          id?: string
+          landmark?: string | null
+          notes?: string | null
+          order_number?: string
+          payment_method?: Database["public"]["Enums"]["payment_method"]
+          payment_status?: Database["public"]["Enums"]["payment_status"]
+          reseller_id?: string
+          reseller_note?: string | null
+          reseller_profit?: number
+          sa_cost_total?: number
+          shipping_cost?: number
+          status?: Database["public"]["Enums"]["order_status"]
+          subtotal?: number
+          total?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_reseller_id_fkey"
+            columns: ["reseller_id"]
+            isOneToOne: false
+            referencedRelation: "resellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payouts: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          method: Database["public"]["Enums"]["payment_method"] | null
+          notes: string | null
+          paid_at: string | null
+          reference: string | null
+          requested_at: string
+          reseller_id: string
+          status: Database["public"]["Enums"]["payout_status"]
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          id?: string
+          method?: Database["public"]["Enums"]["payment_method"] | null
+          notes?: string | null
+          paid_at?: string | null
+          reference?: string | null
+          requested_at?: string
+          reseller_id: string
+          status?: Database["public"]["Enums"]["payout_status"]
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          method?: Database["public"]["Enums"]["payment_method"] | null
+          notes?: string | null
+          paid_at?: string | null
+          reference?: string | null
+          requested_at?: string
+          reseller_id?: string
+          status?: Database["public"]["Enums"]["payout_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payouts_reseller_id_fkey"
+            columns: ["reseller_id"]
+            isOneToOne: false
+            referencedRelation: "resellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_images: {
         Row: {
           alt_text: string | null
@@ -546,6 +796,65 @@ export type Database = {
           },
         ]
       }
+      shipments: {
+        Row: {
+          booked_at: string | null
+          booked_by: string | null
+          consignment_id: string | null
+          cost: number
+          created_at: string
+          id: string
+          last_synced_at: string | null
+          order_id: string
+          provider: Database["public"]["Enums"]["courier_provider"]
+          request_payload: Json | null
+          response_payload: Json | null
+          status: Database["public"]["Enums"]["shipment_status"]
+          tracking_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          booked_at?: string | null
+          booked_by?: string | null
+          consignment_id?: string | null
+          cost?: number
+          created_at?: string
+          id?: string
+          last_synced_at?: string | null
+          order_id: string
+          provider?: Database["public"]["Enums"]["courier_provider"]
+          request_payload?: Json | null
+          response_payload?: Json | null
+          status?: Database["public"]["Enums"]["shipment_status"]
+          tracking_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          booked_at?: string | null
+          booked_by?: string | null
+          consignment_id?: string | null
+          cost?: number
+          created_at?: string
+          id?: string
+          last_synced_at?: string | null
+          order_id?: string
+          provider?: Database["public"]["Enums"]["courier_provider"]
+          request_payload?: Json | null
+          response_payload?: Json | null
+          status?: Database["public"]["Enums"]["shipment_status"]
+          tracking_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shipments_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -584,7 +893,44 @@ export type Database = {
     }
     Enums: {
       app_role: "super_admin" | "reseller" | "leader" | "staff"
+      courier_provider:
+        | "steadfast"
+        | "pathao"
+        | "carrybee"
+        | "redx"
+        | "paperfly"
+        | "manual"
+      delivery_area: "inside_dhaka" | "outside_dhaka" | "sub_dhaka"
+      order_status:
+        | "draft"
+        | "pending"
+        | "confirmed"
+        | "forwarded"
+        | "processing"
+        | "shipped"
+        | "delivered"
+        | "returned"
+        | "cancelled"
+      payment_method:
+        | "cod"
+        | "bkash"
+        | "nagad"
+        | "rocket"
+        | "card"
+        | "sslcommerz"
+        | "eps"
+        | "other"
+      payment_status: "unpaid" | "partial" | "paid" | "refunded"
+      payout_status: "pending" | "approved" | "paid" | "rejected"
       reseller_status: "pending" | "active" | "suspended" | "rejected"
+      shipment_status:
+        | "pending"
+        | "booked"
+        | "in_transit"
+        | "delivered"
+        | "returned"
+        | "failed"
+        | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -713,7 +1059,48 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["super_admin", "reseller", "leader", "staff"],
+      courier_provider: [
+        "steadfast",
+        "pathao",
+        "carrybee",
+        "redx",
+        "paperfly",
+        "manual",
+      ],
+      delivery_area: ["inside_dhaka", "outside_dhaka", "sub_dhaka"],
+      order_status: [
+        "draft",
+        "pending",
+        "confirmed",
+        "forwarded",
+        "processing",
+        "shipped",
+        "delivered",
+        "returned",
+        "cancelled",
+      ],
+      payment_method: [
+        "cod",
+        "bkash",
+        "nagad",
+        "rocket",
+        "card",
+        "sslcommerz",
+        "eps",
+        "other",
+      ],
+      payment_status: ["unpaid", "partial", "paid", "refunded"],
+      payout_status: ["pending", "approved", "paid", "rejected"],
       reseller_status: ["pending", "active", "suspended", "rejected"],
+      shipment_status: [
+        "pending",
+        "booked",
+        "in_transit",
+        "delivered",
+        "returned",
+        "failed",
+        "cancelled",
+      ],
     },
   },
 } as const
