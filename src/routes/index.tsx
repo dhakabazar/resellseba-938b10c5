@@ -282,9 +282,13 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
       <footer className="border-t border-border/60 bg-background">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 py-8 text-xs text-muted-foreground sm:flex-row sm:px-6">
           <div className="flex min-w-0 items-center gap-2 text-center sm:text-left">
-            <span className="grid h-6 w-6 shrink-0 place-items-center rounded bg-primary text-[10px] font-bold text-primary-foreground">
-              {siteName.charAt(0).toUpperCase()}
-            </span>
+            {logoUrl ? (
+              <img src={logoUrl} alt={siteName} className="h-6 w-6 shrink-0 rounded object-cover" />
+            ) : (
+              <span className="grid h-6 w-6 shrink-0 place-items-center rounded bg-primary text-[10px] font-bold text-primary-foreground">
+                {siteName.charAt(0).toUpperCase()}
+              </span>
+            )}
             <span className="truncate">© {new Date().getFullYear()} {siteName} · {c.footer.tagline}</span>
           </div>
           <div className="flex flex-wrap justify-center gap-4 sm:gap-5">
