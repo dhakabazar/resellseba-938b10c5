@@ -45,15 +45,31 @@ function Checkout() {
       return;
     }
     (async () => {
-      const { data } = await supabase
-        .from("reseller_listings")
-        .select("id,selling_price,extra_delivery_inside,extra_delivery_outside,custom_title, product:products(id,name,delivery_inside,delivery_outside,product_images(url,is_primary))")
-        .eq("id", listingId)
-        .eq("is_active", true)
-        .maybeSingle();
+      const [{ data }, listingResellerRes] = await Promise.all([
+        supabase
+          .from("reseller_listings")
+          .select("id,reseller_id,selling_price,extra_delivery_inside,extra_delivery_outside,custom_title, product:products(id,name,delivery_inside,delivery_outside,product_images(url,is_primary))")
+          .eq("id", listingId)
+          .eq("is_active", true)
+          .maybeSingle(),
+        Promise.resolve(null),
+      ]);
+      void listingResellerRes;
       if (data) {
         setListing(data);
         setProduct((data as any).product);
+        // load active payment methods (reseller override + global)
+        const { data: pms } = await supabase
+          .from("payment_configs")
+          .select("method,label,instructions,is_active,reseller_id")
+          .eq("is_active", true)
+          .or(`reseller_id.eq.${(data as any).reseller_id},reseller_id.is.null`);
+        const byMethod = new Map<string, any>();
+        for (const r of pms ?? []) {
+          const existing = byMethod.get(r.method);
+          if (!existing || (r.reseller_id && !existing.reseller_id)) byMethod.set(r.method, r);
+        }
+        setMethods(Array.from(byMethod.values()).map((r) => ({ method: r.method, label: r.label ?? r.method, instructions: r.instructions })));
       }
       setLoading(false);
     })();
@@ -82,20 +98,44 @@ function Checkout() {
       _city: form.city || (null as any),
       _area: form.area,
       _landmark: form.landmark || (null as any),
-      _payment_method: "cod",
+      _payment_method: payMethod,
       _notes: form.notes || (null as any),
       _items: [{ listing_id: listing.id, quantity: qty }] as any,
     });
-    setBusy(false);
     if (error) {
+      setBusy(false);
       toast.error(error.message);
       return;
     }
     const row = Array.isArray(data) ? data[0] : data;
-    if (row?.order_number) {
-      nav({ to: "/s/$code/thanks", params: { code }, search: { n: row.order_number } });
+    if (!row?.order_number) { setBusy(false); return; }
+
+    if (payMethod === "sslcommerz") {
+      try {
+        const r = await runSsl({ data: { orderNumber: row.order_number, code } });
+        window.location.href = r.redirectUrl;
+        return;
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Gateway init failed");
+        setBusy(false);
+        return;
+      }
     }
+    if (payMethod === "bkash") {
+      try {
+        const r = await runBkash({ data: { orderNumber: row.order_number, code } });
+        window.location.href = r.redirectUrl;
+        return;
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "bKash init failed");
+        setBusy(false);
+        return;
+      }
+    }
+    setBusy(false);
+    nav({ to: "/s/$code/thanks", params: { code }, search: { n: row.order_number } });
   }
+
 
   if (loading)
     return (
