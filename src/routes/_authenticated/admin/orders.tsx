@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
-import { Loader2, Truck, X } from "lucide-react";
+import { Loader2, Truck, X, Download } from "lucide-react";
 import { toast } from "sonner";
 
 type OrderRow = {
@@ -86,6 +86,15 @@ function AdminOrdersPage() {
       <PageHeader
         title="Orders"
         description="Reseller forward kora order gulo ekhane process korun."
+        actions={
+          <button
+            onClick={() => exportCsv(orders)}
+            disabled={orders.length === 0}
+            className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm disabled:opacity-50"
+          >
+            <Download className="h-4 w-4" /> Export CSV
+          </button>
+        }
       />
 
       <div className="mb-4 flex gap-2 text-sm">
