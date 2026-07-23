@@ -134,9 +134,13 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
       <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
           <Link to="/" className="flex min-w-0 items-center gap-2 font-semibold tracking-tight">
-            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground">
-              {siteName.charAt(0).toUpperCase()}
-            </span>
+            {logoUrl ? (
+              <img src={logoUrl} alt={siteName} className="h-8 w-8 shrink-0 rounded-lg object-cover" />
+            ) : (
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground">
+                {siteName.charAt(0).toUpperCase()}
+              </span>
+            )}
             <span className="truncate">{siteName}</span>
           </Link>
           <nav className="hidden gap-8 text-sm text-muted-foreground md:flex">
