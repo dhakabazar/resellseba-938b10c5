@@ -107,7 +107,7 @@ function PayoutsPage() {
                 <td className="font-medium">৳{Number(p.amount).toLocaleString()}</td>
                 <td className="capitalize">{p.method}</td>
                 <td><span className={"rounded-full px-2 py-0.5 text-[10px] " + statusStyle(p.status)}>{p.status}</span></td>
-                <td className="text-muted-foreground">{p.note}</td>
+                <td className="text-muted-foreground">{p.notes ?? p.reference}</td>
               </tr>
             ))}
             {rows.length === 0 && (<tr><td colSpan={5} className="p-8 text-center text-muted-foreground">No payouts yet.</td></tr>)}
