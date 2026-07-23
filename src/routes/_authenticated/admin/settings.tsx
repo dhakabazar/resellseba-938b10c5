@@ -41,6 +41,7 @@ function SettingsPage() {
         setEmail(data.contact_email ?? "");
         setFlagshipCode((data as any).flagship_reseller_code ?? "");
         if (data.logo_url) setLogo([{ path: "", url: data.logo_url, bytes: 0 }]);
+        if ((data as any).favicon_url) setFavicon([{ path: "", url: (data as any).favicon_url, bytes: 0 }]);
         if (data.og_image_url) setOg([{ path: "", url: data.og_image_url, bytes: 0 }]);
       }
       const { data: rs } = await supabase.from("resellers").select("code,business_name").eq("status", "active").order("business_name");
