@@ -48,8 +48,9 @@ function PayoutsPage() {
     if (!amt || amt <= 0) return toast.error("Invalid amount");
     if (amt > sum.available) return toast.error("Amount available balance er cheye beshi");
     setBusy(true);
+    const enumMethod = (method === "bank" ? "other" : method) as any;
     const { error } = await supabase.from("payouts").insert({
-      reseller_id: rid, amount: amt, method, account_details: account, status: "pending",
+      reseller_id: rid, amount: amt, method: enumMethod, reference: account, status: "pending",
     });
     setBusy(false);
     if (error) return toast.error(error.message);
