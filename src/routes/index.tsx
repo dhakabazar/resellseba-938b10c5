@@ -222,21 +222,23 @@ function Landing({ c, siteName }: { c: LandingContent; siteName: string }) {
 
 
       <section id="features" className="border-t border-border/60 bg-muted/30">
-        <div className="mx-auto max-w-6xl px-6 py-20">
+        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
           <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">{c.features.title}</h2>
-            <p className="mt-3 text-muted-foreground">{c.features.subtitle}</p>
+            <h2 className="text-balance text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl">{c.features.title}</h2>
+            {c.features.subtitle && (
+              <p className="mt-3 text-pretty text-sm text-muted-foreground sm:text-base">{c.features.subtitle}</p>
+            )}
           </div>
-          <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-10 grid gap-4 sm:mt-12 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
             {c.features.items.map((f, i) => {
               const Icon = ICON_MAP[f.icon] ?? Sparkles;
               return (
-                <div key={i} className="group surface-card p-6 transition-all hover:-translate-y-0.5 hover:shadow-lg">
+                <div key={i} className="group surface-card p-5 transition-all hover:-translate-y-0.5 hover:shadow-lg sm:p-6">
                   <div className="mb-4 grid h-11 w-11 place-items-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
                     <Icon className="h-5 w-5" />
                   </div>
                   <h3 className="text-base font-semibold">{f.title}</h3>
-                  <p className="mt-1.5 text-sm text-muted-foreground">{f.desc}</p>
+                  <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{f.desc}</p>
                 </div>
               );
             })}
@@ -245,19 +247,21 @@ function Landing({ c, siteName }: { c: LandingContent; siteName: string }) {
       </section>
 
       <section id="how" className="border-t border-border/60">
-        <div className="mx-auto max-w-6xl px-6 py-20">
+        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
           <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">{c.how.title}</h2>
-            <p className="mt-3 text-muted-foreground">{c.how.subtitle}</p>
+            <h2 className="text-balance text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl">{c.how.title}</h2>
+            {c.how.subtitle && (
+              <p className="mt-3 text-pretty text-sm text-muted-foreground sm:text-base">{c.how.subtitle}</p>
+            )}
           </div>
-          <div className="mt-12 grid gap-6 md:grid-cols-3">
+          <div className="mt-10 grid gap-6 sm:mt-12 md:grid-cols-3">
             {c.how.steps.map((s, i) => (
-              <div key={i} className="relative surface-card p-6">
+              <div key={i} className="relative surface-card p-5 sm:p-6">
                 <div className="absolute -top-3 -left-3 grid h-9 w-9 place-items-center rounded-full bg-primary text-sm font-bold text-primary-foreground shadow-md">
                   {i + 1}
                 </div>
-                <h3 className="mt-2 text-lg font-semibold">{s.title}</h3>
-                <p className="mt-2 text-sm text-muted-foreground">{s.desc}</p>
+                <h3 className="mt-2 text-base font-semibold sm:text-lg">{s.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{s.desc}</p>
               </div>
             ))}
           </div>
@@ -265,21 +269,24 @@ function Landing({ c, siteName }: { c: LandingContent; siteName: string }) {
       </section>
 
       <section id="pricing" className="border-t border-border/60 bg-muted/30">
-        <div className="mx-auto max-w-4xl px-6 py-24 text-center">
+        <div className="mx-auto max-w-4xl px-4 py-16 text-center sm:px-6 sm:py-24">
           {c.cta.badge && (
-            <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-border/60 bg-card px-4 py-1.5 text-xs text-muted-foreground">
+            <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-border/60 bg-card px-3 py-1.5 text-[11px] text-muted-foreground sm:px-4 sm:text-xs">
               {c.cta.badge}
             </div>
           )}
-          <h2 className="mt-6 text-3xl font-bold tracking-tight sm:text-5xl">{c.cta.title}</h2>
-          <p className="mx-auto mt-5 max-w-xl text-muted-foreground">{c.cta.subtitle}</p>
-          <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Link to="/login" className="btn-brand inline-flex items-center gap-2 rounded-md px-7 py-3 text-sm font-semibold shadow-lg shadow-primary/20">
+          <h2 className="mt-5 text-balance text-2xl font-bold tracking-tight sm:mt-6 sm:text-4xl lg:text-5xl">{c.cta.title}</h2>
+          {c.cta.subtitle && (
+            <p className="mx-auto mt-4 max-w-xl text-pretty text-sm text-muted-foreground sm:mt-5 sm:text-base">{c.cta.subtitle}</p>
+          )}
+          <div className="mt-7 flex flex-wrap justify-center gap-3 sm:mt-8">
+            <Link to="/login" className="btn-brand inline-flex items-center gap-2 rounded-md px-6 py-2.5 text-sm font-semibold shadow-lg shadow-primary/20 sm:px-7 sm:py-3">
               {c.cta.button} <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
         </div>
       </section>
+
 
       <footer className="border-t border-border/60 bg-background">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-6 py-8 text-xs text-muted-foreground sm:flex-row">
