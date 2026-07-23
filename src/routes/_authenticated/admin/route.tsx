@@ -15,6 +15,7 @@ import {
   Award,
   ScrollText,
   Bell,
+  FileText,
 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { useAuth } from "@/lib/use-auth";
@@ -39,6 +40,7 @@ const NAV = [
   { label: "Marketing", to: "/admin/marketing", icon: <Megaphone className="h-4 w-4" /> },
   { label: "Notifications", to: "/admin/notifications", icon: <Bell className="h-4 w-4" /> },
   { label: "Audit log", to: "/admin/audit", icon: <ScrollText className="h-4 w-4" /> },
+  { label: "Landing page", to: "/admin/landing", icon: <FileText className="h-4 w-4" /> },
   { label: "Settings", to: "/admin/settings", icon: <Settings className="h-4 w-4" /> },
 ];
 
