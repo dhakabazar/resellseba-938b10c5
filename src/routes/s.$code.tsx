@@ -56,6 +56,7 @@ function StoreLayout() {
         business_name: data.business_name,
         settings: s ?? null,
       });
+      loadTrackingForReseller(data.id).catch(() => {});
     })();
   }, [code]);
 
