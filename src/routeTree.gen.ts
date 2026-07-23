@@ -33,7 +33,6 @@ import { Route as AuthenticatedResellerCommissionsRouteImport } from './routes/_
 import { Route as AuthenticatedResellerCatalogRouteImport } from './routes/_authenticated/reseller/catalog'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin/settings'
 import { Route as AuthenticatedAdminResellersRouteImport } from './routes/_authenticated/admin/resellers'
-import { Route as AuthenticatedAdminProductsRouteImport } from './routes/_authenticated/admin/products'
 import { Route as AuthenticatedAdminPayoutsRouteImport } from './routes/_authenticated/admin/payouts'
 import { Route as AuthenticatedAdminPaymentsRouteImport } from './routes/_authenticated/admin/payments'
 import { Route as AuthenticatedAdminOrdersRouteImport } from './routes/_authenticated/admin/orders'
@@ -46,6 +45,7 @@ import { Route as AuthenticatedAdminCommissionsRouteImport } from './routes/_aut
 import { Route as AuthenticatedAdminCategoriesRouteImport } from './routes/_authenticated/admin/categories'
 import { Route as AuthenticatedAdminBrandsRouteImport } from './routes/_authenticated/admin/brands'
 import { Route as AuthenticatedAdminAuditRouteImport } from './routes/_authenticated/admin/audit'
+import { Route as AuthenticatedAdminProductsIndexRouteImport } from './routes/_authenticated/admin/products.index'
 import { Route as SCodePSlugRouteImport } from './routes/s.$code.p.$slug'
 import { Route as ApiPublicSitemapCodeRouteImport } from './routes/api/public/sitemap.$code'
 import { Route as ApiPublicPaymentSslcommerzIpnRouteImport } from './routes/api/public/payment.sslcommerz-ipn'
@@ -184,12 +184,6 @@ const AuthenticatedAdminResellersRoute =
     path: '/resellers',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
-const AuthenticatedAdminProductsRoute =
-  AuthenticatedAdminProductsRouteImport.update({
-    id: '/products',
-    path: '/products',
-    getParentRoute: () => AuthenticatedAdminRouteRoute,
-  } as any)
 const AuthenticatedAdminPayoutsRoute =
   AuthenticatedAdminPayoutsRouteImport.update({
     id: '/payouts',
@@ -261,6 +255,12 @@ const AuthenticatedAdminAuditRoute = AuthenticatedAdminAuditRouteImport.update({
   path: '/audit',
   getParentRoute: () => AuthenticatedAdminRouteRoute,
 } as any)
+const AuthenticatedAdminProductsIndexRoute =
+  AuthenticatedAdminProductsIndexRouteImport.update({
+    id: '/products/',
+    path: '/products/',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
 const SCodePSlugRoute = SCodePSlugRouteImport.update({
   id: '/p/$slug',
   path: '/p/$slug',
@@ -285,9 +285,9 @@ const ApiPublicPaymentBkashCallbackRoute =
   } as any)
 const AuthenticatedAdminProductsNewRoute =
   AuthenticatedAdminProductsNewRouteImport.update({
-    id: '/new',
-    path: '/new',
-    getParentRoute: () => AuthenticatedAdminProductsRoute,
+    id: '/products/new',
+    path: '/products/new',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
 const AuthenticatedResellerOrdersIdInvoiceRoute =
   AuthenticatedResellerOrdersIdInvoiceRouteImport.update({
@@ -316,7 +316,6 @@ export interface FileRoutesByFullPath {
   '/admin/orders': typeof AuthenticatedAdminOrdersRoute
   '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
   '/admin/payouts': typeof AuthenticatedAdminPayoutsRoute
-  '/admin/products': typeof AuthenticatedAdminProductsRouteWithChildren
   '/admin/resellers': typeof AuthenticatedAdminResellersRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/reseller/catalog': typeof AuthenticatedResellerCatalogRoute
@@ -338,6 +337,7 @@ export interface FileRoutesByFullPath {
   '/api/public/payment/sslcommerz-ipn': typeof ApiPublicPaymentSslcommerzIpnRoute
   '/api/public/sitemap/$code': typeof ApiPublicSitemapCodeRoute
   '/s/$code/p/$slug': typeof SCodePSlugRoute
+  '/admin/products/': typeof AuthenticatedAdminProductsIndexRoute
   '/reseller/orders/$id/invoice': typeof AuthenticatedResellerOrdersIdInvoiceRoute
 }
 export interface FileRoutesByTo {
@@ -357,7 +357,6 @@ export interface FileRoutesByTo {
   '/admin/orders': typeof AuthenticatedAdminOrdersRoute
   '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
   '/admin/payouts': typeof AuthenticatedAdminPayoutsRoute
-  '/admin/products': typeof AuthenticatedAdminProductsRouteWithChildren
   '/admin/resellers': typeof AuthenticatedAdminResellersRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/reseller/catalog': typeof AuthenticatedResellerCatalogRoute
@@ -379,6 +378,7 @@ export interface FileRoutesByTo {
   '/api/public/payment/sslcommerz-ipn': typeof ApiPublicPaymentSslcommerzIpnRoute
   '/api/public/sitemap/$code': typeof ApiPublicSitemapCodeRoute
   '/s/$code/p/$slug': typeof SCodePSlugRoute
+  '/admin/products': typeof AuthenticatedAdminProductsIndexRoute
   '/reseller/orders/$id/invoice': typeof AuthenticatedResellerOrdersIdInvoiceRoute
 }
 export interface FileRoutesById {
@@ -403,7 +403,6 @@ export interface FileRoutesById {
   '/_authenticated/admin/orders': typeof AuthenticatedAdminOrdersRoute
   '/_authenticated/admin/payments': typeof AuthenticatedAdminPaymentsRoute
   '/_authenticated/admin/payouts': typeof AuthenticatedAdminPayoutsRoute
-  '/_authenticated/admin/products': typeof AuthenticatedAdminProductsRouteWithChildren
   '/_authenticated/admin/resellers': typeof AuthenticatedAdminResellersRoute
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/_authenticated/reseller/catalog': typeof AuthenticatedResellerCatalogRoute
@@ -425,6 +424,7 @@ export interface FileRoutesById {
   '/api/public/payment/sslcommerz-ipn': typeof ApiPublicPaymentSslcommerzIpnRoute
   '/api/public/sitemap/$code': typeof ApiPublicSitemapCodeRoute
   '/s/$code/p/$slug': typeof SCodePSlugRoute
+  '/_authenticated/admin/products/': typeof AuthenticatedAdminProductsIndexRoute
   '/_authenticated/reseller/orders/$id/invoice': typeof AuthenticatedResellerOrdersIdInvoiceRoute
 }
 export interface FileRouteTypes {
@@ -449,7 +449,6 @@ export interface FileRouteTypes {
     | '/admin/orders'
     | '/admin/payments'
     | '/admin/payouts'
-    | '/admin/products'
     | '/admin/resellers'
     | '/admin/settings'
     | '/reseller/catalog'
@@ -471,6 +470,7 @@ export interface FileRouteTypes {
     | '/api/public/payment/sslcommerz-ipn'
     | '/api/public/sitemap/$code'
     | '/s/$code/p/$slug'
+    | '/admin/products/'
     | '/reseller/orders/$id/invoice'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -490,7 +490,6 @@ export interface FileRouteTypes {
     | '/admin/orders'
     | '/admin/payments'
     | '/admin/payouts'
-    | '/admin/products'
     | '/admin/resellers'
     | '/admin/settings'
     | '/reseller/catalog'
@@ -512,6 +511,7 @@ export interface FileRouteTypes {
     | '/api/public/payment/sslcommerz-ipn'
     | '/api/public/sitemap/$code'
     | '/s/$code/p/$slug'
+    | '/admin/products'
     | '/reseller/orders/$id/invoice'
   id:
     | '__root__'
@@ -535,7 +535,6 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/orders'
     | '/_authenticated/admin/payments'
     | '/_authenticated/admin/payouts'
-    | '/_authenticated/admin/products'
     | '/_authenticated/admin/resellers'
     | '/_authenticated/admin/settings'
     | '/_authenticated/reseller/catalog'
@@ -557,6 +556,7 @@ export interface FileRouteTypes {
     | '/api/public/payment/sslcommerz-ipn'
     | '/api/public/sitemap/$code'
     | '/s/$code/p/$slug'
+    | '/_authenticated/admin/products/'
     | '/_authenticated/reseller/orders/$id/invoice'
   fileRoutesById: FileRoutesById
 }
@@ -741,13 +741,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminResellersRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
-    '/_authenticated/admin/products': {
-      id: '/_authenticated/admin/products'
-      path: '/products'
-      fullPath: '/admin/products'
-      preLoaderRoute: typeof AuthenticatedAdminProductsRouteImport
-      parentRoute: typeof AuthenticatedAdminRouteRoute
-    }
     '/_authenticated/admin/payouts': {
       id: '/_authenticated/admin/payouts'
       path: '/payouts'
@@ -832,6 +825,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAuditRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/_authenticated/admin/products/': {
+      id: '/_authenticated/admin/products/'
+      path: '/products'
+      fullPath: '/admin/products/'
+      preLoaderRoute: typeof AuthenticatedAdminProductsIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
     '/s/$code/p/$slug': {
       id: '/s/$code/p/$slug'
       path: '/p/$slug'
@@ -862,10 +862,10 @@ declare module '@tanstack/react-router' {
     }
     '/_authenticated/admin/products/new': {
       id: '/_authenticated/admin/products/new'
-      path: '/new'
+      path: '/products/new'
       fullPath: '/admin/products/new'
       preLoaderRoute: typeof AuthenticatedAdminProductsNewRouteImport
-      parentRoute: typeof AuthenticatedAdminProductsRoute
+      parentRoute: typeof AuthenticatedAdminRouteRoute
     }
     '/_authenticated/reseller/orders/$id/invoice': {
       id: '/_authenticated/reseller/orders/$id/invoice'
@@ -876,20 +876,6 @@ declare module '@tanstack/react-router' {
     }
   }
 }
-
-interface AuthenticatedAdminProductsRouteChildren {
-  AuthenticatedAdminProductsNewRoute: typeof AuthenticatedAdminProductsNewRoute
-}
-
-const AuthenticatedAdminProductsRouteChildren: AuthenticatedAdminProductsRouteChildren =
-  {
-    AuthenticatedAdminProductsNewRoute: AuthenticatedAdminProductsNewRoute,
-  }
-
-const AuthenticatedAdminProductsRouteWithChildren =
-  AuthenticatedAdminProductsRoute._addFileChildren(
-    AuthenticatedAdminProductsRouteChildren,
-  )
 
 interface AuthenticatedAdminRouteRouteChildren {
   AuthenticatedAdminAuditRoute: typeof AuthenticatedAdminAuditRoute
@@ -904,10 +890,11 @@ interface AuthenticatedAdminRouteRouteChildren {
   AuthenticatedAdminOrdersRoute: typeof AuthenticatedAdminOrdersRoute
   AuthenticatedAdminPaymentsRoute: typeof AuthenticatedAdminPaymentsRoute
   AuthenticatedAdminPayoutsRoute: typeof AuthenticatedAdminPayoutsRoute
-  AuthenticatedAdminProductsRoute: typeof AuthenticatedAdminProductsRouteWithChildren
   AuthenticatedAdminResellersRoute: typeof AuthenticatedAdminResellersRoute
   AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
+  AuthenticatedAdminProductsNewRoute: typeof AuthenticatedAdminProductsNewRoute
+  AuthenticatedAdminProductsIndexRoute: typeof AuthenticatedAdminProductsIndexRoute
 }
 
 const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren =
@@ -924,11 +911,11 @@ const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren
     AuthenticatedAdminOrdersRoute: AuthenticatedAdminOrdersRoute,
     AuthenticatedAdminPaymentsRoute: AuthenticatedAdminPaymentsRoute,
     AuthenticatedAdminPayoutsRoute: AuthenticatedAdminPayoutsRoute,
-    AuthenticatedAdminProductsRoute:
-      AuthenticatedAdminProductsRouteWithChildren,
     AuthenticatedAdminResellersRoute: AuthenticatedAdminResellersRoute,
     AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
     AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
+    AuthenticatedAdminProductsNewRoute: AuthenticatedAdminProductsNewRoute,
+    AuthenticatedAdminProductsIndexRoute: AuthenticatedAdminProductsIndexRoute,
   }
 
 const AuthenticatedAdminRouteRouteWithChildren =

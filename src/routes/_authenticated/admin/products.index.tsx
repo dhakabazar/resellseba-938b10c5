@@ -15,7 +15,7 @@ type Row = {
   is_active: boolean;
 };
 
-export const Route = createFileRoute("/_authenticated/admin/products")({
+export const Route = createFileRoute("/_authenticated/admin/products/")({
   component: ProductsPage,
 });
 
