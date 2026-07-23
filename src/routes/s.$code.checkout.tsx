@@ -3,6 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { initSslcommerz, initBkash } from "@/lib/payments.functions";
 
 type Search = { l?: string; q?: number };
 
@@ -22,6 +24,10 @@ function Checkout() {
   const [listing, setListing] = useState<any>(null);
   const [product, setProduct] = useState<any>(null);
   const [busy, setBusy] = useState(false);
+  const [methods, setMethods] = useState<Array<{ method: string; label: string; instructions: string | null }>>([]);
+  const [payMethod, setPayMethod] = useState<"cod" | "bkash" | "sslcommerz">("cod");
+  const runSsl = useServerFn(initSslcommerz);
+  const runBkash = useServerFn(initBkash);
   const [form, setForm] = useState({
     name: "",
     phone: "",
