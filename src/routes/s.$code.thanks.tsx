@@ -27,8 +27,8 @@ function Thanks() {
       trackPurchase({
         orderNumber: n,
         total: Number(data.total),
-        items: (data.order_items ?? []).map((i: { product_id: string; product_name: string; reseller_price: number; quantity: number }) => ({
-          id: i.product_id,
+        items: (data.order_items ?? []).map((i) => ({
+          id: i.product_id ?? "",
           name: i.product_name,
           price: Number(i.reseller_price),
           qty: i.quantity,
