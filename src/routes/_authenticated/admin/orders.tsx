@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
-import { Loader2, Truck, X } from "lucide-react";
+import { Loader2, Truck, X, Download } from "lucide-react";
 import { toast } from "sonner";
 
 type OrderRow = {
@@ -56,6 +56,34 @@ export const Route = createFileRoute("/_authenticated/admin/orders")({
   component: AdminOrdersPage,
 });
 
+function exportCsv(rows: OrderRow[]) {
+  const head = ["Order", "Date", "Reseller", "Customer", "Phone", "Area", "Address", "Payment", "Status", "Total"];
+  const csv = [head.join(",")]
+    .concat(
+      rows.map((o) =>
+        [
+          o.order_number,
+          new Date(o.created_at).toISOString().slice(0, 10),
+          o.resellers?.business_name ?? "",
+          o.customer_name,
+          o.customer_phone,
+          o.area,
+          `"${(o.address_line ?? "").replace(/"/g, '""')}"`,
+          o.payment_method,
+          o.status,
+          Number(o.total).toFixed(0),
+        ].join(","),
+      ),
+    )
+    .join("\n");
+  const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `orders-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 function AdminOrdersPage() {
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -86,6 +114,15 @@ function AdminOrdersPage() {
       <PageHeader
         title="Orders"
         description="Reseller forward kora order gulo ekhane process korun."
+        actions={
+          <button
+            onClick={() => exportCsv(orders)}
+            disabled={orders.length === 0}
+            className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm disabled:opacity-50"
+          >
+            <Download className="h-4 w-4" /> Export CSV
+          </button>
+        }
       />
 
       <div className="mb-4 flex gap-2 text-sm">

@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_log: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_role: string | null
+          created_at: string
+          entity: string
+          entity_id: string | null
+          id: string
+          metadata: Json
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_role?: string | null
+          created_at?: string
+          entity: string
+          entity_id?: string | null
+          id?: string
+          metadata?: Json
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_role?: string | null
+          created_at?: string
+          entity?: string
+          entity_id?: string | null
+          id?: string
+          metadata?: Json
+        }
+        Relationships: []
+      }
       brands: {
         Row: {
           created_at: string
@@ -139,6 +172,76 @@ export type Database = {
         }
         Relationships: []
       }
+      delivery_rules: {
+        Row: {
+          brand_id: string | null
+          category_id: string | null
+          created_at: string
+          free_above: number | null
+          id: string
+          inside_dhaka: number
+          is_active: boolean
+          notes: string | null
+          outside_dhaka: number
+          product_id: string | null
+          scope: string
+          sub_dhaka: number
+          updated_at: string
+        }
+        Insert: {
+          brand_id?: string | null
+          category_id?: string | null
+          created_at?: string
+          free_above?: number | null
+          id?: string
+          inside_dhaka?: number
+          is_active?: boolean
+          notes?: string | null
+          outside_dhaka?: number
+          product_id?: string | null
+          scope: string
+          sub_dhaka?: number
+          updated_at?: string
+        }
+        Update: {
+          brand_id?: string | null
+          category_id?: string | null
+          created_at?: string
+          free_above?: number | null
+          id?: string
+          inside_dhaka?: number
+          is_active?: boolean
+          notes?: string | null
+          outside_dhaka?: number
+          product_id?: string | null
+          scope?: string
+          sub_dhaka?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_rules_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_rules_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_rules_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       global_settings: {
         Row: {
           accent_color: string | null
@@ -186,6 +289,67 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      leader_commissions: {
+        Row: {
+          amount: number
+          base_profit: number
+          created_at: string
+          id: string
+          leader_id: string
+          order_id: string
+          paid_at: string | null
+          rate: number
+          reseller_id: string
+          status: string
+        }
+        Insert: {
+          amount: number
+          base_profit: number
+          created_at?: string
+          id?: string
+          leader_id: string
+          order_id: string
+          paid_at?: string | null
+          rate: number
+          reseller_id: string
+          status?: string
+        }
+        Update: {
+          amount?: number
+          base_profit?: number
+          created_at?: string
+          id?: string
+          leader_id?: string
+          order_id?: string
+          paid_at?: string | null
+          rate?: number
+          reseller_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leader_commissions_leader_id_fkey"
+            columns: ["leader_id"]
+            isOneToOne: false
+            referencedRelation: "resellers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leader_commissions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leader_commissions_reseller_id_fkey"
+            columns: ["reseller_id"]
+            isOneToOne: false
+            referencedRelation: "resellers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       marketing_configs: {
         Row: {
@@ -1005,6 +1169,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_delivery_charge: {
+        Args: { _area: string; _product_id: string }
+        Returns: number
+      }
       create_public_order: {
         Args: {
           _address_line: string

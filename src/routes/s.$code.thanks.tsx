@@ -1,5 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useRef } from "react";
 import { CheckCircle2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { trackPurchase } from "@/lib/tracking";
 
 export const Route = createFileRoute("/s/$code/thanks")({
   validateSearch: (s: Record<string, unknown>) => ({ n: typeof s.n === "string" ? s.n : "" }),
@@ -9,6 +12,31 @@ export const Route = createFileRoute("/s/$code/thanks")({
 function Thanks() {
   const { code } = Route.useParams();
   const { n } = Route.useSearch();
+  const fired = useRef(false);
+
+  useEffect(() => {
+    if (!n || fired.current) return;
+    fired.current = true;
+    (async () => {
+      const { data } = await supabase
+        .from("orders")
+        .select("total,order_items(product_id,product_name,reseller_price,quantity)")
+        .eq("order_number", n)
+        .maybeSingle();
+      if (!data) return;
+      trackPurchase({
+        orderNumber: n,
+        total: Number(data.total),
+        items: (data.order_items ?? []).map((i) => ({
+          id: i.product_id ?? "",
+          name: i.product_name,
+          price: Number(i.reseller_price),
+          qty: i.quantity,
+        })),
+      });
+    })();
+  }, [n]);
+
   return (
     <div className="mx-auto max-w-md px-4 py-16 text-center">
       <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-success/20 text-success">

@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Minus, Plus, ShoppingCart, ChevronLeft } from "lucide-react";
+import { trackAddToCart, trackViewContent } from "@/lib/tracking";
 
 export const Route = createFileRoute("/s/$code/p/$slug")({
   component: ProductPage,
@@ -45,6 +46,7 @@ function ProductPage() {
       if (!l) return setLoading(false);
       setRow({ product: p, listing: l });
       setLoading(false);
+      trackViewContent({ id: p.id, name: l.custom_title || p.name, price: Number(l.selling_price) });
     })();
   }, [code, slug]);
 
@@ -109,7 +111,10 @@ function ProductPage() {
               <button onClick={() => setQty((q) => q + 1)} className="p-2 hover:bg-muted"><Plus className="h-3.5 w-3.5" /></button>
             </div>
             <button
-              onClick={() => nav({ to: "/s/$code/checkout", params: { code }, search: { l: listing.id, q: qty } })}
+              onClick={() => {
+                trackAddToCart({ id: product.id, name: title, price: Number(listing.selling_price), qty });
+                nav({ to: "/s/$code/checkout", params: { code }, search: { l: listing.id, q: qty } });
+              }}
               className="inline-flex flex-1 items-center justify-center gap-2 rounded-md px-4 py-3 text-sm font-medium text-white"
               style={{ background: "var(--store-primary)" }}
             >
