@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { LogOut, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import type { ReactNode } from "react";
 
 export interface NavItem {
@@ -30,20 +31,20 @@ export function AppShell({
     <div className="min-h-screen bg-background">
       <div className="flex">
         <aside className="fixed inset-y-0 left-0 hidden w-64 flex-col border-r bg-sidebar md:flex">
-          <div className="flex h-16 items-center gap-2 border-b border-sidebar-border px-6">
+          <div className="flex min-h-24 items-center gap-3 border-b border-sidebar-border px-5 py-4">
             {brand.logoUrl ? (
-              <img src={brand.logoUrl} alt={brand.name} className="h-9 w-9 rounded-lg object-cover" />
+              <img src={brand.logoUrl} alt={brand.name} className="h-12 max-w-28 shrink-0 object-contain" />
             ) : (
-              <div className="grid h-9 w-9 place-items-center rounded-lg bg-gradient-to-br from-primary to-primary/70 text-primary-foreground font-bold">
+              <div className="grid h-14 w-14 shrink-0 place-items-center rounded-lg bg-gradient-to-br from-primary to-primary/70 text-xl font-bold text-primary-foreground">
                 {brand.name.charAt(0)}
               </div>
             )}
             <div className="min-w-0">
-              <div className="truncate text-sm font-semibold text-sidebar-foreground">
+              <div className="truncate text-base font-semibold leading-tight text-sidebar-foreground">
                 {brand.name}
               </div>
               {brand.sub && (
-                <div className="truncate text-xs text-muted-foreground">{brand.sub}</div>
+                <div className="mt-0.5 truncate text-xs text-muted-foreground">{brand.sub}</div>
               )}
             </div>
           </div>
@@ -74,15 +75,16 @@ export function AppShell({
               </div>
               <div className="truncate text-xs text-muted-foreground">{user.email}</div>
             </div>
-            <button
+            <Button
+              variant="ghost"
               onClick={async () => {
                 await supabase.auth.signOut();
                 window.location.href = "/login";
               }}
-              className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+              className="flex w-full justify-start text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
             >
               <LogOut className="h-4 w-4" /> Sign out
-            </button>
+            </Button>
           </div>
         </aside>
         <main className="flex-1 md:ml-64">

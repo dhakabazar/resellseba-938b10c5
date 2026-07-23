@@ -133,15 +133,14 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
     <div className="min-h-screen overflow-x-hidden bg-background text-foreground">
       <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
-          <Link to="/" className="flex min-w-0 items-center gap-2 font-semibold tracking-tight">
+          <Link to="/" className="flex min-w-0 items-center" aria-label={siteName}>
             {logoUrl ? (
-              <img src={logoUrl} alt={siteName} className="h-8 w-8 shrink-0 rounded-lg object-cover" />
+              <img src={logoUrl} alt={siteName} className="h-12 max-w-44 shrink-0 object-contain sm:h-14" />
             ) : (
-              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground">
+              <span className="grid h-12 w-12 shrink-0 place-items-center rounded-lg bg-primary text-lg font-bold text-primary-foreground sm:h-14 sm:w-14">
                 {siteName.charAt(0).toUpperCase()}
               </span>
             )}
-            <span className="truncate">{siteName}</span>
           </Link>
           <nav className="hidden gap-8 text-sm text-muted-foreground md:flex">
             <a href="#features" className="hover:text-foreground">{c.nav.features}</a>
@@ -159,23 +158,23 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
         </div>
       </header>
 
-      <section className="relative overflow-hidden">
+      <section className="relative isolate overflow-hidden">
         {banner && (
-          <div className="pointer-events-none absolute inset-0 -z-20">
+          <div className="pointer-events-none absolute inset-0 z-0">
             <img
               src={banner}
               alt=""
               aria-hidden="true"
-              className="h-full w-full object-cover opacity-30"
+              className="h-full w-full object-cover opacity-75"
             />
-            <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/60 to-background" />
+            <div className="absolute inset-0 bg-gradient-to-b from-background/85 via-background/65 to-background" />
           </div>
         )}
-        <div className="pointer-events-none absolute inset-0 -z-10">
+        <div className="pointer-events-none absolute inset-0 z-0">
           <div className="absolute left-1/2 top-[-10%] h-[420px] w-[420px] -translate-x-1/2 rounded-full bg-primary/25 blur-[120px] sm:h-[520px] sm:w-[520px]" />
           <div className="absolute right-[-10%] top-[30%] h-[320px] w-[320px] rounded-full bg-accent/30 blur-[120px] sm:h-[380px] sm:w-[380px]" />
         </div>
-        <div className="mx-auto max-w-4xl px-4 pt-16 pb-20 text-center sm:px-6 sm:pt-24 sm:pb-28 lg:pt-28">
+        <div className="relative z-10 mx-auto max-w-4xl px-4 pt-16 pb-20 text-center sm:px-6 sm:pt-24 sm:pb-28 lg:pt-28">
           <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/60 px-3 py-1.5 text-[11px] text-muted-foreground shadow-sm backdrop-blur sm:px-4 sm:text-xs">
             <Sparkles className="h-3.5 w-3.5 shrink-0 text-primary" />
             <span className="truncate">{c.hero.badge}</span>
@@ -283,9 +282,9 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 py-8 text-xs text-muted-foreground sm:flex-row sm:px-6">
           <div className="flex min-w-0 items-center gap-2 text-center sm:text-left">
             {logoUrl ? (
-              <img src={logoUrl} alt={siteName} className="h-6 w-6 shrink-0 rounded object-cover" />
+              <img src={logoUrl} alt={siteName} className="h-10 max-w-36 shrink-0 object-contain" />
             ) : (
-              <span className="grid h-6 w-6 shrink-0 place-items-center rounded bg-primary text-[10px] font-bold text-primary-foreground">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded bg-primary text-sm font-bold text-primary-foreground">
                 {siteName.charAt(0).toUpperCase()}
               </span>
             )}
