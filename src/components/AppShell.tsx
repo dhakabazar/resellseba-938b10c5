@@ -29,9 +29,13 @@ export function AppShell({
       <div className="flex">
         <aside className="fixed inset-y-0 left-0 hidden w-64 flex-col border-r bg-sidebar md:flex">
           <div className="flex h-16 items-center gap-2 border-b border-sidebar-border px-6">
-            <div className="grid h-9 w-9 place-items-center rounded-lg bg-gradient-to-br from-primary to-primary/70 text-primary-foreground font-bold">
-              {brand.name.charAt(0)}
-            </div>
+            {brand.logoUrl ? (
+              <img src={brand.logoUrl} alt={brand.name} className="h-9 w-9 rounded-lg object-cover" />
+            ) : (
+              <div className="grid h-9 w-9 place-items-center rounded-lg bg-gradient-to-br from-primary to-primary/70 text-primary-foreground font-bold">
+                {brand.name.charAt(0)}
+              </div>
+            )}
             <div className="min-w-0">
               <div className="truncate text-sm font-semibold text-sidebar-foreground">
                 {brand.name}
