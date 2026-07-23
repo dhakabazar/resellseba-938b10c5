@@ -39,11 +39,13 @@ const ICON_MAP: Record<string, LucideIcon> = {
 
 type Feature = { icon: string; title: string; desc: string };
 type Step = { title: string; desc: string };
+type HeroImage = { path: string; url: string; bytes: number } | null;
 type LandingContent = {
   nav: { features: string; how: string; pricing: string; signIn: string; cta: string };
   hero: {
     badge: string; titleStart: string; titleHighlight: string; subtitle: string;
     ctaPrimary: string; ctaSecondary: string; badges: string[];
+    bannerImage?: HeroImage;
   };
   features: { title: string; subtitle: string; items: Feature[] };
   how: { title: string; subtitle: string; steps: Step[] };
@@ -61,6 +63,7 @@ const FALLBACK: LandingContent = {
     ctaPrimary: "সাইনআপ করুন",
     ctaSecondary: "অ্যাডমিন সাইন ইন",
     badges: ["সেটআপ ফি নেই"],
+    bannerImage: null,
   },
   features: { title: "ফিচার", subtitle: "", items: [] },
   how: { title: "কীভাবে শুরু করবেন", subtitle: "", steps: [] },
