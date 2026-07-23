@@ -64,6 +64,7 @@ function SettingsPage() {
       contact_phone: phone || null,
       contact_email: email || null,
       logo_url: logo[0]?.url ?? null,
+      favicon_url: favicon[0]?.url ?? null,
       og_image_url: og[0]?.url ?? null,
       flagship_reseller_code: flagshipCode || null,
     } as any);
