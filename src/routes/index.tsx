@@ -76,6 +76,7 @@ function RootResolver() {
   const [checking, setChecking] = useState(true);
   const [content, setContent] = useState<LandingContent>(FALLBACK);
   const [siteName, setSiteName] = useState("Reseller");
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -102,11 +103,12 @@ function RootResolver() {
 
       const { data } = await supabase
         .from("global_settings")
-        .select("site_name, landing_content")
+        .select("site_name, logo_url, landing_content")
         .eq("id", 1)
         .maybeSingle();
       if (data) {
         setSiteName(data.site_name ?? "Reseller");
+        setLogoUrl((data as { logo_url?: string | null }).logo_url ?? null);
         const lc = (data as unknown as { landing_content?: LandingContent }).landing_content;
         if (lc) setContent(lc);
       }
@@ -122,10 +124,10 @@ function RootResolver() {
     );
   }
 
-  return <Landing c={content} siteName={siteName} />;
+  return <Landing c={content} siteName={siteName} logoUrl={logoUrl} />;
 }
 
-function Landing({ c, siteName }: { c: LandingContent; siteName: string }) {
+function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string; logoUrl: string | null }) {
   const banner = c.hero.bannerImage?.url;
   return (
     <div className="min-h-screen overflow-x-hidden bg-background text-foreground">
