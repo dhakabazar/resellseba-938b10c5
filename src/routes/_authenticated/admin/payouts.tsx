@@ -10,8 +10,8 @@ export const Route = createFileRoute("/_authenticated/admin/payouts")({
 });
 
 type Row = {
-  id: string; amount: number; status: string; method: string; account_details: string | null;
-  note: string | null; created_at: string; paid_at: string | null;
+  id: string; amount: number; status: string; method: string | null; reference: string | null;
+  notes: string | null; created_at: string; paid_at: string | null;
   reseller: { code: string; business_name: string } | null;
 };
 
@@ -68,7 +68,7 @@ function AdminPayouts() {
                   </td>
                   <td className="font-semibold">৳{Number(r.amount).toLocaleString()}</td>
                   <td className="capitalize">{r.method}</td>
-                  <td className="font-mono text-xs">{r.account_details}</td>
+                  <td className="font-mono text-xs">{r.reference}</td>
                   <td><span className={"rounded-full px-2 py-0.5 text-[10px] " + statusStyle(r.status)}>{r.status}</span></td>
                   <td className="text-xs text-muted-foreground">{new Date(r.created_at).toLocaleDateString()}</td>
                   <td className="p-3">
