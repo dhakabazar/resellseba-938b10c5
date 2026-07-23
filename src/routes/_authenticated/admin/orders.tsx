@@ -20,7 +20,7 @@ type OrderRow = {
   created_at: string;
   reseller_note: string | null;
   admin_note: string | null;
-  resellers: { business_name: string; store_code: string } | null;
+  resellers: { business_name: string; code: string } | null;
 };
 
 type Item = {
@@ -67,7 +67,7 @@ function AdminOrdersPage() {
     let q = supabase
       .from("orders")
       .select(
-        "id,order_number,customer_name,customer_phone,address_line,area,total,status,payment_status,payment_method,forwarded_to_admin,created_at,reseller_note,admin_note,resellers(business_name,store_code)",
+        "id,order_number,customer_name,customer_phone,address_line,area,total,status,payment_status,payment_method,forwarded_to_admin,created_at,reseller_note,admin_note,resellers(business_name,code)",
       )
       .order("created_at", { ascending: false });
     if (filter === "forwarded") q = q.eq("forwarded_to_admin", true);
@@ -131,7 +131,7 @@ function AdminOrdersPage() {
               </div>
               <div className="truncate text-xs">
                 <div className="font-medium">{o.resellers?.business_name}</div>
-                <div className="text-muted-foreground">/{o.resellers?.store_code}</div>
+                <div className="text-muted-foreground">/{o.resellers?.code}</div>
               </div>
               <div>
                 <div className="truncate">{o.customer_name}</div>
@@ -255,7 +255,7 @@ function OrderDrawer({
           <div>
             <h2 className="text-lg font-semibold">{order.order_number}</h2>
             <p className="text-xs text-muted-foreground">
-              {order.resellers?.business_name} — /{order.resellers?.store_code}
+              {order.resellers?.business_name} — /{order.resellers?.code}
             </p>
           </div>
           <button onClick={onClose} className="rounded-md p-1 hover:bg-accent">
