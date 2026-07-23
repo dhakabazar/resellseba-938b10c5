@@ -126,26 +126,27 @@ function RootResolver() {
 }
 
 function Landing({ c, siteName }: { c: LandingContent; siteName: string }) {
+  const banner = c.hero.bannerImage?.url;
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen overflow-x-hidden bg-background text-foreground">
       <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
-          <Link to="/" className="flex items-center gap-2 font-semibold tracking-tight">
-            <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-primary-foreground">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
+          <Link to="/" className="flex min-w-0 items-center gap-2 font-semibold tracking-tight">
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground">
               {siteName.charAt(0).toUpperCase()}
             </span>
-            {siteName}
+            <span className="truncate">{siteName}</span>
           </Link>
           <nav className="hidden gap-8 text-sm text-muted-foreground md:flex">
             <a href="#features" className="hover:text-foreground">{c.nav.features}</a>
             <a href="#how" className="hover:text-foreground">{c.nav.how}</a>
             <a href="#pricing" className="hover:text-foreground">{c.nav.pricing}</a>
           </nav>
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2">
             <Link to="/login" className="hidden rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground sm:inline">
               {c.nav.signIn}
             </Link>
-            <Link to="/login" className="btn-brand inline-flex items-center gap-1 rounded-md px-4 py-2 text-sm font-medium">
+            <Link to="/login" className="btn-brand inline-flex items-center gap-1 rounded-md px-3 py-2 text-sm font-medium sm:px-4">
               {c.nav.cta} <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
@@ -154,40 +155,71 @@ function Landing({ c, siteName }: { c: LandingContent; siteName: string }) {
 
       <section className="relative overflow-hidden">
         <div className="pointer-events-none absolute inset-0 -z-10">
-          <div className="absolute left-1/2 top-[-10%] h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-primary/25 blur-[120px]" />
-          <div className="absolute right-[-10%] top-[30%] h-[380px] w-[380px] rounded-full bg-accent/30 blur-[120px]" />
+          <div className="absolute left-1/2 top-[-10%] h-[420px] w-[420px] -translate-x-1/2 rounded-full bg-primary/25 blur-[120px] sm:h-[520px] sm:w-[520px]" />
+          <div className="absolute right-[-10%] top-[30%] h-[320px] w-[320px] rounded-full bg-accent/30 blur-[120px] sm:h-[380px] sm:w-[380px]" />
         </div>
-        <div className="mx-auto max-w-6xl px-6 pt-20 pb-24 text-center sm:pt-28 sm:pb-32">
-          <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/50 px-4 py-1.5 text-xs text-muted-foreground shadow-sm backdrop-blur">
-            <Sparkles className="h-3.5 w-3.5 text-primary" />
-            {c.hero.badge}
-          </div>
-          <h1 className="mx-auto mt-6 max-w-3xl text-4xl font-bold tracking-tight sm:text-6xl">
-            {c.hero.titleStart}{" "}
-            <span className="bg-gradient-to-r from-primary via-primary to-accent bg-clip-text text-transparent">
-              {c.hero.titleHighlight}
-            </span>
-          </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-base text-muted-foreground sm:text-lg">
-            {c.hero.subtitle}
-          </p>
-          <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Link to="/login" className="btn-brand inline-flex items-center gap-2 rounded-md px-6 py-3 text-sm font-semibold shadow-lg shadow-primary/20">
-              {c.hero.ctaPrimary} <ArrowRight className="h-4 w-4" />
-            </Link>
-            <Link to="/login" className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-6 py-3 text-sm font-semibold hover:bg-muted">
-              {c.hero.ctaSecondary}
-            </Link>
-          </div>
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-xs text-muted-foreground">
-            {c.hero.badges.map((b) => (
-              <span key={b} className="inline-flex items-center gap-1.5">
-                <Check className="h-3.5 w-3.5 text-primary" /> {b}
+        <div className="mx-auto grid max-w-6xl gap-10 px-4 pt-14 pb-16 sm:px-6 sm:pt-20 sm:pb-24 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-center lg:gap-14 lg:pt-24">
+          <div className="min-w-0 text-center lg:text-left">
+            <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/50 px-3 py-1.5 text-[11px] text-muted-foreground shadow-sm backdrop-blur sm:px-4 sm:text-xs">
+              <Sparkles className="h-3.5 w-3.5 shrink-0 text-primary" />
+              <span className="truncate">{c.hero.badge}</span>
+            </div>
+            <h1 className="mt-5 text-balance text-3xl font-bold leading-[1.1] tracking-tight sm:mt-6 sm:text-5xl lg:text-6xl">
+              {c.hero.titleStart}{" "}
+              <span className="bg-gradient-to-r from-primary via-primary to-accent bg-clip-text text-transparent">
+                {c.hero.titleHighlight}
               </span>
-            ))}
+            </h1>
+            <p className="mt-5 text-pretty text-sm leading-relaxed text-muted-foreground sm:mt-6 sm:text-base lg:text-lg">
+              {c.hero.subtitle}
+            </p>
+            <div className="mt-7 flex flex-wrap justify-center gap-3 sm:mt-8 lg:justify-start">
+              <Link to="/login" className="btn-brand inline-flex items-center gap-2 rounded-md px-5 py-2.5 text-sm font-semibold shadow-lg shadow-primary/20 sm:px-6 sm:py-3">
+                {c.hero.ctaPrimary} <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link to="/login" className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-5 py-2.5 text-sm font-semibold hover:bg-muted sm:px-6 sm:py-3">
+                {c.hero.ctaSecondary}
+              </Link>
+            </div>
+            {c.hero.badges.length > 0 && (
+              <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[11px] text-muted-foreground sm:gap-x-8 sm:text-xs lg:justify-start">
+                {c.hero.badges.map((b) => (
+                  <span key={b} className="inline-flex items-center gap-1.5">
+                    <Check className="h-3.5 w-3.5 shrink-0 text-primary" /> {b}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="relative mx-auto w-full max-w-md lg:max-w-none">
+            <div className="pointer-events-none absolute -inset-6 -z-10 rounded-[2rem] bg-gradient-to-tr from-primary/20 via-transparent to-accent/20 blur-2xl" />
+            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-card to-muted shadow-2xl shadow-primary/10 sm:aspect-[5/4] lg:aspect-[4/3]">
+              {banner ? (
+                <img
+                  src={banner}
+                  alt={c.hero.titleStart}
+                  loading="eager"
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="grid h-full w-full place-items-center p-6 text-center">
+                  <div className="space-y-3">
+                    <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-primary/10 text-primary">
+                      <Sparkles className="h-7 w-7" />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Hero banner add korte /admin/landing e jaan
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </section>
+
+
 
       <section id="features" className="border-t border-border/60 bg-muted/30">
         <div className="mx-auto max-w-6xl px-6 py-20">
