@@ -104,7 +104,7 @@ function RootResolver() {
         .maybeSingle();
       if (data) {
         setSiteName(data.site_name ?? "Reseller");
-        const lc = (data as { landing_content?: LandingContent }).landing_content;
+        const lc = (data as unknown as { landing_content?: LandingContent }).landing_content;
         if (lc) setContent(lc);
       }
       setChecking(false);
