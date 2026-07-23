@@ -77,7 +77,7 @@ export function ImageUploader({
             key={img.path}
             className="group relative h-24 w-24 overflow-hidden rounded-md border bg-muted"
           >
-            <img src={img.url} className="h-full w-full object-cover" alt="" />
+            <img src={img.url} className="h-full w-full object-contain" alt="" />
             <button
               type="button"
               onClick={() => remove(img)}
