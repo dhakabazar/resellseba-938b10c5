@@ -109,6 +109,36 @@ export type Database = {
           },
         ]
       }
+      courier_configs: {
+        Row: {
+          config: Json
+          created_at: string
+          display_name: string
+          id: string
+          is_active: boolean
+          provider: Database["public"]["Enums"]["courier_provider"]
+          updated_at: string
+        }
+        Insert: {
+          config?: Json
+          created_at?: string
+          display_name: string
+          id?: string
+          is_active?: boolean
+          provider: Database["public"]["Enums"]["courier_provider"]
+          updated_at?: string
+        }
+        Update: {
+          config?: Json
+          created_at?: string
+          display_name?: string
+          id?: string
+          is_active?: boolean
+          provider?: Database["public"]["Enums"]["courier_provider"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       global_settings: {
         Row: {
           accent_color: string | null
@@ -156,6 +186,53 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      marketing_configs: {
+        Row: {
+          access_token: string | null
+          created_at: string
+          extra: Json
+          id: string
+          is_active: boolean
+          pixel_id: string | null
+          platform: string
+          reseller_id: string | null
+          test_event_code: string | null
+          updated_at: string
+        }
+        Insert: {
+          access_token?: string | null
+          created_at?: string
+          extra?: Json
+          id?: string
+          is_active?: boolean
+          pixel_id?: string | null
+          platform: string
+          reseller_id?: string | null
+          test_event_code?: string | null
+          updated_at?: string
+        }
+        Update: {
+          access_token?: string | null
+          created_at?: string
+          extra?: Json
+          id?: string
+          is_active?: boolean
+          pixel_id?: string | null
+          platform?: string
+          reseller_id?: string | null
+          test_event_code?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_configs_reseller_id_fkey"
+            columns: ["reseller_id"]
+            isOneToOne: false
+            referencedRelation: "resellers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       order_items: {
         Row: {
@@ -350,6 +427,53 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "orders_reseller_id_fkey"
+            columns: ["reseller_id"]
+            isOneToOne: false
+            referencedRelation: "resellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_configs: {
+        Row: {
+          config: Json
+          created_at: string
+          id: string
+          instructions: string | null
+          is_active: boolean
+          label: string
+          method: Database["public"]["Enums"]["payment_method"]
+          mode: string
+          reseller_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          config?: Json
+          created_at?: string
+          id?: string
+          instructions?: string | null
+          is_active?: boolean
+          label: string
+          method: Database["public"]["Enums"]["payment_method"]
+          mode?: string
+          reseller_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          config?: Json
+          created_at?: string
+          id?: string
+          instructions?: string | null
+          is_active?: boolean
+          label?: string
+          method?: Database["public"]["Enums"]["payment_method"]
+          mode?: string
+          reseller_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_configs_reseller_id_fkey"
             columns: ["reseller_id"]
             isOneToOne: false
             referencedRelation: "resellers"
@@ -881,6 +1005,25 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_public_order: {
+        Args: {
+          _address_line: string
+          _area: Database["public"]["Enums"]["delivery_area"]
+          _city: string
+          _customer_email: string
+          _customer_name: string
+          _customer_phone: string
+          _items: Json
+          _landmark: string
+          _notes: string
+          _payment_method: Database["public"]["Enums"]["payment_method"]
+          _reseller_code: string
+        }
+        Returns: {
+          order_id: string
+          order_number: string
+        }[]
+      }
       current_reseller_id: { Args: never; Returns: string }
       has_role: {
         Args: {
@@ -890,6 +1033,15 @@ export type Database = {
         Returns: boolean
       }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      reseller_profit_summary: {
+        Args: { _reseller_id: string }
+        Returns: {
+          available: number
+          delivered_profit: number
+          paid_out: number
+          pending_payout: number
+        }[]
+      }
     }
     Enums: {
       app_role: "super_admin" | "reseller" | "leader" | "staff"
