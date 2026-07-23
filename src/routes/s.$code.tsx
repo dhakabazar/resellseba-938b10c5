@@ -2,6 +2,7 @@ import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, ShoppingBag } from "lucide-react";
+import { loadTrackingForReseller } from "@/lib/tracking";
 
 export const Route = createFileRoute("/s/$code")({
   component: StoreLayout,
