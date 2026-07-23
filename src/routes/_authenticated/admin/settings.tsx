@@ -22,6 +22,7 @@ function SettingsPage() {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [logo, setLogo] = useState<UploadedImage[]>([]);
+  const [favicon, setFavicon] = useState<UploadedImage[]>([]);
   const [og, setOg] = useState<UploadedImage[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
