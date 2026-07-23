@@ -92,7 +92,17 @@ function LandingEditor() {
         <F label="Trust badges (comma separated)">
           <I value={c.hero.badges.join(", ")} onChange={(v) => update((d) => { d.hero.badges = v.split(",").map(s => s.trim()).filter(Boolean); })} />
         </F>
+        <F label="Hero banner image (auto-compressed to WebP ≤200KB)">
+          <ImageUploader
+            bucket="branding"
+            folder="landing-hero"
+            value={c.hero.bannerImage ? [c.hero.bannerImage] : []}
+            onChange={(v) => update((d) => { d.hero.bannerImage = v[0] ?? null; })}
+            label="Upload banner"
+          />
+        </F>
       </Section>
+
 
       <Section title="Features section">
         <F label="Title"><I value={c.features.title} onChange={(v) => update((d) => { d.features.title = v; })} /></F>
