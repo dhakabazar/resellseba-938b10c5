@@ -134,13 +134,7 @@ function OrdersPage() {
               className="grid grid-cols-1 items-center gap-3 border-b px-4 py-3 text-sm last:border-b-0 md:grid-cols-[1fr_1.2fr_1fr_0.8fr_0.8fr_auto]"
             >
               <div>
-                <Link
-                  to="/reseller/orders/$id"
-                  params={{ id: o.id }}
-                  className="font-medium hover:underline"
-                >
-                  {o.order_number}
-                </Link>
+                <div className="font-medium">{o.order_number}</div>
                 <div className="text-xs text-muted-foreground">
                   {new Date(o.created_at).toLocaleDateString()}
                 </div>
