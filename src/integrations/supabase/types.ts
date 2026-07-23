@@ -248,6 +248,7 @@ export type Database = {
           contact_email: string | null
           contact_phone: string | null
           favicon_url: string | null
+          flagship_reseller_code: string | null
           id: number
           logo_url: string | null
           meta_description: string | null
@@ -263,6 +264,7 @@ export type Database = {
           contact_email?: string | null
           contact_phone?: string | null
           favicon_url?: string | null
+          flagship_reseller_code?: string | null
           id?: number
           logo_url?: string | null
           meta_description?: string | null
@@ -278,6 +280,7 @@ export type Database = {
           contact_email?: string | null
           contact_phone?: string | null
           favicon_url?: string | null
+          flagship_reseller_code?: string | null
           id?: number
           logo_url?: string | null
           meta_description?: string | null
