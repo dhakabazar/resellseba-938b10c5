@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LogOut, ChevronRight, ChevronDown, Menu, X } from "lucide-react";
+import { LogOut, ChevronRight, ChevronDown, Menu, X, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -61,42 +61,75 @@ export function AppShell({
     setMobileOpen(false);
   }, [currentPath]);
 
-  const sidebarInner = (
+  const [desktopCollapsed, setDesktopCollapsed] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem("appshell:collapsed") === "1";
+  });
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("appshell:collapsed", desktopCollapsed ? "1" : "0");
+    }
+  }, [desktopCollapsed]);
+
+  const renderSidebar = (collapsed: boolean) => (
     <>
-      <div className="flex min-h-24 items-center gap-3 border-b border-sidebar-border px-5 py-4">
+      <div className={cn("flex min-h-24 items-center gap-3 border-b border-sidebar-border py-4", collapsed ? "px-3 justify-center" : "px-5")}>
         {brand.logoUrl ? (
-          <img src={brand.logoUrl} alt={brand.name} className="h-12 max-w-28 shrink-0 object-contain" />
+          <img src={brand.logoUrl} alt={brand.name} className={cn("shrink-0 object-contain", collapsed ? "h-10 w-10" : "h-12 max-w-28")} />
         ) : (
-          <div className="grid h-14 w-14 shrink-0 place-items-center rounded-lg bg-gradient-to-br from-primary to-primary/70 text-xl font-bold text-primary-foreground">
+          <div className={cn("grid shrink-0 place-items-center rounded-lg bg-gradient-to-br from-primary to-primary/70 font-bold text-primary-foreground", collapsed ? "h-10 w-10 text-base" : "h-14 w-14 text-xl")}>
             {brand.name.charAt(0)}
           </div>
         )}
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-base font-semibold leading-tight text-sidebar-foreground">
-            {brand.name}
+        {!collapsed && (
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-base font-semibold leading-tight text-sidebar-foreground">
+              {brand.name}
+            </div>
+            {brand.sub && (
+              <div className="mt-0.5 truncate text-xs text-muted-foreground">{brand.sub}</div>
+            )}
           </div>
-          {brand.sub && (
-            <div className="mt-0.5 truncate text-xs text-muted-foreground">{brand.sub}</div>
-          )}
-        </div>
-        <button
-          type="button"
-          onClick={() => setMobileOpen(false)}
-          className="md:hidden rounded-md p-1.5 text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-          aria-label="Close menu"
-        >
-          <X className="h-5 w-5" />
-        </button>
+        )}
+        {!collapsed && (
+          <button
+            type="button"
+            onClick={() => setMobileOpen(false)}
+            className="md:hidden rounded-md p-1.5 text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            aria-label="Close menu"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        )}
       </div>
-      <nav className="flex-1 overflow-y-auto p-3">
+      <nav className={cn("flex-1 overflow-y-auto", collapsed ? "p-2" : "p-3")}>
         {nav.map((entry, idx) => {
           if (!isGroup(entry)) {
-            return <LeafLink key={entry.to} item={entry} />;
+            return <LeafLink key={entry.to} item={entry} collapsed={collapsed} />;
           }
-          const isOpen = openIdx === idx;
+          const isOpen = openIdx === idx && !collapsed;
           const hasActive = entry.items.some(
             (it) => currentPath === it.to || (!it.end && currentPath.startsWith(it.to + "/")),
           );
+          if (collapsed) {
+            return (
+              <button
+                key={entry.label}
+                type="button"
+                onClick={() => {
+                  setDesktopCollapsed(false);
+                  setOpenIdx(idx);
+                }}
+                title={entry.label}
+                className={cn(
+                  "mb-1 flex w-full items-center justify-center rounded-md p-2 text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                  hasActive && "bg-sidebar-accent/60 text-sidebar-accent-foreground",
+                )}
+              >
+                {entry.icon}
+              </button>
+            );
+          }
           return (
             <div key={entry.label} className="mb-1">
               <button
@@ -117,7 +150,7 @@ export function AppShell({
               {isOpen && (
                 <div className="mt-1 ml-4 border-l border-sidebar-border pl-2">
                   {entry.items.map((it) => (
-                    <LeafLink key={it.to} item={it} nested />
+                    <LeafLink key={it.to} item={it} nested collapsed={false} />
                   ))}
                 </div>
               )}
@@ -125,22 +158,28 @@ export function AppShell({
           );
         })}
       </nav>
-      <div className="border-t border-sidebar-border p-3">
-        <div className="mb-2 px-2">
-          <div className="truncate text-sm font-medium text-sidebar-foreground">
-            {user.name}
+      <div className={cn("border-t border-sidebar-border", collapsed ? "p-2" : "p-3")}>
+        {!collapsed && (
+          <div className="mb-2 px-2">
+            <div className="truncate text-sm font-medium text-sidebar-foreground">
+              {user.name}
+            </div>
+            <div className="truncate text-xs text-muted-foreground">{user.email}</div>
           </div>
-          <div className="truncate text-xs text-muted-foreground">{user.email}</div>
-        </div>
+        )}
         <Button
           variant="ghost"
+          title="Sign out"
           onClick={async () => {
             await supabase.auth.signOut();
             window.location.href = "/login";
           }}
-          className="flex w-full justify-start text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+          className={cn(
+            "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+            collapsed ? "w-full justify-center px-0" : "flex w-full justify-start",
+          )}
         >
-          <LogOut className="h-4 w-4" /> Sign out
+          <LogOut className="h-4 w-4" /> {!collapsed && "Sign out"}
         </Button>
       </div>
     </>
@@ -149,8 +188,13 @@ export function AppShell({
   return (
     <div className="min-h-screen bg-background">
       <div className="flex">
-        <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r bg-sidebar md:flex">
-          {sidebarInner}
+        <aside
+          className={cn(
+            "fixed inset-y-0 left-0 z-40 hidden flex-col border-r bg-sidebar transition-[width] duration-200 md:flex",
+            desktopCollapsed ? "w-16" : "w-64",
+          )}
+        >
+          {renderSidebar(desktopCollapsed)}
         </aside>
 
         {/* Mobile drawer */}
@@ -167,10 +211,10 @@ export function AppShell({
             mobileOpen ? "translate-x-0" : "-translate-x-full",
           )}
         >
-          {sidebarInner}
+          {renderSidebar(false)}
         </aside>
 
-        <main className="flex-1 md:ml-64">
+        <main className={cn("flex-1 transition-[margin] duration-200", desktopCollapsed ? "md:ml-16" : "md:ml-64")}>
           <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b bg-background/80 px-4 backdrop-blur md:px-6">
             <button
               type="button"
@@ -179,6 +223,15 @@ export function AppShell({
               aria-label="Open menu"
             >
               <Menu className="h-5 w-5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setDesktopCollapsed((v) => !v)}
+              className="hidden md:inline-flex -ml-1 rounded-md p-2 text-foreground hover:bg-muted"
+              aria-label={desktopCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              title={desktopCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            >
+              {desktopCollapsed ? <PanelLeftOpen className="h-5 w-5" /> : <PanelLeftClose className="h-5 w-5" />}
             </button>
             <h1 className="flex-1 truncate text-lg font-semibold tracking-tight">{title}</h1>
             {headerRight}
@@ -190,7 +243,20 @@ export function AppShell({
   );
 }
 
-function LeafLink({ item, nested = false }: { item: NavItem; nested?: boolean }) {
+function LeafLink({ item, nested = false, collapsed = false }: { item: NavItem; nested?: boolean; collapsed?: boolean }) {
+  if (collapsed) {
+    return (
+      <Link
+        to={item.to}
+        activeOptions={{ exact: item.end }}
+        title={item.label}
+        className="mb-1 flex items-center justify-center rounded-md p-2 text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+        activeProps={{ className: "bg-sidebar-accent text-sidebar-accent-foreground" }}
+      >
+        {item.icon}
+      </Link>
+    );
+  }
   return (
     <Link
       to={item.to}
