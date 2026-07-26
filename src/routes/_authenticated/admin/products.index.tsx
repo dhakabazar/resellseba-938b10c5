@@ -315,17 +315,21 @@ function ProductsPage() {
                           )}
                         </div>
                         <div className="min-w-0">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <Link
-                              to="/admin/products/$id/edit"
-                              params={{ id: p.id }}
-                              className="font-medium hover:underline"
-                            >
-                              {p.name}
-                            </Link>
-                            <span className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                          <div className="font-medium truncate">{p.name}</div>
+                          <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[10px] text-muted-foreground">
+                            <span className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 font-medium">
                               ID: {p.product_code}
                             </span>
+                            {p.brand_id && brands.find((b) => b.id === p.brand_id) && (
+                              <span className="inline-flex items-center rounded bg-muted px-1.5 py-0.5">
+                                {brands.find((b) => b.id === p.brand_id)!.name}
+                              </span>
+                            )}
+                            {p.category_id && categories.find((c) => c.id === p.category_id) && (
+                              <span className="inline-flex items-center rounded bg-muted px-1.5 py-0.5">
+                                {categories.find((c) => c.id === p.category_id)!.name}
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>
