@@ -885,7 +885,7 @@ export type Database = {
           name: string
           og_image_url?: string | null
           packaging_cost?: number
-          product_code: string
+          product_code?: string
           reseller_price?: number
           short_description?: string | null
           sku?: string | null

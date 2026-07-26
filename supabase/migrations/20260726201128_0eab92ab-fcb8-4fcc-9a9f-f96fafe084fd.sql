@@ -1,0 +1,1 @@
+ALTER TABLE public.products ALTER COLUMN product_code SET DEFAULT public.generate_product_code();
