@@ -259,10 +259,10 @@ function EditProduct() {
         <div className="surface-card p-6">
           <h3 className="mb-1 text-sm font-semibold">Pricing & delivery</h3>
           <p className="mb-4 text-xs text-muted-foreground">
-            <b>Buying price</b> = apnar (SA) kena dam. <b>Reseller price</b> = reseller ke jei dame den.
+            <b>Buying price</b> = admin's purchase cost. <b>Reseller price</b> = the price you give resellers.
           </p>
           <div className="grid gap-3 md:grid-cols-3">
-            <Field label="Buying price / SA cost (৳)" required>
+            <Field label="Buying price / Admin cost (৳)" required>
               <input required type="number" min={0} value={buying} onChange={(e) => setBuying(e.target.value)} className={inputCls} />
             </Field>
             <Field label="Reseller price (৳)" required>
