@@ -189,7 +189,7 @@ function ProductsPage() {
               <thead className="bg-muted text-left text-xs uppercase text-muted-foreground">
                 <tr>
                   <th className="px-4 py-3">Product</th>
-                  <th className="px-4 py-3">Buy</th>
+                  <th className="px-4 py-3">Admin cost</th>
                   <th className="px-4 py-3">Reseller</th>
                   <th className="px-4 py-3">Suggested</th>
                   <th className="px-4 py-3">Stock</th>
