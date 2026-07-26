@@ -87,33 +87,37 @@ export function Pagination({
   total: number;
   onPage: (p: number) => void;
 }) {
-  const pages = Math.max(1, Math.ceil(total / perPage));
-  const from = total === 0 ? 0 : (page - 1) * perPage + 1;
-  const to = Math.min(page * perPage, total);
+  const showAll = perPage <= 0;
+  const effectivePer = showAll ? Math.max(total, 1) : perPage;
+  const pages = Math.max(1, Math.ceil(total / effectivePer));
+  const from = total === 0 ? 0 : showAll ? 1 : (page - 1) * perPage + 1;
+  const to = showAll ? total : Math.min(page * perPage, total);
   return (
     <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
       <span>
         {from}–{to} of {total}
       </span>
-      <div className="flex items-center gap-1">
-        <button
-          onClick={() => onPage(Math.max(1, page - 1))}
-          disabled={page <= 1}
-          className="inline-flex items-center rounded-md border px-2 py-1 disabled:opacity-40"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </button>
-        <span className="px-2">
-          {page} / {pages}
-        </span>
-        <button
-          onClick={() => onPage(Math.min(pages, page + 1))}
-          disabled={page >= pages}
-          className="inline-flex items-center rounded-md border px-2 py-1 disabled:opacity-40"
-        >
-          <ChevronRight className="h-4 w-4" />
-        </button>
-      </div>
+      {!showAll && (
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => onPage(Math.max(1, page - 1))}
+            disabled={page <= 1}
+            className="inline-flex items-center rounded-md border px-2 py-1 disabled:opacity-40"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <span className="px-2">
+            {page} / {pages}
+          </span>
+          <button
+            onClick={() => onPage(Math.min(pages, page + 1))}
+            disabled={page >= pages}
+            className="inline-flex items-center rounded-md border px-2 py-1 disabled:opacity-40"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+      )}
     </div>
   );
 }
