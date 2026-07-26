@@ -855,10 +855,10 @@ export type Database = {
           keywords: string | null
           meta_description: string | null
           meta_title: string | null
-          min_selling_price: number
           name: string
           og_image_url: string | null
           packaging_cost: number
+          reseller_price: number
           short_description: string | null
           sku: string | null
           slug: string
@@ -881,10 +881,10 @@ export type Database = {
           keywords?: string | null
           meta_description?: string | null
           meta_title?: string | null
-          min_selling_price?: number
           name: string
           og_image_url?: string | null
           packaging_cost?: number
+          reseller_price?: number
           short_description?: string | null
           sku?: string | null
           slug: string
@@ -907,10 +907,10 @@ export type Database = {
           keywords?: string | null
           meta_description?: string | null
           meta_title?: string | null
-          min_selling_price?: number
           name?: string
           og_image_url?: string | null
           packaging_cost?: number
+          reseller_price?: number
           short_description?: string | null
           sku?: string | null
           slug?: string
