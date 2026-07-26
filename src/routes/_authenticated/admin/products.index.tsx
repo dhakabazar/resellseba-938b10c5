@@ -135,13 +135,6 @@ function ProductsPage() {
 
   const paged = usePaginated(filtered, page, perPage);
 
-  const brandMap = useMemo(() => {
-    return Object.fromEntries(brands.map((b) => [b.id, b.name]));
-  }, [brands]);
-
-  const categoryMap = useMemo(() => {
-    return Object.fromEntries(categories.map((c) => [c.id, c.name]));
-  }, [categories]);
 
   const filters: FilterDef[] = [
     {
@@ -262,7 +255,7 @@ function ProductsPage() {
             <table className="w-full text-sm">
               <thead className="bg-muted text-left text-xs uppercase text-muted-foreground">
                 <tr>
-                  <th className="px-3 py-3 w-8">
+                  <th className="w-8 px-2 py-3">
                     <button
                       type="button"
                       onClick={() => {
@@ -285,21 +278,19 @@ function ProductsPage() {
                       )}
                     </button>
                   </th>
-                  <th className="px-4 py-3 min-w-[320px]">Product</th>
-                  <th className="px-4 py-3">Brand</th>
-                  <th className="px-4 py-3">Category</th>
-                  <th className="px-4 py-3">Admin cost</th>
-                  <th className="px-4 py-3">Reseller</th>
-                  <th className="px-4 py-3">Suggested</th>
-                  <th className="px-4 py-3">Stock</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3 text-right">Actions</th>
+                  <th className="min-w-[240px] px-3 py-3">Product</th>
+                  <th className="px-3 py-3">Admin cost</th>
+                  <th className="px-3 py-3">Reseller</th>
+                  <th className="px-3 py-3">Suggested</th>
+                  <th className="px-3 py-3">Stock</th>
+                  <th className="px-3 py-3">Status</th>
+                  <th className="px-3 py-3 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
                 {paged.map((p) => (
                   <tr key={p.id} className={`hover:bg-muted/50 ${selected.has(p.id) ? "bg-primary/5" : ""}`}>
-                    <td className="px-3 py-3">
+                    <td className="px-2 py-3">
                       <button
                         type="button"
                         onClick={() =>
@@ -316,34 +307,36 @@ function ProductsPage() {
                         {selected.has(p.id) ? <CheckSquare className="h-4 w-4 text-primary" /> : <Square className="h-4 w-4" />}
                       </button>
                     </td>
-                    <td className="px-4 py-3 min-w-[320px]">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 overflow-hidden rounded-md border bg-muted">
+                    <td className="min-w-[240px] px-3 py-3">
+                      <div className="flex items-center gap-2">
+                        <div className="h-10 w-10 shrink-0 overflow-hidden rounded-md border bg-muted">
                           {p.og_image_url && (
                             <img src={p.og_image_url} className="h-full w-full object-cover" alt="" />
                           )}
                         </div>
-                        <div>
-                          <Link
-                            to="/admin/products/$id/edit"
-                            params={{ id: p.id }}
-                            className="font-medium hover:underline"
-                          >
-                            {p.name}
-                          </Link>
-                          <div className="text-xs text-muted-foreground">ID: {p.product_code}</div>
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Link
+                              to="/admin/products/$id/edit"
+                              params={{ id: p.id }}
+                              className="font-medium hover:underline"
+                            >
+                              {p.name}
+                            </Link>
+                            <span className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                              ID: {p.product_code}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-muted-foreground">{brandMap[p.brand_id ?? ""] || "—"}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{categoryMap[p.category_id ?? ""] || "—"}</td>
-                    <td className="px-4 py-3">৳{p.buying_price}</td>
-                    <td className="px-4 py-3">৳{p.reseller_price}</td>
-                    <td className="px-4 py-3">৳{p.suggested_price}</td>
-                    <td className="px-4 py-3">
+                    <td className="px-3 py-3">৳{p.buying_price}</td>
+                    <td className="px-3 py-3">৳{p.reseller_price}</td>
+                    <td className="px-3 py-3">৳{p.suggested_price}</td>
+                    <td className="px-3 py-3">
                       <StockCell row={p} onSaved={(v) => setItems((s) => s.map((i) => (i.id === p.id ? { ...i, stock: v } : i)))} />
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-3 py-3">
                       <span
                         className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium ${
                           p.is_active
@@ -355,7 +348,7 @@ function ProductsPage() {
                         {p.is_active ? "Active" : "Hidden"}
                       </span>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-3 py-3">
                       <div className="flex justify-end">
                         <ActionMenu>
                           <DropdownMenuItem onSelect={() => nav({ to: "/admin/products/$id/edit", params: { id: p.id } })}>
