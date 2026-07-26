@@ -111,18 +111,16 @@ function CatalogPage() {
     <div>
       <PageHeader
         title="Catalog"
-        description={
-          <span className="inline-flex items-center gap-1.5">
-            আপনার কস্ট = <b>product price + packaging</b>। ডেলিভারি চার্জ কাস্টমার আলাদা দেবে।
-            <Hint side="bottom">
-              <b>কীভাবে টাকা কাটবে?</b><br />
-              প্রতি অর্ডারে এডমিন কাটবে: <b>(reseller price + packaging) × quantity</b> + কুরিয়ার এর ডেলিভারি চার্জ।
-              একাধিক প্রোডাক্ট থাকলে ডেলিভারি চার্জ সর্বোচ্চটা <b>একবার</b> ধরা হবে (highest wins)।
-              বাকি টাকা আপনার profit।
-            </Hint>
-          </span>
-        }
+        description="আপনার কস্ট = product price + packaging। ডেলিভারি চার্জ কাস্টমার আলাদা দেবে।"
       />
+      <div className="-mt-4 mb-4 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+        কীভাবে টাকা কাটবে?
+        <Hint side="bottom">
+          প্রতি অর্ডারে এডমিন কাটবে: <b>(reseller price + packaging) × quantity</b> + কুরিয়ার এর ডেলিভারি চার্জ।
+          একাধিক প্রোডাক্ট থাকলে ডেলিভারি চার্জ সর্বোচ্চটা <b>একবার</b> ধরা হবে (highest wins)।
+          বাকি টাকা আপনার profit।
+        </Hint>
+      </div>
       {items.length === 0 ? (
         <EmptyState title="Catalog is empty" description="Admin product add korle ekhane dekhabe." />
       ) : (
