@@ -16,7 +16,6 @@ import { DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdow
 type Row = {
   id: string;
   name: string;
-  slug: string;
   buying_price: number;
   reseller_price: number;
   suggested_price: number;
@@ -53,7 +52,7 @@ function ProductsPage() {
     const [{ data: p }, { data: b }, { data: c }] = await Promise.all([
       supabase
         .from("products")
-        .select("id,name,slug,buying_price,reseller_price,suggested_price,stock,is_active,og_image_url,brand_id,category_id")
+        .select("id,name,buying_price,reseller_price,suggested_price,stock,is_active,og_image_url,brand_id,category_id")
         .order("created_at", { ascending: false }),
       supabase.from("brands").select("id,name").order("name"),
       supabase.from("categories").select("id,name").order("name"),
@@ -88,7 +87,7 @@ function ProductsPage() {
     return items.filter((i) => {
       if (q) {
         const t = q.toLowerCase();
-        if (!i.name.toLowerCase().includes(t) && !i.slug.includes(t)) return false;
+        if (!i.name.toLowerCase().includes(t) && !i.id.toLowerCase().includes(t)) return false;
       }
       if (brand && i.brand_id !== brand) return false;
       if (category && i.category_id !== category) return false;
@@ -102,6 +101,14 @@ function ProductsPage() {
   }, [items, q, brand, category, status, stockFilter]);
 
   const paged = usePaginated(filtered, page, perPage);
+
+  const brandMap = useMemo(() => {
+    return Object.fromEntries(brands.map((b) => [b.id, b.name]));
+  }, [brands]);
+
+  const categoryMap = useMemo(() => {
+    return Object.fromEntries(categories.map((c) => [c.id, c.name]));
+  }, [categories]);
 
   const filters: FilterDef[] = [
     {
@@ -159,7 +166,7 @@ function ProductsPage() {
       <DataToolbar
         search={q}
         onSearch={setQ}
-        searchPlaceholder="Search by name or slug…"
+        searchPlaceholder="Search by name or ID…"
         filters={filters}
         perPage={perPage}
         onPerPage={setPerPage}
@@ -189,6 +196,8 @@ function ProductsPage() {
               <thead className="bg-muted text-left text-xs uppercase text-muted-foreground">
                 <tr>
                   <th className="px-4 py-3">Product</th>
+                  <th className="px-4 py-3">Brand</th>
+                  <th className="px-4 py-3">Category</th>
                   <th className="px-4 py-3">Admin cost</th>
                   <th className="px-4 py-3">Reseller</th>
                   <th className="px-4 py-3">Suggested</th>
@@ -215,10 +224,12 @@ function ProductsPage() {
                           >
                             {p.name}
                           </Link>
-                          <div className="text-xs text-muted-foreground">/{p.slug}</div>
+                          <div className="text-xs text-muted-foreground">ID: {p.id.slice(0, 8)}</div>
                         </div>
                       </div>
                     </td>
+                    <td className="px-4 py-3 text-muted-foreground">{brandMap[p.brand_id ?? ""] || "—"}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{categoryMap[p.category_id ?? ""] || "—"}</td>
                     <td className="px-4 py-3">৳{p.buying_price}</td>
                     <td className="px-4 py-3">৳{p.reseller_price}</td>
                     <td className="px-4 py-3">৳{p.suggested_price}</td>
