@@ -102,6 +102,14 @@ function ProductsPage() {
 
   const paged = usePaginated(filtered, page, perPage);
 
+  const brandMap = useMemo(() => {
+    return Object.fromEntries(brands.map((b) => [b.id, b.name]));
+  }, [brands]);
+
+  const categoryMap = useMemo(() => {
+    return Object.fromEntries(categories.map((c) => [c.id, c.name]));
+  }, [categories]);
+
   const filters: FilterDef[] = [
     {
       key: "brand",
