@@ -316,7 +316,7 @@ function ProductsPage() {
                         {selected.has(p.id) ? <CheckSquare className="h-4 w-4 text-primary" /> : <Square className="h-4 w-4" />}
                       </button>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 min-w-[320px]">
                       <div className="flex items-center gap-3">
                         <div className="h-10 w-10 overflow-hidden rounded-md border bg-muted">
                           {p.og_image_url && (
