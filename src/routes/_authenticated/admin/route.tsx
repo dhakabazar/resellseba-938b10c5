@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { AppShell, type NavEntry } from "@/components/AppShell";
 import { useAuth } from "@/lib/use-auth";
+import { useBrandingTheme } from "@/lib/branding";
 import { Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin")({
