@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/use-auth";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
 import { Loader2, Plus, Check } from "lucide-react";
 import { toast } from "sonner";
+import { Hint } from "@/components/Hint";
 
 type P = {
   id: string;
@@ -69,10 +70,10 @@ function CatalogPage() {
   async function addListing() {
     if (!selected || !resellerId) return;
     const priceNum = Number(price);
-    // Reseller's minimum sell = reseller_price + packaging + delivery_inside
-    const minPrice = selected.reseller_price + selected.packaging_cost + selected.delivery_inside;
+    // Reseller's minimum sell = reseller_price + packaging (delivery is separate, charged to customer)
+    const minPrice = selected.reseller_price + selected.packaging_cost;
     if (priceNum < minPrice) {
-      toast.error(`Selling price minimum ৳${minPrice} hote hobe (product + packaging + delivery).`);
+      toast.error(`Selling price minimum ৳${minPrice} hote hobe (product + packaging). Delivery customer alada dibe.`);
       return;
     }
     setBusy(true);
@@ -103,21 +104,29 @@ function CatalogPage() {
     ? priceNum - selected.reseller_price - selected.packaging_cost
     : 0;
   const minSell = selected
-    ? selected.reseller_price + selected.packaging_cost + selected.delivery_inside
+    ? selected.reseller_price + selected.packaging_cost
     : 0;
 
   return (
     <div>
       <PageHeader
         title="Catalog"
-        description="Product price + packaging + delivery — ei 3ta niye apnar total cost. Ekhan theke selling price bosiye listing korun."
+        description="আপনার কস্ট = product price + packaging। ডেলিভারি চার্জ কাস্টমার আলাদা দেবে।"
       />
+      <div className="-mt-4 mb-4 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+        কীভাবে টাকা কাটবে?
+        <Hint side="bottom">
+          প্রতি অর্ডারে এডমিন কাটবে: <b>(reseller price + packaging) × quantity</b> + কুরিয়ার এর ডেলিভারি চার্জ।
+          একাধিক প্রোডাক্ট থাকলে ডেলিভারি চার্জ সর্বোচ্চটা <b>একবার</b> ধরা হবে (highest wins)।
+          বাকি টাকা আপনার profit।
+        </Hint>
+      </div>
       {items.length === 0 ? (
         <EmptyState title="Catalog is empty" description="Admin product add korle ekhane dekhabe." />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {items.map((p) => {
-            const totalCost = p.reseller_price + p.packaging_cost + p.delivery_inside;
+            const myCost = p.reseller_price + p.packaging_cost;
             const isListed = listed.has(p.id);
             return (
               <div key={p.id} className="surface-card overflow-hidden">
@@ -129,7 +138,10 @@ function CatalogPage() {
                 <div className="p-4">
                   <div className="truncate text-sm font-medium">{p.name}</div>
                   <div className="mt-1 text-xs text-muted-foreground">
-                    Product ৳{p.reseller_price} + Pack ৳{p.packaging_cost} + Del ৳{p.delivery_inside} = <b>৳{totalCost}</b>
+                    Product ৳{p.reseller_price} + Pack ৳{p.packaging_cost} = <b>৳{myCost}</b> (your cost)
+                  </div>
+                  <div className="mt-1 text-xs text-muted-foreground">
+                    Delivery ৳{p.delivery_inside} (in) / ৳{p.delivery_outside} (out) · customer pays
                   </div>
                   <div className="mt-1 text-xs text-muted-foreground">
                     Suggested ৳{p.suggested_price} · Stock {p.stock}
@@ -163,20 +175,19 @@ function CatalogPage() {
             <div className="mt-4 space-y-2 text-sm text-muted-foreground">
               <Row label="Product price" value={`৳${selected.reseller_price}`} />
               <Row label="Packaging" value={`৳${selected.packaging_cost}`} />
-              <Row label="Delivery (inside Dhaka)" value={`৳${selected.delivery_inside}`} />
-              <Row label="Delivery (outside Dhaka)" value={`৳${selected.delivery_outside}`} />
               <div className="border-t pt-2">
-                <Row
-                  label="Base cost (inside Dhaka)"
-                  value={`৳${minSell}`}
-                  strong
-                />
+                <Row label="Your cost (admin কাটবে)" value={`৳${minSell}`} strong />
               </div>
-              <p className="text-xs">Ei tin ta miliye apnar cost — ei theke kom e sell kora jabe na.</p>
+              <Row label="Delivery inside Dhaka" value={`৳${selected.delivery_inside}`} />
+              <Row label="Delivery outside Dhaka" value={`৳${selected.delivery_outside}`} />
+              <p className="text-xs">
+                ডেলিভারি চার্জ কাস্টমার আলাদা দেবে (কুরিয়ার এ যায়)। একাধিক প্রোডাক্টে সর্বোচ্চটা একবার প্রযোজ্য।
+              </p>
             </div>
             <div className="mt-4">
-              <label className="mb-1 block text-xs font-medium">
-                Apnar selling price (minimum ৳{minSell})
+              <label className="mb-1 flex items-center gap-1 text-xs font-medium">
+                Your selling price (minimum ৳{minSell})
+                <Hint>এই দাম কাস্টমার প্রোডাক্ট এর জন্য দেবে। ডেলিভারি এর উপরে যোগ হবে।</Hint>
               </label>
               <input
                 type="number"
@@ -189,10 +200,10 @@ function CatalogPage() {
                 <p className="mt-2 text-xs">
                   Selling ৳{priceNum} − Product ৳{selected.reseller_price} − Packaging ৳{selected.packaging_cost} ={" "}
                   <span className={`font-semibold ${profit >= 0 ? "text-success" : "text-destructive"}`}>
-                    ৳{profit} profit / order
+                    ৳{profit} profit / unit
                   </span>
                   <br />
-                  <span className="text-muted-foreground">Delivery charge customer theke alada ashe.</span>
+                  <span className="text-muted-foreground">Delivery customer theke alada, courier e jai.</span>
                 </p>
               )}
             </div>

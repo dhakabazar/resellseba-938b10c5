@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { ImageUploader, type UploadedImage } from "@/components/ImageUploader";
 import { RichTextEditor } from "@/components/RichTextEditor";
 import { uniqueProductSlug } from "@/lib/slug";
+import { Hint } from "@/components/Hint";
 
 export const Route = createFileRoute("/_authenticated/admin/products/new")({
   component: NewProduct,
@@ -46,21 +47,23 @@ function NewProduct() {
     const di = Number(deliveryIn) || 0;
     const dOut = Number(deliveryOut) || 0;
     const sug = Number(suggested) || 0;
-    const saProfit = rp - buy; // SA earns per unit from reseller
-    const resellerBaseIn = rp + pkg + di; // reseller's minimum sell (inside dhaka)
+    const saProfit = rp - buy;
+    // Reseller's minimum sell = reseller_price + packaging (delivery is charged separately to customer)
+    const resellerMinSell = rp + pkg;
+    const resellerBaseIn = rp + pkg + di; // total customer cost inside dhaka (for reference)
     const resellerBaseOut = rp + pkg + dOut;
-    const resellerProfitAtSuggestedIn = sug - rp - pkg; // delivery goes to SA
-    return { saProfit, resellerBaseIn, resellerBaseOut, resellerProfitAtSuggestedIn };
+    const resellerProfitAtSuggested = sug - rp - pkg;
+    return { saProfit, resellerMinSell, resellerBaseIn, resellerBaseOut, resellerProfitAtSuggested };
   }, [buying, resellerPrice, packaging, deliveryIn, deliveryOut, suggested]);
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
     if (Number(resellerPrice) < Number(buying)) {
-      toast.error("Reseller price buying price er theke kom hote parbe na.");
+      toast.error("Reseller price cannot be less than buying price.");
       return;
     }
-    if (Number(suggested) < calc.resellerBaseIn) {
-      toast.error(`Suggested sell reseller er base cost ৳${calc.resellerBaseIn} er theke kom.`);
+    if (Number(suggested) < calc.resellerMinSell) {
+      toast.error(`Suggested sell price must be ≥ ৳${calc.resellerMinSell} (reseller price + packaging).`);
       return;
     }
     setBusy(true);
@@ -161,53 +164,71 @@ function NewProduct() {
         </div>
 
         <div className="surface-card p-6">
-          <h3 className="mb-1 text-sm font-semibold">Pricing & delivery</h3>
+          <h3 className="mb-1 flex items-center gap-1.5 text-sm font-semibold">
+            Pricing & delivery
+            <Hint side="right">
+              <b>Buying</b> = আপনার কেনা দাম। <b>Reseller price</b> = রিসেলারকে যে দামে দিচ্ছেন।{" "}
+              <b>Packaging</b> = প্যাকেট খরচ। <b>Delivery</b> = কুরিয়ার চার্জ, কাস্টমার আলাদা দেয়।
+              রিসেলার মিনিমাম বিক্রি করবে <b>reseller price + packaging</b>, ডেলিভারি এর উপরে।
+            </Hint>
+          </h3>
           <p className="mb-4 text-xs text-muted-foreground">
             <b>Buying price</b> = admin's purchase cost. <b>Reseller price</b> = the price you give resellers — resellers see this as the product price.
           </p>
           <div className="grid gap-3 md:grid-cols-3">
-            <Field label="Buying price / Admin cost (৳)" required>
+            <Field label="Buying price / Admin cost (৳)" required hint="আপনার (Admin) নিজের কেনা মূল্য। রিসেলার এটা দেখবে না।">
               <input required type="number" min={0} value={buying} onChange={(e) => setBuying(e.target.value)} className={inputCls} />
             </Field>
-            <Field label="Reseller price (৳)" required>
+            <Field label="Reseller price (৳)" required hint="রিসেলার এই দামটাই product price হিসেবে দেখবে। এর নিচে বিক্রি করা যাবে না।">
               <input required type="number" min={0} value={resellerPrice} onChange={(e) => setResellerPrice(e.target.value)} className={inputCls} />
             </Field>
-            <Field label="Packaging cost (৳)">
+            <Field label="Packaging cost (৳)" hint="প্রতি অর্ডারে প্যাকেজিং খরচ। রিসেলার এর কাছ থেকে এই টাকা কাটা হবে।">
               <input type="number" min={0} value={packaging} onChange={(e) => setPackaging(e.target.value)} className={inputCls} />
             </Field>
-            <Field label="Delivery inside Dhaka (৳)">
+            <Field label="Delivery inside Dhaka (৳)" hint="ঢাকার ভেতরে কুরিয়ার চার্জ। কাস্টমার আলাদা দেবে। একাধিক প্রোডাক্ট থাকলে সর্বোচ্চ ডেলিভারি চার্জ একবার প্রযোজ্য।">
               <input type="number" min={0} value={deliveryIn} onChange={(e) => setDeliveryIn(e.target.value)} className={inputCls} />
             </Field>
-            <Field label="Delivery outside Dhaka (৳)">
+            <Field label="Delivery outside Dhaka (৳)" hint="ঢাকার বাইরে কুরিয়ার চার্জ। কাস্টমার আলাদা দেবে।">
               <input type="number" min={0} value={deliveryOut} onChange={(e) => setDeliveryOut(e.target.value)} className={inputCls} />
             </Field>
             <Field label="Stock">
               <input type="number" min={0} value={stock} onChange={(e) => setStock(e.target.value)} className={inputCls} />
             </Field>
-            <Field label="Suggested sell price (৳)" required>
+            <Field label="Suggested sell price (৳)" required hint="রিসেলারকে সাজেস্ট করা বিক্রয়মূল্য। অবশ্যই reseller price + packaging এর সমান বা বেশি হতে হবে।">
               <input required type="number" min={0} value={suggested} onChange={(e) => setSuggested(e.target.value)} className={inputCls} />
             </Field>
           </div>
 
           <div className="mt-5 grid gap-3 md:grid-cols-2">
             <div className="rounded-lg border bg-muted/30 p-4 text-sm">
-              <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Admin calculation</div>
+              <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase text-muted-foreground">
+                Admin calculation
+                <Hint>প্রতি ইউনিটে আপনার লাভ = reseller price − buying price।</Hint>
+              </div>
               <Row label="Reseller price" value={`৳${Number(resellerPrice) || 0}`} />
               <Row label="− Buying price" value={`৳${Number(buying) || 0}`} />
               <Row label="Admin profit / unit" value={`৳${calc.saProfit}`} strong success={calc.saProfit >= 0} />
             </div>
             <div className="rounded-lg border bg-muted/30 p-4 text-sm">
-              <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Reseller calculation (inside Dhaka)</div>
+              <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase text-muted-foreground">
+                Reseller calculation
+                <Hint>
+                  রিসেলার এর মূল কস্ট = reseller price + packaging। এই দুইটাই এডমিন কাটবে।
+                  ডেলিভারি চার্জ কাস্টমার আলাদা দেয়, সেটা কুরিয়ার এ যায়।
+                </Hint>
+              </div>
               <Row label="Product (reseller price)" value={`৳${Number(resellerPrice) || 0}`} />
               <Row label="+ Packaging" value={`৳${Number(packaging) || 0}`} />
-              <Row label="+ Delivery" value={`৳${Number(deliveryIn) || 0}`} />
-              <Row label="Reseller base cost" value={`৳${calc.resellerBaseIn}`} strong />
+              <Row label="Reseller min sell price" value={`৳${calc.resellerMinSell}`} strong />
+              <div className="mt-2 border-t pt-2 text-xs text-muted-foreground">
+                Customer pays (inside Dhaka): ৳{calc.resellerBaseIn} · outside: ৳{calc.resellerBaseOut}
+              </div>
               <div className="mt-2 border-t pt-2">
                 <Row
-                  label={`Suggested (৳${Number(suggested) || 0}) hole profit`}
-                  value={`৳${calc.resellerProfitAtSuggestedIn}`}
+                  label={`At suggested ৳${Number(suggested) || 0} → profit`}
+                  value={`৳${calc.resellerProfitAtSuggested}`}
                   strong
-                  success={calc.resellerProfitAtSuggestedIn >= 0}
+                  success={calc.resellerProfitAtSuggested >= 0}
                 />
               </div>
             </div>
@@ -253,14 +274,15 @@ const inputCls =
   "w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring";
 
 function Field({
-  label, children, required,
+  label, children, required, hint,
 }: {
-  label: string; children: React.ReactNode; required?: boolean;
+  label: string; children: React.ReactNode; required?: boolean; hint?: React.ReactNode;
 }) {
   return (
     <div>
-      <label className="mb-1 block text-xs font-medium">
+      <label className="mb-1 flex items-center gap-1 text-xs font-medium">
         {label} {required && <span className="text-destructive">*</span>}
+        {hint && <Hint>{hint}</Hint>}
       </label>
       {children}
     </div>

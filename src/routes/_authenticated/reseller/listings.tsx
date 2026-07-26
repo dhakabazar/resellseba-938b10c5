@@ -77,7 +77,7 @@ function ListingsPage() {
       ) : (
         <div className="surface-card divide-y">
           {items.map((l) => {
-            const cost = (l.products?.reseller_price ?? 0) + (l.products?.packaging_cost ?? 0) + (l.products?.delivery_inside ?? 0);
+            const cost = (l.products?.reseller_price ?? 0) + (l.products?.packaging_cost ?? 0);
             const profit = l.selling_price - cost;
             return (
               <div key={l.id} className="flex flex-wrap items-center gap-4 p-4">
@@ -89,7 +89,7 @@ function ListingsPage() {
                 <div className="min-w-0 flex-1">
                   <div className="truncate font-medium">{l.products?.name}</div>
                   <div className="text-xs text-muted-foreground">
-                    Sell ৳{l.selling_price} · Cost ৳{cost} ·{" "}
+                    Sell ৳{l.selling_price} · Cost ৳{cost} (product + packaging) ·{" "}
                     <span className="text-success">Profit ৳{profit}</span>
                   </div>
                 </div>
