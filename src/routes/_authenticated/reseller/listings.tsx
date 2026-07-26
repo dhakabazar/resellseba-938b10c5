@@ -13,7 +13,7 @@ type L = {
   products: {
     name: string;
     slug: string;
-    buying_price: number;
+    reseller_price: number;
     packaging_cost: number;
     delivery_inside: number;
     og_image_url: string | null;
