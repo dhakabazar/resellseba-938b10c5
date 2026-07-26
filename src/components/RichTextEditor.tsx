@@ -45,7 +45,13 @@ export function RichTextEditor({
   const fileRef = useRef<HTMLInputElement>(null);
   const editor = useEditor({
     extensions: [
-      StarterKit.configure({ heading: { levels: [2, 3] } }),
+      StarterKit.configure({
+        heading: { levels: [2, 3], HTMLAttributes: { class: "font-semibold" } },
+        bulletList: { HTMLAttributes: { class: "list-disc pl-6 my-2" } },
+        orderedList: { HTMLAttributes: { class: "list-decimal pl-6 my-2" } },
+        listItem: { HTMLAttributes: { class: "my-1" } },
+        blockquote: { HTMLAttributes: { class: "border-l-4 border-muted pl-3 italic my-2" } },
+      }),
       Image.configure({ HTMLAttributes: { class: "rounded-md my-2 max-w-full h-auto" } }),
       Link.configure({ openOnClick: false, HTMLAttributes: { class: "text-primary underline" } }),
     ],
@@ -53,7 +59,7 @@ export function RichTextEditor({
     editorProps: {
       attributes: {
         class:
-          "prose prose-sm max-w-none min-h-[220px] px-3 py-3 focus:outline-none dark:prose-invert",
+          "max-w-none min-h-[220px] px-3 py-3 focus:outline-none text-sm leading-relaxed",
       },
     },
     onUpdate: ({ editor }) => onChange(editor.getHTML()),
