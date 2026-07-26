@@ -149,6 +149,52 @@ function CatalogPage() {
     setSelected(null);
   }
 
+  async function bulkList() {
+    if (!resellerId) return;
+    const ids = Array.from(picked).filter((id) => !listed.has(id));
+    if (!ids.length) return toast.error("Selected products already listed");
+    setBulkBusy(true);
+    const rows = items
+      .filter((i) => ids.includes(i.id))
+      .map((i) => ({
+        reseller_id: resellerId,
+        product_id: i.id,
+        selling_price: i.suggested_price && i.suggested_price >= i.reseller_price + i.packaging_cost
+          ? i.suggested_price
+          : i.reseller_price + i.packaging_cost,
+        extra_delivery_inside: 0,
+        extra_delivery_outside: 0,
+      }));
+    const { error } = await supabase.from("reseller_listings").insert(rows);
+    setBulkBusy(false);
+    if (error) return toast.error(error.message);
+    const next = new Set(listed);
+    ids.forEach((id) => next.add(id));
+    setListed(next);
+    setPicked(new Set());
+    toast.success(`${ids.length} product listed (suggested price). Edit korte listings page e jan.`);
+  }
+
+  async function bulkDelist() {
+    if (!resellerId) return;
+    const ids = Array.from(picked).filter((id) => listed.has(id));
+    if (!ids.length) return toast.error("Selected products not listed");
+    if (!confirm(`Remove ${ids.length} listing from your store?`)) return;
+    setBulkBusy(true);
+    const { error } = await supabase
+      .from("reseller_listings")
+      .delete()
+      .eq("reseller_id", resellerId)
+      .in("product_id", ids);
+    setBulkBusy(false);
+    if (error) return toast.error(error.message);
+    const next = new Set(listed);
+    ids.forEach((id) => next.delete(id));
+    setListed(next);
+    setPicked(new Set());
+    toast.success(`${ids.length} listing removed`);
+  }
+
   if (loading)
     return (
       <div className="grid place-items-center py-12">
