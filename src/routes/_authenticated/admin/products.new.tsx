@@ -197,7 +197,7 @@ function NewProduct() {
               <Row label="Admin profit / unit" value={`৳${calc.saProfit}`} strong success={calc.saProfit >= 0} />
             </div>
             <div className="rounded-lg border bg-muted/30 p-4 text-sm">
-              <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Reseller er hishab (inside Dhaka)</div>
+              <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Reseller calculation (inside Dhaka)</div>
               <Row label="Product (reseller price)" value={`৳${Number(resellerPrice) || 0}`} />
               <Row label="+ Packaging" value={`৳${Number(packaging) || 0}`} />
               <Row label="+ Delivery" value={`৳${Number(deliveryIn) || 0}`} />
