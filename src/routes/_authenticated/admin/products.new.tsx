@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/ui-kit";
 import { Loader2 } from "lucide-react";
@@ -20,11 +20,11 @@ function NewProduct() {
   const [brandId, setBrandId] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [buying, setBuying] = useState("");
+  const [resellerPrice, setResellerPrice] = useState("");
   const [packaging, setPackaging] = useState("0");
   const [deliveryIn, setDeliveryIn] = useState("60");
   const [deliveryOut, setDeliveryOut] = useState("130");
   const [suggested, setSuggested] = useState("");
-  const [minSell, setMinSell] = useState("");
   const [stock, setStock] = useState("0");
   const [images, setImages] = useState<UploadedImage[]>([]);
   const [metaTitle, setMetaTitle] = useState("");
@@ -39,8 +39,30 @@ function NewProduct() {
     supabase.from("categories").select("id,name").order("name").then(({ data }) => setCats(data ?? []));
   }, []);
 
+  const calc = useMemo(() => {
+    const buy = Number(buying) || 0;
+    const rp = Number(resellerPrice) || 0;
+    const pkg = Number(packaging) || 0;
+    const di = Number(deliveryIn) || 0;
+    const dOut = Number(deliveryOut) || 0;
+    const sug = Number(suggested) || 0;
+    const saProfit = rp - buy; // SA earns per unit from reseller
+    const resellerBaseIn = rp + pkg + di; // reseller's minimum sell (inside dhaka)
+    const resellerBaseOut = rp + pkg + dOut;
+    const resellerProfitAtSuggestedIn = sug - rp - pkg; // delivery goes to SA
+    return { saProfit, resellerBaseIn, resellerBaseOut, resellerProfitAtSuggestedIn };
+  }, [buying, resellerPrice, packaging, deliveryIn, deliveryOut, suggested]);
+
   async function save(e: React.FormEvent) {
     e.preventDefault();
+    if (Number(resellerPrice) < Number(buying)) {
+      toast.error("Reseller price buying price er theke kom hote parbe na.");
+      return;
+    }
+    if (Number(suggested) < calc.resellerBaseIn) {
+      toast.error(`Suggested sell reseller er base cost ৳${calc.resellerBaseIn} er theke kom.`);
+      return;
+    }
     setBusy(true);
     try {
       const slug = await uniqueProductSlug(name);
@@ -54,11 +76,11 @@ function NewProduct() {
           brand_id: brandId || null,
           category_id: categoryId || null,
           buying_price: Number(buying),
+          reseller_price: Number(resellerPrice),
           packaging_cost: Number(packaging),
           delivery_inside: Number(deliveryIn),
           delivery_outside: Number(deliveryOut),
           suggested_price: Number(suggested),
-          min_selling_price: Number(minSell),
           stock: Number(stock),
           og_image_url: images[0]?.url ?? null,
           meta_title: metaTitle || null,
@@ -141,17 +163,17 @@ function NewProduct() {
         <div className="surface-card p-6">
           <h3 className="mb-1 text-sm font-semibold">Pricing & delivery</h3>
           <p className="mb-4 text-xs text-muted-foreground">
-            Buying price + packaging + delivery — reseller cost break-down dekhbe.
+            <b>Buying price</b> = apnar (SA) kena dam. <b>Reseller price</b> = reseller ke jei dame den — reseller eta dekhbe product price hisebe.
           </p>
           <div className="grid gap-3 md:grid-cols-3">
-            <Field label="Buying price (৳)" required>
+            <Field label="Buying price / SA cost (৳)" required>
               <input required type="number" min={0} value={buying} onChange={(e) => setBuying(e.target.value)} className={inputCls} />
+            </Field>
+            <Field label="Reseller price (৳)" required>
+              <input required type="number" min={0} value={resellerPrice} onChange={(e) => setResellerPrice(e.target.value)} className={inputCls} />
             </Field>
             <Field label="Packaging cost (৳)">
               <input type="number" min={0} value={packaging} onChange={(e) => setPackaging(e.target.value)} className={inputCls} />
-            </Field>
-            <Field label="Stock">
-              <input type="number" min={0} value={stock} onChange={(e) => setStock(e.target.value)} className={inputCls} />
             </Field>
             <Field label="Delivery inside Dhaka (৳)">
               <input type="number" min={0} value={deliveryIn} onChange={(e) => setDeliveryIn(e.target.value)} className={inputCls} />
@@ -159,20 +181,41 @@ function NewProduct() {
             <Field label="Delivery outside Dhaka (৳)">
               <input type="number" min={0} value={deliveryOut} onChange={(e) => setDeliveryOut(e.target.value)} className={inputCls} />
             </Field>
+            <Field label="Stock">
+              <input type="number" min={0} value={stock} onChange={(e) => setStock(e.target.value)} className={inputCls} />
+            </Field>
             <Field label="Suggested sell price (৳)" required>
               <input required type="number" min={0} value={suggested} onChange={(e) => setSuggested(e.target.value)} className={inputCls} />
             </Field>
-            <Field label="Minimum sell price (৳)" required>
-              <input required type="number" min={0} value={minSell} onChange={(e) => setMinSell(e.target.value)} className={inputCls} />
-            </Field>
+          </div>
+
+          <div className="mt-5 grid gap-3 md:grid-cols-2">
+            <div className="rounded-lg border bg-muted/30 p-4 text-sm">
+              <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Super admin er hishab</div>
+              <Row label="Reseller price" value={`৳${Number(resellerPrice) || 0}`} />
+              <Row label="− Buying price" value={`৳${Number(buying) || 0}`} />
+              <Row label="SA profit / unit" value={`৳${calc.saProfit}`} strong success={calc.saProfit >= 0} />
+            </div>
+            <div className="rounded-lg border bg-muted/30 p-4 text-sm">
+              <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Reseller er hishab (inside Dhaka)</div>
+              <Row label="Product (reseller price)" value={`৳${Number(resellerPrice) || 0}`} />
+              <Row label="+ Packaging" value={`৳${Number(packaging) || 0}`} />
+              <Row label="+ Delivery" value={`৳${Number(deliveryIn) || 0}`} />
+              <Row label="Reseller base cost" value={`৳${calc.resellerBaseIn}`} strong />
+              <div className="mt-2 border-t pt-2">
+                <Row
+                  label={`Suggested (৳${Number(suggested) || 0}) hole profit`}
+                  value={`৳${calc.resellerProfitAtSuggestedIn}`}
+                  strong
+                  success={calc.resellerProfitAtSuggestedIn >= 0}
+                />
+              </div>
+            </div>
           </div>
         </div>
 
         <div className="surface-card p-6">
           <h3 className="mb-1 text-sm font-semibold">SEO</h3>
-          <p className="mb-4 text-xs text-muted-foreground">
-            Reseller ra chaile override korte parbe nijer listing e.
-          </p>
           <div className="space-y-3">
             <Field label="Meta title (≤ 60 chars)">
               <input maxLength={60} value={metaTitle} onChange={(e) => setMetaTitle(e.target.value)} className={inputCls} />
@@ -220,6 +263,17 @@ function Field({
         {label} {required && <span className="text-destructive">*</span>}
       </label>
       {children}
+    </div>
+  );
+}
+
+function Row({ label, value, strong, success }: { label: string; value: string; strong?: boolean; success?: boolean }) {
+  return (
+    <div className="flex items-center justify-between py-0.5">
+      <span className="text-muted-foreground">{label}</span>
+      <span className={`${strong ? "font-semibold" : ""} ${success === true ? "text-success" : success === false ? "text-destructive" : "text-foreground"}`}>
+        {value}
+      </span>
     </div>
   );
 }

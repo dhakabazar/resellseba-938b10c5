@@ -12,7 +12,7 @@ type Listing = {
   products: {
     id: string;
     name: string;
-    buying_price: number;
+    reseller_price: number;
     packaging_cost: number;
     delivery_inside: number;
     delivery_outside: number;
@@ -64,7 +64,7 @@ function OrdersPage() {
         .order("created_at", { ascending: false }),
       supabase
         .from("reseller_listings")
-        .select("id,selling_price,products(id,name,buying_price,packaging_cost,delivery_inside,delivery_outside,og_image_url)")
+        .select("id,selling_price,products(id,name,reseller_price,packaging_cost,delivery_inside,delivery_outside,og_image_url)")
         .eq("reseller_id", r.id)
         .eq("is_active", true),
     ]);
@@ -234,7 +234,7 @@ function NewOrderModal({
       const l = listings.find((x) => x.id === line.listing_id);
       if (!l?.products) continue;
       subtotal += Number(l.selling_price) * line.qty;
-      saCost += (Number(l.products.buying_price) + Number(l.products.packaging_cost)) * line.qty;
+      saCost += (Number(l.products.reseller_price) + Number(l.products.packaging_cost)) * line.qty;
       const dc = area === "inside_dhaka" ? l.products.delivery_inside : l.products.delivery_outside;
       shipping = Math.max(shipping, Number(dc) || 0);
     }
@@ -283,7 +283,7 @@ function NewOrderModal({
       const items = lines.map((line) => {
         const l = listings.find((x) => x.id === line.listing_id)!;
         const p = l.products!;
-        const saPrice = Number(p.buying_price) + Number(p.packaging_cost);
+        const saPrice = Number(p.reseller_price) + Number(p.packaging_cost);
         return {
           order_id: order.id,
           listing_id: l.id,

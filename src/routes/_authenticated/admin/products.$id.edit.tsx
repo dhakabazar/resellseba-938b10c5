@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/ui-kit";
 import { Loader2, Trash2 } from "lucide-react";
@@ -43,11 +43,11 @@ function EditProduct() {
   const [brandId, setBrandId] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [buying, setBuying] = useState("");
+  const [resellerPrice, setResellerPrice] = useState("");
   const [packaging, setPackaging] = useState("0");
   const [deliveryIn, setDeliveryIn] = useState("60");
   const [deliveryOut, setDeliveryOut] = useState("130");
   const [suggested, setSuggested] = useState("");
-  const [minSell, setMinSell] = useState("");
   const [stock, setStock] = useState("0");
   const [isActive, setIsActive] = useState(true);
   const [images, setImages] = useState<UploadedImage[]>([]);
@@ -72,6 +72,7 @@ function EditProduct() {
         nav({ to: "/admin/products" });
         return;
       }
+      const anyP = p as any;
       setName(p.name ?? "");
       setOrigName(p.name ?? "");
       setSlug(p.slug ?? "");
@@ -80,11 +81,11 @@ function EditProduct() {
       setBrandId(p.brand_id ?? "");
       setCategoryId(p.category_id ?? "");
       setBuying(String(p.buying_price ?? 0));
+      setResellerPrice(String(anyP.reseller_price ?? p.buying_price ?? 0));
       setPackaging(String(p.packaging_cost ?? 0));
       setDeliveryIn(String(p.delivery_inside ?? 0));
       setDeliveryOut(String(p.delivery_outside ?? 0));
       setSuggested(String(p.suggested_price ?? 0));
-      setMinSell(String(p.min_selling_price ?? 0));
       setStock(String(p.stock ?? 0));
       setIsActive(!!p.is_active);
       setMetaTitle(p.meta_title ?? "");
@@ -97,6 +98,21 @@ function EditProduct() {
     })();
   }, [id, nav]);
 
+  const calc = useMemo(() => {
+    const buy = Number(buying) || 0;
+    const rp = Number(resellerPrice) || 0;
+    const pkg = Number(packaging) || 0;
+    const di = Number(deliveryIn) || 0;
+    const dOut = Number(deliveryOut) || 0;
+    const sug = Number(suggested) || 0;
+    return {
+      saProfit: rp - buy,
+      resellerBaseIn: rp + pkg + di,
+      resellerBaseOut: rp + pkg + dOut,
+      resellerProfitAtSuggestedIn: sug - rp - pkg,
+    };
+  }, [buying, resellerPrice, packaging, deliveryIn, deliveryOut, suggested]);
+
   async function save(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
@@ -105,6 +121,12 @@ function EditProduct() {
       // regenerate slug if name changed or slug empty
       if (!finalSlug || (name !== origName && slugify(name) !== finalSlug)) {
         finalSlug = await uniqueProductSlug(name, id);
+      }
+      if (Number(resellerPrice) < Number(buying)) {
+        throw new Error("Reseller price buying price er theke kom hote parbe na.");
+      }
+      if (Number(suggested) < calc.resellerBaseIn) {
+        throw new Error(`Suggested sell reseller er base cost ৳${calc.resellerBaseIn} er theke kom.`);
       }
       const { error } = await supabase
         .from("products")
@@ -116,11 +138,11 @@ function EditProduct() {
           brand_id: brandId || null,
           category_id: categoryId || null,
           buying_price: Number(buying),
+          reseller_price: Number(resellerPrice),
           packaging_cost: Number(packaging),
           delivery_inside: Number(deliveryIn),
           delivery_outside: Number(deliveryOut),
           suggested_price: Number(suggested),
-          min_selling_price: Number(minSell),
           stock: Number(stock),
           is_active: isActive,
           og_image_url: images[0]?.url ?? null,
@@ -236,15 +258,18 @@ function EditProduct() {
 
         <div className="surface-card p-6">
           <h3 className="mb-1 text-sm font-semibold">Pricing & delivery</h3>
+          <p className="mb-4 text-xs text-muted-foreground">
+            <b>Buying price</b> = apnar (SA) kena dam. <b>Reseller price</b> = reseller ke jei dame den.
+          </p>
           <div className="grid gap-3 md:grid-cols-3">
-            <Field label="Buying price (৳)" required>
+            <Field label="Buying price / SA cost (৳)" required>
               <input required type="number" min={0} value={buying} onChange={(e) => setBuying(e.target.value)} className={inputCls} />
+            </Field>
+            <Field label="Reseller price (৳)" required>
+              <input required type="number" min={0} value={resellerPrice} onChange={(e) => setResellerPrice(e.target.value)} className={inputCls} />
             </Field>
             <Field label="Packaging cost (৳)">
               <input type="number" min={0} value={packaging} onChange={(e) => setPackaging(e.target.value)} className={inputCls} />
-            </Field>
-            <Field label="Stock">
-              <input type="number" min={0} value={stock} onChange={(e) => setStock(e.target.value)} className={inputCls} />
             </Field>
             <Field label="Delivery inside Dhaka (৳)">
               <input type="number" min={0} value={deliveryIn} onChange={(e) => setDeliveryIn(e.target.value)} className={inputCls} />
@@ -252,12 +277,36 @@ function EditProduct() {
             <Field label="Delivery outside Dhaka (৳)">
               <input type="number" min={0} value={deliveryOut} onChange={(e) => setDeliveryOut(e.target.value)} className={inputCls} />
             </Field>
+            <Field label="Stock">
+              <input type="number" min={0} value={stock} onChange={(e) => setStock(e.target.value)} className={inputCls} />
+            </Field>
             <Field label="Suggested sell price (৳)" required>
               <input required type="number" min={0} value={suggested} onChange={(e) => setSuggested(e.target.value)} className={inputCls} />
             </Field>
-            <Field label="Minimum sell price (৳)" required>
-              <input required type="number" min={0} value={minSell} onChange={(e) => setMinSell(e.target.value)} className={inputCls} />
-            </Field>
+          </div>
+
+          <div className="mt-5 grid gap-3 md:grid-cols-2">
+            <div className="rounded-lg border bg-muted/30 p-4 text-sm">
+              <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Super admin er hishab</div>
+              <PRow label="Reseller price" value={`৳${Number(resellerPrice) || 0}`} />
+              <PRow label="− Buying price" value={`৳${Number(buying) || 0}`} />
+              <PRow label="SA profit / unit" value={`৳${calc.saProfit}`} strong success={calc.saProfit >= 0} />
+            </div>
+            <div className="rounded-lg border bg-muted/30 p-4 text-sm">
+              <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Reseller er hishab (inside Dhaka)</div>
+              <PRow label="Product (reseller price)" value={`৳${Number(resellerPrice) || 0}`} />
+              <PRow label="+ Packaging" value={`৳${Number(packaging) || 0}`} />
+              <PRow label="+ Delivery" value={`৳${Number(deliveryIn) || 0}`} />
+              <PRow label="Reseller base cost" value={`৳${calc.resellerBaseIn}`} strong />
+              <div className="mt-2 border-t pt-2">
+                <PRow
+                  label={`Suggested (৳${Number(suggested) || 0}) hole profit`}
+                  value={`৳${calc.resellerProfitAtSuggestedIn}`}
+                  strong
+                  success={calc.resellerProfitAtSuggestedIn >= 0}
+                />
+              </div>
+            </div>
           </div>
         </div>
 
@@ -292,6 +341,17 @@ function EditProduct() {
           </button>
         </div>
       </form>
+    </div>
+  );
+}
+
+function PRow({ label, value, strong, success }: { label: string; value: string; strong?: boolean; success?: boolean }) {
+  return (
+    <div className="flex items-center justify-between py-0.5">
+      <span className="text-muted-foreground">{label}</span>
+      <span className={`${strong ? "font-semibold" : ""} ${success === true ? "text-success" : success === false ? "text-destructive" : "text-foreground"}`}>
+        {value}
+      </span>
     </div>
   );
 }

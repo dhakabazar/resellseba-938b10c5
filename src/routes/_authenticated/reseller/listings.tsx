@@ -13,7 +13,7 @@ type L = {
   products: {
     name: string;
     slug: string;
-    buying_price: number;
+    reseller_price: number;
     packaging_cost: number;
     delivery_inside: number;
     og_image_url: string | null;
@@ -41,7 +41,7 @@ function ListingsPage() {
     const { data } = await supabase
       .from("reseller_listings")
       .select(
-        "id,selling_price,is_active,products(name,slug,buying_price,packaging_cost,delivery_inside,og_image_url)",
+        "id,selling_price,is_active,products(name,slug,reseller_price,packaging_cost,delivery_inside,og_image_url)",
       )
       .eq("reseller_id", r.id)
       .order("created_at", { ascending: false });
@@ -77,7 +77,7 @@ function ListingsPage() {
       ) : (
         <div className="surface-card divide-y">
           {items.map((l) => {
-            const cost = (l.products?.buying_price ?? 0) + (l.products?.packaging_cost ?? 0) + (l.products?.delivery_inside ?? 0);
+            const cost = (l.products?.reseller_price ?? 0) + (l.products?.packaging_cost ?? 0) + (l.products?.delivery_inside ?? 0);
             const profit = l.selling_price - cost;
             return (
               <div key={l.id} className="flex flex-wrap items-center gap-4 p-4">
