@@ -69,6 +69,7 @@ export function DataToolbar({
             {n} / page
           </option>
         ))}
+        <option value={-1}>All</option>
       </select>
       {right && <div className="ml-auto">{right}</div>}
     </div>
