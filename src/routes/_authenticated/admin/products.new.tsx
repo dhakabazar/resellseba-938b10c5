@@ -191,10 +191,10 @@ function NewProduct() {
 
           <div className="mt-5 grid gap-3 md:grid-cols-2">
             <div className="rounded-lg border bg-muted/30 p-4 text-sm">
-              <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Super admin er hishab</div>
+              <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Admin calculation</div>
               <Row label="Reseller price" value={`৳${Number(resellerPrice) || 0}`} />
               <Row label="− Buying price" value={`৳${Number(buying) || 0}`} />
-              <Row label="SA profit / unit" value={`৳${calc.saProfit}`} strong success={calc.saProfit >= 0} />
+              <Row label="Admin profit / unit" value={`৳${calc.saProfit}`} strong success={calc.saProfit >= 0} />
             </div>
             <div className="rounded-lg border bg-muted/30 p-4 text-sm">
               <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Reseller er hishab (inside Dhaka)</div>
