@@ -188,7 +188,8 @@ function CatsPage() {
                 )}
               </div>
             );
-          })}
+          });
+          })()}
         </div>
       )}
     </div>
