@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { ImageUploader, type UploadedImage } from "@/components/ImageUploader";
 import { RichTextEditor } from "@/components/RichTextEditor";
 import { uniqueProductSlug } from "@/lib/slug";
+import { Hint } from "@/components/Hint";
 
 export const Route = createFileRoute("/_authenticated/admin/products/new")({
   component: NewProduct,
