@@ -223,10 +223,67 @@ function ProductsPage() {
         />
       ) : (
         <>
+          {selected.size > 0 && (
+            <div className="mb-3 flex flex-wrap items-center gap-2 rounded-md border bg-primary/5 px-3 py-2 text-sm">
+              <span className="font-medium">{selected.size} selected</span>
+              <div className="ml-auto flex flex-wrap gap-2">
+                <button
+                  disabled={bulkBusy}
+                  onClick={() => bulkSetActive(true)}
+                  className="inline-flex items-center gap-1 rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-background disabled:opacity-50"
+                >
+                  <Eye className="h-3.5 w-3.5" /> Activate
+                </button>
+                <button
+                  disabled={bulkBusy}
+                  onClick={() => bulkSetActive(false)}
+                  className="inline-flex items-center gap-1 rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-background disabled:opacity-50"
+                >
+                  <EyeOff className="h-3.5 w-3.5" /> Hide
+                </button>
+                <button
+                  disabled={bulkBusy}
+                  onClick={bulkDelete}
+                  className="inline-flex items-center gap-1 rounded-md border border-destructive/50 px-3 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/10 disabled:opacity-50"
+                >
+                  <Trash2 className="h-3.5 w-3.5" /> Delete
+                </button>
+                <button
+                  onClick={() => setSelected(new Set())}
+                  className="inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+          )}
           <div className="surface-card overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-muted text-left text-xs uppercase text-muted-foreground">
                 <tr>
+                  <th className="px-3 py-3 w-8">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const pageIds = paged.map((p) => p.id);
+                        const allChecked = pageIds.every((id) => selected.has(id));
+                        setSelected((s) => {
+                          const n = new Set(s);
+                          if (allChecked) pageIds.forEach((id) => n.delete(id));
+                          else pageIds.forEach((id) => n.add(id));
+                          return n;
+                        });
+                      }}
+                      className="text-muted-foreground hover:text-primary"
+                      aria-label="Select all on page"
+                    >
+                      {paged.length > 0 && paged.every((p) => selected.has(p.id)) ? (
+                        <CheckSquare className="h-4 w-4 text-primary" />
+                      ) : (
+                        <Square className="h-4 w-4" />
+                      )}
+                    </button>
+                  </th>
                   <th className="px-4 py-3">Product</th>
                   <th className="px-4 py-3">Brand</th>
                   <th className="px-4 py-3">Category</th>
