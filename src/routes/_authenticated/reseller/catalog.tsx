@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/use-auth";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
-import { Loader2, Plus, Check } from "lucide-react";
+import { Loader2, Plus, Check, CheckSquare, Square, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Hint } from "@/components/Hint";
 import { DataToolbar, Pagination, usePaginated, type FilterDef } from "@/components/data-list";
