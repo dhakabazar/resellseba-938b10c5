@@ -297,7 +297,24 @@ function ProductsPage() {
               </thead>
               <tbody className="divide-y">
                 {paged.map((p) => (
-                  <tr key={p.id} className="hover:bg-muted/50">
+                  <tr key={p.id} className={`hover:bg-muted/50 ${selected.has(p.id) ? "bg-primary/5" : ""}`}>
+                    <td className="px-3 py-3">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setSelected((s) => {
+                            const n = new Set(s);
+                            if (n.has(p.id)) n.delete(p.id);
+                            else n.add(p.id);
+                            return n;
+                          })
+                        }
+                        className="text-muted-foreground hover:text-primary"
+                        aria-label="Select"
+                      >
+                        {selected.has(p.id) ? <CheckSquare className="h-4 w-4 text-primary" /> : <Square className="h-4 w-4" />}
+                      </button>
+                    </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <div className="h-10 w-10 overflow-hidden rounded-md border bg-muted">
