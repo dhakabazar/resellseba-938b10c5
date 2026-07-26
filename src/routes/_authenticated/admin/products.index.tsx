@@ -285,7 +285,7 @@ function ProductsPage() {
                       )}
                     </button>
                   </th>
-                  <th className="px-4 py-3">Product</th>
+                  <th className="px-4 py-3 min-w-[320px]">Product</th>
                   <th className="px-4 py-3">Brand</th>
                   <th className="px-4 py-3">Category</th>
                   <th className="px-4 py-3">Admin cost</th>
