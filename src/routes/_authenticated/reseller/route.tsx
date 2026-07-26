@@ -72,6 +72,7 @@ function ResellerLayout() {
   const [storeName, setStoreName] = useState("My store");
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [storeCode, setStoreCode] = useState<string | null>(null);
+  const [primary, setPrimary] = useState<string | null>(null);
 
   useEffect(() => {
     if (loading) return;
@@ -87,6 +88,14 @@ function ResellerLayout() {
   useEffect(() => {
     if (!user) return;
     (async () => {
+      const { data: g } = await supabase
+        .from("global_settings")
+        .select("logo_url, primary_color")
+        .eq("id", 1)
+        .maybeSingle();
+      let logo = g?.logo_url ?? null;
+      let color = g?.primary_color ?? null;
+
       const { data: r } = await supabase
         .from("resellers")
         .select("id, business_name, code")
@@ -97,22 +106,19 @@ function ResellerLayout() {
         setStoreCode(r.code);
         const { data: s } = await supabase
           .from("reseller_settings")
-          .select("logo_url")
+          .select("logo_url, primary_color")
           .eq("reseller_id", r.id)
           .maybeSingle();
-        if (s?.logo_url) {
-          setLogoUrl(s.logo_url);
-          return;
-        }
+        if (s?.logo_url) logo = s.logo_url;
+        if (s?.primary_color) color = s.primary_color;
       }
-      const { data: g } = await supabase
-        .from("global_settings")
-        .select("logo_url")
-        .eq("id", 1)
-        .maybeSingle();
-      if (g?.logo_url) setLogoUrl(g.logo_url);
+      setLogoUrl(logo);
+      setPrimary(color);
     })();
   }, [user]);
+
+  useBrandingTheme(primary);
+
 
   if (loading || !user || (!roles.includes("reseller") && !roles.includes("leader"))) {
     return (
