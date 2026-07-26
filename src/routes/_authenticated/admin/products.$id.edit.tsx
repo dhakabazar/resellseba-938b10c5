@@ -258,15 +258,18 @@ function EditProduct() {
 
         <div className="surface-card p-6">
           <h3 className="mb-1 text-sm font-semibold">Pricing & delivery</h3>
+          <p className="mb-4 text-xs text-muted-foreground">
+            <b>Buying price</b> = apnar (SA) kena dam. <b>Reseller price</b> = reseller ke jei dame den.
+          </p>
           <div className="grid gap-3 md:grid-cols-3">
-            <Field label="Buying price (৳)" required>
+            <Field label="Buying price / SA cost (৳)" required>
               <input required type="number" min={0} value={buying} onChange={(e) => setBuying(e.target.value)} className={inputCls} />
+            </Field>
+            <Field label="Reseller price (৳)" required>
+              <input required type="number" min={0} value={resellerPrice} onChange={(e) => setResellerPrice(e.target.value)} className={inputCls} />
             </Field>
             <Field label="Packaging cost (৳)">
               <input type="number" min={0} value={packaging} onChange={(e) => setPackaging(e.target.value)} className={inputCls} />
-            </Field>
-            <Field label="Stock">
-              <input type="number" min={0} value={stock} onChange={(e) => setStock(e.target.value)} className={inputCls} />
             </Field>
             <Field label="Delivery inside Dhaka (৳)">
               <input type="number" min={0} value={deliveryIn} onChange={(e) => setDeliveryIn(e.target.value)} className={inputCls} />
@@ -274,12 +277,36 @@ function EditProduct() {
             <Field label="Delivery outside Dhaka (৳)">
               <input type="number" min={0} value={deliveryOut} onChange={(e) => setDeliveryOut(e.target.value)} className={inputCls} />
             </Field>
+            <Field label="Stock">
+              <input type="number" min={0} value={stock} onChange={(e) => setStock(e.target.value)} className={inputCls} />
+            </Field>
             <Field label="Suggested sell price (৳)" required>
               <input required type="number" min={0} value={suggested} onChange={(e) => setSuggested(e.target.value)} className={inputCls} />
             </Field>
-            <Field label="Minimum sell price (৳)" required>
-              <input required type="number" min={0} value={minSell} onChange={(e) => setMinSell(e.target.value)} className={inputCls} />
-            </Field>
+          </div>
+
+          <div className="mt-5 grid gap-3 md:grid-cols-2">
+            <div className="rounded-lg border bg-muted/30 p-4 text-sm">
+              <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Super admin er hishab</div>
+              <PRow label="Reseller price" value={`৳${Number(resellerPrice) || 0}`} />
+              <PRow label="− Buying price" value={`৳${Number(buying) || 0}`} />
+              <PRow label="SA profit / unit" value={`৳${calc.saProfit}`} strong success={calc.saProfit >= 0} />
+            </div>
+            <div className="rounded-lg border bg-muted/30 p-4 text-sm">
+              <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Reseller er hishab (inside Dhaka)</div>
+              <PRow label="Product (reseller price)" value={`৳${Number(resellerPrice) || 0}`} />
+              <PRow label="+ Packaging" value={`৳${Number(packaging) || 0}`} />
+              <PRow label="+ Delivery" value={`৳${Number(deliveryIn) || 0}`} />
+              <PRow label="Reseller base cost" value={`৳${calc.resellerBaseIn}`} strong />
+              <div className="mt-2 border-t pt-2">
+                <PRow
+                  label={`Suggested (৳${Number(suggested) || 0}) hole profit`}
+                  value={`৳${calc.resellerProfitAtSuggestedIn}`}
+                  strong
+                  success={calc.resellerProfitAtSuggestedIn >= 0}
+                />
+              </div>
+            </div>
           </div>
         </div>
 
