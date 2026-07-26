@@ -131,6 +131,17 @@ function CatsPage() {
         </button>
       </form>
 
+      {!loading && items.length > 0 && (
+        <div className="mb-3">
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search categories…"
+            className="w-full max-w-sm rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+          />
+        </div>
+      )}
+
       {loading ? (
         <div className="grid place-items-center py-12">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -139,9 +150,19 @@ function CatsPage() {
         <EmptyState title="No categories yet" description="Add korun product-e assign korte." />
       ) : (
         <div className="surface-card divide-y">
-          {parents.map((p) => {
-            const kids = childrenByParent.get(p.id) ?? [];
-            const isOpen = expanded.has(p.id);
+          {(() => {
+            const q = search.trim().toLowerCase();
+            const match = (c: Cat) =>
+              !q || c.name.toLowerCase().includes(q) || c.slug.toLowerCase().includes(q);
+            const visibleParents = q
+              ? parents.filter(
+                  (p) => match(p) || (childrenByParent.get(p.id) ?? []).some(match),
+                )
+              : parents;
+            return visibleParents.map((p) => {
+            const allKids = childrenByParent.get(p.id) ?? [];
+            const kids = q && !match(p) ? allKids.filter(match) : allKids;
+            const isOpen = q ? true : expanded.has(p.id);
             return (
               <div key={p.id}>
                 <CategoryRow
