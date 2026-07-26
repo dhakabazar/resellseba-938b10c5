@@ -139,6 +139,17 @@ function BrandsPage() {
         </form>
       )}
 
+      {!loading && items.length > 0 && (
+        <div className="mb-3">
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search brands…"
+            className="w-full max-w-sm rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+          />
+        </div>
+      )}
+
       {loading ? (
         <div className="grid place-items-center py-12">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
