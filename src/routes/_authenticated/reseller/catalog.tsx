@@ -10,12 +10,11 @@ type P = {
   id: string;
   name: string;
   slug: string;
-  buying_price: number;
+  reseller_price: number;
   packaging_cost: number;
   delivery_inside: number;
   delivery_outside: number;
   suggested_price: number;
-  min_selling_price: number;
   stock: number;
   og_image_url: string | null;
 };
@@ -53,11 +52,11 @@ function CatalogPage() {
       const { data } = await supabase
         .from("products")
         .select(
-          "id,name,slug,buying_price,packaging_cost,delivery_inside,delivery_outside,suggested_price,min_selling_price,stock,og_image_url",
+          "id,name,slug,reseller_price,packaging_cost,delivery_inside,delivery_outside,suggested_price,stock,og_image_url",
         )
         .eq("is_active", true)
         .order("created_at", { ascending: false });
-      setItems(data ?? []);
+      setItems((data ?? []) as P[]);
       setLoading(false);
     })();
   }, [user]);
@@ -70,8 +69,10 @@ function CatalogPage() {
   async function addListing() {
     if (!selected || !resellerId) return;
     const priceNum = Number(price);
-    if (priceNum < selected.min_selling_price) {
-      toast.error(`Minimum price ৳${selected.min_selling_price}`);
+    // Reseller's minimum sell = reseller_price + packaging + delivery_inside
+    const minPrice = selected.reseller_price + selected.packaging_cost + selected.delivery_inside;
+    if (priceNum < minPrice) {
+      toast.error(`Selling price minimum ৳${minPrice} hote hobe (product + packaging + delivery).`);
       return;
     }
     setBusy(true);
@@ -97,18 +98,26 @@ function CatalogPage() {
       </div>
     );
 
+  const priceNum = Number(price) || 0;
+  const profit = selected
+    ? priceNum - selected.reseller_price - selected.packaging_cost
+    : 0;
+  const minSell = selected
+    ? selected.reseller_price + selected.packaging_cost + selected.delivery_inside
+    : 0;
+
   return (
     <div>
       <PageHeader
         title="Catalog"
-        description="Super admin er products theke pochando gulo nijer store-e list korun."
+        description="Product price + packaging + delivery — ei 3ta niye apnar total cost. Ekhan theke selling price bosiye listing korun."
       />
       {items.length === 0 ? (
         <EmptyState title="Catalog is empty" description="Admin product add korle ekhane dekhabe." />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {items.map((p) => {
-            const totalCost = p.buying_price + p.packaging_cost + p.delivery_inside;
+            const totalCost = p.reseller_price + p.packaging_cost + p.delivery_inside;
             const isListed = listed.has(p.id);
             return (
               <div key={p.id} className="surface-card overflow-hidden">
@@ -120,10 +129,10 @@ function CatalogPage() {
                 <div className="p-4">
                   <div className="truncate text-sm font-medium">{p.name}</div>
                   <div className="mt-1 text-xs text-muted-foreground">
-                    Cost ৳{totalCost} · Suggested ৳{p.suggested_price}
+                    Product ৳{p.reseller_price} + Pack ৳{p.packaging_cost} + Del ৳{p.delivery_inside} = <b>৳{totalCost}</b>
                   </div>
                   <div className="mt-1 text-xs text-muted-foreground">
-                    Min sale ৳{p.min_selling_price} · Stock {p.stock}
+                    Suggested ৳{p.suggested_price} · Stock {p.stock}
                   </div>
                   {isListed ? (
                     <button
@@ -152,33 +161,38 @@ function CatalogPage() {
           <div className="w-full max-w-md surface-card p-6" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-semibold">List "{selected.name}"</h3>
             <div className="mt-4 space-y-2 text-sm text-muted-foreground">
-              <Row label="Buying price" value={`৳${selected.buying_price}`} />
+              <Row label="Product price" value={`৳${selected.reseller_price}`} />
               <Row label="Packaging" value={`৳${selected.packaging_cost}`} />
-              <Row label="Delivery inside" value={`৳${selected.delivery_inside}`} />
-              <Row label="Delivery outside" value={`৳${selected.delivery_outside}`} />
-              <Row
-                label="Total cost (inside Dhaka)"
-                value={`৳${selected.buying_price + selected.packaging_cost + selected.delivery_inside}`}
-                strong
-              />
+              <Row label="Delivery (inside Dhaka)" value={`৳${selected.delivery_inside}`} />
+              <Row label="Delivery (outside Dhaka)" value={`৳${selected.delivery_outside}`} />
+              <div className="border-t pt-2">
+                <Row
+                  label="Base cost (inside Dhaka)"
+                  value={`৳${minSell}`}
+                  strong
+                />
+              </div>
+              <p className="text-xs">Ei tin ta miliye apnar cost — ei theke kom e sell kora jabe na.</p>
             </div>
             <div className="mt-4">
               <label className="mb-1 block text-xs font-medium">
-                Your selling price (min ৳{selected.min_selling_price})
+                Apnar selling price (minimum ৳{minSell})
               </label>
               <input
                 type="number"
-                min={selected.min_selling_price}
+                min={minSell}
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
                 className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
               />
-              {Number(price) > 0 && (
-                <p className="mt-1 text-xs">
-                  Profit per order (inside Dhaka):{" "}
-                  <span className="font-semibold text-success">
-                    ৳{Number(price) - selected.buying_price - selected.packaging_cost - selected.delivery_inside}
+              {priceNum > 0 && (
+                <p className="mt-2 text-xs">
+                  Selling ৳{priceNum} − Product ৳{selected.reseller_price} − Packaging ৳{selected.packaging_cost} ={" "}
+                  <span className={`font-semibold ${profit >= 0 ? "text-success" : "text-destructive"}`}>
+                    ৳{profit} profit / order
                   </span>
+                  <br />
+                  <span className="text-muted-foreground">Delivery charge customer theke alada ashe.</span>
                 </p>
               )}
             </div>
