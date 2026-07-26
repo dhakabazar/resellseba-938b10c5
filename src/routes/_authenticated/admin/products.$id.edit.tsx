@@ -43,11 +43,11 @@ function EditProduct() {
   const [brandId, setBrandId] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [buying, setBuying] = useState("");
+  const [resellerPrice, setResellerPrice] = useState("");
   const [packaging, setPackaging] = useState("0");
   const [deliveryIn, setDeliveryIn] = useState("60");
   const [deliveryOut, setDeliveryOut] = useState("130");
   const [suggested, setSuggested] = useState("");
-  const [minSell, setMinSell] = useState("");
   const [stock, setStock] = useState("0");
   const [isActive, setIsActive] = useState(true);
   const [images, setImages] = useState<UploadedImage[]>([]);
@@ -72,6 +72,7 @@ function EditProduct() {
         nav({ to: "/admin/products" });
         return;
       }
+      const anyP = p as any;
       setName(p.name ?? "");
       setOrigName(p.name ?? "");
       setSlug(p.slug ?? "");
@@ -80,11 +81,11 @@ function EditProduct() {
       setBrandId(p.brand_id ?? "");
       setCategoryId(p.category_id ?? "");
       setBuying(String(p.buying_price ?? 0));
+      setResellerPrice(String(anyP.reseller_price ?? p.buying_price ?? 0));
       setPackaging(String(p.packaging_cost ?? 0));
       setDeliveryIn(String(p.delivery_inside ?? 0));
       setDeliveryOut(String(p.delivery_outside ?? 0));
       setSuggested(String(p.suggested_price ?? 0));
-      setMinSell(String(p.min_selling_price ?? 0));
       setStock(String(p.stock ?? 0));
       setIsActive(!!p.is_active);
       setMetaTitle(p.meta_title ?? "");
@@ -96,6 +97,21 @@ function EditProduct() {
       setLoading(false);
     })();
   }, [id, nav]);
+
+  const calc = useMemo(() => {
+    const buy = Number(buying) || 0;
+    const rp = Number(resellerPrice) || 0;
+    const pkg = Number(packaging) || 0;
+    const di = Number(deliveryIn) || 0;
+    const dOut = Number(deliveryOut) || 0;
+    const sug = Number(suggested) || 0;
+    return {
+      saProfit: rp - buy,
+      resellerBaseIn: rp + pkg + di,
+      resellerBaseOut: rp + pkg + dOut,
+      resellerProfitAtSuggestedIn: sug - rp - pkg,
+    };
+  }, [buying, resellerPrice, packaging, deliveryIn, deliveryOut, suggested]);
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
