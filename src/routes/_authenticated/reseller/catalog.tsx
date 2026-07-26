@@ -176,11 +176,22 @@ function CatalogPage() {
           বাকি টাকা আপনার profit।
         </Hint>
       </div>
-      {items.length === 0 ? (
-        <EmptyState title="Catalog is empty" description="Admin product add korle ekhane dekhabe." />
+
+      <DataToolbar
+        search={q}
+        onSearch={setQ}
+        searchPlaceholder="Search products…"
+        filters={filters}
+        perPage={perPage}
+        onPerPage={setPerPage}
+      />
+
+      {filtered.length === 0 ? (
+        <EmptyState title="No products match" description="Filter change korun ba admin er notun product er opekkha korun." />
       ) : (
+        <>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {items.map((p) => {
+          {paged.map((p) => {
             const myCost = p.reseller_price + p.packaging_cost;
             const isListed = listed.has(p.id);
             return (
