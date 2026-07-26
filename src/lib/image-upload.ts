@@ -44,7 +44,10 @@ export interface CompressedResult {
   bytes: number;
 }
 
-export async function validateAndCompress(file: File): Promise<CompressedResult> {
+export async function validateAndCompress(
+  file: File,
+  opts: { square?: boolean } = {},
+): Promise<CompressedResult> {
   if (file.size > MAX_INPUT_BYTES) {
     throw new Error(`Image too large. Max ${(MAX_INPUT_BYTES / 1024 / 1024) | 0}MB.`);
   }
@@ -57,8 +60,18 @@ export async function validateAndCompress(file: File): Promise<CompressedResult>
     throw new Error("Could not decode image (possibly corrupted or unsafe).");
   });
 
+  let sx = 0, sy = 0, sw = bitmap.width, sh = bitmap.height;
+  if (opts.square) {
+    const side = Math.min(bitmap.width, bitmap.height);
+    sx = Math.round((bitmap.width - side) / 2);
+    sy = Math.round((bitmap.height - side) / 2);
+    sw = side;
+    sh = side;
+  }
+
   // Downscale if needed
-  let { width, height } = bitmap;
+  let width = sw;
+  let height = sh;
   const scale = Math.min(1, MAX_DIMENSION / Math.max(width, height));
   width = Math.round(width * scale);
   height = Math.round(height * scale);
@@ -68,7 +81,7 @@ export async function validateAndCompress(file: File): Promise<CompressedResult>
   canvas.height = height;
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Canvas not available");
-  ctx.drawImage(bitmap, 0, 0, width, height);
+  ctx.drawImage(bitmap, sx, sy, sw, sh, 0, 0, width, height);
   bitmap.close?.();
 
   // Iterate quality until under target
