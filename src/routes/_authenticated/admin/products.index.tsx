@@ -331,7 +331,7 @@ function ProductsPage() {
                           >
                             {p.name}
                           </Link>
-                          <div className="text-xs text-muted-foreground">ID: {p.id.slice(0, 8)}</div>
+                          <div className="text-xs text-muted-foreground">ID: {p.product_code}</div>
                         </div>
                       </div>
                     </td>
