@@ -27,6 +27,7 @@ function CatsPage() {
   const [parent, setParent] = useState("");
   const [busy, setBusy] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [search, setSearch] = useState("");
 
   async function load() {
     setLoading(true);
