@@ -17,6 +17,7 @@ export function ImageUploader({
   onChange,
   multiple = false,
   label = "Upload image",
+  variant = "square",
 }: {
   bucket: "product-images" | "branding";
   folder: string;
@@ -24,6 +25,7 @@ export function ImageUploader({
   onChange: (v: UploadedImage[]) => void;
   multiple?: boolean;
   label?: string;
+  variant?: "square" | "wide" | "hero";
 }) {
   const [busy, setBusy] = useState(false);
   const ref = useRef<HTMLInputElement>(null);
