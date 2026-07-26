@@ -39,6 +39,8 @@ function CatalogPage() {
   const [selected, setSelected] = useState<P | null>(null);
   const [price, setPrice] = useState("");
   const [busy, setBusy] = useState(false);
+  const [picked, setPicked] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
 
   const [q, setQ] = useState("");
   const [brand, setBrand] = useState("");
