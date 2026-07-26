@@ -10,8 +10,8 @@ type Row = {
   name: string;
   slug: string;
   buying_price: number;
+  reseller_price: number;
   suggested_price: number;
-  min_selling_price: number;
   stock: number;
   is_active: boolean;
   og_image_url: string | null;
@@ -30,9 +30,9 @@ function ProductsPage() {
     setLoading(true);
     const { data } = await supabase
       .from("products")
-      .select("id,name,slug,buying_price,suggested_price,min_selling_price,stock,is_active,og_image_url")
+      .select("id,name,slug,buying_price,reseller_price,suggested_price,stock,is_active,og_image_url")
       .order("created_at", { ascending: false });
-    setItems(data ?? []);
+    setItems((data ?? []) as Row[]);
     setLoading(false);
   }
   useEffect(() => {
