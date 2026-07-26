@@ -31,6 +31,7 @@ function BrandsPage() {
   const [description, setDescription] = useState("");
   const [logo, setLogo] = useState<UploadedImage[]>([]);
   const [busy, setBusy] = useState(false);
+  const [search, setSearch] = useState("");
 
   async function load() {
     setLoading(true);
