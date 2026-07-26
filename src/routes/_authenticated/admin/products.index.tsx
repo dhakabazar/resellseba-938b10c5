@@ -16,7 +16,6 @@ import { DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdow
 type Row = {
   id: string;
   name: string;
-  slug: string;
   buying_price: number;
   reseller_price: number;
   suggested_price: number;
