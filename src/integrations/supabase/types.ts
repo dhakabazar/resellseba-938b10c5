@@ -858,6 +858,7 @@ export type Database = {
           name: string
           og_image_url: string | null
           packaging_cost: number
+          product_code: string
           reseller_price: number
           short_description: string | null
           sku: string | null
@@ -884,6 +885,7 @@ export type Database = {
           name: string
           og_image_url?: string | null
           packaging_cost?: number
+          product_code: string
           reseller_price?: number
           short_description?: string | null
           sku?: string | null
@@ -910,6 +912,7 @@ export type Database = {
           name?: string
           og_image_url?: string | null
           packaging_cost?: number
+          product_code?: string
           reseller_price?: number
           short_description?: string | null
           sku?: string | null
@@ -1300,6 +1303,7 @@ export type Database = {
         }[]
       }
       current_reseller_id: { Args: never; Returns: string }
+      generate_product_code: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
