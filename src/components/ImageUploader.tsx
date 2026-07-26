@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { Upload, X, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { validateAndCompress, TARGET_BYTES } from "@/lib/image-upload";
+import { validateAndCompress } from "@/lib/image-upload";
 import { toast } from "sonner";
 
 export interface UploadedImage {
@@ -18,6 +18,9 @@ export function ImageUploader({
   multiple = false,
   label = "Upload image",
   variant = "square",
+  square = false,
+  maxImages,
+  hint,
 }: {
   bucket: "product-images" | "branding";
   folder: string;
@@ -26,17 +29,26 @@ export function ImageUploader({
   multiple?: boolean;
   label?: string;
   variant?: "square" | "wide" | "hero";
+  square?: boolean;
+  maxImages?: number;
+  hint?: string;
 }) {
   const [busy, setBusy] = useState(false);
   const ref = useRef<HTMLInputElement>(null);
+
+  const remaining = maxImages ? Math.max(0, maxImages - value.length) : Infinity;
 
   async function handleFiles(files: FileList | null) {
     if (!files || files.length === 0) return;
     setBusy(true);
     try {
+      const list = Array.from(files).slice(0, remaining === Infinity ? files.length : remaining);
+      if (maxImages && files.length > remaining) {
+        toast.message(`Max ${maxImages} images — extra files skipped.`);
+      }
       const out: UploadedImage[] = [];
-      for (const f of Array.from(files)) {
-        const compressed = await validateAndCompress(f);
+      for (const f of list) {
+        const compressed = await validateAndCompress(f, { square });
         const path = `${folder}/${crypto.randomUUID()}.webp`;
         const { error } = await supabase.storage
           .from(bucket)
@@ -56,7 +68,6 @@ export function ImageUploader({
         });
       }
       onChange(multiple ? [...value, ...out] : out.slice(0, 1));
-      toast.success(`Uploaded ${out.length} image(s) — auto-optimized to ≤200KB`);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Upload failed";
       toast.error(msg);
@@ -67,8 +78,8 @@ export function ImageUploader({
   }
 
   async function remove(img: UploadedImage) {
-    await supabase.storage.from(bucket).remove([img.path]).catch(() => {});
-    onChange(value.filter((v) => v.path !== img.path));
+    if (img.path) await supabase.storage.from(bucket).remove([img.path]).catch(() => {});
+    onChange(value.filter((v) => v.path !== img.path || v.url !== img.url));
   }
 
   const previewClass =
@@ -76,30 +87,36 @@ export function ImageUploader({
       ? "h-44 w-full max-w-3xl"
       : variant === "wide"
       ? "h-32 w-full max-w-xl"
+      : square
+      ? "aspect-square w-28"
       : "h-24 w-24";
+
+  const canAdd = (multiple || value.length === 0) && (maxImages ? value.length < maxImages : true);
 
   return (
     <div>
       <div className="mb-2 flex flex-wrap gap-3">
-        {value.map((img) => (
+        {value.map((img, idx) => (
           <div
-            key={img.path}
+            key={(img.path || img.url) + idx}
             className={`group relative overflow-hidden rounded-md border bg-muted ${previewClass}`}
           >
-            <img src={img.url} className="h-full w-full object-contain" alt="" />
+            <img src={img.url} className={`h-full w-full ${square ? "object-cover" : "object-contain"}`} alt="" />
             <button
               type="button"
               onClick={() => remove(img)}
-              className="absolute right-2 top-2 rounded-full bg-black/60 p-1.5 text-white opacity-0 transition group-hover:opacity-100"
+              className="absolute right-1.5 top-1.5 rounded-full bg-black/60 p-1.5 text-white opacity-0 transition group-hover:opacity-100"
             >
               <X className="h-3.5 w-3.5" />
             </button>
-            <div className="absolute inset-x-0 bottom-0 bg-black/60 px-2 py-1 text-[10px] text-white">
-              {(img.bytes / 1024).toFixed(0)}KB
-            </div>
+            {idx === 0 && multiple && (
+              <div className="absolute left-1.5 top-1.5 rounded bg-primary/90 px-1.5 py-0.5 text-[10px] font-medium text-primary-foreground">
+                Primary
+              </div>
+            )}
           </div>
         ))}
-        {(multiple || value.length === 0) && (
+        {canAdd && (
           <button
             type="button"
             onClick={() => ref.current?.click()}
@@ -111,7 +128,7 @@ export function ImageUploader({
             ) : (
               <Upload className="h-4 w-4" />
             )}
-            {busy ? "Optimizing…" : label}
+            {busy ? "Processing…" : label}
           </button>
         )}
       </div>
@@ -123,10 +140,14 @@ export function ImageUploader({
         className="hidden"
         onChange={(e) => handleFiles(e.target.files)}
       />
-      <p className="text-xs text-muted-foreground">
-        Auto-compressed to WebP ≤ {(TARGET_BYTES / 1024) | 0}KB · Malware/polyglot files
-        rejected by magic-byte check.
-      </p>
+      {hint !== "" && (
+        <p className="text-xs text-muted-foreground">
+          {hint ??
+            (square
+              ? `1:1 square · auto-optimized${maxImages ? ` · up to ${maxImages} images` : ""}`
+              : "Auto-optimized for fast loading")}
+        </p>
+      )}
     </div>
   );
 }
