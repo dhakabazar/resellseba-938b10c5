@@ -227,10 +227,13 @@ function ProductsPage() {
                     </td>
                     <td className="px-4 py-3">
                       <span
-                        className={`rounded-full px-2 py-0.5 text-xs ${
-                          p.is_active ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"
+                        className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium ${
+                          p.is_active
+                            ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
+                            : "bg-muted text-muted-foreground"
                         }`}
                       >
+                        <span className={`h-1.5 w-1.5 rounded-full ${p.is_active ? "bg-emerald-500" : "bg-muted-foreground"}`} />
                         {p.is_active ? "Active" : "Hidden"}
                       </span>
                     </td>
