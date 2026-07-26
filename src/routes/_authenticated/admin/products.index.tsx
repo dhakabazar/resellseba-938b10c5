@@ -120,7 +120,7 @@ function ProductsPage() {
     return items.filter((i) => {
       if (q) {
         const t = q.toLowerCase();
-        if (!i.name.toLowerCase().includes(t) && !i.id.toLowerCase().includes(t)) return false;
+        if (!i.name.toLowerCase().includes(t) && !i.product_code.includes(t)) return false;
       }
       if (brand && i.brand_id !== brand) return false;
       if (category && i.category_id !== category) return false;
