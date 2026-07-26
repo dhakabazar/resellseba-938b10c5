@@ -70,6 +70,9 @@ function ProductsPage() {
     setPage(1);
   }, [q, brand, category, status, stockFilter, perPage]);
 
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+
   async function toggle(p: Row) {
     const { error } = await supabase.from("products").update({ is_active: !p.is_active }).eq("id", p.id);
     if (error) return toast.error(error.message);
@@ -81,6 +84,35 @@ function ProductsPage() {
     if (error) return toast.error(error.message);
     toast.success("Deleted");
     setItems((s) => s.filter((i) => i.id !== p.id));
+    setSelected((s) => {
+      const n = new Set(s);
+      n.delete(p.id);
+      return n;
+    });
+  }
+
+  async function bulkSetActive(active: boolean) {
+    const ids = Array.from(selected);
+    if (!ids.length) return;
+    setBulkBusy(true);
+    const { error } = await supabase.from("products").update({ is_active: active }).in("id", ids);
+    setBulkBusy(false);
+    if (error) return toast.error(error.message);
+    setItems((s) => s.map((i) => (ids.includes(i.id) ? { ...i, is_active: active } : i)));
+    toast.success(`${ids.length} product ${active ? "activated" : "hidden"}`);
+    setSelected(new Set());
+  }
+  async function bulkDelete() {
+    const ids = Array.from(selected);
+    if (!ids.length) return;
+    if (!confirm(`Delete ${ids.length} product? Order er product delete hobe na (protected).`)) return;
+    setBulkBusy(true);
+    const { error } = await supabase.from("products").delete().in("id", ids);
+    setBulkBusy(false);
+    if (error) return toast.error(error.message);
+    setItems((s) => s.filter((i) => !ids.includes(i.id)));
+    toast.success(`${ids.length} product deleted`);
+    setSelected(new Set());
   }
 
   const filtered = useMemo(() => {
