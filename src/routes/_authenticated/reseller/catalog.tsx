@@ -1,11 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/use-auth";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
 import { Loader2, Plus, Check } from "lucide-react";
 import { toast } from "sonner";
 import { Hint } from "@/components/Hint";
+import { DataToolbar, Pagination, usePaginated, type FilterDef } from "@/components/data-list";
 
 type P = {
   id: string;
@@ -18,7 +19,10 @@ type P = {
   suggested_price: number;
   stock: number;
   og_image_url: string | null;
+  brand_id: string | null;
+  category_id: string | null;
 };
+type Opt = { id: string; name: string };
 
 export const Route = createFileRoute("/_authenticated/reseller/catalog")({
   component: CatalogPage,
@@ -27,12 +31,21 @@ export const Route = createFileRoute("/_authenticated/reseller/catalog")({
 function CatalogPage() {
   const { user } = useAuth();
   const [items, setItems] = useState<P[]>([]);
+  const [brands, setBrands] = useState<Opt[]>([]);
+  const [categories, setCategories] = useState<Opt[]>([]);
   const [loading, setLoading] = useState(true);
   const [resellerId, setResellerId] = useState<string | null>(null);
   const [listed, setListed] = useState<Set<string>>(new Set());
   const [selected, setSelected] = useState<P | null>(null);
   const [price, setPrice] = useState("");
   const [busy, setBusy] = useState(false);
+
+  const [q, setQ] = useState("");
+  const [brand, setBrand] = useState("");
+  const [category, setCategory] = useState("");
+  const [avail, setAvail] = useState("");
+  const [perPage, setPerPage] = useState(20);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     if (!user) return;
@@ -50,17 +63,59 @@ function CatalogPage() {
           .eq("reseller_id", r.id);
         setListed(new Set((mine ?? []).map((m) => m.product_id)));
       }
-      const { data } = await supabase
-        .from("products")
-        .select(
-          "id,name,slug,reseller_price,packaging_cost,delivery_inside,delivery_outside,suggested_price,stock,og_image_url",
-        )
-        .eq("is_active", true)
-        .order("created_at", { ascending: false });
+      const [{ data }, { data: b }, { data: c }] = await Promise.all([
+        supabase
+          .from("products")
+          .select(
+            "id,name,slug,reseller_price,packaging_cost,delivery_inside,delivery_outside,suggested_price,stock,og_image_url,brand_id,category_id",
+          )
+          .eq("is_active", true)
+          .order("created_at", { ascending: false }),
+        supabase.from("brands").select("id,name").eq("is_active", true).order("name"),
+        supabase.from("categories").select("id,name").eq("is_active", true).order("name"),
+      ]);
       setItems((data ?? []) as P[]);
+      setBrands((b ?? []) as Opt[]);
+      setCategories((c ?? []) as Opt[]);
       setLoading(false);
     })();
   }, [user]);
+
+  useEffect(() => setPage(1), [q, brand, category, avail, perPage]);
+
+  const filtered = useMemo(
+    () =>
+      items.filter((i) => {
+        if (q) {
+          const t = q.toLowerCase();
+          if (!i.name.toLowerCase().includes(t) && !i.slug.includes(t)) return false;
+        }
+        if (brand && i.brand_id !== brand) return false;
+        if (category && i.category_id !== category) return false;
+        if (avail === "listed" && !listed.has(i.id)) return false;
+        if (avail === "unlisted" && listed.has(i.id)) return false;
+        if (avail === "instock" && i.stock <= 0) return false;
+        return true;
+      }),
+    [items, q, brand, category, avail, listed],
+  );
+  const paged = usePaginated(filtered, page, perPage);
+
+  const filters: FilterDef[] = [
+    { key: "brand", label: "Brand", value: brand, onChange: setBrand, options: brands.map((b) => ({ value: b.id, label: b.name })) },
+    { key: "category", label: "Category", value: category, onChange: setCategory, options: categories.map((c) => ({ value: c.id, label: c.name })) },
+    {
+      key: "avail",
+      label: "Show",
+      value: avail,
+      onChange: setAvail,
+      options: [
+        { value: "unlisted", label: "Not listed yet" },
+        { value: "listed", label: "Already listed" },
+        { value: "instock", label: "In stock" },
+      ],
+    },
+  ];
 
   const openList = (p: P) => {
     setSelected(p);
@@ -121,11 +176,22 @@ function CatalogPage() {
           বাকি টাকা আপনার profit।
         </Hint>
       </div>
-      {items.length === 0 ? (
-        <EmptyState title="Catalog is empty" description="Admin product add korle ekhane dekhabe." />
+
+      <DataToolbar
+        search={q}
+        onSearch={setQ}
+        searchPlaceholder="Search products…"
+        filters={filters}
+        perPage={perPage}
+        onPerPage={setPerPage}
+      />
+
+      {filtered.length === 0 ? (
+        <EmptyState title="No products match" description="Filter change korun ba admin er notun product er opekkha korun." />
       ) : (
+        <>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {items.map((p) => {
+          {paged.map((p) => {
             const myCost = p.reseller_price + p.packaging_cost;
             const isListed = listed.has(p.id);
             return (
@@ -166,6 +232,8 @@ function CatalogPage() {
             );
           })}
         </div>
+        <Pagination page={page} perPage={perPage} total={filtered.length} onPage={setPage} />
+        </>
       )}
 
       {selected && (
