@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { AppShell, type NavEntry } from "@/components/AppShell";
 import { useAuth } from "@/lib/use-auth";
+import { useBrandingTheme } from "@/lib/branding";
 import { Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -88,9 +89,10 @@ const NAV: NavEntry[] = [
 function AdminLayout() {
   const { user, roles, loading } = useAuth();
   const nav = useNavigate();
-  const [brand, setBrand] = useState<{ name: string; logoUrl: string | null }>({
+  const [brand, setBrand] = useState<{ name: string; logoUrl: string | null; primary: string | null }>({
     name: "Admin",
     logoUrl: null,
+    primary: null,
   });
 
   useEffect(() => {
@@ -101,13 +103,20 @@ function AdminLayout() {
   useEffect(() => {
     supabase
       .from("global_settings")
-      .select("site_name, logo_url")
+      .select("site_name, logo_url, primary_color")
       .eq("id", 1)
       .maybeSingle()
       .then(({ data }) => {
-        if (data) setBrand({ name: data.site_name ?? "Admin", logoUrl: data.logo_url ?? null });
+        if (data)
+          setBrand({
+            name: data.site_name ?? "Admin",
+            logoUrl: data.logo_url ?? null,
+            primary: data.primary_color ?? null,
+          });
       });
   }, []);
+
+  useBrandingTheme(brand.primary);
 
   if (loading || !user || !roles.includes("super_admin")) {
     return (
