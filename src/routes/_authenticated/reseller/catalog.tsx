@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/use-auth";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
-import { Loader2, Plus, Check } from "lucide-react";
+import { Loader2, Plus, Check, CheckSquare, Square, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Hint } from "@/components/Hint";
 import { DataToolbar, Pagination, usePaginated, type FilterDef } from "@/components/data-list";
@@ -39,6 +39,8 @@ function CatalogPage() {
   const [selected, setSelected] = useState<P | null>(null);
   const [price, setPrice] = useState("");
   const [busy, setBusy] = useState(false);
+  const [picked, setPicked] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
 
   const [q, setQ] = useState("");
   const [brand, setBrand] = useState("");
@@ -147,6 +149,52 @@ function CatalogPage() {
     setSelected(null);
   }
 
+  async function bulkList() {
+    if (!resellerId) return;
+    const ids = Array.from(picked).filter((id) => !listed.has(id));
+    if (!ids.length) return toast.error("Selected products already listed");
+    setBulkBusy(true);
+    const rows = items
+      .filter((i) => ids.includes(i.id))
+      .map((i) => ({
+        reseller_id: resellerId,
+        product_id: i.id,
+        selling_price: i.suggested_price && i.suggested_price >= i.reseller_price + i.packaging_cost
+          ? i.suggested_price
+          : i.reseller_price + i.packaging_cost,
+        extra_delivery_inside: 0,
+        extra_delivery_outside: 0,
+      }));
+    const { error } = await supabase.from("reseller_listings").insert(rows);
+    setBulkBusy(false);
+    if (error) return toast.error(error.message);
+    const next = new Set(listed);
+    ids.forEach((id) => next.add(id));
+    setListed(next);
+    setPicked(new Set());
+    toast.success(`${ids.length} product listed (suggested price). Edit korte listings page e jan.`);
+  }
+
+  async function bulkDelist() {
+    if (!resellerId) return;
+    const ids = Array.from(picked).filter((id) => listed.has(id));
+    if (!ids.length) return toast.error("Selected products not listed");
+    if (!confirm(`Remove ${ids.length} listing from your store?`)) return;
+    setBulkBusy(true);
+    const { error } = await supabase
+      .from("reseller_listings")
+      .delete()
+      .eq("reseller_id", resellerId)
+      .in("product_id", ids);
+    setBulkBusy(false);
+    if (error) return toast.error(error.message);
+    const next = new Set(listed);
+    ids.forEach((id) => next.delete(id));
+    setListed(next);
+    setPicked(new Set());
+    toast.success(`${ids.length} listing removed`);
+  }
+
   if (loading)
     return (
       <div className="grid place-items-center py-12">
@@ -190,12 +238,78 @@ function CatalogPage() {
         <EmptyState title="No products match" description="Filter change korun ba admin er notun product er opekkha korun." />
       ) : (
         <>
+        {picked.size > 0 && (
+          <div className="mb-3 flex flex-wrap items-center gap-2 rounded-md border bg-primary/5 px-3 py-2 text-sm">
+            <span className="font-medium">{picked.size} selected</span>
+            <div className="ml-auto flex flex-wrap gap-2">
+              <button
+                disabled={bulkBusy}
+                onClick={bulkList}
+                className="btn-brand inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-medium disabled:opacity-50"
+              >
+                <Plus className="h-3.5 w-3.5" /> List (suggested price)
+              </button>
+              <button
+                disabled={bulkBusy}
+                onClick={bulkDelist}
+                className="inline-flex items-center gap-1 rounded-md border border-destructive/50 px-3 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/10 disabled:opacity-50"
+              >
+                <Trash2 className="h-3.5 w-3.5" /> Delist
+              </button>
+              <button
+                onClick={() => setPicked(new Set())}
+                className="rounded-md px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+        )}
+        <div className="mb-2 flex items-center gap-2 text-xs">
+          <button
+            type="button"
+            onClick={() => {
+              const ids = paged.map((p) => p.id);
+              const all = ids.every((id) => picked.has(id));
+              setPicked((s) => {
+                const n = new Set(s);
+                if (all) ids.forEach((id) => n.delete(id));
+                else ids.forEach((id) => n.add(id));
+                return n;
+              });
+            }}
+            className="inline-flex items-center gap-1 rounded-md border px-2 py-1 hover:bg-muted"
+          >
+            {paged.length > 0 && paged.every((p) => picked.has(p.id)) ? (
+              <CheckSquare className="h-3.5 w-3.5 text-primary" />
+            ) : (
+              <Square className="h-3.5 w-3.5" />
+            )}
+            Select page
+          </button>
+        </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {paged.map((p) => {
             const myCost = p.reseller_price + p.packaging_cost;
             const isListed = listed.has(p.id);
+            const isPicked = picked.has(p.id);
             return (
-              <div key={p.id} className="surface-card overflow-hidden">
+              <div key={p.id} className={`surface-card overflow-hidden relative ${isPicked ? "ring-2 ring-primary" : ""}`}>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setPicked((s) => {
+                      const n = new Set(s);
+                      if (n.has(p.id)) n.delete(p.id);
+                      else n.add(p.id);
+                      return n;
+                    })
+                  }
+                  className="absolute left-2 top-2 z-10 rounded-md bg-background/90 p-1 shadow-sm backdrop-blur"
+                  aria-label="Select"
+                >
+                  {isPicked ? <CheckSquare className="h-4 w-4 text-primary" /> : <Square className="h-4 w-4" />}
+                </button>
                 <div className="aspect-square bg-muted">
                   {p.og_image_url && (
                     <img src={p.og_image_url} className="h-full w-full object-cover" alt="" />
