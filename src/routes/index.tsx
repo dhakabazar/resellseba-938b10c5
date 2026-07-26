@@ -165,14 +165,15 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
               src={banner}
               alt=""
               aria-hidden="true"
-              className="h-full w-full object-cover opacity-75"
+              className="h-full w-full object-cover opacity-90"
             />
-            <div className="absolute inset-0 bg-gradient-to-b from-background/85 via-background/65 to-background" />
+            <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/40 to-background/90" />
+            <div className="absolute inset-0 bg-background/20 backdrop-blur-[2px]" />
           </div>
         )}
         <div className="pointer-events-none absolute inset-0 z-0">
-          <div className="absolute left-1/2 top-[-10%] h-[420px] w-[420px] -translate-x-1/2 rounded-full bg-primary/25 blur-[120px] sm:h-[520px] sm:w-[520px]" />
-          <div className="absolute right-[-10%] top-[30%] h-[320px] w-[320px] rounded-full bg-accent/30 blur-[120px] sm:h-[380px] sm:w-[380px]" />
+          <div className="absolute left-1/2 top-[-10%] h-[420px] w-[420px] -translate-x-1/2 rounded-full bg-primary/20 blur-[120px] sm:h-[520px] sm:w-[520px]" />
+          <div className="absolute right-[-10%] top-[30%] h-[320px] w-[320px] rounded-full bg-accent/20 blur-[120px] sm:h-[380px] sm:w-[380px]" />
         </div>
         <div className="relative z-10 mx-auto max-w-4xl px-4 pt-16 pb-20 text-center sm:px-6 sm:pt-24 sm:pb-28 lg:pt-28">
           <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/60 px-3 py-1.5 text-[11px] text-muted-foreground shadow-sm backdrop-blur sm:px-4 sm:text-xs">
