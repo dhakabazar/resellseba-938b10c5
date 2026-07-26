@@ -15,6 +15,7 @@ import { DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdow
 
 type Row = {
   id: string;
+  product_code: string;
   name: string;
   buying_price: number;
   reseller_price: number;
@@ -52,7 +53,7 @@ function ProductsPage() {
     const [{ data: p }, { data: b }, { data: c }] = await Promise.all([
       supabase
         .from("products")
-        .select("id,name,buying_price,reseller_price,suggested_price,stock,is_active,og_image_url,brand_id,category_id")
+        .select("id,product_code,name,buying_price,reseller_price,suggested_price,stock,is_active,og_image_url,brand_id,category_id")
         .order("created_at", { ascending: false }),
       supabase.from("brands").select("id,name").order("name"),
       supabase.from("categories").select("id,name").order("name"),
@@ -119,7 +120,7 @@ function ProductsPage() {
     return items.filter((i) => {
       if (q) {
         const t = q.toLowerCase();
-        if (!i.name.toLowerCase().includes(t) && !i.id.toLowerCase().includes(t)) return false;
+        if (!i.name.toLowerCase().includes(t) && !i.product_code.includes(t)) return false;
       }
       if (brand && i.brand_id !== brand) return false;
       if (category && i.category_id !== category) return false;
@@ -330,7 +331,7 @@ function ProductsPage() {
                           >
                             {p.name}
                           </Link>
-                          <div className="text-xs text-muted-foreground">ID: {p.id.slice(0, 8)}</div>
+                          <div className="text-xs text-muted-foreground">ID: {p.product_code}</div>
                         </div>
                       </div>
                     </td>
