@@ -257,7 +257,7 @@ function NewProduct() {
           </button>
           <button
             disabled={busy}
-            className="btn-brand inline-flex items-center gap-2 rounded-md px-5 py-2.5 text-sm font-medium disabled:opacity-50"
+            className="btn-brand inline-flex items-center gap-2 rounded-md px-5 py-2.5 text-sm font-medium text-primary-foreground disabled:opacity-50"
           >
             {busy && <Loader2 className="h-4 w-4 animate-spin" />} Save product
           </button>
