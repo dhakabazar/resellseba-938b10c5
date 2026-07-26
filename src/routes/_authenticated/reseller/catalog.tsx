@@ -238,12 +238,78 @@ function CatalogPage() {
         <EmptyState title="No products match" description="Filter change korun ba admin er notun product er opekkha korun." />
       ) : (
         <>
+        {picked.size > 0 && (
+          <div className="mb-3 flex flex-wrap items-center gap-2 rounded-md border bg-primary/5 px-3 py-2 text-sm">
+            <span className="font-medium">{picked.size} selected</span>
+            <div className="ml-auto flex flex-wrap gap-2">
+              <button
+                disabled={bulkBusy}
+                onClick={bulkList}
+                className="btn-brand inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-medium disabled:opacity-50"
+              >
+                <Plus className="h-3.5 w-3.5" /> List (suggested price)
+              </button>
+              <button
+                disabled={bulkBusy}
+                onClick={bulkDelist}
+                className="inline-flex items-center gap-1 rounded-md border border-destructive/50 px-3 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/10 disabled:opacity-50"
+              >
+                <Trash2 className="h-3.5 w-3.5" /> Delist
+              </button>
+              <button
+                onClick={() => setPicked(new Set())}
+                className="rounded-md px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+        )}
+        <div className="mb-2 flex items-center gap-2 text-xs">
+          <button
+            type="button"
+            onClick={() => {
+              const ids = paged.map((p) => p.id);
+              const all = ids.every((id) => picked.has(id));
+              setPicked((s) => {
+                const n = new Set(s);
+                if (all) ids.forEach((id) => n.delete(id));
+                else ids.forEach((id) => n.add(id));
+                return n;
+              });
+            }}
+            className="inline-flex items-center gap-1 rounded-md border px-2 py-1 hover:bg-muted"
+          >
+            {paged.length > 0 && paged.every((p) => picked.has(p.id)) ? (
+              <CheckSquare className="h-3.5 w-3.5 text-primary" />
+            ) : (
+              <Square className="h-3.5 w-3.5" />
+            )}
+            Select page
+          </button>
+        </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {paged.map((p) => {
             const myCost = p.reseller_price + p.packaging_cost;
             const isListed = listed.has(p.id);
+            const isPicked = picked.has(p.id);
             return (
-              <div key={p.id} className="surface-card overflow-hidden">
+              <div key={p.id} className={`surface-card overflow-hidden relative ${isPicked ? "ring-2 ring-primary" : ""}`}>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setPicked((s) => {
+                      const n = new Set(s);
+                      if (n.has(p.id)) n.delete(p.id);
+                      else n.add(p.id);
+                      return n;
+                    })
+                  }
+                  className="absolute left-2 top-2 z-10 rounded-md bg-background/90 p-1 shadow-sm backdrop-blur"
+                  aria-label="Select"
+                >
+                  {isPicked ? <CheckSquare className="h-4 w-4 text-primary" /> : <Square className="h-4 w-4" />}
+                </button>
                 <div className="aspect-square bg-muted">
                   {p.og_image_url && (
                     <img src={p.og_image_url} className="h-full w-full object-cover" alt="" />
