@@ -1,15 +1,27 @@
-import { Link } from "@tanstack/react-router";
-import { LogOut, ChevronRight } from "lucide-react";
+import { Link, useRouterState } from "@tanstack/react-router";
+import { LogOut, ChevronRight, ChevronDown } from "lucide-react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import type { ReactNode } from "react";
 
 export interface NavItem {
   label: string;
   to: string;
   icon: ReactNode;
   end?: boolean;
+}
+
+export interface NavGroup {
+  label: string;
+  icon: ReactNode;
+  items: NavItem[];
+}
+
+export type NavEntry = NavItem | NavGroup;
+
+function isGroup(entry: NavEntry): entry is NavGroup {
+  return (entry as NavGroup).items !== undefined;
 }
 
 export function AppShell({
@@ -22,11 +34,28 @@ export function AppShell({
 }: {
   title: string;
   brand: { name: string; sub?: string; logoUrl?: string | null };
-  nav: NavItem[];
+  nav: NavEntry[];
   user: { name: string; email: string };
   headerRight?: ReactNode;
   children: ReactNode;
 }) {
+  const currentPath = useRouterState({ select: (r) => r.location.pathname });
+
+  const activeGroupIdx = useMemo(() => {
+    for (let i = 0; i < nav.length; i++) {
+      const e = nav[i];
+      if (isGroup(e) && e.items.some((it) => currentPath === it.to || (!it.end && currentPath.startsWith(it.to + "/")))) {
+        return i;
+      }
+    }
+    return -1;
+  }, [nav, currentPath]);
+
+  const [openIdx, setOpenIdx] = useState<number>(activeGroupIdx);
+  useEffect(() => {
+    if (activeGroupIdx !== -1) setOpenIdx(activeGroupIdx);
+  }, [activeGroupIdx]);
+
   return (
     <div className="min-h-screen bg-background">
       <div className="flex">
@@ -49,24 +78,41 @@ export function AppShell({
             </div>
           </div>
           <nav className="flex-1 overflow-y-auto p-3">
-            {nav.map((n) => (
-              <Link
-                key={n.to}
-                to={n.to}
-                activeOptions={{ exact: n.end }}
-                className={cn(
-                  "group mb-1 flex items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                )}
-                activeProps={{
-                  className:
-                    "bg-sidebar-accent text-sidebar-accent-foreground font-medium",
-                }}
-              >
-                <span className="text-current">{n.icon}</span>
-                <span className="flex-1">{n.label}</span>
-                <ChevronRight className="h-3.5 w-3.5 opacity-0 group-hover:opacity-60" />
-              </Link>
-            ))}
+            {nav.map((entry, idx) => {
+              if (!isGroup(entry)) {
+                return <LeafLink key={entry.to} item={entry} />;
+              }
+              const isOpen = openIdx === idx;
+              const hasActive = entry.items.some(
+                (it) => currentPath === it.to || (!it.end && currentPath.startsWith(it.to + "/")),
+              );
+              return (
+                <div key={entry.label} className="mb-1">
+                  <button
+                    type="button"
+                    onClick={() => setOpenIdx(isOpen ? -1 : idx)}
+                    className={cn(
+                      "flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                      hasActive && "text-sidebar-accent-foreground",
+                    )}
+                    aria-expanded={isOpen}
+                  >
+                    <span className="text-current">{entry.icon}</span>
+                    <span className="flex-1 text-left font-medium">{entry.label}</span>
+                    <ChevronDown
+                      className={cn("h-3.5 w-3.5 transition-transform", isOpen ? "rotate-0" : "-rotate-90")}
+                    />
+                  </button>
+                  {isOpen && (
+                    <div className="mt-1 ml-4 border-l border-sidebar-border pl-2">
+                      {entry.items.map((it) => (
+                        <LeafLink key={it.to} item={it} nested />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </nav>
           <div className="border-t border-sidebar-border p-3">
             <div className="mb-2 px-2">
@@ -96,5 +142,25 @@ export function AppShell({
         </main>
       </div>
     </div>
+  );
+}
+
+function LeafLink({ item, nested = false }: { item: NavItem; nested?: boolean }) {
+  return (
+    <Link
+      to={item.to}
+      activeOptions={{ exact: item.end }}
+      className={cn(
+        "group mb-1 flex items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+        nested && "py-1.5 text-[13px]",
+      )}
+      activeProps={{
+        className: "bg-sidebar-accent text-sidebar-accent-foreground font-medium",
+      }}
+    >
+      <span className="text-current">{item.icon}</span>
+      <span className="flex-1">{item.label}</span>
+      <ChevronRight className="h-3.5 w-3.5 opacity-0 group-hover:opacity-60" />
+    </Link>
   );
 }
