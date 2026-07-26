@@ -31,6 +31,7 @@ function BrandsPage() {
   const [description, setDescription] = useState("");
   const [logo, setLogo] = useState<UploadedImage[]>([]);
   const [busy, setBusy] = useState(false);
+  const [search, setSearch] = useState("");
 
   async function load() {
     setLoading(true);
@@ -138,6 +139,17 @@ function BrandsPage() {
         </form>
       )}
 
+      {!loading && items.length > 0 && (
+        <div className="mb-3">
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search brands…"
+            className="w-full max-w-sm rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+          />
+        </div>
+      )}
+
       {loading ? (
         <div className="grid place-items-center py-12">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -149,7 +161,13 @@ function BrandsPage() {
         />
       ) : (
         <div className="surface-card divide-y">
-          {items.map((b) => (
+          {items
+            .filter((b) => {
+              const q = search.trim().toLowerCase();
+              if (!q) return true;
+              return b.name.toLowerCase().includes(q) || b.slug.toLowerCase().includes(q);
+            })
+            .map((b) => (
             <div key={b.id} className="flex items-center gap-4 p-4">
               <div className="h-10 w-10 overflow-hidden rounded-md border bg-muted">
                 {b.logo_url && <img src={b.logo_url} className="h-full w-full object-cover" alt="" />}
