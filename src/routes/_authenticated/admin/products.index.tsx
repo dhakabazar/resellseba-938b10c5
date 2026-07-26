@@ -52,7 +52,7 @@ function ProductsPage() {
     const [{ data: p }, { data: b }, { data: c }] = await Promise.all([
       supabase
         .from("products")
-        .select("id,name,slug,buying_price,reseller_price,suggested_price,stock,is_active,og_image_url,brand_id,category_id")
+        .select("id,name,buying_price,reseller_price,suggested_price,stock,is_active,og_image_url,brand_id,category_id")
         .order("created_at", { ascending: false }),
       supabase.from("brands").select("id,name").order("name"),
       supabase.from("categories").select("id,name").order("name"),
