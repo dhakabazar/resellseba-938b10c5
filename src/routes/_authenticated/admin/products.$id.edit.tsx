@@ -287,13 +287,13 @@ function EditProduct() {
 
           <div className="mt-5 grid gap-3 md:grid-cols-2">
             <div className="rounded-lg border bg-muted/30 p-4 text-sm">
-              <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Super admin er hishab</div>
+              <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Admin calculation</div>
               <PRow label="Reseller price" value={`৳${Number(resellerPrice) || 0}`} />
               <PRow label="− Buying price" value={`৳${Number(buying) || 0}`} />
-              <PRow label="SA profit / unit" value={`৳${calc.saProfit}`} strong success={calc.saProfit >= 0} />
+              <PRow label="Admin profit / unit" value={`৳${calc.saProfit}`} strong success={calc.saProfit >= 0} />
             </div>
             <div className="rounded-lg border bg-muted/30 p-4 text-sm">
-              <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Reseller er hishab (inside Dhaka)</div>
+              <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Reseller calculation (inside Dhaka)</div>
               <PRow label="Product (reseller price)" value={`৳${Number(resellerPrice) || 0}`} />
               <PRow label="+ Packaging" value={`৳${Number(packaging) || 0}`} />
               <PRow label="+ Delivery" value={`৳${Number(deliveryIn) || 0}`} />
