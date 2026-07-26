@@ -122,6 +122,12 @@ function EditProduct() {
       if (!finalSlug || (name !== origName && slugify(name) !== finalSlug)) {
         finalSlug = await uniqueProductSlug(name, id);
       }
+      if (Number(resellerPrice) < Number(buying)) {
+        throw new Error("Reseller price buying price er theke kom hote parbe na.");
+      }
+      if (Number(suggested) < calc.resellerBaseIn) {
+        throw new Error(`Suggested sell reseller er base cost ৳${calc.resellerBaseIn} er theke kom.`);
+      }
       const { error } = await supabase
         .from("products")
         .update({
@@ -132,11 +138,11 @@ function EditProduct() {
           brand_id: brandId || null,
           category_id: categoryId || null,
           buying_price: Number(buying),
+          reseller_price: Number(resellerPrice),
           packaging_cost: Number(packaging),
           delivery_inside: Number(deliveryIn),
           delivery_outside: Number(deliveryOut),
           suggested_price: Number(suggested),
-          min_selling_price: Number(minSell),
           stock: Number(stock),
           is_active: isActive,
           og_image_url: images[0]?.url ?? null,
