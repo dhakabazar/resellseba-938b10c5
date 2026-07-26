@@ -141,6 +141,7 @@ export function ActionMenu({ children }: { children: ReactNode }) {
 }
 
 export function usePaginated<T>(items: T[], page: number, perPage: number) {
+  if (perPage <= 0) return items;
   const start = (page - 1) * perPage;
   return items.slice(start, start + perPage);
 }
