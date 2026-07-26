@@ -163,7 +163,7 @@ function NewProduct() {
         <div className="surface-card p-6">
           <h3 className="mb-1 text-sm font-semibold">Pricing & delivery</h3>
           <p className="mb-4 text-xs text-muted-foreground">
-            <b>Buying price</b> = apnar (SA) kena dam. <b>Reseller price</b> = reseller ke jei dame den — reseller eta dekhbe product price hisebe.
+            <b>Buying price</b> = admin's purchase cost. <b>Reseller price</b> = the price you give resellers — resellers see this as the product price.
           </p>
           <div className="grid gap-3 md:grid-cols-3">
             <Field label="Buying price / SA cost (৳)" required>
