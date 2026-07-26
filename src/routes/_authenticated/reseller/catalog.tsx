@@ -232,6 +232,8 @@ function CatalogPage() {
             );
           })}
         </div>
+        <Pagination page={page} perPage={perPage} total={filtered.length} onPage={setPage} />
+        </>
       )}
 
       {selected && (
