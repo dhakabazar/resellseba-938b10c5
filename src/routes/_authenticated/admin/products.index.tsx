@@ -103,9 +103,9 @@ function ProductsPage() {
             <thead className="bg-muted text-left text-xs uppercase text-muted-foreground">
               <tr>
                 <th className="px-4 py-3">Product</th>
-                <th className="px-4 py-3">Cost</th>
+                <th className="px-4 py-3">Buy (SA)</th>
+                <th className="px-4 py-3">Reseller price</th>
                 <th className="px-4 py-3">Suggested</th>
-                <th className="px-4 py-3">Min sale</th>
                 <th className="px-4 py-3">Stock</th>
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3 text-right">Actions</th>
@@ -134,8 +134,8 @@ function ProductsPage() {
                     </div>
                   </td>
                   <td className="px-4 py-3">৳{p.buying_price}</td>
+                  <td className="px-4 py-3">৳{p.reseller_price}</td>
                   <td className="px-4 py-3">৳{p.suggested_price}</td>
-                  <td className="px-4 py-3">৳{p.min_selling_price}</td>
                   <td className="px-4 py-3">{p.stock}</td>
                   <td className="px-4 py-3">
                     <span
