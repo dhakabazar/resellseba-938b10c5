@@ -12,8 +12,10 @@ import {
   Megaphone,
   Loader2,
   ExternalLink,
+  Store,
+  Rocket,
 } from "lucide-react";
-import { AppShell } from "@/components/AppShell";
+import { AppShell, type NavEntry } from "@/components/AppShell";
 import { useAuth } from "@/lib/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -21,16 +23,46 @@ export const Route = createFileRoute("/_authenticated/reseller")({
   component: ResellerLayout,
 });
 
-const NAV = [
+const NAV: NavEntry[] = [
   { label: "Dashboard", to: "/reseller", icon: <LayoutDashboard className="h-4 w-4" />, end: true },
-  { label: "Catalog", to: "/reseller/catalog", icon: <Package className="h-4 w-4" /> },
-  { label: "My listings", to: "/reseller/listings", icon: <ShoppingBag className="h-4 w-4" /> },
-  { label: "Orders", to: "/reseller/orders", icon: <ClipboardList className="h-4 w-4" /> },
-  { label: "Payouts", to: "/reseller/payouts", icon: <Wallet className="h-4 w-4" /> },
-  { label: "Leader commissions", to: "/reseller/commissions", icon: <Award className="h-4 w-4" /> },
-  { label: "Marketing", to: "/reseller/marketing", icon: <Megaphone className="h-4 w-4" /> },
-  { label: "Store design", to: "/reseller/design", icon: <Palette className="h-4 w-4" /> },
-  { label: "Domain", to: "/reseller/domain", icon: <Globe className="h-4 w-4" /> },
+  {
+    label: "Products",
+    icon: <Package className="h-4 w-4" />,
+    items: [
+      { label: "Catalog", to: "/reseller/catalog", icon: <Package className="h-4 w-4" /> },
+      { label: "My listings", to: "/reseller/listings", icon: <ShoppingBag className="h-4 w-4" /> },
+    ],
+  },
+  {
+    label: "Sales",
+    icon: <ShoppingBag className="h-4 w-4" />,
+    items: [
+      { label: "Orders", to: "/reseller/orders", icon: <ClipboardList className="h-4 w-4" /> },
+    ],
+  },
+  {
+    label: "Finance",
+    icon: <Wallet className="h-4 w-4" />,
+    items: [
+      { label: "Payouts", to: "/reseller/payouts", icon: <Wallet className="h-4 w-4" /> },
+      { label: "Leader commissions", to: "/reseller/commissions", icon: <Award className="h-4 w-4" /> },
+    ],
+  },
+  {
+    label: "Growth",
+    icon: <Rocket className="h-4 w-4" />,
+    items: [
+      { label: "Marketing", to: "/reseller/marketing", icon: <Megaphone className="h-4 w-4" /> },
+    ],
+  },
+  {
+    label: "Store",
+    icon: <Store className="h-4 w-4" />,
+    items: [
+      { label: "Store design", to: "/reseller/design", icon: <Palette className="h-4 w-4" /> },
+      { label: "Domain", to: "/reseller/domain", icon: <Globe className="h-4 w-4" /> },
+    ],
+  },
 ];
 
 function ResellerLayout() {
