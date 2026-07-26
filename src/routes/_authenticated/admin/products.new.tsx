@@ -166,7 +166,7 @@ function NewProduct() {
             <b>Buying price</b> = admin's purchase cost. <b>Reseller price</b> = the price you give resellers — resellers see this as the product price.
           </p>
           <div className="grid gap-3 md:grid-cols-3">
-            <Field label="Buying price / SA cost (৳)" required>
+            <Field label="Buying price / Admin cost (৳)" required>
               <input required type="number" min={0} value={buying} onChange={(e) => setBuying(e.target.value)} className={inputCls} />
             </Field>
             <Field label="Reseller price (৳)" required>
