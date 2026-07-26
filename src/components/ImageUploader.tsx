@@ -17,6 +17,7 @@ export function ImageUploader({
   onChange,
   multiple = false,
   label = "Upload image",
+  variant = "square",
 }: {
   bucket: "product-images" | "branding";
   folder: string;
@@ -24,6 +25,7 @@ export function ImageUploader({
   onChange: (v: UploadedImage[]) => void;
   multiple?: boolean;
   label?: string;
+  variant?: "square" | "wide" | "hero";
 }) {
   const [busy, setBusy] = useState(false);
   const ref = useRef<HTMLInputElement>(null);
@@ -69,23 +71,30 @@ export function ImageUploader({
     onChange(value.filter((v) => v.path !== img.path));
   }
 
+  const previewClass =
+    variant === "hero"
+      ? "h-44 w-full max-w-3xl"
+      : variant === "wide"
+      ? "h-32 w-full max-w-xl"
+      : "h-24 w-24";
+
   return (
     <div>
       <div className="mb-2 flex flex-wrap gap-3">
         {value.map((img) => (
           <div
             key={img.path}
-            className="group relative h-24 w-24 overflow-hidden rounded-md border bg-muted"
+            className={`group relative overflow-hidden rounded-md border bg-muted ${previewClass}`}
           >
             <img src={img.url} className="h-full w-full object-contain" alt="" />
             <button
               type="button"
               onClick={() => remove(img)}
-              className="absolute right-1 top-1 rounded-full bg-black/60 p-1 text-white opacity-0 transition group-hover:opacity-100"
+              className="absolute right-2 top-2 rounded-full bg-black/60 p-1.5 text-white opacity-0 transition group-hover:opacity-100"
             >
-              <X className="h-3 w-3" />
+              <X className="h-3.5 w-3.5" />
             </button>
-            <div className="absolute inset-x-0 bottom-0 bg-black/60 px-1 py-0.5 text-[10px] text-white">
+            <div className="absolute inset-x-0 bottom-0 bg-black/60 px-2 py-1 text-[10px] text-white">
               {(img.bytes / 1024).toFixed(0)}KB
             </div>
           </div>
@@ -95,7 +104,7 @@ export function ImageUploader({
             type="button"
             onClick={() => ref.current?.click()}
             disabled={busy}
-            className="flex h-24 w-24 flex-col items-center justify-center gap-1 rounded-md border-2 border-dashed border-border text-xs text-muted-foreground transition hover:border-primary hover:text-primary disabled:opacity-50"
+            className={`flex flex-col items-center justify-center gap-1 rounded-md border-2 border-dashed border-border text-xs text-muted-foreground transition hover:border-primary hover:text-primary disabled:opacity-50 ${previewClass}`}
           >
             {busy ? (
               <Loader2 className="h-4 w-4 animate-spin" />

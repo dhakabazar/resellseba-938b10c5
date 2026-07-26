@@ -99,6 +99,7 @@ function LandingEditor() {
             value={c.hero.bannerImage ? [c.hero.bannerImage] : []}
             onChange={(v) => update((d) => { d.hero.bannerImage = v[0] ?? null; })}
             label="Upload banner"
+            variant="hero"
           />
         </F>
       </Section>
