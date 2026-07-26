@@ -259,10 +259,10 @@ function EditProduct() {
         <div className="surface-card p-6">
           <h3 className="mb-1 text-sm font-semibold">Pricing & delivery</h3>
           <p className="mb-4 text-xs text-muted-foreground">
-            <b>Buying price</b> = apnar (SA) kena dam. <b>Reseller price</b> = reseller ke jei dame den.
+            <b>Buying price</b> = admin's purchase cost. <b>Reseller price</b> = the price you give resellers.
           </p>
           <div className="grid gap-3 md:grid-cols-3">
-            <Field label="Buying price / SA cost (৳)" required>
+            <Field label="Buying price / Admin cost (৳)" required>
               <input required type="number" min={0} value={buying} onChange={(e) => setBuying(e.target.value)} className={inputCls} />
             </Field>
             <Field label="Reseller price (৳)" required>
@@ -287,13 +287,13 @@ function EditProduct() {
 
           <div className="mt-5 grid gap-3 md:grid-cols-2">
             <div className="rounded-lg border bg-muted/30 p-4 text-sm">
-              <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Super admin er hishab</div>
+              <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Admin calculation</div>
               <PRow label="Reseller price" value={`৳${Number(resellerPrice) || 0}`} />
               <PRow label="− Buying price" value={`৳${Number(buying) || 0}`} />
-              <PRow label="SA profit / unit" value={`৳${calc.saProfit}`} strong success={calc.saProfit >= 0} />
+              <PRow label="Admin profit / unit" value={`৳${calc.saProfit}`} strong success={calc.saProfit >= 0} />
             </div>
             <div className="rounded-lg border bg-muted/30 p-4 text-sm">
-              <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Reseller er hishab (inside Dhaka)</div>
+              <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Reseller calculation (inside Dhaka)</div>
               <PRow label="Product (reseller price)" value={`৳${Number(resellerPrice) || 0}`} />
               <PRow label="+ Packaging" value={`৳${Number(packaging) || 0}`} />
               <PRow label="+ Delivery" value={`৳${Number(deliveryIn) || 0}`} />
