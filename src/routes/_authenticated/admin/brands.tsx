@@ -161,7 +161,13 @@ function BrandsPage() {
         />
       ) : (
         <div className="surface-card divide-y">
-          {items.map((b) => (
+          {items
+            .filter((b) => {
+              const q = search.trim().toLowerCase();
+              if (!q) return true;
+              return b.name.toLowerCase().includes(q) || b.slug.toLowerCase().includes(q);
+            })
+            .map((b) => (
             <div key={b.id} className="flex items-center gap-4 p-4">
               <div className="h-10 w-10 overflow-hidden rounded-md border bg-muted">
                 {b.logo_url && <img src={b.logo_url} className="h-full w-full object-cover" alt="" />}
