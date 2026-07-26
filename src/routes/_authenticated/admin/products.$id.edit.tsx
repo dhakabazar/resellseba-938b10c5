@@ -268,9 +268,6 @@ function EditProduct() {
               রিসেলার মিনিমাম বিক্রি করবে <b>reseller price + packaging</b>, ডেলিভারি এর উপরে।
             </Hint>
           </h3>
-          <p className="mb-4 text-xs text-muted-foreground">
-            <b>Buying price</b> = admin's purchase cost. <b>Reseller price</b> = the price you give resellers.
-          </p>
           <div className="grid gap-3 md:grid-cols-3">
             <Field label="Buying price / Admin cost (৳)" required hint="আপনার নিজের কেনা মূল্য। রিসেলার দেখবে না।">
               <input required type="number" min={0} value={buying} onChange={(e) => setBuying(e.target.value)} className={inputCls} />
