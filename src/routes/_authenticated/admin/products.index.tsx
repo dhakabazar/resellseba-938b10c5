@@ -1,9 +1,17 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
-import { Plus, Loader2, Pencil, Trash2, Eye, EyeOff } from "lucide-react";
+import { Plus, Loader2, Pencil, Trash2, Eye, EyeOff, Check, X } from "lucide-react";
 import { toast } from "sonner";
+import {
+  DataToolbar,
+  Pagination,
+  ActionMenu,
+  usePaginated,
+  type FilterDef,
+} from "@/components/data-list";
+import { DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 
 type Row = {
   id: string;
@@ -15,46 +23,123 @@ type Row = {
   stock: number;
   is_active: boolean;
   og_image_url: string | null;
+  brand_id: string | null;
+  category_id: string | null;
 };
+
+type Opt = { id: string; name: string };
 
 export const Route = createFileRoute("/_authenticated/admin/products/")({
   component: ProductsPage,
 });
 
 function ProductsPage() {
+  const nav = useNavigate();
   const [items, setItems] = useState<Row[]>([]);
+  const [brands, setBrands] = useState<Opt[]>([]);
+  const [categories, setCategories] = useState<Opt[]>([]);
   const [loading, setLoading] = useState(true);
+
   const [q, setQ] = useState("");
+  const [brand, setBrand] = useState("");
+  const [category, setCategory] = useState("");
+  const [status, setStatus] = useState("");
+  const [stockFilter, setStockFilter] = useState("");
+  const [perPage, setPerPage] = useState(20);
+  const [page, setPage] = useState(1);
 
   async function load() {
     setLoading(true);
-    const { data } = await supabase
-      .from("products")
-      .select("id,name,slug,buying_price,reseller_price,suggested_price,stock,is_active,og_image_url")
-      .order("created_at", { ascending: false });
-    setItems((data ?? []) as Row[]);
+    const [{ data: p }, { data: b }, { data: c }] = await Promise.all([
+      supabase
+        .from("products")
+        .select("id,name,slug,buying_price,reseller_price,suggested_price,stock,is_active,og_image_url,brand_id,category_id")
+        .order("created_at", { ascending: false }),
+      supabase.from("brands").select("id,name").order("name"),
+      supabase.from("categories").select("id,name").order("name"),
+    ]);
+    setItems((p ?? []) as Row[]);
+    setBrands((b ?? []) as Opt[]);
+    setCategories((c ?? []) as Opt[]);
     setLoading(false);
   }
   useEffect(() => {
     load();
   }, []);
 
+  useEffect(() => {
+    setPage(1);
+  }, [q, brand, category, status, stockFilter, perPage]);
+
   async function toggle(p: Row) {
     const { error } = await supabase.from("products").update({ is_active: !p.is_active }).eq("id", p.id);
     if (error) return toast.error(error.message);
-    load();
+    setItems((s) => s.map((i) => (i.id === p.id ? { ...i, is_active: !p.is_active } : i)));
   }
   async function remove(p: Row) {
     if (!confirm(`Delete "${p.name}"?`)) return;
     const { error } = await supabase.from("products").delete().eq("id", p.id);
     if (error) return toast.error(error.message);
     toast.success("Deleted");
-    load();
+    setItems((s) => s.filter((i) => i.id !== p.id));
   }
 
-  const filtered = items.filter((i) =>
-    q ? i.name.toLowerCase().includes(q.toLowerCase()) || i.slug.includes(q.toLowerCase()) : true,
-  );
+  const filtered = useMemo(() => {
+    return items.filter((i) => {
+      if (q) {
+        const t = q.toLowerCase();
+        if (!i.name.toLowerCase().includes(t) && !i.slug.includes(t)) return false;
+      }
+      if (brand && i.brand_id !== brand) return false;
+      if (category && i.category_id !== category) return false;
+      if (status === "active" && !i.is_active) return false;
+      if (status === "hidden" && i.is_active) return false;
+      if (stockFilter === "out" && i.stock > 0) return false;
+      if (stockFilter === "low" && (i.stock === 0 || i.stock > 5)) return false;
+      if (stockFilter === "in" && i.stock <= 0) return false;
+      return true;
+    });
+  }, [items, q, brand, category, status, stockFilter]);
+
+  const paged = usePaginated(filtered, page, perPage);
+
+  const filters: FilterDef[] = [
+    {
+      key: "brand",
+      label: "Brand",
+      value: brand,
+      onChange: setBrand,
+      options: brands.map((b) => ({ value: b.id, label: b.name })),
+    },
+    {
+      key: "category",
+      label: "Category",
+      value: category,
+      onChange: setCategory,
+      options: categories.map((c) => ({ value: c.id, label: c.name })),
+    },
+    {
+      key: "status",
+      label: "Status",
+      value: status,
+      onChange: setStatus,
+      options: [
+        { value: "active", label: "Active" },
+        { value: "hidden", label: "Hidden" },
+      ],
+    },
+    {
+      key: "stock",
+      label: "Stock",
+      value: stockFilter,
+      onChange: setStockFilter,
+      options: [
+        { value: "in", label: "In stock" },
+        { value: "low", label: "Low (≤5)" },
+        { value: "out", label: "Out of stock" },
+      ],
+    },
+  ];
 
   return (
     <div>
@@ -71,14 +156,14 @@ function ProductsPage() {
         }
       />
 
-      <div className="mb-4">
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Search by name or slug…"
-          className="w-full max-w-sm rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-        />
-      </div>
+      <DataToolbar
+        search={q}
+        onSearch={setQ}
+        searchPlaceholder="Search by name or slug…"
+        filters={filters}
+        perPage={perPage}
+        onPerPage={setPerPage}
+      />
 
       {loading ? (
         <div className="grid place-items-center py-12">
@@ -86,8 +171,8 @@ function ProductsPage() {
         </div>
       ) : filtered.length === 0 ? (
         <EmptyState
-          title="No products yet"
-          description="Prothom product add kore resellers der jonno available korun."
+          title="No products match"
+          description="Filters change korun ba notun product add korun."
           action={
             <Link
               to="/admin/products/new"
@@ -98,88 +183,156 @@ function ProductsPage() {
           }
         />
       ) : (
-        <div className="surface-card overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-muted text-left text-xs uppercase text-muted-foreground">
-              <tr>
-                <th className="px-4 py-3">Product</th>
-                <th className="px-4 py-3">Buy (SA)</th>
-                <th className="px-4 py-3">Reseller price</th>
-                <th className="px-4 py-3">Suggested</th>
-                <th className="px-4 py-3">Stock</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {filtered.map((p) => (
-                <tr key={p.id} className="hover:bg-muted/50">
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 overflow-hidden rounded-md border bg-muted">
-                        {p.og_image_url && (
-                          <img src={p.og_image_url} className="h-full w-full object-cover" alt="" />
-                        )}
-                      </div>
-                      <div>
-                        <Link
-                          to="/admin/products/$id/edit"
-                          params={{ id: p.id }}
-                          className="font-medium hover:underline"
-                        >
-                          {p.name}
-                        </Link>
-                        <div className="text-xs text-muted-foreground">/{p.slug}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">৳{p.buying_price}</td>
-                  <td className="px-4 py-3">৳{p.reseller_price}</td>
-                  <td className="px-4 py-3">৳{p.suggested_price}</td>
-                  <td className="px-4 py-3">{p.stock}</td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-xs ${
-                        p.is_active
-                          ? "bg-success/15 text-success-foreground"
-                          : "bg-muted text-muted-foreground"
-                      }`}
-                    >
-                      {p.is_active ? "Active" : "Hidden"}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center justify-end gap-1">
-                      <button
-                        onClick={() => toggle(p)}
-                        title={p.is_active ? "Hide" : "Show"}
-                        className="rounded-md p-2 text-muted-foreground hover:bg-muted"
-                      >
-                        {p.is_active ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </button>
-                      <Link
-                        to="/admin/products/$id/edit"
-                        params={{ id: p.id }}
-                        className="rounded-md p-2 text-muted-foreground hover:bg-muted"
-                        title="Edit"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Link>
-                      <button
-                        onClick={() => remove(p)}
-                        title="Delete"
-                        className="rounded-md p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </td>
+        <>
+          <div className="surface-card overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-muted text-left text-xs uppercase text-muted-foreground">
+                <tr>
+                  <th className="px-4 py-3">Product</th>
+                  <th className="px-4 py-3">Buy</th>
+                  <th className="px-4 py-3">Reseller</th>
+                  <th className="px-4 py-3">Suggested</th>
+                  <th className="px-4 py-3">Stock</th>
+                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3 text-right">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y">
+                {paged.map((p) => (
+                  <tr key={p.id} className="hover:bg-muted/50">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 overflow-hidden rounded-md border bg-muted">
+                          {p.og_image_url && (
+                            <img src={p.og_image_url} className="h-full w-full object-cover" alt="" />
+                          )}
+                        </div>
+                        <div>
+                          <Link
+                            to="/admin/products/$id/edit"
+                            params={{ id: p.id }}
+                            className="font-medium hover:underline"
+                          >
+                            {p.name}
+                          </Link>
+                          <div className="text-xs text-muted-foreground">/{p.slug}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">৳{p.buying_price}</td>
+                    <td className="px-4 py-3">৳{p.reseller_price}</td>
+                    <td className="px-4 py-3">৳{p.suggested_price}</td>
+                    <td className="px-4 py-3">
+                      <StockCell row={p} onSaved={(v) => setItems((s) => s.map((i) => (i.id === p.id ? { ...i, stock: v } : i)))} />
+                    </td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-xs ${
+                          p.is_active ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        {p.is_active ? "Active" : "Hidden"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex justify-end">
+                        <ActionMenu>
+                          <DropdownMenuItem onSelect={() => nav({ to: "/admin/products/$id/edit", params: { id: p.id } })}>
+                            <Pencil className="mr-2 h-4 w-4" /> Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => toggle(p)}>
+                            {p.is_active ? (
+                              <>
+                                <EyeOff className="mr-2 h-4 w-4" /> Hide
+                              </>
+                            ) : (
+                              <>
+                                <Eye className="mr-2 h-4 w-4" /> Show
+                              </>
+                            )}
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onSelect={() => remove(p)}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" /> Delete
+                          </DropdownMenuItem>
+                        </ActionMenu>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <Pagination page={page} perPage={perPage} total={filtered.length} onPage={setPage} />
+        </>
       )}
+    </div>
+  );
+}
+
+function StockCell({ row, onSaved }: { row: Row; onSaved: (v: number) => void }) {
+  const [editing, setEditing] = useState(false);
+  const [val, setVal] = useState(String(row.stock));
+  const [busy, setBusy] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (editing) inputRef.current?.select();
+  }, [editing]);
+
+  async function save() {
+    const n = Math.max(0, Math.floor(Number(val)));
+    if (Number.isNaN(n)) return toast.error("Invalid stock");
+    if (n === row.stock) return setEditing(false);
+    setBusy(true);
+    const { error } = await supabase.from("products").update({ stock: n }).eq("id", row.id);
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    onSaved(n);
+    setEditing(false);
+    toast.success("Stock updated");
+  }
+
+  if (!editing) {
+    return (
+      <button
+        onClick={() => {
+          setVal(String(row.stock));
+          setEditing(true);
+        }}
+        className={`rounded-md border border-dashed px-2 py-0.5 text-xs hover:border-primary hover:text-primary ${
+          row.stock === 0 ? "text-destructive" : row.stock <= 5 ? "text-warning" : ""
+        }`}
+        title="Click to edit stock"
+      >
+        {row.stock}
+      </button>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-1">
+      <input
+        ref={inputRef}
+        type="number"
+        min={0}
+        value={val}
+        onChange={(e) => setVal(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") save();
+          if (e.key === "Escape") setEditing(false);
+        }}
+        className="w-20 rounded-md border bg-background px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-ring"
+      />
+      <button onClick={save} disabled={busy} className="rounded-md p-1 text-primary hover:bg-primary/10">
+        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+      </button>
+      <button onClick={() => setEditing(false)} className="rounded-md p-1 text-muted-foreground hover:bg-muted">
+        <X className="h-4 w-4" />
+      </button>
     </div>
   );
 }
