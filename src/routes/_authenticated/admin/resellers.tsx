@@ -347,6 +347,9 @@ function ResellersPage() {
                           <ExternalLink className="mr-2 h-4 w-4" /> Visit storefront
                         </a>
                       </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => confirmEmail(r)}>
+                        <MailCheck className="mr-2 h-4 w-4" /> Confirm email
+                      </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         onClick={() => remove(r)}
