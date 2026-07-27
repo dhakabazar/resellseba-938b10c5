@@ -55,20 +55,29 @@ function Onboarding() {
     setBusy(true);
     try {
       const isBank = payoutMethod === "bank";
-      const { error } = await supabase.from("resellers").insert({
-        user_id: user.id,
+      const payload = {
         business_name: businessName,
         code: code.toLowerCase().replace(/[^a-z0-9-]/g, "-"),
         contact_phone: phone,
-        status: "pending",
+        status: "pending" as const,
         payout_method: payoutMethod,
         payout_account_name: payoutAccountName || null,
         payout_account_number: payoutAccountNumber || null,
         payout_bank_name: isBank ? payoutBankName || null : null,
         payout_branch: isBank ? payoutBranch || null : null,
         payout_routing: isBank ? payoutRouting || null : null,
-      });
+      };
+      // Row auto-created at signup — update if exists, else insert.
+      const { data: existing } = await supabase
+        .from("resellers")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      const { error } = existing
+        ? await supabase.from("resellers").update(payload).eq("user_id", user.id)
+        : await supabase.from("resellers").insert({ user_id: user.id, ...payload });
       if (error) throw error;
+
       setStatus("pending");
       toast.success("আবেদন জমা হয়েছে! অ্যাডমিন রিভিউ করে অ্যাপ্রুভ করবেন।");
     } catch (err) {
