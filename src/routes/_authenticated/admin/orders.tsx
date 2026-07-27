@@ -419,8 +419,6 @@ function OrderDrawer({
               <option value="steadfast">Steadfast</option>
               <option value="pathao">Pathao</option>
               <option value="carrybee">Carrybee</option>
-              <option value="redx">RedX</option>
-              <option value="paperfly">Paperfly</option>
               <option value="manual">Manual</option>
             </select>
             <input
