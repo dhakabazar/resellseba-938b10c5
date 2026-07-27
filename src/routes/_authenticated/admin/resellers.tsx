@@ -322,6 +322,11 @@ function ResellersPage() {
         </div>
       )}
 
+      {!loading && filtered.length > 0 && (
+        <Pagination page={page} perPage={perPage} total={filtered.length} onPage={setPage} />
+      )}
+
+
       {editing && (
         <EditModal
           reseller={editing}
