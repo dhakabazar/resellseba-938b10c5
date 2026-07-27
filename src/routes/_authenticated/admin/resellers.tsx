@@ -70,6 +70,10 @@ type Filter = (typeof FILTERS)[number];
 
 function ResellersPage() {
   const confirmEmailFn = useServerFn(confirmUserEmail);
+  const listPendingFn = useServerFn(listPendingSignups);
+  const deleteAuthUserFn = useServerFn(deleteAuthUser);
+  const [pending, setPending] = useState<PendingSignup[]>([]);
+  const [pendingLoading, setPendingLoading] = useState(true);
   const [items, setItems] = useState<Reseller[]>([]);
   const [summaries, setSummaries] = useState<Record<string, Summary>>({});
   const [orderCounts, setOrderCounts] = useState<Record<string, number>>({});
