@@ -153,13 +153,85 @@ function Onboarding() {
                 placeholder="01XXXXXXXXX"
               />
             </div>
+
+            <div className="mt-4 border-t pt-4">
+              <div className="mb-2 text-sm font-semibold">পেমেন্ট (Payout) তথ্য</div>
+              <p className="mb-3 text-xs text-muted-foreground">
+                আপনার আর্নিং আমরা এই অ্যাকাউন্টে পাঠাবো। পরে সেটিংস থেকেও পরিবর্তন করা যাবে।
+              </p>
+              <div>
+                <label className="mb-1 block text-xs font-medium">Method</label>
+                <select
+                  value={payoutMethod}
+                  onChange={(e) => setPayoutMethod(e.target.value as typeof payoutMethod)}
+                  className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                >
+                  <option value="bkash">bKash</option>
+                  <option value="nagad">Nagad</option>
+                  <option value="rocket">Rocket</option>
+                  <option value="bank">Bank</option>
+                </select>
+              </div>
+              <div className="mt-2 grid gap-2 md:grid-cols-2">
+                <div>
+                  <label className="mb-1 block text-xs font-medium">Account holder name</label>
+                  <input
+                    value={payoutAccountName}
+                    onChange={(e) => setPayoutAccountName(e.target.value)}
+                    className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                    placeholder="Full name"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium">
+                    {payoutMethod === "bank" ? "Account number" : "Mobile number"}
+                  </label>
+                  <input
+                    value={payoutAccountNumber}
+                    onChange={(e) => setPayoutAccountNumber(e.target.value)}
+                    className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                    placeholder={payoutMethod === "bank" ? "1234567890" : "01XXXXXXXXX"}
+                  />
+                </div>
+              </div>
+              {payoutMethod === "bank" && (
+                <div className="mt-2 grid gap-2 md:grid-cols-3">
+                  <div>
+                    <label className="mb-1 block text-xs font-medium">Bank name</label>
+                    <input
+                      value={payoutBankName}
+                      onChange={(e) => setPayoutBankName(e.target.value)}
+                      className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium">Branch</label>
+                    <input
+                      value={payoutBranch}
+                      onChange={(e) => setPayoutBranch(e.target.value)}
+                      className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium">Routing</label>
+                    <input
+                      value={payoutRouting}
+                      onChange={(e) => setPayoutRouting(e.target.value)}
+                      className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
             <button
               disabled={busy}
-              className="btn-brand flex w-full items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium disabled:opacity-50"
+              className="btn-brand mt-4 flex w-full items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium disabled:opacity-50"
             >
               {busy && <Loader2 className="h-4 w-4 animate-spin" />}
               Submit application
             </button>
+
           </form>
         </div>
       </div>
