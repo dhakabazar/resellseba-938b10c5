@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/use-auth";
 import { PageHeader, StatCard, EmptyState } from "@/components/ui-kit";
-import { Loader2, Wallet, TrendingUp, Clock, CheckCircle2, PackageSearch } from "lucide-react";
+import { Loader2, Wallet, TrendingUp, Clock, CheckCircle2 } from "lucide-react";
 
 type Item = {
   product_name: string;
