@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
+import { DataToolbar, Pagination, usePaginated } from "@/components/data-list";
 import {
   Check,
   X,
@@ -14,7 +15,6 @@ import {
   BadgeCheck,
   ShieldOff,
   ExternalLink,
-  Search,
   Copy,
 } from "lucide-react";
 import { toast } from "sonner";
