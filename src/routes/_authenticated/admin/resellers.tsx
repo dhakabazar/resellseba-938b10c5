@@ -1,9 +1,31 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
-import { Check, X, Loader2, Pencil, Trash2, Pause, Play } from "lucide-react";
+import {
+  Check,
+  X,
+  Loader2,
+  Pencil,
+  Trash2,
+  Pause,
+  Play,
+  MoreHorizontal,
+  BadgeCheck,
+  ShieldOff,
+  ExternalLink,
+  Search,
+  Copy,
+} from "lucide-react";
 import { toast } from "sonner";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 type Status = "pending" | "active" | "suspended" | "rejected";
 
@@ -18,35 +40,92 @@ type Reseller = {
   commission_rate: number;
   leader_id: string | null;
   notes: string | null;
+  approved_at: string | null;
   created_at: string;
+};
+
+type Summary = {
+  delivered_profit: number;
+  pending_payout: number;
+  paid_out: number;
+  available: number;
 };
 
 export const Route = createFileRoute("/_authenticated/admin/resellers")({
   component: ResellersPage,
 });
 
+const FILTERS = ["pending", "active", "suspended", "rejected", "unverified", "all"] as const;
+type Filter = (typeof FILTERS)[number];
+
 function ResellersPage() {
   const [items, setItems] = useState<Reseller[]>([]);
+  const [summaries, setSummaries] = useState<Record<string, Summary>>({});
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<"all" | Status>("pending");
+  const [filter, setFilter] = useState<Filter>("pending");
+  const [query, setQuery] = useState("");
   const [editing, setEditing] = useState<Reseller | null>(null);
 
   async function load() {
     setLoading(true);
-    let q = supabase
+    const { data } = await supabase
       .from("resellers")
       .select(
-        "id,user_id,business_name,code,contact_phone,address,status,commission_rate,leader_id,notes,created_at",
+        "id,user_id,business_name,code,contact_phone,address,status,commission_rate,leader_id,notes,approved_at,created_at",
       )
       .order("created_at", { ascending: false });
-    if (filter !== "all") q = q.eq("status", filter);
-    const { data } = await q;
-    setItems((data ?? []) as Reseller[]);
+    const rows = (data ?? []) as Reseller[];
+    setItems(rows);
     setLoading(false);
+
+    // Load earnings summary per reseller in parallel
+    const results = await Promise.all(
+      rows.map(async (r) => {
+        const { data: s } = await supabase.rpc("reseller_profit_summary", { _reseller_id: r.id });
+        const row = Array.isArray(s) ? s[0] : s;
+        return [
+          r.id,
+          {
+            delivered_profit: Number(row?.delivered_profit ?? 0),
+            pending_payout: Number(row?.pending_payout ?? 0),
+            paid_out: Number(row?.paid_out ?? 0),
+            available: Number(row?.available ?? 0),
+          } as Summary,
+        ] as const;
+      }),
+    );
+    setSummaries(Object.fromEntries(results));
   }
+
   useEffect(() => {
     load();
-  }, [filter]);
+  }, []);
+
+  const filtered = useMemo(() => {
+    let out = items;
+    if (filter === "unverified") out = out.filter((r) => !r.approved_at);
+    else if (filter !== "all") out = out.filter((r) => r.status === filter);
+    const q = query.trim().toLowerCase();
+    if (q)
+      out = out.filter(
+        (r) =>
+          r.business_name.toLowerCase().includes(q) ||
+          r.code.toLowerCase().includes(q) ||
+          (r.contact_phone ?? "").toLowerCase().includes(q),
+      );
+    return out;
+  }, [items, filter, query]);
+
+  const counts = useMemo(() => {
+    return {
+      pending: items.filter((r) => r.status === "pending").length,
+      active: items.filter((r) => r.status === "active").length,
+      suspended: items.filter((r) => r.status === "suspended").length,
+      rejected: items.filter((r) => r.status === "rejected").length,
+      unverified: items.filter((r) => !r.approved_at).length,
+      all: items.length,
+    } as Record<Filter, number>;
+  }, [items]);
 
   async function approve(r: Reseller) {
     const { error } = await supabase
@@ -60,7 +139,7 @@ function ResellersPage() {
     await supabase
       .from("reseller_settings")
       .upsert({ reseller_id: r.id, store_name: r.business_name }, { onConflict: "reseller_id" });
-    toast.success(`${r.business_name} approved`);
+    toast.success(`${r.business_name} approved & verified`);
     load();
   }
 
@@ -71,112 +150,179 @@ function ResellersPage() {
     load();
   }
 
+  async function setVerified(r: Reseller, verified: boolean) {
+    const { error } = await supabase
+      .from("resellers")
+      .update({ approved_at: verified ? new Date().toISOString() : null })
+      .eq("id", r.id);
+    if (error) return toast.error(error.message);
+    toast.success(verified ? "Marked verified" : "Verification removed");
+    load();
+  }
+
   async function remove(r: Reseller) {
-    if (!confirm(`Delete reseller "${r.business_name}"? Er sob listing/order o remove hote pare.`)) return;
+    if (!confirm(`Delete reseller "${r.business_name}"? Er sob listing/order o remove hote pare.`))
+      return;
     const { error } = await supabase.from("resellers").delete().eq("id", r.id);
     if (error) return toast.error(error.message);
     toast.success("Deleted");
     load();
   }
 
+  function copyStoreLink(r: Reseller) {
+    const url = `${window.location.origin}/s/${r.code}`;
+    navigator.clipboard.writeText(url);
+    toast.success("Store link copied");
+  }
+
   return (
     <div>
       <PageHeader
         title="Resellers"
-        description="Applications review korun, commission/leader set korun, status manage korun."
+        description="Applications review, commission/leader setup, verify & activate, earning overview."
       />
-      <div className="mb-4 inline-flex overflow-hidden rounded-md border">
-        {(["pending", "active", "suspended", "rejected", "all"] as const).map((f) => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className={`px-4 py-1.5 text-sm capitalize ${
-              filter === f ? "bg-primary text-primary-foreground" : "bg-background hover:bg-muted"
-            }`}
-          >
-            {f}
-          </button>
-        ))}
+
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search name, code, phone…"
+            className="w-64 rounded-md border bg-background py-2 pl-8 pr-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+          />
+        </div>
+        <div className="ml-auto flex flex-wrap gap-1">
+          {FILTERS.map((f) => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={
+                "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs capitalize transition-colors " +
+                (filter === f
+                  ? "border-transparent bg-primary text-primary-foreground"
+                  : "hover:bg-muted")
+              }
+            >
+              {f}
+              <span
+                className={
+                  "rounded-full px-1.5 text-[10px] " +
+                  (filter === f ? "bg-primary-foreground/20" : "bg-muted text-muted-foreground")
+                }
+              >
+                {counts[f]}
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {loading ? (
         <div className="grid place-items-center py-12">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
-      ) : items.length === 0 ? (
+      ) : filtered.length === 0 ? (
         <EmptyState title="Nothing here" description="No resellers match this filter." />
       ) : (
         <div className="surface-card divide-y">
-          {items.map((r) => (
-            <div key={r.id} className="flex flex-wrap items-center gap-4 p-4">
-              <div className="min-w-0 flex-1">
-                <div className="font-medium">{r.business_name}</div>
-                <div className="text-xs text-muted-foreground">
-                  #{r.code} · {r.contact_phone ?? "no phone"} · Commission {r.commission_rate}%
-                  {r.leader_id ? " · Leader linked" : ""}
+          {filtered.map((r) => {
+            const s = summaries[r.id];
+            const verified = !!r.approved_at;
+            return (
+              <div key={r.id} className="flex flex-wrap items-center gap-4 p-4">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold uppercase text-primary">
+                  {r.business_name.slice(0, 2)}
                 </div>
-              </div>
-              <span
-                className={`rounded-full px-2 py-0.5 text-xs capitalize ${
-                  r.status === "active"
-                    ? "bg-success/15 text-success-foreground"
-                    : r.status === "pending"
-                      ? "bg-warning/20 text-warning-foreground"
-                      : r.status === "suspended"
-                        ? "bg-muted text-muted-foreground"
-                        : "bg-destructive/15 text-destructive"
-                }`}
-              >
-                {r.status}
-              </span>
-              <div className="flex flex-wrap gap-2">
-                {r.status === "pending" && (
-                  <>
-                    <button
-                      onClick={() => approve(r)}
-                      className="inline-flex items-center gap-1 rounded-md bg-success px-3 py-1.5 text-xs font-medium text-success-foreground"
+
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="truncate font-medium">{r.business_name}</span>
+                    <StatusBadge status={r.status} />
+                    {verified ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+                        <BadgeCheck className="h-3 w-3" /> Verified
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                        <ShieldOff className="h-3 w-3" /> Unverified
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-0.5 text-xs text-muted-foreground">
+                    #{r.code} · {r.contact_phone ?? "no phone"} · Commission {r.commission_rate}%
+                    {r.leader_id ? " · Leader linked" : ""}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-right md:grid-cols-4">
+                  <Metric label="Delivered profit" value={s?.delivered_profit} accent />
+                  <Metric label="Available" value={s?.available} />
+                  <Metric label="Paid out" value={s?.paid_out} />
+                  <Metric label="Payout pending" value={s?.pending_payout} muted />
+                </div>
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="grid h-8 w-8 place-items-center rounded-md border hover:bg-muted">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuLabel>{r.business_name}</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {r.status === "pending" && (
+                      <>
+                        <DropdownMenuItem onClick={() => approve(r)}>
+                          <Check className="mr-2 h-4 w-4" /> Approve & verify
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setStatus(r, "rejected")}>
+                          <X className="mr-2 h-4 w-4" /> Reject
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                      </>
+                    )}
+                    {r.status === "active" && (
+                      <DropdownMenuItem onClick={() => setStatus(r, "suspended")}>
+                        <Pause className="mr-2 h-4 w-4" /> Deactivate
+                      </DropdownMenuItem>
+                    )}
+                    {(r.status === "suspended" || r.status === "rejected") && (
+                      <DropdownMenuItem onClick={() => setStatus(r, "active")}>
+                        <Play className="mr-2 h-4 w-4" /> Activate
+                      </DropdownMenuItem>
+                    )}
+                    {verified ? (
+                      <DropdownMenuItem onClick={() => setVerified(r, false)}>
+                        <ShieldOff className="mr-2 h-4 w-4" /> Remove verification
+                      </DropdownMenuItem>
+                    ) : (
+                      <DropdownMenuItem onClick={() => setVerified(r, true)}>
+                        <BadgeCheck className="mr-2 h-4 w-4" /> Mark verified
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => setEditing(r)}>
+                      <Pencil className="mr-2 h-4 w-4" /> Edit details
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => copyStoreLink(r)}>
+                      <Copy className="mr-2 h-4 w-4" /> Copy store link
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <a href={`/s/${r.code}`} target="_blank" rel="noreferrer">
+                        <ExternalLink className="mr-2 h-4 w-4" /> Visit storefront
+                      </a>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => remove(r)}
+                      className="text-destructive focus:text-destructive"
                     >
-                      <Check className="h-3 w-3" /> Approve
-                    </button>
-                    <button
-                      onClick={() => setStatus(r, "rejected")}
-                      className="inline-flex items-center gap-1 rounded-md border px-3 py-1.5 text-xs font-medium"
-                    >
-                      <X className="h-3 w-3" /> Reject
-                    </button>
-                  </>
-                )}
-                {r.status === "active" && (
-                  <button
-                    onClick={() => setStatus(r, "suspended")}
-                    className="inline-flex items-center gap-1 rounded-md border px-3 py-1.5 text-xs font-medium"
-                  >
-                    <Pause className="h-3 w-3" /> Suspend
-                  </button>
-                )}
-                {(r.status === "suspended" || r.status === "rejected") && (
-                  <button
-                    onClick={() => setStatus(r, "active")}
-                    className="inline-flex items-center gap-1 rounded-md border px-3 py-1.5 text-xs font-medium"
-                  >
-                    <Play className="h-3 w-3" /> Reactivate
-                  </button>
-                )}
-                <button
-                  onClick={() => setEditing(r)}
-                  className="inline-flex items-center gap-1 rounded-md border px-3 py-1.5 text-xs font-medium"
-                >
-                  <Pencil className="h-3 w-3" /> Edit
-                </button>
-                <button
-                  onClick={() => remove(r)}
-                  className="inline-flex items-center gap-1 rounded-md border border-destructive/40 px-3 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/10"
-                >
-                  <Trash2 className="h-3 w-3" /> Delete
-                </button>
+                      <Trash2 className="mr-2 h-4 w-4" /> Delete reseller
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -192,6 +338,46 @@ function ResellersPage() {
         />
       )}
     </div>
+  );
+}
+
+function Metric({
+  label,
+  value,
+  accent,
+  muted,
+}: {
+  label: string;
+  value: number | undefined;
+  accent?: boolean;
+  muted?: boolean;
+}) {
+  return (
+    <div className="text-right">
+      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</div>
+      <div
+        className={
+          "text-sm font-semibold tabular-nums " +
+          (accent ? "text-success" : muted ? "text-muted-foreground" : "")
+        }
+      >
+        {value == null ? "—" : `৳${value.toLocaleString()}`}
+      </div>
+    </div>
+  );
+}
+
+function StatusBadge({ status }: { status: Status }) {
+  const map: Record<Status, string> = {
+    active: "bg-success/15 text-success",
+    pending: "bg-warning/20 text-warning-foreground",
+    suspended: "bg-muted text-muted-foreground",
+    rejected: "bg-destructive/15 text-destructive",
+  };
+  return (
+    <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium capitalize ${map[status]}`}>
+      {status}
+    </span>
   );
 }
 
