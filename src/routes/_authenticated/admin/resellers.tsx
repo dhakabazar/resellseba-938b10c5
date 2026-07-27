@@ -267,6 +267,21 @@ function ResellersPage() {
                     #{r.code} · {r.contact_phone ?? "no phone"} · Commission {r.commission_rate}%
                     {r.leader_id ? " · Leader linked" : ""} · Orders {orderCounts[r.id] ?? 0}
                   </div>
+                  <div className="mt-0.5 text-xs text-muted-foreground">
+                    Payout:{" "}
+                    {r.payout_method ? (
+                      <span>
+                        <span className="font-medium capitalize text-foreground">{r.payout_method}</span>
+                        {" · "}
+                        {r.payout_account_number ?? "—"}
+                        {r.payout_account_name ? ` · ${r.payout_account_name}` : ""}
+                        {r.payout_method === "bank" && r.payout_bank_name ? ` · ${r.payout_bank_name}` : ""}
+                      </span>
+                    ) : (
+                      <span className="text-destructive">not set</span>
+                    )}
+                  </div>
+
                 </div>
 
                 <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-right md:grid-cols-5">
