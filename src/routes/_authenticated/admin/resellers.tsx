@@ -169,31 +169,55 @@ function ResellersPage() {
     loadPending();
   }, []);
 
+  const unified = useMemo<UnifiedRow[]>(() => {
+    const pendingRows: UnifiedRow[] = pending.map((p) => ({ kind: "pending", p }));
+    const resellerRows: UnifiedRow[] = items.map((r) => ({ kind: "reseller", r }));
+    return [...pendingRows, ...resellerRows];
+  }, [pending, items]);
+
   const filtered = useMemo(() => {
-    let out = items;
-    if (filter === "unverified") out = out.filter((r) => !r.approved_at);
-    else if (filter !== "all") out = out.filter((r) => r.status === filter);
     const q = query.trim().toLowerCase();
-    if (q)
-      out = out.filter(
-        (r) =>
-          r.business_name.toLowerCase().includes(q) ||
-          r.code.toLowerCase().includes(q) ||
-          (r.contact_phone ?? "").toLowerCase().includes(q),
+    return unified.filter((row) => {
+      // status filter
+      if (filter === "incomplete") {
+        if (row.kind !== "pending") return false;
+      } else if (filter === "unverified") {
+        if (row.kind === "pending") {
+          if (row.p.email_confirmed) return false;
+        } else if (row.r.approved_at) return false;
+      } else if (filter !== "all") {
+        if (row.kind !== "reseller" || row.r.status !== filter) return false;
+      }
+      if (!q) return true;
+      if (row.kind === "pending") {
+        return (
+          (row.p.email ?? "").toLowerCase().includes(q) ||
+          (row.p.full_name ?? "").toLowerCase().includes(q) ||
+          (row.p.phone ?? "").toLowerCase().includes(q)
+        );
+      }
+      return (
+        row.r.business_name.toLowerCase().includes(q) ||
+        row.r.code.toLowerCase().includes(q) ||
+        (row.r.contact_phone ?? "").toLowerCase().includes(q)
       );
-    return out;
-  }, [items, filter, query]);
+    });
+  }, [unified, filter, query]);
 
   const counts = useMemo(() => {
     return {
+      incomplete: pending.length,
       pending: items.filter((r) => r.status === "pending").length,
       active: items.filter((r) => r.status === "active").length,
       suspended: items.filter((r) => r.status === "suspended").length,
       rejected: items.filter((r) => r.status === "rejected").length,
-      unverified: items.filter((r) => !r.approved_at).length,
-      all: items.length,
+      unverified:
+        items.filter((r) => !r.approved_at).length +
+        pending.filter((p) => !p.email_confirmed).length,
+      all: items.length + pending.length,
     } as Record<Filter, number>;
-  }, [items]);
+  }, [items, pending]);
+
 
   async function approve(r: Reseller) {
     const { error } = await supabase
