@@ -181,44 +181,38 @@ function ResellersPage() {
     <div>
       <PageHeader
         title="Resellers"
-        description="Applications review, commission/leader setup, verify & activate, earning overview."
+        description="Review applications, set commission/leader, and manage status."
       />
 
-      <div className="mb-4 flex flex-wrap items-center gap-3">
-        <div className="relative">
-          <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search name, code, phone…"
-            className="w-64 rounded-md border bg-background py-2 pl-8 pr-3 text-sm outline-none focus:ring-2 focus:ring-ring"
-          />
-        </div>
-        <div className="ml-auto flex flex-wrap gap-1">
-          {FILTERS.map((f) => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={
-                "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs capitalize transition-colors " +
-                (filter === f
-                  ? "border-transparent bg-primary text-primary-foreground"
-                  : "hover:bg-muted")
-              }
-            >
-              {f}
-              <span
-                className={
-                  "rounded-full px-1.5 text-[10px] " +
-                  (filter === f ? "bg-primary-foreground/20" : "bg-muted text-muted-foreground")
-                }
-              >
-                {counts[f]}
-              </span>
-            </button>
-          ))}
-        </div>
-      </div>
+      <DataToolbar
+        search={query}
+        onSearch={(v) => {
+          setQuery(v);
+          setPage(1);
+        }}
+        searchPlaceholder="Search name, code, phone…"
+        filters={[
+          {
+            key: "status",
+            label: "Status",
+            value: filter === "all" ? "" : filter,
+            onChange: (v) => {
+              setFilter((v || "all") as Filter);
+              setPage(1);
+            },
+            options: FILTERS.filter((f) => f !== "all").map((f) => ({
+              value: f,
+              label: `${f[0].toUpperCase()}${f.slice(1)} (${counts[f]})`,
+            })),
+          },
+        ]}
+        perPage={perPage}
+        onPerPage={(n) => {
+          setPerPage(n);
+          setPage(1);
+        }}
+      />
+
 
       {loading ? (
         <div className="grid place-items-center py-12">
