@@ -60,8 +60,9 @@ export const listPendingSignups = createServerFn({ method: "GET" })
 
 
     const pending = users
-      .filter((u) => !hasReseller.has(u.id))
+      .filter((u) => !hasReseller.has(u.id) && !isSuperAdmin.has(u.id))
       .map((u) => ({
+
         user_id: u.id,
         email: u.email ?? null,
         full_name: (u.user_metadata?.full_name as string | undefined) ?? (u.user_metadata?.name as string | undefined) ?? null,
