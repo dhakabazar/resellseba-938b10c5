@@ -65,8 +65,13 @@ export const Route = createFileRoute("/_authenticated/admin/resellers")({
   component: ResellersPage,
 });
 
-const FILTERS = ["pending", "active", "suspended", "rejected", "unverified", "all"] as const;
+const FILTERS = ["incomplete", "pending", "active", "suspended", "rejected", "unverified", "all"] as const;
 type Filter = (typeof FILTERS)[number];
+
+type UnifiedRow =
+  | { kind: "reseller"; r: Reseller }
+  | { kind: "pending"; p: PendingSignup };
+
 
 function ResellersPage() {
   const confirmEmailFn = useServerFn(confirmUserEmail);
