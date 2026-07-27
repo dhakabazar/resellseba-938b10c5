@@ -125,8 +125,43 @@ function ResellersPage() {
   }
 
 
+  async function loadPending() {
+    setPendingLoading(true);
+    try {
+      const rows = await listPendingFn();
+      setPending(rows ?? []);
+    } catch (e: any) {
+      // silent — pending list is auxiliary
+    } finally {
+      setPendingLoading(false);
+    }
+  }
+
+  async function confirmPendingEmail(u: PendingSignup) {
+    try {
+      const res = await confirmEmailFn({ data: { userId: u.user_id } });
+      if (res.alreadyConfirmed) toast.info("Email already confirmed");
+      else toast.success(`Email confirmed for ${res.email ?? u.email ?? "user"}`);
+      loadPending();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to confirm email");
+    }
+  }
+
+  async function removePending(u: PendingSignup) {
+    if (!confirm(`Delete signup "${u.email ?? u.full_name ?? u.user_id}"? Ei user auth theke muche jabe.`)) return;
+    try {
+      await deleteAuthUserFn({ data: { userId: u.user_id } });
+      toast.success("Signup deleted");
+      loadPending();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to delete user");
+    }
+  }
+
   useEffect(() => {
     load();
+    loadPending();
   }, []);
 
   const filtered = useMemo(() => {
