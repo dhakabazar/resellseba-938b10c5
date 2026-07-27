@@ -27,6 +27,7 @@ import { Route as AuthenticatedResellerPayoutsRouteImport } from './routes/_auth
 import { Route as AuthenticatedResellerOrdersRouteImport } from './routes/_authenticated/reseller/orders'
 import { Route as AuthenticatedResellerMarketingRouteImport } from './routes/_authenticated/reseller/marketing'
 import { Route as AuthenticatedResellerListingsRouteImport } from './routes/_authenticated/reseller/listings'
+import { Route as AuthenticatedResellerEarningsRouteImport } from './routes/_authenticated/reseller/earnings'
 import { Route as AuthenticatedResellerDomainRouteImport } from './routes/_authenticated/reseller/domain'
 import { Route as AuthenticatedResellerDesignRouteImport } from './routes/_authenticated/reseller/design'
 import { Route as AuthenticatedResellerCommissionsRouteImport } from './routes/_authenticated/reseller/commissions'
@@ -39,6 +40,7 @@ import { Route as AuthenticatedAdminOrdersRouteImport } from './routes/_authenti
 import { Route as AuthenticatedAdminNotificationsRouteImport } from './routes/_authenticated/admin/notifications'
 import { Route as AuthenticatedAdminMarketingRouteImport } from './routes/_authenticated/admin/marketing'
 import { Route as AuthenticatedAdminLandingRouteImport } from './routes/_authenticated/admin/landing'
+import { Route as AuthenticatedAdminFinancialsRouteImport } from './routes/_authenticated/admin/financials'
 import { Route as AuthenticatedAdminDeliveryRouteImport } from './routes/_authenticated/admin/delivery'
 import { Route as AuthenticatedAdminCouriersRouteImport } from './routes/_authenticated/admin/couriers'
 import { Route as AuthenticatedAdminCommissionsRouteImport } from './routes/_authenticated/admin/commissions'
@@ -149,6 +151,12 @@ const AuthenticatedResellerListingsRoute =
     path: '/listings',
     getParentRoute: () => AuthenticatedResellerRouteRoute,
   } as any)
+const AuthenticatedResellerEarningsRoute =
+  AuthenticatedResellerEarningsRouteImport.update({
+    id: '/earnings',
+    path: '/earnings',
+    getParentRoute: () => AuthenticatedResellerRouteRoute,
+  } as any)
 const AuthenticatedResellerDomainRoute =
   AuthenticatedResellerDomainRouteImport.update({
     id: '/domain',
@@ -219,6 +227,12 @@ const AuthenticatedAdminLandingRoute =
   AuthenticatedAdminLandingRouteImport.update({
     id: '/landing',
     path: '/landing',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAdminFinancialsRoute =
+  AuthenticatedAdminFinancialsRouteImport.update({
+    id: '/financials',
+    path: '/financials',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
 const AuthenticatedAdminDeliveryRoute =
@@ -317,6 +331,7 @@ export interface FileRoutesByFullPath {
   '/admin/commissions': typeof AuthenticatedAdminCommissionsRoute
   '/admin/couriers': typeof AuthenticatedAdminCouriersRoute
   '/admin/delivery': typeof AuthenticatedAdminDeliveryRoute
+  '/admin/financials': typeof AuthenticatedAdminFinancialsRoute
   '/admin/landing': typeof AuthenticatedAdminLandingRoute
   '/admin/marketing': typeof AuthenticatedAdminMarketingRoute
   '/admin/notifications': typeof AuthenticatedAdminNotificationsRoute
@@ -329,6 +344,7 @@ export interface FileRoutesByFullPath {
   '/reseller/commissions': typeof AuthenticatedResellerCommissionsRoute
   '/reseller/design': typeof AuthenticatedResellerDesignRoute
   '/reseller/domain': typeof AuthenticatedResellerDomainRoute
+  '/reseller/earnings': typeof AuthenticatedResellerEarningsRoute
   '/reseller/listings': typeof AuthenticatedResellerListingsRoute
   '/reseller/marketing': typeof AuthenticatedResellerMarketingRoute
   '/reseller/orders': typeof AuthenticatedResellerOrdersRouteWithChildren
@@ -359,6 +375,7 @@ export interface FileRoutesByTo {
   '/admin/commissions': typeof AuthenticatedAdminCommissionsRoute
   '/admin/couriers': typeof AuthenticatedAdminCouriersRoute
   '/admin/delivery': typeof AuthenticatedAdminDeliveryRoute
+  '/admin/financials': typeof AuthenticatedAdminFinancialsRoute
   '/admin/landing': typeof AuthenticatedAdminLandingRoute
   '/admin/marketing': typeof AuthenticatedAdminMarketingRoute
   '/admin/notifications': typeof AuthenticatedAdminNotificationsRoute
@@ -371,6 +388,7 @@ export interface FileRoutesByTo {
   '/reseller/commissions': typeof AuthenticatedResellerCommissionsRoute
   '/reseller/design': typeof AuthenticatedResellerDesignRoute
   '/reseller/domain': typeof AuthenticatedResellerDomainRoute
+  '/reseller/earnings': typeof AuthenticatedResellerEarningsRoute
   '/reseller/listings': typeof AuthenticatedResellerListingsRoute
   '/reseller/marketing': typeof AuthenticatedResellerMarketingRoute
   '/reseller/orders': typeof AuthenticatedResellerOrdersRouteWithChildren
@@ -406,6 +424,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/commissions': typeof AuthenticatedAdminCommissionsRoute
   '/_authenticated/admin/couriers': typeof AuthenticatedAdminCouriersRoute
   '/_authenticated/admin/delivery': typeof AuthenticatedAdminDeliveryRoute
+  '/_authenticated/admin/financials': typeof AuthenticatedAdminFinancialsRoute
   '/_authenticated/admin/landing': typeof AuthenticatedAdminLandingRoute
   '/_authenticated/admin/marketing': typeof AuthenticatedAdminMarketingRoute
   '/_authenticated/admin/notifications': typeof AuthenticatedAdminNotificationsRoute
@@ -418,6 +437,7 @@ export interface FileRoutesById {
   '/_authenticated/reseller/commissions': typeof AuthenticatedResellerCommissionsRoute
   '/_authenticated/reseller/design': typeof AuthenticatedResellerDesignRoute
   '/_authenticated/reseller/domain': typeof AuthenticatedResellerDomainRoute
+  '/_authenticated/reseller/earnings': typeof AuthenticatedResellerEarningsRoute
   '/_authenticated/reseller/listings': typeof AuthenticatedResellerListingsRoute
   '/_authenticated/reseller/marketing': typeof AuthenticatedResellerMarketingRoute
   '/_authenticated/reseller/orders': typeof AuthenticatedResellerOrdersRouteWithChildren
@@ -453,6 +473,7 @@ export interface FileRouteTypes {
     | '/admin/commissions'
     | '/admin/couriers'
     | '/admin/delivery'
+    | '/admin/financials'
     | '/admin/landing'
     | '/admin/marketing'
     | '/admin/notifications'
@@ -465,6 +486,7 @@ export interface FileRouteTypes {
     | '/reseller/commissions'
     | '/reseller/design'
     | '/reseller/domain'
+    | '/reseller/earnings'
     | '/reseller/listings'
     | '/reseller/marketing'
     | '/reseller/orders'
@@ -495,6 +517,7 @@ export interface FileRouteTypes {
     | '/admin/commissions'
     | '/admin/couriers'
     | '/admin/delivery'
+    | '/admin/financials'
     | '/admin/landing'
     | '/admin/marketing'
     | '/admin/notifications'
@@ -507,6 +530,7 @@ export interface FileRouteTypes {
     | '/reseller/commissions'
     | '/reseller/design'
     | '/reseller/domain'
+    | '/reseller/earnings'
     | '/reseller/listings'
     | '/reseller/marketing'
     | '/reseller/orders'
@@ -541,6 +565,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/commissions'
     | '/_authenticated/admin/couriers'
     | '/_authenticated/admin/delivery'
+    | '/_authenticated/admin/financials'
     | '/_authenticated/admin/landing'
     | '/_authenticated/admin/marketing'
     | '/_authenticated/admin/notifications'
@@ -553,6 +578,7 @@ export interface FileRouteTypes {
     | '/_authenticated/reseller/commissions'
     | '/_authenticated/reseller/design'
     | '/_authenticated/reseller/domain'
+    | '/_authenticated/reseller/earnings'
     | '/_authenticated/reseller/listings'
     | '/_authenticated/reseller/marketing'
     | '/_authenticated/reseller/orders'
@@ -712,6 +738,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedResellerListingsRouteImport
       parentRoute: typeof AuthenticatedResellerRouteRoute
     }
+    '/_authenticated/reseller/earnings': {
+      id: '/_authenticated/reseller/earnings'
+      path: '/earnings'
+      fullPath: '/reseller/earnings'
+      preLoaderRoute: typeof AuthenticatedResellerEarningsRouteImport
+      parentRoute: typeof AuthenticatedResellerRouteRoute
+    }
     '/_authenticated/reseller/domain': {
       id: '/_authenticated/reseller/domain'
       path: '/domain'
@@ -794,6 +827,13 @@ declare module '@tanstack/react-router' {
       path: '/landing'
       fullPath: '/admin/landing'
       preLoaderRoute: typeof AuthenticatedAdminLandingRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/financials': {
+      id: '/_authenticated/admin/financials'
+      path: '/financials'
+      fullPath: '/admin/financials'
+      preLoaderRoute: typeof AuthenticatedAdminFinancialsRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
     '/_authenticated/admin/delivery': {
@@ -904,6 +944,7 @@ interface AuthenticatedAdminRouteRouteChildren {
   AuthenticatedAdminCommissionsRoute: typeof AuthenticatedAdminCommissionsRoute
   AuthenticatedAdminCouriersRoute: typeof AuthenticatedAdminCouriersRoute
   AuthenticatedAdminDeliveryRoute: typeof AuthenticatedAdminDeliveryRoute
+  AuthenticatedAdminFinancialsRoute: typeof AuthenticatedAdminFinancialsRoute
   AuthenticatedAdminLandingRoute: typeof AuthenticatedAdminLandingRoute
   AuthenticatedAdminMarketingRoute: typeof AuthenticatedAdminMarketingRoute
   AuthenticatedAdminNotificationsRoute: typeof AuthenticatedAdminNotificationsRoute
@@ -926,6 +967,7 @@ const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren
     AuthenticatedAdminCommissionsRoute: AuthenticatedAdminCommissionsRoute,
     AuthenticatedAdminCouriersRoute: AuthenticatedAdminCouriersRoute,
     AuthenticatedAdminDeliveryRoute: AuthenticatedAdminDeliveryRoute,
+    AuthenticatedAdminFinancialsRoute: AuthenticatedAdminFinancialsRoute,
     AuthenticatedAdminLandingRoute: AuthenticatedAdminLandingRoute,
     AuthenticatedAdminMarketingRoute: AuthenticatedAdminMarketingRoute,
     AuthenticatedAdminNotificationsRoute: AuthenticatedAdminNotificationsRoute,
@@ -966,6 +1008,7 @@ interface AuthenticatedResellerRouteRouteChildren {
   AuthenticatedResellerCommissionsRoute: typeof AuthenticatedResellerCommissionsRoute
   AuthenticatedResellerDesignRoute: typeof AuthenticatedResellerDesignRoute
   AuthenticatedResellerDomainRoute: typeof AuthenticatedResellerDomainRoute
+  AuthenticatedResellerEarningsRoute: typeof AuthenticatedResellerEarningsRoute
   AuthenticatedResellerListingsRoute: typeof AuthenticatedResellerListingsRoute
   AuthenticatedResellerMarketingRoute: typeof AuthenticatedResellerMarketingRoute
   AuthenticatedResellerOrdersRoute: typeof AuthenticatedResellerOrdersRouteWithChildren
@@ -980,6 +1023,7 @@ const AuthenticatedResellerRouteRouteChildren: AuthenticatedResellerRouteRouteCh
       AuthenticatedResellerCommissionsRoute,
     AuthenticatedResellerDesignRoute: AuthenticatedResellerDesignRoute,
     AuthenticatedResellerDomainRoute: AuthenticatedResellerDomainRoute,
+    AuthenticatedResellerEarningsRoute: AuthenticatedResellerEarningsRoute,
     AuthenticatedResellerListingsRoute: AuthenticatedResellerListingsRoute,
     AuthenticatedResellerMarketingRoute: AuthenticatedResellerMarketingRoute,
     AuthenticatedResellerOrdersRoute:

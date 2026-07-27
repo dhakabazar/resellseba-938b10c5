@@ -169,7 +169,7 @@ function EarningsPage() {
 
       {rows.length === 0 && (
         <div className="mt-4">
-          <EmptyState title="No orders yet" description="Store share korun r prothom order asa matro ekhane breakdown ashbe." icon={<PackageSearch className="h-8 w-8" />} />
+          <EmptyState title="No orders yet" description="Store share korun r prothom order asa matro ekhane breakdown ashbe." />
         </div>
       )}
     </div>
