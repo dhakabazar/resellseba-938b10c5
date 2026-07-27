@@ -34,8 +34,6 @@ const FIELDS: Record<string, { key: string; label: string; type?: string; hint?:
     { key: "api_token", label: "API Token", type: "password" },
     { key: "base_url", label: "Base URL" },
   ],
-  redx: [{ key: "api_token", label: "API Token", type: "password" }],
-  paperfly: [{ key: "api_key", label: "API Key", type: "password" }],
   manual: [],
 };
 
