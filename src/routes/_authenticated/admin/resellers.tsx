@@ -184,6 +184,16 @@ function ResellersPage() {
     load();
   }
 
+  async function confirmEmail(r: Reseller) {
+    try {
+      const res = await confirmEmailFn({ data: { userId: r.user_id } });
+      if (res.alreadyConfirmed) toast.info("Email already confirmed");
+      else toast.success(`Email confirmed for ${res.email ?? r.business_name}`);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to confirm email");
+    }
+  }
+
   async function remove(r: Reseller) {
     if (!confirm(`Delete reseller "${r.business_name}"? Er sob listing/order o remove hote pare.`))
       return;
