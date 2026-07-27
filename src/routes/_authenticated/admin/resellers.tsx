@@ -69,6 +69,7 @@ const FILTERS = ["pending", "active", "suspended", "rejected", "unverified", "al
 type Filter = (typeof FILTERS)[number];
 
 function ResellersPage() {
+  const confirmEmailFn = useServerFn(confirmUserEmail);
   const [items, setItems] = useState<Reseller[]>([]);
   const [summaries, setSummaries] = useState<Record<string, Summary>>({});
   const [orderCounts, setOrderCounts] = useState<Record<string, number>>({});
