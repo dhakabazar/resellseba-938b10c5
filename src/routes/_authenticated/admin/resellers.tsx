@@ -72,6 +72,19 @@ type UnifiedRow =
   | { kind: "reseller"; r: Reseller }
   | { kind: "pending"; p: PendingSignup };
 
+const FILTER_LABELS: Record<Filter, string> = {
+  incomplete: "Incomplete signup",
+  pending: "Pending approval",
+  active: "Active",
+  suspended: "Suspended",
+  rejected: "Rejected",
+  unverified: "Unverified",
+  all: "All",
+};
+function labelFor(f: Filter) {
+  return FILTER_LABELS[f];
+}
+
 
 function ResellersPage() {
   const confirmEmailFn = useServerFn(confirmUserEmail);
