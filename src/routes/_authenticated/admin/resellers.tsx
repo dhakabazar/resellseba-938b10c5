@@ -284,76 +284,13 @@ function ResellersPage() {
         description="Review applications, set commission/leader, and manage status."
       />
 
-      {(pendingLoading || pending.length > 0) && (
-        <div className="mb-4 rounded-lg border bg-muted/30 p-4">
-          <div className="mb-2 flex items-center justify-between">
-            <div>
-              <div className="text-sm font-semibold">Pending signups</div>
-              <div className="text-xs text-muted-foreground">
-                Signup complete, but onboarding baki — beshirbhag khetre email verify hoyni.
-              </div>
-            </div>
-            {pendingLoading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
-          </div>
-          {pending.length === 0 && !pendingLoading ? (
-            <div className="text-xs text-muted-foreground">Kono pending signup nei.</div>
-          ) : (
-            <div className="divide-y rounded-md border bg-background">
-              {pending.map((u) => (
-                <div key={u.user_id} className="flex flex-wrap items-center gap-3 p-3">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="truncate text-sm font-medium">{u.email ?? "(no email)"}</span>
-                      {u.email_confirmed ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
-                          <BadgeCheck className="h-3 w-3" /> Email verified
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-400">
-                          <ShieldOff className="h-3 w-3" /> Email unverified
-                        </span>
-                      )}
-                      <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                        Onboarding baki
-                      </span>
-                    </div>
-                    <div className="mt-0.5 truncate text-xs text-muted-foreground">
-                      {u.full_name ?? "—"}
-                      {u.phone ? ` · ${u.phone}` : ""}
-                      {" · signed up "}
-                      {new Date(u.created_at).toLocaleDateString()}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {!u.email_confirmed && (
-                      <button
-                        onClick={() => confirmPendingEmail(u)}
-                        className="inline-flex items-center gap-1 rounded-md border bg-primary px-2.5 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90"
-                      >
-                        <MailCheck className="h-3.5 w-3.5" /> Confirm email
-                      </button>
-                    )}
-                    <button
-                      onClick={() => removePending(u)}
-                      className="inline-flex items-center gap-1 rounded-md border px-2.5 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/5"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" /> Delete
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
       <DataToolbar
         search={query}
         onSearch={(v) => {
           setQuery(v);
           setPage(1);
         }}
-        searchPlaceholder="Search name, code, phone…"
+        searchPlaceholder="Search name, code, phone, email…"
         filters={[
           {
             key: "status",
@@ -365,7 +302,7 @@ function ResellersPage() {
             },
             options: FILTERS.filter((f) => f !== "all").map((f) => ({
               value: f,
-              label: `${f[0].toUpperCase()}${f.slice(1)} (${counts[f]})`,
+              label: `${labelFor(f)} (${counts[f]})`,
             })),
           },
         ]}
@@ -377,7 +314,7 @@ function ResellersPage() {
       />
 
 
-      {loading ? (
+      {loading || pendingLoading ? (
         <div className="grid place-items-center py-12">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
@@ -385,7 +322,67 @@ function ResellersPage() {
         <EmptyState title="Nothing here" description="No resellers match this filter." />
       ) : (
         <div className="surface-card divide-y">
-          {usePaginated(filtered, page, perPage).map((r) => {
+          {usePaginated(filtered, page, perPage).map((row) => {
+            if (row.kind === "pending") {
+              const u = row.p;
+              return (
+                <div key={`p-${u.user_id}`} className="p-4">
+                  <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-500/10 text-sm font-semibold uppercase text-amber-700 dark:text-amber-400">
+                      {(u.email ?? "?").slice(0, 2)}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span className="truncate font-medium">{u.email ?? "(no email)"}</span>
+                        <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-medium capitalize text-amber-700 dark:text-amber-400">
+                          Incomplete
+                        </span>
+                        {u.email_confirmed ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+                            <BadgeCheck className="h-3 w-3" /> Email verified
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                            <ShieldOff className="h-3 w-3" /> Email unverified
+                          </span>
+                        )}
+                      </div>
+                      <div className="mt-0.5 break-words text-xs text-muted-foreground">
+                        {u.full_name ?? "—"}
+                        {u.phone ? ` · ${u.phone}` : ""}
+                        {" · signed up "}
+                        {new Date(u.created_at).toLocaleDateString()}
+                      </div>
+                      <div className="mt-0.5 text-xs text-muted-foreground">
+                        Onboarding baki — reseller login kore profile complete korle full row ashbe.
+                      </div>
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger className="grid h-8 w-8 shrink-0 place-items-center rounded-md border hover:bg-muted">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-56">
+                        <DropdownMenuLabel>{u.email ?? u.user_id}</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        {!u.email_confirmed && (
+                          <DropdownMenuItem onClick={() => confirmPendingEmail(u)}>
+                            <MailCheck className="mr-2 h-4 w-4" /> Confirm email
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem
+                          onClick={() => removePending(u)}
+                          className="text-destructive focus:text-destructive"
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" /> Delete signup
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </div>
+              );
+            }
+
+            const r = row.r;
             const s = summaries[r.id];
             const verified = !!r.approved_at;
             return (
@@ -505,6 +502,7 @@ function ResellersPage() {
 
         </div>
       )}
+
 
       {!loading && filtered.length > 0 && (
         <Pagination page={page} perPage={perPage} total={filtered.length} onPage={setPage} />
