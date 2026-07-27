@@ -42,7 +42,14 @@ type Reseller = {
   notes: string | null;
   approved_at: string | null;
   created_at: string;
+  payout_method: string | null;
+  payout_account_name: string | null;
+  payout_account_number: string | null;
+  payout_bank_name: string | null;
+  payout_branch: string | null;
+  payout_routing: string | null;
 };
+
 
 type Summary = {
   delivered_profit: number;
@@ -74,9 +81,10 @@ function ResellersPage() {
     const { data } = await supabase
       .from("resellers")
       .select(
-        "id,user_id,business_name,code,contact_phone,address,status,commission_rate,leader_id,notes,approved_at,created_at",
+        "id,user_id,business_name,code,contact_phone,address,status,commission_rate,leader_id,notes,approved_at,created_at,payout_method,payout_account_name,payout_account_number,payout_bank_name,payout_branch,payout_routing",
       )
       .order("created_at", { ascending: false });
+
     const rows = (data ?? []) as Reseller[];
     setItems(rows);
     setLoading(false);
