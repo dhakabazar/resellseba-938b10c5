@@ -24,8 +24,8 @@ export const Route = createFileRoute("/")({
         content:
           "Bangladesh er first-class reseller platform. Product listing, courier, payment, marketing — ekta panel-e sob.",
       },
-      { property: "og:title", content: "Reseller Platform" },
-      { property: "og:description", content: "Master catalog theke product niye nijer store chalu korun." },
+      { property: "og:title", content: "Reseller Platform — Nijer online store, zero investment" },
+      { property: "og:description", content: "Bangladesh er first-class reseller platform. Product listing, courier, payment, marketing — ekta panel-e sob." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
