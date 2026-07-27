@@ -62,8 +62,10 @@ function ResellersPage() {
   const [items, setItems] = useState<Reseller[]>([]);
   const [summaries, setSummaries] = useState<Record<string, Summary>>({});
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<Filter>("pending");
+  const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(20);
   const [editing, setEditing] = useState<Reseller | null>(null);
 
   async function load() {
