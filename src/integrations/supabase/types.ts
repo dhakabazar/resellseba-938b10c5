@@ -1325,6 +1325,7 @@ export type Database = {
       }
       current_reseller_id: { Args: never; Returns: string }
       generate_product_code: { Args: never; Returns: string }
+      generate_reseller_code: { Args: { _seed: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

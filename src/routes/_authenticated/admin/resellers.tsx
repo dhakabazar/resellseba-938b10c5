@@ -17,10 +17,11 @@ import {
   ExternalLink,
   Copy,
   MailCheck,
+  MailX,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
-import { confirmUserEmail, listPendingSignups, deleteAuthUser, type PendingSignup } from "@/lib/admin-users.functions";
+import { confirmUserEmail, listResellerEmailStatus, deleteAuthUser } from "@/lib/admin-users.functions";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -53,7 +54,6 @@ type Reseller = {
   payout_routing: string | null;
 };
 
-
 type Summary = {
   delivered_profit: number;
   pending_payout: number;
@@ -65,34 +65,31 @@ export const Route = createFileRoute("/_authenticated/admin/resellers")({
   component: ResellersPage,
 });
 
-const FILTERS = ["incomplete", "pending", "active", "suspended", "rejected", "unverified", "all"] as const;
+const FILTERS = [
+  "pending",
+  "active",
+  "suspended",
+  "rejected",
+  "email_unverified",
+  "all",
+] as const;
 type Filter = (typeof FILTERS)[number];
 
-type UnifiedRow =
-  | { kind: "reseller"; r: Reseller }
-  | { kind: "pending"; p: PendingSignup };
-
 const FILTER_LABELS: Record<Filter, string> = {
-  incomplete: "Incomplete signup",
   pending: "Pending approval",
   active: "Active",
   suspended: "Suspended",
   rejected: "Rejected",
-  unverified: "Unverified",
+  email_unverified: "Email unverified",
   all: "All",
 };
-function labelFor(f: Filter) {
-  return FILTER_LABELS[f];
-}
-
 
 function ResellersPage() {
   const confirmEmailFn = useServerFn(confirmUserEmail);
-  const listPendingFn = useServerFn(listPendingSignups);
+  const listEmailStatusFn = useServerFn(listResellerEmailStatus);
   const deleteAuthUserFn = useServerFn(deleteAuthUser);
-  const [pending, setPending] = useState<PendingSignup[]>([]);
-  const [pendingLoading, setPendingLoading] = useState(true);
   const [items, setItems] = useState<Reseller[]>([]);
+  const [emailStatus, setEmailStatus] = useState<Record<string, { email: string | null; verified: boolean }>>({});
   const [summaries, setSummaries] = useState<Record<string, Summary>>({});
   const [orderCounts, setOrderCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
@@ -115,7 +112,7 @@ function ResellersPage() {
     setItems(rows);
     setLoading(false);
 
-    // Load earnings summary + order count per reseller in parallel
+    // Fetch financial + order metrics in parallel
     const results = await Promise.all(
       rows.map(async (r) => {
         const [summaryRes, countRes] = await Promise.all([
@@ -142,95 +139,49 @@ function ResellersPage() {
     setOrderCounts(Object.fromEntries(results.map((x) => [x.id, x.orders])));
   }
 
-
-  async function loadPending() {
-    setPendingLoading(true);
+  async function loadEmailStatus() {
     try {
-      const rows = await listPendingFn();
-      setPending(rows ?? []);
-    } catch (e: any) {
-      // silent — pending list is auxiliary
-    } finally {
-      setPendingLoading(false);
-    }
-  }
-
-  async function confirmPendingEmail(u: PendingSignup) {
-    try {
-      const res = await confirmEmailFn({ data: { userId: u.user_id } });
-      if (res.alreadyConfirmed) toast.info("Email already confirmed");
-      else toast.success(`Email confirmed for ${res.email ?? u.email ?? "user"}`);
-      loadPending();
-    } catch (e: any) {
-      toast.error(e?.message ?? "Failed to confirm email");
-    }
-  }
-
-  async function removePending(u: PendingSignup) {
-    if (!confirm(`Delete signup "${u.email ?? u.full_name ?? u.user_id}"? Ei user auth theke muche jabe.`)) return;
-    try {
-      await deleteAuthUserFn({ data: { userId: u.user_id } });
-      toast.success("Signup deleted");
-      loadPending();
-    } catch (e: any) {
-      toast.error(e?.message ?? "Failed to delete user");
+      const list = await listEmailStatusFn();
+      const map: Record<string, { email: string | null; verified: boolean }> = {};
+      for (const u of list) map[u.user_id] = { email: u.email, verified: u.email_confirmed };
+      setEmailStatus(map);
+    } catch {
+      // non-critical
     }
   }
 
   useEffect(() => {
     load();
-    loadPending();
+    loadEmailStatus();
   }, []);
 
-  const unified = useMemo<UnifiedRow[]>(() => {
-    const pendingRows: UnifiedRow[] = pending.map((p) => ({ kind: "pending", p }));
-    const resellerRows: UnifiedRow[] = items.map((r) => ({ kind: "reseller", r }));
-    return [...pendingRows, ...resellerRows];
-  }, [pending, items]);
-
   const filtered = useMemo(() => {
+    let out = items;
+    if (filter === "email_unverified")
+      out = out.filter((r) => !emailStatus[r.user_id]?.verified);
+    else if (filter !== "all") out = out.filter((r) => r.status === filter);
     const q = query.trim().toLowerCase();
-    return unified.filter((row) => {
-      // status filter
-      if (filter === "incomplete") {
-        if (row.kind !== "pending") return false;
-      } else if (filter === "unverified") {
-        if (row.kind === "pending") {
-          if (row.p.email_confirmed) return false;
-        } else if (row.r.approved_at) return false;
-      } else if (filter !== "all") {
-        if (row.kind !== "reseller" || row.r.status !== filter) return false;
-      }
-      if (!q) return true;
-      if (row.kind === "pending") {
-        return (
-          (row.p.email ?? "").toLowerCase().includes(q) ||
-          (row.p.full_name ?? "").toLowerCase().includes(q) ||
-          (row.p.phone ?? "").toLowerCase().includes(q)
-        );
-      }
-      return (
-        row.r.business_name.toLowerCase().includes(q) ||
-        row.r.code.toLowerCase().includes(q) ||
-        (row.r.contact_phone ?? "").toLowerCase().includes(q)
+    if (q)
+      out = out.filter(
+        (r) =>
+          r.business_name.toLowerCase().includes(q) ||
+          r.code.toLowerCase().includes(q) ||
+          (r.contact_phone ?? "").toLowerCase().includes(q) ||
+          (emailStatus[r.user_id]?.email ?? "").toLowerCase().includes(q),
       );
-    });
-  }, [unified, filter, query]);
+    return out;
+  }, [items, filter, query, emailStatus]);
 
   const counts = useMemo(() => {
     return {
-      incomplete: pending.length,
       pending: items.filter((r) => r.status === "pending").length,
       active: items.filter((r) => r.status === "active").length,
       suspended: items.filter((r) => r.status === "suspended").length,
       rejected: items.filter((r) => r.status === "rejected").length,
-      unverified:
-        items.filter((r) => !r.approved_at).length +
-        pending.filter((p) => !p.email_confirmed).length,
-      all: items.length + pending.length,
+      email_unverified: items.filter((r) => !emailStatus[r.user_id]?.verified).length,
+      all: items.length,
     } as Record<Filter, number>;
-  }, [items, pending]);
-
+  }, [items, emailStatus]);
 
   async function approve(r: Reseller) {
     const { error } = await supabase
@@ -244,7 +195,7 @@ function ResellersPage() {
     await supabase
       .from("reseller_settings")
       .upsert({ reseller_id: r.id, store_name: r.business_name }, { onConflict: "reseller_id" });
-    toast.success(`${r.business_name} approved & verified`);
+    toast.success(`${r.business_name} approved`);
     load();
   }
 
@@ -255,33 +206,34 @@ function ResellersPage() {
     load();
   }
 
-  async function setVerified(r: Reseller, verified: boolean) {
-    const { error } = await supabase
-      .from("resellers")
-      .update({ approved_at: verified ? new Date().toISOString() : null })
-      .eq("id", r.id);
-    if (error) return toast.error(error.message);
-    toast.success(verified ? "Marked verified" : "Verification removed");
-    load();
-  }
-
   async function confirmEmail(r: Reseller) {
     try {
       const res = await confirmEmailFn({ data: { userId: r.user_id } });
       if (res.alreadyConfirmed) toast.info("Email already confirmed");
       else toast.success(`Email confirmed for ${res.email ?? r.business_name}`);
+      loadEmailStatus();
     } catch (e: any) {
       toast.error(e?.message ?? "Failed to confirm email");
     }
   }
 
   async function remove(r: Reseller) {
-    if (!confirm(`Delete reseller "${r.business_name}"? Er sob listing/order o remove hote pare.`))
+    if (
+      !confirm(
+        `Delete reseller "${r.business_name}"? Reseller record er sathe auth account o muche jabe. Er sob listing/order o remove hote pare.`,
+      )
+    )
       return;
     const { error } = await supabase.from("resellers").delete().eq("id", r.id);
     if (error) return toast.error(error.message);
+    try {
+      await deleteAuthUserFn({ data: { userId: r.user_id } });
+    } catch {
+      /* ignore — reseller row already gone */
+    }
     toast.success("Deleted");
     load();
+    loadEmailStatus();
   }
 
   function copyStoreLink(r: Reseller) {
@@ -294,7 +246,7 @@ function ResellersPage() {
     <div>
       <PageHeader
         title="Resellers"
-        description="Review applications, set commission/leader, and manage status."
+        description="Signup korlei ekhane list e ashbe. Email verified/unverified, status active/pending — sob ek jaigai."
       />
 
       <DataToolbar
@@ -315,7 +267,7 @@ function ResellersPage() {
             },
             options: FILTERS.filter((f) => f !== "all").map((f) => ({
               value: f,
-              label: `${labelFor(f)} (${counts[f]})`,
+              label: `${FILTER_LABELS[f]} (${counts[f]})`,
             })),
           },
         ]}
@@ -326,8 +278,7 @@ function ResellersPage() {
         }}
       />
 
-
-      {loading || pendingLoading ? (
+      {loading ? (
         <div className="grid place-items-center py-12">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
@@ -335,69 +286,10 @@ function ResellersPage() {
         <EmptyState title="Nothing here" description="No resellers match this filter." />
       ) : (
         <div className="surface-card divide-y">
-          {usePaginated(filtered, page, perPage).map((row) => {
-            if (row.kind === "pending") {
-              const u = row.p;
-              return (
-                <div key={`p-${u.user_id}`} className="p-4">
-                  <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-500/10 text-sm font-semibold uppercase text-amber-700 dark:text-amber-400">
-                      {(u.email ?? "?").slice(0, 2)}
-                    </div>
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        <span className="truncate font-medium">{u.email ?? "(no email)"}</span>
-                        <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-medium capitalize text-amber-700 dark:text-amber-400">
-                          Incomplete
-                        </span>
-                        {u.email_confirmed ? (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
-                            <BadgeCheck className="h-3 w-3" /> Email verified
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                            <ShieldOff className="h-3 w-3" /> Email unverified
-                          </span>
-                        )}
-                      </div>
-                      <div className="mt-0.5 break-words text-xs text-muted-foreground">
-                        {u.full_name ?? "—"}
-                        {u.phone ? ` · ${u.phone}` : ""}
-                        {" · signed up "}
-                        {new Date(u.created_at).toLocaleDateString()}
-                      </div>
-                      <div className="mt-0.5 text-xs text-muted-foreground">
-                        Onboarding baki — reseller login kore profile complete korle full row ashbe.
-                      </div>
-                    </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger className="grid h-8 w-8 shrink-0 place-items-center rounded-md border hover:bg-muted">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-56">
-                        <DropdownMenuLabel>{u.email ?? u.user_id}</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        {!u.email_confirmed && (
-                          <DropdownMenuItem onClick={() => confirmPendingEmail(u)}>
-                            <MailCheck className="mr-2 h-4 w-4" /> Confirm email
-                          </DropdownMenuItem>
-                        )}
-                        <DropdownMenuItem
-                          onClick={() => removePending(u)}
-                          className="text-destructive focus:text-destructive"
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" /> Delete signup
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </div>
-              );
-            }
-
-            const r = row.r;
+          {usePaginated(filtered, page, perPage).map((r) => {
             const s = summaries[r.id];
-            const verified = !!r.approved_at;
+            const em = emailStatus[r.user_id];
+            const emailVerified = !!em?.verified;
             return (
               <div key={r.id} className="p-4">
                 <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3">
@@ -409,17 +301,18 @@ function ResellersPage() {
                     <div className="flex flex-wrap items-center gap-1.5">
                       <span className="truncate font-medium">{r.business_name}</span>
                       <StatusBadge status={r.status} />
-                      {verified ? (
+                      {emailVerified ? (
                         <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
-                          <BadgeCheck className="h-3 w-3" /> Verified
+                          <MailCheck className="h-3 w-3" /> Email verified
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                          <ShieldOff className="h-3 w-3" /> Unverified
+                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-400">
+                          <MailX className="h-3 w-3" /> Email unverified
                         </span>
                       )}
                     </div>
                     <div className="mt-0.5 break-words text-xs text-muted-foreground">
+                      {em?.email ? <span>{em.email} · </span> : null}
                       #{r.code} · {r.contact_phone ?? "no phone"} · Commission {r.commission_rate}%
                       {r.leader_id ? " · Leader linked" : ""}
                     </div>
@@ -449,7 +342,7 @@ function ResellersPage() {
                       {r.status === "pending" && (
                         <>
                           <DropdownMenuItem onClick={() => approve(r)}>
-                            <Check className="mr-2 h-4 w-4" /> Approve & verify
+                            <Check className="mr-2 h-4 w-4" /> Approve access
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => setStatus(r, "rejected")}>
                             <X className="mr-2 h-4 w-4" /> Reject
@@ -467,13 +360,9 @@ function ResellersPage() {
                           <Play className="mr-2 h-4 w-4" /> Activate
                         </DropdownMenuItem>
                       )}
-                      {verified ? (
-                        <DropdownMenuItem onClick={() => setVerified(r, false)}>
-                          <ShieldOff className="mr-2 h-4 w-4" /> Remove verification
-                        </DropdownMenuItem>
-                      ) : (
-                        <DropdownMenuItem onClick={() => setVerified(r, true)}>
-                          <BadgeCheck className="mr-2 h-4 w-4" /> Mark verified
+                      {!emailVerified && (
+                        <DropdownMenuItem onClick={() => confirmEmail(r)}>
+                          <MailCheck className="mr-2 h-4 w-4" /> Confirm email
                         </DropdownMenuItem>
                       )}
                       <DropdownMenuSeparator />
@@ -487,9 +376,6 @@ function ResellersPage() {
                         <a href={`/s/${r.code}`} target="_blank" rel="noreferrer">
                           <ExternalLink className="mr-2 h-4 w-4" /> Visit storefront
                         </a>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => confirmEmail(r)}>
-                        <MailCheck className="mr-2 h-4 w-4" /> Confirm email
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
@@ -512,15 +398,12 @@ function ResellersPage() {
               </div>
             );
           })}
-
         </div>
       )}
-
 
       {!loading && filtered.length > 0 && (
         <Pagination page={page} perPage={perPage} total={filtered.length} onPage={setPage} />
       )}
-
 
       {editing && (
         <EditModal
@@ -562,7 +445,6 @@ function Metric({
         {value == null ? "—" : plain ? value.toLocaleString() : `৳${value.toLocaleString()}`}
       </div>
     </div>
-
   );
 }
 
@@ -633,7 +515,6 @@ function EditModal({
     toast.success("Saved");
     onSaved();
   }
-
 
   const cls =
     "w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring";
