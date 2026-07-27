@@ -42,6 +42,13 @@ export const listPendingSignups = createServerFn({ method: "GET" })
     const { data: resellerRows } = await supabaseAdmin.from("resellers").select("user_id");
     const hasReseller = new Set((resellerRows ?? []).map((r: any) => r.user_id));
 
+    // Exclude super admins from the pending list
+    const { data: adminRoleRows } = await supabaseAdmin
+      .from("user_roles")
+      .select("user_id")
+      .eq("role", "super_admin");
+    const isSuperAdmin = new Set((adminRoleRows ?? []).map((r: any) => r.user_id));
+
     // Paginate through auth users (up to 1000 recent)
     const users: any[] = [];
     for (let page = 1; page <= 10; page++) {
@@ -50,6 +57,7 @@ export const listPendingSignups = createServerFn({ method: "GET" })
       users.push(...(data?.users ?? []));
       if (!data?.users || data.users.length < 100) break;
     }
+
 
     const pending = users
       .filter((u) => !hasReseller.has(u.id))
