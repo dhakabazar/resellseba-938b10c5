@@ -222,7 +222,7 @@ function ResellersPage() {
         <EmptyState title="Nothing here" description="No resellers match this filter." />
       ) : (
         <div className="surface-card divide-y">
-          {filtered.map((r) => {
+          {usePaginated(filtered, page, perPage).map((r) => {
             const s = summaries[r.id];
             const verified = !!r.approved_at;
             return (
