@@ -16,8 +16,11 @@ import {
   ShieldOff,
   ExternalLink,
   Copy,
+  MailCheck,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { confirmUserEmail } from "@/lib/admin-users.functions";
 import {
   DropdownMenu,
   DropdownMenuContent,
