@@ -255,6 +255,69 @@ function ResellersPage() {
         description="Review applications, set commission/leader, and manage status."
       />
 
+      {(pendingLoading || pending.length > 0) && (
+        <div className="mb-4 rounded-lg border bg-muted/30 p-4">
+          <div className="mb-2 flex items-center justify-between">
+            <div>
+              <div className="text-sm font-semibold">Pending signups</div>
+              <div className="text-xs text-muted-foreground">
+                Signup complete, but onboarding baki — beshirbhag khetre email verify hoyni.
+              </div>
+            </div>
+            {pendingLoading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+          </div>
+          {pending.length === 0 && !pendingLoading ? (
+            <div className="text-xs text-muted-foreground">Kono pending signup nei.</div>
+          ) : (
+            <div className="divide-y rounded-md border bg-background">
+              {pending.map((u) => (
+                <div key={u.user_id} className="flex flex-wrap items-center gap-3 p-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="truncate text-sm font-medium">{u.email ?? "(no email)"}</span>
+                      {u.email_confirmed ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+                          <BadgeCheck className="h-3 w-3" /> Email verified
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-400">
+                          <ShieldOff className="h-3 w-3" /> Email unverified
+                        </span>
+                      )}
+                      <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                        Onboarding baki
+                      </span>
+                    </div>
+                    <div className="mt-0.5 truncate text-xs text-muted-foreground">
+                      {u.full_name ?? "—"}
+                      {u.phone ? ` · ${u.phone}` : ""}
+                      {" · signed up "}
+                      {new Date(u.created_at).toLocaleDateString()}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {!u.email_confirmed && (
+                      <button
+                        onClick={() => confirmPendingEmail(u)}
+                        className="inline-flex items-center gap-1 rounded-md border bg-primary px-2.5 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90"
+                      >
+                        <MailCheck className="h-3.5 w-3.5" /> Confirm email
+                      </button>
+                    )}
+                    <button
+                      onClick={() => removePending(u)}
+                      className="inline-flex items-center gap-1 rounded-md border px-2.5 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/5"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" /> Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       <DataToolbar
         search={query}
         onSearch={(v) => {
