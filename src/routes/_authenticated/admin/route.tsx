@@ -62,13 +62,7 @@ const NAV: NavEntry[] = [
       { label: "Commissions", to: "/admin/commissions", icon: <Award className="h-4 w-4" /> },
     ],
   },
-  {
-    label: "Network",
-    icon: <Users className="h-4 w-4" />,
-    items: [
-      { label: "Resellers", to: "/admin/resellers", icon: <Users className="h-4 w-4" /> },
-    ],
-  },
+  { label: "Resellers", to: "/admin/resellers", icon: <Users className="h-4 w-4" /> },
   {
     label: "Growth",
     icon: <Rocket className="h-4 w-4" />,
