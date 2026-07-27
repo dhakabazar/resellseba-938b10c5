@@ -21,6 +21,12 @@ function Onboarding() {
   const [businessName, setBusinessName] = useState("");
   const [code, setCode] = useState("");
   const [phone, setPhone] = useState("");
+  const [payoutMethod, setPayoutMethod] = useState<"bkash" | "nagad" | "rocket" | "bank">("bkash");
+  const [payoutAccountName, setPayoutAccountName] = useState("");
+  const [payoutAccountNumber, setPayoutAccountNumber] = useState("");
+  const [payoutBankName, setPayoutBankName] = useState("");
+  const [payoutBranch, setPayoutBranch] = useState("");
+  const [payoutRouting, setPayoutRouting] = useState("");
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<"none" | "pending" | "active" | "suspended" | "rejected">("none");
 
@@ -48,22 +54,30 @@ function Onboarding() {
     if (!user) return;
     setBusy(true);
     try {
+      const isBank = payoutMethod === "bank";
       const { error } = await supabase.from("resellers").insert({
         user_id: user.id,
         business_name: businessName,
         code: code.toLowerCase().replace(/[^a-z0-9-]/g, "-"),
         contact_phone: phone,
         status: "pending",
+        payout_method: payoutMethod,
+        payout_account_name: payoutAccountName || null,
+        payout_account_number: payoutAccountNumber || null,
+        payout_bank_name: isBank ? payoutBankName || null : null,
+        payout_branch: isBank ? payoutBranch || null : null,
+        payout_routing: isBank ? payoutRouting || null : null,
       });
       if (error) throw error;
       setStatus("pending");
-      toast.success("Application submitted! Admin will review it shortly.");
+      toast.success("আবেদন জমা হয়েছে! অ্যাডমিন রিভিউ করে অ্যাপ্রুভ করবেন।");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed");
     } finally {
       setBusy(false);
     }
   }
+
 
   if (status === "pending") {
     return (
