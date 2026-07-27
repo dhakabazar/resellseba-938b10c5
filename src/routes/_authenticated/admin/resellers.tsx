@@ -244,116 +244,117 @@ function ResellersPage() {
             const s = summaries[r.id];
             const verified = !!r.approved_at;
             return (
-              <div key={r.id} className="flex flex-wrap items-center gap-4 p-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold uppercase text-primary">
-                  {r.business_name.slice(0, 2)}
+              <div key={r.id} className="p-4">
+                <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold uppercase text-primary">
+                    {r.business_name.slice(0, 2)}
+                  </div>
+
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="truncate font-medium">{r.business_name}</span>
+                      <StatusBadge status={r.status} />
+                      {verified ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+                          <BadgeCheck className="h-3 w-3" /> Verified
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                          <ShieldOff className="h-3 w-3" /> Unverified
+                        </span>
+                      )}
+                    </div>
+                    <div className="mt-0.5 break-words text-xs text-muted-foreground">
+                      #{r.code} · {r.contact_phone ?? "no phone"} · Commission {r.commission_rate}%
+                      {r.leader_id ? " · Leader linked" : ""}
+                    </div>
+                    <div className="mt-0.5 break-words text-xs text-muted-foreground">
+                      Payout:{" "}
+                      {r.payout_method ? (
+                        <span>
+                          <span className="font-medium capitalize text-foreground">{r.payout_method}</span>
+                          {" · "}
+                          {r.payout_account_number ?? "—"}
+                          {r.payout_account_name ? ` · ${r.payout_account_name}` : ""}
+                          {r.payout_method === "bank" && r.payout_bank_name ? ` · ${r.payout_bank_name}` : ""}
+                        </span>
+                      ) : (
+                        <span className="text-destructive">not set</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <DropdownMenu>
+                    <DropdownMenuTrigger className="grid h-8 w-8 shrink-0 place-items-center rounded-md border hover:bg-muted">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-56">
+                      <DropdownMenuLabel>{r.business_name}</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      {r.status === "pending" && (
+                        <>
+                          <DropdownMenuItem onClick={() => approve(r)}>
+                            <Check className="mr-2 h-4 w-4" /> Approve & verify
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setStatus(r, "rejected")}>
+                            <X className="mr-2 h-4 w-4" /> Reject
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                        </>
+                      )}
+                      {r.status === "active" && (
+                        <DropdownMenuItem onClick={() => setStatus(r, "suspended")}>
+                          <Pause className="mr-2 h-4 w-4" /> Deactivate
+                        </DropdownMenuItem>
+                      )}
+                      {(r.status === "suspended" || r.status === "rejected") && (
+                        <DropdownMenuItem onClick={() => setStatus(r, "active")}>
+                          <Play className="mr-2 h-4 w-4" /> Activate
+                        </DropdownMenuItem>
+                      )}
+                      {verified ? (
+                        <DropdownMenuItem onClick={() => setVerified(r, false)}>
+                          <ShieldOff className="mr-2 h-4 w-4" /> Remove verification
+                        </DropdownMenuItem>
+                      ) : (
+                        <DropdownMenuItem onClick={() => setVerified(r, true)}>
+                          <BadgeCheck className="mr-2 h-4 w-4" /> Mark verified
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => setEditing(r)}>
+                        <Pencil className="mr-2 h-4 w-4" /> Edit details
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => copyStoreLink(r)}>
+                        <Copy className="mr-2 h-4 w-4" /> Copy store link
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <a href={`/s/${r.code}`} target="_blank" rel="noreferrer">
+                          <ExternalLink className="mr-2 h-4 w-4" /> Visit storefront
+                        </a>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => remove(r)}
+                        className="text-destructive focus:text-destructive"
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" /> Delete reseller
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
 
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="truncate font-medium">{r.business_name}</span>
-                    <StatusBadge status={r.status} />
-                    {verified ? (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
-                        <BadgeCheck className="h-3 w-3" /> Verified
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                        <ShieldOff className="h-3 w-3" /> Unverified
-                      </span>
-                    )}
-                  </div>
-                  <div className="mt-0.5 text-xs text-muted-foreground">
-                    #{r.code} · {r.contact_phone ?? "no phone"} · Commission {r.commission_rate}%
-                    {r.leader_id ? " · Leader linked" : ""} · Orders {orderCounts[r.id] ?? 0}
-                  </div>
-                  <div className="mt-0.5 text-xs text-muted-foreground">
-                    Payout:{" "}
-                    {r.payout_method ? (
-                      <span>
-                        <span className="font-medium capitalize text-foreground">{r.payout_method}</span>
-                        {" · "}
-                        {r.payout_account_number ?? "—"}
-                        {r.payout_account_name ? ` · ${r.payout_account_name}` : ""}
-                        {r.payout_method === "bank" && r.payout_bank_name ? ` · ${r.payout_bank_name}` : ""}
-                      </span>
-                    ) : (
-                      <span className="text-destructive">not set</span>
-                    )}
-                  </div>
-
-                </div>
-
-                <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-right md:grid-cols-5">
+                <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
                   <Metric label="Orders" value={orderCounts[r.id] ?? 0} plain />
                   <Metric label="Delivered profit" value={s?.delivered_profit} accent />
                   <Metric label="Available" value={s?.available} />
                   <Metric label="Paid out" value={s?.paid_out} />
                   <Metric label="Payout pending" value={s?.pending_payout} muted />
                 </div>
-
-
-                <DropdownMenu>
-                  <DropdownMenuTrigger className="grid h-8 w-8 place-items-center rounded-md border hover:bg-muted">
-                    <MoreHorizontal className="h-4 w-4" />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56">
-                    <DropdownMenuLabel>{r.business_name}</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    {r.status === "pending" && (
-                      <>
-                        <DropdownMenuItem onClick={() => approve(r)}>
-                          <Check className="mr-2 h-4 w-4" /> Approve & verify
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setStatus(r, "rejected")}>
-                          <X className="mr-2 h-4 w-4" /> Reject
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                      </>
-                    )}
-                    {r.status === "active" && (
-                      <DropdownMenuItem onClick={() => setStatus(r, "suspended")}>
-                        <Pause className="mr-2 h-4 w-4" /> Deactivate
-                      </DropdownMenuItem>
-                    )}
-                    {(r.status === "suspended" || r.status === "rejected") && (
-                      <DropdownMenuItem onClick={() => setStatus(r, "active")}>
-                        <Play className="mr-2 h-4 w-4" /> Activate
-                      </DropdownMenuItem>
-                    )}
-                    {verified ? (
-                      <DropdownMenuItem onClick={() => setVerified(r, false)}>
-                        <ShieldOff className="mr-2 h-4 w-4" /> Remove verification
-                      </DropdownMenuItem>
-                    ) : (
-                      <DropdownMenuItem onClick={() => setVerified(r, true)}>
-                        <BadgeCheck className="mr-2 h-4 w-4" /> Mark verified
-                      </DropdownMenuItem>
-                    )}
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => setEditing(r)}>
-                      <Pencil className="mr-2 h-4 w-4" /> Edit details
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => copyStoreLink(r)}>
-                      <Copy className="mr-2 h-4 w-4" /> Copy store link
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <a href={`/s/${r.code}`} target="_blank" rel="noreferrer">
-                        <ExternalLink className="mr-2 h-4 w-4" /> Visit storefront
-                      </a>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={() => remove(r)}
-                      className="text-destructive focus:text-destructive"
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" /> Delete reseller
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
               </div>
             );
           })}
+
         </div>
       )}
 
@@ -391,7 +392,7 @@ function Metric({
   plain?: boolean;
 }) {
   return (
-    <div className="text-right">
+    <div className="rounded-md border bg-muted/30 px-2 py-1.5">
       <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</div>
       <div
         className={
@@ -402,6 +403,7 @@ function Metric({
         {value == null ? "—" : plain ? value.toLocaleString() : `৳${value.toLocaleString()}`}
       </div>
     </div>
+
   );
 }
 
