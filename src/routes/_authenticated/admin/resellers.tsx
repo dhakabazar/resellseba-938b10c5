@@ -359,11 +359,13 @@ function Metric({
   value,
   accent,
   muted,
+  plain,
 }: {
   label: string;
   value: number | undefined;
   accent?: boolean;
   muted?: boolean;
+  plain?: boolean;
 }) {
   return (
     <div className="text-right">
@@ -374,7 +376,7 @@ function Metric({
           (accent ? "text-success" : muted ? "text-muted-foreground" : "")
         }
       >
-        {value == null ? "—" : `৳${value.toLocaleString()}`}
+        {value == null ? "—" : plain ? value.toLocaleString() : `৳${value.toLocaleString()}`}
       </div>
     </div>
   );
