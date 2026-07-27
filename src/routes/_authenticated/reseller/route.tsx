@@ -14,6 +14,7 @@ import {
   ExternalLink,
   Store,
   Rocket,
+  TrendingUp,
 } from "lucide-react";
 import { AppShell, type NavEntry } from "@/components/AppShell";
 import { useAuth } from "@/lib/use-auth";
@@ -45,6 +46,7 @@ const NAV: NavEntry[] = [
     label: "Finance",
     icon: <Wallet className="h-4 w-4" />,
     items: [
+      { label: "Earnings", to: "/reseller/earnings", icon: <TrendingUp className="h-4 w-4" /> },
       { label: "Payouts", to: "/reseller/payouts", icon: <Wallet className="h-4 w-4" /> },
       { label: "Leader commissions", to: "/reseller/commissions", icon: <Award className="h-4 w-4" /> },
     ],
