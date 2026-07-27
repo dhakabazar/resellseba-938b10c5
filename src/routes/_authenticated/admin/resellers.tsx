@@ -61,6 +61,7 @@ type Filter = (typeof FILTERS)[number];
 function ResellersPage() {
   const [items, setItems] = useState<Reseller[]>([]);
   const [summaries, setSummaries] = useState<Record<string, Summary>>({});
+  const [orderCounts, setOrderCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
@@ -80,24 +81,33 @@ function ResellersPage() {
     setItems(rows);
     setLoading(false);
 
-    // Load earnings summary per reseller in parallel
+    // Load earnings summary + order count per reseller in parallel
     const results = await Promise.all(
       rows.map(async (r) => {
-        const { data: s } = await supabase.rpc("reseller_profit_summary", { _reseller_id: r.id });
-        const row = Array.isArray(s) ? s[0] : s;
-        return [
-          r.id,
-          {
+        const [summaryRes, countRes] = await Promise.all([
+          supabase.rpc("reseller_profit_summary", { _reseller_id: r.id }),
+          supabase
+            .from("orders")
+            .select("id", { count: "exact", head: true })
+            .eq("reseller_id", r.id),
+        ]);
+        const row = Array.isArray(summaryRes.data) ? summaryRes.data[0] : summaryRes.data;
+        return {
+          id: r.id,
+          summary: {
             delivered_profit: Number(row?.delivered_profit ?? 0),
             pending_payout: Number(row?.pending_payout ?? 0),
             paid_out: Number(row?.paid_out ?? 0),
             available: Number(row?.available ?? 0),
           } as Summary,
-        ] as const;
+          orders: countRes.count ?? 0,
+        };
       }),
     );
-    setSummaries(Object.fromEntries(results));
+    setSummaries(Object.fromEntries(results.map((x) => [x.id, x.summary])));
+    setOrderCounts(Object.fromEntries(results.map((x) => [x.id, x.orders])));
   }
+
 
   useEffect(() => {
     load();
@@ -247,16 +257,18 @@ function ResellersPage() {
                   </div>
                   <div className="mt-0.5 text-xs text-muted-foreground">
                     #{r.code} · {r.contact_phone ?? "no phone"} · Commission {r.commission_rate}%
-                    {r.leader_id ? " · Leader linked" : ""}
+                    {r.leader_id ? " · Leader linked" : ""} · Orders {orderCounts[r.id] ?? 0}
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-right md:grid-cols-4">
+                <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-right md:grid-cols-5">
+                  <Metric label="Orders" value={orderCounts[r.id] ?? 0} plain />
                   <Metric label="Delivered profit" value={s?.delivered_profit} accent />
                   <Metric label="Available" value={s?.available} />
                   <Metric label="Paid out" value={s?.paid_out} />
                   <Metric label="Payout pending" value={s?.pending_payout} muted />
                 </div>
+
 
                 <DropdownMenu>
                   <DropdownMenuTrigger className="grid h-8 w-8 place-items-center rounded-md border hover:bg-muted">
@@ -347,11 +359,13 @@ function Metric({
   value,
   accent,
   muted,
+  plain,
 }: {
   label: string;
   value: number | undefined;
   accent?: boolean;
   muted?: boolean;
+  plain?: boolean;
 }) {
   return (
     <div className="text-right">
@@ -362,7 +376,7 @@ function Metric({
           (accent ? "text-success" : muted ? "text-muted-foreground" : "")
         }
       >
-        {value == null ? "—" : `৳${value.toLocaleString()}`}
+        {value == null ? "—" : plain ? value.toLocaleString() : `৳${value.toLocaleString()}`}
       </div>
     </div>
   );
