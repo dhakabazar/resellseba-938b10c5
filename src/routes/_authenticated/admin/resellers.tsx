@@ -42,7 +42,14 @@ type Reseller = {
   notes: string | null;
   approved_at: string | null;
   created_at: string;
+  payout_method: string | null;
+  payout_account_name: string | null;
+  payout_account_number: string | null;
+  payout_bank_name: string | null;
+  payout_branch: string | null;
+  payout_routing: string | null;
 };
+
 
 type Summary = {
   delivered_profit: number;
@@ -74,9 +81,10 @@ function ResellersPage() {
     const { data } = await supabase
       .from("resellers")
       .select(
-        "id,user_id,business_name,code,contact_phone,address,status,commission_rate,leader_id,notes,approved_at,created_at",
+        "id,user_id,business_name,code,contact_phone,address,status,commission_rate,leader_id,notes,approved_at,created_at,payout_method,payout_account_name,payout_account_number,payout_bank_name,payout_branch,payout_routing",
       )
       .order("created_at", { ascending: false });
+
     const rows = (data ?? []) as Reseller[];
     setItems(rows);
     setLoading(false);
@@ -259,6 +267,21 @@ function ResellersPage() {
                     #{r.code} · {r.contact_phone ?? "no phone"} · Commission {r.commission_rate}%
                     {r.leader_id ? " · Leader linked" : ""} · Orders {orderCounts[r.id] ?? 0}
                   </div>
+                  <div className="mt-0.5 text-xs text-muted-foreground">
+                    Payout:{" "}
+                    {r.payout_method ? (
+                      <span>
+                        <span className="font-medium capitalize text-foreground">{r.payout_method}</span>
+                        {" · "}
+                        {r.payout_account_number ?? "—"}
+                        {r.payout_account_name ? ` · ${r.payout_account_name}` : ""}
+                        {r.payout_method === "bank" && r.payout_bank_name ? ` · ${r.payout_bank_name}` : ""}
+                      </span>
+                    ) : (
+                      <span className="text-destructive">not set</span>
+                    )}
+                  </div>
+
                 </div>
 
                 <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-right md:grid-cols-5">
@@ -414,11 +437,18 @@ function EditModal({
   const [commission, setCommission] = useState(String(reseller.commission_rate));
   const [leaderId, setLeaderId] = useState(reseller.leader_id ?? "");
   const [notes, setNotes] = useState(reseller.notes ?? "");
+  const [payoutMethod, setPayoutMethod] = useState<string>(reseller.payout_method ?? "");
+  const [payoutAccountName, setPayoutAccountName] = useState(reseller.payout_account_name ?? "");
+  const [payoutAccountNumber, setPayoutAccountNumber] = useState(reseller.payout_account_number ?? "");
+  const [payoutBankName, setPayoutBankName] = useState(reseller.payout_bank_name ?? "");
+  const [payoutBranch, setPayoutBranch] = useState(reseller.payout_branch ?? "");
+  const [payoutRouting, setPayoutRouting] = useState(reseller.payout_routing ?? "");
   const [busy, setBusy] = useState(false);
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
+    const isBank = payoutMethod === "bank";
     const { error } = await supabase
       .from("resellers")
       .update({
@@ -429,6 +459,12 @@ function EditModal({
         commission_rate: Number(commission),
         leader_id: leaderId || null,
         notes: notes || null,
+        payout_method: payoutMethod || null,
+        payout_account_name: payoutAccountName || null,
+        payout_account_number: payoutAccountNumber || null,
+        payout_bank_name: isBank ? payoutBankName || null : null,
+        payout_branch: isBank ? payoutBranch || null : null,
+        payout_routing: isBank ? payoutRouting || null : null,
       })
       .eq("id", reseller.id);
     setBusy(false);
@@ -436,6 +472,7 @@ function EditModal({
     toast.success("Saved");
     onSaved();
   }
+
 
   const cls =
     "w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring";
@@ -499,6 +536,51 @@ function EditModal({
           <label className="mb-1 block text-xs font-medium">Internal notes</label>
           <textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} className={cls} />
         </div>
+
+        <div className="border-t pt-3">
+          <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Payout information
+          </div>
+          <div className="grid gap-3 md:grid-cols-2">
+            <div>
+              <label className="mb-1 block text-xs font-medium">Method</label>
+              <select value={payoutMethod} onChange={(e) => setPayoutMethod(e.target.value)} className={cls}>
+                <option value="">— Not set —</option>
+                <option value="bkash">bKash</option>
+                <option value="nagad">Nagad</option>
+                <option value="rocket">Rocket</option>
+                <option value="bank">Bank</option>
+              </select>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium">Account holder</label>
+              <input value={payoutAccountName} onChange={(e) => setPayoutAccountName(e.target.value)} className={cls} />
+            </div>
+            <div className="md:col-span-2">
+              <label className="mb-1 block text-xs font-medium">
+                {payoutMethod === "bank" ? "Account number" : "Mobile number"}
+              </label>
+              <input value={payoutAccountNumber} onChange={(e) => setPayoutAccountNumber(e.target.value)} className={cls} />
+            </div>
+            {payoutMethod === "bank" && (
+              <>
+                <div>
+                  <label className="mb-1 block text-xs font-medium">Bank</label>
+                  <input value={payoutBankName} onChange={(e) => setPayoutBankName(e.target.value)} className={cls} />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium">Branch</label>
+                  <input value={payoutBranch} onChange={(e) => setPayoutBranch(e.target.value)} className={cls} />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="mb-1 block text-xs font-medium">Routing</label>
+                  <input value={payoutRouting} onChange={(e) => setPayoutRouting(e.target.value)} className={cls} />
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
         <div className="flex justify-end gap-2 pt-2">
           <button type="button" onClick={onClose} className="rounded-md border px-4 py-2 text-sm">
             Cancel

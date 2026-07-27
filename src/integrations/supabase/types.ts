@@ -1146,6 +1146,13 @@ export type Database = {
           leader_id: string | null
           nid_number: string | null
           notes: string | null
+          payout_account_name: string | null
+          payout_account_number: string | null
+          payout_bank_name: string | null
+          payout_branch: string | null
+          payout_method: string | null
+          payout_notes: string | null
+          payout_routing: string | null
           status: Database["public"]["Enums"]["reseller_status"]
           updated_at: string
           user_id: string
@@ -1163,6 +1170,13 @@ export type Database = {
           leader_id?: string | null
           nid_number?: string | null
           notes?: string | null
+          payout_account_name?: string | null
+          payout_account_number?: string | null
+          payout_bank_name?: string | null
+          payout_branch?: string | null
+          payout_method?: string | null
+          payout_notes?: string | null
+          payout_routing?: string | null
           status?: Database["public"]["Enums"]["reseller_status"]
           updated_at?: string
           user_id: string
@@ -1180,6 +1194,13 @@ export type Database = {
           leader_id?: string | null
           nid_number?: string | null
           notes?: string | null
+          payout_account_name?: string | null
+          payout_account_number?: string | null
+          payout_bank_name?: string | null
+          payout_branch?: string | null
+          payout_method?: string | null
+          payout_notes?: string | null
+          payout_routing?: string | null
           status?: Database["public"]["Enums"]["reseller_status"]
           updated_at?: string
           user_id?: string

@@ -151,10 +151,11 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
             <Link to="/login" className="hidden rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground sm:inline">
               {c.nav.signIn}
             </Link>
-            <Link to="/login" className="btn-brand inline-flex items-center gap-1 rounded-md px-3 py-2 text-sm font-medium sm:px-4">
+            <Link to="/login" search={{ mode: "signup" }} className="btn-brand inline-flex items-center gap-1 rounded-md px-3 py-2 text-sm font-medium sm:px-4">
               {c.nav.cta} <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
+
         </div>
       </header>
 
@@ -211,6 +212,7 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
           <div className="mt-7 flex flex-col items-stretch justify-center gap-3 sm:mt-9 sm:flex-row sm:flex-wrap sm:items-center">
             <Link
               to="/login"
+              search={{ mode: "signup" }}
               className="btn-brand inline-flex items-center justify-center gap-2 rounded-lg px-6 py-3 text-sm font-semibold shadow-xl shadow-primary/30 transition-transform hover:-translate-y-0.5 sm:px-7 sm:text-base"
             >
               {c.hero.ctaPrimary} <ArrowRight className="h-4 w-4" />
@@ -226,6 +228,7 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
               {c.hero.ctaSecondary}
             </Link>
           </div>
+
           {c.hero.badges.length > 0 && (
             <div className="mt-8 flex flex-wrap items-center justify-center gap-2 text-[11px] font-medium sm:mt-10 sm:gap-3 sm:text-xs">
               {c.hero.badges.map((b) => (
@@ -333,10 +336,11 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
             <p className="mx-auto mt-5 max-w-xl text-pretty text-sm leading-relaxed text-muted-foreground sm:text-base">{c.cta.subtitle}</p>
           )}
           <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Link to="/login" className="btn-brand inline-flex items-center gap-2 rounded-lg px-7 py-3 text-sm font-semibold shadow-xl shadow-primary/30 transition-transform hover:-translate-y-0.5 sm:text-base">
+            <Link to="/login" search={{ mode: "signup" }} className="btn-brand inline-flex items-center gap-2 rounded-lg px-7 py-3 text-sm font-semibold shadow-xl shadow-primary/30 transition-transform hover:-translate-y-0.5 sm:text-base">
               {c.cta.button} <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
+
         </div>
       </section>
 

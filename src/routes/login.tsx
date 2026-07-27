@@ -2,18 +2,20 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, Mail, ArrowLeft } from "lucide-react";
 
 export const Route = createFileRoute("/login")({
-  validateSearch: z.object({ redirect: z.string().optional() }),
+  validateSearch: z.object({
+    redirect: z.string().optional(),
+    mode: z.enum(["signin", "signup"]).optional(),
+  }),
   head: () => ({
     meta: [
-      { title: "Sign in — ResellHub" },
-      { name: "description", content: "Sign in or create a reseller account on ResellHub." },
-      { property: "og:title", content: "Sign in — ResellHub" },
-      { property: "og:description", content: "Sign in or create a reseller account on ResellHub." },
+      { title: "লগইন / রেজিস্টার" },
+      { name: "description", content: "আপনার রিসেলার অ্যাকাউন্টে সাইন ইন করুন অথবা নতুন করে রেজিস্টার করুন।" },
+      { property: "og:title", content: "লগইন / রেজিস্টার" },
+      { property: "og:description", content: "রিসেলার অ্যাকাউন্ট তৈরি করে নিজের স্টোর চালু করুন।" },
     ],
   }),
   component: AuthPage,
@@ -21,183 +23,201 @@ export const Route = createFileRoute("/login")({
 
 function AuthPage() {
   const nav = useNavigate();
-  const { redirect: redirectTo } = Route.useSearch();
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const search = Route.useSearch();
+  const [mode, setMode] = useState<"signin" | "signup">(search.mode ?? "signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [busy, setBusy] = useState(false);
+  const [sentEmail, setSentEmail] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       if (data.session?.user) {
         const target =
-          redirectTo && redirectTo.startsWith("/") && !redirectTo.startsWith("/login")
-            ? redirectTo
+          search.redirect && search.redirect.startsWith("/") && !search.redirect.startsWith("/login")
+            ? search.redirect
             : "/dashboard";
         nav({ to: target, replace: true });
       }
     });
-  }, [nav, redirectTo]);
+  }, [nav, search.redirect]);
+
+  useEffect(() => {
+    if (search.mode) setMode(search.mode);
+  }, [search.mode]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     try {
       if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/`,
+            emailRedirectTo: `${window.location.origin}/login`,
             data: { full_name: name, phone },
           },
         });
         if (error) throw error;
-        toast.success("Account created! You can sign in now.");
-        setMode("signin");
+        // If email confirmation is required, session will be null
+        if (!data.session) {
+          setSentEmail(email);
+        } else {
+          toast.success("অ্যাকাউন্ট তৈরি হয়েছে!");
+          nav({ to: "/dashboard", replace: true });
+        }
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        toast.success("Welcome back!");
+        toast.success("স্বাগতম!");
         const target =
-          redirectTo && redirectTo.startsWith("/") && !redirectTo.startsWith("/login")
-            ? redirectTo
+          search.redirect && search.redirect.startsWith("/") && !search.redirect.startsWith("/login")
+            ? search.redirect
             : "/dashboard";
         nav({ to: target, replace: true });
       }
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Auth failed");
+      toast.error(e instanceof Error ? e.message : "কিছু একটা সমস্যা হয়েছে");
     } finally {
       setBusy(false);
     }
   }
 
-  async function google() {
-    setBusy(true);
-    const r = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
-    });
-    if (r.error) {
-      toast.error(r.error.message ?? "Google sign-in failed");
-      setBusy(false);
-    }
+  if (sentEmail) {
+    return (
+      <div className="grid min-h-screen place-items-center px-4" style={{ background: "var(--gradient-hero)" }}>
+        <div className="w-full max-w-md">
+          <div className="surface-card p-8 text-center">
+            <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-full bg-primary/10 text-primary">
+              <Mail className="h-6 w-6" />
+            </div>
+            <h1 className="text-2xl font-semibold">ইমেইল ভেরিফাই করুন</h1>
+            <p className="mt-3 text-sm text-muted-foreground">
+              আমরা <span className="font-medium text-foreground">{sentEmail}</span> এ একটি ভেরিফিকেশন লিংক পাঠিয়েছি।
+              ইমেইল খুলে লিংকে ক্লিক করুন, তারপর এখানে ফিরে এসে লগইন করুন।
+            </p>
+            <p className="mt-2 text-xs text-muted-foreground">
+              (ইমেইল না পেলে স্প্যাম / প্রোমোশন ফোল্ডার চেক করুন)
+            </p>
+            <button
+              onClick={() => {
+                setSentEmail(null);
+                setMode("signin");
+              }}
+              className="btn-brand mt-6 inline-flex items-center gap-2 rounded-md px-5 py-2.5 text-sm font-medium"
+            >
+              লগইন পেজে যান
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
+  const isSignup = mode === "signup";
+
   return (
-    <div
-      className="grid min-h-screen place-items-center px-4"
-      style={{ background: "var(--gradient-hero)" }}
-    >
+    <div className="grid min-h-screen place-items-center px-4" style={{ background: "var(--gradient-hero)" }}>
       <div className="w-full max-w-md">
-        <Link to="/" className="mb-6 flex items-center justify-center gap-2">
-          <div className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-primary to-primary/70 text-lg font-bold text-primary-foreground">
-            R
-          </div>
-          <span className="text-xl font-semibold tracking-tight">ResellHub</span>
+        <Link to="/" className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="h-4 w-4" /> হোমপেজে ফিরে যান
         </Link>
 
         <div className="surface-card p-8">
           <h1 className="text-2xl font-semibold tracking-tight">
-            {mode === "signin" ? "Welcome back" : "Create your account"}
+            {isSignup ? "নতুন অ্যাকাউন্ট তৈরি করুন" : "লগইন করুন"}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {mode === "signin"
-              ? "Sign in to your reseller or admin dashboard"
-              : "Start your reseller business today"}
+            {isSignup
+              ? "নিচের তথ্য দিয়ে রেজিস্টার করুন — কয়েক সেকেন্ডেই হয়ে যাবে।"
+              : "আপনার ইমেইল ও পাসওয়ার্ড দিয়ে সাইন ইন করুন।"}
           </p>
 
-          <button
-            onClick={google}
-            disabled={busy}
-            className="mt-6 flex w-full items-center justify-center gap-2 rounded-md border bg-background px-4 py-2.5 text-sm font-medium transition hover:bg-muted disabled:opacity-50"
-          >
-            <svg width="18" height="18" viewBox="0 0 48 48">
-              <path
-                fill="#EA4335"
-                d="M24 9.5c3.54 0 6.7 1.22 9.2 3.6l6.85-6.85C35.9 2.36 30.4 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"
-              />
-              <path
-                fill="#4285F4"
-                d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"
-              />
-              <path
-                fill="#FBBC05"
-                d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"
-              />
-              <path
-                fill="#34A853"
-                d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
-              />
-            </svg>
-            Continue with Google
-          </button>
-
-          <div className="my-6 flex items-center gap-3 text-xs text-muted-foreground">
-            <div className="h-px flex-1 bg-border" /> OR{" "}
-            <div className="h-px flex-1 bg-border" />
-          </div>
-
-          <form onSubmit={onSubmit} className="space-y-3">
-            {mode === "signup" && (
+          <form onSubmit={onSubmit} className="mt-6 space-y-3">
+            {isSignup && (
               <>
-                <input
-                  className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-                  placeholder="Full name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                />
-                <input
-                  className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-                  placeholder="Phone (01...)"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                />
+                <Field label="আপনার নাম">
+                  <input
+                    className={inp}
+                    placeholder="যেমনঃ রফিকুল ইসলাম"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                  />
+                </Field>
+                <Field label="ফোন নাম্বার">
+                  <input
+                    className={inp}
+                    placeholder="01XXXXXXXXX"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    required
+                  />
+                </Field>
               </>
             )}
-            <input
-              type="email"
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-            <input
-              type="password"
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-              placeholder="Password (min 6 chars)"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              minLength={6}
-              required
-            />
+            <Field label="ইমেইল">
+              <input
+                type="email"
+                className={inp}
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </Field>
+            <Field label="পাসওয়ার্ড" hint={isSignup ? "কমপক্ষে ৬ অক্ষর" : undefined}>
+              <input
+                type="password"
+                className={inp}
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                minLength={6}
+                required
+              />
+            </Field>
             <button
               type="submit"
               disabled={busy}
               className="btn-brand flex w-full items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium disabled:opacity-50"
             >
               {busy && <Loader2 className="h-4 w-4 animate-spin" />}
-              {mode === "signin" ? "Sign in" : "Create account"}
+              {isSignup ? "রেজিস্টার করুন" : "লগইন করুন"}
             </button>
           </form>
 
-          <p className="mt-4 text-center text-sm text-muted-foreground">
-            {mode === "signin" ? "New here?" : "Already have an account?"}{" "}
+          <p className="mt-5 text-center text-sm text-muted-foreground">
+            {isSignup ? "আগে থেকে অ্যাকাউন্ট আছে?" : "নতুন এখানে?"}{" "}
             <button
-              onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
+              onClick={() => setMode(isSignup ? "signin" : "signup")}
               className="font-medium text-primary hover:underline"
             >
-              {mode === "signin" ? "Create account" : "Sign in"}
+              {isSignup ? "লগইন করুন" : "রেজিস্টার করুন"}
             </button>
           </p>
         </div>
         <p className="mt-6 text-center text-xs text-muted-foreground">
-          By continuing you agree to our terms & privacy policy.
+          সাইন ইন করলেই আপনি আমাদের শর্তাবলি ও প্রাইভেসি পলিসিতে সম্মত হচ্ছেন।
         </p>
       </div>
+    </div>
+  );
+}
+
+const inp = "w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring";
+
+function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label className="mb-1 flex items-center justify-between text-xs font-medium">
+        <span>{label}</span>
+        {hint && <span className="text-muted-foreground">{hint}</span>}
+      </label>
+      {children}
     </div>
   );
 }
