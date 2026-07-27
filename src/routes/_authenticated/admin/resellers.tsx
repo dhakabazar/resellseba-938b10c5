@@ -16,8 +16,11 @@ import {
   ShieldOff,
   ExternalLink,
   Copy,
+  MailCheck,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { confirmUserEmail } from "@/lib/admin-users.functions";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -66,6 +69,7 @@ const FILTERS = ["pending", "active", "suspended", "rejected", "unverified", "al
 type Filter = (typeof FILTERS)[number];
 
 function ResellersPage() {
+  const confirmEmailFn = useServerFn(confirmUserEmail);
   const [items, setItems] = useState<Reseller[]>([]);
   const [summaries, setSummaries] = useState<Record<string, Summary>>({});
   const [orderCounts, setOrderCounts] = useState<Record<string, number>>({});
@@ -178,6 +182,16 @@ function ResellersPage() {
     if (error) return toast.error(error.message);
     toast.success(verified ? "Marked verified" : "Verification removed");
     load();
+  }
+
+  async function confirmEmail(r: Reseller) {
+    try {
+      const res = await confirmEmailFn({ data: { userId: r.user_id } });
+      if (res.alreadyConfirmed) toast.info("Email already confirmed");
+      else toast.success(`Email confirmed for ${res.email ?? r.business_name}`);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to confirm email");
+    }
   }
 
   async function remove(r: Reseller) {
@@ -332,6 +346,9 @@ function ResellersPage() {
                         <a href={`/s/${r.code}`} target="_blank" rel="noreferrer">
                           <ExternalLink className="mr-2 h-4 w-4" /> Visit storefront
                         </a>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => confirmEmail(r)}>
+                        <MailCheck className="mr-2 h-4 w-4" /> Confirm email
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
