@@ -392,7 +392,7 @@ function Metric({
   plain?: boolean;
 }) {
   return (
-    <div className="text-right">
+    <div className="rounded-md border bg-muted/30 px-2 py-1.5">
       <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</div>
       <div
         className={
@@ -403,6 +403,7 @@ function Metric({
         {value == null ? "—" : plain ? value.toLocaleString() : `৳${value.toLocaleString()}`}
       </div>
     </div>
+
   );
 }
 
