@@ -151,10 +151,11 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
             <Link to="/login" className="hidden rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground sm:inline">
               {c.nav.signIn}
             </Link>
-            <Link to="/login" className="btn-brand inline-flex items-center gap-1 rounded-md px-3 py-2 text-sm font-medium sm:px-4">
+            <Link to="/login" search={{ mode: "signup" }} className="btn-brand inline-flex items-center gap-1 rounded-md px-3 py-2 text-sm font-medium sm:px-4">
               {c.nav.cta} <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
+
         </div>
       </header>
 
