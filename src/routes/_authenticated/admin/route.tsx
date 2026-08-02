@@ -12,7 +12,6 @@ import {
   Wallet,
   ShoppingCart,
   Megaphone,
-  Percent,
   Award,
   ScrollText,
   Bell,
@@ -48,7 +47,6 @@ const NAV: NavEntry[] = [
     icon: <ShoppingBag className="h-4 w-4" />,
     items: [
       { label: "Orders", to: "/admin/orders", icon: <ShoppingCart className="h-4 w-4" /> },
-      { label: "Delivery rules", to: "/admin/delivery", icon: <Percent className="h-4 w-4" /> },
       { label: "Couriers", to: "/admin/couriers", icon: <Truck className="h-4 w-4" /> },
     ],
   },
