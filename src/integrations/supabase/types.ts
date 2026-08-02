@@ -846,7 +846,9 @@ export type Database = {
           buying_price: number
           category_id: string | null
           created_at: string
+          delivery_flat: number
           delivery_inside: number
+          delivery_mode: string
           delivery_outside: number
           description: string | null
           id: string
@@ -873,7 +875,9 @@ export type Database = {
           buying_price?: number
           category_id?: string | null
           created_at?: string
+          delivery_flat?: number
           delivery_inside?: number
+          delivery_mode?: string
           delivery_outside?: number
           description?: string | null
           id?: string
@@ -900,7 +904,9 @@ export type Database = {
           buying_price?: number
           category_id?: string | null
           created_at?: string
+          delivery_flat?: number
           delivery_inside?: number
+          delivery_mode?: string
           delivery_outside?: number
           description?: string | null
           id?: string
