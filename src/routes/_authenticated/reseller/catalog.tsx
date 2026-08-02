@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { deliveryLabel, deliveryMode } from "@/lib/delivery";
 import { useAuth } from "@/lib/use-auth";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
 import { Loader2, Plus, Check, CheckSquare, Square, Trash2 } from "lucide-react";
@@ -16,6 +17,8 @@ type P = {
   packaging_cost: number;
   delivery_inside: number;
   delivery_outside: number;
+  delivery_mode: string | null;
+  delivery_flat: number | null;
   suggested_price: number;
   stock: number;
   og_image_url: string | null;
@@ -69,7 +72,7 @@ function CatalogPage() {
         supabase
           .from("products")
           .select(
-            "id,name,slug,reseller_price,packaging_cost,delivery_inside,delivery_outside,suggested_price,stock,og_image_url,brand_id,category_id",
+            "id,name,slug,reseller_price,packaging_cost,delivery_inside,delivery_outside,delivery_mode,delivery_flat,suggested_price,stock,og_image_url,brand_id,category_id",
           )
           .eq("is_active", true)
           .order("created_at", { ascending: false }),
@@ -321,7 +324,7 @@ function CatalogPage() {
                     Product ৳{p.reseller_price} + Pack ৳{p.packaging_cost} = <b>৳{myCost}</b> (your cost)
                   </div>
                   <div className="mt-1 text-xs text-muted-foreground">
-                    Delivery ৳{p.delivery_inside} (in) / ৳{p.delivery_outside} (out) · customer pays
+                    Delivery: {deliveryLabel(p)} · customer pays
                   </div>
                   <div className="mt-1 text-xs text-muted-foreground">
                     Suggested ৳{p.suggested_price} · Stock {p.stock}
@@ -360,8 +363,16 @@ function CatalogPage() {
               <div className="border-t pt-2">
                 <Row label="Your cost (admin কাটবে)" value={`৳${minSell}`} strong />
               </div>
-              <Row label="Delivery inside Dhaka" value={`৳${selected.delivery_inside}`} />
-              <Row label="Delivery outside Dhaka" value={`৳${selected.delivery_outside}`} />
+              {deliveryMode(selected) === "free" ? (
+                <Row label="Delivery" value="Free shipping (customer pays ৳0)" />
+              ) : deliveryMode(selected) === "flat" ? (
+                <Row label="Delivery (flat, all areas)" value={`৳${selected.delivery_flat ?? 0}`} />
+              ) : (
+                <>
+                  <Row label="Delivery inside Dhaka" value={`৳${selected.delivery_inside}`} />
+                  <Row label="Delivery outside Dhaka" value={`৳${selected.delivery_outside}`} />
+                </>
+              )}
               <p className="text-xs">
                 ডেলিভারি চার্জ কাস্টমার আলাদা দেবে (কুরিয়ার এ যায়)। একাধিক প্রোডাক্টে সর্বোচ্চটা একবার প্রযোজ্য।
               </p>

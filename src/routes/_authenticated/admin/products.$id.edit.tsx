@@ -47,6 +47,8 @@ function EditProduct() {
   const [buying, setBuying] = useState("");
   const [resellerPrice, setResellerPrice] = useState("");
   const [packaging, setPackaging] = useState("0");
+  const [deliveryMode, setDeliveryMode] = useState<"area" | "free" | "flat">("area");
+  const [deliveryFlat, setDeliveryFlat] = useState("0");
   const [deliveryIn, setDeliveryIn] = useState("60");
   const [deliveryOut, setDeliveryOut] = useState("130");
   const [suggested, setSuggested] = useState("");
@@ -85,6 +87,8 @@ function EditProduct() {
       setBuying(String(p.buying_price ?? 0));
       setResellerPrice(String(anyP.reseller_price ?? p.buying_price ?? 0));
       setPackaging(String(p.packaging_cost ?? 0));
+      setDeliveryMode(((p as any).delivery_mode ?? "area") as "area" | "free" | "flat");
+      setDeliveryFlat(String((p as any).delivery_flat ?? 0));
       setDeliveryIn(String(p.delivery_inside ?? 0));
       setDeliveryOut(String(p.delivery_outside ?? 0));
       setSuggested(String(p.suggested_price ?? 0));
@@ -104,8 +108,8 @@ function EditProduct() {
     const buy = Number(buying) || 0;
     const rp = Number(resellerPrice) || 0;
     const pkg = Number(packaging) || 0;
-    const di = Number(deliveryIn) || 0;
-    const dOut = Number(deliveryOut) || 0;
+    const di = deliveryMode === "free" ? 0 : deliveryMode === "flat" ? Number(deliveryFlat) || 0 : Number(deliveryIn) || 0;
+    const dOut = deliveryMode === "free" ? 0 : deliveryMode === "flat" ? Number(deliveryFlat) || 0 : Number(deliveryOut) || 0;
     const sug = Number(suggested) || 0;
     return {
       saProfit: rp - buy,
@@ -114,7 +118,7 @@ function EditProduct() {
       resellerBaseOut: rp + pkg + dOut,
       resellerProfitAtSuggested: sug - rp - pkg,
     };
-  }, [buying, resellerPrice, packaging, deliveryIn, deliveryOut, suggested]);
+  }, [buying, resellerPrice, packaging, deliveryIn, deliveryOut, deliveryMode, deliveryFlat, suggested]);
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
@@ -143,8 +147,10 @@ function EditProduct() {
           buying_price: Number(buying),
           reseller_price: Number(resellerPrice),
           packaging_cost: Number(packaging),
-          delivery_inside: Number(deliveryIn),
-          delivery_outside: Number(deliveryOut),
+          delivery_mode: deliveryMode,
+          delivery_flat: deliveryMode === "flat" ? Number(deliveryFlat) || 0 : 0,
+          delivery_inside: deliveryMode === "area" ? Number(deliveryIn) : 0,
+          delivery_outside: deliveryMode === "area" ? Number(deliveryOut) : 0,
           suggested_price: Number(suggested),
           stock: Number(stock),
           is_active: isActive,
@@ -278,12 +284,28 @@ function EditProduct() {
             <Field label="Packaging cost (৳)" hint="প্রতি অর্ডারে প্যাকেজিং খরচ। এডমিন এটাও কাটবে।">
               <input type="number" min={0} value={packaging} onChange={(e) => setPackaging(e.target.value)} className={inputCls} />
             </Field>
-            <Field label="Delivery inside Dhaka (৳)" hint="ঢাকার ভেতরে কুরিয়ার চার্জ। কাস্টমার আলাদা দেবে। একাধিক প্রোডাক্টে সর্বোচ্চটা একবার নেয়া হবে।">
-              <input type="number" min={0} value={deliveryIn} onChange={(e) => setDeliveryIn(e.target.value)} className={inputCls} />
+            <Field label="Delivery type" hint="Area-wise = ঢাকার ভেতরে/বাইরে আলাদা চার্জ। Free = ডেলিভারি ফ্রি। Flat = সব এলাকায় একই চার্জ।">
+              <select value={deliveryMode} onChange={(e) => setDeliveryMode(e.target.value as typeof deliveryMode)} className={inputCls}>
+                <option value="area">Area-wise (Inside / Outside Dhaka)</option>
+                <option value="free">Free shipping</option>
+                <option value="flat">Flat rate (same everywhere)</option>
+              </select>
             </Field>
-            <Field label="Delivery outside Dhaka (৳)" hint="ঢাকার বাইরে কুরিয়ার চার্জ।">
-              <input type="number" min={0} value={deliveryOut} onChange={(e) => setDeliveryOut(e.target.value)} className={inputCls} />
-            </Field>
+            {deliveryMode === "flat" && (
+              <Field label="Flat delivery charge (৳)" hint="সব এলাকার জন্য একই ডেলিভারি চার্জ।">
+                <input type="number" min={0} value={deliveryFlat} onChange={(e) => setDeliveryFlat(e.target.value)} className={inputCls} />
+              </Field>
+            )}
+            {deliveryMode === "area" && (
+              <>
+                <Field label="Delivery inside Dhaka (৳)" hint="ঢাকার ভেতরে কুরিয়ার চার্জ। একাধিক প্রোডাক্টে সর্বোচ্চটা একবার নেয়া হবে।">
+                  <input type="number" min={0} value={deliveryIn} onChange={(e) => setDeliveryIn(e.target.value)} className={inputCls} />
+                </Field>
+                <Field label="Delivery outside Dhaka (৳)" hint="ঢাকার বাইরে কুরিয়ার চার্জ।">
+                  <input type="number" min={0} value={deliveryOut} onChange={(e) => setDeliveryOut(e.target.value)} className={inputCls} />
+                </Field>
+              </>
+            )}
             <Field label="Stock">
               <input type="number" min={0} value={stock} onChange={(e) => setStock(e.target.value)} className={inputCls} />
             </Field>

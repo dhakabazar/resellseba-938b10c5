@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { deliveryLabel } from "@/lib/delivery";
 import { useAuth } from "@/lib/use-auth";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
 import { Loader2, Trash2 } from "lucide-react";
@@ -16,6 +17,9 @@ type L = {
     reseller_price: number;
     packaging_cost: number;
     delivery_inside: number;
+    delivery_outside: number;
+    delivery_mode: string | null;
+    delivery_flat: number | null;
     og_image_url: string | null;
   } | null;
 };
@@ -41,7 +45,7 @@ function ListingsPage() {
     const { data } = await supabase
       .from("reseller_listings")
       .select(
-        "id,selling_price,is_active,products(name,slug,reseller_price,packaging_cost,delivery_inside,og_image_url)",
+        "id,selling_price,is_active,products(name,slug,reseller_price,packaging_cost,delivery_inside,delivery_outside,delivery_mode,delivery_flat,og_image_url)",
       )
       .eq("reseller_id", r.id)
       .order("created_at", { ascending: false });
@@ -89,7 +93,8 @@ function ListingsPage() {
                 <div className="min-w-0 flex-1">
                   <div className="truncate font-medium">{l.products?.name}</div>
                   <div className="text-xs text-muted-foreground">
-                    Sell ৳{l.selling_price} · Cost ৳{cost} (product + packaging) ·{" "}
+                    Sell ৳{l.selling_price} · Cost ৳{cost} (product + packaging) · Delivery:{" "}
+                    {l.products ? deliveryLabel(l.products) : "—"} ·{" "}
                     <span className="text-success">Profit ৳{profit}</span>
                   </div>
                 </div>
