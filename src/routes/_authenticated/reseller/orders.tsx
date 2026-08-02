@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { productDeliveryCharge } from "@/lib/delivery";
 import { useAuth } from "@/lib/use-auth";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
 import { Loader2, Plus, Send, X, Trash2, FileText } from "lucide-react";
@@ -16,6 +17,8 @@ type Listing = {
     packaging_cost: number;
     delivery_inside: number;
     delivery_outside: number;
+    delivery_mode: string | null;
+    delivery_flat: number | null;
     og_image_url: string | null;
   } | null;
 };
@@ -64,7 +67,7 @@ function OrdersPage() {
         .order("created_at", { ascending: false }),
       supabase
         .from("reseller_listings")
-        .select("id,selling_price,products(id,name,reseller_price,packaging_cost,delivery_inside,delivery_outside,og_image_url)")
+        .select("id,selling_price,products(id,name,reseller_price,packaging_cost,delivery_inside,delivery_outside,delivery_mode,delivery_flat,og_image_url)")
         .eq("reseller_id", r.id)
         .eq("is_active", true),
     ]);
@@ -235,8 +238,8 @@ function NewOrderModal({
       if (!l?.products) continue;
       subtotal += Number(l.selling_price) * line.qty;
       saCost += (Number(l.products.reseller_price) + Number(l.products.packaging_cost)) * line.qty;
-      const dc = area === "inside_dhaka" ? l.products.delivery_inside : l.products.delivery_outside;
-      shipping = Math.max(shipping, Number(dc) || 0);
+      const dc = productDeliveryCharge(l.products, area);
+      shipping = Math.max(shipping, dc);
     }
     const total = subtotal + shipping;
     const profit = subtotal - saCost;

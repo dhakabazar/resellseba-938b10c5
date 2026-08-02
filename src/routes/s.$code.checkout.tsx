@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { productDeliveryCharge } from "@/lib/delivery";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
@@ -48,7 +49,7 @@ function Checkout() {
       const [{ data }, listingResellerRes] = await Promise.all([
         supabase
           .from("reseller_listings")
-          .select("id,reseller_id,selling_price,extra_delivery_inside,extra_delivery_outside,custom_title, product:products(id,name,delivery_inside,delivery_outside,product_images(url,is_primary))")
+          .select("id,reseller_id,selling_price,extra_delivery_inside,extra_delivery_outside,custom_title, product:products(id,name,delivery_inside,delivery_outside,delivery_mode,delivery_flat,product_images(url,is_primary))")
           .eq("id", listingId)
           .eq("is_active", true)
           .maybeSingle(),
@@ -78,10 +79,10 @@ function Checkout() {
   const totals = useMemo(() => {
     if (!listing || !product) return { subtotal: 0, ship: 0, total: 0 };
     const sub = Number(listing.selling_price) * qty;
-    const ship =
-      form.area === "inside_dhaka"
-        ? Number(product.delivery_inside) + Number(listing.extra_delivery_inside)
-        : Number(product.delivery_outside) + Number(listing.extra_delivery_outside);
+    const ship = productDeliveryCharge(product, form.area, {
+      inside: listing.extra_delivery_inside,
+      outside: listing.extra_delivery_outside,
+    });
     return { subtotal: sub, ship, total: sub + ship };
   }, [listing, product, qty, form.area]);
 
