@@ -23,6 +23,8 @@ function NewProduct() {
   const [buying, setBuying] = useState("");
   const [resellerPrice, setResellerPrice] = useState("");
   const [packaging, setPackaging] = useState("0");
+  const [deliveryMode, setDeliveryMode] = useState<"area" | "free" | "flat">("area");
+  const [deliveryFlat, setDeliveryFlat] = useState("0");
   const [deliveryIn, setDeliveryIn] = useState("60");
   const [deliveryOut, setDeliveryOut] = useState("130");
   const [suggested, setSuggested] = useState("");
