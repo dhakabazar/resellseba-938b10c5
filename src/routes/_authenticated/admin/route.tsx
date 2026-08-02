@@ -12,7 +12,6 @@ import {
   Wallet,
   ShoppingCart,
   Megaphone,
-  Percent,
   Award,
   ScrollText,
   Bell,
