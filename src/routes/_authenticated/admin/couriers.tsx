@@ -19,12 +19,12 @@ type Row = {
   config: Record<string, string>;
 };
 
+const PROVIDER_ORDER = ["steadfast", "pathao", "carrybee", "manual"];
+
 const FIELDS: Record<string, { key: string; label: string; type?: string; hint?: string }[]> = {
   steadfast: [
     { key: "api_key", label: "API Key" },
     { key: "secret_key", label: "Secret Key", type: "password" },
-    { key: "base_url", label: "Base URL", hint: "https://portal.packzy.com/api/v1" },
-    { key: "webhook_token", label: "Webhook Token", hint: "Any secret string — also used in the webhook URL" },
   ],
   pathao: [
     { key: "client_id", label: "Client ID" },
@@ -39,6 +39,7 @@ const FIELDS: Record<string, { key: string; label: string; type?: string; hint?:
   ],
   manual: [],
 };
+
 
 
 function CouriersPage() {
