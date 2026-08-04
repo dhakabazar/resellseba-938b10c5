@@ -36,9 +36,13 @@ const FIELDS: Record<string, { key: string; label: string; type?: string; hint?:
     { key: "store_id", label: "Default Store ID" },
   ],
   carrybee: [
-    { key: "api_token", label: "API Token" },
-    { key: "base_url", label: "Base URL" },
+    { key: "client_id", label: "Client ID" },
+    { key: "client_secret", label: "Client Secret" },
+    { key: "client_context", label: "Client Context" },
+    { key: "store_id", label: "Default Pickup Store ID", hint: "Store list theke copy korun" },
+    { key: "base_url", label: "Base URL (optional override)", hint: "Khali rakhle environment onujayi auto" },
   ],
+
   manual: [],
 };
 
