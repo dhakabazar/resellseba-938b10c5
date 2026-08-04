@@ -375,7 +375,7 @@ function AdminOrdersPage() {
           }
           onPick={(name) => {
             setSearchMode("product");
-            setProductQ(name);
+            setFilters((f) => ({ ...f, q: name }));
             setPickOpen(false);
           }}
           onClose={() => setPickOpen(false)}
