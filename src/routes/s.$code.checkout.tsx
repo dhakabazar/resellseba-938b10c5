@@ -167,9 +167,10 @@ function Checkout() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
       <Heading as="h1" className="text-2xl md:text-3xl">
-        Checkout
+        {store.content.text("co_headline")}
       </Heading>
-      <p className={cx("mt-1 text-sm", muted)}>Review your cart and confirm the delivery details.</p>
+      <p className={cx("mt-1 text-sm", muted)}>{store.content.text("co_note")}</p>
+
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_380px]">
         <form onSubmit={submit} className={cx("space-y-4 rounded-[var(--st-radius)] border bg-[var(--st-surface)] p-5", borderc)}>
