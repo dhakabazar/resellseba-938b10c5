@@ -35,7 +35,7 @@ export function OrderTabs({
       </button>
 
       <div
-        className={`${open ? "grid" : "hidden"} grid-cols-2 gap-2 text-sm sm:flex sm:flex-wrap xs:grid-cols-3`}
+        className={`${open ? "grid" : "hidden"} grid-cols-2 gap-2 text-sm sm:flex sm:flex-wrap`}
       >
         {ORDER_TABS.map((t) => (
           <button
