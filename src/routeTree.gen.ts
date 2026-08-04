@@ -23,6 +23,7 @@ import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authentic
 import { Route as SCodeThanksRouteImport } from './routes/s.$code.thanks'
 import { Route as SCodeCheckoutRouteImport } from './routes/s.$code.checkout'
 import { Route as ApiPublicRobotsRouteImport } from './routes/api/public/robots'
+import { Route as AuthenticatedResellerSettingsRouteImport } from './routes/_authenticated/reseller/settings'
 import { Route as AuthenticatedResellerPayoutsRouteImport } from './routes/_authenticated/reseller/payouts'
 import { Route as AuthenticatedResellerOrdersRouteImport } from './routes/_authenticated/reseller/orders'
 import { Route as AuthenticatedResellerMarketingRouteImport } from './routes/_authenticated/reseller/marketing'
@@ -131,6 +132,12 @@ const ApiPublicRobotsRoute = ApiPublicRobotsRouteImport.update({
   path: '/api/public/robots',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedResellerSettingsRoute =
+  AuthenticatedResellerSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => AuthenticatedResellerRouteRoute,
+  } as any)
 const AuthenticatedResellerPayoutsRoute =
   AuthenticatedResellerPayoutsRouteImport.update({
     id: '/payouts',
@@ -375,6 +382,7 @@ export interface FileRoutesByFullPath {
   '/reseller/marketing': typeof AuthenticatedResellerMarketingRoute
   '/reseller/orders': typeof AuthenticatedResellerOrdersRouteWithChildren
   '/reseller/payouts': typeof AuthenticatedResellerPayoutsRoute
+  '/reseller/settings': typeof AuthenticatedResellerSettingsRoute
   '/api/public/robots': typeof ApiPublicRobotsRoute
   '/s/$code/checkout': typeof SCodeCheckoutRoute
   '/s/$code/thanks': typeof SCodeThanksRoute
@@ -423,6 +431,7 @@ export interface FileRoutesByTo {
   '/reseller/marketing': typeof AuthenticatedResellerMarketingRoute
   '/reseller/orders': typeof AuthenticatedResellerOrdersRouteWithChildren
   '/reseller/payouts': typeof AuthenticatedResellerPayoutsRoute
+  '/reseller/settings': typeof AuthenticatedResellerSettingsRoute
   '/api/public/robots': typeof ApiPublicRobotsRoute
   '/s/$code/checkout': typeof SCodeCheckoutRoute
   '/s/$code/thanks': typeof SCodeThanksRoute
@@ -476,6 +485,7 @@ export interface FileRoutesById {
   '/_authenticated/reseller/marketing': typeof AuthenticatedResellerMarketingRoute
   '/_authenticated/reseller/orders': typeof AuthenticatedResellerOrdersRouteWithChildren
   '/_authenticated/reseller/payouts': typeof AuthenticatedResellerPayoutsRoute
+  '/_authenticated/reseller/settings': typeof AuthenticatedResellerSettingsRoute
   '/api/public/robots': typeof ApiPublicRobotsRoute
   '/s/$code/checkout': typeof SCodeCheckoutRoute
   '/s/$code/thanks': typeof SCodeThanksRoute
@@ -529,6 +539,7 @@ export interface FileRouteTypes {
     | '/reseller/marketing'
     | '/reseller/orders'
     | '/reseller/payouts'
+    | '/reseller/settings'
     | '/api/public/robots'
     | '/s/$code/checkout'
     | '/s/$code/thanks'
@@ -577,6 +588,7 @@ export interface FileRouteTypes {
     | '/reseller/marketing'
     | '/reseller/orders'
     | '/reseller/payouts'
+    | '/reseller/settings'
     | '/api/public/robots'
     | '/s/$code/checkout'
     | '/s/$code/thanks'
@@ -629,6 +641,7 @@ export interface FileRouteTypes {
     | '/_authenticated/reseller/marketing'
     | '/_authenticated/reseller/orders'
     | '/_authenticated/reseller/payouts'
+    | '/_authenticated/reseller/settings'
     | '/api/public/robots'
     | '/s/$code/checkout'
     | '/s/$code/thanks'
@@ -762,6 +775,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/public/robots'
       preLoaderRoute: typeof ApiPublicRobotsRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/reseller/settings': {
+      id: '/_authenticated/reseller/settings'
+      path: '/settings'
+      fullPath: '/reseller/settings'
+      preLoaderRoute: typeof AuthenticatedResellerSettingsRouteImport
+      parentRoute: typeof AuthenticatedResellerRouteRoute
     }
     '/_authenticated/reseller/payouts': {
       id: '/_authenticated/reseller/payouts'
@@ -1095,6 +1115,7 @@ interface AuthenticatedResellerRouteRouteChildren {
   AuthenticatedResellerMarketingRoute: typeof AuthenticatedResellerMarketingRoute
   AuthenticatedResellerOrdersRoute: typeof AuthenticatedResellerOrdersRouteWithChildren
   AuthenticatedResellerPayoutsRoute: typeof AuthenticatedResellerPayoutsRoute
+  AuthenticatedResellerSettingsRoute: typeof AuthenticatedResellerSettingsRoute
   AuthenticatedResellerIndexRoute: typeof AuthenticatedResellerIndexRoute
 }
 
@@ -1111,6 +1132,7 @@ const AuthenticatedResellerRouteRouteChildren: AuthenticatedResellerRouteRouteCh
     AuthenticatedResellerOrdersRoute:
       AuthenticatedResellerOrdersRouteWithChildren,
     AuthenticatedResellerPayoutsRoute: AuthenticatedResellerPayoutsRoute,
+    AuthenticatedResellerSettingsRoute: AuthenticatedResellerSettingsRoute,
     AuthenticatedResellerIndexRoute: AuthenticatedResellerIndexRoute,
   }
 
