@@ -1,5 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { Pagination, usePaginated, type FilterOption } from "@/components/data-list";
+import {
+  OrderFilterBar,
+  applyOrderFilters,
+  DEFAULT_ORDER_FILTERS,
+  type OrderFilterState,
+} from "@/components/order-filters";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
 import { Loader2, Truck, X, Download, Zap, RotateCcw, RefreshCw, Lock, PackageCheck, Repeat, Ban } from "lucide-react";
@@ -32,6 +39,7 @@ import {
 
 type OrderRow = {
   id: string;
+  reseller_id: string;
   order_number: string;
   customer_name: string;
   customer_phone: string;
@@ -109,6 +117,9 @@ function AdminOrdersPage() {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<OrderTabKey>("confirmed");
   const [selected, setSelected] = useState<OrderRow | null>(null);
+  const [filters, setFilters] = useState<OrderFilterState>(DEFAULT_ORDER_FILTERS);
+  const [page, setPage] = useState(1);
+  const [resellerOptions, setResellerOptions] = useState<FilterOption[]>([]);
 
   async function load() {
     setLoading(true);
@@ -116,15 +127,19 @@ function AdminOrdersPage() {
     let q = supabase
       .from("orders")
       .select(
-        "id,order_number,customer_name,customer_phone,address_line,area,total,status,payment_status,payment_method,forwarded_to_admin,created_at,reseller_note,admin_note,resellers(business_name,code)",
+        "id,reseller_id,order_number,customer_name,customer_phone,address_line,area,total,status,payment_status,payment_method,forwarded_to_admin,created_at,reseller_note,admin_note,resellers(business_name,code)",
       )
       .order("created_at", { ascending: false });
     if (statuses.length > 0) q = q.in("status", statuses);
-    const [{ data }, { data: all }] = await Promise.all([
+    const [{ data }, { data: all }, { data: rs }] = await Promise.all([
       q,
       supabase.from("orders").select("status"),
+      supabase.from("resellers").select("id,business_name,code").order("business_name"),
     ]);
     setOrders((data ?? []) as OrderRow[]);
+    setResellerOptions(
+      (rs ?? []).map((r: any) => ({ value: r.id, label: `${r.business_name} (/${r.code})` })),
+    );
     const byStatus: Record<string, number> = {};
     for (const row of all ?? []) byStatus[(row as any).status] = (byStatus[(row as any).status] ?? 0) + 1;
     const tabCounts: Record<string, number> = { all: (all ?? []).length };
@@ -139,6 +154,12 @@ function AdminOrdersPage() {
     load();
   }, [tab]);
 
+  const filtered = useMemo(() => applyOrderFilters(orders, filters), [orders, filters]);
+  useEffect(() => {
+    setPage(1);
+  }, [filters, tab]);
+  const paged = usePaginated(filtered, page, filters.perPage);
+
   return (
     <div>
       <PageHeader
@@ -146,8 +167,8 @@ function AdminOrdersPage() {
         description="Status onujayi order manage korun — courier booking o live tracking ekhane."
         actions={
           <button
-            onClick={() => exportCsv(orders)}
-            disabled={orders.length === 0}
+            onClick={() => exportCsv(filtered)}
+            disabled={filtered.length === 0}
             className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm disabled:opacity-50"
           >
             <Download className="h-4 w-4" /> Export CSV
@@ -157,14 +178,25 @@ function AdminOrdersPage() {
 
       <OrderTabs tab={tab} onChange={setTab} count={(k) => counts[k] ?? 0} />
 
+      <OrderFilterBar
+        value={filters}
+        onChange={setFilters}
+        resellerOptions={resellerOptions}
+        total={orders.length}
+        shown={filtered.length}
+      />
+
+
+
 
       {loading ? (
         <div className="grid place-items-center py-12">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
-      ) : orders.length === 0 ? (
-        <EmptyState title="No orders" description="Ei status e kono order nai." />
+      ) : paged.length === 0 ? (
+        <EmptyState title="No orders" description="Ei status/filter e kono order nai." />
       ) : (
+        <>
         <div className="surface-card overflow-hidden">
           <div className="hidden grid-cols-[1fr_1fr_1.2fr_1fr_1fr_auto] gap-4 border-b bg-muted/40 px-4 py-2 text-xs font-medium text-muted-foreground md:grid">
             <div>Order</div>
@@ -174,7 +206,7 @@ function AdminOrdersPage() {
             <div>Status</div>
             <div></div>
           </div>
-          {orders.map((o) => (
+          {paged.map((o) => (
             <div
               key={o.id}
               className="grid grid-cols-1 items-center gap-3 border-b px-4 py-3 text-sm last:border-b-0 md:grid-cols-[1fr_1fr_1.2fr_1fr_1fr_auto]"
@@ -210,7 +242,10 @@ function AdminOrdersPage() {
             </div>
           ))}
         </div>
+        <Pagination page={page} perPage={filters.perPage} total={filtered.length} onPage={setPage} />
+        </>
       )}
+
 
       {selected && (
         <OrderDrawer

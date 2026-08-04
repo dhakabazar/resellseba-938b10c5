@@ -8,6 +8,13 @@ import { Loader2, Plus, X, Trash2, FileText, Check, Ban } from "lucide-react";
 import { toast } from "sonner";
 import { CourierTimeline, type CourierEvent } from "@/components/CourierTimeline";
 import { OrderTabs } from "@/components/OrderTabs";
+import { Pagination, usePaginated } from "@/components/data-list";
+import {
+  OrderFilterBar,
+  applyOrderFilters,
+  DEFAULT_ORDER_FILTERS,
+  type OrderFilterState,
+} from "@/components/order-filters";
 
 import {
   ORDER_TABS,
@@ -73,6 +80,8 @@ function OrdersPage() {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<OrderTabKey>("new");
   const [selected, setSelected] = useState<OrderRow | null>(null);
+  const [filters, setFilters] = useState<OrderFilterState>(DEFAULT_ORDER_FILTERS);
+  const [page, setPage] = useState(1);
 
   async function load() {
     if (!user) return;
@@ -105,12 +114,18 @@ function OrdersPage() {
   }, [user]);
 
   const tabStatuses = ORDER_TABS.find((t) => t.key === tab)?.statuses ?? [];
-  const visible =
+  const inTab =
     tabStatuses.length === 0 ? orders : orders.filter((o) => (tabStatuses as string[]).includes(o.status));
+  const visible = useMemo(() => applyOrderFilters(inTab, filters), [inTab, filters]);
+  useEffect(() => {
+    setPage(1);
+  }, [filters, tab]);
+  const paged = usePaginated(visible, page, filters.perPage);
   const tabCount = (key: OrderTabKey) => {
     const sts = ORDER_TABS.find((t) => t.key === key)?.statuses ?? [];
     return sts.length === 0 ? orders.length : orders.filter((o) => (sts as string[]).includes(o.status)).length;
   };
+
 
   async function remove(id: string) {
     if (!confirm("Delete this order?")) return;
@@ -136,16 +151,24 @@ function OrdersPage() {
 
       <OrderTabs tab={tab} onChange={setTab} count={tabCount} />
 
+      <OrderFilterBar
+        value={filters}
+        onChange={setFilters}
+        total={orders.length}
+        shown={visible.length}
+      />
+
       {loading ? (
         <div className="grid place-items-center py-12">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
-      ) : visible.length === 0 ? (
+      ) : paged.length === 0 ? (
         <EmptyState
           title="No orders"
-          description="Ei status e apnar kono order nai."
+          description="Ei status/filter e apnar kono order nai."
         />
       ) : (
+        <>
         <div className="surface-card overflow-hidden">
           <div className="hidden grid-cols-[1fr_1.2fr_1fr_0.8fr_0.8fr_auto] gap-4 border-b bg-muted/40 px-4 py-2 text-xs font-medium text-muted-foreground md:grid">
             <div>Order</div>
@@ -155,7 +178,7 @@ function OrdersPage() {
             <div>Status</div>
             <div></div>
           </div>
-          {visible.map((o) => (
+          {paged.map((o) => (
             <div
               key={o.id}
               className="grid grid-cols-1 items-center gap-3 border-b px-4 py-3 text-sm last:border-b-0 md:grid-cols-[1fr_1.2fr_1fr_0.8fr_0.8fr_auto]"
@@ -206,6 +229,13 @@ function OrdersPage() {
             </div>
           ))}
         </div>
+        <Pagination
+          page={page}
+          perPage={filters.perPage}
+          total={visible.length}
+          onPage={setPage}
+        />
+        </>
       )}
 
       {selected && (
