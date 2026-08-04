@@ -38,6 +38,15 @@ function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [counts, setCounts] = useState({ products: 0, resellers: 0, pendingResellers: 0, brands: 0 });
   const [rows, setRows] = useState<OrderRow[]>([]);
+  const [lifetime, setLifetime] = useState({
+    orders: 0,
+    revenue: 0,
+    profit: 0,
+    saCost: 0,
+    deliveredOrders: 0,
+    payoutPaid: 0,
+    payoutDue: 0,
+  });
 
   const load = useCallback(async (r: DateRangeState) => {
     setLoading(true);
@@ -66,9 +75,39 @@ function AdminDashboard() {
     setLoading(false);
   }, []);
 
+  const loadLifetime = useCallback(async () => {
+    const [allOrders, delivered, payoutsRes] = await Promise.all([
+      supabase.from("orders").select("*", { count: "exact", head: true }),
+      supabase
+        .from("orders")
+        .select("total,reseller_profit,sa_cost_total")
+        .eq("status", "delivered")
+        .limit(20000),
+      supabase.from("payouts").select("amount,status").limit(20000),
+    ]);
+    const d = (delivered.data ?? []) as { total: number | string; reseller_profit: number | string; sa_cost_total: number | string }[];
+    const pay = (payoutsRes.data ?? []) as { amount: number | string; status: string }[];
+    setLifetime({
+      orders: allOrders.count ?? 0,
+      deliveredOrders: d.length,
+      revenue: d.reduce((s, o) => s + Number(o.total), 0),
+      profit: d.reduce((s, o) => s + Number(o.reseller_profit), 0),
+      saCost: d.reduce((s, o) => s + Number(o.sa_cost_total), 0),
+      payoutPaid: pay.filter((x) => x.status === "paid").reduce((s, x) => s + Number(x.amount), 0),
+      payoutDue: pay
+        .filter((x) => ["pending", "approved"].includes(x.status))
+        .reduce((s, x) => s + Number(x.amount), 0),
+    });
+  }, []);
+
+  useEffect(() => {
+    void loadLifetime();
+  }, [loadLifetime]);
+
   useEffect(() => {
     void load(range);
   }, [load, range]);
+
 
   const { stats, daily, top } = useMemo(() => {
     const dayMap = new Map<string, DailyRow>();
