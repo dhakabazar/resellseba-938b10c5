@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { getStoreTheme, ensureThemeFont, type StoreTheme } from "@/lib/store-theme";
+import { getStoreTheme, getPalette, ensureThemeFont, type StorePalette, type StoreTheme } from "@/lib/store-theme";
 import { onCartChange, readCart, type CartLine } from "@/lib/store-cart";
 import {
   createContentReader,
@@ -70,6 +70,8 @@ export type StoreData = {
   name: string;
   settings: StoreSettings | null;
   theme: StoreTheme;
+  /** active color palette of the theme */
+  palette: StorePalette;
   /** resolved per-theme content (falls back to legacy columns then defaults) */
   content: ContentReader;
   listings: StoreListing[];
@@ -93,7 +95,7 @@ export function useStore(): StoreData {
 
 export type LoadState = "loading" | "missing" | "ready";
 
-export function useStoreLoader(code: string, themeOverride?: string | null) {
+export function useStoreLoader(code: string, themeOverride?: string | null, paletteOverride?: string | null) {
   const [state, setState] = useState<LoadState>("loading");
   const [data, setData] = useState<Omit<StoreData, "cart" | "cartCount"> | null>(null);
   const [cart, setCart] = useState<CartLine[]>([]);
@@ -155,6 +157,9 @@ export function useStoreLoader(code: string, themeOverride?: string | null) {
       const theme = getStoreTheme(themeOverride || s?.theme);
       ensureThemeFont(theme);
       const storeName = s?.store_name || r.business_name || code;
+      const values = s?.theme_settings?.[theme.id];
+      const savedPalette = typeof values?.palette === "string" ? values.palette : null;
+      const palette = getPalette(theme, paletteOverride || savedPalette);
 
       if (!alive) return;
       setData({
@@ -163,7 +168,8 @@ export function useStoreLoader(code: string, themeOverride?: string | null) {
         name: storeName,
         settings: s,
         theme,
-        content: createContentReader(theme.id, s?.theme_settings?.[theme.id], s, storeName),
+        palette,
+        content: createContentReader(theme.id, values, s, storeName),
 
         listings,
         categories,
@@ -178,7 +184,7 @@ export function useStoreLoader(code: string, themeOverride?: string | null) {
     return () => {
       alive = false;
     };
-  }, [code, themeOverride]);
+  }, [code, themeOverride, paletteOverride]);
 
   const value = useMemo<StoreData | null>(() => {
     if (!data) return null;

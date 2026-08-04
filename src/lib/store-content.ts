@@ -201,36 +201,57 @@ function baseGroups(): ContentGroup[] {
   ];
 }
 
-/** Theme-specific extra fields appended to the hero group. */
-const THEME_EXTRAS: Record<StoreThemeId, ContentField[]> = {
-  aurora: [
-    t("aurora_stat1", "Highlight 1 (hero card)", "10k+ orders delivered"),
-    t("aurora_stat2", "Highlight 2 (hero card)", "4.8★ average rating"),
-    t("aurora_offer", "Offer chip on hero image", "Free delivery over ৳2000"),
-  ],
-  noir: [
-    t("noir_eyebrow", "Collection eyebrow text", "The signature collection"),
-    area("noir_story", "Brand story paragraph", "Curated pieces, made for people who notice the details."),
-  ],
-  bazaar: [
-    t("bazaar_deal_title", "Flash deal strip title", "Today's deals"),
-    t("bazaar_deal_note", "Flash deal note", "Limited stock — first come, first served"),
-  ],
-  atelier: [
-    t("atelier_quote", "Editorial quote", "Fewer, better things."),
-    t("atelier_credit", "Quote credit", "— our studio promise"),
-  ],
+/**
+ * Theme-specific groups. Only the active theme's group is shown in the panel,
+ * and every field here is rendered by that theme on the storefront.
+ */
+const THEME_GROUP: Record<StoreThemeId, ContentGroup> = {
+  aurora: {
+    id: "theme-aurora",
+    title: "Aurora highlights",
+    description: "Trust highlights and the offer chip on the gradient hero.",
+    fields: [
+      t("aurora_stat1", "Highlight 1 (next to hero buttons)", "10k+ orders delivered"),
+      t("aurora_stat2", "Highlight 2 (next to hero buttons)", "4.8★ average rating"),
+      t("aurora_offer", "Offer chip on hero image", "Free delivery over ৳2000"),
+    ],
+  },
+  noir: {
+    id: "theme-noir",
+    title: "Noir brand story",
+    description: "Eyebrow line above the hero headline and the boutique story band.",
+    fields: [
+      t("noir_eyebrow", "Collection eyebrow text", "The signature collection"),
+      area("noir_story", "Brand story paragraph", "Curated pieces, made for people who notice the details."),
+    ],
+  },
+  bazaar: {
+    id: "theme-bazaar",
+    title: "Bazaar deal strip",
+    description: "Colored deal strip shown between the hero and the product sections.",
+    fields: [
+      t("bazaar_deal_title", "Flash deal strip title", "Today's deals"),
+      t("bazaar_deal_note", "Flash deal note", "Limited stock — first come, first served"),
+    ],
+  },
+  atelier: {
+    id: "theme-atelier",
+    title: "Atelier editorial quote",
+    description: "Large editorial quote band placed between the product sections.",
+    fields: [
+      t("atelier_quote", "Editorial quote", "Fewer, better things."),
+      t("atelier_credit", "Quote credit", "— our studio promise"),
+    ],
+  },
 };
 
 export function themeContentGroups(themeId: StoreThemeId): ContentGroup[] {
   const groups = baseGroups();
-  const extras = THEME_EXTRAS[themeId] ?? [];
-  if (!extras.length) return groups;
-  return groups.map((g) =>
-    g.id === "hero"
-      ? { ...g, fields: [...g.fields, ...extras], description: `${g.description} Theme-specific extras included.` }
-      : g,
-  );
+  const extra = THEME_GROUP[themeId];
+  if (!extra) return groups;
+  /** theme group sits right after the hero group */
+  const i = groups.findIndex((g) => g.id === "hero");
+  return [...groups.slice(0, i + 1), extra, ...groups.slice(i + 1)];
 }
 
 export function contentFieldMap(themeId: StoreThemeId): Record<string, ContentField> {

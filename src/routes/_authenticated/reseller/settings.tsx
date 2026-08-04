@@ -29,10 +29,7 @@ function SettingsPage() {
   const [code, setCode] = useState("");
   const [storeName, setStoreName] = useState("");
   const [tagline, setTagline] = useState("");
-  const [primary, setPrimary] = useState("#3b82f6");
-  const [accent, setAccent] = useState("#f59e0b");
-  /** When on, the storefront uses the selected theme's own palette. */
-  const [themeColors, setThemeColors] = useState(true);
+  /** Store colors are managed per theme in the Theme page. */
   const [whatsapp, setWhatsapp] = useState("");
   const [supportPhone, setSupportPhone] = useState("");
   const [fb, setFb] = useState("");
@@ -62,9 +59,6 @@ function SettingsPage() {
       if (s) {
         setStoreName(s.store_name);
         setTagline(s.tagline ?? "");
-        setPrimary(s.primary_color ?? "#3b82f6");
-        setAccent(s.accent_color ?? "#f59e0b");
-        setThemeColors(!s.primary_color && !s.accent_color);
         setWhatsapp(s.whatsapp ?? "");
         setSupportPhone(s.support_phone ?? "");
         setFb(s.facebook_url ?? "");
@@ -92,8 +86,9 @@ function SettingsPage() {
         reseller_id: rid,
         store_name: storeName,
         tagline: tagline || null,
-        primary_color: themeColors ? null : primary,
-        accent_color: themeColors ? null : accent,
+        /** colors are theme palette driven now */
+        primary_color: null,
+        accent_color: null,
         whatsapp: whatsapp || null,
         support_phone: supportPhone || null,
         facebook_url: fb || null,
@@ -156,40 +151,10 @@ function SettingsPage() {
               placeholder="Free delivery over ৳2000"
             />
           </Field>
-          <label className="flex items-start gap-2 rounded-md border p-3 text-sm">
-            <input
-              type="checkbox"
-              checked={themeColors}
-              onChange={(e) => setThemeColors(e.target.checked)}
-              className="mt-0.5 h-4 w-4"
-            />
-            <span>
-              Follow theme colors
-              <span className="block text-xs text-muted-foreground">
-                Recommended — each theme keeps its own palette. Turn off to force your brand colors.
-              </span>
-            </span>
-          </label>
-          <div className={`grid grid-cols-2 gap-3 ${themeColors ? "pointer-events-none opacity-50" : ""}`}>
-            <Field label="Primary color">
-              <input
-                type="color"
-                value={primary}
-                onChange={(e) => setPrimary(e.target.value)}
-                disabled={themeColors}
-                className="h-10 w-full rounded-md border"
-              />
-            </Field>
-            <Field label="Accent color">
-              <input
-                type="color"
-                value={accent}
-                onChange={(e) => setAccent(e.target.value)}
-                disabled={themeColors}
-                className="h-10 w-full rounded-md border"
-              />
-            </Field>
-          </div>
+          <p className="rounded-md border bg-muted/40 p-3 text-xs text-muted-foreground">
+            Store colors live in <span className="font-medium">Theme</span> — pick a theme and one of its
+            ready-made color palettes there.
+          </p>
         </div>
 
         <div className="surface-card space-y-3 p-6">

@@ -8,6 +8,7 @@ import {
   Hero,
   PromoBanner,
   Reviews,
+  ThemeSignature,
   WhyUs,
 } from "@/components/store/sections";
 import {
@@ -21,13 +22,14 @@ import {
   SectionHead,
 } from "@/components/store/ui";
 
-type Search = { q?: string; theme?: string };
+type Search = { q?: string; theme?: string; palette?: string };
 
 export const Route = createFileRoute("/s/$code/")({
   component: StoreHome,
   validateSearch: (s: Record<string, unknown>): Search => ({
     q: typeof s.q === "string" && s.q ? s.q : undefined,
     theme: typeof s.theme === "string" && s.theme ? s.theme : undefined,
+    palette: typeof s.palette === "string" && s.palette ? s.palette : undefined,
   }),
 });
 
@@ -68,6 +70,7 @@ function StoreHome() {
   return (
     <div>
       <Hero />
+      <ThemeSignature slot="top" />
       <BenefitStrip />
       <CategoryStrip />
 
@@ -80,6 +83,7 @@ function StoreHome() {
         </section>
       )}
 
+      <ThemeSignature />
       <PromoBanner />
 
       <section className="mx-auto max-w-6xl px-4 py-12">

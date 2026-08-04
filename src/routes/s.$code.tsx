@@ -26,10 +26,12 @@ export const Route = createFileRoute("/s/$code")({
 
 function StoreLayout() {
   const { code } = Route.useParams();
-  /** `?theme=` lets the reseller panel render a live preview of any theme. */
+  /** `?theme=` / `?palette=` let the reseller panel preview any combination. */
   const searchStr = useRouterState({ select: (s) => s.location.searchStr });
-  const previewTheme = new URLSearchParams(searchStr).get("theme");
-  const { state, store, Provider } = useStoreLoader(code, previewTheme);
+  const params = new URLSearchParams(searchStr);
+  const previewTheme = params.get("theme");
+  const previewPalette = params.get("palette");
+  const { state, store, Provider } = useStoreLoader(code, previewTheme, previewPalette);
 
 
   useEffect(() => {
@@ -53,7 +55,7 @@ function StoreLayout() {
       </div>
     );
 
-  const style = storeThemeStyle(store.theme, store.settings?.primary_color, store.settings?.accent_color);
+  const style = storeThemeStyle(store.theme, store.palette.id);
 
   return (
     <Provider value={store}>
