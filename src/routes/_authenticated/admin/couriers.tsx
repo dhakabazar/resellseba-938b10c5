@@ -144,17 +144,51 @@ function CouriersPage() {
   );
 }
 
-function SteadfastExtras({ token }: { token: string }) {
+function SteadfastExtras({ token, onToken }: { token: string; onToken: (t: string) => void }) {
   const [balance, setBalance] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const getBalance = useServerFn(steadfastBalance);
   const origin = typeof window !== "undefined" ? window.location.origin : "";
-  const webhookUrl = `${origin}/api/public/courier/steadfast?token=${token || "<save-token-first>"}`;
+  const webhookUrl = `${origin}/api/public/courier/steadfast?token=${token || "<generate-token-first>"}`;
+
+  function generate() {
+    const bytes = new Uint8Array(24);
+    crypto.getRandomValues(bytes);
+    const t = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+    onToken(t);
+    toast.success("Token generated — Save korun");
+  }
 
   return (
     <div className="mt-4 space-y-3 rounded-lg border bg-muted/30 p-3">
       <div>
+        <div className="mb-1 text-xs font-medium">Webhook Token</div>
+        <div className="flex items-center gap-2">
+          <input
+            readOnly
+            value={token}
+            placeholder="Generate button e click korun"
+            className="min-w-0 flex-1 rounded-md border bg-background px-2 py-1.5 font-mono text-[11px]"
+          />
+          <button type="button" onClick={generate} className="shrink-0 rounded-md border px-2 py-1.5 text-xs hover:bg-accent">
+            <RefreshCw className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (!token) return;
+              navigator.clipboard.writeText(token);
+              toast.success("Token copied");
+            }}
+            className="shrink-0 rounded-md border p-1.5 hover:bg-accent"
+          >
+            <Copy className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </div>
+      <div>
         <div className="mb-1 text-xs font-medium">Webhook URL (Steadfast panel e set korun)</div>
+
         <div className="flex items-center gap-2">
           <code className="flex-1 truncate rounded-md border bg-background px-2 py-1.5 text-[11px]">
             {webhookUrl}
