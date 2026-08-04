@@ -2,7 +2,7 @@ import { HelpCircle } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 
 /**
- * Hint icon — hover (desktop) or click (mobile) e Bangla explanation dekhabe.
+ * Hint icon — shows an explanation on hover (desktop) or tap (mobile).
  * Global, reusable. Text prop e jekono string ba node dite paren.
  */
 export function Hint({
