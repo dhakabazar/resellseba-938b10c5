@@ -193,41 +193,23 @@ function AdminOrdersPage() {
     return m;
   }, [orderItems]);
 
-  /** Scoped search: field dropdown + one input. */
+  /** Two separate searches: order (no/name/phone) + product name. */
   const filtered = useMemo(() => {
     const base = applyOrderFilters(orders, { ...filters, q: "" });
     const q = filters.q.trim().toLowerCase();
-    if (!q) return base;
-    const has = (v?: string | null) => (v ?? "").toLowerCase().includes(q);
+    const pq = productQ.trim().toLowerCase();
+    if (!q && !pq) return base;
     return base.filter((o) => {
-      const inProduct = () =>
-        (itemsByOrder.get(o.id) ?? []).some((it) => it.product_name.toLowerCase().includes(q));
-      switch (searchField) {
-        case "order":
-          return has(o.order_number);
-        case "customer":
-          return has(o.customer_name);
-        case "phone":
-          return has(o.customer_phone);
-        case "address":
-          return has(o.address_line);
-        case "reseller":
-          return has(o.resellers?.business_name) || has(o.resellers?.code);
-        case "product":
-          return inProduct();
-        default:
-          return (
-            has(o.order_number) ||
-            has(o.customer_name) ||
-            has(o.customer_phone) ||
-            has(o.address_line) ||
-            has(o.resellers?.business_name) ||
-            has(o.resellers?.code) ||
-            inProduct()
-          );
-      }
+      const has = (v?: string | null) => (v ?? "").toLowerCase().includes(q);
+      const okOrder =
+        !q || has(o.order_number) || has(o.customer_name) || has(o.customer_phone);
+      const okProduct =
+        !pq ||
+        (itemsByOrder.get(o.id) ?? []).some((it) => it.product_name.toLowerCase().includes(pq));
+      return okOrder && okProduct;
     });
-  }, [orders, filters, itemsByOrder, searchField]);
+  }, [orders, filters, itemsByOrder, productQ]);
+
 
 
   const markedOrders = useMemo(
