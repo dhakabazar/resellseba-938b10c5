@@ -156,12 +156,27 @@ function SettingsPage() {
               placeholder="Free delivery over ৳2000"
             />
           </Field>
-          <div className="grid grid-cols-2 gap-3">
+          <label className="flex items-start gap-2 rounded-md border p-3 text-sm">
+            <input
+              type="checkbox"
+              checked={themeColors}
+              onChange={(e) => setThemeColors(e.target.checked)}
+              className="mt-0.5 h-4 w-4"
+            />
+            <span>
+              Follow theme colors
+              <span className="block text-xs text-muted-foreground">
+                Recommended — each theme keeps its own palette. Turn off to force your brand colors.
+              </span>
+            </span>
+          </label>
+          <div className={`grid grid-cols-2 gap-3 ${themeColors ? "pointer-events-none opacity-50" : ""}`}>
             <Field label="Primary color">
               <input
                 type="color"
                 value={primary}
                 onChange={(e) => setPrimary(e.target.value)}
+                disabled={themeColors}
                 className="h-10 w-full rounded-md border"
               />
             </Field>
@@ -170,6 +185,7 @@ function SettingsPage() {
                 type="color"
                 value={accent}
                 onChange={(e) => setAccent(e.target.value)}
+                disabled={themeColors}
                 className="h-10 w-full rounded-md border"
               />
             </Field>
