@@ -26,7 +26,7 @@ export const Route = createFileRoute("/_authenticated/reseller/earnings")({
   head: () => ({
     meta: [
       { title: "Earnings & report — Reseller" },
-      { name: "description", content: "Nijer order, profit, commission ar payout er full report." },
+      { name: "description", content: "Full report of your orders, profit, commission and payouts." },
     ],
   }),
 });
@@ -169,7 +169,7 @@ function EarningsPage() {
     { key: "orders", label: "Order wise" },
     { key: "payouts", label: "Payout ledger" },
     ...(commissions.length ? [{ key: "commission" as const, label: "Team commission" }] : []),
-    { key: "how", label: "Hisab niyom" },
+    { key: "how", label: "How it works" },
   ];
 
   return (
@@ -182,11 +182,11 @@ function EarningsPage() {
         <StatCard
           label="Confirmed profit (delivered)"
           value={bdt(summary.delivered_profit)}
-          hint="Lifetime — delivered order theke"
+          hint="Lifetime, from delivered orders"
           icon={<CheckCircle2 className="h-4 w-4" />}
         />
         <StatCard
-          label="Withdraw kora jabe"
+          label="Available for withdrawal"
           value={bdt(summary.available)}
           hint={`Paid ${bdt(summary.paid_out)} · Pending ${bdt(summary.pending_payout)}`}
           icon={<Wallet className="h-4 w-4" />}
@@ -194,25 +194,25 @@ function EarningsPage() {
         <StatCard
           label="Pipeline profit (running)"
           value={bdt(report.pipeline.profit)}
-          hint={`${report.pipeline.orders} order delivery hoyni ekhono`}
+          hint={`${report.pipeline.orders} orders not yet delivered`}
           icon={<Clock className="h-4 w-4" />}
         />
         <StatCard
           label="Team commission (leader)"
           value={bdt(commissionTotals.due)}
-          hint={commissions.length ? `Due · Paid ${bdt(commissionTotals.paid)}` : "Apni kono team leader non"}
+          hint={commissions.length ? `Due · Paid ${bdt(commissionTotals.paid)}` : "You are not a team leader"}
           icon={<Award className="h-4 w-4" />}
         />
         <StatCard
           label="Delivered sell value"
           value={bdt(report.realized.gross)}
-          hint={`${report.realized.orders} order · AOV ${bdt(report.avgOrderValue)}`}
+          hint={`${report.realized.orders} orders · AOV ${bdt(report.avgOrderValue)}`}
           icon={<TrendingUp className="h-4 w-4" />}
         />
         <StatCard
           label="Admin cost (delivered)"
           value={bdt(report.realized.adminCost)}
-          hint="Product + packaging — admin k dewa"
+          hint="Product + packaging paid to admin"
           icon={<Wallet className="h-4 w-4" />}
         />
         <StatCard
@@ -224,7 +224,7 @@ function EarningsPage() {
         <StatCard
           label="Return / cancel loss"
           value={bdt(report.lost.gross + report.risk.gross)}
-          hint={`Returned+cancel ${report.lost.orders} · Pending return ${report.risk.orders} · Return rate ${report.returnRate.toFixed(1)}%`}
+          hint={`Returned+cancelled ${report.lost.orders} · Pending return ${report.risk.orders} · Return rate ${report.returnRate.toFixed(1)}%`}
           icon={<AlertTriangle className="h-4 w-4" />}
         />
       </div>
@@ -233,7 +233,7 @@ function EarningsPage() {
 
       {tab === "overview" && (
       <>
-      <ReportCard title="Order status wise report" hint="Order page er tab onujai bucket.">
+      <ReportCard title="Order status wise report" hint="Grouped by the tabs on the Orders page.">
         <StatusReportTable report={report} />
       </ReportCard>
 
@@ -246,7 +246,7 @@ function EarningsPage() {
       {tab === "products" && (
       <ReportCard
         title="Product wise profit"
-        hint="Kon product theke koto profit pacchen."
+        hint="Profit earned per product."
         right={<CsvBtn onClick={exportProducts} />}
       >
         <ProductReportTable products={report.products} />
@@ -274,7 +274,7 @@ function EarningsPage() {
       {tab === "orders" && (
       <ReportCard
         title="Order wise profit"
-        hint="Prottek order er cost, delivery ar profit — sob clear."
+        hint="Cost, delivery and profit for each order."
         right={<CsvBtn onClick={exportOrders} />}
       >
         <table className="w-full min-w-[820px] text-sm">
@@ -323,7 +323,7 @@ function EarningsPage() {
             {scoped.length === 0 && (
               <tr>
                 <td colSpan={7} className="p-8 text-center text-muted-foreground">
-                  Ei filter e kono order nai.
+                  No orders match this filter.
                 </td>
               </tr>
             )}
@@ -331,14 +331,14 @@ function EarningsPage() {
         </table>
         {scoped.length > 100 && (
           <div className="border-t p-3 text-center text-[11px] text-muted-foreground">
-            Prothom 100 ta dekhano hocche — baki ta CSV export korun.
+            Showing first 100 — export CSV for the rest.
           </div>
         )}
       </ReportCard>
       )}
 
       {tab === "payouts" && (
-      <ReportCard title="Payout ledger" hint="Withdraw request ar payment history.">
+      <ReportCard title="Payout ledger" hint="Withdrawal requests and payment history.">
         <table className="w-full min-w-[520px] text-sm">
           <thead className="bg-muted/20 text-left text-[11px] uppercase text-muted-foreground">
             <tr>
@@ -364,7 +364,7 @@ function EarningsPage() {
             {payouts.length === 0 && (
               <tr>
                 <td colSpan={5} className="p-8 text-center text-muted-foreground">
-                  Ekhono kono payout request nai.
+                  No payout requests yet.
                 </td>
               </tr>
             )}
@@ -374,7 +374,7 @@ function EarningsPage() {
       )}
 
       {tab === "commission" && commissions.length > 0 && (
-        <ReportCard title="Team commission ledger" hint="Apnar team er delivered order theke commission.">
+        <ReportCard title="Team commission ledger" hint="Commission from your team's delivered orders.">
           <table className="w-full min-w-[520px] text-sm">
             <thead className="bg-muted/20 text-left text-[11px] uppercase text-muted-foreground">
               <tr>
@@ -402,13 +402,13 @@ function EarningsPage() {
 
       {tab === "how" && (
       <div className="rounded-lg border bg-muted/30 p-4 text-xs text-muted-foreground">
-        <div className="mb-1 font-medium text-foreground">Hisab kivabe hoy</div>
+        <div className="mb-1 font-medium text-foreground">How the numbers work</div>
         <ul className="list-disc space-y-1 pl-4">
-          <li><b>Sell value</b> = apnar selling price × qty (delivery charge chara).</li>
-          <li><b>Admin cost</b> = product price + packaging — eta admin er.</li>
-          <li><b>Profit</b> = Sell value − Admin cost. Delivery charge customer theke niye courier k dewa hoy.</li>
-          <li><b>Delivered</b> hole profit confirm, pending return hole ekhono risk e.</li>
-          <li><b>Withdraw</b> = confirmed profit − paid − pending payout.</li>
+          <li><b>Sell value</b> = your selling price × quantity (excluding delivery charge).</li>
+          <li><b>Admin cost</b> = product price + packaging, paid to admin.</li>
+          <li><b>Profit</b> = Sell value − Admin cost. Delivery charge is collected from customer and paid to courier.</li>
+          <li>Profit is confirmed once <b>delivered</b>; it stays at risk while a return is pending.</li>
+          <li><b>Withdrawable</b> = confirmed profit − paid − pending payout.</li>
         </ul>
       </div>
       )}
