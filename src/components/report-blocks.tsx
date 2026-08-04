@@ -204,23 +204,63 @@ export function TrendReportTable({ trend, limit = 30 }: { trend: TrendPoint[]; l
   );
 }
 
-/** Raw per-status list (all 10 statuses, not just tabs). */
-export function RawStatusList({ report }: { report: FinanceReport }) {
+/** Raw per-status breakdown — same column layout as the per-order details table. */
+export function RawStatusList({ report, showAdminCost = true }: { report: FinanceReport; showAdminCost?: boolean }) {
   const entries = Object.entries(report.byStatus).sort((a, b) => b[1].orders - a[1].orders);
   return (
-    <div className="flex flex-wrap gap-2 p-4">
-      {entries.map(([s, b]) => (
-        <div key={s} className="rounded-lg border px-3 py-2">
-          <div className={"mb-1 inline-block rounded-full px-2 py-0.5 text-[10px] capitalize " + orderStatusTone(s)}>
-            {orderStatusLabel(s)}
-          </div>
-          <div className="text-sm font-semibold">{b.orders} order</div>
-          <div className="text-[11px] text-muted-foreground">
-            {bdt(b.gross)} sell · {bdt(b.profit)} profit
-          </div>
-        </div>
-      ))}
-      {entries.length === 0 && <div className="text-sm text-muted-foreground">No orders yet.</div>}
-    </div>
+    <table className="w-full min-w-[820px] text-sm">
+      <thead className="bg-muted/20 text-left">
+        <tr>
+          <th className={th}>Status</th>
+          <th className={`${th} text-right`}>Orders</th>
+          <th className={`${th} text-right`}>Sell value</th>
+          <th className={`${th} text-right`}>Delivery</th>
+          <th className={`${th} text-right`}>Customer total</th>
+          {showAdminCost && <th className={`${th} text-right`}>Product+pkg cost</th>}
+          <th className={`${th} text-right`}>Profit</th>
+          <th className={`${th} text-right`}>Avg / order</th>
+        </tr>
+      </thead>
+      <tbody>
+        {entries.map(([s, b]) => (
+          <tr key={s} className="border-t">
+            <td className="p-3">
+              <span className={"rounded-full px-2 py-0.5 text-[11px] capitalize " + orderStatusTone(s)}>
+                {orderStatusLabel(s)}
+              </span>
+            </td>
+            <td className="p-3 text-right">{b.orders}</td>
+            <td className="p-3 text-right">{bdt(b.gross)}</td>
+            <td className="p-3 text-right text-muted-foreground">{bdt(b.delivery)}</td>
+            <td className="p-3 text-right">{bdt(b.customerTotal)}</td>
+            {showAdminCost && <td className="p-3 text-right text-muted-foreground">{bdt(b.adminCost)}</td>}
+            <td className="p-3 text-right font-medium">{bdt(b.profit)}</td>
+            <td className="p-3 text-right text-muted-foreground">
+              {bdt(b.orders ? b.customerTotal / b.orders : 0)}
+            </td>
+          </tr>
+        ))}
+        {entries.length === 0 && (
+          <tr>
+            <td colSpan={showAdminCost ? 8 : 7} className="p-8 text-center text-muted-foreground">
+              No orders yet.
+            </td>
+          </tr>
+        )}
+      </tbody>
+      <tfoot className="border-t bg-muted/30 font-medium">
+        <tr>
+          <td className="p-3">Total</td>
+          <td className="p-3 text-right">{report.all.orders}</td>
+          <td className="p-3 text-right">{bdt(report.all.gross)}</td>
+          <td className="p-3 text-right">{bdt(report.all.delivery)}</td>
+          <td className="p-3 text-right">{bdt(report.all.customerTotal)}</td>
+          {showAdminCost && <td className="p-3 text-right">{bdt(report.all.adminCost)}</td>}
+          <td className="p-3 text-right">{bdt(report.all.profit)}</td>
+          <td className="p-3 text-right">{bdt(report.avgOrderValue)}</td>
+        </tr>
+      </tfoot>
+    </table>
   );
 }
+
