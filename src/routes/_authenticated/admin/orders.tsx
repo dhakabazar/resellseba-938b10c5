@@ -256,97 +256,107 @@ function AdminOrdersPage() {
         }
       />
 
-      <div className="mb-4 flex flex-wrap items-center gap-2">
+      {/* Always-visible merged search: order no / customer / phone / address / reseller / product */}
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <div className="relative min-w-[240px] flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <input
+            value={filters.q}
+            onChange={(e) => setFilters({ ...filters, q: e.target.value })}
+            placeholder="Search: order no, customer, phone, address, reseller ba product name…"
+            className="h-10 w-full rounded-md border bg-background pl-9 pr-8 text-sm outline-none focus:ring-2 focus:ring-ring"
+          />
+          {filters.q && (
+            <button
+              type="button"
+              onClick={() => setFilters({ ...filters, q: "" })}
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground hover:bg-accent"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
         <button
           type="button"
           onClick={() => setShowFilters((v) => !v)}
-          className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-accent"
+          className="inline-flex h-10 items-center gap-2 rounded-md border px-3 text-sm hover:bg-accent"
         >
           <SlidersHorizontal className="h-4 w-4" />
-          Filter & search
+          Filters
           <ChevronDown className={`h-4 w-4 transition-transform ${showFilters ? "rotate-180" : ""}`} />
         </button>
         <button
           type="button"
-          onClick={() => setShowPickList((v) => !v)}
-          className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-accent"
+          onClick={() => {
+            setPickScope("filtered");
+            setPickOpen(true);
+          }}
+          className="inline-flex h-10 items-center gap-2 rounded-md border px-3 text-sm hover:bg-accent"
         >
           <ListChecks className="h-4 w-4" />
-          Product pick list ({pickList.length})
-          <ChevronDown className={`h-4 w-4 transition-transform ${showPickList ? "rotate-180" : ""}`} />
+          Pick list
         </button>
-        {(productQuery || filtered.length !== orders.length) && (
-          <span className="text-xs text-muted-foreground">
-            {filtered.length} of {orders.length} shown
-          </span>
-        )}
+        <span className="text-xs text-muted-foreground">
+          {filtered.length} of {orders.length}
+        </span>
       </div>
 
       {showFilters && (
-        <>
-          <OrderFilterBar
-            value={filters}
-            onChange={setFilters}
-            resellerOptions={resellerOptions}
-            total={orders.length}
-            shown={filtered.length}
-          />
-          <div className="mb-4 flex flex-wrap items-center gap-2">
-            <div className="relative min-w-[220px] flex-1 sm:max-w-sm">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <input
-                value={productQuery}
-                onChange={(e) => setProductQuery(e.target.value)}
-                placeholder="Product name diye order khujun…"
-                className="h-9 w-full rounded-md border bg-background pl-9 pr-8 text-sm outline-none focus:ring-2 focus:ring-ring"
-              />
-              {productQuery && (
-                <button
-                  type="button"
-                  onClick={() => setProductQuery("")}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground hover:bg-accent"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              )}
-            </div>
-          </div>
-        </>
+        <OrderFilterBar
+          value={filters}
+          onChange={setFilters}
+          resellerOptions={resellerOptions}
+          total={orders.length}
+          shown={filtered.length}
+        />
       )}
 
-
-      {showPickList && (
-        <div className="surface-card mb-4 overflow-hidden">
-          <div className="flex items-center justify-between border-b bg-muted/40 px-4 py-2 text-xs font-medium text-muted-foreground">
-            <span>
-              {ORDER_TABS.find((t) => t.key === tab)?.label ?? "All"} — product wise quantity
-            </span>
-            <span>
-              Total {pickList.reduce((s, p) => s + p.qty, 0)} pcs / {filtered.length} orders
-            </span>
-          </div>
-          {pickList.length === 0 ? (
-            <div className="px-4 py-6 text-center text-sm text-muted-foreground">Kono product nai.</div>
-          ) : (
-            pickList.map((p) => (
-              <button
-                key={p.name}
-                type="button"
-                onClick={() => setProductQuery(p.name)}
-                className="flex w-full items-center justify-between gap-3 border-b px-4 py-2 text-left text-sm last:border-b-0 hover:bg-accent/50"
-              >
-                <span className="truncate">{p.name}</span>
-                <span className="flex shrink-0 items-center gap-3 text-xs">
-                  <span className="text-muted-foreground">{p.orders} order</span>
-                  <span className="rounded-full bg-primary/10 px-2 py-0.5 font-semibold text-primary">
-                    {p.qty} pcs
-                  </span>
-                </span>
-              </button>
-            ))
-          )}
+      {marked.length > 0 && (
+        <div className="mb-3 flex flex-wrap items-center gap-2 rounded-md border border-primary/40 bg-primary/5 px-3 py-2 text-sm">
+          <span className="font-medium">{marked.length} order marked</span>
+          <button
+            type="button"
+            onClick={() => {
+              setPickScope("marked");
+              setPickOpen(true);
+            }}
+            className="inline-flex items-center gap-1.5 rounded-md border bg-background px-2.5 py-1 text-xs hover:bg-accent"
+          >
+            <ListChecks className="h-3.5 w-3.5" /> Marked pick list
+          </button>
+          <button
+            type="button"
+            onClick={() => exportCsv(markedOrders)}
+            className="inline-flex items-center gap-1.5 rounded-md border bg-background px-2.5 py-1 text-xs hover:bg-accent"
+          >
+            <Download className="h-3.5 w-3.5" /> Export marked
+          </button>
+          <button
+            type="button"
+            onClick={() => setMarked([])}
+            className="ml-auto rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-accent"
+          >
+            Clear
+          </button>
         </div>
       )}
+
+      {pickOpen && (
+        <PickListModal
+          rows={pickList}
+          scopeLabel={
+            pickScope === "marked"
+              ? `${markedOrders.length} marked order`
+              : `${ORDER_TABS.find((t) => t.key === tab)?.label ?? "All"} — ${filtered.length} order`
+          }
+          onPick={(name) => {
+            setFilters({ ...filters, q: name });
+            setPickOpen(false);
+          }}
+          onClose={() => setPickOpen(false)}
+        />
+      )}
+
 
       <OrderTabs tab={tab} onChange={setTab} count={(k) => counts[k] ?? 0} />
 
