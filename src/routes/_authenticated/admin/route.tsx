@@ -20,7 +20,6 @@ import {
   Store,
   Rocket,
   Cog,
-  PiggyBank,
   LineChart,
   PieChart,
   Percent,
