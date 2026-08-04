@@ -457,9 +457,10 @@ function OrderDrawer({
                         </span>
                         {s.courier_status && (
                           <span className="rounded-full bg-muted px-2 py-0.5">
-                            Courier: {courierStatusLabel(s.courier_status)}
+                            Courier: {courierStatusLabel(s.courier_status, s.provider)}
                           </span>
                         )}
+
                         {s.cod_amount != null && (
                           <span className="rounded-full bg-muted px-2 py-0.5">COD ৳{Number(s.cod_amount).toFixed(0)}</span>
                         )}
