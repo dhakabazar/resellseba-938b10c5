@@ -49,11 +49,11 @@ function CommissionsPage() {
 
   return (
     <div>
-      <PageHeader title="Leader commissions" description="Downline reseller er delivered order theke auto-calc commission." />
+      <PageHeader title="Leader commissions" description="Auto-calculated from downline resellers' delivered orders." />
       {loading ? (
         <div className="grid place-items-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
       ) : rows.length === 0 ? (
-        <EmptyState title="No commissions yet" description="Leader-assigned resellers order delivered hole ekhane ashbe." />
+        <EmptyState title="No commissions yet" description="Appears once a leader-assigned reseller's order is delivered." />
       ) : (
         <div className="surface-card overflow-hidden">
           <div className="hidden grid-cols-[1fr_1fr_1fr_1fr_1fr_1fr_auto] gap-4 border-b bg-muted/40 px-4 py-2 text-xs font-medium text-muted-foreground md:grid">

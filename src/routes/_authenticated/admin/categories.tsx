@@ -98,7 +98,7 @@ function CatsPage() {
     <div>
       <PageHeader
         title="Categories"
-        description="Nested categories supported — parent select korle sub-category hobe."
+        description="Nested categories supported — pick a parent to create a subcategory."
       />
       <form onSubmit={create} className="surface-card mb-6 flex flex-wrap items-end gap-3 p-4">
         <div className="flex-1 min-w-[200px]">
@@ -147,7 +147,7 @@ function CatsPage() {
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       ) : items.length === 0 ? (
-        <EmptyState title="No categories yet" description="Add korun product-e assign korte." />
+        <EmptyState title="No categories yet" />
       ) : (
         <div className="surface-card divide-y">
           {(() => {

@@ -220,7 +220,7 @@ function ResellersPage() {
   async function remove(r: Reseller) {
     if (
       !confirm(
-        `Delete reseller "${r.business_name}"? Reseller record er sathe auth account o muche jabe. Er sob listing/order o remove hote pare.`,
+        `Delete reseller "${r.business_name}"? This also deletes the auth account and may remove related listings/orders.`,
       )
     )
       return;
@@ -246,7 +246,7 @@ function ResellersPage() {
     <div>
       <PageHeader
         title="Resellers"
-        description="Signup korlei ekhane list e ashbe. Email verified/unverified, status active/pending — sob ek jaigai."
+        description="All signups, with email verification and status, in one place."
       />
 
       <DataToolbar

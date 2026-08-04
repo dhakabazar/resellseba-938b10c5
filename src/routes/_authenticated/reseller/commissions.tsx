@@ -40,7 +40,7 @@ function LeaderCommissionsPage() {
 
   return (
     <div>
-      <PageHeader title="My leader commissions" description="Apnar downline reseller der theke commission." />
+      <PageHeader title="My leader commissions" description="Commission earned from your downline resellers." />
       <div className="mb-6 grid gap-4 md:grid-cols-3">
         <StatCard label="Pending" value={`৳${pending.toLocaleString()}`} icon={<Wallet className="h-4 w-4" />} />
         <StatCard label="Paid to date" value={`৳${paid.toLocaleString()}`} icon={<Wallet className="h-4 w-4" />} />
@@ -49,7 +49,7 @@ function LeaderCommissionsPage() {
       {loading ? (
         <div className="grid place-items-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
       ) : rows.length === 0 ? (
-        <EmptyState title="No commissions yet" description="Apnar downline reseller der order delivered hole ekhane ashbe." />
+        <EmptyState title="No commissions yet" description="Appears here once your downline resellers' orders are delivered." />
       ) : (
         <div className="surface-card overflow-hidden">
           <div className="hidden grid-cols-[1fr_1fr_1fr_1fr_1fr] gap-4 border-b bg-muted/40 px-4 py-2 text-xs font-medium text-muted-foreground md:grid">

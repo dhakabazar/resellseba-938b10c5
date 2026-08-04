@@ -79,7 +79,7 @@ function Onboarding() {
       if (error) throw error;
 
       setStatus("pending");
-      toast.success("আবেদন জমা হয়েছে! অ্যাডমিন রিভিউ করে অ্যাপ্রুভ করবেন।");
+      toast.success("Application submitted! Admin will review and approve it.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed");
     } finally {
@@ -97,8 +97,7 @@ function Onboarding() {
           </div>
           <h1 className="text-xl font-semibold">Application under review</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Ekjon super admin apnar reseller application review korchen. Approve holei
-            apni dashboard e access paben.
+            A super admin is reviewing your reseller application. You will get dashboard access once approved.
           </p>
         </div>
       </div>
@@ -121,7 +120,7 @@ function Onboarding() {
                 Become a reseller
               </h1>
               <p className="text-sm text-muted-foreground">
-                Nijer store setup korun 2 minute e
+                Set up your store in 2 minutes
               </p>
             </div>
           </div>
@@ -164,9 +163,9 @@ function Onboarding() {
             </div>
 
             <div className="mt-4 border-t pt-4">
-              <div className="mb-2 text-sm font-semibold">পেমেন্ট (Payout) তথ্য</div>
+              <div className="mb-2 text-sm font-semibold">Payout information</div>
               <p className="mb-3 text-xs text-muted-foreground">
-                আপনার আর্নিং আমরা এই অ্যাকাউন্টে পাঠাবো। পরে সেটিংস থেকেও পরিবর্তন করা যাবে।
+                We will send your earnings to this account. You can change it later in settings.
               </p>
               <div>
                 <label className="mb-1 block text-xs font-medium">Method</label>

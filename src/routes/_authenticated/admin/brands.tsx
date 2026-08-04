@@ -86,7 +86,7 @@ function BrandsPage() {
     <div>
       <PageHeader
         title="Brands"
-        description="Products ke brand er niche organize korun."
+        description="Organize products under brands."
         actions={
           <button
             onClick={() => setOpen((o) => !o)}
@@ -157,7 +157,7 @@ function BrandsPage() {
       ) : items.length === 0 ? (
         <EmptyState
           title="No brands yet"
-          description="Product organize korte prothome brand add korun."
+          description="Add a brand to start organizing products."
         />
       ) : (
         <div className="surface-card divide-y">

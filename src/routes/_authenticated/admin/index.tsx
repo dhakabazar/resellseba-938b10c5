@@ -106,13 +106,13 @@ function AdminDashboard() {
     <div>
       <PageHeader
         title="Dashboard"
-        description="30 diner overview — sales, orders, top resellers."
+        description="30-day overview — sales, orders, top resellers."
       />
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Orders today" value={stats.ordersToday} icon={<ShoppingCart className="h-4 w-4" />} />
         <StatCard label="Revenue (30d, delivered)" value={`৳${stats.revenue30.toLocaleString()}`} icon={<TrendingUp className="h-4 w-4" />} />
         <StatCard label="Reseller profit (30d)" value={`৳${stats.profit30.toLocaleString()}`} icon={<Wallet className="h-4 w-4" />} />
-        <StatCard label="Pending applications" value={stats.pendingResellers} hint="Review korte hobe" icon={<Users className="h-4 w-4" />} />
+        <StatCard label="Pending applications" value={stats.pendingResellers} hint="Needs review" icon={<Users className="h-4 w-4" />} />
       </div>
 
       <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">

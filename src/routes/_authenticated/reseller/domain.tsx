@@ -36,7 +36,7 @@ function DomainPage() {
     e.preventDefault();
     if (!rid) return;
     const host = hostname.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
-    if (!/^[a-z0-9.-]+\.[a-z]{2,}$/i.test(host)) return toast.error("Valid domain din (e.g. shop.example.com)");
+    if (!/^[a-z0-9.-]+\.[a-z]{2,}$/i.test(host)) return toast.error("Enter a valid domain (e.g. shop.example.com)");
     setBusy(true);
     const { error } = await supabase.from("reseller_domains").insert({
       reseller_id: rid, hostname: host, is_primary: rows.length === 0, ssl_status: "pending",
@@ -66,7 +66,7 @@ function DomainPage() {
 
   return (
     <div>
-      <PageHeader title="Custom domain" description="Nijer domain (e.g. shop.brand.com) connect korun. DNS setup korle SSL Cloudflare theke free hobe." />
+      <PageHeader title="Custom domain" description="Connect your own domain (e.g. shop.brand.com). Free SSL via Cloudflare after DNS setup." />
 
       <form onSubmit={add} className="surface-card mb-5 flex flex-wrap items-end gap-2 p-4">
         <div className="flex-1 min-w-[220px]">
@@ -79,10 +79,10 @@ function DomainPage() {
       <div className="surface-card mb-5 p-5 text-sm">
         <div className="mb-2 flex items-center gap-2 font-semibold"><Globe className="h-4 w-4 text-primary" /> DNS setup instructions</div>
         <ol className="ml-4 list-decimal space-y-1 text-muted-foreground">
-          <li>Apnar domain provider (GoDaddy/Namecheap/etc.) e DNS settings e jaan.</li>
-          <li>Ekta <code className="rounded bg-muted px-1 text-xs">CNAME</code> record add korun — Name: <code className="rounded bg-muted px-1 text-xs">shop</code> (ba jei subdomain use korchen), Value: <code className="rounded bg-muted px-1 text-xs">resellhub-proxy.cloudflareaccess.com</code></li>
-          <li>Root domain hole <code className="rounded bg-muted px-1 text-xs">A</code> record diye Cloudflare SaaS IP add korun (admin apnake diben).</li>
-          <li>DNS propagate hote 5–60 minute lagte pare. Er por SSL auto issue hobe.</li>
+          <li>Go to your domain provider (GoDaddy, Namecheap, etc.) DNS settings.</li>
+          <li>Add a <code className="rounded bg-muted px-1 text-xs">CNAME</code> record — Name: <code className="rounded bg-muted px-1 text-xs">shop</code> (or your subdomain), Value: <code className="rounded bg-muted px-1 text-xs">resellhub-proxy.cloudflareaccess.com</code></li>
+          <li>For a root domain, add an <code className="rounded bg-muted px-1 text-xs">A</code> record with the Cloudflare SaaS IP (provided by admin).</li>
+          <li>DNS can take 5–60 minutes to propagate. SSL is issued automatically after.</li>
         </ol>
       </div>
 

@@ -130,7 +130,7 @@ function ListingsPage() {
 
   return (
     <div>
-      <PageHeader title="My listings" description="Apnar store-e joined thakā products." />
+      <PageHeader title="My listings" description="Products currently in your store." />
 
       <DataToolbar
         search={q}
@@ -149,7 +149,7 @@ function ListingsPage() {
       {filtered.length === 0 ? (
         <EmptyState
           title="No listings"
-          description="Catalog theke product select kore listing shuru korun."
+          description="Select products from the Catalog to start listing."
         />
       ) : (
         <>

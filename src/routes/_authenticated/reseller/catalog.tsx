@@ -133,7 +133,7 @@ function CatalogPage() {
     // Reseller's minimum sell = reseller_price + packaging (delivery is separate, charged to customer)
     const minPrice = selected.reseller_price + selected.packaging_cost;
     if (priceNum < minPrice) {
-      toast.error(`Selling price minimum ৳${minPrice} hote hobe (product + packaging). Delivery customer alada dibe.`);
+      toast.error(`Selling price must be at least ৳${minPrice} (product + packaging). Delivery is charged separately.`);
       return;
     }
     setBusy(true);
@@ -175,7 +175,7 @@ function CatalogPage() {
     ids.forEach((id) => next.add(id));
     setListed(next);
     setPicked(new Set());
-    toast.success(`${ids.length} product listed (suggested price). Edit korte listings page e jan.`);
+    toast.success(`${ids.length} product listed at suggested price. Edit prices on the Listings page.`);
   }
 
   async function bulkDelist() {
@@ -217,14 +217,14 @@ function CatalogPage() {
     <div>
       <PageHeader
         title="Catalog"
-        description="আপনার কস্ট = product price + packaging। ডেলিভারি চার্জ কাস্টমার আলাদা দেবে।"
+        description="Your cost = product price + packaging. Delivery is charged to the customer separately."
       />
       <div className="-mt-4 mb-4 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-        কীভাবে টাকা কাটবে?
+        How are charges calculated?
         <Hint side="bottom">
-          প্রতি অর্ডারে এডমিন কাটবে: <b>(reseller price + packaging) × quantity</b> + কুরিয়ার এর ডেলিভারি চার্জ।
-          একাধিক প্রোডাক্ট থাকলে ডেলিভারি চার্জ সর্বোচ্চটা <b>একবার</b> ধরা হবে (highest wins)।
-          বাকি টাকা আপনার profit।
+          Per order, admin deducts <b>(reseller price + packaging) × quantity</b> plus the courier delivery charge.
+          With multiple products, only the highest delivery charge is applied once.
+          The rest is your profit.
         </Hint>
       </div>
 
@@ -238,7 +238,7 @@ function CatalogPage() {
       />
 
       {filtered.length === 0 ? (
-        <EmptyState title="No products match" description="Filter change korun ba admin er notun product er opekkha korun." />
+        <EmptyState title="No products match" description="Change filters or wait for admin to add new products." />
       ) : (
         <>
         {picked.size > 0 && (
@@ -361,7 +361,7 @@ function CatalogPage() {
               <Row label="Product price" value={`৳${selected.reseller_price}`} />
               <Row label="Packaging" value={`৳${selected.packaging_cost}`} />
               <div className="border-t pt-2">
-                <Row label="Your cost (admin কাটবে)" value={`৳${minSell}`} strong />
+                <Row label="Your cost (deducted by admin)" value={`৳${minSell}`} strong />
               </div>
               {deliveryMode(selected) === "free" ? (
                 <Row label="Delivery" value="Free shipping (customer pays ৳0)" />
@@ -374,13 +374,13 @@ function CatalogPage() {
                 </>
               )}
               <p className="text-xs">
-                ডেলিভারি চার্জ কাস্টমার আলাদা দেবে (কুরিয়ার এ যায়)। একাধিক প্রোডাক্টে সর্বোচ্চটা একবার প্রযোজ্য।
+                Delivery is charged to the customer separately (goes to courier). Only the highest delivery charge applies across multiple products.
               </p>
             </div>
             <div className="mt-4">
               <label className="mb-1 flex items-center gap-1 text-xs font-medium">
                 Your selling price (minimum ৳{minSell})
-                <Hint>এই দাম কাস্টমার প্রোডাক্ট এর জন্য দেবে। ডেলিভারি এর উপরে যোগ হবে।</Hint>
+                <Hint>Customer pays this for the product; delivery is added on top.</Hint>
               </label>
               <input
                 type="number"
@@ -396,7 +396,7 @@ function CatalogPage() {
                     ৳{profit} profit / unit
                   </span>
                   <br />
-                  <span className="text-muted-foreground">Delivery customer theke alada, courier e jai.</span>
+                  <span className="text-muted-foreground">Delivery is separate and goes to the courier.</span>
                 </p>
               )}
             </div>

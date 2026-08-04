@@ -42,7 +42,7 @@ function AdminPayouts() {
 
   return (
     <div>
-      <PageHeader title="Payouts" description="Reseller request review korun, bKash/bank e pay korar por 'Paid' e mark korun." />
+      <PageHeader title="Payouts" description="Review requests, then mark as paid after sending payment." />
 
       <div className="mb-4 flex flex-wrap gap-2">
         {(["pending", "approved", "paid", "all"] as const).map((f) => (

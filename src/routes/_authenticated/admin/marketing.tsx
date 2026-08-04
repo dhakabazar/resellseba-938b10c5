@@ -54,7 +54,7 @@ function MarketingPage() {
 
   return (
     <div>
-      <PageHeader title="Marketing & ads" description="Pixel + Events API — global default. Reseller ra nijer store e override korte parbe." />
+      <PageHeader title="Marketing & ads" description="Pixel and Events API defaults. Resellers can override per store." />
       <div className="grid gap-4 lg:grid-cols-3">
         {rows.map((r, idx) => {
           const m = meta[r.platform];

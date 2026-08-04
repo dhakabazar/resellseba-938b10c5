@@ -74,8 +74,8 @@ function PayoutsPage() {
 
   async function saveProfile() {
     if (!rid) return;
-    if (!profile.payout_method) return toast.error("Method select korun");
-    if (!profile.payout_account_number) return toast.error("Account/mobile number din");
+    if (!profile.payout_method) return toast.error("Select a method");
+    if (!profile.payout_account_number) return toast.error("Enter account/mobile number");
     setBusy(true);
     const isBank = profile.payout_method === "bank";
     const { error } = await supabase.from("resellers").update({
@@ -96,10 +96,10 @@ function PayoutsPage() {
   async function request(e: React.FormEvent) {
     e.preventDefault();
     if (!rid) return;
-    if (!profile.payout_method) return toast.error("Age payout method save korun");
+    if (!profile.payout_method) return toast.error("Save a payout method first");
     const amt = Number(amount);
     if (!amt || amt <= 0) return toast.error("Invalid amount");
-    if (amt > sum.available) return toast.error("Amount available balance er cheye beshi");
+    if (amt > sum.available) return toast.error("Amount exceeds available balance");
     setBusy(true);
     const enumMethod = (profile.payout_method === "bank" ? "other" : profile.payout_method) as
       | "bkash" | "nagad" | "rocket" | "other";
@@ -120,7 +120,7 @@ function PayoutsPage() {
 
   return (
     <div>
-      <PageHeader title="Payouts" description="Delivered order er profit ekhane jomma hoy. Save kora account e request diye admin theke withdraw korte parben." />
+      <PageHeader title="Payouts" description="Profit from delivered orders accumulates here. Request a withdrawal to your saved account." />
 
       <div className="mb-6 grid gap-4 md:grid-cols-4">
         <StatCard label="Delivered profit" value={`৳${sum.delivered_profit.toLocaleString()}`} icon={<TrendingUp className="h-4 w-4" />} />
@@ -133,7 +133,7 @@ function PayoutsPage() {
         <div className="mb-3 flex items-center justify-between">
           <div>
             <div className="text-sm font-semibold">Payout information</div>
-            <p className="text-xs text-muted-foreground">Admin ei account e apnar profit pathabe.</p>
+            <p className="text-xs text-muted-foreground">Admin will send your profit to this account.</p>
           </div>
           {!editing && (
             <button onClick={() => setEditing(true)} className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs hover:bg-muted">
@@ -157,7 +157,7 @@ function PayoutsPage() {
               )}
             </div>
           ) : (
-            <div className="text-sm text-muted-foreground">Kono payout information save kora nei.</div>
+            <div className="text-sm text-muted-foreground">No payout information saved yet.</div>
           )
         ) : (
           <div className="space-y-3">
@@ -245,7 +245,7 @@ function PayoutsPage() {
           <p className="mt-1 text-xs text-muted-foreground">
             {profile.payout_method
               ? <>Payout <span className="capitalize font-medium">{profile.payout_method}</span> · {profile.payout_account_number}</>
-              : <span className="text-destructive">Age upore payout information save korun</span>}
+              : <span className="text-destructive">Save payout information above first</span>}
           </p>
         </div>
         <div className="flex items-end">

@@ -25,7 +25,7 @@ export function CourierTimeline({
       <div className="mb-3 text-sm font-medium">{title}</div>
       {events.length === 0 ? (
         <p className="text-xs text-muted-foreground">
-          Kono courier update ashe nai. Booking o live webhook update ekhane dekhabe.
+          No courier updates yet. Booking and live webhook updates will appear here.
         </p>
       ) : (
         <ol className="relative space-y-4 border-l pl-4">

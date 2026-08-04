@@ -106,7 +106,7 @@ function ProductsPage() {
   async function bulkDelete() {
     const ids = Array.from(selected);
     if (!ids.length) return;
-    if (!confirm(`Delete ${ids.length} product? Order er product delete hobe na (protected).`)) return;
+    if (!confirm(`Delete ${ids.length} product? Products used in orders are protected.`)) return;
     setBulkBusy(true);
     const { error } = await supabase.from("products").delete().in("id", ids);
     setBulkBusy(false);
@@ -178,7 +178,7 @@ function ProductsPage() {
     <div>
       <PageHeader
         title="Products"
-        description="Master catalog. Resellers ei products theke listing banaben."
+        description="Master catalog resellers create listings from."
         actions={
           <Link
             to="/admin/products/new"
@@ -205,7 +205,7 @@ function ProductsPage() {
       ) : filtered.length === 0 ? (
         <EmptyState
           title="No products match"
-          description="Filters change korun ba notun product add korun."
+          description="Try changing filters or add a new product."
           action={
             <Link
               to="/admin/products/new"

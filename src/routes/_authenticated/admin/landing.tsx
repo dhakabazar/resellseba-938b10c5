@@ -65,7 +65,7 @@ function LandingEditor() {
     <div className="space-y-5">
       <PageHeader
         title="Landing page content"
-        description="Main domain e ei text gulo dekhabe. Sob Bangla te lekha ache — apnar moto change korun."
+        description="Edit the text shown on your main domain"
       />
 
       <Section title="Navigation">

@@ -68,7 +68,7 @@ function ResellerDashboard() {
 
   return (
     <div>
-      <PageHeader title="Welcome back" description="Apnar store er quick overview — listing, orders, income." />
+      <PageHeader title="Welcome back" description="Quick overview of your listings, orders and income." />
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Active listings" value={stats.listings} icon={<ShoppingBag className="h-4 w-4" />} />
         <StatCard label="Orders (30d)" value={stats.orders30} icon={<ClipboardList className="h-4 w-4" />} />

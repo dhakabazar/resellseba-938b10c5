@@ -93,7 +93,7 @@ function DesignPage() {
     <div>
       <PageHeader
         title="Store design"
-        description="Nijer branding — logo, color, tagline, social links."
+        description="Your branding — logo, colors, tagline, social links."
       />
       <form onSubmit={save} className="grid gap-4 lg:grid-cols-2">
         <div className="surface-card space-y-3 p-6">
