@@ -15,6 +15,7 @@ import { useServerFn } from "@tanstack/react-start";
 import {
   bookSteadfast,
   bookPathao,
+  syncPathaoStatus,
   syncSteadfastStatus,
   steadfastCreateReturn,
   bookCarrybee,
@@ -24,6 +25,7 @@ import {
   cancelCarrybee,
   receiveReturn,
 } from "@/lib/couriers.functions";
+
 
 import { CourierTimeline, type CourierEvent } from "@/components/CourierTimeline";
 import { OrderTabs } from "@/components/OrderTabs";
@@ -278,7 +280,9 @@ function OrderDrawer({
   const [busy, setBusy] = useState(false);
   const bookAuto = useServerFn(bookSteadfast);
   const bookPathaoFn = useServerFn(bookPathao);
+  const syncPathaoFn = useServerFn(syncPathaoStatus);
   const syncStatus = useServerFn(syncSteadfastStatus);
+
   const createReturn = useServerFn(steadfastCreateReturn);
   const bookCarrybeeFn = useServerFn(bookCarrybee);
   const syncCarrybeeFn = useServerFn(syncCarrybeeStatus);
@@ -296,6 +300,9 @@ function OrderDrawer({
   const [deliveryType, setDeliveryType] = useState<0 | 1>(0);
   const [cbDeliveryType, setCbDeliveryType] = useState<1 | 2>(1);
   const [cbWeight, setCbWeight] = useState<number>(0);
+  const [pxDeliveryType, setPxDeliveryType] = useState<48 | 12>(48);
+  const [pxWeight, setPxWeight] = useState<number>(0.5);
+
 
 
   async function loadDetails() {
@@ -561,7 +568,32 @@ function OrderDrawer({
                       </button>
                     </div>
                   )}
+                  {s.provider === "pathao" && (
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={async () => {
+                          setBusy(true);
+                          try {
+                            const r = await syncPathaoFn({ data: { shipmentId: s.id } });
+                            toast.success(`Courier status: ${courierStatusLabel(r.courierStatus, "pathao")}`);
+                            await loadDetails();
+                            onChanged();
+                          } catch (e) {
+                            toast.error(e instanceof Error ? e.message : "Sync failed");
+                          } finally {
+                            setBusy(false);
+                          }
+                        }}
+                        className="inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs hover:bg-accent"
+                      >
+                        <RefreshCw className="h-3.5 w-3.5" /> Sync status
+                      </button>
+                    </div>
+                  )}
                   {s.provider === "carrybee" && (
+
                     <div className="flex flex-wrap gap-2">
                       <button
                         type="button"
@@ -720,27 +752,54 @@ function OrderDrawer({
               </>
             )}
             {provider === "pathao" && (
-              <button
-                type="button"
-                disabled={busy}
-                onClick={async () => {
-                  setBusy(true);
-                  try {
-                    const r = await bookPathaoFn({ data: { orderId: order.id } });
-                    toast.success(`Booked · ${r.trackingId}`);
-                    await loadDetails();
-                    onChanged();
-                  } catch (e) {
-                    toast.error(e instanceof Error ? e.message : "Booking failed");
-                  } finally {
-                    setBusy(false);
-                  }
-                }}
-                className="col-span-2 inline-flex items-center justify-center gap-2 rounded-md border border-primary/40 bg-primary/10 px-4 py-2 text-sm font-medium text-primary"
-              >
-                <Zap className="h-4 w-4" /> Auto-book with Pathao API
-              </button>
+              <>
+                <select
+                  value={pxDeliveryType}
+                  onChange={(e) => setPxDeliveryType(Number(e.target.value) as 48 | 12)}
+                  className="input col-span-2"
+                >
+                  <option value={48}>Normal delivery (48h)</option>
+                  <option value={12}>On demand delivery (12h)</option>
+                </select>
+                <input
+                  type="number"
+                  step="0.5"
+                  min="0.5"
+                  max="10"
+                  placeholder="Item weight (kg)"
+                  value={pxWeight || ""}
+                  onChange={(e) => setPxWeight(Number(e.target.value))}
+                  className="input col-span-2"
+                />
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={async () => {
+                    setBusy(true);
+                    try {
+                      const r = await bookPathaoFn({
+                        data: {
+                          orderId: order.id,
+                          deliveryType: pxDeliveryType,
+                          itemWeight: pxWeight >= 0.5 ? pxWeight : undefined,
+                        },
+                      });
+                      toast.success(`Booked · ${r.trackingId}`);
+                      await loadDetails();
+                      onChanged();
+                    } catch (e) {
+                      toast.error(e instanceof Error ? e.message : "Booking failed");
+                    } finally {
+                      setBusy(false);
+                    }
+                  }}
+                  className="col-span-2 inline-flex items-center justify-center gap-2 rounded-md border border-primary/40 bg-primary/10 px-4 py-2 text-sm font-medium text-primary"
+                >
+                  <Zap className="h-4 w-4" /> Auto-book with Pathao API
+                </button>
+              </>
             )}
+
             {provider === "carrybee" && (
               <>
                 <select

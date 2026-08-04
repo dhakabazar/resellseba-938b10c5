@@ -52,6 +52,7 @@ import { Route as ApiPublicSitemapCodeRouteImport } from './routes/api/public/si
 import { Route as ApiPublicPaymentSslcommerzIpnRouteImport } from './routes/api/public/payment.sslcommerz-ipn'
 import { Route as ApiPublicPaymentBkashCallbackRouteImport } from './routes/api/public/payment.bkash-callback'
 import { Route as ApiPublicCourierSteadfastRouteImport } from './routes/api/public/courier.steadfast'
+import { Route as ApiPublicCourierPathaoRouteImport } from './routes/api/public/courier.pathao'
 import { Route as ApiPublicCourierCarrybeeRouteImport } from './routes/api/public/courier.carrybee'
 import { Route as AuthenticatedAdminProductsNewRouteImport } from './routes/_authenticated/admin/products.new'
 import { Route as AuthenticatedResellerOrdersIdInvoiceRouteImport } from './routes/_authenticated/reseller/orders.$id.invoice'
@@ -299,6 +300,11 @@ const ApiPublicCourierSteadfastRoute =
     path: '/api/public/courier/steadfast',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicCourierPathaoRoute = ApiPublicCourierPathaoRouteImport.update({
+  id: '/api/public/courier/pathao',
+  path: '/api/public/courier/pathao',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicCourierCarrybeeRoute =
   ApiPublicCourierCarrybeeRouteImport.update({
     id: '/api/public/courier/carrybee',
@@ -363,6 +369,7 @@ export interface FileRoutesByFullPath {
   '/s/$code/': typeof SCodeIndexRoute
   '/admin/products/new': typeof AuthenticatedAdminProductsNewRoute
   '/api/public/courier/carrybee': typeof ApiPublicCourierCarrybeeRoute
+  '/api/public/courier/pathao': typeof ApiPublicCourierPathaoRoute
   '/api/public/courier/steadfast': typeof ApiPublicCourierSteadfastRoute
   '/api/public/payment/bkash-callback': typeof ApiPublicPaymentBkashCallbackRoute
   '/api/public/payment/sslcommerz-ipn': typeof ApiPublicPaymentSslcommerzIpnRoute
@@ -408,6 +415,7 @@ export interface FileRoutesByTo {
   '/s/$code': typeof SCodeIndexRoute
   '/admin/products/new': typeof AuthenticatedAdminProductsNewRoute
   '/api/public/courier/carrybee': typeof ApiPublicCourierCarrybeeRoute
+  '/api/public/courier/pathao': typeof ApiPublicCourierPathaoRoute
   '/api/public/courier/steadfast': typeof ApiPublicCourierSteadfastRoute
   '/api/public/payment/bkash-callback': typeof ApiPublicPaymentBkashCallbackRoute
   '/api/public/payment/sslcommerz-ipn': typeof ApiPublicPaymentSslcommerzIpnRoute
@@ -458,6 +466,7 @@ export interface FileRoutesById {
   '/s/$code/': typeof SCodeIndexRoute
   '/_authenticated/admin/products/new': typeof AuthenticatedAdminProductsNewRoute
   '/api/public/courier/carrybee': typeof ApiPublicCourierCarrybeeRoute
+  '/api/public/courier/pathao': typeof ApiPublicCourierPathaoRoute
   '/api/public/courier/steadfast': typeof ApiPublicCourierSteadfastRoute
   '/api/public/payment/bkash-callback': typeof ApiPublicPaymentBkashCallbackRoute
   '/api/public/payment/sslcommerz-ipn': typeof ApiPublicPaymentSslcommerzIpnRoute
@@ -508,6 +517,7 @@ export interface FileRouteTypes {
     | '/s/$code/'
     | '/admin/products/new'
     | '/api/public/courier/carrybee'
+    | '/api/public/courier/pathao'
     | '/api/public/courier/steadfast'
     | '/api/public/payment/bkash-callback'
     | '/api/public/payment/sslcommerz-ipn'
@@ -553,6 +563,7 @@ export interface FileRouteTypes {
     | '/s/$code'
     | '/admin/products/new'
     | '/api/public/courier/carrybee'
+    | '/api/public/courier/pathao'
     | '/api/public/courier/steadfast'
     | '/api/public/payment/bkash-callback'
     | '/api/public/payment/sslcommerz-ipn'
@@ -602,6 +613,7 @@ export interface FileRouteTypes {
     | '/s/$code/'
     | '/_authenticated/admin/products/new'
     | '/api/public/courier/carrybee'
+    | '/api/public/courier/pathao'
     | '/api/public/courier/steadfast'
     | '/api/public/payment/bkash-callback'
     | '/api/public/payment/sslcommerz-ipn'
@@ -619,6 +631,7 @@ export interface RootRouteChildren {
   SCodeRoute: typeof SCodeRouteWithChildren
   ApiPublicRobotsRoute: typeof ApiPublicRobotsRoute
   ApiPublicCourierCarrybeeRoute: typeof ApiPublicCourierCarrybeeRoute
+  ApiPublicCourierPathaoRoute: typeof ApiPublicCourierPathaoRoute
   ApiPublicCourierSteadfastRoute: typeof ApiPublicCourierSteadfastRoute
   ApiPublicPaymentBkashCallbackRoute: typeof ApiPublicPaymentBkashCallbackRoute
   ApiPublicPaymentSslcommerzIpnRoute: typeof ApiPublicPaymentSslcommerzIpnRoute
@@ -928,6 +941,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCourierSteadfastRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/courier/pathao': {
+      id: '/api/public/courier/pathao'
+      path: '/api/public/courier/pathao'
+      fullPath: '/api/public/courier/pathao'
+      preLoaderRoute: typeof ApiPublicCourierPathaoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/courier/carrybee': {
       id: '/api/public/courier/carrybee'
       path: '/api/public/courier/carrybee'
@@ -1097,6 +1117,7 @@ const rootRouteChildren: RootRouteChildren = {
   SCodeRoute: SCodeRouteWithChildren,
   ApiPublicRobotsRoute: ApiPublicRobotsRoute,
   ApiPublicCourierCarrybeeRoute: ApiPublicCourierCarrybeeRoute,
+  ApiPublicCourierPathaoRoute: ApiPublicCourierPathaoRoute,
   ApiPublicCourierSteadfastRoute: ApiPublicCourierSteadfastRoute,
   ApiPublicPaymentBkashCallbackRoute: ApiPublicPaymentBkashCallbackRoute,
   ApiPublicPaymentSslcommerzIpnRoute: ApiPublicPaymentSslcommerzIpnRoute,
