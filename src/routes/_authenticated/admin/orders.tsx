@@ -187,28 +187,42 @@ function AdminOrdersPage() {
     return m;
   }, [orderItems]);
 
-  /** Single merged search: order fields + product name. */
+  /** Scoped search: field dropdown + one input. */
   const filtered = useMemo(() => {
     const base = applyOrderFilters(orders, { ...filters, q: "" });
     const q = filters.q.trim().toLowerCase();
     if (!q) return base;
+    const has = (v?: string | null) => (v ?? "").toLowerCase().includes(q);
     return base.filter((o) => {
-      const hay = [
-        o.order_number,
-        o.customer_name,
-        o.customer_phone,
-        o.address_line ?? "",
-        o.resellers?.business_name ?? "",
-        o.resellers?.code ?? "",
-      ]
-        .join(" ")
-        .toLowerCase();
-      if (hay.includes(q)) return true;
-      return (itemsByOrder.get(o.id) ?? []).some((it) =>
-        it.product_name.toLowerCase().includes(q),
-      );
+      const inProduct = () =>
+        (itemsByOrder.get(o.id) ?? []).some((it) => it.product_name.toLowerCase().includes(q));
+      switch (searchField) {
+        case "order":
+          return has(o.order_number);
+        case "customer":
+          return has(o.customer_name);
+        case "phone":
+          return has(o.customer_phone);
+        case "address":
+          return has(o.address_line);
+        case "reseller":
+          return has(o.resellers?.business_name) || has(o.resellers?.code);
+        case "product":
+          return inProduct();
+        default:
+          return (
+            has(o.order_number) ||
+            has(o.customer_name) ||
+            has(o.customer_phone) ||
+            has(o.address_line) ||
+            has(o.resellers?.business_name) ||
+            has(o.resellers?.code) ||
+            inProduct()
+          );
+      }
     });
-  }, [orders, filters, itemsByOrder]);
+  }, [orders, filters, itemsByOrder, searchField]);
+
 
   const markedOrders = useMemo(
     () => filtered.filter((o) => marked.includes(o.id)),
