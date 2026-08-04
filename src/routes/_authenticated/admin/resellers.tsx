@@ -101,43 +101,43 @@ function ResellersPage() {
 
   async function load() {
     setLoading(true);
-    const { data } = await supabase
-      .from("resellers")
-      .select(
-        "id,user_id,business_name,code,contact_phone,address,status,commission_rate,leader_id,notes,approved_at,created_at,payout_method,payout_account_name,payout_account_number,payout_bank_name,payout_branch,payout_routing",
-      )
-      .order("created_at", { ascending: false });
+    const [listRes, metricsRes] = await Promise.all([
+      supabase
+        .from("resellers")
+        .select(
+          "id,user_id,business_name,code,contact_phone,address,status,commission_rate,leader_id,notes,approved_at,created_at,payout_method,payout_account_name,payout_account_number,payout_bank_name,payout_branch,payout_routing",
+        )
+        .order("created_at", { ascending: false }),
+      supabase.rpc("admin_reseller_metrics"),
+    ]);
 
-    const rows = (data ?? []) as Reseller[];
-    setItems(rows);
-    setLoading(false);
+    setItems((listRes.data ?? []) as Reseller[]);
 
-    // Fetch financial + order metrics in parallel
-    const results = await Promise.all(
-      rows.map(async (r) => {
-        const [summaryRes, countRes] = await Promise.all([
-          supabase.rpc("reseller_profit_summary", { _reseller_id: r.id }),
-          supabase
-            .from("orders")
-            .select("id", { count: "exact", head: true })
-            .eq("reseller_id", r.id),
-        ]);
-        const row = Array.isArray(summaryRes.data) ? summaryRes.data[0] : summaryRes.data;
-        return {
-          id: r.id,
-          summary: {
-            delivered_profit: Number(row?.delivered_profit ?? 0),
-            pending_payout: Number(row?.pending_payout ?? 0),
-            paid_out: Number(row?.paid_out ?? 0),
-            available: Number(row?.available ?? 0),
+    const metrics = (metricsRes.data ?? []) as Array<{
+      reseller_id: string;
+      orders: number;
+      delivered_profit: number;
+      pending_payout: number;
+      paid_out: number;
+      available: number;
+    }>;
+    setSummaries(
+      Object.fromEntries(
+        metrics.map((m) => [
+          m.reseller_id,
+          {
+            delivered_profit: Number(m.delivered_profit ?? 0),
+            pending_payout: Number(m.pending_payout ?? 0),
+            paid_out: Number(m.paid_out ?? 0),
+            available: Number(m.available ?? 0),
           } as Summary,
-          orders: countRes.count ?? 0,
-        };
-      }),
+        ]),
+      ),
     );
-    setSummaries(Object.fromEntries(results.map((x) => [x.id, x.summary])));
-    setOrderCounts(Object.fromEntries(results.map((x) => [x.id, x.orders])));
+    setOrderCounts(Object.fromEntries(metrics.map((m) => [m.reseller_id, Number(m.orders ?? 0)])));
+    setLoading(false);
   }
+
 
   async function loadEmailStatus() {
     try {
