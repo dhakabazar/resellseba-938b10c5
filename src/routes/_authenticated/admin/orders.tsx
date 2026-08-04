@@ -195,22 +195,21 @@ function AdminOrdersPage() {
     return m;
   }, [orderItems]);
 
-  /** Two separate searches: order (no/name/phone) + product name. */
+  /** One search box, mode decides target: order fields or product name. */
   const filtered = useMemo(() => {
     const base = applyOrderFilters(orders, { ...filters, q: "" });
     const q = filters.q.trim().toLowerCase();
-    const pq = productQ.trim().toLowerCase();
-    if (!q && !pq) return base;
+    if (!q) return base;
     return base.filter((o) => {
+      if (searchMode === "product") {
+        return (itemsByOrder.get(o.id) ?? []).some((it) =>
+          it.product_name.toLowerCase().includes(q),
+        );
+      }
       const has = (v?: string | null) => (v ?? "").toLowerCase().includes(q);
-      const okOrder =
-        !q || has(o.order_number) || has(o.customer_name) || has(o.customer_phone);
-      const okProduct =
-        !pq ||
-        (itemsByOrder.get(o.id) ?? []).some((it) => it.product_name.toLowerCase().includes(pq));
-      return okOrder && okProduct;
+      return has(o.order_number) || has(o.customer_name) || has(o.customer_phone);
     });
-  }, [orders, filters, itemsByOrder, productQ]);
+  }, [orders, filters, itemsByOrder, searchMode]);
 
 
 
