@@ -33,6 +33,12 @@ function ListingsPage() {
   const { user } = useAuth();
   const [items, setItems] = useState<L[]>([]);
   const [loading, setLoading] = useState(true);
+  const [q, setQ] = useState("");
+  const [status, setStatus] = useState("");
+  const [sort, setSort] = useState("newest");
+  const [perPage, setPerPage] = useState(20);
+  const [page, setPage] = useState(1);
+
 
   async function load() {
     if (!user) return;
