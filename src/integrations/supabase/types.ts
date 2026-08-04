@@ -1166,6 +1166,7 @@ export type Database = {
           support_phone: string | null
           tagline: string | null
           theme: string
+          theme_settings: Json
           tiktok_url: string | null
           updated_at: string
           whatsapp: string | null
@@ -1190,6 +1191,7 @@ export type Database = {
           support_phone?: string | null
           tagline?: string | null
           theme?: string
+          theme_settings?: Json
           tiktok_url?: string | null
           updated_at?: string
           whatsapp?: string | null
@@ -1214,6 +1216,7 @@ export type Database = {
           support_phone?: string | null
           tagline?: string | null
           theme?: string
+          theme_settings?: Json
           tiktok_url?: string | null
           updated_at?: string
           whatsapp?: string | null
@@ -1523,6 +1526,7 @@ export type Database = {
           support_phone: string | null
           tagline: string | null
           theme: string | null
+          theme_settings: Json | null
           tiktok_url: string | null
           whatsapp: string | null
         }

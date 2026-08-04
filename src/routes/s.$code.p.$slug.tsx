@@ -93,7 +93,7 @@ function ProductPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
+    <div className="mx-auto max-w-6xl px-4 pb-24 pt-8 lg:pb-10">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       <nav className={cx("mb-5 flex items-center gap-1 text-xs", muted)}>
@@ -154,15 +154,24 @@ function ProductPage() {
             </span>
           </div>
 
+          {store.content.text("pdp_urgency") && inStock && (
+            <p className="mt-3 text-sm font-medium text-[var(--st-primary)]">{store.content.text("pdp_urgency")}</p>
+          )}
+
           <div className={cx("mt-5 grid gap-2 rounded-[var(--st-radius)] border p-4 text-sm", borderc)}>
             <div className="flex items-center gap-2">
               <Truck className="h-4 w-4 text-[var(--st-primary)]" />
               <span>Delivery: {deliveryLabel(p)}</span>
             </div>
-            <div className="flex items-center gap-2">
-              <ShieldCheck className="h-4 w-4 text-[var(--st-primary)]" />
-              <span>Cash on delivery — pay after you receive</span>
-            </div>
+            {[1, 2, 3]
+              .map((i) => store.content.text(`pdp_trust${i}`))
+              .filter(Boolean)
+              .map((line) => (
+                <div key={line} className="flex items-center gap-2">
+                  <ShieldCheck className="h-4 w-4 text-[var(--st-primary)]" />
+                  <span>{line}</span>
+                </div>
+              ))}
           </div>
 
           <div className="mt-6 flex flex-wrap items-center gap-3">
@@ -183,6 +192,11 @@ function ProductPage() {
             </GhostButton>
           </div>
 
+          {store.content.text("pdp_returns") && (
+            <p className={cx("mt-3 text-xs leading-relaxed", muted)}>{store.content.text("pdp_returns")}</p>
+          )}
+
+
           {p.description && (
             <div className="mt-8">
               <Heading className="text-lg">Product details</Heading>
@@ -201,6 +215,24 @@ function ProductPage() {
           <ProductGrid listings={related} />
         </section>
       )}
+
+      {store.content.flag("pdp_sticky") && (
+        <div
+          className={cx(
+            "fixed inset-x-0 bottom-0 z-40 flex items-center gap-3 border-t bg-[var(--st-surface)] px-4 py-3 lg:hidden",
+            borderc,
+          )}
+        >
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-xs text-[var(--st-muted)]">{title}</div>
+            <Price value={price} className="text-lg" />
+          </div>
+          <PrimaryButton disabled={!inStock} onClick={() => add(true)} className="px-4 py-2.5">
+            <Zap className="h-4 w-4" /> Order now
+          </PrimaryButton>
+        </div>
+      )}
     </div>
+
   );
 }

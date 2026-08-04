@@ -233,14 +233,13 @@ export function StoreHeader() {
 }
 
 export function TrustBar() {
-  const { theme } = useStore();
-  if (!theme.layout.trustBar) return null;
-  const items = [
-    { t: "Cash on Delivery", d: "Pay when you receive" },
-    { t: "Nationwide delivery", d: "All 64 districts" },
-    { t: "100% genuine", d: "Verified products only" },
-    { t: "Easy returns", d: "Report within 24h" },
-  ];
+  const { theme, content } = useStore();
+  if (!theme.layout.trustBar || !content.flag("usp_show")) return null;
+  const items = [1, 2, 3, 4]
+    .map((i) => ({ t: content.text(`usp${i}_t`), d: content.text(`usp${i}_d`) }))
+    .filter((i) => i.t);
+  if (!items.length) return null;
+
   return (
     <section className={cx("border-y bg-[var(--st-bg-alt)]", borderc)}>
       <div className="mx-auto grid max-w-6xl grid-cols-2 gap-4 px-4 py-5 md:grid-cols-4">
