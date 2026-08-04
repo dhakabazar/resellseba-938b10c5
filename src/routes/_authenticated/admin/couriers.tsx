@@ -182,5 +182,3 @@ function SteadfastExtras({ token }: { token: string }) {
     </div>
   );
 }
-
-}
