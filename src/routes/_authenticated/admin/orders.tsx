@@ -300,6 +300,9 @@ function OrderDrawer({
   const [deliveryType, setDeliveryType] = useState<0 | 1>(0);
   const [cbDeliveryType, setCbDeliveryType] = useState<1 | 2>(1);
   const [cbWeight, setCbWeight] = useState<number>(0);
+  const [pxDeliveryType, setPxDeliveryType] = useState<48 | 12>(48);
+  const [pxWeight, setPxWeight] = useState<number>(0.5);
+
 
 
   async function loadDetails() {
