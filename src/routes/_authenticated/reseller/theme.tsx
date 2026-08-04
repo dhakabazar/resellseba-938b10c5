@@ -361,13 +361,16 @@ function ThemePage() {
                 key={previewKey}
                 src={previewSrc}
                 title="Store preview"
-                loading="lazy"
+                onLoad={() => setPreviewLoaded(true)}
                 className="h-[720px] w-full bg-background"
               />
             </div>
           ) : (
             <button
-              onClick={() => setPreviewOn(true)}
+              onClick={() => {
+                setPreviewLoaded(false);
+                setPreviewOn(true);
+              }}
               className="grid h-[280px] w-full place-items-center rounded-lg border border-dashed text-sm text-muted-foreground hover:bg-muted/40"
             >
               <span className="inline-flex items-center gap-2">
@@ -375,10 +378,19 @@ function ThemePage() {
               </span>
             </button>
           )}
+          {previewOn && !previewLoaded && (
+            <div className="mt-2 flex flex-wrap items-center gap-2 rounded-md border border-dashed p-2 text-[11px] text-muted-foreground">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading preview… if it stays blank,
+              <a href={previewSrc} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-medium text-primary">
+                open it in a new tab <ExternalLink className="h-3 w-3" />
+              </a>
+            </div>
+          )}
           <p className="mt-2 text-[11px] text-muted-foreground">
             Theme and palette changes show instantly after Refresh. Save & publish to apply them for customers —
             text edits appear in the preview after saving.
           </p>
+
         </div>
       </div>
     </div>
