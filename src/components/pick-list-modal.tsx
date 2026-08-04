@@ -57,7 +57,7 @@ export function PickListModal({
         </div>
         <div className="max-h-[60vh] overflow-y-auto">
           {rows.length === 0 ? (
-            <div className="px-4 py-10 text-center text-sm text-muted-foreground">Kono product nai.</div>
+            <div className="px-4 py-10 text-center text-sm text-muted-foreground">No products found.</div>
           ) : (
             rows.map((p) => (
               <button

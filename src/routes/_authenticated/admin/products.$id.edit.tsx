@@ -133,7 +133,7 @@ function EditProduct() {
         throw new Error("Reseller price cannot be less than buying price.");
       }
       if (Number(suggested) < calc.resellerMinSell) {
-        throw new Error(`Suggested sell must be ≥ ৳${calc.resellerMinSell} (reseller price + packaging).`);
+        throw new Error(`Suggested sell must be at least ৳${calc.resellerMinSell} (reseller price + packaging).`);
       }
       const { error } = await supabase
         .from("products")
@@ -183,7 +183,7 @@ function EditProduct() {
   }
 
   async function remove() {
-    if (!confirm(`Delete "${name}"? Ei product er sob listing o remove hoye jete pare.`)) return;
+    if (!confirm(`Delete "${name}"? All related listings may also be removed.`)) return;
     const { error } = await supabase.from("products").delete().eq("id", id);
     if (error) return toast.error(error.message);
     toast.success("Deleted");
@@ -201,7 +201,7 @@ function EditProduct() {
     <div>
       <PageHeader
         title="Edit product"
-        description="Master catalog update. Change save hole reseller listing e o reflect hobe."
+        description="Changes here also reflect in reseller listings."
         actions={
           <button
             onClick={remove}
@@ -245,7 +245,7 @@ function EditProduct() {
             </Field>
             <label className="inline-flex items-center gap-2 text-sm">
               <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
-              Active (resellers ke dekhabe)
+              Active (visible to resellers)
             </label>
           </div>
         </div>
@@ -269,22 +269,22 @@ function EditProduct() {
           <h3 className="mb-1 flex items-center gap-1.5 text-sm font-semibold">
             Pricing & delivery
             <Hint side="right">
-              <b>Buying</b> = আপনার কেনা দাম। <b>Reseller price</b> = রিসেলারকে যে দামে দিচ্ছেন।{" "}
-              <b>Packaging</b> = প্যাকেট খরচ। <b>Delivery</b> = কুরিয়ার চার্জ, কাস্টমার আলাদা দেয়।
-              রিসেলার মিনিমাম বিক্রি করবে <b>reseller price + packaging</b>, ডেলিভারি এর উপরে।
+              <b>Buying</b> is your cost. <b>Reseller price</b> is what you charge the reseller.{" "}
+              <b>Packaging</b> is the pack cost. <b>Delivery</b> is the courier charge, paid separately by the customer.
+              Reseller's minimum sell price is <b>reseller price + packaging</b>, on top of delivery.
             </Hint>
           </h3>
           <div className="grid gap-3 md:grid-cols-3">
-            <Field label="Buying price / Admin cost (৳)" required hint="আপনার নিজের কেনা মূল্য। রিসেলার দেখবে না।">
+            <Field label="Buying price / Admin cost (৳)" required hint="Your cost. Resellers do not see this.">
               <input required type="number" min={0} value={buying} onChange={(e) => setBuying(e.target.value)} className={inputCls} />
             </Field>
-            <Field label="Reseller price (৳)" required hint="রিসেলার এই দামটাই product price হিসেবে দেখবে।">
+            <Field label="Reseller price (৳)" required hint="Resellers see this as the product price.">
               <input required type="number" min={0} value={resellerPrice} onChange={(e) => setResellerPrice(e.target.value)} className={inputCls} />
             </Field>
-            <Field label="Packaging cost (৳)" hint="প্রতি অর্ডারে প্যাকেজিং খরচ। এডমিন এটাও কাটবে।">
+            <Field label="Packaging cost (৳)" hint="Per-order packaging cost, deducted by admin.">
               <input type="number" min={0} value={packaging} onChange={(e) => setPackaging(e.target.value)} className={inputCls} />
             </Field>
-            <Field label="Delivery type" hint="Area-wise = ঢাকার ভেতরে/বাইরে আলাদা চার্জ। Free = ডেলিভারি ফ্রি। Flat = সব এলাকায় একই চার্জ।">
+            <Field label="Delivery type" hint="Area-wise, free, or flat rate.">
               <select value={deliveryMode} onChange={(e) => setDeliveryMode(e.target.value as typeof deliveryMode)} className={inputCls}>
                 <option value="area">Area-wise (Inside / Outside Dhaka)</option>
                 <option value="free">Free shipping</option>
@@ -292,16 +292,16 @@ function EditProduct() {
               </select>
             </Field>
             {deliveryMode === "flat" && (
-              <Field label="Flat delivery charge (৳)" hint="সব এলাকার জন্য একই ডেলিভারি চার্জ।">
+              <Field label="Flat delivery charge (৳)" hint="Same delivery charge for every area.">
                 <input type="number" min={0} value={deliveryFlat} onChange={(e) => setDeliveryFlat(e.target.value)} className={inputCls} />
               </Field>
             )}
             {deliveryMode === "area" && (
               <>
-                <Field label="Delivery inside Dhaka (৳)" hint="ঢাকার ভেতরে কুরিয়ার চার্জ। একাধিক প্রোডাক্টে সর্বোচ্চটা একবার নেয়া হবে।">
+                <Field label="Delivery inside Dhaka (৳)" hint="Courier charge inside Dhaka.">
                   <input type="number" min={0} value={deliveryIn} onChange={(e) => setDeliveryIn(e.target.value)} className={inputCls} />
                 </Field>
-                <Field label="Delivery outside Dhaka (৳)" hint="ঢাকার বাইরে কুরিয়ার চার্জ।">
+                <Field label="Delivery outside Dhaka (৳)" hint="Courier charge outside Dhaka.">
                   <input type="number" min={0} value={deliveryOut} onChange={(e) => setDeliveryOut(e.target.value)} className={inputCls} />
                 </Field>
               </>
@@ -309,7 +309,7 @@ function EditProduct() {
             <Field label="Stock">
               <input type="number" min={0} value={stock} onChange={(e) => setStock(e.target.value)} className={inputCls} />
             </Field>
-            <Field label="Suggested sell price (৳)" required hint="রিসেলারকে সাজেস্ট করা বিক্রয়মূল্য (≥ reseller price + packaging)।">
+            <Field label="Suggested sell price (৳)" required hint="Suggested to resellers, at least reseller price + packaging.">
               <input required type="number" min={0} value={suggested} onChange={(e) => setSuggested(e.target.value)} className={inputCls} />
             </Field>
           </div>
@@ -318,7 +318,7 @@ function EditProduct() {
             <div className="rounded-lg border bg-muted/30 p-4 text-sm">
               <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase text-muted-foreground">
                 Admin calculation
-                <Hint>প্রতি ইউনিটে আপনার লাভ = reseller price − buying price।</Hint>
+                <Hint>Your profit per unit = reseller price − buying price.</Hint>
               </div>
               <PRow label="Reseller price" value={`৳${Number(resellerPrice) || 0}`} />
               <PRow label="− Buying price" value={`৳${Number(buying) || 0}`} />
@@ -328,7 +328,7 @@ function EditProduct() {
               <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase text-muted-foreground">
                 Reseller calculation
                 <Hint>
-                  রিসেলার এর কস্ট = reseller price + packaging (এডমিন কাটবে)। ডেলিভারি কাস্টমার আলাদা দেয়।
+                  Reseller's cost is reseller price + packaging (deducted by admin). Delivery is paid separately by the customer.
                 </Hint>
               </div>
               <PRow label="Product (reseller price)" value={`৳${Number(resellerPrice) || 0}`} />

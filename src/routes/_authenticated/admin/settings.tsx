@@ -70,7 +70,7 @@ function SettingsPage() {
     } as any);
     setBusy(false);
     if (error) toast.error(error.message);
-    else toast.success("Settings saved — apply hote page refresh lagbe");
+    else toast.success("Settings saved — refresh the page to apply");
   }
 
   if (loading)
@@ -84,7 +84,7 @@ function SettingsPage() {
     <div>
       <PageHeader
         title="Global settings"
-        description="Branding, SEO, contact — ei settings sob reseller store default hisebe pabe."
+        description="Branding, SEO and contact defaults for all reseller stores."
       />
       <form onSubmit={save} className="grid gap-4 lg:grid-cols-2">
         <div className="surface-card space-y-3 p-6">
@@ -125,7 +125,7 @@ function SettingsPage() {
         <div className="surface-card space-y-3 p-6 lg:col-span-2">
           <h3 className="text-sm font-semibold">Flagship storefront</h3>
           <p className="text-xs text-muted-foreground">
-            Main domain + preview URL e ei reseller er store dekhabe. Blank rakhle sign-in panel dekhabe.
+            Shown on the main domain and preview URL. Leave blank to show the sign-in page.
           </p>
           <Field label="Flagship reseller">
             <select value={flagshipCode} onChange={(e) => setFlagshipCode(e.target.value)} className={inp}>

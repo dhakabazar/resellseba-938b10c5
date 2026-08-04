@@ -39,7 +39,7 @@ const FIELDS: Record<string, { key: string; label: string; type?: string; hint?:
     { key: "client_id", label: "Client ID" },
     { key: "client_secret", label: "Client Secret" },
     { key: "client_context", label: "Client Context" },
-    { key: "store_id", label: "Default Pickup Store ID", hint: "Store list theke copy korun" },
+    { key: "store_id", label: "Default Pickup Store ID", hint: "Copy from store list" },
   ],
 };
 
@@ -77,7 +77,7 @@ function CouriersPage() {
 
   return (
     <div>
-      <PageHeader title="Courier providers" description="Credentials save korle admin panel theke direct booking kora jabe." />
+      <PageHeader title="Courier providers" description="Save credentials to enable direct booking from the admin panel." />
       <div className="grid gap-4 lg:grid-cols-2">
         {rows.map((r, idx) => {
           const fields = FIELDS[r.provider] ?? [];
@@ -175,7 +175,7 @@ function SteadfastExtras({ token, onToken }: { token: string; onToken: (t: strin
     crypto.getRandomValues(bytes);
     const t = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
     onToken(t);
-    toast.success("Token generated — Save korun");
+    toast.success("Token generated — remember to save");
   }
 
   return (
@@ -186,7 +186,7 @@ function SteadfastExtras({ token, onToken }: { token: string; onToken: (t: strin
           <input
             readOnly
             value={token}
-            placeholder="Generate button e click korun"
+            placeholder="Click generate button"
             className="min-w-0 flex-1 rounded-md border bg-background px-2 py-1.5 font-mono text-[11px]"
           />
           <button type="button" onClick={generate} className="shrink-0 rounded-md border px-2 py-1.5 text-xs hover:bg-accent">
@@ -206,7 +206,7 @@ function SteadfastExtras({ token, onToken }: { token: string; onToken: (t: strin
         </div>
       </div>
       <div>
-        <div className="mb-1 text-xs font-medium">Webhook URL (Steadfast panel e set korun)</div>
+        <div className="mb-1 text-xs font-medium">Webhook URL (set in Steadfast panel)</div>
 
         <div className="flex items-center gap-2">
           <code className="flex-1 truncate rounded-md border bg-background px-2 py-1.5 text-[11px]">
@@ -273,7 +273,7 @@ function CarrybeeExtras({
     onConfig({
       webhook_secret: Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join(""),
     });
-    toast.success("Secret generated — Save korun");
+    toast.success("Secret generated — remember to save");
   }
 
   return (
@@ -284,7 +284,7 @@ function CarrybeeExtras({
           <input
             value={secret}
             onChange={(e) => onConfig({ webhook_secret: e.target.value })}
-            placeholder="Generate korun ba Carrybee panel er secret paste korun"
+            placeholder="Generate or paste secret from Carrybee panel"
             className="min-w-0 flex-1 rounded-md border bg-background px-2 py-1.5 font-mono text-[11px]"
           />
           <button type="button" onClick={generate} className="shrink-0 rounded-md border px-2 py-1.5 text-xs hover:bg-accent">
@@ -332,9 +332,9 @@ function CarrybeeExtras({
             try {
               const r = await loadStores();
               setStores(r.stores);
-              if (r.stores.length === 0) toast.info("Kono store nai — Carrybee panel e store create korun");
+              if (r.stores.length === 0) toast.info("No stores — create one in the Carrybee panel");
             } catch (e) {
-              toast.error(e instanceof Error ? e.message : "Store list load hoyni");
+              toast.error(e instanceof Error ? e.message : "Failed to load store list");
             } finally {
               setBusy(false);
             }
@@ -360,7 +360,7 @@ function CarrybeeExtras({
                   type="button"
                   onClick={() => {
                     onConfig({ store_id: s.id });
-                    toast.success("Store id set — Save korun");
+                    toast.success("Store ID set — remember to save");
                   }}
                   className="rounded-md border px-2 py-0.5 text-[10px] hover:bg-accent"
                 >
@@ -397,7 +397,7 @@ function PathaoExtras({
     onConfig({
       webhook_secret: Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join(""),
     });
-    toast.success("Secret generated — Save korun");
+    toast.success("Secret generated — remember to save");
   }
 
   return (
@@ -408,7 +408,7 @@ function PathaoExtras({
           <input
             value={secret}
             onChange={(e) => onConfig({ webhook_secret: e.target.value })}
-            placeholder="Generate korun ba Pathao panel er secret paste korun"
+            placeholder="Generate or paste secret from Pathao panel"
             className="min-w-0 flex-1 rounded-md border bg-background px-2 py-1.5 font-mono text-[11px]"
           />
           <button type="button" onClick={generate} className="shrink-0 rounded-md border px-2 py-1.5 text-xs hover:bg-accent">
@@ -456,9 +456,9 @@ function PathaoExtras({
             try {
               const r = await loadStores();
               setStores(r.stores);
-              if (r.stores.length === 0) toast.info("Kono store nai — Pathao panel e store create korun");
+              if (r.stores.length === 0) toast.info("No stores — create one in the Pathao panel");
             } catch (e) {
-              toast.error(e instanceof Error ? e.message : "Store list load hoyni");
+              toast.error(e instanceof Error ? e.message : "Failed to load store list");
             } finally {
               setBusy(false);
             }
@@ -483,7 +483,7 @@ function PathaoExtras({
                   type="button"
                   onClick={() => {
                     onConfig({ store_id: s.id });
-                    toast.success("Store id set — Save korun");
+                    toast.success("Store ID set — remember to save");
                   }}
                   className="rounded-md border px-2 py-0.5 text-[10px] hover:bg-accent"
                 >

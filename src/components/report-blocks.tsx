@@ -159,7 +159,7 @@ export function ProductReportTable({
         {rows.length === 0 && (
           <tr>
             <td colSpan={8} className="p-8 text-center text-muted-foreground">
-              এই filter-এ কোনো product নেই।
+              No products match this filter.
             </td>
           </tr>
         )}
@@ -195,7 +195,7 @@ export function TrendReportTable({ trend, limit = 30 }: { trend: TrendPoint[]; l
         {rows.length === 0 && (
           <tr>
             <td colSpan={5} className="p-8 text-center text-muted-foreground">
-              কোনো data নেই।
+              No data available.
             </td>
           </tr>
         )}
@@ -220,7 +220,7 @@ export function RawStatusList({ report }: { report: FinanceReport }) {
           </div>
         </div>
       ))}
-      {entries.length === 0 && <div className="text-sm text-muted-foreground">কোনো order নেই।</div>}
+      {entries.length === 0 && <div className="text-sm text-muted-foreground">No orders yet.</div>}
     </div>
   );
 }

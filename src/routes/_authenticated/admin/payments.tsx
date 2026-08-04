@@ -84,7 +84,7 @@ function PaymentsPage() {
 
   return (
     <div>
-      <PageHeader title="Payment methods" description="bKash / Nagad personal + API, SSLCommerz, EPS — ekhane add korun. Reseller ra nijer setting-e override korte parbe." />
+      <PageHeader title="Payment methods" description="Add bKash, Nagad, SSLCommerz, EPS and more. Resellers can override in their own settings." />
       <form onSubmit={add} className="surface-card mb-5 flex flex-wrap items-end gap-3 p-4">
         <div className="min-w-[140px]">
           <label className="mb-1 block text-xs font-medium">Method</label>

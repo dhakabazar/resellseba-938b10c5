@@ -369,7 +369,7 @@ function OrdersPage() {
       ) : paged.length === 0 ? (
         <EmptyState
           title="No orders"
-          description="Ei status/filter e apnar kono order nai."
+          description="No orders match this filter."
         />
       ) : (
         <>
@@ -548,11 +548,11 @@ function NewOrderModal({
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (lines.length === 0) return toast.error("At least one product select korun.");
+    if (lines.length === 0) return toast.error("Select at least one product.");
     setBusy(true);
     try {
-      // Reseller nijer hate add kora order = already confirmed, so admin queue e chole jabe.
-      // "New Order" tab shudhu customer website theke asa order dekhabe.
+      // A reseller-created order is already confirmed, so it goes straight to the admin queue.
+      // The "New Order" tab only shows orders placed via the customer website.
       const { data: order, error } = await supabase
         .from("orders")
         .insert({
@@ -596,7 +596,7 @@ function NewOrderModal({
       const { error: ie } = await supabase.from("order_items").insert(items);
       if (ie) throw ie;
 
-      toast.success("Order created & admin ke pathano hoyeche");
+      toast.success("Order created and sent to admin");
       onCreated();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed");
@@ -808,8 +808,8 @@ function OrderDrawer({
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
 
-  // Reseller shudhu New order (draft/pending) e Confirm ba Cancel korte parbe.
-  // Er por sob kichu SA admin er logic onujayi cholbe.
+  // A reseller can only Confirm or Cancel a new order (draft/pending).
+  // After that, admin logic takes over.
   const canAct = !order.forwarded_to_admin && (order.status === "pending" || order.status === "draft");
 
   useEffect(() => {
@@ -852,7 +852,7 @@ function OrderDrawer({
       return;
     }
     await supabase.from("order_status_history").insert({ order_id: order.id, status: next as any });
-    toast.success(next === "confirmed" ? "Order confirmed — admin ke pathano hoyeche" : "Order cancelled");
+    toast.success(next === "confirmed" ? "Order confirmed and sent to admin" : "Order cancelled");
     setBusy(false);
     onChanged();
   }
@@ -894,7 +894,7 @@ function OrderDrawer({
           </div>
         ) : (
           <p className="rounded-md bg-muted/50 p-3 text-xs text-muted-foreground">
-            Order ta admin er kache chole gese — ekhon theke status shudhu admin/courier update korbe.
+            This order has been sent to admin — only admin/courier can update its status now.
           </p>
         )}
 
@@ -945,7 +945,7 @@ function OrderDrawer({
         <div className="surface-card p-4">
           <div className="mb-2 text-sm font-medium">Parcel info</div>
           {shipments.length === 0 ? (
-            <p className="text-xs text-muted-foreground">Admin এখনও courier booking koreni.</p>
+            <p className="text-xs text-muted-foreground">Admin has not booked a courier yet.</p>
           ) : (
             shipments.map((s) => (
               <div key={s.id} className="space-y-1 border-b py-2 text-sm last:border-b-0">
