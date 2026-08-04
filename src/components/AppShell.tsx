@@ -262,11 +262,11 @@ function LeafLink({ item, nested = false, collapsed = false }: { item: NavItem; 
       to={item.to}
       activeOptions={{ exact: item.end }}
       className={cn(
-        "group mb-1 flex items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-        nested && "py-1.5 text-[13px]",
+        "group mb-1 flex items-center gap-3 rounded-md px-3 py-2 text-[13px] font-medium text-sidebar-foreground/90 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+        nested && "py-1.5",
       )}
       activeProps={{
-        className: "bg-sidebar-accent text-sidebar-accent-foreground font-medium",
+        className: "bg-sidebar-accent text-sidebar-accent-foreground",
       }}
     >
       <span className="text-current">{item.icon}</span>
