@@ -8,6 +8,7 @@ import {
   Hero,
   PromoBanner,
   Reviews,
+  ThemeSignature,
   WhyUs,
 } from "@/components/store/sections";
 import {
