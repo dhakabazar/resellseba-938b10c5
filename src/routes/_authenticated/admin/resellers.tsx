@@ -628,17 +628,20 @@ function EditModal({
           </div>
         </div>
 
-        <div className="flex justify-end gap-2 pt-2">
+        </div>
+
+        <div className="flex flex-col-reverse gap-2 border-t px-4 py-3 sm:flex-row sm:justify-end sm:px-6">
           <button type="button" onClick={onClose} className="rounded-md border px-4 py-2 text-sm">
             Cancel
           </button>
           <button
             disabled={busy}
-            className="btn-brand inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium"
+            className="btn-brand inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium"
           >
             {busy && <Loader2 className="h-4 w-4 animate-spin" />} Save
           </button>
         </div>
+
       </form>
     </div>
   );
