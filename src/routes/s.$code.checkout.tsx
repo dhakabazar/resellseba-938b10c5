@@ -85,20 +85,26 @@ function Checkout() {
 
   const totals = useMemo(() => {
     const subtotal = lines.reduce((s, x) => s + Number(x.listing.selling_price) * x.line.qty, 0);
-    /** Delivery follows backend rule: highest single-item charge in the cart. */
-    const ship = lines.reduce(
-      (max, x) =>
-        Math.max(
-          max,
-          productDeliveryCharge(x.listing.product ?? {}, form.area, {
-            inside: x.listing.extra_delivery_inside,
-            outside: x.listing.extra_delivery_outside,
-          }),
-        ),
-      0,
+    /**
+     * Delivery is never summed across products. Each product carries its own
+     * delivery method (area / flat / free) and the cart charges only the
+     * single highest one — same rule the backend applies.
+     */
+    const perItem = lines.map((x) => ({
+      name: x.listing.custom_title || x.listing.product?.name || "Product",
+      charge: productDeliveryCharge(x.listing.product ?? {}, form.area, {
+        inside: x.listing.extra_delivery_inside,
+        outside: x.listing.extra_delivery_outside,
+      }),
+    }));
+    const top = perItem.reduce<{ name: string; charge: number } | null>(
+      (best, i) => (!best || i.charge > best.charge ? i : best),
+      null,
     );
-    return { subtotal, ship, total: subtotal + ship };
+    const ship = top ? top.charge : 0;
+    return { subtotal, ship, total: subtotal + ship, shipFrom: top?.name ?? null, multi: perItem.length > 1 };
   }, [lines, form.area]);
+
 
   const errors = {
     name: nameError(form.name),
@@ -387,7 +393,15 @@ function Checkout() {
           <div className={cx("space-y-1.5 border-t pt-3 text-sm", borderc)}>
             <Row label="Subtotal" value={bdt(totals.subtotal)} />
             <Row label="Delivery charge" value={totals.ship ? bdt(totals.ship) : "Free"} />
+            {totals.multi && (
+              <p className={cx("text-[11px] leading-snug", muted)}>
+                {totals.ship
+                  ? `Highest single-product delivery charge applied${totals.shipFrom ? ` (${totals.shipFrom})` : ""} — charges are not added up.`
+                  : "Free delivery on this cart."}
+              </p>
+            )}
             <Row label="Total payable" value={bdt(totals.total)} bold />
+
           </div>
           <Link
             to="/s/$code"
