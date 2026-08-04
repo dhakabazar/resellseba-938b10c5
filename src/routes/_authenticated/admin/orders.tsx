@@ -187,19 +187,37 @@ function AdminOrdersPage() {
     return m;
   }, [orderItems]);
 
+  /** Single merged search: order fields + product name. */
   const filtered = useMemo(() => {
-    const base = applyOrderFilters(orders, filters);
-    const pq = productQuery.trim().toLowerCase();
-    if (!pq) return base;
-    return base.filter((o) =>
-      (itemsByOrder.get(o.id) ?? []).some((it) => it.product_name.toLowerCase().includes(pq)),
-    );
-  }, [orders, filters, productQuery, itemsByOrder]);
+    const base = applyOrderFilters(orders, { ...filters, q: "" });
+    const q = filters.q.trim().toLowerCase();
+    if (!q) return base;
+    return base.filter((o) => {
+      const hay = [
+        o.order_number,
+        o.customer_name,
+        o.customer_phone,
+        o.address_line ?? "",
+        o.resellers?.business_name ?? "",
+        o.resellers?.code ?? "",
+      ]
+        .join(" ")
+        .toLowerCase();
+      if (hay.includes(q)) return true;
+      return (itemsByOrder.get(o.id) ?? []).some((it) =>
+        it.product_name.toLowerCase().includes(q),
+      );
+    });
+  }, [orders, filters, itemsByOrder]);
 
-  /** Product-wise pick list for the currently visible (status + filter) orders. */
-  const pickList = useMemo(() => {
+  const markedOrders = useMemo(
+    () => filtered.filter((o) => marked.includes(o.id)),
+    [filtered, marked],
+  );
+
+  const buildPickList = (rows: OrderRow[]) => {
     const m = new Map<string, { name: string; qty: number; orders: number }>();
-    for (const o of filtered) {
+    for (const o of rows) {
       for (const it of itemsByOrder.get(o.id) ?? []) {
         const key = it.product_id ?? it.product_name;
         const cur = m.get(key) ?? { name: it.product_name, qty: 0, orders: 0 };
@@ -209,12 +227,18 @@ function AdminOrdersPage() {
       }
     }
     return [...m.values()].sort((a, b) => b.qty - a.qty);
-  }, [filtered, itemsByOrder]);
+  };
+
+  const pickList = useMemo(
+    () => buildPickList(pickScope === "marked" ? markedOrders : filtered),
+    [pickScope, markedOrders, filtered, itemsByOrder],
+  );
 
   useEffect(() => {
     setPage(1);
-  }, [filters, tab, productQuery]);
+  }, [filters, tab]);
   const paged = usePaginated(filtered, page, filters.perPage);
+
 
   return (
     <div>
