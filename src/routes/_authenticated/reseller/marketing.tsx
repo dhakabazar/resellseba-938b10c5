@@ -59,7 +59,7 @@ function ResellerMarketing() {
 
   return (
     <div>
-      <PageHeader title="Marketing & tracking" description="Apnar nijer Pixel r Access Token bosaan — apnar customer der event apnar ads account e jabe." />
+      <PageHeader title="Marketing & tracking" description="Add your Pixel and Access Token — customer events go to your ads account." />
       <div className="grid gap-4 lg:grid-cols-3">
         {rows.map((r, idx) => {
           const m = meta[r.platform];
