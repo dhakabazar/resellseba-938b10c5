@@ -31,6 +31,8 @@ function SettingsPage() {
   const [tagline, setTagline] = useState("");
   const [primary, setPrimary] = useState("#3b82f6");
   const [accent, setAccent] = useState("#f59e0b");
+  /** When on, the storefront uses the selected theme's own palette. */
+  const [themeColors, setThemeColors] = useState(true);
   const [whatsapp, setWhatsapp] = useState("");
   const [supportPhone, setSupportPhone] = useState("");
   const [fb, setFb] = useState("");
