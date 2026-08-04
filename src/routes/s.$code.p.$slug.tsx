@@ -93,7 +93,7 @@ function ProductPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
+    <div className="mx-auto max-w-6xl px-4 pb-24 pt-8 lg:pb-10">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       <nav className={cx("mb-5 flex items-center gap-1 text-xs", muted)}>
