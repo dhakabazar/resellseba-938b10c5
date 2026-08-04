@@ -1,13 +1,24 @@
 import { useMemo } from "react";
-import { Search, X, SlidersHorizontal } from "lucide-react";
+import { Search, X, SlidersHorizontal, CalendarDays } from "lucide-react";
 import { FilterOption } from "@/components/data-list";
+
+export type DatePreset =
+  | "today"
+  | "yesterday"
+  | "last7"
+  | "last30"
+  | "this_month"
+  | "last_month"
+  | "this_year"
+  | "last_year"
+  | "lifetime"
+  | "custom";
 
 /** Global order-list filter state — same shape for SA admin & reseller panels. */
 export type OrderFilterState = {
   q: string;
-  paymentMethod: string;
-  paymentStatus: string;
   reseller: string;
+  datePreset: DatePreset;
   from: string;
   to: string;
   sort: "newest" | "oldest" | "high" | "low";
@@ -16,31 +27,25 @@ export type OrderFilterState = {
 
 export const DEFAULT_ORDER_FILTERS: OrderFilterState = {
   q: "",
-  paymentMethod: "",
-  paymentStatus: "",
   reseller: "",
+  datePreset: "lifetime",
   from: "",
   to: "",
   sort: "newest",
   perPage: 20,
 };
 
-export const PAYMENT_METHOD_OPTIONS: FilterOption[] = [
-  { value: "cod", label: "Cash on Delivery" },
-  { value: "bkash", label: "bKash" },
-  { value: "nagad", label: "Nagad" },
-  { value: "rocket", label: "Rocket" },
-  { value: "card", label: "Card" },
-  { value: "sslcommerz", label: "SSLCommerz" },
-  { value: "eps", label: "EPS" },
-  { value: "other", label: "Other" },
-];
-
-export const PAYMENT_STATUS_OPTIONS: FilterOption[] = [
-  { value: "unpaid", label: "Unpaid" },
-  { value: "partial", label: "Partial" },
-  { value: "paid", label: "Paid" },
-  { value: "refunded", label: "Refunded" },
+export const DATE_PRESET_OPTIONS: { value: DatePreset; label: string }[] = [
+  { value: "today", label: "Today" },
+  { value: "yesterday", label: "Yesterday" },
+  { value: "last7", label: "Last 7 days" },
+  { value: "last30", label: "Last 30 days" },
+  { value: "this_month", label: "This month" },
+  { value: "last_month", label: "Last month" },
+  { value: "this_year", label: "This year" },
+  { value: "last_year", label: "Last year" },
+  { value: "lifetime", label: "Life time" },
+  { value: "custom", label: "Custom range" },
 ];
 
 const SORT_OPTIONS: { value: OrderFilterState["sort"]; label: string }[] = [
@@ -50,14 +55,64 @@ const SORT_OPTIONS: { value: OrderFilterState["sort"]; label: string }[] = [
   { value: "low", label: "Amount: low → high" },
 ];
 
+const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+const endOfDay = (d: Date) =>
+  new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999).getTime();
+
+/** Resolve a preset (or custom range) into a timestamp window. */
+export function resolveDateRange(f: OrderFilterState): { fromTs: number | null; toTs: number | null } {
+  const now = new Date();
+  switch (f.datePreset) {
+    case "today":
+      return { fromTs: startOfDay(now), toTs: endOfDay(now) };
+    case "yesterday": {
+      const y = new Date(now);
+      y.setDate(y.getDate() - 1);
+      return { fromTs: startOfDay(y), toTs: endOfDay(y) };
+    }
+    case "last7": {
+      const s = new Date(now);
+      s.setDate(s.getDate() - 6);
+      return { fromTs: startOfDay(s), toTs: endOfDay(now) };
+    }
+    case "last30": {
+      const s = new Date(now);
+      s.setDate(s.getDate() - 29);
+      return { fromTs: startOfDay(s), toTs: endOfDay(now) };
+    }
+    case "this_month":
+      return {
+        fromTs: new Date(now.getFullYear(), now.getMonth(), 1).getTime(),
+        toTs: endOfDay(now),
+      };
+    case "last_month":
+      return {
+        fromTs: new Date(now.getFullYear(), now.getMonth() - 1, 1).getTime(),
+        toTs: new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999).getTime(),
+      };
+    case "this_year":
+      return { fromTs: new Date(now.getFullYear(), 0, 1).getTime(), toTs: endOfDay(now) };
+    case "last_year":
+      return {
+        fromTs: new Date(now.getFullYear() - 1, 0, 1).getTime(),
+        toTs: new Date(now.getFullYear() - 1, 11, 31, 23, 59, 59, 999).getTime(),
+      };
+    case "custom":
+      return {
+        fromTs: f.from ? new Date(`${f.from}T00:00:00`).getTime() : null,
+        toTs: f.to ? new Date(`${f.to}T23:59:59`).getTime() : null,
+      };
+    default:
+      return { fromTs: null, toTs: null };
+  }
+}
+
 type FilterableOrder = {
   order_number: string;
   customer_name: string;
   customer_phone: string;
   address_line?: string | null;
   total: number | string;
-  payment_method?: string | null;
-  payment_status?: string | null;
   created_at: string;
   reseller_id?: string | null;
   resellers?: { business_name: string; code: string } | null;
@@ -66,8 +121,7 @@ type FilterableOrder = {
 /** Shared filter + sort logic so admin & reseller lists behave identically. */
 export function applyOrderFilters<T extends FilterableOrder>(rows: T[], f: OrderFilterState): T[] {
   const q = f.q.trim().toLowerCase();
-  const fromTs = f.from ? new Date(`${f.from}T00:00:00`).getTime() : null;
-  const toTs = f.to ? new Date(`${f.to}T23:59:59`).getTime() : null;
+  const { fromTs, toTs } = resolveDateRange(f);
 
   const out = rows.filter((o) => {
     if (q) {
@@ -83,8 +137,6 @@ export function applyOrderFilters<T extends FilterableOrder>(rows: T[], f: Order
         .toLowerCase();
       if (!hay.includes(q)) return false;
     }
-    if (f.paymentMethod && o.payment_method !== f.paymentMethod) return false;
-    if (f.paymentStatus && o.payment_status !== f.paymentStatus) return false;
     if (f.reseller && o.reseller_id !== f.reseller) return false;
     const ts = new Date(o.created_at).getTime();
     if (fromTs != null && ts < fromTs) return false;
@@ -151,11 +203,8 @@ export function OrderFilterBar({
   const dirty = useMemo(
     () =>
       value.q !== "" ||
-      value.paymentMethod !== "" ||
-      value.paymentStatus !== "" ||
       value.reseller !== "" ||
-      value.from !== "" ||
-      value.to !== "" ||
+      value.datePreset !== "lifetime" ||
       value.sort !== "newest",
     [value],
   );
@@ -184,7 +233,7 @@ export function OrderFilterBar({
         {right}
       </div>
 
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
         {resellerOptions && (
           <Select label="Reseller" value={value.reseller} onChange={(v) => set({ reseller: v })}>
             <option value="">All resellers</option>
@@ -195,40 +244,23 @@ export function OrderFilterBar({
             ))}
           </Select>
         )}
-        <Select label="Payment method" value={value.paymentMethod} onChange={(v) => set({ paymentMethod: v })}>
-          <option value="">All methods</option>
-          {PAYMENT_METHOD_OPTIONS.map((o) => (
+        <Select
+          label="Date"
+          value={value.datePreset}
+          onChange={(v) =>
+            set(
+              v === "custom"
+                ? { datePreset: "custom" }
+                : { datePreset: v as DatePreset, from: "", to: "" },
+            )
+          }
+        >
+          {DATE_PRESET_OPTIONS.map((o) => (
             <option key={o.value} value={o.value}>
               {o.label}
             </option>
           ))}
         </Select>
-        <Select label="Payment status" value={value.paymentStatus} onChange={(v) => set({ paymentStatus: v })}>
-          <option value="">All payments</option>
-          {PAYMENT_STATUS_OPTIONS.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </Select>
-        <label className="flex min-w-0 flex-col gap-1">
-          <span className="text-[11px] font-medium text-muted-foreground">From</span>
-          <input
-            type="date"
-            value={value.from}
-            onChange={(e) => set({ from: e.target.value })}
-            className="h-9 w-full rounded-md border bg-background px-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-          />
-        </label>
-        <label className="flex min-w-0 flex-col gap-1">
-          <span className="text-[11px] font-medium text-muted-foreground">To</span>
-          <input
-            type="date"
-            value={value.to}
-            onChange={(e) => set({ to: e.target.value })}
-            className="h-9 w-full rounded-md border bg-background px-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-          />
-        </label>
         <Select label="Sort" value={value.sort} onChange={(v) => set({ sort: v as OrderFilterState["sort"] })}>
           {SORT_OPTIONS.map((o) => (
             <option key={o.value} value={o.value}>
@@ -245,6 +277,35 @@ export function OrderFilterBar({
           <option value={-1}>All</option>
         </Select>
       </div>
+
+      {value.datePreset === "custom" && (
+        <div className="grid grid-cols-2 gap-2 rounded-md border border-dashed p-2 sm:max-w-md">
+          <label className="flex min-w-0 flex-col gap-1">
+            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
+              <CalendarDays className="h-3 w-3" /> From
+            </span>
+            <input
+              type="date"
+              value={value.from}
+              max={value.to || undefined}
+              onChange={(e) => set({ from: e.target.value })}
+              className="h-9 w-full rounded-md border bg-background px-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+            />
+          </label>
+          <label className="flex min-w-0 flex-col gap-1">
+            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
+              <CalendarDays className="h-3 w-3" /> To
+            </span>
+            <input
+              type="date"
+              value={value.to}
+              min={value.from || undefined}
+              onChange={(e) => set({ to: e.target.value })}
+              className="h-9 w-full rounded-md border bg-background px-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+            />
+          </label>
+        </div>
+      )}
 
       <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
         <span className="inline-flex items-center gap-1.5">
