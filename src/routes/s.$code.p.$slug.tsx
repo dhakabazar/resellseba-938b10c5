@@ -7,6 +7,12 @@ import { addToCart } from "@/lib/store-cart";
 import { deliveryLabel } from "@/lib/delivery";
 import { useStore } from "@/components/store/store-context";
 import {
+  CopyButton,
+  ImageDownloadTools,
+  stripHtml,
+  useResellerTools,
+} from "@/components/store/reseller-tools";
+import {
   borderc,
   cx,
   EmptyState,
@@ -43,6 +49,7 @@ function ProductPage() {
   const listing = store.bySlug(slug);
   const [qty, setQty] = useState(1);
   const [idx, setIdx] = useState(0);
+  const tools = useResellerTools();
 
   useEffect(() => {
     setQty(1);
@@ -69,6 +76,10 @@ function ProductPage() {
   const images = p.product_images ?? [];
   const active = images[idx]?.url ?? store.image(listing);
   const inStock = p.stock === null || Number(p.stock) > 0;
+  const imageUrls = images.map((im) => im.url).filter(Boolean);
+  const detailsText = stripHtml(
+    [listing.custom_description || p.short_description || "", p.description || ""].filter(Boolean).join("\n\n"),
+  );
   const related = store.listings.filter((l) => l.id !== listing.id && l.product?.category_id === p.category_id).slice(0, 4);
 
   const jsonLd = {
@@ -106,7 +117,17 @@ function ProductPage() {
 
       <div className="grid gap-10 lg:grid-cols-2">
         <div>
-          <div className={cx("aspect-square overflow-hidden rounded-[var(--st-radius)] border bg-[var(--st-bg-alt)]", borderc)}>
+          <div
+            className={cx(
+              "relative aspect-square overflow-hidden rounded-[var(--st-radius)] border bg-[var(--st-bg-alt)]",
+              borderc,
+            )}
+          >
+            {tools && (
+              <div className="absolute right-3 top-3 z-10">
+                <ImageDownloadTools compact images={imageUrls} activeUrl={active} baseName={title} />
+              </div>
+            )}
             {active ? (
               <img src={active} alt={title} className="h-full w-full object-cover" />
             ) : (
@@ -130,12 +151,28 @@ function ProductPage() {
               ))}
             </div>
           )}
+
+          {tools && (
+            <div className={cx("mt-3 rounded-[var(--st-radius-sm)] border p-3", borderc)}>
+              <div className={cx("mb-2 text-[11px] font-semibold uppercase tracking-wide", muted)}>Reseller tools</div>
+              <div className="flex flex-wrap items-center gap-2">
+                <ImageDownloadTools images={imageUrls} activeUrl={active} baseName={title} />
+                <CopyButton value={title} label="title" />
+                {detailsText && <CopyButton value={detailsText} label="details" />}
+              </div>
+            </div>
+          )}
         </div>
 
         <div>
-          <Heading as="h1" className="text-2xl leading-tight md:text-4xl">
-            {title}
-          </Heading>
+          <div className="group flex items-start gap-2">
+            <Heading as="h1" className="text-2xl leading-tight md:text-4xl">
+              {title}
+            </Heading>
+            {tools && (
+              <CopyButton value={title} className="mt-1.5 flex-none opacity-70 group-hover:opacity-100" />
+            )}
+          </div>
           {(listing.custom_description || p.short_description) && (
             <p className={cx("mt-3 text-sm leading-relaxed", muted)}>
               {listing.custom_description || p.short_description}
@@ -199,7 +236,10 @@ function ProductPage() {
 
           {p.description && (
             <div className="mt-8">
-              <Heading className="text-lg">Product details</Heading>
+              <div className="flex items-center justify-between gap-3">
+                <Heading className="text-lg">Product details</Heading>
+                {tools && <CopyButton value={detailsText} label="details" />}
+              </div>
               <div
                 className={cx("prose prose-sm mt-2 max-w-none text-sm leading-relaxed", muted)}
                 dangerouslySetInnerHTML={{ __html: p.description }}
