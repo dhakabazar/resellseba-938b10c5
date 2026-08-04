@@ -558,7 +558,7 @@ function EditModal({
             />
           </div>
         </div>
-        <div className="grid gap-3 md:grid-cols-2">
+        <div className="grid gap-3 sm:grid-cols-2">
           <div>
             <label className="mb-1 block text-xs font-medium">Phone</label>
             <input value={phone} onChange={(e) => setPhone(e.target.value)} className={cls} />
@@ -588,7 +588,7 @@ function EditModal({
           <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Payout information
           </div>
-          <div className="grid gap-3 md:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <label className="mb-1 block text-xs font-medium">Method</label>
               <select value={payoutMethod} onChange={(e) => setPayoutMethod(e.target.value)} className={cls}>
@@ -603,7 +603,7 @@ function EditModal({
               <label className="mb-1 block text-xs font-medium">Account holder</label>
               <input value={payoutAccountName} onChange={(e) => setPayoutAccountName(e.target.value)} className={cls} />
             </div>
-            <div className="md:col-span-2">
+            <div className="sm:col-span-2">
               <label className="mb-1 block text-xs font-medium">
                 {payoutMethod === "bank" ? "Account number" : "Mobile number"}
               </label>
@@ -619,7 +619,7 @@ function EditModal({
                   <label className="mb-1 block text-xs font-medium">Branch</label>
                   <input value={payoutBranch} onChange={(e) => setPayoutBranch(e.target.value)} className={cls} />
                 </div>
-                <div className="md:col-span-2">
+                <div className="sm:col-span-2">
                   <label className="mb-1 block text-xs font-medium">Routing</label>
                   <input value={payoutRouting} onChange={(e) => setPayoutRouting(e.target.value)} className={cls} />
                 </div>
