@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { productDeliveryCharge } from "@/lib/delivery";
 import { useAuth } from "@/lib/use-auth";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
-import { Loader2, Plus, Send, X, Trash2, FileText, Truck } from "lucide-react";
+import { Loader2, Plus, X, Trash2, FileText, Check, Ban } from "lucide-react";
 import { toast } from "sonner";
 import { CourierTimeline, type CourierEvent } from "@/components/CourierTimeline";
 import { OrderTabs } from "@/components/OrderTabs";
@@ -38,10 +38,20 @@ type OrderRow = {
   order_number: string;
   customer_name: string;
   customer_phone: string;
+  address_line: string;
+  city: string | null;
+  area: string;
+  subtotal: number;
+  shipping_cost: number;
+  discount: number;
   total: number;
+  reseller_profit: number;
+  payment_method: string;
   status: string;
   payment_status: string;
   forwarded_to_admin: boolean;
+  notes: string | null;
+  reseller_note: string | null;
   created_at: string;
 };
 
@@ -51,6 +61,9 @@ export const Route = createFileRoute("/_authenticated/reseller/orders")({
   component: OrdersPage,
 });
 
+const ORDER_COLUMNS =
+  "id,order_number,customer_name,customer_phone,address_line,city,area,subtotal,shipping_cost,discount,total,reseller_profit,payment_method,status,payment_status,forwarded_to_admin,notes,reseller_note,created_at";
+
 function OrdersPage() {
   const { user } = useAuth();
   const [resellerId, setResellerId] = useState<string | null>(null);
@@ -59,7 +72,7 @@ function OrdersPage() {
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<OrderTabKey>("new");
-  const [tracked, setTracked] = useState<OrderRow | null>(null);
+  const [selected, setSelected] = useState<OrderRow | null>(null);
 
   async function load() {
     if (!user) return;
@@ -74,7 +87,7 @@ function OrdersPage() {
     const [{ data: o }, { data: l }] = await Promise.all([
       supabase
         .from("orders")
-        .select("id,order_number,customer_name,customer_phone,total,status,payment_status,forwarded_to_admin,created_at")
+        .select(ORDER_COLUMNS)
         .eq("reseller_id", r.id)
         .order("created_at", { ascending: false }),
       supabase
@@ -99,17 +112,6 @@ function OrdersPage() {
     return sts.length === 0 ? orders.length : orders.filter((o) => (sts as string[]).includes(o.status)).length;
   };
 
-  async function forward(id: string) {
-    const { error } = await supabase
-      .from("orders")
-      .update({ forwarded_to_admin: true, forwarded_at: new Date().toISOString(), status: "forwarded" })
-      .eq("id", id);
-    if (error) toast.error(error.message);
-    else {
-      toast.success("Forwarded to admin");
-      load();
-    }
-  }
   async function remove(id: string) {
     if (!confirm("Delete this order?")) return;
     const { error } = await supabase.from("orders").delete().eq("id", id);
@@ -121,7 +123,7 @@ function OrdersPage() {
     <div>
       <PageHeader
         title="Orders"
-        description="Customer order gulo ekhane manage korun. Forward korle admin process korbe."
+        description="Nijer store er sob order ekhane. New Order = customer website theke asa order — confirm korle admin process korbe."
         actions={
           <button
             onClick={() => setOpen(true)}
@@ -134,15 +136,14 @@ function OrdersPage() {
 
       <OrderTabs tab={tab} onChange={setTab} count={tabCount} />
 
-
       {loading ? (
         <div className="grid place-items-center py-12">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       ) : visible.length === 0 ? (
         <EmptyState
-          title="No orders yet"
-          description="Manually order add korun ba customer order asle ekhane dekhben."
+          title="No orders"
+          description="Ei status e apnar kono order nai."
         />
       ) : (
         <div className="surface-card overflow-hidden">
@@ -150,7 +151,7 @@ function OrdersPage() {
             <div>Order</div>
             <div>Customer</div>
             <div>Total</div>
-            <div>Payment</div>
+            <div>Profit</div>
             <div>Status</div>
             <div></div>
           </div>
@@ -170,8 +171,8 @@ function OrdersPage() {
                 <div className="text-xs text-muted-foreground">{o.customer_phone}</div>
               </div>
               <div className="font-semibold">৳{Number(o.total).toFixed(0)}</div>
-              <div>
-                <span className="rounded-full bg-muted px-2 py-0.5 text-xs">{o.payment_status}</span>
+              <div className="text-xs font-medium text-success">
+                ৳{Number(o.reseller_profit).toFixed(0)}
               </div>
               <div>
                 <span className={`rounded-full px-2 py-0.5 text-xs capitalize ${orderStatusTone(o.status)}`}>
@@ -180,10 +181,10 @@ function OrdersPage() {
               </div>
               <div className="flex justify-end gap-2">
                 <button
-                  onClick={() => setTracked(o)}
-                  className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs hover:bg-accent"
+                  onClick={() => setSelected(o)}
+                  className="rounded-md border px-2 py-1 text-xs hover:bg-accent"
                 >
-                  <Truck className="h-3.5 w-3.5" /> Track
+                  Details
                 </button>
                 <Link
                   to="/reseller/orders/$id/invoice"
@@ -193,15 +194,7 @@ function OrdersPage() {
                 >
                   <FileText className="h-3.5 w-3.5" /> Invoice
                 </Link>
-                {!o.forwarded_to_admin && o.status !== "cancelled" && (
-                  <button
-                    onClick={() => forward(o.id)}
-                    className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs hover:bg-accent"
-                  >
-                    <Send className="h-3.5 w-3.5" /> Forward
-                  </button>
-                )}
-                {!o.forwarded_to_admin && (
+                {!o.forwarded_to_admin && (o.status === "pending" || o.status === "draft") && (
                   <button
                     onClick={() => remove(o.id)}
                     className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
@@ -215,7 +208,16 @@ function OrdersPage() {
         </div>
       )}
 
-      {tracked && <TrackDrawer order={tracked} onClose={() => setTracked(null)} />}
+      {selected && (
+        <OrderDrawer
+          order={selected}
+          onClose={() => setSelected(null)}
+          onChanged={() => {
+            setSelected(null);
+            load();
+          }}
+        />
+      )}
 
       {open && resellerId && (
         <NewOrderModal
@@ -285,6 +287,8 @@ function NewOrderModal({
     if (lines.length === 0) return toast.error("At least one product select korun.");
     setBusy(true);
     try {
+      // Reseller nijer hate add kora order = already confirmed, so admin queue e chole jabe.
+      // "New Order" tab shudhu customer website theke asa order dekhabe.
       const { data: order, error } = await supabase
         .from("orders")
         .insert({
@@ -300,7 +304,9 @@ function NewOrderModal({
           total: totals.total,
           sa_cost_total: totals.saCost,
           reseller_profit: totals.profit,
-          status: "pending",
+          status: "confirmed",
+          forwarded_to_admin: true,
+          forwarded_at: new Date().toISOString(),
         })
         .select("id")
         .single();
@@ -326,7 +332,7 @@ function NewOrderModal({
       const { error: ie } = await supabase.from("order_items").insert(items);
       if (ie) throw ie;
 
-      toast.success("Order created");
+      toast.success("Order created & admin ke pathano hoyeche");
       onCreated();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed");
@@ -514,14 +520,41 @@ function Row({
   );
 }
 
-function TrackDrawer({ order, onClose }: { order: OrderRow; onClose: () => void }) {
+type Item = {
+  id: string;
+  product_name: string;
+  quantity: number;
+  reseller_price: number;
+  line_total: number;
+  profit: number;
+};
+
+function OrderDrawer({
+  order,
+  onClose,
+  onChanged,
+}: {
+  order: OrderRow;
+  onClose: () => void;
+  onChanged: () => void;
+}) {
+  const [items, setItems] = useState<Item[]>([]);
   const [events, setEvents] = useState<CourierEvent[]>([]);
   const [shipments, setShipments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+
+  // Reseller shudhu New order (draft/pending) e Confirm ba Cancel korte parbe.
+  // Er por sob kichu SA admin er logic onujayi cholbe.
+  const canAct = !order.forwarded_to_admin && (order.status === "pending" || order.status === "draft");
 
   useEffect(() => {
     (async () => {
-      const [{ data: ev }, { data: sh }] = await Promise.all([
+      const [{ data: it }, { data: ev }, { data: sh }] = await Promise.all([
+        supabase
+          .from("order_items")
+          .select("id,product_name,quantity,reseller_price,line_total,profit")
+          .eq("order_id", order.id),
         supabase
           .from("courier_events")
           .select(
@@ -535,11 +568,30 @@ function TrackDrawer({ order, onClose }: { order: OrderRow; onClose: () => void 
           .eq("order_id", order.id)
           .order("created_at", { ascending: false }),
       ]);
+      setItems((it ?? []) as Item[]);
       setEvents((ev ?? []) as CourierEvent[]);
       setShipments(sh ?? []);
       setLoading(false);
     })();
   }, [order.id]);
+
+  async function setStatus(next: "confirmed" | "cancelled") {
+    setBusy(true);
+    const patch: Record<string, unknown> =
+      next === "confirmed"
+        ? { status: "confirmed", forwarded_to_admin: true, forwarded_at: new Date().toISOString() }
+        : { status: "cancelled" };
+    const { error } = await supabase.from("orders").update(patch as any).eq("id", order.id);
+    if (error) {
+      toast.error(error.message);
+      setBusy(false);
+      return;
+    }
+    await supabase.from("order_status_history").insert({ order_id: order.id, status: next as any });
+    toast.success(next === "confirmed" ? "Order confirmed — admin ke pathano hoyeche" : "Order cancelled");
+    setBusy(false);
+    onChanged();
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/40">
@@ -559,51 +611,111 @@ function TrackDrawer({ order, onClose }: { order: OrderRow; onClose: () => void 
           </button>
         </div>
 
-        {loading ? (
-          <div className="grid place-items-center py-10">
-            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+        {canAct ? (
+          <div className="flex gap-2">
+            <button
+              disabled={busy}
+              onClick={() => setStatus("confirmed")}
+              className="btn-brand inline-flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium disabled:opacity-50"
+            >
+              <Check className="h-4 w-4" /> Confirm
+            </button>
+            <button
+              disabled={busy}
+              onClick={() => setStatus("cancelled")}
+              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-md border border-destructive/40 px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/10 disabled:opacity-50"
+            >
+              <Ban className="h-4 w-4" /> Cancel
+            </button>
           </div>
         ) : (
-          <>
-            <div className="surface-card p-4">
-              <div className="mb-2 text-sm font-medium">Parcel info</div>
-              {shipments.length === 0 ? (
-                <p className="text-xs text-muted-foreground">
-                  Admin এখনও courier booking koreni.
-                </p>
-              ) : (
-                shipments.map((s) => (
-                  <div key={s.id} className="space-y-1 border-b py-2 text-sm last:border-b-0">
-                    <div className="font-medium capitalize">{s.provider}</div>
-                    <div className="text-xs text-muted-foreground">
-                      Tracking: {s.tracking_id ?? "—"}
-                      {s.consignment_id ? ` · CID ${s.consignment_id}` : ""}
-                    </div>
-                    <div className="flex flex-wrap gap-1.5 text-[11px]">
-                      <span className="rounded-full bg-primary/15 px-2 py-0.5 capitalize text-primary">
-                        {String(s.status).replace(/_/g, " ")}
-                      </span>
-                      {s.courier_status && (
-                        <span className="rounded-full bg-muted px-2 py-0.5">
-                          Courier: {courierStatusLabel(s.courier_status)}
-                        </span>
-                      )}
-                      {s.cod_amount != null && (
-                        <span className="rounded-full bg-muted px-2 py-0.5">COD ৳{Number(s.cod_amount).toFixed(0)}</span>
-                      )}
-                    </div>
-                    {s.last_event_at && (
-                      <div className="text-[11px] text-muted-foreground">
-                        Last update: {new Date(s.last_event_at).toLocaleString()}
-                      </div>
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
-            <CourierTimeline events={events} title="Courier tracking history" />
-          </>
+          <p className="rounded-md bg-muted/50 p-3 text-xs text-muted-foreground">
+            Order ta admin er kache chole gese — ekhon theke status shudhu admin/courier update korbe.
+          </p>
         )}
+
+        <div className="surface-card p-4 text-sm">
+          <div className="mb-2 font-medium">Delivery</div>
+          <p className="text-xs text-muted-foreground">
+            {order.address_line}
+            {order.city ? `, ${order.city}` : ""} · {String(order.area).replace(/_/g, " ")}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Payment: {order.payment_method} ({order.payment_status})
+          </p>
+          {order.notes && <p className="mt-1 text-xs text-muted-foreground">Customer note: {order.notes}</p>}
+          {order.reseller_note && (
+            <p className="mt-1 text-xs text-muted-foreground">Your note: {order.reseller_note}</p>
+          )}
+        </div>
+
+        <div className="surface-card p-4">
+          <div className="mb-2 text-sm font-medium">Items</div>
+          {loading ? (
+            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+          ) : (
+            items.map((it) => (
+              <div key={it.id} className="flex items-center justify-between border-b py-2 text-sm last:border-b-0">
+                <div className="min-w-0">
+                  <div className="truncate">{it.product_name}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {it.quantity} × ৳{Number(it.reseller_price).toFixed(0)} · profit ৳
+                    {Number(it.profit).toFixed(0)}
+                  </div>
+                </div>
+                <div className="font-medium">৳{Number(it.line_total).toFixed(0)}</div>
+              </div>
+            ))
+          )}
+          <div className="mt-3 space-y-1 border-t pt-3 text-sm">
+            <Row label="Subtotal" value={`৳${Number(order.subtotal).toFixed(0)}`} />
+            <Row label="Shipping" value={`৳${Number(order.shipping_cost).toFixed(0)}`} />
+            {Number(order.discount) > 0 && (
+              <Row label="Discount" value={`-৳${Number(order.discount).toFixed(0)}`} />
+            )}
+            <Row label="Total" value={`৳${Number(order.total).toFixed(0)}`} bold />
+            <Row label="Your profit" value={`৳${Number(order.reseller_profit).toFixed(0)}`} muted />
+          </div>
+        </div>
+
+        <div className="surface-card p-4">
+          <div className="mb-2 text-sm font-medium">Parcel info</div>
+          {shipments.length === 0 ? (
+            <p className="text-xs text-muted-foreground">Admin এখনও courier booking koreni.</p>
+          ) : (
+            shipments.map((s) => (
+              <div key={s.id} className="space-y-1 border-b py-2 text-sm last:border-b-0">
+                <div className="font-medium capitalize">{s.provider}</div>
+                <div className="text-xs text-muted-foreground">
+                  Tracking: {s.tracking_id ?? "—"}
+                  {s.consignment_id ? ` · CID ${s.consignment_id}` : ""}
+                </div>
+                <div className="flex flex-wrap gap-1.5 text-[11px]">
+                  <span className="rounded-full bg-primary/15 px-2 py-0.5 capitalize text-primary">
+                    {String(s.status).replace(/_/g, " ")}
+                  </span>
+                  {s.courier_status && (
+                    <span className="rounded-full bg-muted px-2 py-0.5">
+                      Courier: {courierStatusLabel(s.courier_status, s.provider)}
+                    </span>
+                  )}
+                  {s.cod_amount != null && (
+                    <span className="rounded-full bg-muted px-2 py-0.5">
+                      COD ৳{Number(s.cod_amount).toFixed(0)}
+                    </span>
+                  )}
+                </div>
+                {s.last_event_at && (
+                  <div className="text-[11px] text-muted-foreground">
+                    Last update: {new Date(s.last_event_at).toLocaleString()}
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+
+        <CourierTimeline events={events} title="Courier tracking history" />
       </div>
     </div>
   );
