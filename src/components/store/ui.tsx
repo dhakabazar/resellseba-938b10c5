@@ -157,8 +157,9 @@ export function ProductCard({ listing }: { listing: StoreListing }) {
           className={cx(
             "line-clamp-2 text-[var(--st-fg)]",
             variant === "compact" ? "text-[13px] leading-snug" : "text-sm",
-            variant === "bare" && "font-[var(--st-font-head)] text-base",
+            variant === "bare" && "text-base",
           )}
+          style={variant === "bare" ? { fontFamily: "var(--st-font-head)" } : undefined}
         >
           {title(listing)}
         </h3>
