@@ -51,6 +51,7 @@ import { Route as SCodePSlugRouteImport } from './routes/s.$code.p.$slug'
 import { Route as ApiPublicSitemapCodeRouteImport } from './routes/api/public/sitemap.$code'
 import { Route as ApiPublicPaymentSslcommerzIpnRouteImport } from './routes/api/public/payment.sslcommerz-ipn'
 import { Route as ApiPublicPaymentBkashCallbackRouteImport } from './routes/api/public/payment.bkash-callback'
+import { Route as ApiPublicCourierSteadfastRouteImport } from './routes/api/public/courier.steadfast'
 import { Route as AuthenticatedAdminProductsNewRouteImport } from './routes/_authenticated/admin/products.new'
 import { Route as AuthenticatedResellerOrdersIdInvoiceRouteImport } from './routes/_authenticated/reseller/orders.$id.invoice'
 import { Route as AuthenticatedAdminProductsIdEditRouteImport } from './routes/_authenticated/admin/products.$id.edit'
@@ -291,6 +292,12 @@ const ApiPublicPaymentBkashCallbackRoute =
     path: '/api/public/payment/bkash-callback',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicCourierSteadfastRoute =
+  ApiPublicCourierSteadfastRouteImport.update({
+    id: '/api/public/courier/steadfast',
+    path: '/api/public/courier/steadfast',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedAdminProductsNewRoute =
   AuthenticatedAdminProductsNewRouteImport.update({
     id: '/products/new',
@@ -348,6 +355,7 @@ export interface FileRoutesByFullPath {
   '/reseller/': typeof AuthenticatedResellerIndexRoute
   '/s/$code/': typeof SCodeIndexRoute
   '/admin/products/new': typeof AuthenticatedAdminProductsNewRoute
+  '/api/public/courier/steadfast': typeof ApiPublicCourierSteadfastRoute
   '/api/public/payment/bkash-callback': typeof ApiPublicPaymentBkashCallbackRoute
   '/api/public/payment/sslcommerz-ipn': typeof ApiPublicPaymentSslcommerzIpnRoute
   '/api/public/sitemap/$code': typeof ApiPublicSitemapCodeRoute
@@ -391,6 +399,7 @@ export interface FileRoutesByTo {
   '/reseller': typeof AuthenticatedResellerIndexRoute
   '/s/$code': typeof SCodeIndexRoute
   '/admin/products/new': typeof AuthenticatedAdminProductsNewRoute
+  '/api/public/courier/steadfast': typeof ApiPublicCourierSteadfastRoute
   '/api/public/payment/bkash-callback': typeof ApiPublicPaymentBkashCallbackRoute
   '/api/public/payment/sslcommerz-ipn': typeof ApiPublicPaymentSslcommerzIpnRoute
   '/api/public/sitemap/$code': typeof ApiPublicSitemapCodeRoute
@@ -439,6 +448,7 @@ export interface FileRoutesById {
   '/_authenticated/reseller/': typeof AuthenticatedResellerIndexRoute
   '/s/$code/': typeof SCodeIndexRoute
   '/_authenticated/admin/products/new': typeof AuthenticatedAdminProductsNewRoute
+  '/api/public/courier/steadfast': typeof ApiPublicCourierSteadfastRoute
   '/api/public/payment/bkash-callback': typeof ApiPublicPaymentBkashCallbackRoute
   '/api/public/payment/sslcommerz-ipn': typeof ApiPublicPaymentSslcommerzIpnRoute
   '/api/public/sitemap/$code': typeof ApiPublicSitemapCodeRoute
@@ -487,6 +497,7 @@ export interface FileRouteTypes {
     | '/reseller/'
     | '/s/$code/'
     | '/admin/products/new'
+    | '/api/public/courier/steadfast'
     | '/api/public/payment/bkash-callback'
     | '/api/public/payment/sslcommerz-ipn'
     | '/api/public/sitemap/$code'
@@ -530,6 +541,7 @@ export interface FileRouteTypes {
     | '/reseller'
     | '/s/$code'
     | '/admin/products/new'
+    | '/api/public/courier/steadfast'
     | '/api/public/payment/bkash-callback'
     | '/api/public/payment/sslcommerz-ipn'
     | '/api/public/sitemap/$code'
@@ -577,6 +589,7 @@ export interface FileRouteTypes {
     | '/_authenticated/reseller/'
     | '/s/$code/'
     | '/_authenticated/admin/products/new'
+    | '/api/public/courier/steadfast'
     | '/api/public/payment/bkash-callback'
     | '/api/public/payment/sslcommerz-ipn'
     | '/api/public/sitemap/$code'
@@ -592,6 +605,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   SCodeRoute: typeof SCodeRouteWithChildren
   ApiPublicRobotsRoute: typeof ApiPublicRobotsRoute
+  ApiPublicCourierSteadfastRoute: typeof ApiPublicCourierSteadfastRoute
   ApiPublicPaymentBkashCallbackRoute: typeof ApiPublicPaymentBkashCallbackRoute
   ApiPublicPaymentSslcommerzIpnRoute: typeof ApiPublicPaymentSslcommerzIpnRoute
   ApiPublicSitemapCodeRoute: typeof ApiPublicSitemapCodeRoute
@@ -893,6 +907,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPaymentBkashCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/courier/steadfast': {
+      id: '/api/public/courier/steadfast'
+      path: '/api/public/courier/steadfast'
+      fullPath: '/api/public/courier/steadfast'
+      preLoaderRoute: typeof ApiPublicCourierSteadfastRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/admin/products/new': {
       id: '/_authenticated/admin/products/new'
       path: '/products/new'
@@ -1054,6 +1075,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   SCodeRoute: SCodeRouteWithChildren,
   ApiPublicRobotsRoute: ApiPublicRobotsRoute,
+  ApiPublicCourierSteadfastRoute: ApiPublicCourierSteadfastRoute,
   ApiPublicPaymentBkashCallbackRoute: ApiPublicPaymentBkashCallbackRoute,
   ApiPublicPaymentSslcommerzIpnRoute: ApiPublicPaymentSslcommerzIpnRoute,
   ApiPublicSitemapCodeRoute: ApiPublicSitemapCodeRoute,

@@ -2,8 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/ui-kit";
-import { Loader2, Truck } from "lucide-react";
+import { Loader2, Truck, Copy, Wallet } from "lucide-react";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { steadfastBalance } from "@/lib/couriers.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/couriers")({
   component: CouriersPage,
@@ -22,6 +24,7 @@ const FIELDS: Record<string, { key: string; label: string; type?: string; hint?:
     { key: "api_key", label: "API Key" },
     { key: "secret_key", label: "Secret Key", type: "password" },
     { key: "base_url", label: "Base URL", hint: "https://portal.packzy.com/api/v1" },
+    { key: "webhook_token", label: "Webhook Token", hint: "Any secret string — also used in the webhook URL" },
   ],
   pathao: [
     { key: "client_id", label: "Client ID" },
@@ -36,6 +39,7 @@ const FIELDS: Record<string, { key: string; label: string; type?: string; hint?:
   ],
   manual: [],
 };
+
 
 function CouriersPage() {
   const [rows, setRows] = useState<Row[]>([]);
@@ -112,10 +116,68 @@ function CouriersPage() {
                   ))}
                 </div>
               )}
+              {r.provider === "steadfast" && <SteadfastExtras token={r.config?.webhook_token ?? ""} />}
               <button onClick={() => save(r)} className="btn-brand mt-4 rounded-md px-3 py-1.5 text-xs font-medium">Save</button>
+
             </div>
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+function SteadfastExtras({ token }: { token: string }) {
+  const [balance, setBalance] = useState<number | null>(null);
+  const [busy, setBusy] = useState(false);
+  const getBalance = useServerFn(steadfastBalance);
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const webhookUrl = `${origin}/api/public/courier/steadfast?token=${token || "<save-token-first>"}`;
+
+  return (
+    <div className="mt-4 space-y-3 rounded-lg border bg-muted/30 p-3">
+      <div>
+        <div className="mb-1 text-xs font-medium">Webhook URL (Steadfast panel e set korun)</div>
+        <div className="flex items-center gap-2">
+          <code className="flex-1 truncate rounded-md border bg-background px-2 py-1.5 text-[11px]">
+            {webhookUrl}
+          </code>
+          <button
+            type="button"
+            onClick={() => {
+              navigator.clipboard.writeText(webhookUrl);
+              toast.success("Webhook URL copied");
+            }}
+            className="rounded-md border p-1.5 hover:bg-accent"
+          >
+            <Copy className="h-3.5 w-3.5" />
+          </button>
+        </div>
+        <p className="mt-1 text-[11px] text-muted-foreground">
+          Webhook Token save korar por ei URL Steadfast support/panel e diye din — live status update order e chole asbe.
+        </p>
+      </div>
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          disabled={busy}
+          onClick={async () => {
+            setBusy(true);
+            try {
+              const r = await getBalance();
+              setBalance(r.balance);
+            } catch (e) {
+              toast.error(e instanceof Error ? e.message : "Balance fetch failed");
+            } finally {
+              setBusy(false);
+            }
+          }}
+          className="inline-flex items-center gap-2 rounded-md border px-2.5 py-1.5 text-xs hover:bg-accent"
+        >
+          {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Wallet className="h-3.5 w-3.5" />}
+          Check balance
+        </button>
+        {balance !== null && <span className="text-xs font-semibold">৳{balance.toFixed(2)}</span>}
       </div>
     </div>
   );

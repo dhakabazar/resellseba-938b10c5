@@ -2,10 +2,24 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
-import { Loader2, Truck, X, Download, Zap } from "lucide-react";
+import { Loader2, Truck, X, Download, Zap, RotateCcw, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
-import { bookSteadfast, bookPathao, syncSteadfastStatus } from "@/lib/couriers.functions";
+import {
+  bookSteadfast,
+  bookPathao,
+  syncSteadfastStatus,
+  steadfastCreateReturn,
+} from "@/lib/couriers.functions";
+import { CourierTimeline, type CourierEvent } from "@/components/CourierTimeline";
+import {
+  ORDER_TABS,
+  ORDER_STATUS_OPTIONS,
+  courierStatusLabel,
+  orderStatusTone,
+  orderStatusLabel,
+  type OrderTabKey,
+} from "@/lib/courier-status";
 
 type OrderRow = {
   id: string;
@@ -38,21 +52,15 @@ type Shipment = {
   id: string;
   provider: string;
   tracking_id: string | null;
+  consignment_id: string | null;
   status: string;
+  courier_status: string | null;
+  cod_amount: number | null;
+  delivery_charge: number | null;
+  last_event_at: string | null;
   cost: number;
   booked_at: string | null;
 };
-
-const STATUS_OPTIONS = [
-  "pending",
-  "confirmed",
-  "forwarded",
-  "processing",
-  "shipped",
-  "delivered",
-  "returned",
-  "cancelled",
-];
 
 export const Route = createFileRoute("/_authenticated/admin/orders")({
   component: AdminOrdersPage,
@@ -88,34 +96,45 @@ function exportCsv(rows: OrderRow[]) {
 
 function AdminOrdersPage() {
   const [orders, setOrders] = useState<OrderRow[]>([]);
+  const [counts, setCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<"all" | "forwarded" | "processing">("forwarded");
+  const [tab, setTab] = useState<OrderTabKey>("confirmed");
   const [selected, setSelected] = useState<OrderRow | null>(null);
 
   async function load() {
     setLoading(true);
+    const statuses = ORDER_TABS.find((t) => t.key === tab)?.statuses ?? [];
     let q = supabase
       .from("orders")
       .select(
         "id,order_number,customer_name,customer_phone,address_line,area,total,status,payment_status,payment_method,forwarded_to_admin,created_at,reseller_note,admin_note,resellers(business_name,code)",
       )
       .order("created_at", { ascending: false });
-    if (filter === "forwarded") q = q.eq("forwarded_to_admin", true);
-    if (filter === "processing")
-      q = q.in("status", ["forwarded", "processing", "shipped"]);
-    const { data } = await q;
+    if (statuses.length > 0) q = q.in("status", statuses);
+    const [{ data }, { data: all }] = await Promise.all([
+      q,
+      supabase.from("orders").select("status"),
+    ]);
     setOrders((data ?? []) as OrderRow[]);
+    const byStatus: Record<string, number> = {};
+    for (const row of all ?? []) byStatus[(row as any).status] = (byStatus[(row as any).status] ?? 0) + 1;
+    const tabCounts: Record<string, number> = { all: (all ?? []).length };
+    for (const t of ORDER_TABS) {
+      if (t.key === "all") continue;
+      tabCounts[t.key] = t.statuses.reduce((s, st) => s + (byStatus[st] ?? 0), 0);
+    }
+    setCounts(tabCounts);
     setLoading(false);
   }
   useEffect(() => {
     load();
-  }, [filter]);
+  }, [tab]);
 
   return (
     <div>
       <PageHeader
         title="Orders"
-        description="Reseller forward kora order gulo ekhane process korun."
+        description="Status onujayi order manage korun — courier booking o live tracking ekhane."
         actions={
           <button
             onClick={() => exportCsv(orders)}
@@ -127,16 +146,17 @@ function AdminOrdersPage() {
         }
       />
 
-      <div className="mb-4 flex gap-2 text-sm">
-        {(["forwarded", "processing", "all"] as const).map((k) => (
+      <div className="mb-4 -mx-1 flex gap-2 overflow-x-auto px-1 pb-1 text-sm">
+        {ORDER_TABS.map((t) => (
           <button
-            key={k}
-            onClick={() => setFilter(k)}
-            className={`rounded-md border px-3 py-1.5 capitalize ${
-              filter === k ? "border-primary bg-primary/10 text-primary" : ""
+            key={t.key}
+            onClick={() => setTab(t.key)}
+            className={`shrink-0 rounded-md border px-3 py-1.5 ${
+              tab === t.key ? "border-primary bg-primary/10 font-medium text-primary" : "hover:bg-accent"
             }`}
           >
-            {k}
+            {t.label}
+            <span className="ml-1.5 text-xs text-muted-foreground">{counts[t.key] ?? 0}</span>
           </button>
         ))}
       </div>
@@ -146,7 +166,7 @@ function AdminOrdersPage() {
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       ) : orders.length === 0 ? (
-        <EmptyState title="No orders" description="Kono forwarded order pai nai." />
+        <EmptyState title="No orders" description="Ei status e kono order nai." />
       ) : (
         <div className="surface-card overflow-hidden">
           <div className="hidden grid-cols-[1fr_1fr_1.2fr_1fr_1fr_auto] gap-4 border-b bg-muted/40 px-4 py-2 text-xs font-medium text-muted-foreground md:grid">
@@ -178,8 +198,8 @@ function AdminOrdersPage() {
               </div>
               <div className="font-semibold">৳{Number(o.total).toFixed(0)}</div>
               <div>
-                <span className="rounded-full bg-primary/15 px-2 py-0.5 text-xs text-primary">
-                  {o.status}
+                <span className={`rounded-full px-2 py-0.5 text-xs capitalize ${orderStatusTone(o.status)}`}>
+                  {orderStatusLabel(o.status)}
                 </span>
               </div>
               <div className="flex justify-end">
@@ -220,34 +240,48 @@ function OrderDrawer({
 }) {
   const [items, setItems] = useState<Item[]>([]);
   const [shipments, setShipments] = useState<Shipment[]>([]);
+  const [events, setEvents] = useState<CourierEvent[]>([]);
   const [status, setStatus] = useState(order.status);
   const [adminNote, setAdminNote] = useState(order.admin_note ?? "");
   const [busy, setBusy] = useState(false);
   const bookAuto = useServerFn(bookSteadfast);
   const bookPathaoFn = useServerFn(bookPathao);
   const syncStatus = useServerFn(syncSteadfastStatus);
+  const createReturn = useServerFn(steadfastCreateReturn);
 
   // shipment form
   const [provider, setProvider] = useState("steadfast");
   const [tracking, setTracking] = useState("");
   const [cost, setCost] = useState<number>(0);
+  const [deliveryType, setDeliveryType] = useState<0 | 1>(0);
 
+  async function loadDetails() {
+    const [{ data: i }, { data: s }, { data: ev }] = await Promise.all([
+      supabase
+        .from("order_items")
+        .select("id,product_name,quantity,reseller_price,sa_price,line_total")
+        .eq("order_id", order.id),
+      supabase
+        .from("shipments")
+        .select(
+          "id,provider,tracking_id,consignment_id,status,courier_status,cod_amount,delivery_charge,last_event_at,cost,booked_at",
+        )
+        .eq("order_id", order.id)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("courier_events")
+        .select(
+          "id,provider,source,notification_type,courier_status,tracking_code,cod_amount,delivery_charge,note,event_at",
+        )
+        .eq("order_id", order.id)
+        .order("event_at", { ascending: false }),
+    ]);
+    setItems((i ?? []) as Item[]);
+    setShipments((s ?? []) as Shipment[]);
+    setEvents((ev ?? []) as CourierEvent[]);
+  }
   useEffect(() => {
-    (async () => {
-      const [{ data: i }, { data: s }] = await Promise.all([
-        supabase
-          .from("order_items")
-          .select("id,product_name,quantity,reseller_price,sa_price,line_total")
-          .eq("order_id", order.id),
-        supabase
-          .from("shipments")
-          .select("id,provider,tracking_id,status,cost,booked_at")
-          .eq("order_id", order.id)
-          .order("created_at", { ascending: false }),
-      ]);
-      setItems((i ?? []) as Item[]);
-      setShipments((s ?? []) as Shipment[]);
-    })();
+    loadDetails();
   }, [order.id]);
 
   async function saveStatus() {
@@ -280,10 +314,7 @@ function OrderDrawer({
       booked_at: new Date().toISOString(),
     });
     if (!error) {
-      await supabase
-        .from("orders")
-        .update({ status: "shipped" })
-        .eq("id", order.id);
+      await supabase.from("orders").update({ status: "shipped" }).eq("id", order.id);
       toast.success("Shipment booked");
       onChanged();
     } else toast.error(error.message);
@@ -342,14 +373,10 @@ function OrderDrawer({
 
         <div className="surface-card mb-4 space-y-3 p-4">
           <div className="text-sm font-medium">Status</div>
-          <select
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-            className="input"
-          >
-            {STATUS_OPTIONS.map((s) => (
+          <select value={status} onChange={(e) => setStatus(e.target.value)} className="input capitalize">
+            {ORDER_STATUS_OPTIONS.map((s) => (
               <option key={s} value={s}>
-                {s}
+                {orderStatusLabel(s)}
               </option>
             ))}
           </select>
@@ -369,23 +396,49 @@ function OrderDrawer({
           </button>
         </div>
 
-        <div className="surface-card p-4">
+        <div className="surface-card mb-4 p-4">
           <div className="mb-3 flex items-center gap-2 text-sm font-medium">
             <Truck className="h-4 w-4" /> Shipments
           </div>
           {shipments.length > 0 ? (
             <div className="mb-4 divide-y">
               {shipments.map((s) => (
-                <div key={s.id} className="flex items-center justify-between gap-2 py-2 text-sm">
-                  <div>
-                    <div className="font-medium capitalize">{s.provider}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {s.tracking_id ?? "—"} · {s.status}
+                <div key={s.id} className="space-y-2 py-3 text-sm">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <div className="font-medium capitalize">{s.provider}</div>
+                      <div className="text-xs text-muted-foreground">
+                        Tracking: {s.tracking_id ?? "—"}
+                        {s.consignment_id ? ` · CID ${s.consignment_id}` : ""}
+                      </div>
+                      <div className="mt-1 flex flex-wrap gap-1.5 text-[11px]">
+                        <span className="rounded-full bg-primary/15 px-2 py-0.5 capitalize text-primary">
+                          {s.status.replace(/_/g, " ")}
+                        </span>
+                        {s.courier_status && (
+                          <span className="rounded-full bg-muted px-2 py-0.5">
+                            Courier: {courierStatusLabel(s.courier_status)}
+                          </span>
+                        )}
+                        {s.cod_amount != null && (
+                          <span className="rounded-full bg-muted px-2 py-0.5">COD ৳{Number(s.cod_amount).toFixed(0)}</span>
+                        )}
+                        {s.delivery_charge != null && (
+                          <span className="rounded-full bg-muted px-2 py-0.5">
+                            Charge ৳{Number(s.delivery_charge).toFixed(0)}
+                          </span>
+                        )}
+                      </div>
+                      {s.last_event_at && (
+                        <div className="mt-1 text-[11px] text-muted-foreground">
+                          Last update: {new Date(s.last_event_at).toLocaleString()}
+                        </div>
+                      )}
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2">
                     <div className="text-right text-sm">৳{Number(s.cost).toFixed(0)}</div>
-                    {s.provider === "steadfast" && (
+                  </div>
+                  {s.provider === "steadfast" && (
+                    <div className="flex flex-wrap gap-2">
                       <button
                         type="button"
                         disabled={busy}
@@ -393,16 +446,42 @@ function OrderDrawer({
                           setBusy(true);
                           try {
                             const r = await syncStatus({ data: { shipmentId: s.id } });
-                            toast.success(`Status: ${r.shipStatus}`);
+                            toast.success(`Courier status: ${courierStatusLabel(r.courierStatus)}`);
+                            await loadDetails();
                             onChanged();
                           } catch (e) {
                             toast.error(e instanceof Error ? e.message : "Sync failed");
-                          } finally { setBusy(false); }
+                          } finally {
+                            setBusy(false);
+                          }
                         }}
-                        className="rounded-md border px-2 py-1 text-xs hover:bg-accent"
-                      >Sync</button>
-                    )}
-                  </div>
+                        className="inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs hover:bg-accent"
+                      >
+                        <RefreshCw className="h-3.5 w-3.5" /> Sync status
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={async () => {
+                          const reason = prompt("Return reason (optional)") ?? undefined;
+                          setBusy(true);
+                          try {
+                            const r = await createReturn({ data: { shipmentId: s.id, reason } });
+                            toast.success(`Return request: ${r.status}`);
+                            await loadDetails();
+                            onChanged();
+                          } catch (e) {
+                            toast.error(e instanceof Error ? e.message : "Return request failed");
+                          } finally {
+                            setBusy(false);
+                          }
+                        }}
+                        className="inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs hover:bg-accent"
+                      >
+                        <RotateCcw className="h-3.5 w-3.5" /> Request return
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -441,23 +520,36 @@ function OrderDrawer({
               {busy && <Loader2 className="h-4 w-4 animate-spin" />} Book manually
             </button>
             {provider === "steadfast" && (
-              <button
-                type="button"
-                disabled={busy}
-                onClick={async () => {
-                  setBusy(true);
-                  try {
-                    const r = await bookAuto({ data: { orderId: order.id } });
-                    toast.success(`Booked · ${r.trackingId}`);
-                    onChanged();
-                  } catch (e) {
-                    toast.error(e instanceof Error ? e.message : "Booking failed");
-                  } finally { setBusy(false); }
-                }}
-                className="col-span-2 inline-flex items-center justify-center gap-2 rounded-md border border-primary/40 bg-primary/10 px-4 py-2 text-sm font-medium text-primary"
-              >
-                <Zap className="h-4 w-4" /> Auto-book with Steadfast API
-              </button>
+              <>
+                <select
+                  value={deliveryType}
+                  onChange={(e) => setDeliveryType(Number(e.target.value) as 0 | 1)}
+                  className="input col-span-2"
+                >
+                  <option value={0}>Home delivery</option>
+                  <option value={1}>Point delivery / hub pickup</option>
+                </select>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={async () => {
+                    setBusy(true);
+                    try {
+                      const r = await bookAuto({ data: { orderId: order.id, deliveryType } });
+                      toast.success(`Booked · ${r.trackingId}`);
+                      await loadDetails();
+                      onChanged();
+                    } catch (e) {
+                      toast.error(e instanceof Error ? e.message : "Booking failed");
+                    } finally {
+                      setBusy(false);
+                    }
+                  }}
+                  className="col-span-2 inline-flex items-center justify-center gap-2 rounded-md border border-primary/40 bg-primary/10 px-4 py-2 text-sm font-medium text-primary"
+                >
+                  <Zap className="h-4 w-4" /> Auto-book with Steadfast API
+                </button>
+              </>
             )}
             {provider === "pathao" && (
               <button
@@ -468,10 +560,13 @@ function OrderDrawer({
                   try {
                     const r = await bookPathaoFn({ data: { orderId: order.id } });
                     toast.success(`Booked · ${r.trackingId}`);
+                    await loadDetails();
                     onChanged();
                   } catch (e) {
                     toast.error(e instanceof Error ? e.message : "Booking failed");
-                  } finally { setBusy(false); }
+                  } finally {
+                    setBusy(false);
+                  }
                 }}
                 className="col-span-2 inline-flex items-center justify-center gap-2 rounded-md border border-primary/40 bg-primary/10 px-4 py-2 text-sm font-medium text-primary"
               >
@@ -480,6 +575,8 @@ function OrderDrawer({
             )}
           </form>
         </div>
+
+        <CourierTimeline events={events} />
       </div>
     </div>
   );

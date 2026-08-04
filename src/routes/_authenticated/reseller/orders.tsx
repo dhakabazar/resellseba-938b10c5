@@ -4,8 +4,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { productDeliveryCharge } from "@/lib/delivery";
 import { useAuth } from "@/lib/use-auth";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
-import { Loader2, Plus, Send, X, Trash2, FileText } from "lucide-react";
+import { Loader2, Plus, Send, X, Trash2, FileText, Truck } from "lucide-react";
 import { toast } from "sonner";
+import { CourierTimeline, type CourierEvent } from "@/components/CourierTimeline";
+import {
+  ORDER_TABS,
+  courierStatusLabel,
+  orderStatusLabel,
+  orderStatusTone,
+  type OrderTabKey,
+} from "@/lib/courier-status";
 
 type Listing = {
   id: string;
@@ -48,6 +56,8 @@ function OrdersPage() {
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
+  const [tab, setTab] = useState<OrderTabKey>("new");
+  const [tracked, setTracked] = useState<OrderRow | null>(null);
 
   async function load() {
     if (!user) return;
@@ -78,6 +88,14 @@ function OrdersPage() {
   useEffect(() => {
     load();
   }, [user]);
+
+  const tabStatuses = ORDER_TABS.find((t) => t.key === tab)?.statuses ?? [];
+  const visible =
+    tabStatuses.length === 0 ? orders : orders.filter((o) => (tabStatuses as string[]).includes(o.status));
+  const tabCount = (key: OrderTabKey) => {
+    const sts = ORDER_TABS.find((t) => t.key === key)?.statuses ?? [];
+    return sts.length === 0 ? orders.length : orders.filter((o) => (sts as string[]).includes(o.status)).length;
+  };
 
   async function forward(id: string) {
     const { error } = await supabase
@@ -112,11 +130,26 @@ function OrdersPage() {
         }
       />
 
+      <div className="mb-4 -mx-1 flex gap-2 overflow-x-auto px-1 pb-1 text-sm">
+        {ORDER_TABS.map((t) => (
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key)}
+            className={`shrink-0 rounded-md border px-3 py-1.5 ${
+              tab === t.key ? "border-primary bg-primary/10 font-medium text-primary" : "hover:bg-accent"
+            }`}
+          >
+            {t.label}
+            <span className="ml-1.5 text-xs text-muted-foreground">{tabCount(t.key)}</span>
+          </button>
+        ))}
+      </div>
+
       {loading ? (
         <div className="grid place-items-center py-12">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
-      ) : orders.length === 0 ? (
+      ) : visible.length === 0 ? (
         <EmptyState
           title="No orders yet"
           description="Manually order add korun ba customer order asle ekhane dekhben."
@@ -131,7 +164,7 @@ function OrdersPage() {
             <div>Status</div>
             <div></div>
           </div>
-          {orders.map((o) => (
+          {visible.map((o) => (
             <div
               key={o.id}
               className="grid grid-cols-1 items-center gap-3 border-b px-4 py-3 text-sm last:border-b-0 md:grid-cols-[1fr_1.2fr_1fr_0.8fr_0.8fr_auto]"
@@ -151,19 +184,17 @@ function OrdersPage() {
                 <span className="rounded-full bg-muted px-2 py-0.5 text-xs">{o.payment_status}</span>
               </div>
               <div>
-                <span
-                  className={`rounded-full px-2 py-0.5 text-xs ${
-                    o.status === "delivered"
-                      ? "bg-success/15 text-success"
-                      : o.status === "cancelled" || o.status === "returned"
-                        ? "bg-destructive/15 text-destructive"
-                        : "bg-primary/15 text-primary"
-                  }`}
-                >
-                  {o.status}
+                <span className={`rounded-full px-2 py-0.5 text-xs capitalize ${orderStatusTone(o.status)}`}>
+                  {orderStatusLabel(o.status)}
                 </span>
               </div>
               <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => setTracked(o)}
+                  className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs hover:bg-accent"
+                >
+                  <Truck className="h-3.5 w-3.5" /> Track
+                </button>
                 <Link
                   to="/reseller/orders/$id/invoice"
                   params={{ id: o.id }}
@@ -193,6 +224,8 @@ function OrdersPage() {
           ))}
         </div>
       )}
+
+      {tracked && <TrackDrawer order={tracked} onClose={() => setTracked(null)} />}
 
       {open && resellerId && (
         <NewOrderModal
@@ -487,6 +520,101 @@ function Row({
     <div className={`flex justify-between ${bold ? "font-semibold" : ""} ${muted ? "text-success" : ""}`}>
       <span className="text-muted-foreground">{label}</span>
       <span>{value}</span>
+    </div>
+  );
+}
+
+function TrackDrawer({ order, onClose }: { order: OrderRow; onClose: () => void }) {
+  const [events, setEvents] = useState<CourierEvent[]>([]);
+  const [shipments, setShipments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      const [{ data: ev }, { data: sh }] = await Promise.all([
+        supabase
+          .from("courier_events")
+          .select(
+            "id,provider,source,notification_type,courier_status,tracking_code,cod_amount,delivery_charge,note,event_at",
+          )
+          .eq("order_id", order.id)
+          .order("event_at", { ascending: false }),
+        supabase
+          .from("shipments")
+          .select("id,provider,tracking_id,consignment_id,status,courier_status,cod_amount,delivery_charge,last_event_at")
+          .eq("order_id", order.id)
+          .order("created_at", { ascending: false }),
+      ]);
+      setEvents((ev ?? []) as CourierEvent[]);
+      setShipments(sh ?? []);
+      setLoading(false);
+    })();
+  }, [order.id]);
+
+  return (
+    <div className="fixed inset-0 z-50 flex justify-end bg-black/40">
+      <div className="h-full w-full max-w-md space-y-4 overflow-y-auto bg-background p-6 shadow-2xl">
+        <div className="flex items-start justify-between">
+          <div>
+            <h2 className="text-lg font-semibold">{order.order_number}</h2>
+            <p className="text-xs text-muted-foreground">
+              {order.customer_name} · {order.customer_phone}
+            </p>
+            <span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-xs capitalize ${orderStatusTone(order.status)}`}>
+              {orderStatusLabel(order.status)}
+            </span>
+          </div>
+          <button onClick={onClose} className="rounded-md p-1 hover:bg-accent">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        {loading ? (
+          <div className="grid place-items-center py-10">
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          </div>
+        ) : (
+          <>
+            <div className="surface-card p-4">
+              <div className="mb-2 text-sm font-medium">Parcel info</div>
+              {shipments.length === 0 ? (
+                <p className="text-xs text-muted-foreground">
+                  Admin এখনও courier booking koreni.
+                </p>
+              ) : (
+                shipments.map((s) => (
+                  <div key={s.id} className="space-y-1 border-b py-2 text-sm last:border-b-0">
+                    <div className="font-medium capitalize">{s.provider}</div>
+                    <div className="text-xs text-muted-foreground">
+                      Tracking: {s.tracking_id ?? "—"}
+                      {s.consignment_id ? ` · CID ${s.consignment_id}` : ""}
+                    </div>
+                    <div className="flex flex-wrap gap-1.5 text-[11px]">
+                      <span className="rounded-full bg-primary/15 px-2 py-0.5 capitalize text-primary">
+                        {String(s.status).replace(/_/g, " ")}
+                      </span>
+                      {s.courier_status && (
+                        <span className="rounded-full bg-muted px-2 py-0.5">
+                          Courier: {courierStatusLabel(s.courier_status)}
+                        </span>
+                      )}
+                      {s.cod_amount != null && (
+                        <span className="rounded-full bg-muted px-2 py-0.5">COD ৳{Number(s.cod_amount).toFixed(0)}</span>
+                      )}
+                    </div>
+                    {s.last_event_at && (
+                      <div className="text-[11px] text-muted-foreground">
+                        Last update: {new Date(s.last_event_at).toLocaleString()}
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+            <CourierTimeline events={events} title="Courier tracking history" />
+          </>
+        )}
+      </div>
     </div>
   );
 }
