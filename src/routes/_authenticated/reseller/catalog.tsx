@@ -7,6 +7,7 @@ import { PageHeader, EmptyState } from "@/components/ui-kit";
 import { Loader2, Plus, Check, CheckSquare, Square, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Hint } from "@/components/Hint";
+import { ResellerProductCalc } from "@/components/price-breakdown";
 import { DataToolbar, Pagination, usePaginated, type FilterDef } from "@/components/data-list";
 
 type P = {
