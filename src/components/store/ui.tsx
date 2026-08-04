@@ -21,8 +21,12 @@ export function Heading({
 }) {
   return (
     <As
-      className={cx("font-[var(--st-font-head)] text-[var(--st-fg)]", className)}
-      style={{ fontWeight: "var(--st-head-weight)" as unknown as number, letterSpacing: "var(--st-track)" }}
+      className={cx("text-[var(--st-fg)]", className)}
+      style={{
+        fontFamily: "var(--st-font-head)",
+        fontWeight: "var(--st-head-weight)" as unknown as number,
+        letterSpacing: "var(--st-track)",
+      }}
     >
       {children}
     </As>
