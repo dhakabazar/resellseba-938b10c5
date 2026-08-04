@@ -8,7 +8,14 @@ import {
   DEFAULT_ORDER_FILTERS,
   type OrderFilterState,
 } from "@/components/order-filters";
-import { ReportCard, StatusReportTable, ProductReportTable, TrendReportTable, RawStatusList } from "@/components/report-blocks";
+import {
+  ReportCard,
+  ReportTabs,
+  StatusReportTable,
+  ProductReportTable,
+  TrendReportTable,
+  RawStatusList,
+} from "@/components/report-blocks";
 import {
   buildFinanceReport,
   bdt,
@@ -40,6 +47,16 @@ type Payout = { reseller_id: string; amount: number; status: string };
 type Commission = { leader_id: string; reseller_id: string; amount: number; status: string; created_at: string };
 type Shipment = { order_id: string; provider: string; cost: number | null; delivery_charge: number | null };
 
+type AdminReportTab = "overview" | "resellers" | "products" | "courier" | "trend" | "how";
+const ADMIN_TABS: { key: AdminReportTab; label: string }[] = [
+  { key: "overview", label: "Overview" },
+  { key: "resellers", label: "Per-reseller" },
+  { key: "products", label: "Product wise" },
+  { key: "courier", label: "Courier wise" },
+  { key: "trend", label: "Trend" },
+  { key: "how", label: "Hisab niyom" },
+];
+
 function FinancialsPage() {
   const [loading, setLoading] = useState(true);
   const [orders, setOrders] = useState<OrderRow[]>([]);
@@ -51,6 +68,7 @@ function FinancialsPage() {
   const [filters, setFilters] = useState<OrderFilterState>(DEFAULT_ORDER_FILTERS);
   const [gran, setGran] = useState<"day" | "month">("day");
   const [resellerQ, setResellerQ] = useState("");
+  const [tab, setTab] = useState<AdminReportTab>("overview");
 
   useEffect(() => {
     (async () => {
@@ -290,6 +308,10 @@ function FinancialsPage() {
         />
       </div>
 
+      <ReportTabs tabs={ADMIN_TABS} active={tab} onChange={setTab} />
+
+      {tab === "overview" && (
+      <>
       <ReportCard
         title="Order status wise report"
         hint="Order list er tab gulor sathe ek e bucket."
@@ -301,7 +323,10 @@ function FinancialsPage() {
       <ReportCard title="Raw status split" hint="Prottek database status alada vabe.">
         <RawStatusList report={report} />
       </ReportCard>
+      </>
+      )}
 
+      {tab === "resellers" && (
       <ReportCard
         title="Per-reseller report"
         hint="Tenant onujai — filtered date range er order + lifetime payout ledger."
@@ -376,7 +401,9 @@ function FinancialsPage() {
           </tbody>
         </table>
       </ReportCard>
+      )}
 
+      {tab === "products" && (
       <ReportCard
         title="Product wise report"
         hint="Kon product theke koto sell r koto profit."
@@ -384,7 +411,9 @@ function FinancialsPage() {
       >
         <ProductReportTable products={report.products} />
       </ReportCard>
+      )}
 
+      {tab === "courier" && (
       <ReportCard title="Courier wise report" hint="Booking count, courier charge r COD delivery charge.">
         <table className="w-full min-w-[520px] text-sm">
           <thead className="bg-muted/20 text-left text-[11px] uppercase text-muted-foreground">
@@ -414,7 +443,9 @@ function FinancialsPage() {
           </tbody>
         </table>
       </ReportCard>
+      )}
 
+      {tab === "trend" && (
       <ReportCard
         title="Trend report"
         right={
@@ -430,7 +461,9 @@ function FinancialsPage() {
       >
         <TrendReportTable trend={report.trend} />
       </ReportCard>
+      )}
 
+      {tab === "how" && (
       <div className="rounded-lg border bg-muted/30 p-4 text-xs text-muted-foreground">
         <div className="mb-1 font-medium text-foreground">Kivabe calculate hoy</div>
         <ul className="list-disc space-y-1 pl-4">
@@ -442,6 +475,7 @@ function FinancialsPage() {
           <li><b>Due</b> = delivered profit − paid − pending payout.</li>
         </ul>
       </div>
+      )}
     </div>
   );
 }

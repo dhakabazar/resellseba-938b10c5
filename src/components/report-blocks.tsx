@@ -27,6 +27,43 @@ export function ReportCard({
   );
 }
 
+/** Shared section-tab strip for report pages (keeps long reports out of one scroll). */
+export function ReportTabs<K extends string>({
+  tabs,
+  active,
+  onChange,
+}: {
+  tabs: { key: K; label: string; hint?: string }[];
+  active: K;
+  onChange: (k: K) => void;
+}) {
+  return (
+    <div className="surface-card mb-6 overflow-x-auto p-1.5">
+      <div className="flex min-w-max items-center gap-1">
+        {tabs.map((t) => {
+          const on = t.key === active;
+          return (
+            <button
+              key={t.key}
+              type="button"
+              onClick={() => onChange(t.key)}
+              title={t.hint}
+              className={
+                "rounded-lg px-3 py-2 text-xs font-medium transition-colors " +
+                (on
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:bg-accent hover:text-foreground")
+              }
+            >
+              {t.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 const th = "p-3 text-[11px] font-medium uppercase tracking-wide text-muted-foreground";
 
 /** Status-tab wise money breakdown — same buckets as the order list tabs. */
