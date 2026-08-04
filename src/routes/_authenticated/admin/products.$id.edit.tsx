@@ -314,39 +314,21 @@ function EditProduct() {
             </Field>
           </div>
 
-          <div className="mt-5 grid gap-3 md:grid-cols-2">
-            <div className="rounded-lg border bg-muted/30 p-4 text-sm">
-              <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase text-muted-foreground">
-                Admin calculation
-                <Hint>Your profit per unit = reseller price − buying price.</Hint>
-              </div>
-              <PRow label="Reseller price" value={`৳${Number(resellerPrice) || 0}`} />
-              <PRow label="− Buying price" value={`৳${Number(buying) || 0}`} />
-              <PRow label="Admin profit / unit" value={`৳${calc.saProfit}`} strong success={calc.saProfit >= 0} />
-            </div>
-            <div className="rounded-lg border bg-muted/30 p-4 text-sm">
-              <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase text-muted-foreground">
-                Reseller calculation
-                <Hint>
-                  Reseller's cost is reseller price + packaging (deducted by admin). Delivery is paid separately by the customer.
-                </Hint>
-              </div>
-              <PRow label="Product (reseller price)" value={`৳${Number(resellerPrice) || 0}`} />
-              <PRow label="+ Packaging" value={`৳${Number(packaging) || 0}`} />
-              <PRow label="Reseller min sell price" value={`৳${calc.resellerMinSell}`} strong />
-              <div className="mt-2 border-t pt-2 text-xs text-muted-foreground">
-                Customer pays (inside): ৳{calc.resellerBaseIn} · outside: ৳{calc.resellerBaseOut}
-              </div>
-              <div className="mt-2 border-t pt-2">
-                <PRow
-                  label={`At suggested ৳${Number(suggested) || 0} → profit`}
-                  value={`৳${calc.resellerProfitAtSuggested}`}
-                  strong
-                  success={calc.resellerProfitAtSuggested >= 0}
-                />
-              </div>
-            </div>
+          <div className="mt-5">
+            <AdminProductCalc
+              input={{
+                buying: Number(buying) || 0,
+                resellerPrice: Number(resellerPrice) || 0,
+                packaging: Number(packaging) || 0,
+                deliveryMode,
+                deliveryFlat: Number(deliveryFlat) || 0,
+                deliveryInside: Number(deliveryIn) || 0,
+                deliveryOutside: Number(deliveryOut) || 0,
+                sellPrice: Number(suggested) || 0,
+              }}
+            />
           </div>
+
         </div>
 
         <div className="surface-card p-6">
