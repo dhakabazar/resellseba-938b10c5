@@ -164,7 +164,7 @@ function SteadfastExtras({ token }: { token: string }) {
           onClick={async () => {
             setBusy(true);
             try {
-              const r = await getBalance({ data: {} });
+              const r = await getBalance();
               setBalance(r.balance);
             } catch (e) {
               toast.error(e instanceof Error ? e.message : "Balance fetch failed");
