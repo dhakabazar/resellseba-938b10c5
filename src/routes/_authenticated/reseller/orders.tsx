@@ -80,6 +80,8 @@ function OrdersPage() {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<OrderTabKey>("new");
   const [selected, setSelected] = useState<OrderRow | null>(null);
+  const [filters, setFilters] = useState<OrderFilterState>(DEFAULT_ORDER_FILTERS);
+  const [page, setPage] = useState(1);
 
   async function load() {
     if (!user) return;
