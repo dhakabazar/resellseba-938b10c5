@@ -378,6 +378,15 @@ function OrderDrawer({
 
         <div className="surface-card mb-4 space-y-3 p-4">
           <div className="text-sm font-medium">Status</div>
+          {courierLocked && (
+            <div className="flex items-start gap-2 rounded-md bg-amber-500/10 p-2 text-[11px] text-amber-700">
+              <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              <span>
+                Order courier e chole gese — status change only super admin korte parbe. Courier webhook
+                automatic update pathabe; parcel ferot hate pele "Receive return" diye final korun.
+              </span>
+            </div>
+          )}
           <select value={status} onChange={(e) => setStatus(e.target.value)} className="input capitalize">
             {ORDER_STATUS_OPTIONS.map((s) => (
               <option key={s} value={s}>
@@ -392,14 +401,40 @@ function OrderDrawer({
             rows={2}
             className="input"
           />
-          <button
-            disabled={busy}
-            onClick={saveStatus}
-            className="btn-brand inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium"
-          >
-            {busy && <Loader2 className="h-4 w-4 animate-spin" />} Save status
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button
+              disabled={busy}
+              onClick={saveStatus}
+              className="btn-brand inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium"
+            >
+              {busy && <Loader2 className="h-4 w-4 animate-spin" />} Save status
+            </button>
+            {order.status === "pending_return" && (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={async () => {
+                  const note = prompt("Return receive note (optional)") ?? undefined;
+                  setBusy(true);
+                  try {
+                    await receiveReturnFn({ data: { orderId: order.id, note } });
+                    toast.success("Return received — order returned");
+                    await loadDetails();
+                    onChanged();
+                  } catch (e) {
+                    toast.error(e instanceof Error ? e.message : "Return receive failed");
+                  } finally {
+                    setBusy(false);
+                  }
+                }}
+                className="inline-flex items-center gap-2 rounded-md border border-success/40 bg-success/10 px-4 py-2 text-sm font-medium text-success"
+              >
+                <PackageCheck className="h-4 w-4" /> Receive return
+              </button>
+            )}
+          </div>
         </div>
+
 
         <div className="surface-card mb-4 p-4">
           <div className="mb-3 flex items-center gap-2 text-sm font-medium">
