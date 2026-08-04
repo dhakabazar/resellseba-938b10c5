@@ -440,7 +440,7 @@ export function ThemeSignature() {
             <span className="text-[11px] uppercase tracking-[0.4em] text-[var(--st-primary)]">{eyebrow}</span>
           )}
           {story && (
-            <Heading as="p" className="mt-5 text-2xl leading-snug md:text-3xl">
+            <Heading as="h2" className="mt-5 text-2xl leading-snug md:text-3xl">
               {story}
             </Heading>
           )}
@@ -471,7 +471,7 @@ export function ThemeSignature() {
     if (!quote) return null;
     return (
       <section className="mx-auto max-w-4xl px-4 py-16 text-center">
-        <Heading as="p" className="text-3xl leading-tight md:text-5xl">
+        <Heading as="h2" className="text-3xl leading-tight md:text-5xl">
           {quote}
         </Heading>
         {credit && <p className={cx("mt-4 text-xs uppercase tracking-[0.3em]", muted)}>{credit}</p>}
