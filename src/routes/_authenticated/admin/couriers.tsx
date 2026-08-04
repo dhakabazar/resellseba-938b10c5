@@ -2,8 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/ui-kit";
-import { Loader2, Truck } from "lucide-react";
+import { Loader2, Truck, Copy, Wallet } from "lucide-react";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { steadfastBalance } from "@/lib/couriers.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/couriers")({
   component: CouriersPage,
@@ -22,6 +24,7 @@ const FIELDS: Record<string, { key: string; label: string; type?: string; hint?:
     { key: "api_key", label: "API Key" },
     { key: "secret_key", label: "Secret Key", type: "password" },
     { key: "base_url", label: "Base URL", hint: "https://portal.packzy.com/api/v1" },
+    { key: "webhook_token", label: "Webhook Token", hint: "Any secret string — also used in the webhook URL" },
   ],
   pathao: [
     { key: "client_id", label: "Client ID" },
@@ -36,6 +39,7 @@ const FIELDS: Record<string, { key: string; label: string; type?: string; hint?:
   ],
   manual: [],
 };
+
 
 function CouriersPage() {
   const [rows, setRows] = useState<Row[]>([]);
