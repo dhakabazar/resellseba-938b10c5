@@ -312,9 +312,11 @@ function Checkout() {
             </div>
           )}
 
-          <PrimaryButton disabled={busy} className="hidden w-full sm:inline-flex">
-            {busy && <Loader2 className="h-4 w-4 animate-spin" />} Place order — {bdt(totals.total)}
-          </PrimaryButton>
+          <div className="hidden sm:block">
+            <PrimaryButton disabled={busy} className="w-full">
+              {busy && <Loader2 className="h-4 w-4 animate-spin" />} Place order — {bdt(totals.total)}
+            </PrimaryButton>
+          </div>
           <p className={cx("flex items-center justify-center gap-2 text-xs sm:justify-start", muted)}>
             <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-[var(--st-primary)]" /> {store.content.text("co_trust")}
           </p>
