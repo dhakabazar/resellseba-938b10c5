@@ -393,7 +393,15 @@ function Checkout() {
           <div className={cx("space-y-1.5 border-t pt-3 text-sm", borderc)}>
             <Row label="Subtotal" value={bdt(totals.subtotal)} />
             <Row label="Delivery charge" value={totals.ship ? bdt(totals.ship) : "Free"} />
+            {totals.multi && (
+              <p className={cx("text-[11px] leading-snug", muted)}>
+                {totals.ship
+                  ? `Highest single-product delivery charge applied${totals.shipFrom ? ` (${totals.shipFrom})` : ""} — charges are not added up.`
+                  : "Free delivery on this cart."}
+              </p>
+            )}
             <Row label="Total payable" value={bdt(totals.total)} bold />
+
           </div>
           <Link
             to="/s/$code"
