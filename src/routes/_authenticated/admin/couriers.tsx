@@ -207,8 +207,9 @@ function SteadfastExtras({ token, onToken }: { token: string; onToken: (t: strin
           </button>
         </div>
         <p className="mt-1 text-[11px] text-muted-foreground">
-          Webhook Token save korar por ei URL Steadfast support/panel e diye din — live status update order e chole asbe.
+          URL ta current domain ({origin.replace(/^https?:\/\//, "") || "—"}) theke auto generate hoy — custom domain, new server ba self-host e gele automatic sei domain e change hobe. Token save korar por URL ta Steadfast panel/support e diye din.
         </p>
+
       </div>
       <div className="flex items-center gap-2">
         <button
