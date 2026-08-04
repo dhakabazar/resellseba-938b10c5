@@ -66,9 +66,11 @@ function Checkout() {
           .or(`reseller_id.eq.${(data as any).reseller_id},reseller_id.is.null`);
         const byMethod = new Map<string, any>();
         for (const r of pms ?? []) {
+          if (!r.method) continue;
           const existing = byMethod.get(r.method);
           if (!existing || (r.reseller_id && !existing.reseller_id)) byMethod.set(r.method, r);
         }
+
         setMethods(Array.from(byMethod.values()).map((r) => ({ method: r.method, label: r.label ?? r.method, instructions: r.instructions })));
       }
       setLoading(false);
