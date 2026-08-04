@@ -189,11 +189,12 @@ function ResellerDashboard() {
         }
       />
 
-      <DateRangeBar
-        value={range}
-        onChange={setRange}
-        note="Ei date filter puro dashboard e apply hoy — order, profit, product, payout sob."
-        right={
+      <section className="mb-6">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <div>
+            <h3 className="text-sm font-semibold">Overall summary (lifetime)</h3>
+            <p className="text-[11px] text-muted-foreground">Ei card gulo date filter er baire — sob somoy er total.</p>
+          </div>
           <button
             type="button"
             onClick={() => void load(range)}
@@ -202,7 +203,43 @@ function ResellerDashboard() {
             {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
             Refresh
           </button>
-        }
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+          <StatCard
+            label="Total earning (lifetime)"
+            value={bdt(lifetime.delivered + commissionLifetime)}
+            hint={`Profit ${bdt(lifetime.delivered)} + commission ${bdt(commissionLifetime)}`}
+            icon={<TrendingUp className="h-4 w-4" />}
+          />
+          <StatCard
+            label="Available payout"
+            value={bdt(lifetime.available)}
+            hint={`Requested ${bdt(lifetime.pendingPayout)}`}
+            icon={<Wallet className="h-4 w-4" />}
+          />
+          <StatCard
+            label="Paid out (lifetime)"
+            value={bdt(lifetime.paidOut)}
+            icon={<CheckCircle2 className="h-4 w-4" />}
+          />
+          <StatCard
+            label="Due (unpaid earning)"
+            value={bdt(Math.max(lifetime.delivered + commissionLifetime - lifetime.paidOut, 0))}
+            icon={<Clock className="h-4 w-4" />}
+          />
+          <StatCard
+            label="Active products"
+            value={listings.active}
+            hint={`${listings.total} total listing`}
+            icon={<ShoppingBag className="h-4 w-4" />}
+          />
+        </div>
+      </section>
+
+      <DateRangeBar
+        value={range}
+        onChange={setRange}
+        note="Nicher card, chart o report gulo ei date range onujai."
       />
 
       {loading && !orders.length ? (
@@ -219,12 +256,6 @@ function ResellerDashboard() {
               icon={<ClipboardList className="h-4 w-4" />}
             />
             <StatCard
-              label="Active products"
-              value={listings.active}
-              hint={`${listings.total} total listing`}
-              icon={<ShoppingBag className="h-4 w-4" />}
-            />
-            <StatCard
               label="Earned profit"
               value={bdt(report.realized.profit)}
               hint={`${report.realized.orders} delivered order`}
@@ -236,32 +267,11 @@ function ResellerDashboard() {
               hint={`${report.pipeline.orders} order processing / on the way`}
               icon={<Clock className="h-4 w-4" />}
             />
-          </div>
-
-          <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <StatCard
-              label="Total earning (lifetime)"
-              value={bdt(lifetime.delivered + commissionLifetime)}
-              hint={`Profit ${bdt(lifetime.delivered)} + commission ${bdt(commissionLifetime)}`}
-              icon={<TrendingUp className="h-4 w-4" />}
-            />
-            <StatCard
-              label="Available payout"
-              value={bdt(lifetime.available)}
-              hint={`Requested ${bdt(lifetime.pendingPayout)}`}
-              icon={<Wallet className="h-4 w-4" />}
-            />
-            <StatCard
-              label="Paid out"
+              label="Paid out (range)"
               value={bdt(paidInRange)}
-              hint={`Lifetime ${bdt(lifetime.paidOut)}`}
-              icon={<CheckCircle2 className="h-4 w-4" />}
-            />
-            <StatCard
-              label="Due (unpaid earning)"
-              value={bdt(Math.max(lifetime.delivered + commissionLifetime - lifetime.paidOut, 0))}
-              hint={`Payout request pending ${bdt(requestedInRange)}`}
-              icon={<Clock className="h-4 w-4" />}
+              hint={`Request pending ${bdt(requestedInRange)}`}
+              icon={<Wallet className="h-4 w-4" />}
             />
           </div>
 
@@ -302,6 +312,7 @@ function ResellerDashboard() {
               />
             </div>
           )}
+
 
           <div className="surface-card mt-6 p-5">
             <div className="mb-3 text-sm font-semibold">Orders & delivered profit</div>
