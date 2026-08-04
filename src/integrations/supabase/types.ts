@@ -1233,7 +1233,70 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_marketing_pixels: {
+        Row: {
+          id: string | null
+          pixel_id: string | null
+          platform: string | null
+          reseller_id: string | null
+        }
+        Insert: {
+          id?: string | null
+          pixel_id?: string | null
+          platform?: string | null
+          reseller_id?: string | null
+        }
+        Update: {
+          id?: string | null
+          pixel_id?: string | null
+          platform?: string | null
+          reseller_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_configs_reseller_id_fkey"
+            columns: ["reseller_id"]
+            isOneToOne: false
+            referencedRelation: "resellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      public_payment_methods: {
+        Row: {
+          id: string | null
+          instructions: string | null
+          label: string | null
+          method: Database["public"]["Enums"]["payment_method"] | null
+          mode: string | null
+          reseller_id: string | null
+        }
+        Insert: {
+          id?: string | null
+          instructions?: string | null
+          label?: string | null
+          method?: Database["public"]["Enums"]["payment_method"] | null
+          mode?: string | null
+          reseller_id?: string | null
+        }
+        Update: {
+          id?: string | null
+          instructions?: string | null
+          label?: string | null
+          method?: Database["public"]["Enums"]["payment_method"] | null
+          mode?: string | null
+          reseller_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_configs_reseller_id_fkey"
+            columns: ["reseller_id"]
+            isOneToOne: false
+            referencedRelation: "resellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       calculate_delivery_charge: {
