@@ -268,8 +268,8 @@ function ResellerDashboard() {
           <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <StatCard
               label="On the way (courier)"
-              value={bdt(report.byStatusTab.to_courier?.customerTotal ?? 0)}
-              hint={`${report.byStatusTab.to_courier?.orders ?? 0} parcel`}
+              value={bdt(report.byStatusTab.courier?.customerTotal ?? 0)}
+              hint={`${report.byStatusTab.courier?.orders ?? 0} parcel`}
               icon={<Truck className="h-4 w-4" />}
             />
             <StatCard
