@@ -2,10 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/ui-kit";
-import { Loader2, Truck, Copy, Wallet, RefreshCw } from "lucide-react";
+import { Loader2, Truck, Copy, Wallet, RefreshCw, Store } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
-import { steadfastBalance } from "@/lib/couriers.functions";
+import { steadfastBalance, carrybeeStores } from "@/lib/couriers.functions";
 import { Switch } from "@/components/ui/switch";
 
 
@@ -248,6 +248,147 @@ function SteadfastExtras({ token, onToken }: { token: string; onToken: (t: strin
         </button>
         {balance !== null && <span className="text-xs font-semibold">৳{balance.toFixed(2)}</span>}
       </div>
+    </div>
+  );
+}
+
+function CarrybeeExtras({
+  config,
+  onConfig,
+}: {
+  config: Record<string, string>;
+  onConfig: (patch: Record<string, string>) => void;
+}) {
+  const [stores, setStores] = useState<
+    { id: string; name: string; isApproved: boolean; isDefaultPickup: boolean }[]
+  >([]);
+  const [busy, setBusy] = useState(false);
+  const loadStores = useServerFn(carrybeeStores);
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const secret = config.webhook_secret ?? "";
+  const webhookUrl = `${origin}/api/public/courier/carrybee`;
+
+  function generate() {
+    const bytes = new Uint8Array(24);
+    crypto.getRandomValues(bytes);
+    onConfig({
+      webhook_secret: Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join(""),
+    });
+    toast.success("Secret generated — Save korun");
+  }
+
+  return (
+    <div className="mt-4 space-y-3 rounded-lg border bg-muted/30 p-3">
+      <div>
+        <div className="mb-1 text-xs font-medium">Environment</div>
+        <select
+          value={config.environment || "production"}
+          onChange={(e) => onConfig({ environment: e.target.value })}
+          className="w-full rounded-md border bg-background px-2 py-1.5 text-xs"
+        >
+          <option value="production">Production (developers.carrybee.com)</option>
+          <option value="sandbox">Sandbox (sandbox.carrybee.com)</option>
+        </select>
+      </div>
+
+      <div>
+        <div className="mb-1 text-xs font-medium">Webhook Secret</div>
+        <div className="flex items-center gap-2">
+          <input
+            value={secret}
+            onChange={(e) => onConfig({ webhook_secret: e.target.value })}
+            placeholder="Generate korun ba Carrybee panel er secret paste korun"
+            className="min-w-0 flex-1 rounded-md border bg-background px-2 py-1.5 font-mono text-[11px]"
+          />
+          <button type="button" onClick={generate} className="shrink-0 rounded-md border px-2 py-1.5 text-xs hover:bg-accent">
+            <RefreshCw className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (!secret) return;
+              navigator.clipboard.writeText(secret);
+              toast.success("Secret copied");
+            }}
+            className="shrink-0 rounded-md border p-1.5 hover:bg-accent"
+          >
+            <Copy className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <div className="mb-1 text-xs font-medium">Webhook URL (Carrybee → Webhook Integration)</div>
+        <div className="flex items-center gap-2">
+          <code className="flex-1 truncate rounded-md border bg-background px-2 py-1.5 text-[11px]">
+            {webhookUrl}
+          </code>
+          <button
+            type="button"
+            onClick={() => {
+              navigator.clipboard.writeText(webhookUrl);
+              toast.success("Webhook URL copied");
+            }}
+            className="rounded-md border p-1.5 hover:bg-accent"
+          >
+            <Copy className="h-3.5 w-3.5" />
+          </button>
+        </div>
+        <p className="mt-1 text-[11px] text-muted-foreground">
+          URL current domain ({origin.replace(/^https?:\/\//, "") || "—"}) theke auto generate hoy — custom
+          domain ba new server e gele nijei update hobe. Carrybee panel e ei URL + Secret diye sob event
+          subscribe korun; handshake e amra 202 + integration header echo kori.
+        </p>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          disabled={busy}
+          onClick={async () => {
+            setBusy(true);
+            try {
+              const r = await loadStores();
+              setStores(r.stores);
+              if (r.stores.length === 0) toast.info("Kono store nai — Carrybee panel e store create korun");
+            } catch (e) {
+              toast.error(e instanceof Error ? e.message : "Store list load hoyni");
+            } finally {
+              setBusy(false);
+            }
+          }}
+          className="inline-flex items-center gap-2 rounded-md border px-2.5 py-1.5 text-xs hover:bg-accent"
+        >
+          {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Store className="h-3.5 w-3.5" />}
+          Load pickup stores
+        </button>
+      </div>
+      {stores.length > 0 && (
+        <div className="divide-y rounded-md border bg-background">
+          {stores.map((s) => (
+            <div key={s.id} className="flex items-center justify-between gap-2 px-2 py-1.5 text-xs">
+              <div className="min-w-0">
+                <div className="truncate font-medium">{s.name}</div>
+                <div className="font-mono text-[10px] text-muted-foreground">{s.id}</div>
+              </div>
+              <div className="flex items-center gap-1.5">
+                {s.isDefaultPickup && <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] text-primary">default</span>}
+                {!s.isApproved && <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] text-amber-600">unapproved</span>}
+                <button
+                  type="button"
+                  onClick={() => {
+                    onConfig({ store_id: s.id });
+                    toast.success("Store id set — Save korun");
+                  }}
+                  className="rounded-md border px-2 py-0.5 text-[10px] hover:bg-accent"
+                >
+                  Use
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
