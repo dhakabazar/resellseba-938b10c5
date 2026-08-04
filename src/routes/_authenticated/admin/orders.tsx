@@ -245,6 +245,14 @@ function OrderDrawer({
   const bookPathaoFn = useServerFn(bookPathao);
   const syncStatus = useServerFn(syncSteadfastStatus);
   const createReturn = useServerFn(steadfastCreateReturn);
+  const bookCarrybeeFn = useServerFn(bookCarrybee);
+  const syncCarrybeeFn = useServerFn(syncCarrybeeStatus);
+  const carrybeeReturnFn = useServerFn(carrybeeReversePickup);
+  const carrybeeExchangeFn = useServerFn(carrybeeExchange);
+  const carrybeeCancelFn = useServerFn(cancelCarrybee);
+  const receiveReturnFn = useServerFn(receiveReturn);
+  const courierLocked = shipments.some((s) => s.consignment_id || s.tracking_id);
+
 
   // shipment form
   const [provider, setProvider] = useState("steadfast");
