@@ -40,7 +40,6 @@ const FIELDS: Record<string, { key: string; label: string; type?: string; hint?:
     { key: "client_secret", label: "Client Secret" },
     { key: "client_context", label: "Client Context" },
     { key: "store_id", label: "Default Pickup Store ID", hint: "Store list theke copy korun" },
-    { key: "base_url", label: "Base URL (optional override)", hint: "Khali rakhle environment onujayi auto" },
   ],
 
   manual: [],
@@ -279,18 +278,6 @@ function CarrybeeExtras({
 
   return (
     <div className="mt-4 space-y-3 rounded-lg border bg-muted/30 p-3">
-      <div>
-        <div className="mb-1 text-xs font-medium">Environment</div>
-        <select
-          value={config.environment || "production"}
-          onChange={(e) => onConfig({ environment: e.target.value })}
-          className="w-full rounded-md border bg-background px-2 py-1.5 text-xs"
-        >
-          <option value="production">Production (developers.carrybee.com)</option>
-          <option value="sandbox">Sandbox (sandbox.carrybee.com)</option>
-        </select>
-      </div>
-
       <div>
         <div className="mb-1 text-xs font-medium">Webhook Secret</div>
         <div className="flex items-center gap-2">
