@@ -218,73 +218,187 @@ export const steadfastReturnRequests = createServerFn({ method: "POST" })
     return { data: body?.data ?? body ?? [] };
   });
 
-export const bookPathao = createServerFn({ method: "POST" })
+/* -------------------------------- Pathao -------------------------------- */
+
+async function pathaoConf(supabase: any) {
+  return getCourierConfig(supabase, "pathao");
+}
+
+export const pathaoStores = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => orderInput.parse(d))
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase, userId);
+    const { pathaoStoreList } = await import("@/lib/pathao.server");
+    const conf = await pathaoConf(supabase);
+    return { stores: await pathaoStoreList(supabase, conf) };
+  });
+
+export const pathaoPricePlan = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z
+      .object({
+        cityId: z.number().int().positive(),
+        zoneId: z.number().int().positive(),
+        itemWeight: z.number().min(0.5).max(10).optional(),
+        deliveryType: z.union([z.literal(48), z.literal(12)]).optional(),
+      })
+      .parse(d),
+  )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     await assertAdmin(supabase, userId);
-    const conf = await getCourierConfig(supabase, "pathao");
-    const { client_id, client_secret, username, password, store_id, base_url } = conf;
-    if (!client_id || !client_secret || !username || !password || !store_id)
-      throw new Response("Missing Pathao credentials", { status: 400 });
-    const baseUrl = base_url || "https://api-hermes.pathao.com";
+    const { pathaoPricePlanRequest } = await import("@/lib/pathao.server");
+    const conf = await pathaoConf(supabase);
+    if (!conf.store_id) throw new Response("Pathao store id set korun", { status: 400 });
+    return pathaoPricePlanRequest(supabase, conf, { storeId: conf.store_id, ...data });
+  });
+
+export const bookPathao = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z
+      .object({
+        orderId: z.string().uuid(),
+        deliveryType: z.union([z.literal(48), z.literal(12)]).optional(),
+        itemWeight: z.number().min(0.5).max(10).optional(),
+        note: z.string().max(250).optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase, userId);
+    const { pathaoRequest } = await import("@/lib/pathao.server");
+    const conf = await pathaoConf(supabase);
+    if (!conf.store_id) throw new Response("Pathao store id set korun", { status: 400 });
     const order = await getOrderForBooking(supabase, data.orderId);
 
-    const tokenRes = await fetch(`${baseUrl}/aladdin/api/v1/issue-token`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ client_id, client_secret, username, password, grant_type: "password" }),
-    });
-    const tokenBody = (await tokenRes.json().catch(() => ({}))) as any;
-    if (!tokenRes.ok || !tokenBody.access_token) throw new Response("Pathao auth failed", { status: 502 });
+    const { data: existing } = await supabase
+      .from("shipments")
+      .select("id")
+      .eq("order_id", order.id)
+      .not("consignment_id", "is", null)
+      .maybeSingle();
+    if (existing) throw new Response("This order is already booked with a courier", { status: 400 });
 
-    const codAmount = order.payment_method === "cod" ? Number(order.total) : 0;
-    const payload = {
-      store_id: Number(store_id),
+    const { data: items } = await supabase
+      .from("order_items")
+      .select("product_name, quantity")
+      .eq("order_id", order.id);
+    const quantity = (items ?? []).reduce((s: number, i: any) => s + Number(i.quantity || 0), 0) || 1;
+
+    const codAmount = order.payment_method === "cod" ? Math.round(Number(order.total)) : 0;
+    // recipient_city/zone/area are intentionally omitted — Pathao resolves them
+    // from the address, and sending nulls is rejected by the API.
+    const payload: Record<string, unknown> = {
+      store_id: Number(conf.store_id),
       merchant_order_id: order.order_number,
-      recipient_name: order.customer_name,
+      recipient_name: String(order.customer_name).slice(0, 100),
       recipient_phone: normalizePhone(order.customer_phone),
-      recipient_address: fullAddress(order),
-      recipient_city: 1,
-      recipient_zone: 1,
-      recipient_area: 1,
-      delivery_type: 48,
+      recipient_address: fullAddress(order).padEnd(10, " ").slice(0, 220),
+      delivery_type: data.deliveryType ?? 48,
       item_type: 2,
-      special_instruction: order.area || "",
-      item_quantity: 1,
-      item_weight: 0.5,
+      item_quantity: quantity,
+      item_weight: String(data.itemWeight ?? 0.5),
       amount_to_collect: codAmount,
-      item_description: `Order ${order.order_number}`,
+      item_description:
+        (items ?? []).map((i: any) => `${i.product_name} x${i.quantity}`).join(", ").slice(0, 250) ||
+        `Order ${order.order_number}`,
+      special_instruction:
+        (data.note || order.reseller_note || order.notes || "")?.slice(0, 250) || undefined,
     };
-    const res = await fetch(`${baseUrl}/aladdin/api/v1/orders`, {
+
+    const body = await pathaoRequest(supabase, conf, "/aladdin/api/v1/orders", {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${tokenBody.access_token}`,
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
       body: JSON.stringify(payload),
     });
-    const body = (await res.json().catch(() => ({}))) as any;
-    if (!res.ok) throw new Response(body.message || "Pathao booking failed", { status: 502 });
-    const consignmentId = String(body.data?.consignment_id ?? body.data?.order_id ?? "");
+    const d = body?.data ?? {};
+    const consignmentId = String(d.consignment_id ?? "");
+    const courierStatus = String(d.order_status ?? "pending");
+    const deliveryFee = d.delivery_fee != null ? Number(d.delivery_fee) : null;
+    const nowIso = new Date().toISOString();
 
-    await supabase.from("shipments").insert({
+    const { data: shipment } = await supabase
+      .from("shipments")
+      .insert({
+        order_id: order.id,
+        provider: "pathao",
+        tracking_id: consignmentId,
+        consignment_id: consignmentId,
+        status: "booked",
+        courier_status: courierStatus.toLowerCase(),
+        cod_amount: codAmount,
+        delivery_charge: deliveryFee,
+        cost: deliveryFee ?? 0,
+        request_payload: payload as any,
+        response_payload: body,
+        booked_at: nowIso,
+        last_event_at: nowIso,
+        booked_by: userId,
+      })
+      .select("id")
+      .single();
+
+    await supabase.from("courier_events").insert({
       order_id: order.id,
+      shipment_id: shipment?.id ?? null,
       provider: "pathao",
-      tracking_id: consignmentId,
+      source: "sync",
+      notification_type: "booking",
+      courier_status: courierStatus.toLowerCase(),
       consignment_id: consignmentId,
-      status: "booked",
+      tracking_code: consignmentId,
       cod_amount: codAmount,
-      request_payload: payload,
-      response_payload: body,
-      booked_at: new Date().toISOString(),
-      booked_by: userId,
+      delivery_charge: deliveryFee,
+      note: "Consignment created",
+      payload: body,
+      event_at: nowIso,
     });
+
     await supabase.from("orders").update({ status: "shipped" }).eq("id", order.id);
-    return { trackingId: consignmentId };
+    await supabase.from("order_status_history").insert({
+      order_id: order.id,
+      status: "shipped",
+      note: `Pathao booked · ${consignmentId}`,
+      changed_by: userId,
+    });
+
+    return { trackingId: consignmentId, consignmentId, deliveryFee: deliveryFee ?? 0 };
   });
+
+export const syncPathaoStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ shipmentId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase, userId);
+    const { pathaoOrderInfo } = await import("@/lib/pathao.server");
+    const conf = await pathaoConf(supabase);
+    const { data: sh } = await supabase
+      .from("shipments")
+      .select("id, consignment_id, tracking_id, order_id")
+      .eq("id", data.shipmentId)
+      .maybeSingle();
+    const cid = sh?.consignment_id || sh?.tracking_id;
+    if (!cid) throw new Response("Shipment is not booked with Pathao", { status: 400 });
+
+    const info = await pathaoOrderInfo(supabase, conf, cid);
+    const result = await applyCourierUpdate(supabase, {
+      provider: "pathao",
+      consignmentId: sh?.consignment_id ?? cid,
+      trackingCode: sh?.tracking_id ?? null,
+      invoice: info.merchantOrderId,
+      courierStatus: info.status,
+      source: "sync",
+      notificationType: "manual_sync",
+      payload: info,
+    });
+
+    return { courierStatus: info.status, shipStatus: result.matched ? result.mapped.ship : null };
+  });
+
 
 /* ------------------------------- Carrybee ------------------------------- */
 
