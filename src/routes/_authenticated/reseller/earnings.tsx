@@ -9,7 +9,14 @@ import {
   DEFAULT_ORDER_FILTERS,
   type OrderFilterState,
 } from "@/components/order-filters";
-import { ReportCard, StatusReportTable, ProductReportTable, TrendReportTable, RawStatusList } from "@/components/report-blocks";
+import {
+  ReportCard,
+  ReportTabs,
+  StatusReportTable,
+  ProductReportTable,
+  TrendReportTable,
+  RawStatusList,
+} from "@/components/report-blocks";
 import { buildFinanceReport, bdt, toCsv, downloadCsv, type ReportItem, type ReportOrder } from "@/lib/finance-report";
 import { orderStatusLabel, orderStatusTone } from "@/lib/courier-status";
 import { Loader2, Wallet, TrendingUp, Clock, CheckCircle2, AlertTriangle, Truck, Download, Award } from "lucide-react";
@@ -40,6 +47,8 @@ type Row = ReportOrder & {
   }[];
 };
 type Payout = { id: string; amount: number; status: string; method: string | null; reference: string | null; requested_at: string; paid_at: string | null };
+type ResellerReportTab = "overview" | "products" | "trend" | "orders" | "payouts" | "commission" | "how";
+
 type Commission = { id: string; amount: number; status: string; created_at: string; base_profit: number; rate: number; order_id: string };
 
 function EarningsPage() {
@@ -51,6 +60,7 @@ function EarningsPage() {
   const [summary, setSummary] = useState({ delivered_profit: 0, pending_payout: 0, paid_out: 0, available: 0 });
   const [filters, setFilters] = useState<OrderFilterState>(DEFAULT_ORDER_FILTERS);
   const [gran, setGran] = useState<"day" | "month">("day");
+  const [tab, setTab] = useState<ResellerReportTab>("overview");
 
   useEffect(() => {
     if (!user) return;
@@ -152,6 +162,16 @@ function EarningsPage() {
       </div>
     );
 
+  const tabs: { key: ResellerReportTab; label: string }[] = [
+    { key: "overview", label: "Overview" },
+    { key: "products", label: "Product wise" },
+    { key: "trend", label: "Trend" },
+    { key: "orders", label: "Order wise" },
+    { key: "payouts", label: "Payout ledger" },
+    ...(commissions.length ? [{ key: "commission" as const, label: "Team commission" }] : []),
+    { key: "how", label: "Hisab niyom" },
+  ];
+
   return (
     <div>
       <PageHeader title="Earnings & report" />
@@ -209,6 +229,10 @@ function EarningsPage() {
         />
       </div>
 
+      <ReportTabs tabs={tabs} active={tab} onChange={setTab} />
+
+      {tab === "overview" && (
+      <>
       <ReportCard title="Order status wise report" hint="Order page er tab onujai bucket.">
         <StatusReportTable report={report} />
       </ReportCard>
@@ -216,7 +240,10 @@ function EarningsPage() {
       <ReportCard title="Raw status split">
         <RawStatusList report={report} />
       </ReportCard>
+      </>
+      )}
 
+      {tab === "products" && (
       <ReportCard
         title="Product wise profit"
         hint="Kon product theke koto profit pacchen."
@@ -224,7 +251,9 @@ function EarningsPage() {
       >
         <ProductReportTable products={report.products} />
       </ReportCard>
+      )}
 
+      {tab === "trend" && (
       <ReportCard
         title="Trend report"
         right={
@@ -240,7 +269,9 @@ function EarningsPage() {
       >
         <TrendReportTable trend={report.trend} />
       </ReportCard>
+      )}
 
+      {tab === "orders" && (
       <ReportCard
         title="Order wise profit"
         hint="Prottek order er cost, delivery ar profit — sob clear."
@@ -304,7 +335,9 @@ function EarningsPage() {
           </div>
         )}
       </ReportCard>
+      )}
 
+      {tab === "payouts" && (
       <ReportCard title="Payout ledger" hint="Withdraw request ar payment history.">
         <table className="w-full min-w-[520px] text-sm">
           <thead className="bg-muted/20 text-left text-[11px] uppercase text-muted-foreground">
@@ -338,8 +371,9 @@ function EarningsPage() {
           </tbody>
         </table>
       </ReportCard>
+      )}
 
-      {commissions.length > 0 && (
+      {tab === "commission" && commissions.length > 0 && (
         <ReportCard title="Team commission ledger" hint="Apnar team er delivered order theke commission.">
           <table className="w-full min-w-[520px] text-sm">
             <thead className="bg-muted/20 text-left text-[11px] uppercase text-muted-foreground">
@@ -366,6 +400,7 @@ function EarningsPage() {
         </ReportCard>
       )}
 
+      {tab === "how" && (
       <div className="rounded-lg border bg-muted/30 p-4 text-xs text-muted-foreground">
         <div className="mb-1 font-medium text-foreground">Hisab kivabe hoy</div>
         <ul className="list-disc space-y-1 pl-4">
@@ -376,6 +411,7 @@ function EarningsPage() {
           <li><b>Withdraw</b> = confirmed profit − paid − pending payout.</li>
         </ul>
       </div>
+      )}
     </div>
   );
 }
