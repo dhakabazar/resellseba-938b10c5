@@ -23,15 +23,13 @@ export type TrackingConfig = {
 export async function loadTrackingForReseller(resellerId: string): Promise<TrackingConfig> {
   const [{ data: reseller }, { data: global }] = await Promise.all([
     supabase
-      .from("marketing_configs")
-      .select("platform,pixel_id,is_active")
-      .eq("reseller_id", resellerId)
-      .eq("is_active", true),
+      .from("public_marketing_pixels")
+      .select("platform,pixel_id")
+      .eq("reseller_id", resellerId),
     supabase
-      .from("marketing_configs")
-      .select("platform,pixel_id,is_active")
-      .is("reseller_id", null)
-      .eq("is_active", true),
+      .from("public_marketing_pixels")
+      .select("platform,pixel_id")
+      .is("reseller_id", null),
   ]);
 
   const pick = (platform: string) =>

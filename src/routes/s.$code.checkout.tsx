@@ -61,9 +61,8 @@ function Checkout() {
         setProduct((data as any).product);
         // load active payment methods (reseller override + global)
         const { data: pms } = await supabase
-          .from("payment_configs")
-          .select("method,label,instructions,is_active,reseller_id")
-          .eq("is_active", true)
+          .from("public_payment_methods")
+          .select("method,label,instructions,reseller_id")
           .or(`reseller_id.eq.${(data as any).reseller_id},reseller_id.is.null`);
         const byMethod = new Map<string, any>();
         for (const r of pms ?? []) {
