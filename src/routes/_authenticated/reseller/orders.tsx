@@ -268,44 +268,15 @@ function OrdersPage() {
         }
       />
 
-      {/* Two always-visible searches: order + product */}
+      {/* Merged search: mode select inside the box */}
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <div className="relative min-w-[220px] flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            value={filters.q}
-            onChange={(e) => setFilters({ ...filters, q: e.target.value })}
-            placeholder="Order search — order no / name / mobile…"
-            className="h-10 w-full rounded-md border bg-background pl-9 pr-8 text-sm outline-none focus:ring-2 focus:ring-ring"
-          />
-          {filters.q && (
-            <button
-              type="button"
-              onClick={() => setFilters({ ...filters, q: "" })}
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground hover:bg-accent"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          )}
-        </div>
-        <div className="relative min-w-[200px] flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            value={productQ}
-            onChange={(e) => setProductQ(e.target.value)}
-            placeholder="Product search — product name…"
-            className="h-10 w-full rounded-md border bg-background pl-9 pr-8 text-sm outline-none focus:ring-2 focus:ring-ring"
-          />
-          {productQ && (
-            <button
-              type="button"
-              onClick={() => setProductQ("")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground hover:bg-accent"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          )}
-        </div>
+        <OrderSearch
+          mode={searchMode}
+          onMode={setSearchMode}
+          value={filters.q}
+          onChange={(v) => setFilters({ ...filters, q: v })}
+        />
+
 
         <button
           type="button"
