@@ -17,6 +17,7 @@ function Thanks() {
   const { code } = Route.useParams();
   const { n } = Route.useSearch();
   const fired = useRef(false);
+  const { content } = useStore();
   const capi = useServerFn(trackPurchaseServer);
 
   useEffect(() => {
