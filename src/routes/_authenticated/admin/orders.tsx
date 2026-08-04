@@ -115,6 +115,19 @@ function exportCsv(rows: OrderRow[]) {
 
 type OrderItemLite = { order_id: string; product_id: string | null; product_name: string; quantity: number };
 
+type SearchField = "all" | "order" | "customer" | "phone" | "address" | "reseller" | "product";
+
+const SEARCH_FIELDS: { value: SearchField; label: string; placeholder: string }[] = [
+  { value: "all", label: "All fields", placeholder: "Order, customer, phone, address, reseller, product…" },
+  { value: "order", label: "Order no", placeholder: "Order number…" },
+  { value: "customer", label: "Customer name", placeholder: "Customer name…" },
+  { value: "phone", label: "Phone", placeholder: "Customer phone…" },
+  { value: "address", label: "Address", placeholder: "Address…" },
+  { value: "reseller", label: "Reseller", placeholder: "Reseller name / code…" },
+  { value: "product", label: "Product", placeholder: "Product name…" },
+];
+
+
 function AdminOrdersPage() {
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [orderItems, setOrderItems] = useState<OrderItemLite[]>([]);
@@ -123,6 +136,8 @@ function AdminOrdersPage() {
   const [tab, setTab] = useState<OrderTabKey>("confirmed");
   const [selected, setSelected] = useState<OrderRow | null>(null);
   const [filters, setFilters] = useState<OrderFilterState>(DEFAULT_ORDER_FILTERS);
+  const [searchField, setSearchField] = useState<SearchField>("all");
+
   const [showFilters, setShowFilters] = useState(false);
   const [pickOpen, setPickOpen] = useState(false);
   const [marked, setMarked] = useState<string[]>([]);
@@ -187,28 +202,42 @@ function AdminOrdersPage() {
     return m;
   }, [orderItems]);
 
-  /** Single merged search: order fields + product name. */
+  /** Scoped search: field dropdown + one input. */
   const filtered = useMemo(() => {
     const base = applyOrderFilters(orders, { ...filters, q: "" });
     const q = filters.q.trim().toLowerCase();
     if (!q) return base;
+    const has = (v?: string | null) => (v ?? "").toLowerCase().includes(q);
     return base.filter((o) => {
-      const hay = [
-        o.order_number,
-        o.customer_name,
-        o.customer_phone,
-        o.address_line ?? "",
-        o.resellers?.business_name ?? "",
-        o.resellers?.code ?? "",
-      ]
-        .join(" ")
-        .toLowerCase();
-      if (hay.includes(q)) return true;
-      return (itemsByOrder.get(o.id) ?? []).some((it) =>
-        it.product_name.toLowerCase().includes(q),
-      );
+      const inProduct = () =>
+        (itemsByOrder.get(o.id) ?? []).some((it) => it.product_name.toLowerCase().includes(q));
+      switch (searchField) {
+        case "order":
+          return has(o.order_number);
+        case "customer":
+          return has(o.customer_name);
+        case "phone":
+          return has(o.customer_phone);
+        case "address":
+          return has(o.address_line);
+        case "reseller":
+          return has(o.resellers?.business_name) || has(o.resellers?.code);
+        case "product":
+          return inProduct();
+        default:
+          return (
+            has(o.order_number) ||
+            has(o.customer_name) ||
+            has(o.customer_phone) ||
+            has(o.address_line) ||
+            has(o.resellers?.business_name) ||
+            has(o.resellers?.code) ||
+            inProduct()
+          );
+      }
     });
-  }, [orders, filters, itemsByOrder]);
+  }, [orders, filters, itemsByOrder, searchField]);
+
 
   const markedOrders = useMemo(
     () => filtered.filter((o) => marked.includes(o.id)),
@@ -244,7 +273,7 @@ function AdminOrdersPage() {
     <div>
       <PageHeader
         title="Orders"
-        description="Status onujayi order manage korun — courier booking o live tracking ekhane."
+        description=""
         actions={
           <button
             onClick={() => exportCsv(filtered)}
@@ -256,14 +285,26 @@ function AdminOrdersPage() {
         }
       />
 
-      {/* Always-visible merged search: order no / customer / phone / address / reseller / product */}
+      {/* Always-visible search with field selector */}
       <div className="mb-3 flex flex-wrap items-center gap-2">
+        <select
+          value={searchField}
+          onChange={(e) => setSearchField(e.target.value as SearchField)}
+          className="h-10 rounded-md border bg-background px-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+          title="Search field"
+        >
+          {SEARCH_FIELDS.map((f) => (
+            <option key={f.value} value={f.value}>
+              {f.label}
+            </option>
+          ))}
+        </select>
         <div className="relative min-w-[240px] flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
             value={filters.q}
             onChange={(e) => setFilters({ ...filters, q: e.target.value })}
-            placeholder="Search: order no, customer, phone, address, reseller ba product name…"
+            placeholder={SEARCH_FIELDS.find((f) => f.value === searchField)?.placeholder}
             className="h-10 w-full rounded-md border bg-background pl-9 pr-8 text-sm outline-none focus:ring-2 focus:ring-ring"
           />
           {filters.q && (
@@ -276,6 +317,7 @@ function AdminOrdersPage() {
             </button>
           )}
         </div>
+
         <button
           type="button"
           onClick={() => setShowFilters((v) => !v)}
@@ -350,7 +392,9 @@ function AdminOrdersPage() {
               : `${ORDER_TABS.find((t) => t.key === tab)?.label ?? "All"} — ${filtered.length} order`
           }
           onPick={(name) => {
+            setSearchField("product");
             setFilters({ ...filters, q: name });
+
             setPickOpen(false);
           }}
           onClose={() => setPickOpen(false)}
