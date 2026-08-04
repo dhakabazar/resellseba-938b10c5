@@ -21,7 +21,7 @@ type Row = {
   config: Record<string, string>;
 };
 
-const PROVIDER_ORDER = ["steadfast", "pathao", "carrybee", "manual"];
+const PROVIDER_ORDER = ["steadfast", "pathao", "carrybee"];
 
 const FIELDS: Record<string, { key: string; label: string; type?: string; hint?: string }[]> = {
   steadfast: [
@@ -41,8 +41,6 @@ const FIELDS: Record<string, { key: string; label: string; type?: string; hint?:
     { key: "client_context", label: "Client Context" },
     { key: "store_id", label: "Default Pickup Store ID", hint: "Store list theke copy korun" },
   ],
-
-  manual: [],
 };
 
 
@@ -58,11 +56,9 @@ function CouriersPage() {
   async function load() {
     setLoading(true);
     const { data } = await supabase.from("courier_configs").select("*").order("display_name");
-    const sorted = [...((data ?? []) as Row[])].sort((a, b) => {
-      const ai = PROVIDER_ORDER.indexOf(a.provider);
-      const bi = PROVIDER_ORDER.indexOf(b.provider);
-      return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
-    });
+    const sorted = [...((data ?? []) as Row[])]
+      .filter((r) => PROVIDER_ORDER.includes(r.provider))
+      .sort((a, b) => PROVIDER_ORDER.indexOf(a.provider) - PROVIDER_ORDER.indexOf(b.provider));
     setRows(sorted);
 
     setLoading(false);
@@ -106,41 +102,24 @@ function CouriersPage() {
                 </div>
 
               </div>
-              {fields.length === 0 ? (
-                <div className="rounded-lg border border-dashed bg-muted/30 p-3 text-xs leading-relaxed text-muted-foreground">
-                  <span className="font-medium text-foreground">Manual courier — কোনো API/credential লাগে না।</span>
-                  <br />
-                  Order drawer-এ courier হিসেবে <span className="font-medium">Manual</span> বেছে নিয়ে
-                  tracking / consignment ID আর delivery cost নিজে বসিয়ে দিলে shipment তৈরি হবে এবং order{" "}
-                  <span className="font-medium">To Courier</span>-এ চলে যাবে। এরপর status (Delivered / Pending
-                  Return / Returned) admin নিজেই manually update করবে — কোনো webhook বা auto sync থাকবে না।
-                  <br />
-                  <span className="opacity-80">
-                    যেসব courier-এর এখনো API integration নেই (local pickup, নিজের delivery man, ইত্যাদি)
-                    তাদের জন্য এটি ব্যবহার করুন। পরে আরও detail যোগ করা যাবে।
-                  </span>
-                </div>
-              ) : (
-
-                <div className="grid gap-3">
-                  {fields.map((f) => (
-                    <div key={f.key}>
-                      <label className="mb-1 block text-xs font-medium">{f.label}</label>
-                      <input
-                        type={f.type || "text"}
-                        value={r.config?.[f.key] ?? ""}
-                        placeholder={f.hint}
-                        onChange={(e) => {
-                          const copy = [...rows];
-                          copy[idx] = { ...r, config: { ...r.config, [f.key]: e.target.value } };
-                          setRows(copy);
-                        }}
-                        className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-                      />
-                    </div>
-                  ))}
-                </div>
-              )}
+              <div className="grid gap-3">
+                {fields.map((f) => (
+                  <div key={f.key}>
+                    <label className="mb-1 block text-xs font-medium">{f.label}</label>
+                    <input
+                      type={f.type || "text"}
+                      value={r.config?.[f.key] ?? ""}
+                      placeholder={f.hint}
+                      onChange={(e) => {
+                        const copy = [...rows];
+                        copy[idx] = { ...r, config: { ...r.config, [f.key]: e.target.value } };
+                        setRows(copy);
+                      }}
+                      className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                    />
+                  </div>
+                ))}
+              </div>
               {r.provider === "steadfast" && (
                 <SteadfastExtras
                   token={r.config?.webhook_token ?? ""}
