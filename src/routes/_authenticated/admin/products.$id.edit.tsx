@@ -8,6 +8,7 @@ import { ImageUploader, type UploadedImage } from "@/components/ImageUploader";
 import { RichTextEditor } from "@/components/RichTextEditor";
 import { uniqueProductSlug, slugify } from "@/lib/slug";
 import { Hint } from "@/components/Hint";
+import { AdminProductCalc } from "@/components/price-breakdown";
 
 export const Route = createFileRoute("/_authenticated/admin/products/$id/edit")({
   component: EditProduct,
