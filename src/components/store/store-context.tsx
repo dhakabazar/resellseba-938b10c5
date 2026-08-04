@@ -107,6 +107,7 @@ export function useStoreLoader(code: string) {
       if (!alive) return;
       if (!r) return setState("missing");
 
+      const rid = r.reseller_id as string;
       const s = r as unknown as StoreSettings;
 
 
@@ -115,7 +116,7 @@ export function useStoreLoader(code: string) {
         .select(
           "id, selling_price, custom_title, custom_description, extra_delivery_inside, extra_delivery_outside, created_at, product:products(id,name,slug,short_description,description,stock,category_id,brand_id,is_featured,is_active,delivery_mode,delivery_flat,delivery_inside,delivery_outside, product_images(url,is_primary,sort_order))",
         )
-        .eq("reseller_id", r.id)
+        .eq("reseller_id", rid)
         .eq("is_active", true)
         .order("created_at", { ascending: false });
       if (!alive) return;
@@ -147,8 +148,8 @@ export function useStoreLoader(code: string) {
       if (!alive) return;
       setData({
         code,
-        resellerId: r.id,
-        name: s?.store_name || r.business_name,
+        resellerId: rid,
+        name: s?.store_name || r.business_name || code,
         settings: s,
         theme,
         listings,
