@@ -2,224 +2,457 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, StatCard } from "@/components/ui-kit";
-import { Loader2, Wallet, TrendingUp, Users, Award, PiggyBank } from "lucide-react";
-
-type OrderRow = {
-  reseller_id: string;
-  status: string;
-  subtotal: number;
-  shipping_cost: number;
-  total: number;
-  sa_cost_total: number;
-  reseller_profit: number;
-};
-type Reseller = { id: string; business_name: string; code: string; leader_id: string | null; commission_rate: number };
-type Payout = { reseller_id: string; amount: number; status: string };
-type Commission = { leader_id: string; reseller_id: string; amount: number; status: string };
-
-type Aggregate = {
-  reseller: Reseller;
-  totalOrders: number;
-  deliveredOrders: number;
-  gross: number;             // customer sell subtotal (delivered)
-  adminCost: number;         // admin buying + packaging (delivered)
-  shipping: number;          // delivered
-  deliveredProfit: number;   // reseller profit (delivered)
-  paidOut: number;
-  pendingPayout: number;
-  available: number;
-  leaderCommissionDue: number;
-  leaderCommissionPaid: number;
-};
+import {
+  OrderFilterBar,
+  applyOrderFilters,
+  DEFAULT_ORDER_FILTERS,
+  type OrderFilterState,
+} from "@/components/order-filters";
+import { ReportCard, StatusReportTable, ProductReportTable, TrendReportTable, RawStatusList } from "@/components/report-blocks";
+import {
+  buildFinanceReport,
+  bdt,
+  toCsv,
+  downloadCsv,
+  type ReportItem,
+  type ReportOrder,
+} from "@/lib/finance-report";
+import { Loader2, Wallet, TrendingUp, Award, PiggyBank, Truck, Download, AlertTriangle, Clock } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/financials")({
   component: FinancialsPage,
+  head: () => ({
+    meta: [
+      { title: "Financial report — Admin" },
+      { name: "description", content: "Per-reseller, per-status ar per-product full financial report." },
+    ],
+  }),
 });
+
+type OrderRow = ReportOrder & {
+  customer_name: string;
+  customer_phone: string;
+  address_line: string | null;
+  resellers?: { business_name: string; code: string } | null;
+};
+type Reseller = { id: string; business_name: string; code: string; leader_id: string | null; commission_rate: number };
+type Payout = { reseller_id: string; amount: number; status: string };
+type Commission = { leader_id: string; reseller_id: string; amount: number; status: string; created_at: string };
+type Shipment = { order_id: string; provider: string; cost: number | null; delivery_charge: number | null };
 
 function FinancialsPage() {
   const [loading, setLoading] = useState(true);
-  const [aggregates, setAggregates] = useState<Aggregate[]>([]);
-  const [query, setQuery] = useState("");
+  const [orders, setOrders] = useState<OrderRow[]>([]);
+  const [items, setItems] = useState<ReportItem[]>([]);
+  const [resellers, setResellers] = useState<Reseller[]>([]);
+  const [payouts, setPayouts] = useState<Payout[]>([]);
+  const [commissions, setCommissions] = useState<Commission[]>([]);
+  const [shipments, setShipments] = useState<Shipment[]>([]);
+  const [filters, setFilters] = useState<OrderFilterState>(DEFAULT_ORDER_FILTERS);
+  const [gran, setGran] = useState<"day" | "month">("day");
+  const [resellerQ, setResellerQ] = useState("");
 
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const [resellersRes, ordersRes, payoutsRes, commissionsRes] = await Promise.all([
+      const [o, it, r, p, c, s] = await Promise.all([
+        supabase
+          .from("orders")
+          .select(
+            "id,order_number,reseller_id,status,created_at,customer_name,customer_phone,address_line,subtotal,shipping_cost,discount,total,sa_cost_total,reseller_profit,resellers(business_name,code)",
+          )
+          .order("created_at", { ascending: false }),
+        supabase.from("order_items").select("order_id,product_id,product_name,quantity,sa_price,reseller_price,line_total,profit"),
         supabase.from("resellers").select("id,business_name,code,leader_id,commission_rate"),
-        supabase.from("orders").select("reseller_id,status,subtotal,shipping_cost,total,sa_cost_total,reseller_profit"),
         supabase.from("payouts").select("reseller_id,amount,status"),
-        supabase.from("leader_commissions").select("leader_id,reseller_id,amount,status"),
+        supabase.from("leader_commissions").select("leader_id,reseller_id,amount,status,created_at"),
+        supabase.from("shipments").select("order_id,provider,cost,delivery_charge"),
       ]);
-
-      const resellers = (resellersRes.data ?? []) as Reseller[];
-      const orders = (ordersRes.data ?? []) as OrderRow[];
-      const payouts = (payoutsRes.data ?? []) as Payout[];
-      const commissions = (commissionsRes.data ?? []) as Commission[];
-
-      const agg = new Map<string, Aggregate>();
-      for (const r of resellers) {
-        agg.set(r.id, {
-          reseller: r, totalOrders: 0, deliveredOrders: 0,
-          gross: 0, adminCost: 0, shipping: 0, deliveredProfit: 0,
-          paidOut: 0, pendingPayout: 0, available: 0,
-          leaderCommissionDue: 0, leaderCommissionPaid: 0,
-        });
-      }
-      for (const o of orders) {
-        const a = agg.get(o.reseller_id);
-        if (!a) continue;
-        a.totalOrders += 1;
-        if (o.status === "delivered") {
-          a.deliveredOrders += 1;
-          a.gross += Number(o.subtotal);
-          a.adminCost += Number(o.sa_cost_total);
-          a.shipping += Number(o.shipping_cost);
-          a.deliveredProfit += Number(o.reseller_profit);
-        }
-      }
-      for (const p of payouts) {
-        const a = agg.get(p.reseller_id);
-        if (!a) continue;
-        if (p.status === "paid") a.paidOut += Number(p.amount);
-        else if (p.status === "pending" || p.status === "approved") a.pendingPayout += Number(p.amount);
-      }
-      for (const c of commissions) {
-        const a = agg.get(c.leader_id);
-        if (!a) continue;
-        if (c.status === "paid") a.leaderCommissionPaid += Number(c.amount);
-        else a.leaderCommissionDue += Number(c.amount);
-      }
-      for (const a of agg.values()) {
-        a.available = Math.max(a.deliveredProfit - a.pendingPayout - a.paidOut, 0);
-      }
-      setAggregates(Array.from(agg.values()).sort((x, y) => y.deliveredProfit - x.deliveredProfit));
+      setOrders((o.data ?? []) as unknown as OrderRow[]);
+      setItems((it.data ?? []) as unknown as ReportItem[]);
+      setResellers((r.data ?? []) as Reseller[]);
+      setPayouts((p.data ?? []) as Payout[]);
+      setCommissions((c.data ?? []) as Commission[]);
+      setShipments((s.data ?? []) as Shipment[]);
       setLoading(false);
     })();
   }, []);
 
-  const totals = useMemo(() => {
-    return aggregates.reduce(
-      (t, a) => ({
-        gross: t.gross + a.gross,
-        adminCost: t.adminCost + a.adminCost,
-        shipping: t.shipping + a.shipping,
-        resellerProfit: t.resellerProfit + a.deliveredProfit,
-        paidOut: t.paidOut + a.paidOut,
-        pendingPayout: t.pendingPayout + a.pendingPayout,
-        available: t.available + a.available,
-        leaderDue: t.leaderDue + a.leaderCommissionDue,
-        leaderPaid: t.leaderPaid + a.leaderCommissionPaid,
-      }),
-      { gross: 0, adminCost: 0, shipping: 0, resellerProfit: 0, paidOut: 0, pendingPayout: 0, available: 0, leaderDue: 0, leaderPaid: 0 }
+  /** Date + reseller filtered order set — every report block reads from this. */
+  const scoped = useMemo(() => applyOrderFilters(orders, filters), [orders, filters]);
+  const scopedIds = useMemo(() => new Set(scoped.map((o) => o.id)), [scoped]);
+  const scopedItems = useMemo(() => items.filter((i) => scopedIds.has(i.order_id)), [items, scopedIds]);
+  const report = useMemo(() => buildFinanceReport(scoped, scopedItems, { trend: gran }), [scoped, scopedItems, gran]);
+
+  /** Payouts / commissions are ledger-wide (lifetime) — filter only by reseller. */
+  const ledgerResellerIds = useMemo(
+    () => (filters.reseller ? new Set([filters.reseller]) : new Set(resellers.map((r) => r.id))),
+    [filters.reseller, resellers],
+  );
+  const payoutTotals = useMemo(() => {
+    let paid = 0, pending = 0;
+    for (const p of payouts) {
+      if (!ledgerResellerIds.has(p.reseller_id)) continue;
+      if (p.status === "paid") paid += Number(p.amount);
+      else if (p.status === "pending" || p.status === "approved") pending += Number(p.amount);
+    }
+    return { paid, pending };
+  }, [payouts, ledgerResellerIds]);
+  const commissionTotals = useMemo(() => {
+    let paid = 0, due = 0;
+    for (const c of commissions) {
+      if (!ledgerResellerIds.has(c.reseller_id)) continue;
+      if (c.status === "paid") paid += Number(c.amount);
+      else due += Number(c.amount);
+    }
+    return { paid, due };
+  }, [commissions, ledgerResellerIds]);
+
+  /** Courier cost vs delivery collected (delivered orders only). */
+  const courierStats = useMemo(() => {
+    const deliveredIds = new Set(scoped.filter((o) => o.status === "delivered").map((o) => o.id));
+    const map = new Map<string, { provider: string; shipments: number; cost: number; charge: number }>();
+    for (const s of shipments) {
+      if (!scopedIds.has(s.order_id)) continue;
+      const row = map.get(s.provider) ?? { provider: s.provider, shipments: 0, cost: 0, charge: 0 };
+      row.shipments += 1;
+      row.cost += Number(s.cost ?? 0);
+      row.charge += Number(s.delivery_charge ?? 0);
+      map.set(s.provider, row);
+    }
+    const deliveredCollected = scoped
+      .filter((o) => deliveredIds.has(o.id))
+      .reduce((t, o) => t + Number(o.shipping_cost), 0);
+    return { rows: Array.from(map.values()).sort((a, b) => b.shipments - a.shipments), deliveredCollected };
+  }, [shipments, scoped, scopedIds]);
+
+  /** Per-reseller aggregate on the filtered order set. */
+  const perReseller = useMemo(() => {
+    const base = new Map<
+      string,
+      {
+        reseller: Reseller;
+        orders: number;
+        delivered: number;
+        returned: number;
+        gross: number;
+        adminCost: number;
+        delivery: number;
+        deliveredProfit: number;
+        pipelineProfit: number;
+        paid: number;
+        pending: number;
+        available: number;
+        leaderDue: number;
+        leaderPaid: number;
+      }
+    >();
+    for (const r of resellers) {
+      base.set(r.id, {
+        reseller: r, orders: 0, delivered: 0, returned: 0, gross: 0, adminCost: 0, delivery: 0,
+        deliveredProfit: 0, pipelineProfit: 0, paid: 0, pending: 0, available: 0, leaderDue: 0, leaderPaid: 0,
+      });
+    }
+    for (const o of scoped) {
+      const a = base.get(o.reseller_id);
+      if (!a) continue;
+      a.orders += 1;
+      if (o.status === "delivered") {
+        a.delivered += 1;
+        a.gross += Number(o.subtotal);
+        a.adminCost += Number(o.sa_cost_total);
+        a.delivery += Number(o.shipping_cost);
+        a.deliveredProfit += Number(o.reseller_profit);
+      } else if (o.status === "returned" || o.status === "cancelled") {
+        a.returned += 1;
+      } else {
+        a.pipelineProfit += Number(o.reseller_profit);
+      }
+    }
+    for (const p of payouts) {
+      const a = base.get(p.reseller_id);
+      if (!a) continue;
+      if (p.status === "paid") a.paid += Number(p.amount);
+      else if (p.status === "pending" || p.status === "approved") a.pending += Number(p.amount);
+    }
+    for (const c of commissions) {
+      const a = base.get(c.leader_id);
+      if (!a) continue;
+      if (c.status === "paid") a.leaderPaid += Number(c.amount);
+      else a.leaderDue += Number(c.amount);
+    }
+    for (const a of base.values()) a.available = Math.max(a.deliveredProfit - a.paid - a.pending, 0);
+    let rows = Array.from(base.values());
+    if (filters.reseller) rows = rows.filter((a) => a.reseller.id === filters.reseller);
+    const q = resellerQ.trim().toLowerCase();
+    if (q) rows = rows.filter((a) => a.reseller.business_name.toLowerCase().includes(q) || a.reseller.code.toLowerCase().includes(q));
+    return rows.sort((x, y) => y.deliveredProfit - x.deliveredProfit);
+  }, [resellers, scoped, payouts, commissions, filters.reseller, resellerQ]);
+
+  const totalAvailable = perReseller.reduce((t, a) => t + a.available, 0);
+  const courierCost = courierStats.rows.reduce((t, r) => t + r.cost, 0);
+
+  const exportStatus = () =>
+    downloadCsv(
+      "report-status.csv",
+      toCsv(
+        ["Status", "Orders", "Sell value", "Delivery", "Admin cost", "Reseller profit"],
+        Object.entries(report.byStatus).map(([s, b]) => [s, b.orders, b.gross, b.delivery, b.adminCost, b.profit]),
+      ),
     );
-  }, [aggregates]);
+  const exportProducts = () =>
+    downloadCsv(
+      "report-products.csv",
+      toCsv(
+        ["Product", "Orders", "Qty", "Delivered qty", "Sell value", "Cost", "Profit", "Delivered profit"],
+        report.products.map((p) => [p.name, p.orders, p.qty, p.deliveredQty, p.gross, p.cost, p.profit, p.deliveredProfit]),
+      ),
+    );
+  const exportResellers = () =>
+    downloadCsv(
+      "report-resellers.csv",
+      toCsv(
+        ["Reseller", "Code", "Orders", "Delivered", "Returned/Cancelled", "Gross sell", "Admin cost", "Delivery", "Delivered profit", "Pipeline profit", "Paid", "Pending", "Due", "Leader due"],
+        perReseller.map((a) => [
+          a.reseller.business_name, a.reseller.code, a.orders, a.delivered, a.returned,
+          a.gross, a.adminCost, a.delivery, a.deliveredProfit, a.pipelineProfit, a.paid, a.pending, a.available, a.leaderDue,
+        ]),
+      ),
+    );
 
-  const platformMargin = totals.adminCost; // admin already collected shipping-through, this is buying+packaging revenue
-  // Actually admin margin = adminCost - buying_cost. We don't have buying_cost here without an extra join.
-  // Show what we have clearly.
-
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return aggregates;
-    return aggregates.filter((a) => a.reseller.business_name.toLowerCase().includes(q) || a.reseller.code.toLowerCase().includes(q));
-  }, [aggregates, query]);
-
-  if (loading) return <div className="grid place-items-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
+  if (loading)
+    return (
+      <div className="grid place-items-center py-12">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
 
   return (
     <div>
-      <PageHeader title="Financial report" description="Per-reseller profit, payout, r leader commission er full picture." />
+      <PageHeader title="Financial report" />
+
+      <OrderFilterBar
+        value={filters}
+        onChange={setFilters}
+        resellerOptions={resellers.map((r) => ({ value: r.id, label: `${r.business_name} (${r.code})` }))}
+        total={orders.length}
+        shown={scoped.length}
+      />
 
       <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Gross sales (delivered)" value={`৳${totals.gross.toLocaleString()}`} icon={<TrendingUp className="h-4 w-4" />} />
-        <StatCard label="Reseller profit total" value={`৳${totals.resellerProfit.toLocaleString()}`} hint={`Paid ৳${totals.paidOut.toLocaleString()} · Due ৳${totals.available.toLocaleString()}`} icon={<Wallet className="h-4 w-4" />} />
-        <StatCard label="Admin revenue (cost billed)" value={`৳${platformMargin.toLocaleString()}`} hint="Reseller-price + packaging" icon={<PiggyBank className="h-4 w-4" />} />
-        <StatCard label="Leader commission due" value={`৳${totals.leaderDue.toLocaleString()}`} hint={`Paid ৳${totals.leaderPaid.toLocaleString()}`} icon={<Award className="h-4 w-4" />} />
-      </div>
-
-      <div className="mb-3 flex items-center gap-2">
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search reseller name or code…"
-          className="w-full max-w-xs rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+        <StatCard
+          label="Delivered sell value"
+          value={bdt(report.realized.gross)}
+          hint={`${report.realized.orders} delivered · AOV ${bdt(report.avgOrderValue)}`}
+          icon={<TrendingUp className="h-4 w-4" />}
         />
-        <div className="ml-auto flex items-center gap-1 text-xs text-muted-foreground">
-          <Users className="h-3.5 w-3.5" /> {aggregates.length} resellers
-        </div>
+        <StatCard
+          label="Admin revenue (product+pkg)"
+          value={bdt(report.realized.adminCost)}
+          hint="Delivered order er reseller-price + packaging"
+          icon={<PiggyBank className="h-4 w-4" />}
+        />
+        <StatCard
+          label="Reseller profit (delivered)"
+          value={bdt(report.realized.profit)}
+          hint={`Paid ${bdt(payoutTotals.paid)} · Pending ${bdt(payoutTotals.pending)} · Due ${bdt(totalAvailable)}`}
+          icon={<Wallet className="h-4 w-4" />}
+        />
+        <StatCard
+          label="Leader commission"
+          value={bdt(commissionTotals.due)}
+          hint={`Due ekhon · Paid ${bdt(commissionTotals.paid)}`}
+          icon={<Award className="h-4 w-4" />}
+        />
+        <StatCard
+          label="Pipeline profit (running)"
+          value={bdt(report.pipeline.profit)}
+          hint={`${report.pipeline.orders} order — new/confirmed/RTS/courier`}
+          icon={<Clock className="h-4 w-4" />}
+        />
+        <StatCard
+          label="Pending return (risk)"
+          value={bdt(report.risk.gross)}
+          hint={`${report.risk.orders} order — receive korle returned hobe`}
+          icon={<AlertTriangle className="h-4 w-4" />}
+        />
+        <StatCard
+          label="Lost (returned + cancelled)"
+          value={bdt(report.lost.gross)}
+          hint={`${report.lost.orders} order · Return rate ${report.returnRate.toFixed(1)}%`}
+          icon={<AlertTriangle className="h-4 w-4" />}
+        />
+        <StatCard
+          label="Delivery: collected vs courier"
+          value={`${bdt(courierStats.deliveredCollected)} / ${bdt(courierCost)}`}
+          hint={`Success rate ${report.deliveryRate.toFixed(1)}%`}
+          icon={<Truck className="h-4 w-4" />}
+        />
       </div>
 
-      <div className="surface-card overflow-x-auto">
-        <table className="w-full min-w-[900px] text-sm">
-          <thead className="bg-muted/40 text-left text-[11px] uppercase text-muted-foreground">
+      <ReportCard
+        title="Order status wise report"
+        hint="Order list er tab gulor sathe ek e bucket."
+        right={<CsvBtn onClick={exportStatus} />}
+      >
+        <StatusReportTable report={report} />
+      </ReportCard>
+
+      <ReportCard title="Raw status split" hint="Prottek database status alada vabe.">
+        <RawStatusList report={report} />
+      </ReportCard>
+
+      <ReportCard
+        title="Per-reseller report"
+        hint="Tenant onujai — filtered date range er order + lifetime payout ledger."
+        right={
+          <>
+            <input
+              value={resellerQ}
+              onChange={(e) => setResellerQ(e.target.value)}
+              placeholder="Reseller khujun…"
+              className="h-8 rounded-md border bg-background px-2 text-xs outline-none focus:ring-2 focus:ring-ring"
+            />
+            <CsvBtn onClick={exportResellers} />
+          </>
+        }
+      >
+        <table className="w-full min-w-[1050px] text-sm">
+          <thead className="bg-muted/20 text-left text-[11px] uppercase text-muted-foreground">
             <tr>
               <th className="p-3">Reseller</th>
-              <th className="p-3 text-right">Delivered</th>
+              <th className="p-3 text-right">Orders</th>
               <th className="p-3 text-right">Gross sell</th>
               <th className="p-3 text-right">Admin cost</th>
               <th className="p-3 text-right">Delivery</th>
-              <th className="p-3 text-right">Reseller profit</th>
+              <th className="p-3 text-right">Delivered profit</th>
+              <th className="p-3 text-right">Pipeline</th>
               <th className="p-3 text-right">Paid</th>
+              <th className="p-3 text-right">Pending</th>
               <th className="p-3 text-right">Due</th>
               <th className="p-3 text-right">Leader due</th>
             </tr>
           </thead>
           <tbody>
-            {filtered.map((a) => (
-              <tr key={a.reseller.id} className="border-t align-top">
+            {perReseller.map((a) => (
+              <tr key={a.reseller.id} className="border-t">
                 <td className="p-3">
                   <div className="font-medium">{a.reseller.business_name}</div>
-                  <div className="text-[11px] text-muted-foreground">/{a.reseller.code} · {a.reseller.commission_rate}%</div>
+                  <div className="text-[11px] text-muted-foreground">
+                    /{a.reseller.code} · leader rate {a.reseller.commission_rate}%
+                  </div>
                 </td>
-                <td className="p-3 text-right text-muted-foreground">{a.deliveredOrders}/{a.totalOrders}</td>
-                <td className="p-3 text-right">৳{a.gross.toLocaleString()}</td>
-                <td className="p-3 text-right text-muted-foreground">৳{a.adminCost.toLocaleString()}</td>
-                <td className="p-3 text-right text-muted-foreground">৳{a.shipping.toLocaleString()}</td>
-                <td className="p-3 text-right font-semibold text-success">৳{a.deliveredProfit.toLocaleString()}</td>
-                <td className="p-3 text-right">৳{a.paidOut.toLocaleString()}</td>
-                <td className="p-3 text-right font-medium">৳{a.available.toLocaleString()}</td>
+                <td className="p-3 text-right text-muted-foreground">
+                  {a.delivered}/{a.orders}
+                  <div className="text-[10px]">ret/can {a.returned}</div>
+                </td>
+                <td className="p-3 text-right">{bdt(a.gross)}</td>
+                <td className="p-3 text-right text-muted-foreground">{bdt(a.adminCost)}</td>
+                <td className="p-3 text-right text-muted-foreground">{bdt(a.delivery)}</td>
+                <td className="p-3 text-right font-semibold text-success">{bdt(a.deliveredProfit)}</td>
+                <td className="p-3 text-right text-muted-foreground">{bdt(a.pipelineProfit)}</td>
+                <td className="p-3 text-right">{bdt(a.paid)}</td>
+                <td className="p-3 text-right">{bdt(a.pending)}</td>
+                <td className="p-3 text-right font-medium">{bdt(a.available)}</td>
                 <td className="p-3 text-right">
-                  {a.leaderCommissionDue > 0 || a.leaderCommissionPaid > 0 ? (
+                  {a.leaderDue || a.leaderPaid ? (
                     <div>
-                      <div className="font-medium">৳{a.leaderCommissionDue.toLocaleString()}</div>
-                      <div className="text-[10px] text-muted-foreground">paid ৳{a.leaderCommissionPaid.toLocaleString()}</div>
+                      <div className="font-medium">{bdt(a.leaderDue)}</div>
+                      <div className="text-[10px] text-muted-foreground">paid {bdt(a.leaderPaid)}</div>
                     </div>
-                  ) : <span className="text-muted-foreground">—</span>}
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
                 </td>
               </tr>
             ))}
-            {filtered.length === 0 && (
-              <tr><td colSpan={9} className="p-8 text-center text-muted-foreground">No resellers found.</td></tr>
+            {perReseller.length === 0 && (
+              <tr>
+                <td colSpan={11} className="p-8 text-center text-muted-foreground">
+                  Kono reseller nai.
+                </td>
+              </tr>
             )}
           </tbody>
-          {filtered.length > 0 && (
-            <tfoot className="border-t bg-muted/30 text-sm font-medium">
-              <tr>
-                <td className="p-3">Totals</td>
-                <td className="p-3 text-right"></td>
-                <td className="p-3 text-right">৳{totals.gross.toLocaleString()}</td>
-                <td className="p-3 text-right">৳{totals.adminCost.toLocaleString()}</td>
-                <td className="p-3 text-right">৳{totals.shipping.toLocaleString()}</td>
-                <td className="p-3 text-right text-success">৳{totals.resellerProfit.toLocaleString()}</td>
-                <td className="p-3 text-right">৳{totals.paidOut.toLocaleString()}</td>
-                <td className="p-3 text-right">৳{totals.available.toLocaleString()}</td>
-                <td className="p-3 text-right">৳{totals.leaderDue.toLocaleString()}</td>
-              </tr>
-            </tfoot>
-          )}
         </table>
-      </div>
+      </ReportCard>
 
-      <div className="mt-6 rounded-lg border bg-muted/30 p-4 text-xs text-muted-foreground">
+      <ReportCard
+        title="Product wise report"
+        hint="Kon product theke koto sell r koto profit."
+        right={<CsvBtn onClick={exportProducts} />}
+      >
+        <ProductReportTable products={report.products} />
+      </ReportCard>
+
+      <ReportCard title="Courier wise report" hint="Booking count, courier charge r COD delivery charge.">
+        <table className="w-full min-w-[520px] text-sm">
+          <thead className="bg-muted/20 text-left text-[11px] uppercase text-muted-foreground">
+            <tr>
+              <th className="p-3">Courier</th>
+              <th className="p-3 text-right">Shipments</th>
+              <th className="p-3 text-right">Booking cost</th>
+              <th className="p-3 text-right">Courier delivery charge</th>
+            </tr>
+          </thead>
+          <tbody>
+            {courierStats.rows.map((r) => (
+              <tr key={r.provider} className="border-t">
+                <td className="p-3 font-medium capitalize">{r.provider}</td>
+                <td className="p-3 text-right">{r.shipments}</td>
+                <td className="p-3 text-right">{bdt(r.cost)}</td>
+                <td className="p-3 text-right text-muted-foreground">{bdt(r.charge)}</td>
+              </tr>
+            ))}
+            {courierStats.rows.length === 0 && (
+              <tr>
+                <td colSpan={4} className="p-8 text-center text-muted-foreground">
+                  Ei range e kono shipment nai.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </ReportCard>
+
+      <ReportCard
+        title="Trend report"
+        right={
+          <select
+            value={gran}
+            onChange={(e) => setGran(e.target.value as "day" | "month")}
+            className="h-8 rounded-md border bg-background px-2 text-xs outline-none"
+          >
+            <option value="day">Daily</option>
+            <option value="month">Monthly</option>
+          </select>
+        }
+      >
+        <TrendReportTable trend={report.trend} />
+      </ReportCard>
+
+      <div className="rounded-lg border bg-muted/30 p-4 text-xs text-muted-foreground">
         <div className="mb-1 font-medium text-foreground">Kivabe calculate hoy</div>
-        <ul className="list-disc pl-4 space-y-1">
-          <li><b>Gross sell</b> = reseller er selling price × qty (customer j price dey, delivery baade).</li>
-          <li><b>Admin cost</b> = (reseller_price + packaging_cost) × qty. Eta admin er reseller er theke pawa amount.</li>
-          <li><b>Delivery</b> admin collect kore, courier k dey — profit e count hoy na.</li>
-          <li><b>Reseller profit</b> = Gross sell − Admin cost (shudhu delivered order e).</li>
-          <li><b>Leader commission</b> = reseller profit × leader er rate% — admin pay kore (delivered hole trigger e create hoy).</li>
+        <ul className="list-disc space-y-1 pl-4">
+          <li><b>Sell value</b> = reseller er selling price × qty (delivery baade).</li>
+          <li><b>Admin cost / revenue</b> = (reseller_price + packaging_cost) × qty — reseller admin k ei ta dey.</li>
+          <li><b>Delivery</b> customer theke collect hoy, courier k dewa hoy — profit e count hoy na.</li>
+          <li><b>Reseller profit</b> = Sell value − Admin cost. Delivered hole confirmed, pipeline mane running.</li>
+          <li><b>Leader commission</b> = delivered order er reseller profit × leader rate% (trigger e auto create).</li>
+          <li><b>Due</b> = delivered profit − paid − pending payout.</li>
         </ul>
       </div>
     </div>
+  );
+}
+
+function CsvBtn({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs hover:bg-accent"
+    >
+      <Download className="h-3.5 w-3.5" /> CSV
+    </button>
   );
 }
