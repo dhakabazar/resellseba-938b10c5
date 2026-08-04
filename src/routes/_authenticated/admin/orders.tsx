@@ -752,27 +752,54 @@ function OrderDrawer({
               </>
             )}
             {provider === "pathao" && (
-              <button
-                type="button"
-                disabled={busy}
-                onClick={async () => {
-                  setBusy(true);
-                  try {
-                    const r = await bookPathaoFn({ data: { orderId: order.id } });
-                    toast.success(`Booked · ${r.trackingId}`);
-                    await loadDetails();
-                    onChanged();
-                  } catch (e) {
-                    toast.error(e instanceof Error ? e.message : "Booking failed");
-                  } finally {
-                    setBusy(false);
-                  }
-                }}
-                className="col-span-2 inline-flex items-center justify-center gap-2 rounded-md border border-primary/40 bg-primary/10 px-4 py-2 text-sm font-medium text-primary"
-              >
-                <Zap className="h-4 w-4" /> Auto-book with Pathao API
-              </button>
+              <>
+                <select
+                  value={pxDeliveryType}
+                  onChange={(e) => setPxDeliveryType(Number(e.target.value) as 48 | 12)}
+                  className="input col-span-2"
+                >
+                  <option value={48}>Normal delivery (48h)</option>
+                  <option value={12}>On demand delivery (12h)</option>
+                </select>
+                <input
+                  type="number"
+                  step="0.5"
+                  min="0.5"
+                  max="10"
+                  placeholder="Item weight (kg)"
+                  value={pxWeight || ""}
+                  onChange={(e) => setPxWeight(Number(e.target.value))}
+                  className="input col-span-2"
+                />
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={async () => {
+                    setBusy(true);
+                    try {
+                      const r = await bookPathaoFn({
+                        data: {
+                          orderId: order.id,
+                          deliveryType: pxDeliveryType,
+                          itemWeight: pxWeight >= 0.5 ? pxWeight : undefined,
+                        },
+                      });
+                      toast.success(`Booked · ${r.trackingId}`);
+                      await loadDetails();
+                      onChanged();
+                    } catch (e) {
+                      toast.error(e instanceof Error ? e.message : "Booking failed");
+                    } finally {
+                      setBusy(false);
+                    }
+                  }}
+                  className="col-span-2 inline-flex items-center justify-center gap-2 rounded-md border border-primary/40 bg-primary/10 px-4 py-2 text-sm font-medium text-primary"
+                >
+                  <Zap className="h-4 w-4" /> Auto-book with Pathao API
+                </button>
+              </>
             )}
+
             {provider === "carrybee" && (
               <>
                 <select
