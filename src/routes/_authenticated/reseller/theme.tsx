@@ -282,9 +282,10 @@ function ThemePage() {
           {previewSrc ? (
             <div className="mx-auto overflow-hidden rounded-lg border" style={{ maxWidth: device === "mobile" ? 390 : "100%" }}>
               <iframe
-                key={`${theme}-${previewKey}-${device}`}
+                key={previewKey}
                 src={previewSrc}
                 title="Store preview"
+                sandbox="allow-scripts allow-forms allow-popups allow-modals"
                 className="h-[720px] w-full bg-background"
               />
             </div>
