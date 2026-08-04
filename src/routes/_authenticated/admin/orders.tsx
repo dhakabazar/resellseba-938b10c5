@@ -113,13 +113,18 @@ function exportCsv(rows: OrderRow[]) {
   URL.revokeObjectURL(url);
 }
 
+type OrderItemLite = { order_id: string; product_id: string | null; product_name: string; quantity: number };
+
 function AdminOrdersPage() {
   const [orders, setOrders] = useState<OrderRow[]>([]);
+  const [orderItems, setOrderItems] = useState<OrderItemLite[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<OrderTabKey>("confirmed");
   const [selected, setSelected] = useState<OrderRow | null>(null);
   const [filters, setFilters] = useState<OrderFilterState>(DEFAULT_ORDER_FILTERS);
+  const [productQuery, setProductQuery] = useState("");
+  const [showPickList, setShowPickList] = useState(false);
   const [page, setPage] = useState(1);
   const [resellerOptions, setResellerOptions] = useState<FilterOption[]>([]);
 
@@ -138,7 +143,20 @@ function AdminOrdersPage() {
       supabase.from("orders").select("status"),
       supabase.from("resellers").select("id,business_name,code").order("business_name"),
     ]);
-    setOrders((data ?? []) as OrderRow[]);
+    const rows = (data ?? []) as OrderRow[];
+    setOrders(rows);
+    if (rows.length > 0) {
+      const { data: its } = await supabase
+        .from("order_items")
+        .select("order_id,product_id,product_name,quantity")
+        .in(
+          "order_id",
+          rows.map((r) => r.id),
+        );
+      setOrderItems((its ?? []) as OrderItemLite[]);
+    } else {
+      setOrderItems([]);
+    }
     setResellerOptions(
       (rs ?? []).map((r: any) => ({ value: r.id, label: `${r.business_name} (/${r.code})` })),
     );
@@ -156,10 +174,43 @@ function AdminOrdersPage() {
     load();
   }, [tab]);
 
-  const filtered = useMemo(() => applyOrderFilters(orders, filters), [orders, filters]);
+  const itemsByOrder = useMemo(() => {
+    const m = new Map<string, OrderItemLite[]>();
+    for (const it of orderItems) {
+      const arr = m.get(it.order_id);
+      if (arr) arr.push(it);
+      else m.set(it.order_id, [it]);
+    }
+    return m;
+  }, [orderItems]);
+
+  const filtered = useMemo(() => {
+    const base = applyOrderFilters(orders, filters);
+    const pq = productQuery.trim().toLowerCase();
+    if (!pq) return base;
+    return base.filter((o) =>
+      (itemsByOrder.get(o.id) ?? []).some((it) => it.product_name.toLowerCase().includes(pq)),
+    );
+  }, [orders, filters, productQuery, itemsByOrder]);
+
+  /** Product-wise pick list for the currently visible (status + filter) orders. */
+  const pickList = useMemo(() => {
+    const m = new Map<string, { name: string; qty: number; orders: number }>();
+    for (const o of filtered) {
+      for (const it of itemsByOrder.get(o.id) ?? []) {
+        const key = it.product_id ?? it.product_name;
+        const cur = m.get(key) ?? { name: it.product_name, qty: 0, orders: 0 };
+        cur.qty += Number(it.quantity) || 0;
+        cur.orders += 1;
+        m.set(key, cur);
+      }
+    }
+    return [...m.values()].sort((a, b) => b.qty - a.qty);
+  }, [filtered, itemsByOrder]);
+
   useEffect(() => {
     setPage(1);
-  }, [filters, tab]);
+  }, [filters, tab, productQuery]);
   const paged = usePaginated(filtered, page, filters.perPage);
 
   return (
@@ -187,6 +238,70 @@ function AdminOrdersPage() {
         total={orders.length}
         shown={filtered.length}
       />
+
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <div className="relative min-w-[220px] flex-1 sm:max-w-sm">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <input
+            value={productQuery}
+            onChange={(e) => setProductQuery(e.target.value)}
+            placeholder="Product name diye order khujun…"
+            className="h-9 w-full rounded-md border bg-background pl-9 pr-8 text-sm outline-none focus:ring-2 focus:ring-ring"
+          />
+          {productQuery && (
+            <button
+              type="button"
+              onClick={() => setProductQuery("")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground hover:bg-accent"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowPickList((v) => !v)}
+          className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-accent"
+        >
+          <ListChecks className="h-4 w-4" />
+          Product pick list ({pickList.length})
+        </button>
+      </div>
+
+      {showPickList && (
+        <div className="surface-card mb-4 overflow-hidden">
+          <div className="flex items-center justify-between border-b bg-muted/40 px-4 py-2 text-xs font-medium text-muted-foreground">
+            <span>
+              {ORDER_TABS.find((t) => t.key === tab)?.label ?? "All"} — product wise quantity
+            </span>
+            <span>
+              Total {pickList.reduce((s, p) => s + p.qty, 0)} pcs / {filtered.length} orders
+            </span>
+          </div>
+          {pickList.length === 0 ? (
+            <div className="px-4 py-6 text-center text-sm text-muted-foreground">Kono product nai.</div>
+          ) : (
+            pickList.map((p) => (
+              <button
+                key={p.name}
+                type="button"
+                onClick={() => setProductQuery(p.name)}
+                className="flex w-full items-center justify-between gap-3 border-b px-4 py-2 text-left text-sm last:border-b-0 hover:bg-accent/50"
+              >
+                <span className="truncate">{p.name}</span>
+                <span className="flex shrink-0 items-center gap-3 text-xs">
+                  <span className="text-muted-foreground">{p.orders} order</span>
+                  <span className="rounded-full bg-primary/10 px-2 py-0.5 font-semibold text-primary">
+                    {p.qty} pcs
+                  </span>
+                </span>
+              </button>
+            ))
+          )}
+        </div>
+      )}
+
+
 
 
 
