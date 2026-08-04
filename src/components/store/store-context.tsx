@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { getStoreTheme, ensureThemeFont, type StoreTheme } from "@/lib/store-theme";
+import { getStoreTheme, getPalette, ensureThemeFont, type StorePalette, type StoreTheme } from "@/lib/store-theme";
 import { onCartChange, readCart, type CartLine } from "@/lib/store-cart";
 import {
   createContentReader,
