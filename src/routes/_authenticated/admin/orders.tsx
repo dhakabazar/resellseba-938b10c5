@@ -115,17 +115,8 @@ function exportCsv(rows: OrderRow[]) {
 
 type OrderItemLite = { order_id: string; product_id: string | null; product_name: string; quantity: number };
 
-type SearchField = "all" | "order" | "customer" | "phone" | "address" | "reseller" | "product";
 
-const SEARCH_FIELDS: { value: SearchField; label: string; placeholder: string }[] = [
-  { value: "all", label: "All fields", placeholder: "Order, customer, phone, address, reseller, product…" },
-  { value: "order", label: "Order no", placeholder: "Order number…" },
-  { value: "customer", label: "Customer name", placeholder: "Customer name…" },
-  { value: "phone", label: "Phone", placeholder: "Customer phone…" },
-  { value: "address", label: "Address", placeholder: "Address…" },
-  { value: "reseller", label: "Reseller", placeholder: "Reseller name / code…" },
-  { value: "product", label: "Product", placeholder: "Product name…" },
-];
+
 
 
 function AdminOrdersPage() {
@@ -136,7 +127,7 @@ function AdminOrdersPage() {
   const [tab, setTab] = useState<OrderTabKey>("confirmed");
   const [selected, setSelected] = useState<OrderRow | null>(null);
   const [filters, setFilters] = useState<OrderFilterState>(DEFAULT_ORDER_FILTERS);
-  const [searchField, setSearchField] = useState<SearchField>("all");
+  const [productQ, setProductQ] = useState("");
 
   const [showFilters, setShowFilters] = useState(false);
   const [pickOpen, setPickOpen] = useState(false);
@@ -202,41 +193,23 @@ function AdminOrdersPage() {
     return m;
   }, [orderItems]);
 
-  /** Scoped search: field dropdown + one input. */
+  /** Two separate searches: order (no/name/phone) + product name. */
   const filtered = useMemo(() => {
     const base = applyOrderFilters(orders, { ...filters, q: "" });
     const q = filters.q.trim().toLowerCase();
-    if (!q) return base;
-    const has = (v?: string | null) => (v ?? "").toLowerCase().includes(q);
+    const pq = productQ.trim().toLowerCase();
+    if (!q && !pq) return base;
     return base.filter((o) => {
-      const inProduct = () =>
-        (itemsByOrder.get(o.id) ?? []).some((it) => it.product_name.toLowerCase().includes(q));
-      switch (searchField) {
-        case "order":
-          return has(o.order_number);
-        case "customer":
-          return has(o.customer_name);
-        case "phone":
-          return has(o.customer_phone);
-        case "address":
-          return has(o.address_line);
-        case "reseller":
-          return has(o.resellers?.business_name) || has(o.resellers?.code);
-        case "product":
-          return inProduct();
-        default:
-          return (
-            has(o.order_number) ||
-            has(o.customer_name) ||
-            has(o.customer_phone) ||
-            has(o.address_line) ||
-            has(o.resellers?.business_name) ||
-            has(o.resellers?.code) ||
-            inProduct()
-          );
-      }
+      const has = (v?: string | null) => (v ?? "").toLowerCase().includes(q);
+      const okOrder =
+        !q || has(o.order_number) || has(o.customer_name) || has(o.customer_phone);
+      const okProduct =
+        !pq ||
+        (itemsByOrder.get(o.id) ?? []).some((it) => it.product_name.toLowerCase().includes(pq));
+      return okOrder && okProduct;
     });
-  }, [orders, filters, itemsByOrder, searchField]);
+  }, [orders, filters, itemsByOrder, productQ]);
+
 
 
   const markedOrders = useMemo(
@@ -285,26 +258,14 @@ function AdminOrdersPage() {
         }
       />
 
-      {/* Always-visible search with field selector */}
+      {/* Two always-visible searches: order + product */}
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <select
-          value={searchField}
-          onChange={(e) => setSearchField(e.target.value as SearchField)}
-          className="h-10 rounded-md border bg-background px-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-          title="Search field"
-        >
-          {SEARCH_FIELDS.map((f) => (
-            <option key={f.value} value={f.value}>
-              {f.label}
-            </option>
-          ))}
-        </select>
-        <div className="relative min-w-[240px] flex-1">
+        <div className="relative min-w-[220px] flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
             value={filters.q}
             onChange={(e) => setFilters({ ...filters, q: e.target.value })}
-            placeholder={SEARCH_FIELDS.find((f) => f.value === searchField)?.placeholder}
+            placeholder="Order search — order no / name / mobile…"
             className="h-10 w-full rounded-md border bg-background pl-9 pr-8 text-sm outline-none focus:ring-2 focus:ring-ring"
           />
           {filters.q && (
@@ -317,6 +278,25 @@ function AdminOrdersPage() {
             </button>
           )}
         </div>
+        <div className="relative min-w-[200px] flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <input
+            value={productQ}
+            onChange={(e) => setProductQ(e.target.value)}
+            placeholder="Product search — product name…"
+            className="h-10 w-full rounded-md border bg-background pl-9 pr-8 text-sm outline-none focus:ring-2 focus:ring-ring"
+          />
+          {productQ && (
+            <button
+              type="button"
+              onClick={() => setProductQ("")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground hover:bg-accent"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+
 
         <button
           type="button"
@@ -392,9 +372,7 @@ function AdminOrdersPage() {
               : `${ORDER_TABS.find((t) => t.key === tab)?.label ?? "All"} — ${filtered.length} order`
           }
           onPick={(name) => {
-            setSearchField("product");
-            setFilters({ ...filters, q: name });
-
+            setProductQ(name);
             setPickOpen(false);
           }}
           onClose={() => setPickOpen(false)}
