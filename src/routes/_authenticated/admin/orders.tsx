@@ -123,9 +123,11 @@ function AdminOrdersPage() {
   const [tab, setTab] = useState<OrderTabKey>("confirmed");
   const [selected, setSelected] = useState<OrderRow | null>(null);
   const [filters, setFilters] = useState<OrderFilterState>(DEFAULT_ORDER_FILTERS);
-  const [productQuery, setProductQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
-  const [showPickList, setShowPickList] = useState(false);
+  const [pickOpen, setPickOpen] = useState(false);
+  const [marked, setMarked] = useState<string[]>([]);
+  const [pickScope, setPickScope] = useState<"filtered" | "marked">("filtered");
+
   const [page, setPage] = useState(1);
   const [resellerOptions, setResellerOptions] = useState<FilterOption[]>([]);
 
