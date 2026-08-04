@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { trackPurchase } from "@/lib/tracking";
 import { useServerFn } from "@tanstack/react-start";
 import { trackPurchaseServer } from "@/lib/capi.functions";
+import { useStore } from "@/components/store/store-context";
+import { cx, Heading, muted, PrimaryButton } from "@/components/store/ui";
 
 export const Route = createFileRoute("/s/$code/thanks")({
   validateSearch: (s: Record<string, unknown>) => ({ n: typeof s.n === "string" ? s.n : "" }),
