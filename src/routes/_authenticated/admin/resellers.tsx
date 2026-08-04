@@ -519,23 +519,28 @@ function EditModal({
   const cls =
     "w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring";
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto bg-black/40 p-0 sm:items-center sm:p-4"
+      onClick={onClose}
+    >
       <form
         onClick={(e) => e.stopPropagation()}
         onSubmit={save}
-        className="surface-card w-full max-w-lg space-y-3 p-6"
+        className="surface-card flex max-h-[92dvh] w-full max-w-lg flex-col rounded-b-none sm:max-h-[88dvh] sm:rounded-lg"
       >
-        <div className="flex items-center justify-between">
-          <h3 className="text-base font-semibold">Edit reseller</h3>
-          <button type="button" onClick={onClose} className="rounded-md p-1 hover:bg-muted">
+        <div className="flex items-center justify-between gap-3 border-b px-4 py-3 sm:px-6 sm:py-4">
+          <h3 className="truncate text-base font-semibold">Edit reseller</h3>
+          <button type="button" onClick={onClose} className="shrink-0 rounded-md p-1 hover:bg-muted">
             <X className="h-4 w-4" />
           </button>
         </div>
+        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4 sm:px-6">
         <div>
           <label className="mb-1 block text-xs font-medium">Business name</label>
           <input required value={businessName} onChange={(e) => setBusinessName(e.target.value)} className={cls} />
         </div>
-        <div className="grid gap-3 md:grid-cols-2">
+        <div className="grid gap-3 sm:grid-cols-2">
+
           <div>
             <label className="mb-1 block text-xs font-medium">Store code</label>
             <input required value={code} onChange={(e) => setCode(e.target.value)} className={cls} />
