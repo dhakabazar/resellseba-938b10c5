@@ -1,12 +1,9 @@
 import type { Cfg } from "@/lib/couriers.server";
 
 export const CARRYBEE_PRODUCTION_URL = "https://developers.carrybee.com";
-export const CARRYBEE_SANDBOX_URL = "https://sandbox.carrybee.com";
 
-export function carrybeeBase(conf: Cfg) {
-  const override = (conf.base_url ?? "").trim();
-  if (override) return override.replace(/\/+$/, "");
-  return conf.environment === "sandbox" ? CARRYBEE_SANDBOX_URL : CARRYBEE_PRODUCTION_URL;
+export function carrybeeBase(_conf: Cfg) {
+  return CARRYBEE_PRODUCTION_URL;
 }
 
 export function carrybeeHeaders(conf: Cfg) {

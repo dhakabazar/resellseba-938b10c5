@@ -40,7 +40,6 @@ const FIELDS: Record<string, { key: string; label: string; type?: string; hint?:
     { key: "client_secret", label: "Client Secret" },
     { key: "client_context", label: "Client Context" },
     { key: "store_id", label: "Default Pickup Store ID", hint: "Store list theke copy korun" },
-    { key: "base_url", label: "Base URL (optional override)", hint: "Khali rakhle environment onujayi auto" },
   ],
 
   manual: [],
