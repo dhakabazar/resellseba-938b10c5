@@ -64,6 +64,7 @@ function SettingsPage() {
         setTagline(s.tagline ?? "");
         setPrimary(s.primary_color ?? "#3b82f6");
         setAccent(s.accent_color ?? "#f59e0b");
+        setThemeColors(!s.primary_color && !s.accent_color);
         setWhatsapp(s.whatsapp ?? "");
         setSupportPhone(s.support_phone ?? "");
         setFb(s.facebook_url ?? "");
