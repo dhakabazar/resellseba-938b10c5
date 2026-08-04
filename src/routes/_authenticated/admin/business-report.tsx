@@ -367,7 +367,7 @@ function BusinessReportPage() {
                 </button>
               ))}
             </div>
-            <button type="button" onClick={exportProducts} className="btn-outline text-xs">
+            <button type="button" onClick={exportProducts} className="inline-flex items-center rounded-md border px-2.5 py-1.5 text-xs hover:bg-accent">
               <Download className="mr-1.5 h-3.5 w-3.5" /> Export
             </button>
           </div>
