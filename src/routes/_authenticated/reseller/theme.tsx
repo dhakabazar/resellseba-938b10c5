@@ -282,23 +282,38 @@ function ThemePage() {
               >
                 <Smartphone className="h-4 w-4" />
               </button>
-              <button onClick={() => setPreviewKey((k) => k + 1)} className="rounded-md border px-3 py-2 text-xs">
-                Refresh
+              <button
+                onClick={() => {
+                  setPreviewOn(true);
+                  setPreviewKey((k) => k + 1);
+                }}
+                className="rounded-md border px-3 py-2 text-xs"
+              >
+                {previewOn ? "Refresh" : "Load preview"}
               </button>
             </div>
           </div>
-          {previewSrc ? (
+          {!previewSrc ? (
+            <p className="text-sm text-muted-foreground">Preview appears once your store is active.</p>
+          ) : previewOn ? (
             <div className="mx-auto overflow-hidden rounded-lg border" style={{ maxWidth: device === "mobile" ? 390 : "100%" }}>
               <iframe
                 key={previewKey}
                 src={previewSrc}
                 title="Store preview"
-                sandbox="allow-scripts allow-forms allow-popups allow-modals"
+                loading="lazy"
                 className="h-[720px] w-full bg-background"
               />
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">Preview appears once your store is active.</p>
+            <button
+              onClick={() => setPreviewOn(true)}
+              className="grid h-[280px] w-full place-items-center rounded-lg border border-dashed text-sm text-muted-foreground hover:bg-muted/40"
+            >
+              <span className="inline-flex items-center gap-2">
+                <Eye className="h-4 w-4" /> Load live preview
+              </span>
+            </button>
           )}
           <p className="mt-2 text-[11px] text-muted-foreground">
             Preview shows the selected theme. Save & publish to apply it for customers. Content edits appear after saving.
