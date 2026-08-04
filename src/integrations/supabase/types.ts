@@ -1077,10 +1077,15 @@ export type Database = {
       }
       reseller_settings: {
         Row: {
+          about_text: string | null
           accent_color: string | null
+          announcement: string | null
           facebook_url: string | null
           favicon_url: string | null
           footer_text: string | null
+          hero_headline: string | null
+          hero_image_url: string | null
+          hero_subheadline: string | null
           instagram_url: string | null
           logo_url: string | null
           meta_description: string | null
@@ -1088,16 +1093,23 @@ export type Database = {
           primary_color: string | null
           reseller_id: string
           store_name: string
+          support_phone: string | null
           tagline: string | null
+          theme: string
           tiktok_url: string | null
           updated_at: string
           whatsapp: string | null
         }
         Insert: {
+          about_text?: string | null
           accent_color?: string | null
+          announcement?: string | null
           facebook_url?: string | null
           favicon_url?: string | null
           footer_text?: string | null
+          hero_headline?: string | null
+          hero_image_url?: string | null
+          hero_subheadline?: string | null
           instagram_url?: string | null
           logo_url?: string | null
           meta_description?: string | null
@@ -1105,16 +1117,23 @@ export type Database = {
           primary_color?: string | null
           reseller_id: string
           store_name: string
+          support_phone?: string | null
           tagline?: string | null
+          theme?: string
           tiktok_url?: string | null
           updated_at?: string
           whatsapp?: string | null
         }
         Update: {
+          about_text?: string | null
           accent_color?: string | null
+          announcement?: string | null
           facebook_url?: string | null
           favicon_url?: string | null
           footer_text?: string | null
+          hero_headline?: string | null
+          hero_image_url?: string | null
+          hero_subheadline?: string | null
           instagram_url?: string | null
           logo_url?: string | null
           meta_description?: string | null
@@ -1122,7 +1141,9 @@ export type Database = {
           primary_color?: string | null
           reseller_id?: string
           store_name?: string
+          support_phone?: string | null
           tagline?: string | null
+          theme?: string
           tiktok_url?: string | null
           updated_at?: string
           whatsapp?: string | null

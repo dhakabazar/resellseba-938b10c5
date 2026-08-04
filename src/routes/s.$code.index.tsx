@@ -1,147 +1,269 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Search } from "lucide-react";
+import { useMemo } from "react";
+import { ArrowRight } from "lucide-react";
+import { useStore } from "@/components/store/store-context";
+import { TrustBar } from "@/components/store/chrome";
+import {
+  borderc,
+  cx,
+  EmptyState,
+  GhostButton,
+  Heading,
+  muted,
+  PrimaryButton,
+  ProductGrid,
+  SectionHead,
+} from "@/components/store/ui";
+
+type Search = { q?: string };
 
 export const Route = createFileRoute("/s/$code/")({
   component: StoreHome,
+  validateSearch: (s: Record<string, unknown>): Search => ({
+    q: typeof s.q === "string" && s.q ? s.q : undefined,
+  }),
 });
 
-type Listing = {
-  id: string;
-  selling_price: number;
-  custom_title: string | null;
-  is_active: boolean;
-  product: {
-    id: string;
-    name: string;
-    slug: string;
-    short_description: string | null;
-    category_id: string | null;
-    brand_id: string | null;
-    is_active: boolean;
-    product_images: { url: string; is_primary: boolean }[];
-  } | null;
-};
+function StoreHome() {
+  const { q } = Route.useSearch();
+  const store = useStore();
+  const { code, listings, categories, theme, name, settings } = store;
 
-export default function StoreHome() {
-  const { code } = Route.useParams();
-  const [rid, setRid] = useState<string | null>(null);
-  const [listings, setListings] = useState<Listing[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [q, setQ] = useState("");
-  const [cats, setCats] = useState<{ id: string; name: string }[]>([]);
-  const [activeCat, setActiveCat] = useState<string | "all">("all");
+  const results = useMemo(() => {
+    if (!q) return listings;
+    const term = q.toLowerCase();
+    return listings.filter((l) => store.title(l).toLowerCase().includes(term));
+  }, [q, listings, store]);
 
-  useEffect(() => {
-    (async () => {
-      const { data: r } = await supabase.from("resellers").select("id").eq("code", code).maybeSingle();
-      if (!r) return setLoading(false);
-      setRid(r.id);
-      const { data } = await supabase
-        .from("reseller_listings")
-        .select("id, selling_price, custom_title, is_active, product:products(id,name,slug,short_description,category_id,brand_id,is_active, product_images(url,is_primary))")
-        .eq("reseller_id", r.id)
-        .eq("is_active", true)
-        .order("created_at", { ascending: false });
-      const rows = (data ?? []).filter((l: any) => l.product?.is_active) as unknown as Listing[];
-      setListings(rows);
-      const catIds = Array.from(new Set(rows.map((l) => l.product?.category_id).filter(Boolean))) as string[];
-      if (catIds.length) {
-        const { data: c } = await supabase.from("categories").select("id,name").in("id", catIds);
-        setCats(c ?? []);
-      }
-      setLoading(false);
-    })();
-  }, [code]);
+  const featured = listings.filter((l) => l.product?.is_featured).slice(0, 8);
+  const latest = listings.slice(0, theme.layout.grid === "dense" ? 10 : 8);
 
-  const filtered = listings.filter((l) => {
-    if (!l.product) return false;
-    if (activeCat !== "all" && l.product.category_id !== activeCat) return false;
-    if (q && !(l.custom_title || l.product.name).toLowerCase().includes(q.toLowerCase())) return false;
-    return true;
-  });
-
-  if (loading)
+  if (q)
     return (
-      <div className="mx-auto max-w-6xl px-4 py-12">
-        <Loader2 className="mx-auto h-6 w-6 animate-spin text-muted-foreground" />
+      <div className="mx-auto max-w-6xl px-4 py-10">
+        <SectionHead
+          title={`Search: “${q}”`}
+          subtitle={`${results.length} product${results.length === 1 ? "" : "s"} found`}
+          action={
+            <Link to="/s/$code" params={{ code }}>
+              <GhostButton>Clear</GhostButton>
+            </Link>
+          }
+        />
+        {results.length ? <ProductGrid listings={results} /> : <EmptyState title="Nothing matched" hint="Try a different keyword." />}
       </div>
     );
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6">
-      <div className="mb-4 flex flex-wrap items-center gap-3">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Product search..."
-            className="w-full rounded-lg border bg-background pl-9 pr-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring"
-          />
-        </div>
-      </div>
-      {cats.length > 0 && (
-        <div className="mb-5 flex flex-wrap gap-2">
-          <Chip active={activeCat === "all"} onClick={() => setActiveCat("all")}>All</Chip>
-          {cats.map((c) => (
-            <Chip key={c.id} active={activeCat === c.id} onClick={() => setActiveCat(c.id)}>
-              {c.name}
-            </Chip>
-          ))}
-        </div>
-      )}
-      {filtered.length === 0 ? (
-        <div className="grid place-items-center py-24 text-center text-sm text-muted-foreground">
-          Ekhono kono product listing hoy ni.
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
-          {filtered.map((l) => {
-            const img = l.product?.product_images?.find((i) => i.is_primary)?.url
-              ?? l.product?.product_images?.[0]?.url;
-            return (
+    <div>
+      <Hero />
+      <TrustBar />
+
+      {categories.length > 0 && (
+        <section className="mx-auto max-w-6xl px-4 py-12">
+          <SectionHead title="Shop by category" subtitle="Browse the collection" />
+          <div
+            className={cx(
+              "grid gap-4",
+              theme.layout.grid === "dense" ? "grid-cols-3 sm:grid-cols-4 lg:grid-cols-6" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4",
+            )}
+          >
+            {categories.map((c) => (
               <Link
-                key={l.id}
-                to="/s/$code/p/$slug"
-                params={{ code, slug: l.product!.slug }}
-                className="group overflow-hidden rounded-xl border bg-card transition-all hover:-translate-y-0.5 hover:shadow-md"
+                key={c.id}
+                to="/s/$code/c/$slug"
+                params={{ code, slug: c.slug }}
+                className={cx(
+                  "group overflow-hidden rounded-[var(--st-radius)] border bg-[var(--st-surface)] transition-colors hover:border-[var(--st-primary)]",
+                  borderc,
+                )}
               >
-                <div className="aspect-square bg-muted">
-                  {img ? (
-                    <img src={img} alt={l.product!.name} className="h-full w-full object-cover transition-transform group-hover:scale-105" />
+                <div className="aspect-[4/3] bg-[var(--st-bg-alt)]">
+                  {c.image_url ? (
+                    <img src={c.image_url} alt={c.name} loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
                   ) : (
-                    <div className="grid h-full w-full place-items-center text-xs text-muted-foreground">No image</div>
+                    <div className={cx("grid h-full w-full place-items-center text-2xl font-semibold", muted)}>
+                      {c.name.charAt(0)}
+                    </div>
                   )}
                 </div>
-                <div className="p-3">
-                  <div className="line-clamp-2 text-sm font-medium">
-                    {l.custom_title || l.product!.name}
-                  </div>
-                  <div className="mt-1 text-base font-semibold" style={{ color: "var(--store-primary)" }}>
-                    ৳{Number(l.selling_price).toLocaleString()}
-                  </div>
-                </div>
+                <div className="px-3 py-2.5 text-sm font-medium">{c.name}</div>
               </Link>
-            );
-          })}
-        </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {featured.length > 0 && (
+        <section className={cx("border-y bg-[var(--st-bg-alt)]", borderc)}>
+          <div className="mx-auto max-w-6xl px-4 py-12">
+            <SectionHead title="Featured picks" subtitle="Hand-selected best sellers" />
+            <ProductGrid listings={featured} />
+          </div>
+        </section>
+      )}
+
+      <section className="mx-auto max-w-6xl px-4 py-12">
+        <SectionHead
+          title="New arrivals"
+          subtitle="Latest products in the store"
+          action={
+            listings.length > latest.length ? (
+              <Link to="/s/$code/c/$slug" params={{ code, slug: categories[0]?.slug ?? "all" }} className="hidden" />
+            ) : undefined
+          }
+        />
+        {latest.length ? <ProductGrid listings={latest} /> : <EmptyState title="No products listed yet" hint="Come back soon." />}
+      </section>
+
+      {settings?.about_text && (
+        <section className={cx("border-t bg-[var(--st-bg-alt)]", borderc)}>
+          <div className="mx-auto max-w-3xl px-4 py-14 text-center">
+            <Heading className="text-2xl md:text-3xl">About {name}</Heading>
+            <p className={cx("mt-4 whitespace-pre-wrap text-sm leading-relaxed", muted)}>{settings.about_text}</p>
+          </div>
+        </section>
       )}
     </div>
   );
 }
 
-function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+function Hero() {
+  const { code, name, settings, theme, listings, image, title } = useStore();
+  const headline = settings?.hero_headline || `Discover quality products at ${name}`;
+  const sub =
+    settings?.hero_subheadline ||
+    settings?.tagline ||
+    "Handpicked products, fair prices and cash on delivery anywhere in Bangladesh.";
+  const banner = settings?.hero_image_url;
+  const spotlight = listings[0];
+  const first = listings[0]?.product?.slug;
+
+  const cta = (
+    <div className="flex flex-wrap gap-3">
+      {first && (
+        <Link to="/s/$code/p/$slug" params={{ code, slug: first }}>
+          <PrimaryButton>
+            Shop now <ArrowRight className="h-4 w-4" />
+          </PrimaryButton>
+        </Link>
+      )}
+      {settings?.whatsapp && (
+        <a href={`https://wa.me/${settings.whatsapp.replace(/[^\d]/g, "")}`} target="_blank" rel="noreferrer">
+          <GhostButton>Order on WhatsApp</GhostButton>
+        </a>
+      )}
+    </div>
+  );
+
+  if (theme.layout.hero === "banner")
+    return (
+      <section className="mx-auto max-w-6xl px-4 pt-4">
+        <div className={cx("overflow-hidden rounded-[var(--st-radius)] border bg-[var(--st-surface)]", borderc)}>
+          <div className="grid md:grid-cols-[1.1fr_1fr]">
+            <div className="p-6 md:p-10">
+              <span className="inline-block rounded-full bg-[var(--st-primary)]/12 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--st-primary)]">
+                Cash on delivery
+              </span>
+              <Heading as="h2" className="mt-3 text-2xl leading-tight md:text-4xl">
+                {headline}
+              </Heading>
+              <p className={cx("mt-3 max-w-md text-sm", muted)}>{sub}</p>
+              <div className="mt-5">{cta}</div>
+            </div>
+            <div className="min-h-[220px] bg-[var(--st-bg-alt)]">
+              {(banner || (spotlight && image(spotlight))) && (
+                <img
+                  src={banner || image(spotlight!)!}
+                  alt={name}
+                  className="h-full w-full object-cover"
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+
+  if (theme.layout.hero === "spotlight")
+    return (
+      <section className="relative overflow-hidden">
+        {(banner || (spotlight && image(spotlight))) && (
+          <img
+            src={banner || image(spotlight!)!}
+            alt={name}
+            className="absolute inset-0 h-full w-full object-cover opacity-35"
+          />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-[var(--st-bg)] via-[var(--st-bg)]/70 to-transparent" />
+        <div className="relative mx-auto max-w-3xl px-4 py-24 text-center md:py-32">
+          <span className="text-[11px] uppercase tracking-[0.4em] text-[var(--st-primary)]">{name}</span>
+          <Heading as="h2" className="mt-4 text-4xl leading-[1.1] md:text-6xl">
+            {headline}
+          </Heading>
+          <p className={cx("mx-auto mt-5 max-w-xl text-sm md:text-base", muted)}>{sub}</p>
+          <div className="mt-8 flex justify-center">{cta}</div>
+        </div>
+      </section>
+    );
+
+  if (theme.layout.hero === "split")
+    return (
+      <section className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-16 md:grid-cols-2 md:py-24">
+        <div>
+          <span className="text-[11px] uppercase tracking-[0.3em] text-[var(--st-muted)]">Est. {new Date().getFullYear()}</span>
+          <Heading as="h2" className="mt-4 text-4xl leading-[1.05] md:text-6xl">
+            {headline}
+          </Heading>
+          <p className={cx("mt-5 max-w-md text-base leading-relaxed", muted)}>{sub}</p>
+          <div className="mt-8">{cta}</div>
+        </div>
+        <div className="aspect-[4/5] overflow-hidden rounded-[var(--st-radius)] bg-[var(--st-bg-alt)]">
+          {(banner || (spotlight && image(spotlight))) && (
+            <img
+              src={banner || image(spotlight!)!}
+              alt={spotlight ? title(spotlight) : name}
+              className="h-full w-full object-cover"
+            />
+          )}
+        </div>
+      </section>
+    );
+
   return (
-    <button
-      onClick={onClick}
-      className={
-        "rounded-full border px-3 py-1 text-xs transition-colors " +
-        (active ? "border-transparent bg-primary text-primary-foreground" : "hover:bg-muted")
-      }
-    >
-      {children}
-    </button>
+    <section className="relative overflow-hidden">
+      <div
+        className="absolute inset-0 opacity-[0.16]"
+        style={{
+          background:
+            "radial-gradient(1000px 420px at 12% -10%, var(--st-primary), transparent 60%), radial-gradient(800px 400px at 90% 0%, var(--st-accent), transparent 60%)",
+        }}
+      />
+      <div className="relative mx-auto grid max-w-6xl items-center gap-10 px-4 py-16 md:grid-cols-2 md:py-24">
+        <div>
+          <span className="inline-flex items-center gap-2 rounded-full border border-[var(--st-border)] bg-[var(--st-surface)] px-3 py-1 text-[11px] font-medium">
+            <span className="h-1.5 w-1.5 rounded-full bg-[var(--st-primary)]" /> Trusted online store
+          </span>
+          <Heading as="h2" className="mt-4 text-3xl leading-tight md:text-5xl">
+            {headline}
+          </Heading>
+          <p className={cx("mt-4 max-w-md text-sm md:text-base", muted)}>{sub}</p>
+          <div className="mt-7">{cta}</div>
+        </div>
+        <div className="relative">
+          <div className="overflow-hidden rounded-[var(--st-radius)] bg-[var(--st-surface)] shadow-[var(--st-shadow)]">
+            <div className="aspect-[4/3] bg-[var(--st-bg-alt)]">
+              {(banner || (spotlight && image(spotlight))) && (
+                <img
+                  src={banner || image(spotlight!)!}
+                  alt={spotlight ? title(spotlight) : name}
+                  className="h-full w-full object-cover"
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
