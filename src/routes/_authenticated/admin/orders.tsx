@@ -146,20 +146,8 @@ function AdminOrdersPage() {
         }
       />
 
-      <div className="mb-4 -mx-1 flex gap-2 overflow-x-auto px-1 pb-1 text-sm">
-        {ORDER_TABS.map((t) => (
-          <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
-            className={`shrink-0 rounded-md border px-3 py-1.5 ${
-              tab === t.key ? "border-primary bg-primary/10 font-medium text-primary" : "hover:bg-accent"
-            }`}
-          >
-            {t.label}
-            <span className="ml-1.5 text-xs text-muted-foreground">{counts[t.key] ?? 0}</span>
-          </button>
-        ))}
-      </div>
+      <OrderTabs tab={tab} onChange={setTab} count={(k) => counts[k] ?? 0} />
+
 
       {loading ? (
         <div className="grid place-items-center py-12">
