@@ -285,14 +285,26 @@ function AdminOrdersPage() {
         }
       />
 
-      {/* Always-visible merged search: order no / customer / phone / address / reseller / product */}
+      {/* Always-visible search with field selector */}
       <div className="mb-3 flex flex-wrap items-center gap-2">
+        <select
+          value={searchField}
+          onChange={(e) => setSearchField(e.target.value as SearchField)}
+          className="h-10 rounded-md border bg-background px-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+          title="Search field"
+        >
+          {SEARCH_FIELDS.map((f) => (
+            <option key={f.value} value={f.value}>
+              {f.label}
+            </option>
+          ))}
+        </select>
         <div className="relative min-w-[240px] flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
             value={filters.q}
             onChange={(e) => setFilters({ ...filters, q: e.target.value })}
-            placeholder="Search: order no, customer, phone, address, reseller ba product name…"
+            placeholder={SEARCH_FIELDS.find((f) => f.value === searchField)?.placeholder}
             className="h-10 w-full rounded-md border bg-background pl-9 pr-8 text-sm outline-none focus:ring-2 focus:ring-ring"
           />
           {filters.q && (
@@ -305,6 +317,7 @@ function AdminOrdersPage() {
             </button>
           )}
         </div>
+
         <button
           type="button"
           onClick={() => setShowFilters((v) => !v)}
