@@ -9,7 +9,7 @@ import {
 } from "@/components/order-filters";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
-import { Loader2, Truck, X, Download, Zap, RotateCcw, RefreshCw, Lock, PackageCheck, Repeat, Ban, Search, ListChecks } from "lucide-react";
+import { Loader2, Truck, X, Download, Zap, RotateCcw, RefreshCw, Lock, PackageCheck, Repeat, Ban, Search, ListChecks, SlidersHorizontal, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -124,6 +124,7 @@ function AdminOrdersPage() {
   const [selected, setSelected] = useState<OrderRow | null>(null);
   const [filters, setFilters] = useState<OrderFilterState>(DEFAULT_ORDER_FILTERS);
   const [productQuery, setProductQuery] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
   const [showPickList, setShowPickList] = useState(false);
   const [page, setPage] = useState(1);
   const [resellerOptions, setResellerOptions] = useState<FilterOption[]>([]);
@@ -229,35 +230,16 @@ function AdminOrdersPage() {
         }
       />
 
-      <OrderTabs tab={tab} onChange={setTab} count={(k) => counts[k] ?? 0} />
-
-      <OrderFilterBar
-        value={filters}
-        onChange={setFilters}
-        resellerOptions={resellerOptions}
-        total={orders.length}
-        shown={filtered.length}
-      />
-
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <div className="relative min-w-[220px] flex-1 sm:max-w-sm">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            value={productQuery}
-            onChange={(e) => setProductQuery(e.target.value)}
-            placeholder="Product name diye order khujun…"
-            className="h-9 w-full rounded-md border bg-background pl-9 pr-8 text-sm outline-none focus:ring-2 focus:ring-ring"
-          />
-          {productQuery && (
-            <button
-              type="button"
-              onClick={() => setProductQuery("")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground hover:bg-accent"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          )}
-        </div>
+        <button
+          type="button"
+          onClick={() => setShowFilters((v) => !v)}
+          className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-accent"
+        >
+          <SlidersHorizontal className="h-4 w-4" />
+          Filter & search
+          <ChevronDown className={`h-4 w-4 transition-transform ${showFilters ? "rotate-180" : ""}`} />
+        </button>
         <button
           type="button"
           onClick={() => setShowPickList((v) => !v)}
@@ -265,8 +247,47 @@ function AdminOrdersPage() {
         >
           <ListChecks className="h-4 w-4" />
           Product pick list ({pickList.length})
+          <ChevronDown className={`h-4 w-4 transition-transform ${showPickList ? "rotate-180" : ""}`} />
         </button>
+        {(productQuery || filtered.length !== orders.length) && (
+          <span className="text-xs text-muted-foreground">
+            {filtered.length} of {orders.length} shown
+          </span>
+        )}
       </div>
+
+      {showFilters && (
+        <>
+          <OrderFilterBar
+            value={filters}
+            onChange={setFilters}
+            resellerOptions={resellerOptions}
+            total={orders.length}
+            shown={filtered.length}
+          />
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <div className="relative min-w-[220px] flex-1 sm:max-w-sm">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <input
+                value={productQuery}
+                onChange={(e) => setProductQuery(e.target.value)}
+                placeholder="Product name diye order khujun…"
+                className="h-9 w-full rounded-md border bg-background pl-9 pr-8 text-sm outline-none focus:ring-2 focus:ring-ring"
+              />
+              {productQuery && (
+                <button
+                  type="button"
+                  onClick={() => setProductQuery("")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground hover:bg-accent"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+
 
       {showPickList && (
         <div className="surface-card mb-4 overflow-hidden">
@@ -301,9 +322,7 @@ function AdminOrdersPage() {
         </div>
       )}
 
-
-
-
+      <OrderTabs tab={tab} onChange={setTab} count={(k) => counts[k] ?? 0} />
 
 
       {loading ? (
