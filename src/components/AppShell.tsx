@@ -250,7 +250,7 @@ function LeafLink({ item, nested = false, collapsed = false }: { item: NavItem; 
         to={item.to}
         activeOptions={{ exact: item.end }}
         title={item.label}
-        className="mb-1 flex items-center justify-center rounded-md p-2 text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+        className="mb-1 flex items-center justify-center rounded-md p-2 text-sidebar-foreground/90 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
         activeProps={{ className: "bg-sidebar-accent text-sidebar-accent-foreground" }}
       >
         {item.icon}
