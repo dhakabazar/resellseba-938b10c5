@@ -69,6 +69,7 @@ function StoreHome() {
   return (
     <div>
       <Hero />
+      <ThemeSignature slot="top" />
       <BenefitStrip />
       <CategoryStrip />
 
@@ -81,6 +82,7 @@ function StoreHome() {
         </section>
       )}
 
+      <ThemeSignature />
       <PromoBanner />
 
       <section className="mx-auto max-w-6xl px-4 py-12">
