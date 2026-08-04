@@ -229,6 +229,13 @@ function OrdersPage() {
             </div>
           ))}
         </div>
+        <Pagination
+          page={page}
+          perPage={filters.perPage}
+          total={visible.length}
+          onPage={setPage}
+        />
+        </>
       )}
 
       {selected && (
