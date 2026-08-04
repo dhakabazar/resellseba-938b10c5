@@ -88,18 +88,18 @@ function CouriersPage() {
                   <div className="font-semibold">{r.display_name}</div>
                   <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{r.provider}</div>
                 </div>
-                <label className="inline-flex items-center gap-2 text-xs">
-                  <input
-                    type="checkbox"
+                <div className="flex items-center gap-2">
+                  <Switch
                     checked={r.is_active}
-                    onChange={(e) => {
+                    onCheckedChange={(v) => {
                       const copy = [...rows];
-                      copy[idx] = { ...r, is_active: e.target.checked };
+                      copy[idx] = { ...r, is_active: v };
                       setRows(copy);
                     }}
                   />
-                  Active
-                </label>
+                  <span className="text-xs text-muted-foreground">{r.is_active ? "Active" : "Inactive"}</span>
+                </div>
+
               </div>
               {fields.length === 0 ? (
                 <p className="text-xs text-muted-foreground">No credentials required — manual courier bookings only.</p>
