@@ -42,14 +42,8 @@ const NAV: NavEntry[] = [
       { label: "Categories", to: "/admin/categories", icon: <FolderTree className="h-4 w-4" /> },
     ],
   },
-  {
-    label: "Sales",
-    icon: <ShoppingBag className="h-4 w-4" />,
-    items: [
-      { label: "Orders", to: "/admin/orders", icon: <ShoppingCart className="h-4 w-4" /> },
-      { label: "Couriers", to: "/admin/couriers", icon: <Truck className="h-4 w-4" /> },
-    ],
-  },
+  { label: "Orders", to: "/admin/orders", icon: <ShoppingCart className="h-4 w-4" /> },
+
   {
     label: "Finance",
     icon: <Wallet className="h-4 w-4" />,
@@ -74,8 +68,10 @@ const NAV: NavEntry[] = [
     label: "System",
     icon: <Cog className="h-4 w-4" />,
     items: [
+      { label: "Couriers", to: "/admin/couriers", icon: <Truck className="h-4 w-4" /> },
       { label: "Audit log", to: "/admin/audit", icon: <ScrollText className="h-4 w-4" /> },
       { label: "Settings", to: "/admin/settings", icon: <Settings className="h-4 w-4" /> },
+
     ],
   },
 ];
