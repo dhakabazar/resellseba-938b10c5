@@ -523,6 +523,95 @@ function OrderDrawer({
                       </button>
                     </div>
                   )}
+                  {s.provider === "carrybee" && (
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={async () => {
+                          setBusy(true);
+                          try {
+                            const r = await syncCarrybeeFn({ data: { shipmentId: s.id } });
+                            toast.success(`Courier status: ${courierStatusLabel(r.courierStatus, "carrybee")}`);
+                            await loadDetails();
+                            onChanged();
+                          } catch (e) {
+                            toast.error(e instanceof Error ? e.message : "Sync failed");
+                          } finally {
+                            setBusy(false);
+                          }
+                        }}
+                        className="inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs hover:bg-accent"
+                      >
+                        <RefreshCw className="h-3.5 w-3.5" /> Sync status
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={async () => {
+                          const reason = prompt("Reverse pickup reason (optional)") ?? undefined;
+                          setBusy(true);
+                          try {
+                            await carrybeeReturnFn({ data: { shipmentId: s.id, reason } });
+                            toast.success("Reverse pickup requested");
+                            await loadDetails();
+                            onChanged();
+                          } catch (e) {
+                            toast.error(e instanceof Error ? e.message : "Reverse pickup failed");
+                          } finally {
+                            setBusy(false);
+                          }
+                        }}
+                        className="inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs hover:bg-accent"
+                      >
+                        <RotateCcw className="h-3.5 w-3.5" /> Reverse pickup
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={async () => {
+                          const note = prompt("Exchange note (optional)") ?? undefined;
+                          setBusy(true);
+                          try {
+                            await carrybeeExchangeFn({ data: { shipmentId: s.id, note } });
+                            toast.success("Exchange requested");
+                            await loadDetails();
+                            onChanged();
+                          } catch (e) {
+                            toast.error(e instanceof Error ? e.message : "Exchange failed");
+                          } finally {
+                            setBusy(false);
+                          }
+                        }}
+                        className="inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs hover:bg-accent"
+                      >
+                        <Repeat className="h-3.5 w-3.5" /> Exchange
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={async () => {
+                          const reason = prompt("Cancel reason (required)");
+                          if (!reason || reason.trim().length < 2) return;
+                          setBusy(true);
+                          try {
+                            await carrybeeCancelFn({ data: { shipmentId: s.id, reason: reason.trim() } });
+                            toast.success("Shipment cancelled");
+                            await loadDetails();
+                            onChanged();
+                          } catch (e) {
+                            toast.error(e instanceof Error ? e.message : "Cancel failed");
+                          } finally {
+                            setBusy(false);
+                          }
+                        }}
+                        className="inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs text-destructive hover:bg-destructive/10"
+                      >
+                        <Ban className="h-3.5 w-3.5" /> Cancel
+                      </button>
+                    </div>
+                  )}
+
                 </div>
               ))}
             </div>
