@@ -24,17 +24,17 @@ const PROVIDER_ORDER = ["steadfast", "pathao", "carrybee", "manual"];
 const FIELDS: Record<string, { key: string; label: string; type?: string; hint?: string }[]> = {
   steadfast: [
     { key: "api_key", label: "API Key" },
-    { key: "secret_key", label: "Secret Key", type: "password" },
+    { key: "secret_key", label: "Secret Key" },
   ],
   pathao: [
     { key: "client_id", label: "Client ID" },
-    { key: "client_secret", label: "Client Secret", type: "password" },
+    { key: "client_secret", label: "Client Secret" },
     { key: "username", label: "Username" },
-    { key: "password", label: "Password", type: "password" },
+    { key: "password", label: "Password" },
     { key: "store_id", label: "Default Store ID" },
   ],
   carrybee: [
-    { key: "api_token", label: "API Token", type: "password" },
+    { key: "api_token", label: "API Token" },
     { key: "base_url", label: "Base URL" },
   ],
   manual: [],
