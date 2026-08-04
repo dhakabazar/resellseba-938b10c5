@@ -22,13 +22,14 @@ import {
   SectionHead,
 } from "@/components/store/ui";
 
-type Search = { q?: string; theme?: string };
+type Search = { q?: string; theme?: string; palette?: string };
 
 export const Route = createFileRoute("/s/$code/")({
   component: StoreHome,
   validateSearch: (s: Record<string, unknown>): Search => ({
     q: typeof s.q === "string" && s.q ? s.q : undefined,
     theme: typeof s.theme === "string" && s.theme ? s.theme : undefined,
+    palette: typeof s.palette === "string" && s.palette ? s.palette : undefined,
   }),
 });
 
