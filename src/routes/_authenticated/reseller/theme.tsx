@@ -272,7 +272,7 @@ function ThemePage() {
                             <label className="mb-1 block text-xs font-medium">{f.label}</label>
                             <ImageUploader
                               bucket="branding"
-                              folder={`reseller-${rid}-${theme}-${f.key}`}
+                              folder={`${rid}/${theme}/${f.key}`}
                               value={val}
                               onChange={(v) => setField(f.key, v[0]?.url ?? "")}
                             />

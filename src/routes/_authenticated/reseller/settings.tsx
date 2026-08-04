@@ -160,13 +160,13 @@ function SettingsPage() {
         <div className="surface-card space-y-3 p-6">
           <h3 className="text-sm font-semibold">Brand assets</h3>
           <Field label="Logo">
-            <ImageUploader bucket="branding" folder={`reseller-${rid}`} value={logo} onChange={setLogo} />
+            <ImageUploader bucket="branding" folder={`${rid}/logo`} value={logo} onChange={setLogo} />
           </Field>
           <Field label="Favicon">
-            <ImageUploader bucket="branding" folder={`reseller-${rid}-fav`} value={favicon} onChange={setFavicon} />
+            <ImageUploader bucket="branding" folder={`${rid}/favicon`} value={favicon} onChange={setFavicon} />
           </Field>
           <Field label="OG share image">
-            <ImageUploader bucket="branding" folder={`reseller-${rid}-og`} value={og} onChange={setOg} />
+            <ImageUploader bucket="branding" folder={`${rid}/og`} value={og} onChange={setOg} />
           </Field>
         </div>
 
