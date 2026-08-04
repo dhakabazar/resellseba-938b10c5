@@ -321,9 +321,7 @@ function AdminOrdersPage() {
         </div>
       )}
 
-
-
-
+      <OrderTabs tab={tab} onChange={setTab} count={(k) => counts[k] ?? 0} />
 
 
       {loading ? (
