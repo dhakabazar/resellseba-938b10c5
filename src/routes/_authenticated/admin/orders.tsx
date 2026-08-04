@@ -12,6 +12,8 @@ import {
   steadfastCreateReturn,
 } from "@/lib/couriers.functions";
 import { CourierTimeline, type CourierEvent } from "@/components/CourierTimeline";
+import { OrderTabs } from "@/components/OrderTabs";
+
 import {
   ORDER_TABS,
   ORDER_STATUS_OPTIONS,
