@@ -29,6 +29,8 @@ import {
 
 import { CourierTimeline, type CourierEvent } from "@/components/CourierTimeline";
 import { OrderTabs } from "@/components/OrderTabs";
+import { PickListModal } from "@/components/pick-list-modal";
+
 
 import {
   ORDER_TABS,
