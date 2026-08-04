@@ -419,3 +419,65 @@ export function Faq() {
     </section>
   );
 }
+
+/* ------------------------------------------------- theme signature section */
+
+/**
+ * Renders the active theme's own content fields, so every field shown in the
+ * panel has a matching place on the storefront.
+ */
+export function ThemeSignature() {
+  const { theme, content } = useStore();
+
+  if (theme.id === "noir") {
+    const eyebrow = content.text("noir_eyebrow");
+    const story = content.text("noir_story");
+    if (!eyebrow && !story) return null;
+    return (
+      <section className={cx("border-y bg-[var(--st-bg-alt)]", borderc)}>
+        <div className="mx-auto max-w-3xl px-4 py-16 text-center">
+          {eyebrow && (
+            <span className="text-[11px] uppercase tracking-[0.4em] text-[var(--st-primary)]">{eyebrow}</span>
+          )}
+          {story && (
+            <Heading as="p" className="mt-5 text-2xl leading-snug md:text-3xl">
+              {story}
+            </Heading>
+          )}
+        </div>
+      </section>
+    );
+  }
+
+  if (theme.id === "bazaar") {
+    const title = content.text("bazaar_deal_title");
+    const note = content.text("bazaar_deal_note");
+    if (!title && !note) return null;
+    return (
+      <section className="mx-auto max-w-6xl px-4 pt-6">
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-[var(--st-radius)] bg-[var(--st-primary)] px-4 py-3 text-[var(--st-on-primary)]">
+          <div className="flex items-center gap-2 text-sm font-bold uppercase">
+            <Sparkles className="h-4 w-4" /> {title}
+          </div>
+          {note && <div className="text-xs font-medium opacity-90">{note}</div>}
+        </div>
+      </section>
+    );
+  }
+
+  if (theme.id === "atelier") {
+    const quote = content.text("atelier_quote");
+    const credit = content.text("atelier_credit");
+    if (!quote) return null;
+    return (
+      <section className="mx-auto max-w-4xl px-4 py-16 text-center">
+        <Heading as="p" className="text-3xl leading-tight md:text-5xl">
+          {quote}
+        </Heading>
+        {credit && <p className={cx("mt-4 text-xs uppercase tracking-[0.3em]", muted)}>{credit}</p>}
+      </section>
+    );
+  }
+
+  return null;
+}
