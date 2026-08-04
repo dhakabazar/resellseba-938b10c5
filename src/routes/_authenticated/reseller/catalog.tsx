@@ -411,11 +411,3 @@ function CatalogPage() {
   );
 }
 
-function Row({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
-  return (
-    <div className="flex justify-between">
-      <span>{label}</span>
-      <span className={strong ? "font-semibold text-foreground" : ""}>{value}</span>
-    </div>
-  );
-}
