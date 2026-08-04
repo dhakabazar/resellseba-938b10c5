@@ -279,18 +279,6 @@ function CarrybeeExtras({
   return (
     <div className="mt-4 space-y-3 rounded-lg border bg-muted/30 p-3">
       <div>
-        <div className="mb-1 text-xs font-medium">Environment</div>
-        <select
-          value={config.environment || "production"}
-          onChange={(e) => onConfig({ environment: e.target.value })}
-          className="w-full rounded-md border bg-background px-2 py-1.5 text-xs"
-        >
-          <option value="production">Production (developers.carrybee.com)</option>
-          <option value="sandbox">Sandbox (sandbox.carrybee.com)</option>
-        </select>
-      </div>
-
-      <div>
         <div className="mb-1 text-xs font-medium">Webhook Secret</div>
         <div className="flex items-center gap-2">
           <input
