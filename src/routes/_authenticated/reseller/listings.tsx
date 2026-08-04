@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { deliveryLabel } from "@/lib/delivery";
 import { useAuth } from "@/lib/use-auth";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
+import { DataToolbar, Pagination, usePaginated, type FilterDef } from "@/components/data-list";
 import { Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -32,6 +33,12 @@ function ListingsPage() {
   const { user } = useAuth();
   const [items, setItems] = useState<L[]>([]);
   const [loading, setLoading] = useState(true);
+  const [q, setQ] = useState("");
+  const [status, setStatus] = useState("");
+  const [sort, setSort] = useState("newest");
+  const [perPage, setPerPage] = useState(20);
+  const [page, setPage] = useState(1);
+
 
   async function load() {
     if (!user) return;
@@ -63,6 +70,57 @@ function ListingsPage() {
     load();
   }
 
+  const filtered = useMemo(() => {
+    const term = q.trim().toLowerCase();
+    let out = items.filter((l) => {
+      const okQ = !term || (l.products?.name ?? "").toLowerCase().includes(term);
+      const okS =
+        !status || (status === "active" ? l.is_active : !l.is_active);
+      return okQ && okS;
+    });
+    const profitOf = (l: L) =>
+      l.selling_price - ((l.products?.reseller_price ?? 0) + (l.products?.packaging_cost ?? 0));
+    out = [...out];
+    if (sort === "price_high") out.sort((a, b) => b.selling_price - a.selling_price);
+    else if (sort === "price_low") out.sort((a, b) => a.selling_price - b.selling_price);
+    else if (sort === "profit_high") out.sort((a, b) => profitOf(b) - profitOf(a));
+    else if (sort === "name")
+      out.sort((a, b) => (a.products?.name ?? "").localeCompare(b.products?.name ?? ""));
+    return out;
+  }, [items, q, status, sort]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [q, status, sort, perPage]);
+
+  const paged = usePaginated(filtered, page, perPage);
+
+  const filters: FilterDef[] = [
+    {
+      key: "status",
+      label: "Status",
+      value: status,
+      onChange: setStatus,
+      options: [
+        { value: "active", label: "Live" },
+        { value: "paused", label: "Paused" },
+      ],
+    },
+    {
+      key: "sort",
+      label: "Sort",
+      value: sort,
+      onChange: setSort,
+      options: [
+        { value: "newest", label: "Newest first" },
+        { value: "name", label: "Name (A-Z)" },
+        { value: "price_high", label: "Price high → low" },
+        { value: "price_low", label: "Price low → high" },
+        { value: "profit_high", label: "Profit high → low" },
+      ],
+    },
+  ];
+
   if (loading)
     return (
       <div className="grid place-items-center py-12">
@@ -73,14 +131,31 @@ function ListingsPage() {
   return (
     <div>
       <PageHeader title="My listings" description="Apnar store-e joined thakā products." />
-      {items.length === 0 ? (
+
+      <DataToolbar
+        search={q}
+        onSearch={setQ}
+        searchPlaceholder="Search listings…"
+        filters={filters}
+        perPage={perPage}
+        onPerPage={setPerPage}
+        right={
+          <span className="text-sm text-muted-foreground">
+            {filtered.length} of {items.length} listings
+          </span>
+        }
+      />
+
+      {filtered.length === 0 ? (
         <EmptyState
-          title="No listings yet"
+          title="No listings"
           description="Catalog theke product select kore listing shuru korun."
         />
       ) : (
+        <>
         <div className="surface-card divide-y">
-          {items.map((l) => {
+          {paged.map((l) => {
+
             const cost = (l.products?.reseller_price ?? 0) + (l.products?.packaging_cost ?? 0);
             const profit = l.selling_price - cost;
             return (
@@ -115,6 +190,8 @@ function ListingsPage() {
             );
           })}
         </div>
+        <Pagination page={page} perPage={perPage} total={filtered.length} onPage={setPage} />
+        </>
       )}
     </div>
   );
