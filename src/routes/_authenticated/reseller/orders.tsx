@@ -380,7 +380,8 @@ function OrdersPage() {
               : `${ORDER_TABS.find((t) => t.key === tab)?.label ?? "All"} — ${visible.length} order`
           }
           onPick={(name) => {
-            setProductQ(name);
+            setSearchMode("product");
+            setFilters((f) => ({ ...f, q: name }));
             setPickOpen(false);
           }}
           onClose={() => setPickOpen(false)}
