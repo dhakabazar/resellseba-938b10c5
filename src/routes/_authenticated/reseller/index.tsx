@@ -228,7 +228,9 @@ function ResellerDashboard() {
         </div>
       </section>
 
-      <DateRangeBar value={range} onChange={setRange} />
+      <div className="mb-4 flex justify-end">
+        <DateRangeBar value={range} onChange={setRange} compact />
+      </div>
 
       {loading && !orders.length ? (
         <div className="grid place-items-center py-16">
