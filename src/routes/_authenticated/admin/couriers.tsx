@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/ui-kit";
-import { Loader2, Truck, Copy, Wallet } from "lucide-react";
+import { Loader2, Truck, Copy, Wallet, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { steadfastBalance } from "@/lib/couriers.functions";
@@ -19,12 +19,12 @@ type Row = {
   config: Record<string, string>;
 };
 
+const PROVIDER_ORDER = ["steadfast", "pathao", "carrybee", "manual"];
+
 const FIELDS: Record<string, { key: string; label: string; type?: string; hint?: string }[]> = {
   steadfast: [
     { key: "api_key", label: "API Key" },
     { key: "secret_key", label: "Secret Key", type: "password" },
-    { key: "base_url", label: "Base URL", hint: "https://portal.packzy.com/api/v1" },
-    { key: "webhook_token", label: "Webhook Token", hint: "Any secret string — also used in the webhook URL" },
   ],
   pathao: [
     { key: "client_id", label: "Client ID" },
@@ -41,6 +41,7 @@ const FIELDS: Record<string, { key: string; label: string; type?: string; hint?:
 };
 
 
+
 function CouriersPage() {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,7 +53,13 @@ function CouriersPage() {
   async function load() {
     setLoading(true);
     const { data } = await supabase.from("courier_configs").select("*").order("display_name");
-    setRows((data ?? []) as any);
+    const sorted = [...((data ?? []) as Row[])].sort((a, b) => {
+      const ai = PROVIDER_ORDER.indexOf(a.provider);
+      const bi = PROVIDER_ORDER.indexOf(b.provider);
+      return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+    });
+    setRows(sorted);
+
     setLoading(false);
   }
 
@@ -116,7 +123,17 @@ function CouriersPage() {
                   ))}
                 </div>
               )}
-              {r.provider === "steadfast" && <SteadfastExtras token={r.config?.webhook_token ?? ""} />}
+              {r.provider === "steadfast" && (
+                <SteadfastExtras
+                  token={r.config?.webhook_token ?? ""}
+                  onToken={(t) => {
+                    const copy = [...rows];
+                    copy[idx] = { ...r, config: { ...r.config, webhook_token: t } };
+                    setRows(copy);
+                  }}
+                />
+              )}
+
               <button onClick={() => save(r)} className="btn-brand mt-4 rounded-md px-3 py-1.5 text-xs font-medium">Save</button>
 
             </div>
@@ -127,17 +144,51 @@ function CouriersPage() {
   );
 }
 
-function SteadfastExtras({ token }: { token: string }) {
+function SteadfastExtras({ token, onToken }: { token: string; onToken: (t: string) => void }) {
   const [balance, setBalance] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const getBalance = useServerFn(steadfastBalance);
   const origin = typeof window !== "undefined" ? window.location.origin : "";
-  const webhookUrl = `${origin}/api/public/courier/steadfast?token=${token || "<save-token-first>"}`;
+  const webhookUrl = `${origin}/api/public/courier/steadfast?token=${token || "<generate-token-first>"}`;
+
+  function generate() {
+    const bytes = new Uint8Array(24);
+    crypto.getRandomValues(bytes);
+    const t = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+    onToken(t);
+    toast.success("Token generated — Save korun");
+  }
 
   return (
     <div className="mt-4 space-y-3 rounded-lg border bg-muted/30 p-3">
       <div>
+        <div className="mb-1 text-xs font-medium">Webhook Token</div>
+        <div className="flex items-center gap-2">
+          <input
+            readOnly
+            value={token}
+            placeholder="Generate button e click korun"
+            className="min-w-0 flex-1 rounded-md border bg-background px-2 py-1.5 font-mono text-[11px]"
+          />
+          <button type="button" onClick={generate} className="shrink-0 rounded-md border px-2 py-1.5 text-xs hover:bg-accent">
+            <RefreshCw className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (!token) return;
+              navigator.clipboard.writeText(token);
+              toast.success("Token copied");
+            }}
+            className="shrink-0 rounded-md border p-1.5 hover:bg-accent"
+          >
+            <Copy className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </div>
+      <div>
         <div className="mb-1 text-xs font-medium">Webhook URL (Steadfast panel e set korun)</div>
+
         <div className="flex items-center gap-2">
           <code className="flex-1 truncate rounded-md border bg-background px-2 py-1.5 text-[11px]">
             {webhookUrl}
