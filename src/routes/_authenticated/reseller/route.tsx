@@ -35,13 +35,8 @@ const NAV: NavEntry[] = [
       { label: "My listings", to: "/reseller/listings", icon: <ShoppingBag className="h-4 w-4" /> },
     ],
   },
-  {
-    label: "Sales",
-    icon: <ShoppingBag className="h-4 w-4" />,
-    items: [
-      { label: "Orders", to: "/reseller/orders", icon: <ClipboardList className="h-4 w-4" /> },
-    ],
-  },
+  { label: "Orders", to: "/reseller/orders", icon: <ClipboardList className="h-4 w-4" /> },
+
   {
     label: "Finance",
     icon: <Wallet className="h-4 w-4" />,
