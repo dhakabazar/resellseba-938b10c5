@@ -31,10 +31,14 @@ function ThemePage() {
   const values = all[theme] ?? {};
   const groups = useMemo(() => themeContentGroups(theme), [theme]);
 
+  const uid = user?.id;
+
   useEffect(() => {
-    if (!user) return;
+    if (!uid) return;
+    let alive = true;
     (async () => {
-      const { data: r } = await supabase.from("resellers").select("id,code").eq("user_id", user.id).maybeSingle();
+      const { data: r } = await supabase.from("resellers").select("id,code").eq("user_id", uid).maybeSingle();
+      if (!alive) return;
       if (!r) return setLoading(false);
       setRid(r.id);
       setCode(r.code);
@@ -43,13 +47,17 @@ function ThemePage() {
         .select("theme,theme_settings")
         .eq("reseller_id", r.id)
         .maybeSingle();
+      if (!alive) return;
       const id = (s?.theme as StoreThemeId) ?? DEFAULT_THEME_ID;
       setTheme(id);
       setSavedTheme(id);
       setAll((s?.theme_settings as Record<string, ThemeContentValues>) ?? {});
       setLoading(false);
     })();
-  }, [user]);
+    return () => {
+      alive = false;
+    };
+  }, [uid]);
 
   function setField(key: string, value: string | boolean) {
     setAll((prev) => ({ ...prev, [theme]: { ...(prev[theme] ?? {}), [key]: value } }));
