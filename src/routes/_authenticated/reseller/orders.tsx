@@ -151,16 +151,24 @@ function OrdersPage() {
 
       <OrderTabs tab={tab} onChange={setTab} count={tabCount} />
 
+      <OrderFilterBar
+        value={filters}
+        onChange={setFilters}
+        total={orders.length}
+        shown={visible.length}
+      />
+
       {loading ? (
         <div className="grid place-items-center py-12">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
-      ) : visible.length === 0 ? (
+      ) : paged.length === 0 ? (
         <EmptyState
           title="No orders"
-          description="Ei status e apnar kono order nai."
+          description="Ei status/filter e apnar kono order nai."
         />
       ) : (
+        <>
         <div className="surface-card overflow-hidden">
           <div className="hidden grid-cols-[1fr_1.2fr_1fr_0.8fr_0.8fr_auto] gap-4 border-b bg-muted/40 px-4 py-2 text-xs font-medium text-muted-foreground md:grid">
             <div>Order</div>
@@ -170,7 +178,7 @@ function OrdersPage() {
             <div>Status</div>
             <div></div>
           </div>
-          {visible.map((o) => (
+          {paged.map((o) => (
             <div
               key={o.id}
               className="grid grid-cols-1 items-center gap-3 border-b px-4 py-3 text-sm last:border-b-0 md:grid-cols-[1fr_1.2fr_1fr_0.8fr_0.8fr_auto]"
