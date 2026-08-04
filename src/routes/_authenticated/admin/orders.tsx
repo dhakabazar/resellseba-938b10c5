@@ -273,7 +273,7 @@ function AdminOrdersPage() {
     <div>
       <PageHeader
         title="Orders"
-        description="Status onujayi order manage korun — courier booking o live tracking ekhane."
+        description=""
         actions={
           <button
             onClick={() => exportCsv(filtered)}
