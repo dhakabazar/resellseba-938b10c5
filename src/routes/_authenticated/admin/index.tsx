@@ -203,7 +203,9 @@ function AdminDashboard() {
         </div>
       </section>
 
-      <DateRangeBar value={range} onChange={setRange} />
+      <div className="mb-4 flex justify-end">
+        <DateRangeBar value={range} onChange={setRange} compact />
+      </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Orders" value={stats.orders} icon={<ShoppingCart className="h-4 w-4" />} />
