@@ -1,4 +1,8 @@
 // Shared, browser-safe courier + order status helpers.
+// Rule for every provider (Steadfast, Carrybee, Pathao):
+//  - courier events NEVER auto-finalize an order as "returned" or "cancelled".
+//  - all courier-side return states land on "pending_return".
+//  - final "returned" happens manually when admin receives the parcel back.
 
 export type ShipmentStatus =
   | "pending"
@@ -22,42 +26,97 @@ export type OrderStatus =
   | "returned"
   | "cancelled";
 
-/**
- * Steadfast delivery statuses (API docs v1) mapped to our shipment + order status.
- * Approval-pending statuses are treated as "pending" states so nothing is
- * marked final before Steadfast approves it.
- */
-export const STEADFAST_STATUS_MAP: Record<
-  string,
-  { ship: ShipmentStatus; order: OrderStatus; label: string }
-> = {
+export type CourierProvider = "steadfast" | "pathao" | "carrybee" | "manual";
+
+type StatusMapping = { ship: ShipmentStatus; order: OrderStatus; label: string };
+
+/** Steadfast delivery statuses (API v1). */
+export const STEADFAST_STATUS_MAP: Record<string, StatusMapping> = {
   in_review: { ship: "booked", order: "shipped", label: "In review" },
   pending: { ship: "in_transit", order: "shipped", label: "Pending / on the way" },
   hold: { ship: "in_transit", order: "shipped", label: "On hold" },
   delivered_approval_pending: { ship: "in_transit", order: "shipped", label: "Delivered (approval pending)" },
-  partial_delivered_approval_pending: { ship: "in_transit", order: "shipped", label: "Partial delivered (approval pending)" },
+  partial_delivered_approval_pending: {
+    ship: "in_transit",
+    order: "shipped",
+    label: "Partial delivered (approval pending)",
+  },
   cancelled_approval_pending: { ship: "in_transit", order: "pending_return", label: "Cancelled (approval pending)" },
   unknown_approval_pending: { ship: "in_transit", order: "shipped", label: "Unknown (approval pending)" },
   delivered: { ship: "delivered", order: "delivered", label: "Delivered" },
   partial_delivered: { ship: "delivered", order: "delivered", label: "Partial delivered" },
-  cancelled: { ship: "returned", order: "returned", label: "Cancelled / returned" },
+  // courier side return — order waits in Pending Return until admin receives it
+  cancelled: { ship: "returned", order: "pending_return", label: "Cancelled / returning" },
+  return_requested: { ship: "in_transit", order: "pending_return", label: "Return requested" },
   unknown: { ship: "in_transit", order: "shipped", label: "Unknown" },
 };
 
-export function mapSteadfastStatus(raw: string | null | undefined) {
-  const key = String(raw ?? "").trim().toLowerCase();
+/** Carrybee webhook events (`order.*`), keyed without the `order.` prefix. */
+export const CARRYBEE_STATUS_MAP: Record<string, StatusMapping> = {
+  created: { ship: "booked", order: "shipped", label: "Order created" },
+  "create-failed": { ship: "failed", order: "ready_to_ship", label: "Create failed" },
+  updated: { ship: "booked", order: "shipped", label: "Order updated" },
+  "pickup-requested": { ship: "booked", order: "shipped", label: "Pickup requested" },
+  "assigned-for-pickup": { ship: "booked", order: "shipped", label: "Assigned for pickup" },
+  picked: { ship: "in_transit", order: "shipped", label: "Picked" },
+  "pickup-failed": { ship: "booked", order: "shipped", label: "Pickup failed" },
+  "pickup-cancelled": { ship: "cancelled", order: "ready_to_ship", label: "Pickup cancelled" },
+  "at-the-sorting-hub": { ship: "in_transit", order: "shipped", label: "At sorting hub" },
+  "on-the-way-to-central-warehouse": { ship: "in_transit", order: "shipped", label: "On the way to central warehouse" },
+  "at-central-warehouse": { ship: "in_transit", order: "shipped", label: "At central warehouse" },
+  "in-transit": { ship: "in_transit", order: "shipped", label: "In transit" },
+  "received-at-last-mile-hub": { ship: "in_transit", order: "shipped", label: "Received at last mile hub" },
+  "assigned-for-delivery": { ship: "in_transit", order: "shipped", label: "Assigned for delivery" },
+  "delivery-on-hold": { ship: "in_transit", order: "shipped", label: "Delivery on hold" },
+  delivered: { ship: "delivered", order: "delivered", label: "Delivered" },
+  "partial-delivery": { ship: "delivered", order: "delivered", label: "Partial delivery" },
+  "delivery-failed": { ship: "in_transit", order: "pending_return", label: "Delivery failed" },
+  returned: { ship: "returned", order: "pending_return", label: "Returned (courier)" },
+  "paid-return": { ship: "returned", order: "pending_return", label: "Paid return" },
+  exchange: { ship: "in_transit", order: "shipped", label: "Exchange" },
+  paid: { ship: "delivered", order: "delivered", label: "Paid / invoiced" },
+  "returned-at-sorting": { ship: "returned", order: "pending_return", label: "Returned at sorting" },
+  "returned-in-transit": { ship: "returned", order: "pending_return", label: "Return in transit" },
+  "returned-to-merchant": { ship: "returned", order: "pending_return", label: "Returned to merchant" },
+};
+
+export function normalizeCourierStatus(provider: string | null | undefined, raw: string | null | undefined) {
+  const key = String(raw ?? "")
+    .trim()
+    .toLowerCase();
+  if (provider === "carrybee") return key.replace(/^order\./, "");
+  return key;
+}
+
+export function mapCourierStatus(
+  provider: string | null | undefined,
+  raw: string | null | undefined,
+): StatusMapping {
+  const key = normalizeCourierStatus(provider, raw);
+  const table = provider === "carrybee" ? CARRYBEE_STATUS_MAP : STEADFAST_STATUS_MAP;
   return (
-    STEADFAST_STATUS_MAP[key] ?? {
+    table[key] ?? {
       ship: "in_transit" as ShipmentStatus,
       order: "shipped" as OrderStatus,
-      label: key || "unknown",
+      label: key ? key.replace(/[-_]/g, " ") : "unknown",
     }
   );
 }
 
-export function courierStatusLabel(raw: string | null | undefined) {
+/** Back-compat helper (Steadfast). */
+export function mapSteadfastStatus(raw: string | null | undefined) {
+  return mapCourierStatus("steadfast", raw);
+}
+
+export function courierStatusLabel(raw: string | null | undefined, provider?: string | null) {
   if (!raw) return "—";
-  return STEADFAST_STATUS_MAP[raw.toLowerCase()]?.label ?? raw.replace(/_/g, " ");
+  const key = normalizeCourierStatus(provider, raw);
+  return (
+    (provider === "carrybee" ? CARRYBEE_STATUS_MAP : STEADFAST_STATUS_MAP)[key]?.label ??
+    CARRYBEE_STATUS_MAP[key]?.label ??
+    STEADFAST_STATUS_MAP[key]?.label ??
+    key.replace(/[-_]/g, " ")
+  );
 }
 
 export type OrderTabKey =

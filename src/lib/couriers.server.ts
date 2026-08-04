@@ -1,4 +1,4 @@
-import { mapSteadfastStatus } from "@/lib/courier-status";
+import { mapCourierStatus, normalizeCourierStatus } from "@/lib/courier-status";
 
 export type Cfg = Record<string, string>;
 
@@ -89,6 +89,7 @@ export function fullAddress(order: {
 export async function applyCourierUpdate(
   db: any,
   args: {
+    provider?: string | null;
     consignmentId?: string | null;
     trackingCode?: string | null;
     invoice?: string | null;
@@ -129,16 +130,18 @@ export async function applyCourierUpdate(
   }
   if (!orderId) return { matched: false as const };
 
-  const mapped = mapSteadfastStatus(args.courierStatus);
+  const provider = shipment?.provider ?? args.provider ?? "steadfast";
+  const statusKey = normalizeCourierStatus(provider, args.courierStatus) || "unknown";
+  const mapped = mapCourierStatus(provider, args.courierStatus);
   const nowIso = new Date().toISOString();
 
   await db.from("courier_events").insert({
     order_id: orderId,
     shipment_id: shipment?.id ?? null,
-    provider: shipment?.provider ?? "steadfast",
+    provider,
     source: args.source,
     notification_type: args.notificationType ?? null,
-    courier_status: String(args.courierStatus ?? "unknown").toLowerCase(),
+    courier_status: statusKey,
     consignment_id: args.consignmentId ? String(args.consignmentId) : null,
     tracking_code: args.trackingCode ? String(args.trackingCode) : null,
     cod_amount: args.codAmount ?? null,
@@ -153,7 +156,7 @@ export async function applyCourierUpdate(
       .from("shipments")
       .update({
         status: mapped.ship,
-        courier_status: String(args.courierStatus ?? "").toLowerCase(),
+        courier_status: statusKey,
         cod_amount: args.codAmount ?? undefined,
         delivery_charge: args.deliveryCharge ?? undefined,
         courier_note: args.note ?? undefined,
@@ -165,14 +168,18 @@ export async function applyCourierUpdate(
   }
 
   const { data: order } = await db.from("orders").select("status").eq("id", orderId).maybeSingle();
-  if (order && order.status !== mapped.order) {
+  // "returned" and "cancelled" are final, manually-confirmed states — courier
+  // events must never overwrite them.
+  const finalStates = ["returned", "cancelled"];
+  if (order && order.status !== mapped.order && !finalStates.includes(order.status)) {
     await db.from("orders").update({ status: mapped.order }).eq("id", orderId);
     await db.from("order_status_history").insert({
       order_id: orderId,
       status: mapped.order,
-      note: `Courier update (${args.source}): ${args.courierStatus}`,
+      note: `${provider} update (${args.source}): ${statusKey}`,
     });
   }
 
   return { matched: true as const, orderId, shipmentId: shipment?.id ?? null, mapped };
 }
+

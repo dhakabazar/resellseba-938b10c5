@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
-import { Loader2, Truck, X, Download, Zap, RotateCcw, RefreshCw } from "lucide-react";
+import { Loader2, Truck, X, Download, Zap, RotateCcw, RefreshCw, Lock, PackageCheck, Repeat, Ban } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -10,7 +10,14 @@ import {
   bookPathao,
   syncSteadfastStatus,
   steadfastCreateReturn,
+  bookCarrybee,
+  syncCarrybeeStatus,
+  carrybeeReversePickup,
+  carrybeeExchange,
+  cancelCarrybee,
+  receiveReturn,
 } from "@/lib/couriers.functions";
+
 import { CourierTimeline, type CourierEvent } from "@/components/CourierTimeline";
 import { OrderTabs } from "@/components/OrderTabs";
 
@@ -238,12 +245,23 @@ function OrderDrawer({
   const bookPathaoFn = useServerFn(bookPathao);
   const syncStatus = useServerFn(syncSteadfastStatus);
   const createReturn = useServerFn(steadfastCreateReturn);
+  const bookCarrybeeFn = useServerFn(bookCarrybee);
+  const syncCarrybeeFn = useServerFn(syncCarrybeeStatus);
+  const carrybeeReturnFn = useServerFn(carrybeeReversePickup);
+  const carrybeeExchangeFn = useServerFn(carrybeeExchange);
+  const carrybeeCancelFn = useServerFn(cancelCarrybee);
+  const receiveReturnFn = useServerFn(receiveReturn);
+  const courierLocked = shipments.some((s) => s.consignment_id || s.tracking_id);
+
 
   // shipment form
   const [provider, setProvider] = useState("steadfast");
   const [tracking, setTracking] = useState("");
   const [cost, setCost] = useState<number>(0);
   const [deliveryType, setDeliveryType] = useState<0 | 1>(0);
+  const [cbDeliveryType, setCbDeliveryType] = useState<1 | 2>(1);
+  const [cbWeight, setCbWeight] = useState<number>(0);
+
 
   async function loadDetails() {
     const [{ data: i }, { data: s }, { data: ev }] = await Promise.all([
@@ -363,6 +381,15 @@ function OrderDrawer({
 
         <div className="surface-card mb-4 space-y-3 p-4">
           <div className="text-sm font-medium">Status</div>
+          {courierLocked && (
+            <div className="flex items-start gap-2 rounded-md bg-amber-500/10 p-2 text-[11px] text-amber-700">
+              <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              <span>
+                Order courier e chole gese — status change only super admin korte parbe. Courier webhook
+                automatic update pathabe; parcel ferot hate pele "Receive return" diye final korun.
+              </span>
+            </div>
+          )}
           <select value={status} onChange={(e) => setStatus(e.target.value)} className="input capitalize">
             {ORDER_STATUS_OPTIONS.map((s) => (
               <option key={s} value={s}>
@@ -377,14 +404,40 @@ function OrderDrawer({
             rows={2}
             className="input"
           />
-          <button
-            disabled={busy}
-            onClick={saveStatus}
-            className="btn-brand inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium"
-          >
-            {busy && <Loader2 className="h-4 w-4 animate-spin" />} Save status
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button
+              disabled={busy}
+              onClick={saveStatus}
+              className="btn-brand inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium"
+            >
+              {busy && <Loader2 className="h-4 w-4 animate-spin" />} Save status
+            </button>
+            {order.status === "pending_return" && (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={async () => {
+                  const note = prompt("Return receive note (optional)") ?? undefined;
+                  setBusy(true);
+                  try {
+                    await receiveReturnFn({ data: { orderId: order.id, note } });
+                    toast.success("Return received — order returned");
+                    await loadDetails();
+                    onChanged();
+                  } catch (e) {
+                    toast.error(e instanceof Error ? e.message : "Return receive failed");
+                  } finally {
+                    setBusy(false);
+                  }
+                }}
+                className="inline-flex items-center gap-2 rounded-md border border-success/40 bg-success/10 px-4 py-2 text-sm font-medium text-success"
+              >
+                <PackageCheck className="h-4 w-4" /> Receive return
+              </button>
+            )}
+          </div>
         </div>
+
 
         <div className="surface-card mb-4 p-4">
           <div className="mb-3 flex items-center gap-2 text-sm font-medium">
@@ -407,9 +460,10 @@ function OrderDrawer({
                         </span>
                         {s.courier_status && (
                           <span className="rounded-full bg-muted px-2 py-0.5">
-                            Courier: {courierStatusLabel(s.courier_status)}
+                            Courier: {courierStatusLabel(s.courier_status, s.provider)}
                           </span>
                         )}
+
                         {s.cod_amount != null && (
                           <span className="rounded-full bg-muted px-2 py-0.5">COD ৳{Number(s.cod_amount).toFixed(0)}</span>
                         )}
@@ -472,6 +526,95 @@ function OrderDrawer({
                       </button>
                     </div>
                   )}
+                  {s.provider === "carrybee" && (
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={async () => {
+                          setBusy(true);
+                          try {
+                            const r = await syncCarrybeeFn({ data: { shipmentId: s.id } });
+                            toast.success(`Courier status: ${courierStatusLabel(r.courierStatus, "carrybee")}`);
+                            await loadDetails();
+                            onChanged();
+                          } catch (e) {
+                            toast.error(e instanceof Error ? e.message : "Sync failed");
+                          } finally {
+                            setBusy(false);
+                          }
+                        }}
+                        className="inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs hover:bg-accent"
+                      >
+                        <RefreshCw className="h-3.5 w-3.5" /> Sync status
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={async () => {
+                          const reason = prompt("Reverse pickup reason (optional)") ?? undefined;
+                          setBusy(true);
+                          try {
+                            await carrybeeReturnFn({ data: { shipmentId: s.id, reason } });
+                            toast.success("Reverse pickup requested");
+                            await loadDetails();
+                            onChanged();
+                          } catch (e) {
+                            toast.error(e instanceof Error ? e.message : "Reverse pickup failed");
+                          } finally {
+                            setBusy(false);
+                          }
+                        }}
+                        className="inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs hover:bg-accent"
+                      >
+                        <RotateCcw className="h-3.5 w-3.5" /> Reverse pickup
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={async () => {
+                          const note = prompt("Exchange note (optional)") ?? undefined;
+                          setBusy(true);
+                          try {
+                            await carrybeeExchangeFn({ data: { shipmentId: s.id, note } });
+                            toast.success("Exchange requested");
+                            await loadDetails();
+                            onChanged();
+                          } catch (e) {
+                            toast.error(e instanceof Error ? e.message : "Exchange failed");
+                          } finally {
+                            setBusy(false);
+                          }
+                        }}
+                        className="inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs hover:bg-accent"
+                      >
+                        <Repeat className="h-3.5 w-3.5" /> Exchange
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={async () => {
+                          const reason = prompt("Cancel reason (required)");
+                          if (!reason || reason.trim().length < 2) return;
+                          setBusy(true);
+                          try {
+                            await carrybeeCancelFn({ data: { shipmentId: s.id, reason: reason.trim() } });
+                            toast.success("Shipment cancelled");
+                            await loadDetails();
+                            onChanged();
+                          } catch (e) {
+                            toast.error(e instanceof Error ? e.message : "Cancel failed");
+                          } finally {
+                            setBusy(false);
+                          }
+                        }}
+                        className="inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs text-destructive hover:bg-destructive/10"
+                      >
+                        <Ban className="h-3.5 w-3.5" /> Cancel
+                      </button>
+                    </div>
+                  )}
+
                 </div>
               ))}
             </div>
@@ -563,6 +706,52 @@ function OrderDrawer({
                 <Zap className="h-4 w-4" /> Auto-book with Pathao API
               </button>
             )}
+            {provider === "carrybee" && (
+              <>
+                <select
+                  value={cbDeliveryType}
+                  onChange={(e) => setCbDeliveryType(Number(e.target.value) as 1 | 2)}
+                  className="input col-span-2"
+                >
+                  <option value={1}>Regular delivery</option>
+                  <option value={2}>Express delivery</option>
+                </select>
+                <input
+                  type="number"
+                  placeholder="Item weight (gram)"
+                  value={cbWeight || ""}
+                  onChange={(e) => setCbWeight(Number(e.target.value))}
+                  className="input col-span-2"
+                />
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={async () => {
+                    setBusy(true);
+                    try {
+                      const r = await bookCarrybeeFn({
+                        data: {
+                          orderId: order.id,
+                          deliveryType: cbDeliveryType,
+                          itemWeight: cbWeight > 0 ? cbWeight : undefined,
+                        },
+                      });
+                      toast.success(`Booked · ${r.trackingId}`);
+                      await loadDetails();
+                      onChanged();
+                    } catch (e) {
+                      toast.error(e instanceof Error ? e.message : "Booking failed");
+                    } finally {
+                      setBusy(false);
+                    }
+                  }}
+                  className="col-span-2 inline-flex items-center justify-center gap-2 rounded-md border border-primary/40 bg-primary/10 px-4 py-2 text-sm font-medium text-primary"
+                >
+                  <Zap className="h-4 w-4" /> Auto-book with Carrybee API
+                </button>
+              </>
+            )}
+
           </form>
         </div>
 
