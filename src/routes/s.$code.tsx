@@ -59,8 +59,8 @@ function StoreLayout() {
     <Provider value={store}>
       <div
         data-store-theme={store.theme.id}
-        style={style}
-        className="min-h-screen bg-[var(--st-bg)] font-[var(--st-font-body)] text-[var(--st-fg)] antialiased"
+        style={{ ...style, fontFamily: "var(--st-font-body)" }}
+        className="min-h-screen bg-[var(--st-bg)] text-[var(--st-fg)] antialiased"
       >
         <StoreHeader />
         <main>
