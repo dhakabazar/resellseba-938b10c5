@@ -1,6 +1,6 @@
 import { ORDER_TABS, type OrderTabKey } from "@/lib/courier-status";
 
-/** Minimal order shape needed by every финance report (admin + reseller). */
+/** Minimal order shape needed by every finance report (admin + reseller). */
 export type ReportOrder = {
   id: string;
   order_number: string;
