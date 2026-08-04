@@ -86,16 +86,51 @@ export const Route = createFileRoute("/_authenticated/reseller/orders")({
 const ORDER_COLUMNS =
   "id,order_number,customer_name,customer_phone,address_line,city,area,subtotal,shipping_cost,discount,total,reseller_profit,payment_method,status,payment_status,forwarded_to_admin,notes,reseller_note,created_at";
 
+type OrderItemLite = { order_id: string; product_id: string | null; product_name: string; quantity: number };
+
+function exportCsv(rows: OrderRow[]) {
+  const head = ["Order", "Date", "Customer", "Phone", "Area", "Address", "Status", "Total", "Profit"];
+  const csv = [head.join(",")]
+    .concat(
+      rows.map((o) =>
+        [
+          o.order_number,
+          new Date(o.created_at).toISOString().slice(0, 10),
+          o.customer_name,
+          o.customer_phone,
+          o.area,
+          `"${(o.address_line ?? "").replace(/"/g, '""')}"`,
+          o.status,
+          Number(o.total).toFixed(0),
+          Number(o.reseller_profit).toFixed(0),
+        ].join(","),
+      ),
+    )
+    .join("\n");
+  const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `my-orders-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 function OrdersPage() {
   const { user } = useAuth();
   const [resellerId, setResellerId] = useState<string | null>(null);
   const [orders, setOrders] = useState<OrderRow[]>([]);
+  const [orderItems, setOrderItems] = useState<OrderItemLite[]>([]);
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<OrderTabKey>("new");
   const [selected, setSelected] = useState<OrderRow | null>(null);
   const [filters, setFilters] = useState<OrderFilterState>(DEFAULT_ORDER_FILTERS);
+  const [productQ, setProductQ] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+  const [pickOpen, setPickOpen] = useState(false);
+  const [pickScope, setPickScope] = useState<"filtered" | "marked">("filtered");
+  const [marked, setMarked] = useState<string[]>([]);
   const [page, setPage] = useState(1);
 
   async function load() {
@@ -120,26 +155,86 @@ function OrdersPage() {
         .eq("reseller_id", r.id)
         .eq("is_active", true),
     ]);
-    setOrders((o ?? []) as OrderRow[]);
+    const rows = (o ?? []) as OrderRow[];
+    setOrders(rows);
     setListings((l ?? []) as Listing[]);
+    if (rows.length > 0) {
+      const { data: its } = await supabase
+        .from("order_items")
+        .select("order_id,product_id,product_name,quantity")
+        .in(
+          "order_id",
+          rows.map((x) => x.id),
+        );
+      setOrderItems((its ?? []) as OrderItemLite[]);
+    } else {
+      setOrderItems([]);
+    }
     setLoading(false);
   }
   useEffect(() => {
     load();
   }, [user]);
 
+  const itemsByOrder = useMemo(() => {
+    const m = new Map<string, OrderItemLite[]>();
+    for (const it of orderItems) {
+      const arr = m.get(it.order_id);
+      if (arr) arr.push(it);
+      else m.set(it.order_id, [it]);
+    }
+    return m;
+  }, [orderItems]);
+
   const tabStatuses = ORDER_TABS.find((t) => t.key === tab)?.statuses ?? [];
   const inTab =
     tabStatuses.length === 0 ? orders : orders.filter((o) => (tabStatuses as string[]).includes(o.status));
-  const visible = useMemo(() => applyOrderFilters(inTab, filters), [inTab, filters]);
+
+  /** Two separate searches: order (no/name/phone) + product name. */
+  const visible = useMemo(() => {
+    const base = applyOrderFilters(inTab, { ...filters, q: "" });
+    const q = filters.q.trim().toLowerCase();
+    const pq = productQ.trim().toLowerCase();
+    if (!q && !pq) return base;
+    return base.filter((o) => {
+      const has = (v?: string | null) => (v ?? "").toLowerCase().includes(q);
+      const okOrder = !q || has(o.order_number) || has(o.customer_name) || has(o.customer_phone);
+      const okProduct =
+        !pq ||
+        (itemsByOrder.get(o.id) ?? []).some((it) => it.product_name.toLowerCase().includes(pq));
+      return okOrder && okProduct;
+    });
+  }, [inTab, filters, productQ, itemsByOrder]);
+
+  const markedOrders = useMemo(
+    () => visible.filter((o) => marked.includes(o.id)),
+    [visible, marked],
+  );
+
+  const pickList = useMemo(() => {
+    const rows = pickScope === "marked" ? markedOrders : visible;
+    const m = new Map<string, { name: string; qty: number; orders: number }>();
+    for (const o of rows) {
+      for (const it of itemsByOrder.get(o.id) ?? []) {
+        const key = it.product_id ?? it.product_name;
+        const cur = m.get(key) ?? { name: it.product_name, qty: 0, orders: 0 };
+        cur.qty += Number(it.quantity) || 0;
+        cur.orders += 1;
+        m.set(key, cur);
+      }
+    }
+    return [...m.values()].sort((a, b) => b.qty - a.qty);
+  }, [pickScope, markedOrders, visible, itemsByOrder]);
+
   useEffect(() => {
     setPage(1);
-  }, [filters, tab]);
+  }, [filters, tab, productQ]);
   const paged = usePaginated(visible, page, filters.perPage);
   const tabCount = (key: OrderTabKey) => {
     const sts = ORDER_TABS.find((t) => t.key === key)?.statuses ?? [];
     return sts.length === 0 ? orders.length : orders.filter((o) => (sts as string[]).includes(o.status)).length;
   };
+
 
 
   async function remove(id: string) {
