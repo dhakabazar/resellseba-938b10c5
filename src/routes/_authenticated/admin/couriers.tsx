@@ -6,6 +6,8 @@ import { Loader2, Truck, Copy, Wallet, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { steadfastBalance } from "@/lib/couriers.functions";
+import { Switch } from "@/components/ui/switch";
+
 
 export const Route = createFileRoute("/_authenticated/admin/couriers")({
   component: CouriersPage,
