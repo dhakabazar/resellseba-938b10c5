@@ -157,6 +157,9 @@ export function useStoreLoader(code: string, themeOverride?: string | null, pale
       const theme = getStoreTheme(themeOverride || s?.theme);
       ensureThemeFont(theme);
       const storeName = s?.store_name || r.business_name || code;
+      const values = s?.theme_settings?.[theme.id];
+      const savedPalette = typeof values?.palette === "string" ? values.palette : null;
+      const palette = getPalette(theme, paletteOverride || savedPalette);
 
       if (!alive) return;
       setData({
@@ -165,7 +168,8 @@ export function useStoreLoader(code: string, themeOverride?: string | null, pale
         name: storeName,
         settings: s,
         theme,
-        content: createContentReader(theme.id, s?.theme_settings?.[theme.id], s, storeName),
+        palette,
+        content: createContentReader(theme.id, values, s, storeName),
 
         listings,
         categories,
@@ -180,7 +184,7 @@ export function useStoreLoader(code: string, themeOverride?: string | null, pale
     return () => {
       alive = false;
     };
-  }, [code, themeOverride]);
+  }, [code, themeOverride, paletteOverride]);
 
   const value = useMemo<StoreData | null>(() => {
     if (!data) return null;
