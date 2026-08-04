@@ -86,6 +86,9 @@ function SettingsPage() {
         reseller_id: rid,
         store_name: storeName,
         tagline: tagline || null,
+        /** colors are theme palette driven now */
+        primary_color: null,
+        accent_color: null,
         whatsapp: whatsapp || null,
         support_phone: supportPhone || null,
         facebook_url: fb || null,
