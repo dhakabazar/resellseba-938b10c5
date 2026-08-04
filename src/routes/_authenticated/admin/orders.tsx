@@ -703,6 +703,52 @@ function OrderDrawer({
                 <Zap className="h-4 w-4" /> Auto-book with Pathao API
               </button>
             )}
+            {provider === "carrybee" && (
+              <>
+                <select
+                  value={cbDeliveryType}
+                  onChange={(e) => setCbDeliveryType(Number(e.target.value) as 1 | 2)}
+                  className="input col-span-2"
+                >
+                  <option value={1}>Regular delivery</option>
+                  <option value={2}>Express delivery</option>
+                </select>
+                <input
+                  type="number"
+                  placeholder="Item weight (gram)"
+                  value={cbWeight || ""}
+                  onChange={(e) => setCbWeight(Number(e.target.value))}
+                  className="input col-span-2"
+                />
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={async () => {
+                    setBusy(true);
+                    try {
+                      const r = await bookCarrybeeFn({
+                        data: {
+                          orderId: order.id,
+                          deliveryType: cbDeliveryType,
+                          itemWeight: cbWeight > 0 ? cbWeight : undefined,
+                        },
+                      });
+                      toast.success(`Booked · ${r.trackingId}`);
+                      await loadDetails();
+                      onChanged();
+                    } catch (e) {
+                      toast.error(e instanceof Error ? e.message : "Booking failed");
+                    } finally {
+                      setBusy(false);
+                    }
+                  }}
+                  className="col-span-2 inline-flex items-center justify-center gap-2 rounded-md border border-primary/40 bg-primary/10 px-4 py-2 text-sm font-medium text-primary"
+                >
+                  <Zap className="h-4 w-4" /> Auto-book with Carrybee API
+                </button>
+              </>
+            )}
+
           </form>
         </div>
 
