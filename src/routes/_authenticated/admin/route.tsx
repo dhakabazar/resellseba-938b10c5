@@ -51,11 +51,10 @@ const NAV: NavEntry[] = [
     label: "Finance",
     icon: <Wallet className="h-4 w-4" />,
     items: [
-      { label: "Financials", to: "/admin/financials", icon: <PiggyBank className="h-4 w-4" /> },
-      { label: "Business report", to: "/admin/business-report", icon: <FileText className="h-4 w-4" /> },
+      { label: "Financials", to: "/admin/financials", icon: <LineChart className="h-4 w-4" /> },
+      { label: "Business report", to: "/admin/business-report", icon: <PieChart className="h-4 w-4" /> },
       { label: "Payouts", to: "/admin/payouts", icon: <Wallet className="h-4 w-4" /> },
-
-      { label: "Commissions", to: "/admin/commissions", icon: <Award className="h-4 w-4" /> },
+      { label: "Commissions", to: "/admin/commissions", icon: <Percent className="h-4 w-4" /> },
     ],
   },
   { label: "Resellers", to: "/admin/resellers", icon: <Users className="h-4 w-4" /> },
