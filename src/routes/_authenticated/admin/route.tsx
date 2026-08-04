@@ -50,9 +50,8 @@ const NAV: NavEntry[] = [
     items: [
       { label: "Financials", to: "/admin/financials", icon: <PiggyBank className="h-4 w-4" /> },
       { label: "Business report", to: "/admin/business-report", icon: <FileText className="h-4 w-4" /> },
-
-      { label: "Payments", to: "/admin/payments", icon: <Wallet className="h-4 w-4" /> },
       { label: "Payouts", to: "/admin/payouts", icon: <Wallet className="h-4 w-4" /> },
+
       { label: "Commissions", to: "/admin/commissions", icon: <Award className="h-4 w-4" /> },
     ],
   },
