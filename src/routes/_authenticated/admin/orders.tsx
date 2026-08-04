@@ -9,7 +9,7 @@ import {
 } from "@/components/order-filters";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
-import { Loader2, Truck, X, Download, Zap, RotateCcw, RefreshCw, Lock, PackageCheck, Repeat, Ban, Search, ListChecks } from "lucide-react";
+import { Loader2, Truck, X, Download, Zap, RotateCcw, RefreshCw, Lock, PackageCheck, Repeat, Ban, Search, ListChecks, SlidersHorizontal, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import {
