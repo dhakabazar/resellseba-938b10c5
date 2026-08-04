@@ -308,6 +308,10 @@ function FinancialsPage() {
         />
       </div>
 
+      <ReportTabs tabs={ADMIN_TABS} active={tab} onChange={setTab} />
+
+      {tab === "overview" && (
+      <>
       <ReportCard
         title="Order status wise report"
         hint="Order list er tab gulor sathe ek e bucket."
@@ -319,7 +323,10 @@ function FinancialsPage() {
       <ReportCard title="Raw status split" hint="Prottek database status alada vabe.">
         <RawStatusList report={report} />
       </ReportCard>
+      </>
+      )}
 
+      {tab === "resellers" && (
       <ReportCard
         title="Per-reseller report"
         hint="Tenant onujai — filtered date range er order + lifetime payout ledger."
@@ -394,7 +401,9 @@ function FinancialsPage() {
           </tbody>
         </table>
       </ReportCard>
+      )}
 
+      {tab === "products" && (
       <ReportCard
         title="Product wise report"
         hint="Kon product theke koto sell r koto profit."
@@ -402,7 +411,9 @@ function FinancialsPage() {
       >
         <ProductReportTable products={report.products} />
       </ReportCard>
+      )}
 
+      {tab === "courier" && (
       <ReportCard title="Courier wise report" hint="Booking count, courier charge r COD delivery charge.">
         <table className="w-full min-w-[520px] text-sm">
           <thead className="bg-muted/20 text-left text-[11px] uppercase text-muted-foreground">
@@ -432,7 +443,9 @@ function FinancialsPage() {
           </tbody>
         </table>
       </ReportCard>
+      )}
 
+      {tab === "trend" && (
       <ReportCard
         title="Trend report"
         right={
@@ -448,7 +461,9 @@ function FinancialsPage() {
       >
         <TrendReportTable trend={report.trend} />
       </ReportCard>
+      )}
 
+      {tab === "how" && (
       <div className="rounded-lg border bg-muted/30 p-4 text-xs text-muted-foreground">
         <div className="mb-1 font-medium text-foreground">Kivabe calculate hoy</div>
         <ul className="list-disc space-y-1 pl-4">
@@ -460,6 +475,7 @@ function FinancialsPage() {
           <li><b>Due</b> = delivered profit − paid − pending payout.</li>
         </ul>
       </div>
+      )}
     </div>
   );
 }
