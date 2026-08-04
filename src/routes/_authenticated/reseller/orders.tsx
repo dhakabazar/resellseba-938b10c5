@@ -105,12 +105,18 @@ function OrdersPage() {
   }, [user]);
 
   const tabStatuses = ORDER_TABS.find((t) => t.key === tab)?.statuses ?? [];
-  const visible =
+  const inTab =
     tabStatuses.length === 0 ? orders : orders.filter((o) => (tabStatuses as string[]).includes(o.status));
+  const visible = useMemo(() => applyOrderFilters(inTab, filters), [inTab, filters]);
+  useEffect(() => {
+    setPage(1);
+  }, [filters, tab]);
+  const paged = usePaginated(visible, page, filters.perPage);
   const tabCount = (key: OrderTabKey) => {
     const sts = ORDER_TABS.find((t) => t.key === key)?.statuses ?? [];
     return sts.length === 0 ? orders.length : orders.filter((o) => (sts as string[]).includes(o.status)).length;
   };
+
 
   async function remove(id: string) {
     if (!confirm("Delete this order?")) return;
