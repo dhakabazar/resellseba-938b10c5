@@ -107,8 +107,21 @@ function CouriersPage() {
 
               </div>
               {fields.length === 0 ? (
-                <p className="text-xs text-muted-foreground">No credentials required — manual courier bookings only.</p>
+                <div className="rounded-lg border border-dashed bg-muted/30 p-3 text-xs leading-relaxed text-muted-foreground">
+                  <span className="font-medium text-foreground">Manual courier — কোনো API/credential লাগে না।</span>
+                  <br />
+                  Order drawer-এ courier হিসেবে <span className="font-medium">Manual</span> বেছে নিয়ে
+                  tracking / consignment ID আর delivery cost নিজে বসিয়ে দিলে shipment তৈরি হবে এবং order{" "}
+                  <span className="font-medium">To Courier</span>-এ চলে যাবে। এরপর status (Delivered / Pending
+                  Return / Returned) admin নিজেই manually update করবে — কোনো webhook বা auto sync থাকবে না।
+                  <br />
+                  <span className="opacity-80">
+                    যেসব courier-এর এখনো API integration নেই (local pickup, নিজের delivery man, ইত্যাদি)
+                    তাদের জন্য এটি ব্যবহার করুন। পরে আরও detail যোগ করা যাবে।
+                  </span>
+                </div>
               ) : (
+
                 <div className="grid gap-3">
                   {fields.map((f) => (
                     <div key={f.key}>
