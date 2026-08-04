@@ -122,7 +122,7 @@ export function AppShell({
                 }}
                 title={entry.label}
                 className={cn(
-                  "mb-1 flex w-full items-center justify-center rounded-md p-2 text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                  "mb-1 flex w-full items-center justify-center rounded-md p-2 text-sidebar-foreground/90 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                   hasActive && "bg-sidebar-accent/60 text-sidebar-accent-foreground",
                 )}
               >
@@ -136,13 +136,13 @@ export function AppShell({
                 type="button"
                 onClick={() => setOpenIdx(isOpen ? -1 : idx)}
                 className={cn(
-                  "flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                  "flex w-full items-center gap-3 rounded-md px-3 py-2 text-[13px] font-medium text-sidebar-foreground/90 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                   hasActive && "text-sidebar-accent-foreground",
                 )}
                 aria-expanded={isOpen}
               >
                 <span className="text-current">{entry.icon}</span>
-                <span className="flex-1 text-left font-medium">{entry.label}</span>
+                <span className="flex-1 text-left">{entry.label}</span>
                 <ChevronDown
                   className={cn("h-3.5 w-3.5 transition-transform", isOpen ? "rotate-0" : "-rotate-90")}
                 />
@@ -250,7 +250,7 @@ function LeafLink({ item, nested = false, collapsed = false }: { item: NavItem; 
         to={item.to}
         activeOptions={{ exact: item.end }}
         title={item.label}
-        className="mb-1 flex items-center justify-center rounded-md p-2 text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+        className="mb-1 flex items-center justify-center rounded-md p-2 text-sidebar-foreground/90 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
         activeProps={{ className: "bg-sidebar-accent text-sidebar-accent-foreground" }}
       >
         {item.icon}
@@ -262,11 +262,11 @@ function LeafLink({ item, nested = false, collapsed = false }: { item: NavItem; 
       to={item.to}
       activeOptions={{ exact: item.end }}
       className={cn(
-        "group mb-1 flex items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-        nested && "py-1.5 text-[13px]",
+        "group mb-1 flex items-center gap-3 rounded-md px-3 py-2 text-[13px] font-medium text-sidebar-foreground/90 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+        nested && "py-1.5",
       )}
       activeProps={{
-        className: "bg-sidebar-accent text-sidebar-accent-foreground font-medium",
+        className: "bg-sidebar-accent text-sidebar-accent-foreground",
       }}
     >
       <span className="text-current">{item.icon}</span>
