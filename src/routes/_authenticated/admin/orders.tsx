@@ -115,17 +115,8 @@ function exportCsv(rows: OrderRow[]) {
 
 type OrderItemLite = { order_id: string; product_id: string | null; product_name: string; quantity: number };
 
-type SearchField = "all" | "order" | "customer" | "phone" | "address" | "reseller" | "product";
 
-const SEARCH_FIELDS: { value: SearchField; label: string; placeholder: string }[] = [
-  { value: "all", label: "All fields", placeholder: "Order, customer, phone, address, reseller, product…" },
-  { value: "order", label: "Order no", placeholder: "Order number…" },
-  { value: "customer", label: "Customer name", placeholder: "Customer name…" },
-  { value: "phone", label: "Phone", placeholder: "Customer phone…" },
-  { value: "address", label: "Address", placeholder: "Address…" },
-  { value: "reseller", label: "Reseller", placeholder: "Reseller name / code…" },
-  { value: "product", label: "Product", placeholder: "Product name…" },
-];
+
 
 
 function AdminOrdersPage() {
