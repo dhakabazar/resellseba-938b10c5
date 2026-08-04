@@ -6,6 +6,8 @@ import { Loader2, Truck, Copy, Wallet, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { steadfastBalance } from "@/lib/couriers.functions";
+import { Switch } from "@/components/ui/switch";
+
 
 export const Route = createFileRoute("/_authenticated/admin/couriers")({
   component: CouriersPage,
@@ -88,18 +90,18 @@ function CouriersPage() {
                   <div className="font-semibold">{r.display_name}</div>
                   <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{r.provider}</div>
                 </div>
-                <label className="inline-flex items-center gap-2 text-xs">
-                  <input
-                    type="checkbox"
+                <div className="flex items-center gap-2">
+                  <Switch
                     checked={r.is_active}
-                    onChange={(e) => {
+                    onCheckedChange={(v) => {
                       const copy = [...rows];
-                      copy[idx] = { ...r, is_active: e.target.checked };
+                      copy[idx] = { ...r, is_active: v };
                       setRows(copy);
                     }}
                   />
-                  Active
-                </label>
+                  <span className="text-xs text-muted-foreground">{r.is_active ? "Active" : "Inactive"}</span>
+                </div>
+
               </div>
               {fields.length === 0 ? (
                 <p className="text-xs text-muted-foreground">No credentials required — manual courier bookings only.</p>
@@ -205,8 +207,9 @@ function SteadfastExtras({ token, onToken }: { token: string; onToken: (t: strin
           </button>
         </div>
         <p className="mt-1 text-[11px] text-muted-foreground">
-          Webhook Token save korar por ei URL Steadfast support/panel e diye din — live status update order e chole asbe.
+          URL ta current domain ({origin.replace(/^https?:\/\//, "") || "—"}) theke auto generate hoy — custom domain, new server ba self-host e gele automatic sei domain e change hobe. Token save korar por URL ta Steadfast panel/support e diye din.
         </p>
+
       </div>
       <div className="flex items-center gap-2">
         <button
