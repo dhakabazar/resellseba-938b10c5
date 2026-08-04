@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/ui-kit";
 import { Loader2, Truck, Copy, Wallet, RefreshCw, Store } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
-import { steadfastBalance, carrybeeStores } from "@/lib/couriers.functions";
+import { steadfastBalance, carrybeeStores, pathaoStores } from "@/lib/couriers.functions";
 import { Switch } from "@/components/ui/switch";
 
 
@@ -364,6 +364,129 @@ function CarrybeeExtras({
               <div className="flex items-center gap-1.5">
                 {s.isDefaultPickup && <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] text-primary">default</span>}
                 {!s.isApproved && <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] text-amber-600">unapproved</span>}
+                <button
+                  type="button"
+                  onClick={() => {
+                    onConfig({ store_id: s.id });
+                    toast.success("Store id set — Save korun");
+                  }}
+                  className="rounded-md border px-2 py-0.5 text-[10px] hover:bg-accent"
+                >
+                  Use
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PathaoExtras({
+  config,
+  onConfig,
+}: {
+  config: Record<string, string>;
+  onConfig: (patch: Record<string, string>) => void;
+}) {
+  const [stores, setStores] = useState<
+    { id: string; name: string; address: string; isActive: boolean }[]
+  >([]);
+  const [busy, setBusy] = useState(false);
+  const loadStores = useServerFn(pathaoStores);
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const secret = config.webhook_secret ?? "";
+  const webhookUrl = `${origin}/api/public/courier/pathao`;
+
+  function generate() {
+    const bytes = new Uint8Array(24);
+    crypto.getRandomValues(bytes);
+    onConfig({
+      webhook_secret: Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join(""),
+    });
+    toast.success("Secret generated — Save korun");
+  }
+
+  return (
+    <div className="mt-4 space-y-3 rounded-lg border bg-muted/30 p-3">
+      <div>
+        <div className="mb-1 text-xs font-medium">Webhook Secret</div>
+        <div className="flex items-center gap-2">
+          <input
+            value={secret}
+            onChange={(e) => onConfig({ webhook_secret: e.target.value })}
+            placeholder="Generate korun ba Pathao panel er secret paste korun"
+            className="min-w-0 flex-1 rounded-md border bg-background px-2 py-1.5 font-mono text-[11px]"
+          />
+          <button type="button" onClick={generate} className="shrink-0 rounded-md border px-2 py-1.5 text-xs hover:bg-accent">
+            <RefreshCw className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (!secret) return;
+              navigator.clipboard.writeText(secret);
+              toast.success("Secret copied");
+            }}
+            className="shrink-0 rounded-md border p-1.5 hover:bg-accent"
+          >
+            <Copy className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <div className="mb-1 text-xs font-medium">Webhook URL (Pathao → Webhook Integration)</div>
+        <div className="flex items-center gap-2">
+          <code className="flex-1 truncate rounded-md border bg-background px-2 py-1.5 text-[11px]">
+            {webhookUrl}
+          </code>
+          <button
+            type="button"
+            onClick={() => {
+              navigator.clipboard.writeText(webhookUrl);
+              toast.success("Webhook URL copied");
+            }}
+            className="rounded-md border p-1.5 hover:bg-accent"
+          >
+            <Copy className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          disabled={busy}
+          onClick={async () => {
+            setBusy(true);
+            try {
+              const r = await loadStores();
+              setStores(r.stores);
+              if (r.stores.length === 0) toast.info("Kono store nai — Pathao panel e store create korun");
+            } catch (e) {
+              toast.error(e instanceof Error ? e.message : "Store list load hoyni");
+            } finally {
+              setBusy(false);
+            }
+          }}
+          className="inline-flex items-center gap-2 rounded-md border px-2.5 py-1.5 text-xs hover:bg-accent"
+        >
+          {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Store className="h-3.5 w-3.5" />}
+          Load stores
+        </button>
+      </div>
+      {stores.length > 0 && (
+        <div className="divide-y rounded-md border bg-background">
+          {stores.map((s) => (
+            <div key={s.id} className="flex items-center justify-between gap-2 px-2 py-1.5 text-xs">
+              <div className="min-w-0">
+                <div className="truncate font-medium">{s.name}</div>
+                <div className="truncate font-mono text-[10px] text-muted-foreground">{s.id} · {s.address}</div>
+              </div>
+              <div className="flex items-center gap-1.5">
+                {!s.isActive && <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] text-amber-600">inactive</span>}
                 <button
                   type="button"
                   onClick={() => {
