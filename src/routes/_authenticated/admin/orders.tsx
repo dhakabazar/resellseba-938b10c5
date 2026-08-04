@@ -259,6 +259,9 @@ function OrderDrawer({
   const [tracking, setTracking] = useState("");
   const [cost, setCost] = useState<number>(0);
   const [deliveryType, setDeliveryType] = useState<0 | 1>(0);
+  const [cbDeliveryType, setCbDeliveryType] = useState<1 | 2>(1);
+  const [cbWeight, setCbWeight] = useState<number>(0);
+
 
   async function loadDetails() {
     const [{ data: i }, { data: s }, { data: ev }] = await Promise.all([
