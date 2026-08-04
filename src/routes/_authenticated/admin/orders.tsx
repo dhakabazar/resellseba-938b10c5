@@ -375,9 +375,6 @@ function AdminOrdersPage() {
             setProductQ(name);
             setPickOpen(false);
           }}
-
-            setPickOpen(false);
-          }}
           onClose={() => setPickOpen(false)}
         />
       )}
