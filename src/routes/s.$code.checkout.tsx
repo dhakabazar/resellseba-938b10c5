@@ -236,8 +236,9 @@ function Checkout() {
             {busy && <Loader2 className="h-4 w-4 animate-spin" />} Place order — {bdt(totals.total)}
           </PrimaryButton>
           <p className={cx("flex items-center gap-2 text-xs", muted)}>
-            <ShieldCheck className="h-3.5 w-3.5" /> Your information is used only to deliver this order.
+            <ShieldCheck className="h-3.5 w-3.5" /> {store.content.text("co_trust")}
           </p>
+
         </form>
 
         <aside className={cx("h-fit space-y-4 rounded-[var(--st-radius)] border bg-[var(--st-surface)] p-5", borderc)}>
