@@ -30,6 +30,7 @@ import {
 import { CourierTimeline, type CourierEvent } from "@/components/CourierTimeline";
 import { OrderTabs } from "@/components/OrderTabs";
 import { PickListModal } from "@/components/pick-list-modal";
+import { OrderSearch, type OrderSearchMode } from "@/components/order-search";
 
 
 import {
@@ -129,7 +130,7 @@ function AdminOrdersPage() {
   const [tab, setTab] = useState<OrderTabKey>("confirmed");
   const [selected, setSelected] = useState<OrderRow | null>(null);
   const [filters, setFilters] = useState<OrderFilterState>(DEFAULT_ORDER_FILTERS);
-  const [productQ, setProductQ] = useState("");
+  const [searchMode, setSearchMode] = useState<OrderSearchMode>("order");
 
   const [showFilters, setShowFilters] = useState(false);
   const [pickOpen, setPickOpen] = useState(false);
@@ -195,22 +196,21 @@ function AdminOrdersPage() {
     return m;
   }, [orderItems]);
 
-  /** Two separate searches: order (no/name/phone) + product name. */
+  /** One search box, mode decides target: order fields or product name. */
   const filtered = useMemo(() => {
     const base = applyOrderFilters(orders, { ...filters, q: "" });
     const q = filters.q.trim().toLowerCase();
-    const pq = productQ.trim().toLowerCase();
-    if (!q && !pq) return base;
+    if (!q) return base;
     return base.filter((o) => {
+      if (searchMode === "product") {
+        return (itemsByOrder.get(o.id) ?? []).some((it) =>
+          it.product_name.toLowerCase().includes(q),
+        );
+      }
       const has = (v?: string | null) => (v ?? "").toLowerCase().includes(q);
-      const okOrder =
-        !q || has(o.order_number) || has(o.customer_name) || has(o.customer_phone);
-      const okProduct =
-        !pq ||
-        (itemsByOrder.get(o.id) ?? []).some((it) => it.product_name.toLowerCase().includes(pq));
-      return okOrder && okProduct;
+      return has(o.order_number) || has(o.customer_name) || has(o.customer_phone);
     });
-  }, [orders, filters, itemsByOrder, productQ]);
+  }, [orders, filters, itemsByOrder, searchMode]);
 
 
 
@@ -260,44 +260,15 @@ function AdminOrdersPage() {
         }
       />
 
-      {/* Two always-visible searches: order + product */}
+      {/* Merged search: mode select inside the box */}
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <div className="relative min-w-[220px] flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            value={filters.q}
-            onChange={(e) => setFilters({ ...filters, q: e.target.value })}
-            placeholder="Order search — order no / name / mobile…"
-            className="h-10 w-full rounded-md border bg-background pl-9 pr-8 text-sm outline-none focus:ring-2 focus:ring-ring"
-          />
-          {filters.q && (
-            <button
-              type="button"
-              onClick={() => setFilters({ ...filters, q: "" })}
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground hover:bg-accent"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          )}
-        </div>
-        <div className="relative min-w-[200px] flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            value={productQ}
-            onChange={(e) => setProductQ(e.target.value)}
-            placeholder="Product search — product name…"
-            className="h-10 w-full rounded-md border bg-background pl-9 pr-8 text-sm outline-none focus:ring-2 focus:ring-ring"
-          />
-          {productQ && (
-            <button
-              type="button"
-              onClick={() => setProductQ("")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground hover:bg-accent"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          )}
-        </div>
+        <OrderSearch
+          mode={searchMode}
+          onMode={setSearchMode}
+          value={filters.q}
+          onChange={(v) => setFilters({ ...filters, q: v })}
+        />
+
 
 
         <button
@@ -374,7 +345,8 @@ function AdminOrdersPage() {
               : `${ORDER_TABS.find((t) => t.key === tab)?.label ?? "All"} — ${filtered.length} order`
           }
           onPick={(name) => {
-            setProductQ(name);
+            setSearchMode("product");
+            setFilters((f) => ({ ...f, q: name }));
             setPickOpen(false);
           }}
           onClose={() => setPickOpen(false)}
