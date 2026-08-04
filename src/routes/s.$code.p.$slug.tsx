@@ -215,6 +215,24 @@ function ProductPage() {
           <ProductGrid listings={related} />
         </section>
       )}
+
+      {store.content.flag("pdp_sticky") && (
+        <div
+          className={cx(
+            "fixed inset-x-0 bottom-0 z-40 flex items-center gap-3 border-t bg-[var(--st-surface)] px-4 py-3 lg:hidden",
+            borderc,
+          )}
+        >
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-xs text-[var(--st-muted)]">{title}</div>
+            <Price value={price} className="text-lg" />
+          </div>
+          <PrimaryButton disabled={!inStock} onClick={() => add(true)} className="px-4 py-2.5">
+            <Zap className="h-4 w-4" /> Order now
+          </PrimaryButton>
+        </div>
+      )}
     </div>
+
   );
 }
