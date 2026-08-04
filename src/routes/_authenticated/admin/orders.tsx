@@ -124,6 +124,7 @@ function AdminOrdersPage() {
   const [selected, setSelected] = useState<OrderRow | null>(null);
   const [filters, setFilters] = useState<OrderFilterState>(DEFAULT_ORDER_FILTERS);
   const [productQuery, setProductQuery] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
   const [showPickList, setShowPickList] = useState(false);
   const [page, setPage] = useState(1);
   const [resellerOptions, setResellerOptions] = useState<FilterOption[]>([]);
