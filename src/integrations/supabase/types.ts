@@ -172,6 +172,75 @@ export type Database = {
         }
         Relationships: []
       }
+      courier_events: {
+        Row: {
+          cod_amount: number | null
+          consignment_id: string | null
+          courier_status: string
+          created_at: string
+          delivery_charge: number | null
+          event_at: string
+          id: string
+          note: string | null
+          notification_type: string | null
+          order_id: string
+          payload: Json
+          provider: Database["public"]["Enums"]["courier_provider"]
+          shipment_id: string | null
+          source: string
+          tracking_code: string | null
+        }
+        Insert: {
+          cod_amount?: number | null
+          consignment_id?: string | null
+          courier_status: string
+          created_at?: string
+          delivery_charge?: number | null
+          event_at?: string
+          id?: string
+          note?: string | null
+          notification_type?: string | null
+          order_id: string
+          payload?: Json
+          provider?: Database["public"]["Enums"]["courier_provider"]
+          shipment_id?: string | null
+          source?: string
+          tracking_code?: string | null
+        }
+        Update: {
+          cod_amount?: number | null
+          consignment_id?: string | null
+          courier_status?: string
+          created_at?: string
+          delivery_charge?: number | null
+          event_at?: string
+          id?: string
+          note?: string | null
+          notification_type?: string | null
+          order_id?: string
+          payload?: Json
+          provider?: Database["public"]["Enums"]["courier_provider"]
+          shipment_id?: string | null
+          source?: string
+          tracking_code?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "courier_events_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "courier_events_shipment_id_fkey"
+            columns: ["shipment_id"]
+            isOneToOne: false
+            referencedRelation: "shipments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       global_settings: {
         Row: {
           accent_color: string | null
@@ -1155,10 +1224,15 @@ export type Database = {
         Row: {
           booked_at: string | null
           booked_by: string | null
+          cod_amount: number | null
           consignment_id: string | null
           cost: number
+          courier_note: string | null
+          courier_status: string | null
           created_at: string
+          delivery_charge: number | null
           id: string
+          last_event_at: string | null
           last_synced_at: string | null
           order_id: string
           provider: Database["public"]["Enums"]["courier_provider"]
@@ -1171,10 +1245,15 @@ export type Database = {
         Insert: {
           booked_at?: string | null
           booked_by?: string | null
+          cod_amount?: number | null
           consignment_id?: string | null
           cost?: number
+          courier_note?: string | null
+          courier_status?: string | null
           created_at?: string
+          delivery_charge?: number | null
           id?: string
+          last_event_at?: string | null
           last_synced_at?: string | null
           order_id: string
           provider?: Database["public"]["Enums"]["courier_provider"]
@@ -1187,10 +1266,15 @@ export type Database = {
         Update: {
           booked_at?: string | null
           booked_by?: string | null
+          cod_amount?: number | null
           consignment_id?: string | null
           cost?: number
+          courier_note?: string | null
+          courier_status?: string | null
           created_at?: string
+          delivery_charge?: number | null
           id?: string
+          last_event_at?: string | null
           last_synced_at?: string | null
           order_id?: string
           provider?: Database["public"]["Enums"]["courier_provider"]
@@ -1374,6 +1458,8 @@ export type Database = {
         | "delivered"
         | "returned"
         | "cancelled"
+        | "ready_to_ship"
+        | "pending_return"
       payment_method:
         | "cod"
         | "bkash"
@@ -1541,6 +1627,8 @@ export const Constants = {
         "delivered",
         "returned",
         "cancelled",
+        "ready_to_ship",
+        "pending_return",
       ],
       payment_method: [
         "cod",
