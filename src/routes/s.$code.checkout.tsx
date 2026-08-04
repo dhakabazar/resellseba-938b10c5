@@ -201,29 +201,32 @@ function Checkout() {
           noValidate
           className={cx("space-y-4 rounded-[var(--st-radius)] border bg-[var(--st-surface)] p-4 sm:p-5", borderc)}
         >
-          <Field label="Your name" required error={touched.name ? errors.name : null}>
-            <input
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: sanitizeName(e.target.value) })}
-              onBlur={() => setTouched((t) => ({ ...t, name: true }))}
-              autoComplete="name"
-              inputMode="text"
-              placeholder="Full name"
-              className={inp}
-            />
-          </Field>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Your name" required error={touched.name ? errors.name : null}>
+              <input
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: sanitizeName(e.target.value) })}
+                onBlur={() => setTouched((t) => ({ ...t, name: true }))}
+                autoComplete="name"
+                inputMode="text"
+                placeholder="Full name"
+                className={inp}
+              />
+            </Field>
 
-          <Field label="Mobile number" required error={touched.phone ? errors.phone : null} hint="11 digits, starts with 01">
-            <input
-              value={form.phone}
-              onChange={(e) => setForm({ ...form, phone: normalizePhone(e.target.value) })}
-              onBlur={() => setTouched((t) => ({ ...t, phone: true }))}
-              autoComplete="tel"
-              inputMode="numeric"
-              placeholder="01XXXXXXXXX"
-              className={cx(inp, "tracking-[0.06em]")}
-            />
-          </Field>
+            <Field label="Mobile number" required error={touched.phone ? errors.phone : null} hint="11 digits, starts with 01">
+              <input
+                value={form.phone}
+                onChange={(e) => setForm({ ...form, phone: normalizePhone(e.target.value) })}
+                onBlur={() => setTouched((t) => ({ ...t, phone: true }))}
+                autoComplete="tel"
+                inputMode="numeric"
+                placeholder="01XXXXXXXXX"
+                className={cx(inp, "tracking-[0.06em]")}
+              />
+            </Field>
+          </div>
+
 
           <Field label="Full address" required error={touched.address ? errors.address : null}>
             <textarea
