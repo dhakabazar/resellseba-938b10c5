@@ -568,7 +568,32 @@ function OrderDrawer({
                       </button>
                     </div>
                   )}
+                  {s.provider === "pathao" && (
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={async () => {
+                          setBusy(true);
+                          try {
+                            const r = await syncPathaoFn({ data: { shipmentId: s.id } });
+                            toast.success(`Courier status: ${courierStatusLabel(r.courierStatus, "pathao")}`);
+                            await loadDetails();
+                            onChanged();
+                          } catch (e) {
+                            toast.error(e instanceof Error ? e.message : "Sync failed");
+                          } finally {
+                            setBusy(false);
+                          }
+                        }}
+                        className="inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs hover:bg-accent"
+                      >
+                        <RefreshCw className="h-3.5 w-3.5" /> Sync status
+                      </button>
+                    </div>
+                  )}
                   {s.provider === "carrybee" && (
+
                     <div className="flex flex-wrap gap-2">
                       <button
                         type="button"
