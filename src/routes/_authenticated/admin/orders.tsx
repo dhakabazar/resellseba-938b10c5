@@ -123,9 +123,11 @@ function AdminOrdersPage() {
   const [tab, setTab] = useState<OrderTabKey>("confirmed");
   const [selected, setSelected] = useState<OrderRow | null>(null);
   const [filters, setFilters] = useState<OrderFilterState>(DEFAULT_ORDER_FILTERS);
-  const [productQuery, setProductQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
-  const [showPickList, setShowPickList] = useState(false);
+  const [pickOpen, setPickOpen] = useState(false);
+  const [marked, setMarked] = useState<string[]>([]);
+  const [pickScope, setPickScope] = useState<"filtered" | "marked">("filtered");
+
   const [page, setPage] = useState(1);
   const [resellerOptions, setResellerOptions] = useState<FilterOption[]>([]);
 
@@ -185,19 +187,37 @@ function AdminOrdersPage() {
     return m;
   }, [orderItems]);
 
+  /** Single merged search: order fields + product name. */
   const filtered = useMemo(() => {
-    const base = applyOrderFilters(orders, filters);
-    const pq = productQuery.trim().toLowerCase();
-    if (!pq) return base;
-    return base.filter((o) =>
-      (itemsByOrder.get(o.id) ?? []).some((it) => it.product_name.toLowerCase().includes(pq)),
-    );
-  }, [orders, filters, productQuery, itemsByOrder]);
+    const base = applyOrderFilters(orders, { ...filters, q: "" });
+    const q = filters.q.trim().toLowerCase();
+    if (!q) return base;
+    return base.filter((o) => {
+      const hay = [
+        o.order_number,
+        o.customer_name,
+        o.customer_phone,
+        o.address_line ?? "",
+        o.resellers?.business_name ?? "",
+        o.resellers?.code ?? "",
+      ]
+        .join(" ")
+        .toLowerCase();
+      if (hay.includes(q)) return true;
+      return (itemsByOrder.get(o.id) ?? []).some((it) =>
+        it.product_name.toLowerCase().includes(q),
+      );
+    });
+  }, [orders, filters, itemsByOrder]);
 
-  /** Product-wise pick list for the currently visible (status + filter) orders. */
-  const pickList = useMemo(() => {
+  const markedOrders = useMemo(
+    () => filtered.filter((o) => marked.includes(o.id)),
+    [filtered, marked],
+  );
+
+  const buildPickList = (rows: OrderRow[]) => {
     const m = new Map<string, { name: string; qty: number; orders: number }>();
-    for (const o of filtered) {
+    for (const o of rows) {
       for (const it of itemsByOrder.get(o.id) ?? []) {
         const key = it.product_id ?? it.product_name;
         const cur = m.get(key) ?? { name: it.product_name, qty: 0, orders: 0 };
@@ -207,12 +227,18 @@ function AdminOrdersPage() {
       }
     }
     return [...m.values()].sort((a, b) => b.qty - a.qty);
-  }, [filtered, itemsByOrder]);
+  };
+
+  const pickList = useMemo(
+    () => buildPickList(pickScope === "marked" ? markedOrders : filtered),
+    [pickScope, markedOrders, filtered, itemsByOrder],
+  );
 
   useEffect(() => {
     setPage(1);
-  }, [filters, tab, productQuery]);
+  }, [filters, tab]);
   const paged = usePaginated(filtered, page, filters.perPage);
+
 
   return (
     <div>
@@ -230,97 +256,107 @@ function AdminOrdersPage() {
         }
       />
 
-      <div className="mb-4 flex flex-wrap items-center gap-2">
+      {/* Always-visible merged search: order no / customer / phone / address / reseller / product */}
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <div className="relative min-w-[240px] flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <input
+            value={filters.q}
+            onChange={(e) => setFilters({ ...filters, q: e.target.value })}
+            placeholder="Search: order no, customer, phone, address, reseller ba product name…"
+            className="h-10 w-full rounded-md border bg-background pl-9 pr-8 text-sm outline-none focus:ring-2 focus:ring-ring"
+          />
+          {filters.q && (
+            <button
+              type="button"
+              onClick={() => setFilters({ ...filters, q: "" })}
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground hover:bg-accent"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
         <button
           type="button"
           onClick={() => setShowFilters((v) => !v)}
-          className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-accent"
+          className="inline-flex h-10 items-center gap-2 rounded-md border px-3 text-sm hover:bg-accent"
         >
           <SlidersHorizontal className="h-4 w-4" />
-          Filter & search
+          Filters
           <ChevronDown className={`h-4 w-4 transition-transform ${showFilters ? "rotate-180" : ""}`} />
         </button>
         <button
           type="button"
-          onClick={() => setShowPickList((v) => !v)}
-          className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-accent"
+          onClick={() => {
+            setPickScope("filtered");
+            setPickOpen(true);
+          }}
+          className="inline-flex h-10 items-center gap-2 rounded-md border px-3 text-sm hover:bg-accent"
         >
           <ListChecks className="h-4 w-4" />
-          Product pick list ({pickList.length})
-          <ChevronDown className={`h-4 w-4 transition-transform ${showPickList ? "rotate-180" : ""}`} />
+          Pick list
         </button>
-        {(productQuery || filtered.length !== orders.length) && (
-          <span className="text-xs text-muted-foreground">
-            {filtered.length} of {orders.length} shown
-          </span>
-        )}
+        <span className="text-xs text-muted-foreground">
+          {filtered.length} of {orders.length}
+        </span>
       </div>
 
       {showFilters && (
-        <>
-          <OrderFilterBar
-            value={filters}
-            onChange={setFilters}
-            resellerOptions={resellerOptions}
-            total={orders.length}
-            shown={filtered.length}
-          />
-          <div className="mb-4 flex flex-wrap items-center gap-2">
-            <div className="relative min-w-[220px] flex-1 sm:max-w-sm">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <input
-                value={productQuery}
-                onChange={(e) => setProductQuery(e.target.value)}
-                placeholder="Product name diye order khujun…"
-                className="h-9 w-full rounded-md border bg-background pl-9 pr-8 text-sm outline-none focus:ring-2 focus:ring-ring"
-              />
-              {productQuery && (
-                <button
-                  type="button"
-                  onClick={() => setProductQuery("")}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground hover:bg-accent"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              )}
-            </div>
-          </div>
-        </>
+        <OrderFilterBar
+          value={filters}
+          onChange={setFilters}
+          resellerOptions={resellerOptions}
+          total={orders.length}
+          shown={filtered.length}
+        />
       )}
 
-
-      {showPickList && (
-        <div className="surface-card mb-4 overflow-hidden">
-          <div className="flex items-center justify-between border-b bg-muted/40 px-4 py-2 text-xs font-medium text-muted-foreground">
-            <span>
-              {ORDER_TABS.find((t) => t.key === tab)?.label ?? "All"} — product wise quantity
-            </span>
-            <span>
-              Total {pickList.reduce((s, p) => s + p.qty, 0)} pcs / {filtered.length} orders
-            </span>
-          </div>
-          {pickList.length === 0 ? (
-            <div className="px-4 py-6 text-center text-sm text-muted-foreground">Kono product nai.</div>
-          ) : (
-            pickList.map((p) => (
-              <button
-                key={p.name}
-                type="button"
-                onClick={() => setProductQuery(p.name)}
-                className="flex w-full items-center justify-between gap-3 border-b px-4 py-2 text-left text-sm last:border-b-0 hover:bg-accent/50"
-              >
-                <span className="truncate">{p.name}</span>
-                <span className="flex shrink-0 items-center gap-3 text-xs">
-                  <span className="text-muted-foreground">{p.orders} order</span>
-                  <span className="rounded-full bg-primary/10 px-2 py-0.5 font-semibold text-primary">
-                    {p.qty} pcs
-                  </span>
-                </span>
-              </button>
-            ))
-          )}
+      {marked.length > 0 && (
+        <div className="mb-3 flex flex-wrap items-center gap-2 rounded-md border border-primary/40 bg-primary/5 px-3 py-2 text-sm">
+          <span className="font-medium">{marked.length} order marked</span>
+          <button
+            type="button"
+            onClick={() => {
+              setPickScope("marked");
+              setPickOpen(true);
+            }}
+            className="inline-flex items-center gap-1.5 rounded-md border bg-background px-2.5 py-1 text-xs hover:bg-accent"
+          >
+            <ListChecks className="h-3.5 w-3.5" /> Marked pick list
+          </button>
+          <button
+            type="button"
+            onClick={() => exportCsv(markedOrders)}
+            className="inline-flex items-center gap-1.5 rounded-md border bg-background px-2.5 py-1 text-xs hover:bg-accent"
+          >
+            <Download className="h-3.5 w-3.5" /> Export marked
+          </button>
+          <button
+            type="button"
+            onClick={() => setMarked([])}
+            className="ml-auto rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-accent"
+          >
+            Clear
+          </button>
         </div>
       )}
+
+      {pickOpen && (
+        <PickListModal
+          rows={pickList}
+          scopeLabel={
+            pickScope === "marked"
+              ? `${markedOrders.length} marked order`
+              : `${ORDER_TABS.find((t) => t.key === tab)?.label ?? "All"} — ${filtered.length} order`
+          }
+          onPick={(name) => {
+            setFilters({ ...filters, q: name });
+            setPickOpen(false);
+          }}
+          onClose={() => setPickOpen(false)}
+        />
+      )}
+
 
       <OrderTabs tab={tab} onChange={setTab} count={(k) => counts[k] ?? 0} />
 
@@ -334,7 +370,21 @@ function AdminOrdersPage() {
       ) : (
         <>
         <div className="surface-card overflow-hidden">
-          <div className="hidden grid-cols-[1fr_1fr_1.2fr_1fr_1fr_auto] gap-4 border-b bg-muted/40 px-4 py-2 text-xs font-medium text-muted-foreground md:grid">
+          <div className="hidden grid-cols-[auto_1fr_1fr_1.2fr_1fr_1fr_auto] gap-4 border-b bg-muted/40 px-4 py-2 text-xs font-medium text-muted-foreground md:grid">
+            <input
+              type="checkbox"
+              className="h-4 w-4 accent-[hsl(var(--primary))]"
+              checked={paged.length > 0 && paged.every((o) => marked.includes(o.id))}
+              onChange={(e) => {
+                const ids = paged.map((o) => o.id);
+                setMarked((prev) =>
+                  e.target.checked
+                    ? [...new Set([...prev, ...ids])]
+                    : prev.filter((id) => !ids.includes(id)),
+                );
+              }}
+              title="Mark all on this page"
+            />
             <div>Order</div>
             <div>Reseller</div>
             <div>Customer</div>
@@ -345,8 +395,23 @@ function AdminOrdersPage() {
           {paged.map((o) => (
             <div
               key={o.id}
-              className="grid grid-cols-1 items-center gap-3 border-b px-4 py-3 text-sm last:border-b-0 md:grid-cols-[1fr_1fr_1.2fr_1fr_1fr_auto]"
+              className={`grid grid-cols-1 items-center gap-3 border-b px-4 py-3 text-sm last:border-b-0 md:grid-cols-[auto_1fr_1fr_1.2fr_1fr_1fr_auto] ${
+                marked.includes(o.id) ? "bg-primary/5" : ""
+              }`}
             >
+              <label className="flex items-center gap-2 text-xs text-muted-foreground md:block">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 accent-[hsl(var(--primary))]"
+                  checked={marked.includes(o.id)}
+                  onChange={(e) =>
+                    setMarked((prev) =>
+                      e.target.checked ? [...prev, o.id] : prev.filter((id) => id !== o.id),
+                    )
+                  }
+                />
+                <span className="md:hidden">Mark</span>
+              </label>
               <div>
                 <div className="font-medium">{o.order_number}</div>
                 <div className="text-xs text-muted-foreground">
@@ -378,6 +443,7 @@ function AdminOrdersPage() {
             </div>
           ))}
         </div>
+
         <Pagination page={page} perPage={filters.perPage} total={filtered.length} onPage={setPage} />
         </>
       )}
@@ -396,6 +462,94 @@ function AdminOrdersPage() {
     </div>
   );
 }
+
+type PickRow = { name: string; qty: number; orders: number };
+
+/** Product pick list popup — works for filtered view or marked orders. */
+function PickListModal({
+  rows,
+  scopeLabel,
+  onPick,
+  onClose,
+}: {
+  rows: PickRow[];
+  scopeLabel: string;
+  onPick: (name: string) => void;
+  onClose: () => void;
+}) {
+  const totalQty = rows.reduce((s, r) => s + r.qty, 0);
+  const printList = () => {
+    const w = window.open("", "_blank", "width=720,height=900");
+    if (!w) return;
+    w.document.write(
+      `<title>Pick list</title><style>body{font-family:system-ui,sans-serif;padding:24px}h1{font-size:18px}table{width:100%;border-collapse:collapse;font-size:14px}td,th{border-bottom:1px solid #ddd;padding:8px;text-align:left}th:last-child,td:last-child{text-align:right}</style>` +
+        `<h1>Pick list — ${scopeLabel}</h1><table><tr><th>Product</th><th>Orders</th><th>Qty</th></tr>` +
+        rows.map((r) => `<tr><td>${r.name}</td><td>${r.orders}</td><td>${r.qty}</td></tr>`).join("") +
+        `<tr><th>Total</th><th></th><th>${totalQty} pcs</th></tr></table>`,
+    );
+    w.document.close();
+    w.print();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4" onClick={onClose}>
+      <div
+        className="max-h-[85vh] w-full max-w-xl overflow-hidden rounded-lg border bg-background shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between gap-2 border-b px-4 py-3">
+          <div>
+            <div className="flex items-center gap-2 font-semibold">
+              <ListChecks className="h-4 w-4" /> Product pick list
+            </div>
+            <div className="text-xs text-muted-foreground">{scopeLabel}</div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={printList}
+              disabled={rows.length === 0}
+              className="rounded-md border px-2.5 py-1 text-xs hover:bg-accent disabled:opacity-50"
+            >
+              Print
+            </button>
+            <button type="button" onClick={onClose} className="rounded-md p-1.5 hover:bg-accent">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+        <div className="max-h-[60vh] overflow-y-auto">
+          {rows.length === 0 ? (
+            <div className="px-4 py-10 text-center text-sm text-muted-foreground">Kono product nai.</div>
+          ) : (
+            rows.map((p) => (
+              <button
+                key={p.name}
+                type="button"
+                onClick={() => onPick(p.name)}
+                className="flex w-full items-center justify-between gap-3 border-b px-4 py-2.5 text-left text-sm last:border-b-0 hover:bg-accent/50"
+              >
+                <span className="truncate">{p.name}</span>
+                <span className="flex shrink-0 items-center gap-3 text-xs">
+                  <span className="text-muted-foreground">{p.orders} order</span>
+                  <span className="rounded-full bg-primary/10 px-2 py-0.5 font-semibold text-primary">
+                    {p.qty} pcs
+                  </span>
+                </span>
+              </button>
+            ))
+          )}
+        </div>
+        <div className="flex items-center justify-between border-t bg-muted/40 px-4 py-2 text-xs text-muted-foreground">
+          <span>{rows.length} product</span>
+          <span className="font-semibold text-foreground">{totalQty} pcs</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
 
 function OrderDrawer({
   order,
