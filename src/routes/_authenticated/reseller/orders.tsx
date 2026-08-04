@@ -229,7 +229,7 @@ function OrdersPage() {
 
   useEffect(() => {
     setPage(1);
-  }, [filters, tab, productQ]);
+  }, [filters, tab, searchMode]);
   const paged = usePaginated(visible, page, filters.perPage);
   const tabCount = (key: OrderTabKey) => {
     const sts = ORDER_TABS.find((t) => t.key === key)?.statuses ?? [];
