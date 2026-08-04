@@ -49,6 +49,7 @@ import { Route as AuthenticatedAdminBrandsRouteImport } from './routes/_authenti
 import { Route as AuthenticatedAdminAuditRouteImport } from './routes/_authenticated/admin/audit'
 import { Route as AuthenticatedAdminProductsIndexRouteImport } from './routes/_authenticated/admin/products.index'
 import { Route as SCodePSlugRouteImport } from './routes/s.$code.p.$slug'
+import { Route as SCodeCSlugRouteImport } from './routes/s.$code.c.$slug'
 import { Route as ApiPublicSitemapCodeRouteImport } from './routes/api/public/sitemap.$code'
 import { Route as ApiPublicPaymentSslcommerzIpnRouteImport } from './routes/api/public/payment.sslcommerz-ipn'
 import { Route as ApiPublicPaymentBkashCallbackRouteImport } from './routes/api/public/payment.bkash-callback'
@@ -284,6 +285,11 @@ const SCodePSlugRoute = SCodePSlugRouteImport.update({
   path: '/p/$slug',
   getParentRoute: () => SCodeRoute,
 } as any)
+const SCodeCSlugRoute = SCodeCSlugRouteImport.update({
+  id: '/c/$slug',
+  path: '/c/$slug',
+  getParentRoute: () => SCodeRoute,
+} as any)
 const ApiPublicSitemapCodeRoute = ApiPublicSitemapCodeRouteImport.update({
   id: '/api/public/sitemap/$code',
   path: '/api/public/sitemap/$code',
@@ -382,6 +388,7 @@ export interface FileRoutesByFullPath {
   '/api/public/payment/bkash-callback': typeof ApiPublicPaymentBkashCallbackRoute
   '/api/public/payment/sslcommerz-ipn': typeof ApiPublicPaymentSslcommerzIpnRoute
   '/api/public/sitemap/$code': typeof ApiPublicSitemapCodeRoute
+  '/s/$code/c/$slug': typeof SCodeCSlugRoute
   '/s/$code/p/$slug': typeof SCodePSlugRoute
   '/admin/products/': typeof AuthenticatedAdminProductsIndexRoute
   '/admin/products/$id/edit': typeof AuthenticatedAdminProductsIdEditRoute
@@ -429,6 +436,7 @@ export interface FileRoutesByTo {
   '/api/public/payment/bkash-callback': typeof ApiPublicPaymentBkashCallbackRoute
   '/api/public/payment/sslcommerz-ipn': typeof ApiPublicPaymentSslcommerzIpnRoute
   '/api/public/sitemap/$code': typeof ApiPublicSitemapCodeRoute
+  '/s/$code/c/$slug': typeof SCodeCSlugRoute
   '/s/$code/p/$slug': typeof SCodePSlugRoute
   '/admin/products': typeof AuthenticatedAdminProductsIndexRoute
   '/admin/products/$id/edit': typeof AuthenticatedAdminProductsIdEditRoute
@@ -481,6 +489,7 @@ export interface FileRoutesById {
   '/api/public/payment/bkash-callback': typeof ApiPublicPaymentBkashCallbackRoute
   '/api/public/payment/sslcommerz-ipn': typeof ApiPublicPaymentSslcommerzIpnRoute
   '/api/public/sitemap/$code': typeof ApiPublicSitemapCodeRoute
+  '/s/$code/c/$slug': typeof SCodeCSlugRoute
   '/s/$code/p/$slug': typeof SCodePSlugRoute
   '/_authenticated/admin/products/': typeof AuthenticatedAdminProductsIndexRoute
   '/_authenticated/admin/products/$id/edit': typeof AuthenticatedAdminProductsIdEditRoute
@@ -533,6 +542,7 @@ export interface FileRouteTypes {
     | '/api/public/payment/bkash-callback'
     | '/api/public/payment/sslcommerz-ipn'
     | '/api/public/sitemap/$code'
+    | '/s/$code/c/$slug'
     | '/s/$code/p/$slug'
     | '/admin/products/'
     | '/admin/products/$id/edit'
@@ -580,6 +590,7 @@ export interface FileRouteTypes {
     | '/api/public/payment/bkash-callback'
     | '/api/public/payment/sslcommerz-ipn'
     | '/api/public/sitemap/$code'
+    | '/s/$code/c/$slug'
     | '/s/$code/p/$slug'
     | '/admin/products'
     | '/admin/products/$id/edit'
@@ -631,6 +642,7 @@ export interface FileRouteTypes {
     | '/api/public/payment/bkash-callback'
     | '/api/public/payment/sslcommerz-ipn'
     | '/api/public/sitemap/$code'
+    | '/s/$code/c/$slug'
     | '/s/$code/p/$slug'
     | '/_authenticated/admin/products/'
     | '/_authenticated/admin/products/$id/edit'
@@ -933,6 +945,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SCodePSlugRouteImport
       parentRoute: typeof SCodeRoute
     }
+    '/s/$code/c/$slug': {
+      id: '/s/$code/c/$slug'
+      path: '/c/$slug'
+      fullPath: '/s/$code/c/$slug'
+      preLoaderRoute: typeof SCodeCSlugRouteImport
+      parentRoute: typeof SCodeRoute
+    }
     '/api/public/sitemap/$code': {
       id: '/api/public/sitemap/$code'
       path: '/api/public/sitemap/$code'
@@ -1121,6 +1140,7 @@ interface SCodeRouteChildren {
   SCodeCheckoutRoute: typeof SCodeCheckoutRoute
   SCodeThanksRoute: typeof SCodeThanksRoute
   SCodeIndexRoute: typeof SCodeIndexRoute
+  SCodeCSlugRoute: typeof SCodeCSlugRoute
   SCodePSlugRoute: typeof SCodePSlugRoute
 }
 
@@ -1128,6 +1148,7 @@ const SCodeRouteChildren: SCodeRouteChildren = {
   SCodeCheckoutRoute: SCodeCheckoutRoute,
   SCodeThanksRoute: SCodeThanksRoute,
   SCodeIndexRoute: SCodeIndexRoute,
+  SCodeCSlugRoute: SCodeCSlugRoute,
   SCodePSlugRoute: SCodePSlugRoute,
 }
 

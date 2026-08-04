@@ -1,151 +1,206 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Minus, Plus, ShoppingCart, ChevronLeft } from "lucide-react";
+import { ChevronLeft, Minus, Plus, ShieldCheck, ShoppingBag, Truck, Zap } from "lucide-react";
+import { toast } from "sonner";
 import { trackAddToCart, trackViewContent } from "@/lib/tracking";
+import { addToCart } from "@/lib/store-cart";
+import { deliveryLabel } from "@/lib/delivery";
+import { useStore } from "@/components/store/store-context";
+import {
+  borderc,
+  cx,
+  EmptyState,
+  GhostButton,
+  Heading,
+  muted,
+  Price,
+  PrimaryButton,
+  ProductGrid,
+  SectionHead,
+} from "@/components/store/ui";
 
 export const Route = createFileRoute("/s/$code/p/$slug")({
   component: ProductPage,
-  head: ({ params }) => ({
-    meta: [
-      { title: `${params.slug} — Store` },
-      { name: "description", content: `Order ${params.slug} with cash on delivery.` },
-      { property: "og:title", content: params.slug },
-      { property: "og:type", content: "product" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-  }),
+  head: ({ params }) => {
+    const label = params.slug.replace(/-/g, " ");
+    return {
+      meta: [
+        { title: `${label} — Buy online, cash on delivery` },
+        { name: "description", content: `Order ${label} online with cash on delivery across Bangladesh.` },
+        { property: "og:title", content: label },
+        { property: "og:description", content: `Order ${label} with cash on delivery.` },
+        { property: "og:type", content: "product" },
+        { name: "twitter:card", content: "summary_large_image" },
+      ],
+    };
+  },
 });
 
 function ProductPage() {
   const { code, slug } = Route.useParams();
   const nav = useNavigate();
-  const [row, setRow] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const store = useStore();
+  const listing = store.bySlug(slug);
   const [qty, setQty] = useState(1);
-  const [imgIdx, setImgIdx] = useState(0);
+  const [idx, setIdx] = useState(0);
 
   useEffect(() => {
-    (async () => {
-      const { data: r } = await supabase.from("resellers").select("id").eq("code", code).eq("status", "active").maybeSingle();
-      if (!r) return setLoading(false);
-      const { data: p } = await supabase
-        .from("products")
-        .select("id,name,slug,description,short_description,is_active, product_images(url,is_primary,sort_order)")
-        .eq("slug", slug)
-        .eq("is_active", true)
-        .maybeSingle();
-      if (!p) return setLoading(false);
-      const { data: l } = await supabase
-        .from("reseller_listings")
-        .select("*")
-        .eq("reseller_id", r.id)
-        .eq("product_id", p.id)
-        .eq("is_active", true)
-        .maybeSingle();
-      if (!l) return setLoading(false);
-      setRow({ product: p, listing: l });
-      setLoading(false);
-      trackViewContent({ id: p.id, name: l.custom_title || p.name, price: Number(l.selling_price) });
-    })();
-  }, [code, slug]);
+    setQty(1);
+    setIdx(0);
+    if (listing)
+      trackViewContent({ id: listing.product!.id, name: store.title(listing), price: Number(listing.selling_price) });
+  }, [listing?.id]);
 
-  if (loading)
+  if (!listing)
     return (
-      <div className="mx-auto max-w-6xl px-4 py-12">
-        <Loader2 className="mx-auto h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
-    );
-  if (!row)
-    return (
-      <div className="mx-auto max-w-6xl px-4 py-24 text-center">
-        <p className="text-sm text-muted-foreground">Product not available.</p>
-        <Link to="/s/$code" params={{ code }} className="mt-4 inline-block text-sm underline">← Back to store</Link>
+      <div className="mx-auto max-w-4xl px-4 py-16">
+        <EmptyState title="Product not available" hint="It may have been removed from this store." />
+        <div className="mt-6 text-center">
+          <Link to="/s/$code" params={{ code }}>
+            <GhostButton>Back to store</GhostButton>
+          </Link>
+        </div>
       </div>
     );
 
-  const { product, listing } = row;
-  const images: { url: string }[] = product.product_images ?? [];
-  const activeImg = images[imgIdx]?.url;
-  const title = listing.custom_title || product.name;
+  const p = listing.product!;
+  const title = store.title(listing);
+  const price = Number(listing.selling_price);
+  const images = p.product_images ?? [];
+  const active = images[idx]?.url ?? store.image(listing);
+  const inStock = p.stock === null || Number(p.stock) > 0;
+  const related = store.listings.filter((l) => l.id !== listing.id && l.product?.category_id === p.category_id).slice(0, 4);
 
-  const primaryImage = images.find((i: { is_primary?: boolean; url: string }) => i.is_primary)?.url ?? images[0]?.url;
   const jsonLd = {
     "@context": "https://schema.org/",
     "@type": "Product",
     name: title,
-    description: listing.custom_description || product.short_description || product.name,
-    image: primaryImage ? [primaryImage] : undefined,
+    description: listing.custom_description || p.short_description || title,
+    image: active ? [active] : undefined,
     offers: {
       "@type": "Offer",
       priceCurrency: "BDT",
-      price: Number(listing.selling_price),
-      availability: "https://schema.org/InStock",
+      price,
+      availability: inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
     },
   };
 
-  return (
-    <div className="mx-auto max-w-6xl px-4 py-6">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <Link to="/s/$code" params={{ code }} className="mb-4 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
-        <ChevronLeft className="h-3 w-3" /> Back
-      </Link>
-      <div className="grid gap-6 lg:grid-cols-2">
+  function add(goCheckout: boolean) {
+    addToCart(code, listing!.id, qty);
+    trackAddToCart({ id: p.id, name: title, price, qty });
+    if (goCheckout) nav({ to: "/s/$code/checkout", params: { code } });
+    else toast.success("Added to cart");
+  }
 
+  return (
+    <div className="mx-auto max-w-6xl px-4 py-8">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+
+      <nav className={cx("mb-5 flex items-center gap-1 text-xs", muted)}>
+        <Link to="/s/$code" params={{ code }} className="inline-flex items-center gap-1 hover:text-[var(--st-primary)]">
+          <ChevronLeft className="h-3 w-3" /> Store
+        </Link>
+        <span>/</span>
+        <span className="truncate text-[var(--st-fg)]">{title}</span>
+      </nav>
+
+      <div className="grid gap-10 lg:grid-cols-2">
         <div>
-          <div className="aspect-square overflow-hidden rounded-xl border bg-muted">
-            {activeImg ? (
-              <img src={activeImg} alt={title} className="h-full w-full object-cover" />
+          <div className={cx("aspect-square overflow-hidden rounded-[var(--st-radius)] border bg-[var(--st-bg-alt)]", borderc)}>
+            {active ? (
+              <img src={active} alt={title} className="h-full w-full object-cover" />
             ) : (
-              <div className="grid h-full w-full place-items-center text-xs text-muted-foreground">No image</div>
+              <div className={cx("grid h-full w-full place-items-center text-xs", muted)}>No image</div>
             )}
           </div>
           {images.length > 1 && (
-            <div className="mt-2 flex gap-2 overflow-x-auto">
+            <div className="mt-3 flex gap-2 overflow-x-auto">
               {images.map((im, i) => (
-                <button key={i} onClick={() => setImgIdx(i)} className={"h-16 w-16 flex-none overflow-hidden rounded-md border " + (i === imgIdx ? "ring-2 ring-primary" : "")}>
-                  <img src={im.url} alt="" className="h-full w-full object-cover" />
+                <button
+                  key={i}
+                  onClick={() => setIdx(i)}
+                  aria-label={`Image ${i + 1}`}
+                  className={cx(
+                    "h-16 w-16 flex-none overflow-hidden rounded-[var(--st-radius-sm)] border",
+                    i === idx ? "border-[var(--st-primary)]" : borderc,
+                  )}
+                >
+                  <img src={im.url} alt="" loading="lazy" className="h-full w-full object-cover" />
                 </button>
               ))}
             </div>
           )}
         </div>
+
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
-          {(listing.custom_description || product.short_description) && (
-            <p className="mt-2 text-sm text-muted-foreground">
-              {listing.custom_description || product.short_description}
+          <Heading as="h1" className="text-2xl leading-tight md:text-4xl">
+            {title}
+          </Heading>
+          {(listing.custom_description || p.short_description) && (
+            <p className={cx("mt-3 text-sm leading-relaxed", muted)}>
+              {listing.custom_description || p.short_description}
             </p>
           )}
-          <div className="mt-4 text-3xl font-bold" style={{ color: "var(--store-primary)" }}>
-            ৳{Number(listing.selling_price).toLocaleString()}
-          </div>
 
-          <div className="mt-6 flex items-center gap-3">
-            <div className="inline-flex items-center rounded-md border">
-              <button onClick={() => setQty((q) => Math.max(1, q - 1))} className="p-2 hover:bg-muted"><Minus className="h-3.5 w-3.5" /></button>
-              <span className="min-w-[3ch] text-center text-sm">{qty}</span>
-              <button onClick={() => setQty((q) => q + 1)} className="p-2 hover:bg-muted"><Plus className="h-3.5 w-3.5" /></button>
-            </div>
-            <button
-              onClick={() => {
-                trackAddToCart({ id: product.id, name: title, price: Number(listing.selling_price), qty });
-                nav({ to: "/s/$code/checkout", params: { code }, search: { l: listing.id, q: qty } });
-              }}
-              className="inline-flex flex-1 items-center justify-center gap-2 rounded-md px-4 py-3 text-sm font-medium text-white"
-              style={{ background: "var(--store-primary)" }}
+          <div className="mt-5 flex items-baseline gap-3">
+            <Price value={price} className="text-3xl md:text-4xl" />
+            <span
+              className={cx(
+                "rounded-full px-2.5 py-1 text-[11px] font-semibold",
+                inStock ? "bg-[var(--st-primary)]/12 text-[var(--st-primary)]" : "bg-[var(--st-bg-alt)] text-[var(--st-muted)]",
+              )}
             >
-              <ShoppingCart className="h-4 w-4" /> Order now (Cash on delivery)
-            </button>
+              {inStock ? "In stock" : "Out of stock"}
+            </span>
           </div>
 
-          {product.description && (
-            <div className="prose prose-sm mt-8 max-w-none whitespace-pre-wrap text-sm">
-              {product.description}
+          <div className={cx("mt-5 grid gap-2 rounded-[var(--st-radius)] border p-4 text-sm", borderc)}>
+            <div className="flex items-center gap-2">
+              <Truck className="h-4 w-4 text-[var(--st-primary)]" />
+              <span>Delivery: {deliveryLabel(p)}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-[var(--st-primary)]" />
+              <span>Cash on delivery — pay after you receive</span>
+            </div>
+          </div>
+
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            <div className={cx("inline-flex items-center rounded-[var(--st-radius-sm)] border", borderc)}>
+              <button onClick={() => setQty((q) => Math.max(1, q - 1))} aria-label="Decrease" className="p-3">
+                <Minus className="h-3.5 w-3.5" />
+              </button>
+              <span className="min-w-[3ch] text-center text-sm font-semibold">{qty}</span>
+              <button onClick={() => setQty((q) => q + 1)} aria-label="Increase" className="p-3">
+                <Plus className="h-3.5 w-3.5" />
+              </button>
+            </div>
+            <PrimaryButton disabled={!inStock} onClick={() => add(true)} className="flex-1">
+              <Zap className="h-4 w-4" /> Order now
+            </PrimaryButton>
+            <GhostButton disabled={!inStock} onClick={() => add(false)}>
+              <ShoppingBag className="h-4 w-4" /> Add to cart
+            </GhostButton>
+          </div>
+
+          {p.description && (
+            <div className="mt-8">
+              <Heading className="text-lg">Product details</Heading>
+              <div
+                className={cx("prose prose-sm mt-2 max-w-none text-sm leading-relaxed", muted)}
+                dangerouslySetInnerHTML={{ __html: p.description }}
+              />
             </div>
           )}
         </div>
       </div>
+
+      {related.length > 0 && (
+        <section className="mt-16">
+          <SectionHead title="You may also like" subtitle="More from this collection" />
+          <ProductGrid listings={related} />
+        </section>
+      )}
     </div>
   );
 }
