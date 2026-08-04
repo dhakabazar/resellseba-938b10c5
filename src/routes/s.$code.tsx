@@ -1,10 +1,11 @@
-import { createFileRoute, Outlet } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useRouterState } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { loadTrackingForReseller } from "@/lib/tracking";
 import { storeThemeStyle } from "@/lib/store-theme";
 import { useStoreLoader } from "@/components/store/store-context";
 import { StoreFooter, StoreHeader } from "@/components/store/chrome";
+
 
 export const Route = createFileRoute("/s/$code")({
   component: StoreLayout,
@@ -25,7 +26,11 @@ export const Route = createFileRoute("/s/$code")({
 
 function StoreLayout() {
   const { code } = Route.useParams();
-  const { state, store, Provider } = useStoreLoader(code);
+  /** `?theme=` lets the reseller panel render a live preview of any theme. */
+  const searchStr = useRouterState({ select: (s) => s.location.searchStr });
+  const previewTheme = new URLSearchParams(searchStr).get("theme");
+  const { state, store, Provider } = useStoreLoader(code, previewTheme);
+
 
   useEffect(() => {
     if (store?.resellerId) loadTrackingForReseller(store.resellerId).catch(() => {});
