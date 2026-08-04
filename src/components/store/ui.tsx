@@ -99,8 +99,8 @@ export function GhostButton({
 export function Price({ value, className }: { value: number; className?: string }) {
   return (
     <span
-      className={cx("font-[var(--st-font-head)] text-[var(--st-primary)]", className)}
-      style={{ fontWeight: "var(--st-head-weight)" as unknown as number }}
+      className={cx("text-[var(--st-primary)]", className)}
+      style={{ fontFamily: "var(--st-font-head)", fontWeight: "var(--st-head-weight)" as unknown as number }}
     >
       {bdt(value)}
     </span>
