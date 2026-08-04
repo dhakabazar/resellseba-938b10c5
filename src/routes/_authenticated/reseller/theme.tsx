@@ -25,6 +25,7 @@ function ThemePage() {
   const [openGroup, setOpenGroup] = useState<string>("hero");
   const [device, setDevice] = useState<"desktop" | "mobile">("desktop");
   const [previewKey, setPreviewKey] = useState(0);
+  const [previewOn, setPreviewOn] = useState(false);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
 
