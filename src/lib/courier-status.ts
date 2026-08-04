@@ -80,12 +80,56 @@ export const CARRYBEE_STATUS_MAP: Record<string, StatusMapping> = {
   "returned-to-merchant": { ship: "returned", order: "pending_return", label: "Returned to merchant" },
 };
 
+/**
+ * Pathao webhook events (`order.*` / `store.*`) and API `order_status_slug`
+ * values, keyed without the prefix and with `_`/spaces normalized to `-`.
+ */
+export const PATHAO_STATUS_MAP: Record<string, StatusMapping> = {
+  created: { ship: "booked", order: "shipped", label: "Order created" },
+  pending: { ship: "booked", order: "shipped", label: "Pending" },
+  updated: { ship: "booked", order: "shipped", label: "Order updated" },
+  "pickup-requested": { ship: "booked", order: "shipped", label: "Pickup requested" },
+  "assigned-for-pickup": { ship: "booked", order: "shipped", label: "Assigned for pickup" },
+  picked: { ship: "in_transit", order: "shipped", label: "Picked" },
+  "pickup-failed": { ship: "booked", order: "shipped", label: "Pickup failed" },
+  "pickup-cancelled": { ship: "cancelled", order: "ready_to_ship", label: "Pickup cancelled" },
+  "at-the-sorting-hub": { ship: "in_transit", order: "shipped", label: "At sorting hub" },
+  "at-sorting-hub": { ship: "in_transit", order: "shipped", label: "At sorting hub" },
+  "in-transit": { ship: "in_transit", order: "shipped", label: "In transit" },
+  "received-at-last-mile-hub": { ship: "in_transit", order: "shipped", label: "Received at last mile hub" },
+  "assigned-for-delivery": { ship: "in_transit", order: "shipped", label: "Assigned for delivery" },
+  delivered: { ship: "delivered", order: "delivered", label: "Delivered" },
+  "partial-delivery": { ship: "delivered", order: "delivered", label: "Partial delivery" },
+  "delivery-failed": { ship: "in_transit", order: "pending_return", label: "Delivery failed" },
+  "on-hold": { ship: "in_transit", order: "shipped", label: "On hold" },
+  paid: { ship: "delivered", order: "delivered", label: "Paid / invoiced" },
+  exchanged: { ship: "in_transit", order: "shipped", label: "Exchanged" },
+  exchange: { ship: "in_transit", order: "shipped", label: "Exchange" },
+  // courier-side return family — order waits in Pending Return until admin receives it
+  returned: { ship: "returned", order: "pending_return", label: "Returned (courier)" },
+  return: { ship: "returned", order: "pending_return", label: "Returned (courier)" },
+  "paid-return": { ship: "returned", order: "pending_return", label: "Paid return" },
+  "return-id-created": { ship: "returned", order: "pending_return", label: "Return id created" },
+  "return-in-transit": { ship: "returned", order: "pending_return", label: "Return in transit" },
+  "returned-to-merchant": { ship: "returned", order: "pending_return", label: "Returned to merchant" },
+};
+
 export function normalizeCourierStatus(provider: string | null | undefined, raw: string | null | undefined) {
   const key = String(raw ?? "")
     .trim()
     .toLowerCase();
   if (provider === "carrybee") return key.replace(/^order\./, "");
+  if (provider === "pathao")
+    return key
+      .replace(/^(order|store)\./, "")
+      .replace(/[\s_]+/g, "-");
   return key;
+}
+
+function statusTable(provider: string | null | undefined) {
+  if (provider === "carrybee") return CARRYBEE_STATUS_MAP;
+  if (provider === "pathao") return PATHAO_STATUS_MAP;
+  return STEADFAST_STATUS_MAP;
 }
 
 export function mapCourierStatus(
@@ -93,9 +137,8 @@ export function mapCourierStatus(
   raw: string | null | undefined,
 ): StatusMapping {
   const key = normalizeCourierStatus(provider, raw);
-  const table = provider === "carrybee" ? CARRYBEE_STATUS_MAP : STEADFAST_STATUS_MAP;
   return (
-    table[key] ?? {
+    statusTable(provider)[key] ?? {
       ship: "in_transit" as ShipmentStatus,
       order: "shipped" as OrderStatus,
       label: key ? key.replace(/[-_]/g, " ") : "unknown",
@@ -112,12 +155,14 @@ export function courierStatusLabel(raw: string | null | undefined, provider?: st
   if (!raw) return "—";
   const key = normalizeCourierStatus(provider, raw);
   return (
-    (provider === "carrybee" ? CARRYBEE_STATUS_MAP : STEADFAST_STATUS_MAP)[key]?.label ??
+    statusTable(provider)[key]?.label ??
+    PATHAO_STATUS_MAP[key]?.label ??
     CARRYBEE_STATUS_MAP[key]?.label ??
     STEADFAST_STATUS_MAP[key]?.label ??
     key.replace(/[-_]/g, " ")
   );
 }
+
 
 export type OrderTabKey =
   | "all"
