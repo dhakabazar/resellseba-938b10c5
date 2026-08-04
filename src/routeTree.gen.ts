@@ -44,6 +44,7 @@ import { Route as AuthenticatedAdminFinancialsRouteImport } from './routes/_auth
 import { Route as AuthenticatedAdminCouriersRouteImport } from './routes/_authenticated/admin/couriers'
 import { Route as AuthenticatedAdminCommissionsRouteImport } from './routes/_authenticated/admin/commissions'
 import { Route as AuthenticatedAdminCategoriesRouteImport } from './routes/_authenticated/admin/categories'
+import { Route as AuthenticatedAdminBusinessReportRouteImport } from './routes/_authenticated/admin/business-report'
 import { Route as AuthenticatedAdminBrandsRouteImport } from './routes/_authenticated/admin/brands'
 import { Route as AuthenticatedAdminAuditRouteImport } from './routes/_authenticated/admin/audit'
 import { Route as AuthenticatedAdminProductsIndexRouteImport } from './routes/_authenticated/admin/products.index'
@@ -255,6 +256,12 @@ const AuthenticatedAdminCategoriesRoute =
     path: '/categories',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
+const AuthenticatedAdminBusinessReportRoute =
+  AuthenticatedAdminBusinessReportRouteImport.update({
+    id: '/business-report',
+    path: '/business-report',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
 const AuthenticatedAdminBrandsRoute =
   AuthenticatedAdminBrandsRouteImport.update({
     id: '/brands',
@@ -340,6 +347,7 @@ export interface FileRoutesByFullPath {
   '/s/$code': typeof SCodeRouteWithChildren
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/brands': typeof AuthenticatedAdminBrandsRoute
+  '/admin/business-report': typeof AuthenticatedAdminBusinessReportRoute
   '/admin/categories': typeof AuthenticatedAdminCategoriesRoute
   '/admin/commissions': typeof AuthenticatedAdminCommissionsRoute
   '/admin/couriers': typeof AuthenticatedAdminCouriersRoute
@@ -386,6 +394,7 @@ export interface FileRoutesByTo {
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/brands': typeof AuthenticatedAdminBrandsRoute
+  '/admin/business-report': typeof AuthenticatedAdminBusinessReportRoute
   '/admin/categories': typeof AuthenticatedAdminCategoriesRoute
   '/admin/commissions': typeof AuthenticatedAdminCommissionsRoute
   '/admin/couriers': typeof AuthenticatedAdminCouriersRoute
@@ -437,6 +446,7 @@ export interface FileRoutesById {
   '/s/$code': typeof SCodeRouteWithChildren
   '/_authenticated/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/_authenticated/admin/brands': typeof AuthenticatedAdminBrandsRoute
+  '/_authenticated/admin/business-report': typeof AuthenticatedAdminBusinessReportRoute
   '/_authenticated/admin/categories': typeof AuthenticatedAdminCategoriesRoute
   '/_authenticated/admin/commissions': typeof AuthenticatedAdminCommissionsRoute
   '/_authenticated/admin/couriers': typeof AuthenticatedAdminCouriersRoute
@@ -488,6 +498,7 @@ export interface FileRouteTypes {
     | '/s/$code'
     | '/admin/audit'
     | '/admin/brands'
+    | '/admin/business-report'
     | '/admin/categories'
     | '/admin/commissions'
     | '/admin/couriers'
@@ -534,6 +545,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/admin/audit'
     | '/admin/brands'
+    | '/admin/business-report'
     | '/admin/categories'
     | '/admin/commissions'
     | '/admin/couriers'
@@ -584,6 +596,7 @@ export interface FileRouteTypes {
     | '/s/$code'
     | '/_authenticated/admin/audit'
     | '/_authenticated/admin/brands'
+    | '/_authenticated/admin/business-report'
     | '/_authenticated/admin/categories'
     | '/_authenticated/admin/commissions'
     | '/_authenticated/admin/couriers'
@@ -885,6 +898,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminCategoriesRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/_authenticated/admin/business-report': {
+      id: '/_authenticated/admin/business-report'
+      path: '/business-report'
+      fullPath: '/admin/business-report'
+      preLoaderRoute: typeof AuthenticatedAdminBusinessReportRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
     '/_authenticated/admin/brands': {
       id: '/_authenticated/admin/brands'
       path: '/brands'
@@ -982,6 +1002,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedAdminRouteRouteChildren {
   AuthenticatedAdminAuditRoute: typeof AuthenticatedAdminAuditRoute
   AuthenticatedAdminBrandsRoute: typeof AuthenticatedAdminBrandsRoute
+  AuthenticatedAdminBusinessReportRoute: typeof AuthenticatedAdminBusinessReportRoute
   AuthenticatedAdminCategoriesRoute: typeof AuthenticatedAdminCategoriesRoute
   AuthenticatedAdminCommissionsRoute: typeof AuthenticatedAdminCommissionsRoute
   AuthenticatedAdminCouriersRoute: typeof AuthenticatedAdminCouriersRoute
@@ -1004,6 +1025,8 @@ const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren
   {
     AuthenticatedAdminAuditRoute: AuthenticatedAdminAuditRoute,
     AuthenticatedAdminBrandsRoute: AuthenticatedAdminBrandsRoute,
+    AuthenticatedAdminBusinessReportRoute:
+      AuthenticatedAdminBusinessReportRoute,
     AuthenticatedAdminCategoriesRoute: AuthenticatedAdminCategoriesRoute,
     AuthenticatedAdminCommissionsRoute: AuthenticatedAdminCommissionsRoute,
     AuthenticatedAdminCouriersRoute: AuthenticatedAdminCouriersRoute,
@@ -1126,3 +1149,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
