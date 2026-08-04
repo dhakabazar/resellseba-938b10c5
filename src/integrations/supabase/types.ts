@@ -1299,6 +1299,17 @@ export type Database = {
       }
     }
     Functions: {
+      admin_reseller_metrics: {
+        Args: never
+        Returns: {
+          available: number
+          delivered_profit: number
+          orders: number
+          paid_out: number
+          pending_payout: number
+          reseller_id: string
+        }[]
+      }
       calculate_delivery_charge: {
         Args: { _area: string; _product_id: string }
         Returns: number
