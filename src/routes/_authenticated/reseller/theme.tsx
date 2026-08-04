@@ -25,16 +25,21 @@ function ThemePage() {
   const [openGroup, setOpenGroup] = useState<string>("hero");
   const [device, setDevice] = useState<"desktop" | "mobile">("desktop");
   const [previewKey, setPreviewKey] = useState(0);
+  const [previewOn, setPreviewOn] = useState(false);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
 
   const values = all[theme] ?? {};
   const groups = useMemo(() => themeContentGroups(theme), [theme]);
 
+  const uid = user?.id;
+
   useEffect(() => {
-    if (!user) return;
+    if (!uid) return;
+    let alive = true;
     (async () => {
-      const { data: r } = await supabase.from("resellers").select("id,code").eq("user_id", user.id).maybeSingle();
+      const { data: r } = await supabase.from("resellers").select("id,code").eq("user_id", uid).maybeSingle();
+      if (!alive) return;
       if (!r) return setLoading(false);
       setRid(r.id);
       setCode(r.code);
@@ -43,13 +48,17 @@ function ThemePage() {
         .select("theme,theme_settings")
         .eq("reseller_id", r.id)
         .maybeSingle();
+      if (!alive) return;
       const id = (s?.theme as StoreThemeId) ?? DEFAULT_THEME_ID;
       setTheme(id);
       setSavedTheme(id);
       setAll((s?.theme_settings as Record<string, ThemeContentValues>) ?? {});
       setLoading(false);
     })();
-  }, [user]);
+    return () => {
+      alive = false;
+    };
+  }, [uid]);
 
   function setField(key: string, value: string | boolean) {
     setAll((prev) => ({ ...prev, [theme]: { ...(prev[theme] ?? {}), [key]: value } }));
@@ -274,22 +283,38 @@ function ThemePage() {
               >
                 <Smartphone className="h-4 w-4" />
               </button>
-              <button onClick={() => setPreviewKey((k) => k + 1)} className="rounded-md border px-3 py-2 text-xs">
-                Refresh
+              <button
+                onClick={() => {
+                  setPreviewOn(true);
+                  setPreviewKey((k) => k + 1);
+                }}
+                className="rounded-md border px-3 py-2 text-xs"
+              >
+                {previewOn ? "Refresh" : "Load preview"}
               </button>
             </div>
           </div>
-          {previewSrc ? (
+          {!previewSrc ? (
+            <p className="text-sm text-muted-foreground">Preview appears once your store is active.</p>
+          ) : previewOn ? (
             <div className="mx-auto overflow-hidden rounded-lg border" style={{ maxWidth: device === "mobile" ? 390 : "100%" }}>
               <iframe
-                key={`${theme}-${previewKey}-${device}`}
+                key={previewKey}
                 src={previewSrc}
                 title="Store preview"
+                loading="lazy"
                 className="h-[720px] w-full bg-background"
               />
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">Preview appears once your store is active.</p>
+            <button
+              onClick={() => setPreviewOn(true)}
+              className="grid h-[280px] w-full place-items-center rounded-lg border border-dashed text-sm text-muted-foreground hover:bg-muted/40"
+            >
+              <span className="inline-flex items-center gap-2">
+                <Eye className="h-4 w-4" /> Load live preview
+              </span>
+            </button>
           )}
           <p className="mt-2 text-[11px] text-muted-foreground">
             Preview shows the selected theme. Save & publish to apply it for customers. Content edits appear after saving.
