@@ -220,7 +220,6 @@ function Checkout() {
               onBlur={() => setTouched((t) => ({ ...t, phone: true }))}
               autoComplete="tel"
               inputMode="numeric"
-              maxLength={11}
               placeholder="01XXXXXXXXX"
               className={cx(inp, "tracking-[0.06em]")}
             />
