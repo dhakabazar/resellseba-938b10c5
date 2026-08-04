@@ -337,6 +337,13 @@ export type Database = {
             foreignKeyName: "leader_commissions_leader_id_fkey"
             columns: ["leader_id"]
             isOneToOne: false
+            referencedRelation: "public_stores"
+            referencedColumns: ["reseller_id"]
+          },
+          {
+            foreignKeyName: "leader_commissions_leader_id_fkey"
+            columns: ["leader_id"]
+            isOneToOne: false
             referencedRelation: "resellers"
             referencedColumns: ["id"]
           },
@@ -346,6 +353,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "orders"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leader_commissions_reseller_id_fkey"
+            columns: ["reseller_id"]
+            isOneToOne: false
+            referencedRelation: "public_stores"
+            referencedColumns: ["reseller_id"]
           },
           {
             foreignKeyName: "leader_commissions_reseller_id_fkey"
@@ -398,6 +412,13 @@ export type Database = {
             foreignKeyName: "marketing_configs_reseller_id_fkey"
             columns: ["reseller_id"]
             isOneToOne: false
+            referencedRelation: "public_stores"
+            referencedColumns: ["reseller_id"]
+          },
+          {
+            foreignKeyName: "marketing_configs_reseller_id_fkey"
+            columns: ["reseller_id"]
+            isOneToOne: false
             referencedRelation: "resellers"
             referencedColumns: ["id"]
           },
@@ -441,6 +462,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "notification_configs_reseller_id_fkey"
+            columns: ["reseller_id"]
+            isOneToOne: false
+            referencedRelation: "public_stores"
+            referencedColumns: ["reseller_id"]
+          },
           {
             foreignKeyName: "notification_configs_reseller_id_fkey"
             columns: ["reseller_id"]
@@ -494,6 +522,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "orders"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_logs_reseller_id_fkey"
+            columns: ["reseller_id"]
+            isOneToOne: false
+            referencedRelation: "public_stores"
+            referencedColumns: ["reseller_id"]
           },
           {
             foreignKeyName: "notification_logs_reseller_id_fkey"
@@ -699,6 +734,13 @@ export type Database = {
             foreignKeyName: "orders_reseller_id_fkey"
             columns: ["reseller_id"]
             isOneToOne: false
+            referencedRelation: "public_stores"
+            referencedColumns: ["reseller_id"]
+          },
+          {
+            foreignKeyName: "orders_reseller_id_fkey"
+            columns: ["reseller_id"]
+            isOneToOne: false
             referencedRelation: "resellers"
             referencedColumns: ["id"]
           },
@@ -742,6 +784,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "payment_configs_reseller_id_fkey"
+            columns: ["reseller_id"]
+            isOneToOne: false
+            referencedRelation: "public_stores"
+            referencedColumns: ["reseller_id"]
+          },
           {
             foreignKeyName: "payment_configs_reseller_id_fkey"
             columns: ["reseller_id"]
@@ -792,6 +841,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "payouts_reseller_id_fkey"
+            columns: ["reseller_id"]
+            isOneToOne: false
+            referencedRelation: "public_stores"
+            referencedColumns: ["reseller_id"]
+          },
           {
             foreignKeyName: "payouts_reseller_id_fkey"
             columns: ["reseller_id"]
@@ -1007,6 +1063,13 @@ export type Database = {
             foreignKeyName: "reseller_domains_reseller_id_fkey"
             columns: ["reseller_id"]
             isOneToOne: false
+            referencedRelation: "public_stores"
+            referencedColumns: ["reseller_id"]
+          },
+          {
+            foreignKeyName: "reseller_domains_reseller_id_fkey"
+            columns: ["reseller_id"]
+            isOneToOne: false
             referencedRelation: "resellers"
             referencedColumns: ["id"]
           },
@@ -1065,6 +1128,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "products"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reseller_listings_reseller_id_fkey"
+            columns: ["reseller_id"]
+            isOneToOne: false
+            referencedRelation: "public_stores"
+            referencedColumns: ["reseller_id"]
           },
           {
             foreignKeyName: "reseller_listings_reseller_id_fkey"
@@ -1153,6 +1223,13 @@ export type Database = {
             foreignKeyName: "reseller_settings_reseller_id_fkey"
             columns: ["reseller_id"]
             isOneToOne: true
+            referencedRelation: "public_stores"
+            referencedColumns: ["reseller_id"]
+          },
+          {
+            foreignKeyName: "reseller_settings_reseller_id_fkey"
+            columns: ["reseller_id"]
+            isOneToOne: true
             referencedRelation: "resellers"
             referencedColumns: ["id"]
           },
@@ -1232,6 +1309,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "resellers_leader_id_fkey"
+            columns: ["leader_id"]
+            isOneToOne: false
+            referencedRelation: "public_stores"
+            referencedColumns: ["reseller_id"]
+          },
           {
             foreignKeyName: "resellers_leader_id_fkey"
             columns: ["leader_id"]
@@ -1362,6 +1446,13 @@ export type Database = {
             foreignKeyName: "marketing_configs_reseller_id_fkey"
             columns: ["reseller_id"]
             isOneToOne: false
+            referencedRelation: "public_stores"
+            referencedColumns: ["reseller_id"]
+          },
+          {
+            foreignKeyName: "marketing_configs_reseller_id_fkey"
+            columns: ["reseller_id"]
+            isOneToOne: false
             referencedRelation: "resellers"
             referencedColumns: ["id"]
           },
@@ -1397,10 +1488,45 @@ export type Database = {
             foreignKeyName: "payment_configs_reseller_id_fkey"
             columns: ["reseller_id"]
             isOneToOne: false
+            referencedRelation: "public_stores"
+            referencedColumns: ["reseller_id"]
+          },
+          {
+            foreignKeyName: "payment_configs_reseller_id_fkey"
+            columns: ["reseller_id"]
+            isOneToOne: false
             referencedRelation: "resellers"
             referencedColumns: ["id"]
           },
         ]
+      }
+      public_stores: {
+        Row: {
+          about_text: string | null
+          accent_color: string | null
+          announcement: string | null
+          business_name: string | null
+          code: string | null
+          facebook_url: string | null
+          favicon_url: string | null
+          footer_text: string | null
+          hero_headline: string | null
+          hero_image_url: string | null
+          hero_subheadline: string | null
+          instagram_url: string | null
+          logo_url: string | null
+          meta_description: string | null
+          og_image_url: string | null
+          primary_color: string | null
+          reseller_id: string | null
+          store_name: string | null
+          support_phone: string | null
+          tagline: string | null
+          theme: string | null
+          tiktok_url: string | null
+          whatsapp: string | null
+        }
+        Relationships: []
       }
     }
     Functions: {
