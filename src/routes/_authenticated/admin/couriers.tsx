@@ -21,7 +21,7 @@ type Row = {
   config: Record<string, string>;
 };
 
-const PROVIDER_ORDER = ["steadfast", "pathao", "carrybee", "manual"];
+const PROVIDER_ORDER = ["steadfast", "pathao", "carrybee"];
 
 const FIELDS: Record<string, { key: string; label: string; type?: string; hint?: string }[]> = {
   steadfast: [
@@ -41,8 +41,6 @@ const FIELDS: Record<string, { key: string; label: string; type?: string; hint?:
     { key: "client_context", label: "Client Context" },
     { key: "store_id", label: "Default Pickup Store ID", hint: "Store list theke copy korun" },
   ],
-
-  manual: [],
 };
 
 

@@ -698,7 +698,6 @@ function OrderDrawer({
               <option value="steadfast">Steadfast</option>
               <option value="pathao">Pathao</option>
               <option value="carrybee">Carrybee</option>
-              <option value="manual">Manual</option>
             </select>
             <input
               placeholder="Tracking / consignment ID"
