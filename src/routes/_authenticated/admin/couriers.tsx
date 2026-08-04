@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/ui-kit";
-import { Loader2, Truck, Copy, Wallet } from "lucide-react";
+import { Loader2, Truck, Copy, Wallet, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { steadfastBalance } from "@/lib/couriers.functions";
