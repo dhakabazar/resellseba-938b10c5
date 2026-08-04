@@ -34,6 +34,7 @@ function ThemePage() {
   const [device, setDevice] = useState<"desktop" | "mobile">("desktop");
   const [previewKey, setPreviewKey] = useState(0);
   const [previewOn, setPreviewOn] = useState(false);
+  const [previewLoaded, setPreviewLoaded] = useState(false);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
 
@@ -344,6 +345,7 @@ function ThemePage() {
               </button>
               <button
                 onClick={() => {
+                  setPreviewLoaded(false);
                   setPreviewOn(true);
                   setPreviewKey((k) => k + 1);
                 }}
