@@ -38,6 +38,15 @@ function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [counts, setCounts] = useState({ products: 0, resellers: 0, pendingResellers: 0, brands: 0 });
   const [rows, setRows] = useState<OrderRow[]>([]);
+  const [lifetime, setLifetime] = useState({
+    orders: 0,
+    revenue: 0,
+    profit: 0,
+    saCost: 0,
+    deliveredOrders: 0,
+    payoutPaid: 0,
+    payoutDue: 0,
+  });
 
   const load = useCallback(async (r: DateRangeState) => {
     setLoading(true);
@@ -66,9 +75,39 @@ function AdminDashboard() {
     setLoading(false);
   }, []);
 
+  const loadLifetime = useCallback(async () => {
+    const [allOrders, delivered, payoutsRes] = await Promise.all([
+      supabase.from("orders").select("*", { count: "exact", head: true }),
+      supabase
+        .from("orders")
+        .select("total,reseller_profit,sa_cost_total")
+        .eq("status", "delivered")
+        .limit(20000),
+      supabase.from("payouts").select("amount,status").limit(20000),
+    ]);
+    const d = (delivered.data ?? []) as { total: number | string; reseller_profit: number | string; sa_cost_total: number | string }[];
+    const pay = (payoutsRes.data ?? []) as { amount: number | string; status: string }[];
+    setLifetime({
+      orders: allOrders.count ?? 0,
+      deliveredOrders: d.length,
+      revenue: d.reduce((s, o) => s + Number(o.total), 0),
+      profit: d.reduce((s, o) => s + Number(o.reseller_profit), 0),
+      saCost: d.reduce((s, o) => s + Number(o.sa_cost_total), 0),
+      payoutPaid: pay.filter((x) => x.status === "paid").reduce((s, x) => s + Number(x.amount), 0),
+      payoutDue: pay
+        .filter((x) => ["pending", "approved"].includes(x.status))
+        .reduce((s, x) => s + Number(x.amount), 0),
+    });
+  }, []);
+
+  useEffect(() => {
+    void loadLifetime();
+  }, [loadLifetime]);
+
   useEffect(() => {
     void load(range);
   }, [load, range]);
+
 
   const { stats, daily, top } = useMemo(() => {
     const dayMap = new Map<string, DailyRow>();
@@ -113,20 +152,69 @@ function AdminDashboard() {
     <div>
       <PageHeader title="Dashboard" description="Sales, orders and top resellers for the selected period." />
 
-      <DateRangeBar
-        value={range}
-        onChange={setRange}
-        note="Ei date filter puro dashboard e apply hoy."
-        right={
+      <section className="mb-6">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <div>
+            <h3 className="text-sm font-semibold">Overall summary (lifetime)</h3>
+            <p className="text-[11px] text-muted-foreground">Ei card gulo date filter er baire — sob somoy er total.</p>
+          </div>
           <button
             type="button"
-            onClick={() => void load(range)}
+            onClick={() => {
+              void load(range);
+              void loadLifetime();
+            }}
             className="inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs"
           >
             {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
             Refresh
           </button>
-        }
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <StatCard
+            label="Total revenue (delivered)"
+            value={bdt(lifetime.revenue)}
+            hint={`${lifetime.deliveredOrders} of ${lifetime.orders} order delivered`}
+            icon={<TrendingUp className="h-4 w-4" />}
+          />
+          <StatCard
+            label="Total admin earning"
+            value={bdt(lifetime.saCost)}
+            hint="Product + packaging cost recovered"
+            icon={<Wallet className="h-4 w-4" />}
+          />
+          <StatCard
+            label="Total reseller profit"
+            value={bdt(lifetime.profit)}
+            hint={`Payout paid ${bdt(lifetime.payoutPaid)}`}
+            icon={<Wallet className="h-4 w-4" />}
+          />
+          <StatCard
+            label="Pending payout"
+            value={bdt(lifetime.payoutDue)}
+            hint="Request pending / approved"
+            icon={<Wallet className="h-4 w-4" />}
+          />
+        </div>
+
+        <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <StatCard label="Products" value={counts.products} icon={<Package className="h-4 w-4" />} />
+          <StatCard label="Active resellers" value={counts.resellers} icon={<Users className="h-4 w-4" />} />
+          <StatCard label="Brands" value={counts.brands} icon={<Tag className="h-4 w-4" />} />
+          <StatCard
+            label="Pending applications"
+            value={counts.pendingResellers}
+            hint="Needs review"
+            icon={<Users className="h-4 w-4" />}
+          />
+        </div>
+      </section>
+
+      <DateRangeBar
+        value={range}
+        onChange={setRange}
+        note="Nicher card o chart gulo ei date range onujai."
       />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -146,17 +234,6 @@ function AdminDashboard() {
         />
       </div>
 
-      <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Products" value={counts.products} icon={<Package className="h-4 w-4" />} />
-        <StatCard label="Active resellers" value={counts.resellers} icon={<Users className="h-4 w-4" />} />
-        <StatCard label="Brands" value={counts.brands} icon={<Tag className="h-4 w-4" />} />
-        <StatCard
-          label="Pending applications"
-          value={counts.pendingResellers}
-          hint="Needs review"
-          icon={<Users className="h-4 w-4" />}
-        />
-      </div>
 
       <div className="mt-8 grid gap-4 lg:grid-cols-[2fr_1fr]">
         <div className="surface-card p-5">

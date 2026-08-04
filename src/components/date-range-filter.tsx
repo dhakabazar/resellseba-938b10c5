@@ -42,82 +42,74 @@ export function rangeLabel(v: DateRangeState) {
   return fromTs != null ? `From ${fmt(fromTs)}` : `Until ${fmt(toTs!)}`;
 }
 
-/** Chip-style smart date filter. Works on mobile (scrolls) and desktop. */
+/** Compact dropdown-based smart date filter. */
 export function DateRangeBar({
   value,
   onChange,
   right,
   note,
+  label = "Date filter",
 }: {
   value: DateRangeState;
   onChange: (v: DateRangeState) => void;
   right?: React.ReactNode;
   note?: string;
+  label?: string;
 }) {
   return (
     <div className="surface-card mb-6 space-y-3 p-3 sm:p-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
-          <CalendarDays className="h-3.5 w-3.5" /> {rangeLabel(value)}
-        </span>
-        <div className="ml-auto flex items-center gap-2">{right}</div>
-      </div>
-
-      <div className="-mx-1 overflow-x-auto px-1">
-        <div className="flex min-w-max items-center gap-1.5">
-          {DATE_PRESET_OPTIONS.map((o) => {
-            const on = o.value === value.preset;
-            return (
-              <button
-                key={o.value}
-                type="button"
-                onClick={() =>
-                  onChange(
-                    o.value === "custom"
-                      ? { ...value, preset: "custom" }
-                      : { preset: o.value, from: "", to: "" },
-                  )
-                }
-                className={
-                  "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors " +
-                  (on
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-accent hover:text-foreground")
-                }
-              >
+      <div className="flex flex-wrap items-end gap-3">
+        <label className="flex min-w-0 flex-col gap-1">
+          <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
+            <CalendarDays className="h-3.5 w-3.5" /> {label}
+          </span>
+          <select
+            value={value.preset}
+            onChange={(e) => {
+              const p = e.target.value as DatePreset;
+              onChange(p === "custom" ? { ...value, preset: "custom" } : { preset: p, from: "", to: "" });
+            }}
+            className="h-9 w-56 rounded-md border bg-background px-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+          >
+            {DATE_PRESET_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
                 {o.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+              </option>
+            ))}
+          </select>
+        </label>
 
-      {value.preset === "custom" && (
-        <div className="grid grid-cols-2 gap-2 rounded-md border border-dashed p-2 sm:max-w-md">
-          <label className="flex min-w-0 flex-col gap-1">
-            <span className="text-[11px] font-medium text-muted-foreground">From</span>
-            <input
-              type="date"
-              value={value.from}
-              max={value.to || undefined}
-              onChange={(e) => onChange({ ...value, from: e.target.value })}
-              className="h-9 w-full rounded-md border bg-background px-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-            />
-          </label>
-          <label className="flex min-w-0 flex-col gap-1">
-            <span className="text-[11px] font-medium text-muted-foreground">To</span>
-            <input
-              type="date"
-              value={value.to}
-              min={value.from || undefined}
-              onChange={(e) => onChange({ ...value, to: e.target.value })}
-              className="h-9 w-full rounded-md border bg-background px-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-            />
-          </label>
-        </div>
-      )}
+        {value.preset === "custom" && (
+          <>
+            <label className="flex min-w-0 flex-col gap-1">
+              <span className="text-[11px] font-medium text-muted-foreground">From</span>
+              <input
+                type="date"
+                value={value.from}
+                max={value.to || undefined}
+                onChange={(e) => onChange({ ...value, from: e.target.value })}
+                className="h-9 rounded-md border bg-background px-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+              />
+            </label>
+            <label className="flex min-w-0 flex-col gap-1">
+              <span className="text-[11px] font-medium text-muted-foreground">To</span>
+              <input
+                type="date"
+                value={value.to}
+                min={value.from || undefined}
+                onChange={(e) => onChange({ ...value, to: e.target.value })}
+                className="h-9 rounded-md border bg-background px-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+              />
+            </label>
+          </>
+        )}
+
+        <span className="pb-2 text-xs font-semibold text-muted-foreground">{rangeLabel(value)}</span>
+        <div className="ml-auto flex items-center gap-2 pb-1">{right}</div>
+      </div>
 
       {note && <p className="text-[11px] text-muted-foreground">{note}</p>}
     </div>
   );
 }
+
