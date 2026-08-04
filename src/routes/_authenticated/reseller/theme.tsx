@@ -6,7 +6,15 @@ import { PageHeader } from "@/components/ui-kit";
 import { Check, ExternalLink, Eye, Loader2, Monitor, Smartphone } from "lucide-react";
 import { toast } from "sonner";
 import { ImageUploader, type UploadedImage } from "@/components/ImageUploader";
-import { DEFAULT_THEME_ID, STORE_THEMES, type StoreThemeId } from "@/lib/store-theme";
+import {
+  DEFAULT_THEME_ID,
+  getPalette,
+  getStoreTheme,
+  paletteSwatches,
+  STORE_THEMES,
+  type StorePalette,
+  type StoreThemeId,
+} from "@/lib/store-theme";
 import { themeContentGroups, type ThemeContentValues } from "@/lib/store-content";
 
 export const Route = createFileRoute("/_authenticated/reseller/theme")({
@@ -30,7 +38,11 @@ function ThemePage() {
   const [busy, setBusy] = useState(false);
 
   const values = all[theme] ?? {};
+  const activeTheme = useMemo(() => getStoreTheme(theme), [theme]);
+  /** only the active theme's own sections are listed */
   const groups = useMemo(() => themeContentGroups(theme), [theme]);
+  const paletteId = typeof values.palette === "string" ? values.palette : null;
+  const palette = getPalette(activeTheme, paletteId);
 
   const uid = user?.id;
 
@@ -85,13 +97,15 @@ function ThemePage() {
       </div>
     );
 
-  const previewSrc = code ? `/s/${code}?theme=${theme}&preview=${previewKey}` : "";
+  const previewSrc = code
+    ? `/s/${code}?theme=${theme}&palette=${palette.id}&preview=${previewKey}`
+    : "";
 
   return (
     <div>
       <PageHeader
         title="Theme"
-        description="Pick a theme, preview it live and edit every section of the active theme."
+        description="Pick a theme, choose a color palette and edit only the sections that theme uses."
         actions={
           <div className="flex flex-wrap gap-2">
             {code && (
@@ -116,23 +130,25 @@ function ThemePage() {
       />
 
       {/* theme picker */}
-      <div className="surface-card space-y-3 p-6">
+      <div className="surface-card space-y-4 p-6">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <h3 className="text-sm font-semibold">Choose theme</h3>
+            <h3 className="text-sm font-semibold">1. Choose theme</h3>
             <p className="text-xs text-muted-foreground">
-              Each theme keeps its own content, so switching back never loses your text.
+              Each theme keeps its own content and palette, so switching back never loses your work.
             </p>
           </div>
           {theme !== savedTheme && (
             <span className="rounded-full bg-primary/12 px-3 py-1 text-[11px] font-medium text-primary">
-              Previewing {STORE_THEMES.find((t) => t.id === theme)?.name} — not published yet
+              Previewing {activeTheme.name} — not published yet
             </span>
           )}
         </div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {STORE_THEMES.map((t) => {
             const active = theme === t.id;
+            const savedPaletteId = (all[t.id]?.palette as string) ?? null;
+            const p = getPalette(t, savedPaletteId);
             return (
               <button
                 type="button"
@@ -148,7 +164,7 @@ function ThemePage() {
                     <Check className="h-3 w-3" />
                   </span>
                 )}
-                <ThemeMock colors={t.preview} />
+                <ThemeMock palette={p} />
                 <div className="p-4">
                   <div className="text-sm font-semibold">{t.name}</div>
                   <div className="mt-1 text-xs text-muted-foreground">{t.description}</div>
@@ -162,9 +178,49 @@ function ThemePage() {
         </div>
       </div>
 
+      {/* palette picker */}
+      <div className="surface-card mt-4 space-y-4 p-6">
+        <div>
+          <h3 className="text-sm font-semibold">2. Color palette — {activeTheme.name}</h3>
+          <p className="text-xs text-muted-foreground">
+            Each palette is a complete, contrast-checked color set (background, text, border, buttons), so the
+            design never breaks — every page of your store repaints together.
+          </p>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {activeTheme.palettes.map((p) => {
+            const active = palette.id === p.id;
+            return (
+              <button
+                type="button"
+                key={p.id}
+                onClick={() => setField("palette", p.id)}
+                className={
+                  "relative overflow-hidden rounded-xl border p-3 text-left transition-colors " +
+                  (active ? "border-primary ring-2 ring-primary/30" : "hover:border-primary/50")
+                }
+              >
+                <PaletteChip palette={p} />
+                <div className="mt-2 flex items-center justify-between gap-2">
+                  <span className="text-xs font-semibold">{p.name}</span>
+                  {active && <Check className="h-3.5 w-3.5 text-primary" />}
+                </div>
+                <span className="text-[11px] text-muted-foreground">{p.dark ? "Dark surfaces" : "Light surfaces"}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       <div className="mt-4 grid gap-4 xl:grid-cols-[1fr_1fr]">
         {/* editor */}
         <div className="space-y-3">
+          <div className="px-1">
+            <h3 className="text-sm font-semibold">3. Content of {activeTheme.name}</h3>
+            <p className="text-xs text-muted-foreground">
+              Only sections this theme actually renders are listed here.
+            </p>
+          </div>
           {groups.map((g) => {
             const open = openGroup === g.id;
             return (
@@ -260,9 +316,12 @@ function ThemePage() {
 
         {/* live preview */}
         <div className="surface-card sticky top-4 h-fit p-4">
-          <div className="mb-3 flex items-center justify-between gap-2">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2 text-sm font-semibold">
               <Eye className="h-4 w-4" /> Live preview
+              <span className="rounded-full border px-2 py-0.5 text-[11px] font-normal text-muted-foreground">
+                {activeTheme.name} · {palette.name}
+              </span>
             </div>
             <div className="flex items-center gap-1">
               <button
@@ -317,7 +376,8 @@ function ThemePage() {
             </button>
           )}
           <p className="mt-2 text-[11px] text-muted-foreground">
-            Preview shows the selected theme. Save & publish to apply it for customers. Content edits appear after saving.
+            Theme and palette changes show instantly after Refresh. Save & publish to apply them for customers —
+            text edits appear in the preview after saving.
           </p>
         </div>
       </div>
@@ -325,9 +385,9 @@ function ThemePage() {
   );
 }
 
-/** Tiny wireframe mock built from the theme swatches. */
-function ThemeMock({ colors }: { colors: string[] }) {
-  const [bg, surface, primary, fg] = colors;
+/** Tiny wireframe mock painted with a palette. */
+function ThemeMock({ palette }: { palette: StorePalette }) {
+  const { bg, surface, primary, fg } = palette;
   return (
     <div className="h-28 w-full p-3" style={{ background: bg }}>
       <div className="flex items-center justify-between">
@@ -340,6 +400,25 @@ function ThemeMock({ colors }: { colors: string[] }) {
         <span className="h-8 flex-1 rounded" style={{ background: surface }} />
         <span className="h-8 flex-1 rounded" style={{ background: surface }} />
         <span className="h-8 w-8 rounded" style={{ background: primary }} />
+      </div>
+    </div>
+  );
+}
+
+/** Palette swatch row plus a text-on-color readability sample. */
+function PaletteChip({ palette }: { palette: StorePalette }) {
+  return (
+    <div className="overflow-hidden rounded-lg border" style={{ borderColor: palette.border }}>
+      <div className="flex">
+        {paletteSwatches(palette).map((c, i) => (
+          <span key={i} className="h-8 flex-1" style={{ background: c }} />
+        ))}
+      </div>
+      <div className="px-2 py-2" style={{ background: palette.surface, color: palette.fg }}>
+        <div className="text-[11px] font-semibold">Aa Product title</div>
+        <div className="text-[10px]" style={{ color: palette.muted }}>
+          ৳1,250 · in stock
+        </div>
       </div>
     </div>
   );
