@@ -100,17 +100,15 @@ export function useStoreLoader(code: string) {
     (async () => {
       setState("loading");
       const { data: r } = await supabase
-        .from("resellers")
-        .select("id, code, business_name, reseller_settings(*)")
+        .from("public_stores")
+        .select("*")
         .eq("code", code)
-        .eq("status", "active")
         .maybeSingle();
       if (!alive) return;
       if (!r) return setState("missing");
 
-      const s = (Array.isArray(r.reseller_settings) ? r.reseller_settings[0] : r.reseller_settings) as
-        | StoreSettings
-        | null;
+      const s = r as unknown as StoreSettings;
+
 
       const { data: rows } = await supabase
         .from("reseller_listings")
