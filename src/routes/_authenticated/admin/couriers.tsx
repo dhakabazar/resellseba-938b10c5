@@ -53,7 +53,13 @@ function CouriersPage() {
   async function load() {
     setLoading(true);
     const { data } = await supabase.from("courier_configs").select("*").order("display_name");
-    setRows((data ?? []) as any);
+    const sorted = [...((data ?? []) as Row[])].sort((a, b) => {
+      const ai = PROVIDER_ORDER.indexOf(a.provider);
+      const bi = PROVIDER_ORDER.indexOf(b.provider);
+      return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+    });
+    setRows(sorted);
+
     setLoading(false);
   }
 
