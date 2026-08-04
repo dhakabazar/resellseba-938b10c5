@@ -370,7 +370,21 @@ function AdminOrdersPage() {
       ) : (
         <>
         <div className="surface-card overflow-hidden">
-          <div className="hidden grid-cols-[1fr_1fr_1.2fr_1fr_1fr_auto] gap-4 border-b bg-muted/40 px-4 py-2 text-xs font-medium text-muted-foreground md:grid">
+          <div className="hidden grid-cols-[auto_1fr_1fr_1.2fr_1fr_1fr_auto] gap-4 border-b bg-muted/40 px-4 py-2 text-xs font-medium text-muted-foreground md:grid">
+            <input
+              type="checkbox"
+              className="h-4 w-4 accent-[hsl(var(--primary))]"
+              checked={paged.length > 0 && paged.every((o) => marked.includes(o.id))}
+              onChange={(e) => {
+                const ids = paged.map((o) => o.id);
+                setMarked((prev) =>
+                  e.target.checked
+                    ? [...new Set([...prev, ...ids])]
+                    : prev.filter((id) => !ids.includes(id)),
+                );
+              }}
+              title="Mark all on this page"
+            />
             <div>Order</div>
             <div>Reseller</div>
             <div>Customer</div>
@@ -381,8 +395,23 @@ function AdminOrdersPage() {
           {paged.map((o) => (
             <div
               key={o.id}
-              className="grid grid-cols-1 items-center gap-3 border-b px-4 py-3 text-sm last:border-b-0 md:grid-cols-[1fr_1fr_1.2fr_1fr_1fr_auto]"
+              className={`grid grid-cols-1 items-center gap-3 border-b px-4 py-3 text-sm last:border-b-0 md:grid-cols-[auto_1fr_1fr_1.2fr_1fr_1fr_auto] ${
+                marked.includes(o.id) ? "bg-primary/5" : ""
+              }`}
             >
+              <label className="flex items-center gap-2 text-xs text-muted-foreground md:block">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 accent-[hsl(var(--primary))]"
+                  checked={marked.includes(o.id)}
+                  onChange={(e) =>
+                    setMarked((prev) =>
+                      e.target.checked ? [...prev, o.id] : prev.filter((id) => id !== o.id),
+                    )
+                  }
+                />
+                <span className="md:hidden">Mark</span>
+              </label>
               <div>
                 <div className="font-medium">{o.order_number}</div>
                 <div className="text-xs text-muted-foreground">
@@ -414,6 +443,7 @@ function AdminOrdersPage() {
             </div>
           ))}
         </div>
+
         <Pagination page={page} perPage={filters.perPage} total={filtered.length} onPage={setPage} />
         </>
       )}
