@@ -8,7 +8,14 @@ import {
   DEFAULT_ORDER_FILTERS,
   type OrderFilterState,
 } from "@/components/order-filters";
-import { ReportCard, StatusReportTable, ProductReportTable, TrendReportTable, RawStatusList } from "@/components/report-blocks";
+import {
+  ReportCard,
+  ReportTabs,
+  StatusReportTable,
+  ProductReportTable,
+  TrendReportTable,
+  RawStatusList,
+} from "@/components/report-blocks";
 import {
   buildFinanceReport,
   bdt,
@@ -40,6 +47,16 @@ type Payout = { reseller_id: string; amount: number; status: string };
 type Commission = { leader_id: string; reseller_id: string; amount: number; status: string; created_at: string };
 type Shipment = { order_id: string; provider: string; cost: number | null; delivery_charge: number | null };
 
+type AdminReportTab = "overview" | "resellers" | "products" | "courier" | "trend" | "how";
+const ADMIN_TABS: { key: AdminReportTab; label: string }[] = [
+  { key: "overview", label: "Overview" },
+  { key: "resellers", label: "Per-reseller" },
+  { key: "products", label: "Product wise" },
+  { key: "courier", label: "Courier wise" },
+  { key: "trend", label: "Trend" },
+  { key: "how", label: "Hisab niyom" },
+];
+
 function FinancialsPage() {
   const [loading, setLoading] = useState(true);
   const [orders, setOrders] = useState<OrderRow[]>([]);
@@ -51,6 +68,7 @@ function FinancialsPage() {
   const [filters, setFilters] = useState<OrderFilterState>(DEFAULT_ORDER_FILTERS);
   const [gran, setGran] = useState<"day" | "month">("day");
   const [resellerQ, setResellerQ] = useState("");
+  const [tab, setTab] = useState<AdminReportTab>("overview");
 
   useEffect(() => {
     (async () => {
