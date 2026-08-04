@@ -122,7 +122,7 @@ export function AppShell({
                 }}
                 title={entry.label}
                 className={cn(
-                  "mb-1 flex w-full items-center justify-center rounded-md p-2 text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                  "mb-1 flex w-full items-center justify-center rounded-md p-2 text-sidebar-foreground/90 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                   hasActive && "bg-sidebar-accent/60 text-sidebar-accent-foreground",
                 )}
               >
