@@ -150,14 +150,9 @@ function AdminDashboard() {
 
   return (
     <div>
-      <PageHeader title="Dashboard" description="Sales, orders and top resellers for the selected period." />
-
-      <section className="mb-6">
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <div>
-            <h3 className="text-sm font-semibold">Overall summary (lifetime)</h3>
-            <p className="text-[11px] text-muted-foreground">Ei card gulo date filter er baire — sob somoy er total.</p>
-          </div>
+      <PageHeader
+        title="Dashboard"
+        actions={
           <button
             type="button"
             onClick={() => {
@@ -169,31 +164,29 @@ function AdminDashboard() {
             {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
             Refresh
           </button>
-        </div>
+        }
+      />
 
+      <section className="mb-6">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <StatCard
             label="Total revenue (delivered)"
             value={bdt(lifetime.revenue)}
-            hint={`${lifetime.deliveredOrders} of ${lifetime.orders} order delivered`}
             icon={<TrendingUp className="h-4 w-4" />}
           />
           <StatCard
             label="Total admin earning"
             value={bdt(lifetime.saCost)}
-            hint="Product + packaging cost recovered"
             icon={<Wallet className="h-4 w-4" />}
           />
           <StatCard
             label="Total reseller profit"
             value={bdt(lifetime.profit)}
-            hint={`Payout paid ${bdt(lifetime.payoutPaid)}`}
             icon={<Wallet className="h-4 w-4" />}
           />
           <StatCard
             label="Pending payout"
             value={bdt(lifetime.payoutDue)}
-            hint="Request pending / approved"
             icon={<Wallet className="h-4 w-4" />}
           />
         </div>
@@ -205,31 +198,24 @@ function AdminDashboard() {
           <StatCard
             label="Pending applications"
             value={counts.pendingResellers}
-            hint="Needs review"
             icon={<Users className="h-4 w-4" />}
           />
         </div>
       </section>
 
-      <DateRangeBar
-        value={range}
-        onChange={setRange}
-        note="Nicher card o chart gulo ei date range onujai."
-      />
+      <DateRangeBar value={range} onChange={setRange} />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Orders" value={stats.orders} icon={<ShoppingCart className="h-4 w-4" />} />
         <StatCard
           label="Revenue (delivered)"
           value={bdt(stats.revenue)}
-          hint={`${stats.deliveredOrders} delivered order`}
           icon={<TrendingUp className="h-4 w-4" />}
         />
         <StatCard label="Reseller profit" value={bdt(stats.profit)} icon={<Wallet className="h-4 w-4" />} />
         <StatCard
           label="Admin earning (delivered)"
           value={bdt(stats.saCost)}
-          hint="Product + packaging cost recovered"
           icon={<Wallet className="h-4 w-4" />}
         />
       </div>
