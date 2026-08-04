@@ -7,6 +7,7 @@ import { PageHeader, EmptyState } from "@/components/ui-kit";
 import { Loader2, Plus, Check, CheckSquare, Square, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Hint } from "@/components/Hint";
+import { ResellerProductCalc } from "@/components/price-breakdown";
 import { DataToolbar, Pagination, usePaginated, type FilterDef } from "@/components/data-list";
 
 type P = {
@@ -357,26 +358,6 @@ function CatalogPage() {
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4" onClick={() => setSelected(null)}>
           <div className="w-full max-w-md surface-card p-6" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-semibold">List "{selected.name}"</h3>
-            <div className="mt-4 space-y-2 text-sm text-muted-foreground">
-              <Row label="Product price" value={`৳${selected.reseller_price}`} />
-              <Row label="Packaging" value={`৳${selected.packaging_cost}`} />
-              <div className="border-t pt-2">
-                <Row label="Your cost (deducted by admin)" value={`৳${minSell}`} strong />
-              </div>
-              {deliveryMode(selected) === "free" ? (
-                <Row label="Delivery" value="Free shipping (customer pays ৳0)" />
-              ) : deliveryMode(selected) === "flat" ? (
-                <Row label="Delivery (flat, all areas)" value={`৳${selected.delivery_flat ?? 0}`} />
-              ) : (
-                <>
-                  <Row label="Delivery inside Dhaka" value={`৳${selected.delivery_inside}`} />
-                  <Row label="Delivery outside Dhaka" value={`৳${selected.delivery_outside}`} />
-                </>
-              )}
-              <p className="text-xs">
-                Delivery is charged to the customer separately (goes to courier). Only the highest delivery charge applies across multiple products.
-              </p>
-            </div>
             <div className="mt-4">
               <label className="mb-1 flex items-center gap-1 text-xs font-medium">
                 Your selling price (minimum ৳{minSell})
@@ -389,17 +370,25 @@ function CatalogPage() {
                 onChange={(e) => setPrice(e.target.value)}
                 className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
               />
-              {priceNum > 0 && (
-                <p className="mt-2 text-xs">
-                  Selling ৳{priceNum} − Product ৳{selected.reseller_price} − Packaging ৳{selected.packaging_cost} ={" "}
-                  <span className={`font-semibold ${profit >= 0 ? "text-success" : "text-destructive"}`}>
-                    ৳{profit} profit / unit
-                  </span>
-                  <br />
-                  <span className="text-muted-foreground">Delivery is separate and goes to the courier.</span>
-                </p>
-              )}
             </div>
+            <div className="mt-4">
+              <ResellerProductCalc
+                input={{
+                  buying: 0,
+                  resellerPrice: Number(selected.reseller_price) || 0,
+                  packaging: Number(selected.packaging_cost) || 0,
+                  deliveryMode: deliveryMode(selected) as "area" | "free" | "flat",
+                  deliveryFlat: Number(selected.delivery_flat ?? 0),
+                  deliveryInside: Number(selected.delivery_inside) || 0,
+                  deliveryOutside: Number(selected.delivery_outside) || 0,
+                  sellPrice: priceNum || 0,
+                }}
+              />
+              <p className="mt-2 text-[11px] text-muted-foreground">
+                Delivery is collected from the customer and goes to the courier. With multiple products only the highest delivery charge applies.
+              </p>
+            </div>
+
             <div className="mt-6 flex gap-2">
               <button
                 onClick={addListing}
@@ -422,11 +411,3 @@ function CatalogPage() {
   );
 }
 
-function Row({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
-  return (
-    <div className="flex justify-between">
-      <span>{label}</span>
-      <span className={strong ? "font-semibold text-foreground" : ""}>{value}</span>
-    </div>
-  );
-}

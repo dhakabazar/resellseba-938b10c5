@@ -8,6 +8,7 @@ import { ImageUploader, type UploadedImage } from "@/components/ImageUploader";
 import { RichTextEditor } from "@/components/RichTextEditor";
 import { uniqueProductSlug } from "@/lib/slug";
 import { Hint } from "@/components/Hint";
+import { AdminProductCalc } from "@/components/price-breakdown";
 
 export const Route = createFileRoute("/_authenticated/admin/products/new")({
   component: NewProduct,
@@ -216,39 +217,19 @@ function NewProduct() {
             </Field>
           </div>
 
-          <div className="mt-5 grid gap-3 md:grid-cols-2">
-            <div className="rounded-lg border bg-muted/30 p-4 text-sm">
-              <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase text-muted-foreground">
-                Admin calculation
-                <Hint>Your profit per unit = reseller price − buying price.</Hint>
-              </div>
-              <Row label="Reseller price" value={`৳${Number(resellerPrice) || 0}`} />
-              <Row label="− Buying price" value={`৳${Number(buying) || 0}`} />
-              <Row label="Admin profit / unit" value={`৳${calc.saProfit}`} strong success={calc.saProfit >= 0} />
-            </div>
-            <div className="rounded-lg border bg-muted/30 p-4 text-sm">
-              <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase text-muted-foreground">
-                Reseller calculation
-                <Hint>
-                  Reseller's cost is reseller price + packaging, both deducted by admin.
-                  Delivery is paid separately by the customer and goes to the courier.
-                </Hint>
-              </div>
-              <Row label="Product (reseller price)" value={`৳${Number(resellerPrice) || 0}`} />
-              <Row label="+ Packaging" value={`৳${Number(packaging) || 0}`} />
-              <Row label="Reseller min sell price" value={`৳${calc.resellerMinSell}`} strong />
-              <div className="mt-2 border-t pt-2 text-xs text-muted-foreground">
-                Customer pays (inside Dhaka): ৳{calc.resellerBaseIn} · outside: ৳{calc.resellerBaseOut}
-              </div>
-              <div className="mt-2 border-t pt-2">
-                <Row
-                  label={`At suggested ৳${Number(suggested) || 0} → profit`}
-                  value={`৳${calc.resellerProfitAtSuggested}`}
-                  strong
-                  success={calc.resellerProfitAtSuggested >= 0}
-                />
-              </div>
-            </div>
+          <div className="mt-5">
+            <AdminProductCalc
+              input={{
+                buying: Number(buying) || 0,
+                resellerPrice: Number(resellerPrice) || 0,
+                packaging: Number(packaging) || 0,
+                deliveryMode,
+                deliveryFlat: Number(deliveryFlat) || 0,
+                deliveryInside: Number(deliveryIn) || 0,
+                deliveryOutside: Number(deliveryOut) || 0,
+                sellPrice: Number(suggested) || 0,
+              }}
+            />
           </div>
         </div>
 
@@ -306,13 +287,3 @@ function Field({
   );
 }
 
-function Row({ label, value, strong, success }: { label: string; value: string; strong?: boolean; success?: boolean }) {
-  return (
-    <div className="flex items-center justify-between py-0.5">
-      <span className="text-muted-foreground">{label}</span>
-      <span className={`${strong ? "font-semibold" : ""} ${success === true ? "text-success" : success === false ? "text-destructive" : "text-foreground"}`}>
-        {value}
-      </span>
-    </div>
-  );
-}
