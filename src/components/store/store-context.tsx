@@ -70,6 +70,8 @@ export type StoreData = {
   name: string;
   settings: StoreSettings | null;
   theme: StoreTheme;
+  /** active color palette of the theme */
+  palette: StorePalette;
   /** resolved per-theme content (falls back to legacy columns then defaults) */
   content: ContentReader;
   listings: StoreListing[];
