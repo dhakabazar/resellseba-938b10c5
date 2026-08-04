@@ -220,9 +220,6 @@ function SteadfastExtras({ token, onToken }: { token: string; onToken: (t: strin
             <Copy className="h-3.5 w-3.5" />
           </button>
         </div>
-        <p className="mt-1 text-[11px] text-muted-foreground">
-          URL ta current domain ({origin.replace(/^https?:\/\//, "") || "—"}) theke auto generate hoy — custom domain, new server ba self-host e gele automatic sei domain e change hobe. Token save korar por URL ta Steadfast panel/support e diye din.
-        </p>
 
       </div>
       <div className="flex items-center gap-2">
@@ -321,11 +318,6 @@ function CarrybeeExtras({
             <Copy className="h-3.5 w-3.5" />
           </button>
         </div>
-        <p className="mt-1 text-[11px] text-muted-foreground">
-          URL current domain ({origin.replace(/^https?:\/\//, "") || "—"}) theke auto generate hoy — custom
-          domain ba new server e gele nijei update hobe. Carrybee panel e ei URL + Secret diye sob event
-          subscribe korun; handshake e amra 202 + integration header echo kori.
-        </p>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
