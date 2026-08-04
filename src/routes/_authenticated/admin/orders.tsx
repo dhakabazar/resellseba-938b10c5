@@ -392,7 +392,9 @@ function AdminOrdersPage() {
               : `${ORDER_TABS.find((t) => t.key === tab)?.label ?? "All"} — ${filtered.length} order`
           }
           onPick={(name) => {
+            setSearchField("product");
             setFilters({ ...filters, q: name });
+
             setPickOpen(false);
           }}
           onClose={() => setPickOpen(false)}
