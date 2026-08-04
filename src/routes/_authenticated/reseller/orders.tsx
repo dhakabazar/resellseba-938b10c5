@@ -4,10 +4,24 @@ import { supabase } from "@/integrations/supabase/client";
 import { productDeliveryCharge } from "@/lib/delivery";
 import { useAuth } from "@/lib/use-auth";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
-import { Loader2, Plus, X, Trash2, FileText, Check, Ban } from "lucide-react";
+import {
+  Loader2,
+  Plus,
+  X,
+  Trash2,
+  FileText,
+  Check,
+  Ban,
+  Search,
+  ListChecks,
+  SlidersHorizontal,
+  ChevronDown,
+  Download,
+} from "lucide-react";
 import { toast } from "sonner";
 import { CourierTimeline, type CourierEvent } from "@/components/CourierTimeline";
 import { OrderTabs } from "@/components/OrderTabs";
+import { PickListModal } from "@/components/pick-list-modal";
 import { Pagination, usePaginated } from "@/components/data-list";
 import {
   OrderFilterBar,
@@ -15,6 +29,7 @@ import {
   DEFAULT_ORDER_FILTERS,
   type OrderFilterState,
 } from "@/components/order-filters";
+
 
 import {
   ORDER_TABS,
@@ -71,16 +86,51 @@ export const Route = createFileRoute("/_authenticated/reseller/orders")({
 const ORDER_COLUMNS =
   "id,order_number,customer_name,customer_phone,address_line,city,area,subtotal,shipping_cost,discount,total,reseller_profit,payment_method,status,payment_status,forwarded_to_admin,notes,reseller_note,created_at";
 
+type OrderItemLite = { order_id: string; product_id: string | null; product_name: string; quantity: number };
+
+function exportCsv(rows: OrderRow[]) {
+  const head = ["Order", "Date", "Customer", "Phone", "Area", "Address", "Status", "Total", "Profit"];
+  const csv = [head.join(",")]
+    .concat(
+      rows.map((o) =>
+        [
+          o.order_number,
+          new Date(o.created_at).toISOString().slice(0, 10),
+          o.customer_name,
+          o.customer_phone,
+          o.area,
+          `"${(o.address_line ?? "").replace(/"/g, '""')}"`,
+          o.status,
+          Number(o.total).toFixed(0),
+          Number(o.reseller_profit).toFixed(0),
+        ].join(","),
+      ),
+    )
+    .join("\n");
+  const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `my-orders-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 function OrdersPage() {
   const { user } = useAuth();
   const [resellerId, setResellerId] = useState<string | null>(null);
   const [orders, setOrders] = useState<OrderRow[]>([]);
+  const [orderItems, setOrderItems] = useState<OrderItemLite[]>([]);
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<OrderTabKey>("new");
   const [selected, setSelected] = useState<OrderRow | null>(null);
   const [filters, setFilters] = useState<OrderFilterState>(DEFAULT_ORDER_FILTERS);
+  const [productQ, setProductQ] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+  const [pickOpen, setPickOpen] = useState(false);
+  const [pickScope, setPickScope] = useState<"filtered" | "marked">("filtered");
+  const [marked, setMarked] = useState<string[]>([]);
   const [page, setPage] = useState(1);
 
   async function load() {
@@ -105,26 +155,86 @@ function OrdersPage() {
         .eq("reseller_id", r.id)
         .eq("is_active", true),
     ]);
-    setOrders((o ?? []) as OrderRow[]);
+    const rows = (o ?? []) as OrderRow[];
+    setOrders(rows);
     setListings((l ?? []) as Listing[]);
+    if (rows.length > 0) {
+      const { data: its } = await supabase
+        .from("order_items")
+        .select("order_id,product_id,product_name,quantity")
+        .in(
+          "order_id",
+          rows.map((x) => x.id),
+        );
+      setOrderItems((its ?? []) as OrderItemLite[]);
+    } else {
+      setOrderItems([]);
+    }
     setLoading(false);
   }
   useEffect(() => {
     load();
   }, [user]);
 
+  const itemsByOrder = useMemo(() => {
+    const m = new Map<string, OrderItemLite[]>();
+    for (const it of orderItems) {
+      const arr = m.get(it.order_id);
+      if (arr) arr.push(it);
+      else m.set(it.order_id, [it]);
+    }
+    return m;
+  }, [orderItems]);
+
   const tabStatuses = ORDER_TABS.find((t) => t.key === tab)?.statuses ?? [];
   const inTab =
     tabStatuses.length === 0 ? orders : orders.filter((o) => (tabStatuses as string[]).includes(o.status));
-  const visible = useMemo(() => applyOrderFilters(inTab, filters), [inTab, filters]);
+
+  /** Two separate searches: order (no/name/phone) + product name. */
+  const visible = useMemo(() => {
+    const base = applyOrderFilters(inTab, { ...filters, q: "" });
+    const q = filters.q.trim().toLowerCase();
+    const pq = productQ.trim().toLowerCase();
+    if (!q && !pq) return base;
+    return base.filter((o) => {
+      const has = (v?: string | null) => (v ?? "").toLowerCase().includes(q);
+      const okOrder = !q || has(o.order_number) || has(o.customer_name) || has(o.customer_phone);
+      const okProduct =
+        !pq ||
+        (itemsByOrder.get(o.id) ?? []).some((it) => it.product_name.toLowerCase().includes(pq));
+      return okOrder && okProduct;
+    });
+  }, [inTab, filters, productQ, itemsByOrder]);
+
+  const markedOrders = useMemo(
+    () => visible.filter((o) => marked.includes(o.id)),
+    [visible, marked],
+  );
+
+  const pickList = useMemo(() => {
+    const rows = pickScope === "marked" ? markedOrders : visible;
+    const m = new Map<string, { name: string; qty: number; orders: number }>();
+    for (const o of rows) {
+      for (const it of itemsByOrder.get(o.id) ?? []) {
+        const key = it.product_id ?? it.product_name;
+        const cur = m.get(key) ?? { name: it.product_name, qty: 0, orders: 0 };
+        cur.qty += Number(it.quantity) || 0;
+        cur.orders += 1;
+        m.set(key, cur);
+      }
+    }
+    return [...m.values()].sort((a, b) => b.qty - a.qty);
+  }, [pickScope, markedOrders, visible, itemsByOrder]);
+
   useEffect(() => {
     setPage(1);
-  }, [filters, tab]);
+  }, [filters, tab, productQ]);
   const paged = usePaginated(visible, page, filters.perPage);
   const tabCount = (key: OrderTabKey) => {
     const sts = ORDER_TABS.find((t) => t.key === key)?.statuses ?? [];
     return sts.length === 0 ? orders.length : orders.filter((o) => (sts as string[]).includes(o.status)).length;
   };
+
 
 
   async function remove(id: string) {
@@ -138,25 +248,146 @@ function OrdersPage() {
     <div>
       <PageHeader
         title="Orders"
-        description="Nijer store er sob order ekhane. New Order = customer website theke asa order — confirm korle admin process korbe."
+        description=""
         actions={
-          <button
-            onClick={() => setOpen(true)}
-            className="btn-brand inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium"
-          >
-            <Plus className="h-4 w-4" /> New order
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => exportCsv(visible)}
+              disabled={visible.length === 0}
+              className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm disabled:opacity-50"
+            >
+              <Download className="h-4 w-4" /> Export CSV
+            </button>
+            <button
+              onClick={() => setOpen(true)}
+              className="btn-brand inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium"
+            >
+              <Plus className="h-4 w-4" /> New order
+            </button>
+          </div>
         }
       />
 
-      <OrderTabs tab={tab} onChange={setTab} count={tabCount} />
+      {/* Two always-visible searches: order + product */}
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <div className="relative min-w-[220px] flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <input
+            value={filters.q}
+            onChange={(e) => setFilters({ ...filters, q: e.target.value })}
+            placeholder="Order search — order no / name / mobile…"
+            className="h-10 w-full rounded-md border bg-background pl-9 pr-8 text-sm outline-none focus:ring-2 focus:ring-ring"
+          />
+          {filters.q && (
+            <button
+              type="button"
+              onClick={() => setFilters({ ...filters, q: "" })}
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground hover:bg-accent"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+        <div className="relative min-w-[200px] flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <input
+            value={productQ}
+            onChange={(e) => setProductQ(e.target.value)}
+            placeholder="Product search — product name…"
+            className="h-10 w-full rounded-md border bg-background pl-9 pr-8 text-sm outline-none focus:ring-2 focus:ring-ring"
+          />
+          {productQ && (
+            <button
+              type="button"
+              onClick={() => setProductQ("")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground hover:bg-accent"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
 
-      <OrderFilterBar
-        value={filters}
-        onChange={setFilters}
-        total={orders.length}
-        shown={visible.length}
-      />
+        <button
+          type="button"
+          onClick={() => setShowFilters((v) => !v)}
+          className="inline-flex h-10 items-center gap-2 rounded-md border px-3 text-sm hover:bg-accent"
+        >
+          <SlidersHorizontal className="h-4 w-4" />
+          Filters
+          <ChevronDown className={`h-4 w-4 transition-transform ${showFilters ? "rotate-180" : ""}`} />
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setPickScope("filtered");
+            setPickOpen(true);
+          }}
+          className="inline-flex h-10 items-center gap-2 rounded-md border px-3 text-sm hover:bg-accent"
+        >
+          <ListChecks className="h-4 w-4" />
+          Pick list
+        </button>
+        <span className="text-xs text-muted-foreground">
+          {visible.length} of {orders.length}
+        </span>
+      </div>
+
+      {showFilters && (
+        <OrderFilterBar
+          value={filters}
+          onChange={setFilters}
+          total={orders.length}
+          shown={visible.length}
+        />
+      )}
+
+      {marked.length > 0 && (
+        <div className="mb-3 flex flex-wrap items-center gap-2 rounded-md border border-primary/40 bg-primary/5 px-3 py-2 text-sm">
+          <span className="font-medium">{marked.length} order marked</span>
+          <button
+            type="button"
+            onClick={() => {
+              setPickScope("marked");
+              setPickOpen(true);
+            }}
+            className="inline-flex items-center gap-1.5 rounded-md border bg-background px-2.5 py-1 text-xs hover:bg-accent"
+          >
+            <ListChecks className="h-3.5 w-3.5" /> Marked pick list
+          </button>
+          <button
+            type="button"
+            onClick={() => exportCsv(markedOrders)}
+            className="inline-flex items-center gap-1.5 rounded-md border bg-background px-2.5 py-1 text-xs hover:bg-accent"
+          >
+            <Download className="h-3.5 w-3.5" /> Export marked
+          </button>
+          <button
+            type="button"
+            onClick={() => setMarked([])}
+            className="ml-auto rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-accent"
+          >
+            Clear
+          </button>
+        </div>
+      )}
+
+      {pickOpen && (
+        <PickListModal
+          rows={pickList}
+          scopeLabel={
+            pickScope === "marked"
+              ? `${markedOrders.length} marked order`
+              : `${ORDER_TABS.find((t) => t.key === tab)?.label ?? "All"} — ${visible.length} order`
+          }
+          onPick={(name) => {
+            setProductQ(name);
+            setPickOpen(false);
+          }}
+          onClose={() => setPickOpen(false)}
+        />
+      )}
+
+      <OrderTabs tab={tab} onChange={setTab} count={tabCount} />
 
       {loading ? (
         <div className="grid place-items-center py-12">
@@ -170,7 +401,21 @@ function OrdersPage() {
       ) : (
         <>
         <div className="surface-card overflow-hidden">
-          <div className="hidden grid-cols-[1fr_1.2fr_1fr_0.8fr_0.8fr_auto] gap-4 border-b bg-muted/40 px-4 py-2 text-xs font-medium text-muted-foreground md:grid">
+          <div className="hidden grid-cols-[auto_1fr_1.2fr_1fr_0.8fr_0.8fr_auto] gap-4 border-b bg-muted/40 px-4 py-2 text-xs font-medium text-muted-foreground md:grid">
+            <input
+              type="checkbox"
+              className="h-4 w-4 accent-[hsl(var(--primary))]"
+              checked={paged.length > 0 && paged.every((o) => marked.includes(o.id))}
+              onChange={(e) => {
+                const ids = paged.map((o) => o.id);
+                setMarked((prev) =>
+                  e.target.checked
+                    ? [...new Set([...prev, ...ids])]
+                    : prev.filter((id) => !ids.includes(id)),
+                );
+              }}
+              title="Mark all on this page"
+            />
             <div>Order</div>
             <div>Customer</div>
             <div>Total</div>
@@ -181,8 +426,23 @@ function OrdersPage() {
           {paged.map((o) => (
             <div
               key={o.id}
-              className="grid grid-cols-1 items-center gap-3 border-b px-4 py-3 text-sm last:border-b-0 md:grid-cols-[1fr_1.2fr_1fr_0.8fr_0.8fr_auto]"
+              className={`grid grid-cols-1 items-center gap-3 border-b px-4 py-3 text-sm last:border-b-0 md:grid-cols-[auto_1fr_1.2fr_1fr_0.8fr_0.8fr_auto] ${
+                marked.includes(o.id) ? "bg-primary/5" : ""
+              }`}
             >
+              <label className="flex items-center gap-2 text-xs text-muted-foreground md:block">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 accent-[hsl(var(--primary))]"
+                  checked={marked.includes(o.id)}
+                  onChange={(e) =>
+                    setMarked((prev) =>
+                      e.target.checked ? [...prev, o.id] : prev.filter((id) => id !== o.id),
+                    )
+                  }
+                />
+                <span className="md:hidden">Mark</span>
+              </label>
               <div>
                 <div className="font-medium">{o.order_number}</div>
                 <div className="text-xs text-muted-foreground">
@@ -228,6 +488,7 @@ function OrdersPage() {
               </div>
             </div>
           ))}
+
         </div>
         <Pagination
           page={page}
