@@ -7,6 +7,8 @@ import { PageHeader, EmptyState } from "@/components/ui-kit";
 import { Loader2, Plus, Send, X, Trash2, FileText, Truck } from "lucide-react";
 import { toast } from "sonner";
 import { CourierTimeline, type CourierEvent } from "@/components/CourierTimeline";
+import { OrderTabs } from "@/components/OrderTabs";
+
 import {
   ORDER_TABS,
   courierStatusLabel,
