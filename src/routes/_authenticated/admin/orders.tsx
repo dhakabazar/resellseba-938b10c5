@@ -362,7 +362,7 @@ function AdminOrdersPage() {
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       ) : paged.length === 0 ? (
-        <EmptyState title="No orders" description="Ei status/filter e kono order nai." />
+        <EmptyState title="No orders" description="No orders match this filter." />
       ) : (
         <>
         <div className="surface-card overflow-hidden">
@@ -629,8 +629,7 @@ function OrderDrawer({
             <div className="flex items-start gap-2 rounded-md bg-amber-500/10 p-2 text-[11px] text-amber-700">
               <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0" />
               <span>
-                Order courier e chole gese — status change only super admin korte parbe. Courier webhook
-                automatic update pathabe; parcel ferot hate pele "Receive return" diye final korun.
+                Order is with the courier — only super admin can change status now. Courier updates arrive automatically; use "Receive return" once the parcel comes back.
               </span>
             </div>
           )}

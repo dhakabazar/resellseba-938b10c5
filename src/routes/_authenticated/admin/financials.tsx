@@ -31,7 +31,7 @@ export const Route = createFileRoute("/_authenticated/admin/financials")({
   head: () => ({
     meta: [
       { title: "Financial report — Admin" },
-      { name: "description", content: "Per-reseller, per-status ar per-product full financial report." },
+      { name: "description", content: "Full financial report by reseller, status and product." },
     ],
   }),
 });
@@ -54,7 +54,7 @@ const ADMIN_TABS: { key: AdminReportTab; label: string }[] = [
   { key: "products", label: "Product wise" },
   { key: "courier", label: "Courier wise" },
   { key: "trend", label: "Trend" },
-  { key: "how", label: "Hisab niyom" },
+  { key: "how", label: "How it's calculated" },
 ];
 
 function FinancialsPage() {
@@ -267,7 +267,7 @@ function FinancialsPage() {
         <StatCard
           label="Admin revenue (product+pkg)"
           value={bdt(report.realized.adminCost)}
-          hint="Delivered order er reseller-price + packaging"
+          hint="Reseller price + packaging on delivered orders"
           icon={<PiggyBank className="h-4 w-4" />}
         />
         <StatCard
@@ -279,7 +279,7 @@ function FinancialsPage() {
         <StatCard
           label="Leader commission"
           value={bdt(commissionTotals.due)}
-          hint={`Due ekhon · Paid ${bdt(commissionTotals.paid)}`}
+          hint={`Due now · Paid ${bdt(commissionTotals.paid)}`}
           icon={<Award className="h-4 w-4" />}
         />
         <StatCard
@@ -291,7 +291,7 @@ function FinancialsPage() {
         <StatCard
           label="Pending return (risk)"
           value={bdt(report.risk.gross)}
-          hint={`${report.risk.orders} order — receive korle returned hobe`}
+          hint={`${report.risk.orders} orders — becomes returned if received`}
           icon={<AlertTriangle className="h-4 w-4" />}
         />
         <StatCard
@@ -314,13 +314,13 @@ function FinancialsPage() {
       <>
       <ReportCard
         title="Order status wise report"
-        hint="Order list er tab gulor sathe ek e bucket."
+        hint="Matches the order list tab buckets."
         right={<CsvBtn onClick={exportStatus} />}
       >
         <StatusReportTable report={report} />
       </ReportCard>
 
-      <ReportCard title="Raw status split" hint="Prottek database status alada vabe.">
+      <ReportCard title="Raw status split" hint="Each database status shown separately.">
         <RawStatusList report={report} />
       </ReportCard>
       </>
@@ -329,13 +329,13 @@ function FinancialsPage() {
       {tab === "resellers" && (
       <ReportCard
         title="Per-reseller report"
-        hint="Tenant onujai — filtered date range er order + lifetime payout ledger."
+        hint="Filtered date range orders + lifetime payout ledger."
         right={
           <>
             <input
               value={resellerQ}
               onChange={(e) => setResellerQ(e.target.value)}
-              placeholder="Reseller khujun…"
+              placeholder="Search resellers…"
               className="h-8 rounded-md border bg-background px-2 text-xs outline-none focus:ring-2 focus:ring-ring"
             />
             <CsvBtn onClick={exportResellers} />
@@ -394,7 +394,7 @@ function FinancialsPage() {
             {perReseller.length === 0 && (
               <tr>
                 <td colSpan={11} className="p-8 text-center text-muted-foreground">
-                  Kono reseller nai.
+                  No resellers found.
                 </td>
               </tr>
             )}
@@ -406,7 +406,7 @@ function FinancialsPage() {
       {tab === "products" && (
       <ReportCard
         title="Product wise report"
-        hint="Kon product theke koto sell r koto profit."
+        hint="Sales and profit by product."
         right={<CsvBtn onClick={exportProducts} />}
       >
         <ProductReportTable products={report.products} />
@@ -414,7 +414,7 @@ function FinancialsPage() {
       )}
 
       {tab === "courier" && (
-      <ReportCard title="Courier wise report" hint="Booking count, courier charge r COD delivery charge.">
+      <ReportCard title="Courier wise report" hint="Booking count, courier charge and COD delivery charge.">
         <table className="w-full min-w-[520px] text-sm">
           <thead className="bg-muted/20 text-left text-[11px] uppercase text-muted-foreground">
             <tr>
@@ -436,7 +436,7 @@ function FinancialsPage() {
             {courierStats.rows.length === 0 && (
               <tr>
                 <td colSpan={4} className="p-8 text-center text-muted-foreground">
-                  Ei range e kono shipment nai.
+                  No shipments in this range.
                 </td>
               </tr>
             )}
@@ -465,13 +465,13 @@ function FinancialsPage() {
 
       {tab === "how" && (
       <div className="rounded-lg border bg-muted/30 p-4 text-xs text-muted-foreground">
-        <div className="mb-1 font-medium text-foreground">Kivabe calculate hoy</div>
+        <div className="mb-1 font-medium text-foreground">How it's calculated</div>
         <ul className="list-disc space-y-1 pl-4">
-          <li><b>Sell value</b> = reseller er selling price × qty (delivery baade).</li>
-          <li><b>Admin cost / revenue</b> = (reseller_price + packaging_cost) × qty — reseller admin k ei ta dey.</li>
-          <li><b>Delivery</b> customer theke collect hoy, courier k dewa hoy — profit e count hoy na.</li>
-          <li><b>Reseller profit</b> = Sell value − Admin cost. Delivered hole confirmed, pipeline mane running.</li>
-          <li><b>Leader commission</b> = delivered order er reseller profit × leader rate% (trigger e auto create).</li>
+          <li><b>Sell value</b> = reseller's selling price × qty (excluding delivery).</li>
+          <li><b>Admin cost / revenue</b> = (reseller_price + packaging_cost) × qty — paid by reseller to admin.</li>
+          <li><b>Delivery</b> is collected from customer and paid to courier — not counted in profit.</li>
+          <li><b>Reseller profit</b> = Sell value − Admin cost. Confirmed once delivered; pipeline means running.</li>
+          <li><b>Leader commission</b> = delivered order's reseller profit × leader rate% (auto-created via trigger).</li>
           <li><b>Due</b> = delivered profit − paid − pending payout.</li>
         </ul>
       </div>
