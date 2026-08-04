@@ -40,7 +40,7 @@ function AuditPage() {
       {loading ? (
         <div className="grid place-items-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
       ) : rows.length === 0 ? (
-        <EmptyState title="No audit events yet" description="Critical actions ekhane track hobe." />
+        <EmptyState title="No audit events yet" description="Critical actions will be tracked here." />
       ) : (
         <div className="surface-card divide-y overflow-hidden">
           {rows.map((r) => (
