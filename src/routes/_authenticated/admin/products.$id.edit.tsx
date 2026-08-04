@@ -367,13 +367,3 @@ function EditProduct() {
   );
 }
 
-function PRow({ label, value, strong, success }: { label: string; value: string; strong?: boolean; success?: boolean }) {
-  return (
-    <div className="flex items-center justify-between py-0.5">
-      <span className="text-muted-foreground">{label}</span>
-      <span className={`${strong ? "font-semibold" : ""} ${success === true ? "text-success" : success === false ? "text-destructive" : "text-foreground"}`}>
-        {value}
-      </span>
-    </div>
-  );
-}
