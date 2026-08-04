@@ -95,7 +95,7 @@ export function useStore(): StoreData {
 
 export type LoadState = "loading" | "missing" | "ready";
 
-export function useStoreLoader(code: string, themeOverride?: string | null) {
+export function useStoreLoader(code: string, themeOverride?: string | null, paletteOverride?: string | null) {
   const [state, setState] = useState<LoadState>("loading");
   const [data, setData] = useState<Omit<StoreData, "cart" | "cartCount"> | null>(null);
   const [cart, setCart] = useState<CartLine[]>([]);
