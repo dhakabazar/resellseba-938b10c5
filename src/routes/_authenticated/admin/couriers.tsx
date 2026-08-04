@@ -123,7 +123,17 @@ function CouriersPage() {
                   ))}
                 </div>
               )}
-              {r.provider === "steadfast" && <SteadfastExtras token={r.config?.webhook_token ?? ""} />}
+              {r.provider === "steadfast" && (
+                <SteadfastExtras
+                  token={r.config?.webhook_token ?? ""}
+                  onToken={(t) => {
+                    const copy = [...rows];
+                    copy[idx] = { ...r, config: { ...r.config, webhook_token: t } };
+                    setRows(copy);
+                  }}
+                />
+              )}
+
               <button onClick={() => save(r)} className="btn-brand mt-4 rounded-md px-3 py-1.5 text-xs font-medium">Save</button>
 
             </div>
