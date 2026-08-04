@@ -280,7 +280,9 @@ function OrderDrawer({
   const [busy, setBusy] = useState(false);
   const bookAuto = useServerFn(bookSteadfast);
   const bookPathaoFn = useServerFn(bookPathao);
+  const syncPathaoFn = useServerFn(syncPathaoStatus);
   const syncStatus = useServerFn(syncSteadfastStatus);
+
   const createReturn = useServerFn(steadfastCreateReturn);
   const bookCarrybeeFn = useServerFn(bookCarrybee);
   const syncCarrybeeFn = useServerFn(syncCarrybeeStatus);
