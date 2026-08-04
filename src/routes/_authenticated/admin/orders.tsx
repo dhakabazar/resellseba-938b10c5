@@ -162,9 +162,10 @@ function AdminOrdersPage() {
         <div className="grid place-items-center py-12">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
-      ) : orders.length === 0 ? (
-        <EmptyState title="No orders" description="Ei status e kono order nai." />
+      ) : paged.length === 0 ? (
+        <EmptyState title="No orders" description="Ei status/filter e kono order nai." />
       ) : (
+        <>
         <div className="surface-card overflow-hidden">
           <div className="hidden grid-cols-[1fr_1fr_1.2fr_1fr_1fr_auto] gap-4 border-b bg-muted/40 px-4 py-2 text-xs font-medium text-muted-foreground md:grid">
             <div>Order</div>
@@ -174,7 +175,7 @@ function AdminOrdersPage() {
             <div>Status</div>
             <div></div>
           </div>
-          {orders.map((o) => (
+          {paged.map((o) => (
             <div
               key={o.id}
               className="grid grid-cols-1 items-center gap-3 border-b px-4 py-3 text-sm last:border-b-0 md:grid-cols-[1fr_1fr_1.2fr_1fr_1fr_auto]"
@@ -210,7 +211,10 @@ function AdminOrdersPage() {
             </div>
           ))}
         </div>
+        <Pagination page={page} perPage={filters.perPage} total={filtered.length} onPage={setPage} />
+        </>
       )}
+
 
       {selected && (
         <OrderDrawer
