@@ -395,7 +395,8 @@ export const bookCarrybee = createServerFn({ method: "POST" })
         cod_amount: Number(o.collectable_amount ?? codAmount),
         delivery_charge: o.delivery_fee != null ? Number(o.delivery_fee) : null,
         cost: o.delivery_fee != null ? Number(o.delivery_fee) : 0,
-        request_payload: payload,
+        request_payload: payload as any,
+
         response_payload: body,
         booked_at: nowIso,
         last_event_at: nowIso,
