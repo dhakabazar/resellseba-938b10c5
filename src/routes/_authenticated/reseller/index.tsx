@@ -178,43 +178,36 @@ function ResellerDashboard() {
     <div>
       <PageHeader
         title="Dashboard"
-        description="Orders, listings, profit and payout — all in one place."
         actions={
-          <Link
-            to="/reseller/earnings"
-            className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm"
-          >
-            <Wallet className="h-4 w-4" /> Full earnings report
-          </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => void load(range)}
+              className="inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs"
+            >
+              {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+              Refresh
+            </button>
+            <Link
+              to="/reseller/earnings"
+              className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm"
+            >
+              <Wallet className="h-4 w-4" /> Full earnings report
+            </Link>
+          </div>
         }
       />
 
       <section className="mb-6">
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <div>
-            <h3 className="text-sm font-semibold">Overall summary (lifetime)</h3>
-            <p className="text-[11px] text-muted-foreground">Ei card gulo date filter er baire — sob somoy er total.</p>
-          </div>
-          <button
-            type="button"
-            onClick={() => void load(range)}
-            className="inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs"
-          >
-            {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
-            Refresh
-          </button>
-        </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           <StatCard
             label="Total earning (lifetime)"
             value={bdt(lifetime.delivered + commissionLifetime)}
-            hint={`Profit ${bdt(lifetime.delivered)} + commission ${bdt(commissionLifetime)}`}
             icon={<TrendingUp className="h-4 w-4" />}
           />
           <StatCard
             label="Available payout"
             value={bdt(lifetime.available)}
-            hint={`Requested ${bdt(lifetime.pendingPayout)}`}
             icon={<Wallet className="h-4 w-4" />}
           />
           <StatCard
@@ -230,17 +223,12 @@ function ResellerDashboard() {
           <StatCard
             label="Active products"
             value={listings.active}
-            hint={`${listings.total} total listing`}
             icon={<ShoppingBag className="h-4 w-4" />}
           />
         </div>
       </section>
 
-      <DateRangeBar
-        value={range}
-        onChange={setRange}
-        note="Nicher card, chart o report gulo ei date range onujai."
-      />
+      <DateRangeBar value={range} onChange={setRange} />
 
       {loading && !orders.length ? (
         <div className="grid place-items-center py-16">
@@ -252,25 +240,21 @@ function ResellerDashboard() {
             <StatCard
               label="Orders"
               value={report.all.orders}
-              hint={`Sell value ${bdt(report.all.gross)}`}
               icon={<ClipboardList className="h-4 w-4" />}
             />
             <StatCard
               label="Earned profit"
               value={bdt(report.realized.profit)}
-              hint={`${report.realized.orders} delivered order`}
               icon={<CheckCircle2 className="h-4 w-4" />}
             />
             <StatCard
               label="Pending profit"
               value={bdt(report.pipeline.profit)}
-              hint={`${report.pipeline.orders} order processing / on the way`}
               icon={<Clock className="h-4 w-4" />}
             />
             <StatCard
               label="Paid out (range)"
               value={bdt(paidInRange)}
-              hint={`Request pending ${bdt(requestedInRange)}`}
               icon={<Wallet className="h-4 w-4" />}
             />
           </div>
@@ -279,25 +263,21 @@ function ResellerDashboard() {
             <StatCard
               label="On the way (courier)"
               value={bdt(report.byStatusTab.courier?.customerTotal ?? 0)}
-              hint={`${report.byStatusTab.courier?.orders ?? 0} parcel`}
               icon={<Truck className="h-4 w-4" />}
             />
             <StatCard
               label="Return risk"
               value={bdt(report.risk.profit)}
-              hint={`${report.risk.orders} pending return`}
               icon={<AlertTriangle className="h-4 w-4" />}
             />
             <StatCard
               label="Lost (return + cancel)"
               value={bdt(report.lost.profit)}
-              hint={`Return rate ${report.returnRate.toFixed(1)}%`}
               icon={<AlertTriangle className="h-4 w-4" />}
             />
             <StatCard
               label="Delivery rate"
               value={`${report.deliveryRate.toFixed(1)}%`}
-              hint={`Avg order ${bdt(report.avgOrderValue)}`}
               icon={<Award className="h-4 w-4" />}
             />
           </div>
@@ -307,7 +287,6 @@ function ResellerDashboard() {
               <StatCard
                 label="Team commission (range)"
                 value={bdt(commissionInRange)}
-                hint={`Lifetime ${bdt(commissionLifetime)}`}
                 icon={<Award className="h-4 w-4" />}
               />
             </div>
@@ -346,13 +325,12 @@ function ResellerDashboard() {
           </div>
 
           <div className="mt-6">
-            <ReportCard title="Status wise money" hint="Order list tab gulor moto same bucket">
+            <ReportCard title="Status wise money">
               <StatusReportTable report={report} showAdminCost />
             </ReportCard>
 
             <ReportCard
               title="Top products"
-              hint="Kon product theke koto profit — delivered profit e asol earning"
               right={
                 <Link to="/reseller/listings" className="inline-flex items-center gap-1.5 text-xs text-primary">
                   <Package className="h-3.5 w-3.5" /> Manage listings
@@ -362,7 +340,7 @@ function ResellerDashboard() {
               <ProductReportTable products={report.products} limit={10} showCost />
             </ReportCard>
 
-            <ReportCard title="Day wise trend" hint="Selected date range er per-day summary">
+            <ReportCard title="Day wise trend">
               <TrendReportTable trend={report.trend} limit={31} />
             </ReportCard>
           </div>
