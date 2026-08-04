@@ -31,7 +31,6 @@ import { Route as AuthenticatedResellerMarketingRouteImport } from './routes/_au
 import { Route as AuthenticatedResellerListingsRouteImport } from './routes/_authenticated/reseller/listings'
 import { Route as AuthenticatedResellerEarningsRouteImport } from './routes/_authenticated/reseller/earnings'
 import { Route as AuthenticatedResellerDomainRouteImport } from './routes/_authenticated/reseller/domain'
-import { Route as AuthenticatedResellerDesignRouteImport } from './routes/_authenticated/reseller/design'
 import { Route as AuthenticatedResellerCommissionsRouteImport } from './routes/_authenticated/reseller/commissions'
 import { Route as AuthenticatedResellerCatalogRouteImport } from './routes/_authenticated/reseller/catalog'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin/settings'
@@ -179,12 +178,6 @@ const AuthenticatedResellerDomainRoute =
   AuthenticatedResellerDomainRouteImport.update({
     id: '/domain',
     path: '/domain',
-    getParentRoute: () => AuthenticatedResellerRouteRoute,
-  } as any)
-const AuthenticatedResellerDesignRoute =
-  AuthenticatedResellerDesignRouteImport.update({
-    id: '/design',
-    path: '/design',
     getParentRoute: () => AuthenticatedResellerRouteRoute,
   } as any)
 const AuthenticatedResellerCommissionsRoute =
@@ -382,7 +375,6 @@ export interface FileRoutesByFullPath {
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/reseller/catalog': typeof AuthenticatedResellerCatalogRoute
   '/reseller/commissions': typeof AuthenticatedResellerCommissionsRoute
-  '/reseller/design': typeof AuthenticatedResellerDesignRoute
   '/reseller/domain': typeof AuthenticatedResellerDomainRoute
   '/reseller/earnings': typeof AuthenticatedResellerEarningsRoute
   '/reseller/listings': typeof AuthenticatedResellerListingsRoute
@@ -432,7 +424,6 @@ export interface FileRoutesByTo {
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/reseller/catalog': typeof AuthenticatedResellerCatalogRoute
   '/reseller/commissions': typeof AuthenticatedResellerCommissionsRoute
-  '/reseller/design': typeof AuthenticatedResellerDesignRoute
   '/reseller/domain': typeof AuthenticatedResellerDomainRoute
   '/reseller/earnings': typeof AuthenticatedResellerEarningsRoute
   '/reseller/listings': typeof AuthenticatedResellerListingsRoute
@@ -487,7 +478,6 @@ export interface FileRoutesById {
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/_authenticated/reseller/catalog': typeof AuthenticatedResellerCatalogRoute
   '/_authenticated/reseller/commissions': typeof AuthenticatedResellerCommissionsRoute
-  '/_authenticated/reseller/design': typeof AuthenticatedResellerDesignRoute
   '/_authenticated/reseller/domain': typeof AuthenticatedResellerDomainRoute
   '/_authenticated/reseller/earnings': typeof AuthenticatedResellerEarningsRoute
   '/_authenticated/reseller/listings': typeof AuthenticatedResellerListingsRoute
@@ -542,7 +532,6 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/reseller/catalog'
     | '/reseller/commissions'
-    | '/reseller/design'
     | '/reseller/domain'
     | '/reseller/earnings'
     | '/reseller/listings'
@@ -592,7 +581,6 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/reseller/catalog'
     | '/reseller/commissions'
-    | '/reseller/design'
     | '/reseller/domain'
     | '/reseller/earnings'
     | '/reseller/listings'
@@ -646,7 +634,6 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/settings'
     | '/_authenticated/reseller/catalog'
     | '/_authenticated/reseller/commissions'
-    | '/_authenticated/reseller/design'
     | '/_authenticated/reseller/domain'
     | '/_authenticated/reseller/earnings'
     | '/_authenticated/reseller/listings'
@@ -843,13 +830,6 @@ declare module '@tanstack/react-router' {
       path: '/domain'
       fullPath: '/reseller/domain'
       preLoaderRoute: typeof AuthenticatedResellerDomainRouteImport
-      parentRoute: typeof AuthenticatedResellerRouteRoute
-    }
-    '/_authenticated/reseller/design': {
-      id: '/_authenticated/reseller/design'
-      path: '/design'
-      fullPath: '/reseller/design'
-      preLoaderRoute: typeof AuthenticatedResellerDesignRouteImport
       parentRoute: typeof AuthenticatedResellerRouteRoute
     }
     '/_authenticated/reseller/commissions': {
@@ -1128,7 +1108,6 @@ const AuthenticatedResellerOrdersRouteWithChildren =
 interface AuthenticatedResellerRouteRouteChildren {
   AuthenticatedResellerCatalogRoute: typeof AuthenticatedResellerCatalogRoute
   AuthenticatedResellerCommissionsRoute: typeof AuthenticatedResellerCommissionsRoute
-  AuthenticatedResellerDesignRoute: typeof AuthenticatedResellerDesignRoute
   AuthenticatedResellerDomainRoute: typeof AuthenticatedResellerDomainRoute
   AuthenticatedResellerEarningsRoute: typeof AuthenticatedResellerEarningsRoute
   AuthenticatedResellerListingsRoute: typeof AuthenticatedResellerListingsRoute
@@ -1145,7 +1124,6 @@ const AuthenticatedResellerRouteRouteChildren: AuthenticatedResellerRouteRouteCh
     AuthenticatedResellerCatalogRoute: AuthenticatedResellerCatalogRoute,
     AuthenticatedResellerCommissionsRoute:
       AuthenticatedResellerCommissionsRoute,
-    AuthenticatedResellerDesignRoute: AuthenticatedResellerDesignRoute,
     AuthenticatedResellerDomainRoute: AuthenticatedResellerDomainRoute,
     AuthenticatedResellerEarningsRoute: AuthenticatedResellerEarningsRoute,
     AuthenticatedResellerListingsRoute: AuthenticatedResellerListingsRoute,
