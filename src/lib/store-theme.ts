@@ -179,6 +179,26 @@ export function getStoreTheme(id?: string | null): StoreTheme {
   return STORE_THEMES.find((t) => t.id === id) ?? STORE_THEMES[0];
 }
 
+/** Relative luminance of a hex color (0 = black, 1 = white). */
+function luminance(hex: string): number {
+  const h = hex.trim().replace("#", "");
+  const full = h.length === 3 ? h.split("").map((c) => c + c).join("") : h;
+  if (full.length < 6) return 0;
+  const [r, g, b] = [0, 2, 4].map((i) => parseInt(full.slice(i, i + 2), 16) / 255);
+  const lin = (c: number) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+  return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+}
+
+/**
+ * Text color that stays readable on top of any brand color the reseller picks.
+ * Dark themes keep their off-white ink, light themes fall back to near-black.
+ */
+export function onColor(bg: string, theme: StoreTheme): string {
+  const light = theme.id === "noir" ? "#f4f2ee" : theme.id === "atelier" ? "#fffdf8" : "#ffffff";
+  const dark = theme.vars["--st-fg"] && !theme.layout.dark ? theme.vars["--st-fg"] : "#111114";
+  return luminance(bg) > 0.55 ? dark : light;
+}
+
 /** CSS custom properties for the storefront root element. */
 export function storeThemeStyle(
   theme: StoreTheme,
@@ -191,7 +211,8 @@ export function storeThemeStyle(
     ...theme.vars,
     "--st-primary": p,
     "--st-accent": a,
-    "--st-on-primary": theme.id === "atelier" ? "#fffdf8" : "#ffffff",
+    "--st-on-primary": onColor(p, theme),
+    "--st-on-accent": onColor(a, theme),
     /** legacy var kept for older components */
     "--store-primary": p,
   } as React.CSSProperties;

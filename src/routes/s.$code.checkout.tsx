@@ -1,11 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, Minus, Plus, ShieldCheck, Trash2 } from "lucide-react";
+import { ChevronDown, Loader2, Minus, Plus, ShieldCheck, Trash2, Truck } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { initBkash, initSslcommerz } from "@/lib/payments.functions";
 import { productDeliveryCharge, type DeliveryArea } from "@/lib/delivery";
+import { addressError, nameError, normalizePhone, phoneError, sanitizeName } from "@/lib/checkout-validate";
 import { addToCart, bdt, clearCart, removeFromCart, setCartQty } from "@/lib/store-cart";
 import { useStore } from "@/components/store/store-context";
 import { borderc, cx, EmptyState, GhostButton, Heading, muted, PrimaryButton } from "@/components/store/ui";
@@ -22,6 +23,12 @@ export const Route = createFileRoute("/s/$code/checkout")({
 
 type PayMethod = { method: string; label: string; instructions: string | null };
 
+const AREAS: { value: DeliveryArea; label: string }[] = [
+  { value: "inside_dhaka", label: "Inside Dhaka" },
+  { value: "sub_dhaka", label: "Sub Dhaka" },
+  { value: "outside_dhaka", label: "Outside Dhaka" },
+];
+
 function Checkout() {
   const { code } = Route.useParams();
   const { l: directListing, q: directQty } = Route.useSearch();
@@ -30,17 +37,16 @@ function Checkout() {
   const [methods, setMethods] = useState<PayMethod[]>([]);
   const [payMethod, setPayMethod] = useState<string>("cod");
   const [busy, setBusy] = useState(false);
+  const [noteOpen, setNoteOpen] = useState(false);
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
   const runSsl = useServerFn(initSslcommerz);
   const runBkash = useServerFn(initBkash);
 
   const [form, setForm] = useState({
     name: "",
     phone: "",
-    email: "",
     address: "",
-    city: "",
     area: "outside_dhaka" as DeliveryArea,
-    landmark: "",
     notes: "",
   });
 
@@ -94,21 +100,37 @@ function Checkout() {
     return { subtotal, ship, total: subtotal + ship };
   }, [lines, form.area]);
 
+  const errors = {
+    name: nameError(form.name),
+    phone: phoneError(form.phone),
+    address: addressError(form.address),
+  };
+  const valid = !errors.name && !errors.phone && !errors.address;
+
+  /** Extra payment options only render when the reseller actually enabled one. */
+  const extraMethods = methods.filter((m) => m.method !== "cod");
+  const codMeta = methods.find((m) => m.method === "cod");
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!lines.length) return;
+    setTouched({ name: true, phone: true, address: true });
+    if (!valid) {
+      toast.error(errors.name || errors.phone || errors.address || "Please check your details");
+      return;
+    }
     setBusy(true);
     const { data, error } = await supabase.rpc("create_public_order", {
       _reseller_code: code,
-      _customer_name: form.name,
-      _customer_phone: form.phone,
-      _customer_email: form.email || (null as never),
-      _address_line: form.address,
-      _city: form.city || (null as never),
+      _customer_name: sanitizeName(form.name).trim(),
+      _customer_phone: normalizePhone(form.phone),
+      _customer_email: null as never,
+      _address_line: form.address.trim(),
+      _city: null as never,
       _area: form.area,
-      _landmark: form.landmark || (null as never),
+      _landmark: null as never,
       _payment_method: payMethod as never,
-      _notes: form.notes || (null as never),
+      _notes: form.notes.trim() || (null as never),
       _items: lines.map((x) => ({ listing_id: x.listing.id, quantity: x.line.qty })) as never,
     });
     if (error) {
@@ -148,7 +170,7 @@ function Checkout() {
   }
 
   const inp = cx(
-    "w-full rounded-[var(--st-radius-sm)] border bg-[var(--st-surface)] px-3 py-2.5 text-sm text-[var(--st-fg)] outline-none placeholder:text-[var(--st-muted)] focus:border-[var(--st-primary)]",
+    "w-full rounded-[var(--st-radius-sm)] border bg-[var(--st-surface)] px-3.5 py-3 text-base text-[var(--st-fg)] outline-none placeholder:text-[var(--st-muted)] focus:border-[var(--st-primary)] sm:text-sm",
     borderc,
   );
 
@@ -165,99 +187,169 @@ function Checkout() {
     );
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
-      <Heading as="h1" className="text-2xl md:text-3xl">
-        {store.content.text("co_headline")}
-      </Heading>
-      <p className={cx("mt-1 text-sm", muted)}>{store.content.text("co_note")}</p>
+    <div className="mx-auto max-w-6xl px-4 pb-28 pt-6 sm:pb-10 sm:pt-8">
+      <div className="text-center sm:text-left">
+        <Heading as="h1" className="text-2xl sm:text-3xl">
+          {store.content.text("co_headline")}
+        </Heading>
+        <p className={cx("mx-auto mt-1.5 max-w-xl text-sm sm:mx-0", muted)}>{store.content.text("co_note")}</p>
+      </div>
 
+      <div className="mt-6 grid gap-5 lg:grid-cols-[1fr_380px]">
+        <form
+          onSubmit={submit}
+          noValidate
+          className={cx("space-y-4 rounded-[var(--st-radius)] border bg-[var(--st-surface)] p-4 sm:p-5", borderc)}
+        >
+          <Field label="Your name" required error={touched.name ? errors.name : null}>
+            <input
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: sanitizeName(e.target.value) })}
+              onBlur={() => setTouched((t) => ({ ...t, name: true }))}
+              autoComplete="name"
+              inputMode="text"
+              placeholder="Full name"
+              className={inp}
+            />
+          </Field>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_380px]">
-        <form onSubmit={submit} className={cx("space-y-4 rounded-[var(--st-radius)] border bg-[var(--st-surface)] p-5", borderc)}>
-          <div className="grid gap-3 md:grid-cols-2">
-            <Field label="Full name" required>
-              <input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className={inp} />
-            </Field>
-            <Field label="Phone" required>
-              <input required value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="017XXXXXXXX" className={inp} />
-            </Field>
-          </div>
-          <Field label="Email (optional)">
-            <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className={inp} />
+          <Field label="Mobile number" required error={touched.phone ? errors.phone : null} hint="11 digits, starts with 01">
+            <input
+              value={form.phone}
+              onChange={(e) => setForm({ ...form, phone: normalizePhone(e.target.value) })}
+              onBlur={() => setTouched((t) => ({ ...t, phone: true }))}
+              autoComplete="tel"
+              inputMode="numeric"
+              placeholder="01XXXXXXXXX"
+              className={cx(inp, "tracking-[0.06em]")}
+            />
           </Field>
-          <Field label="Full address" required>
-            <textarea required rows={2} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} className={inp} />
-          </Field>
-          <div className="grid gap-3 md:grid-cols-3">
-            <Field label="City">
-              <input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} className={inp} />
-            </Field>
-            <Field label="Delivery area" required>
-              <select value={form.area} onChange={(e) => setForm({ ...form, area: e.target.value as DeliveryArea })} className={inp}>
-                <option value="inside_dhaka">Inside Dhaka</option>
-                <option value="sub_dhaka">Sub Dhaka</option>
-                <option value="outside_dhaka">Outside Dhaka</option>
-              </select>
-            </Field>
-            <Field label="Landmark">
-              <input value={form.landmark} onChange={(e) => setForm({ ...form, landmark: e.target.value })} className={inp} />
-            </Field>
-          </div>
-          <Field label="Order notes">
-            <textarea rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} className={inp} />
+
+          <Field label="Full address" required error={touched.address ? errors.address : null}>
+            <textarea
+              rows={3}
+              value={form.address}
+              onChange={(e) => setForm({ ...form, address: e.target.value })}
+              onBlur={() => setTouched((t) => ({ ...t, address: true }))}
+              autoComplete="street-address"
+              placeholder="House / road, area, upazila, district"
+              className={inp}
+            />
           </Field>
 
           <div>
-            <div className="mb-2 text-xs font-semibold uppercase tracking-[0.14em]">Payment method</div>
-            <div className="grid gap-2 md:grid-cols-2">
-              {["cod", ...methods.map((m) => m.method).filter((m) => m !== "cod")].map((m) => {
-                const meta = methods.find((x) => x.method === m);
-                if (m !== "cod" && !meta) return null;
-                const label = m === "cod" ? "Cash on Delivery" : (meta?.label ?? m);
-                return (
-                  <button
-                    type="button"
-                    key={m}
-                    onClick={() => setPayMethod(m)}
-                    className={cx(
-                      "rounded-[var(--st-radius-sm)] border px-3 py-2.5 text-left text-sm",
-                      payMethod === m ? "border-[var(--st-primary)] bg-[var(--st-primary)]/8" : borderc,
-                    )}
-                  >
-                    <div className="font-medium capitalize">{label}</div>
-                    {meta?.instructions && <div className={cx("text-xs", muted)}>{meta.instructions}</div>}
-                  </button>
-                );
-              })}
+            <div className="mb-1.5 text-xs font-medium">Delivery area</div>
+            <div className="grid grid-cols-3 gap-2">
+              {AREAS.map((a) => (
+                <button
+                  key={a.value}
+                  type="button"
+                  onClick={() => setForm({ ...form, area: a.value })}
+                  aria-pressed={form.area === a.value}
+                  className={cx(
+                    "rounded-[var(--st-radius-sm)] border px-2 py-2.5 text-xs font-medium sm:text-sm",
+                    form.area === a.value
+                      ? "border-[var(--st-primary)] bg-[var(--st-primary)] text-[var(--st-on-primary)]"
+                      : cx(borderc, "text-[var(--st-fg)] hover:border-[var(--st-primary)]"),
+                  )}
+                >
+                  {a.label}
+                </button>
+              ))}
             </div>
           </div>
 
-          <PrimaryButton disabled={busy} className="w-full">
-            {busy && <Loader2 className="h-4 w-4 animate-spin" />} Place order — {bdt(totals.total)}
-          </PrimaryButton>
-          <p className={cx("flex items-center gap-2 text-xs", muted)}>
-            <ShieldCheck className="h-3.5 w-3.5" /> {store.content.text("co_trust")}
+          <div>
+            <button
+              type="button"
+              onClick={() => setNoteOpen((v) => !v)}
+              className={cx("inline-flex items-center gap-1.5 text-xs font-medium", muted, "hover:text-[var(--st-primary)]")}
+            >
+              <Plus className={cx("h-3.5 w-3.5 transition-transform", noteOpen && "rotate-45")} />
+              Add note (optional)
+            </button>
+            {noteOpen && (
+              <textarea
+                rows={2}
+                autoFocus
+                value={form.notes}
+                onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                placeholder="Anything we should know about your order?"
+                className={cx(inp, "mt-2")}
+              />
+            )}
+          </div>
+
+          {extraMethods.length > 0 && (
+            <div>
+              <div className="mb-2 text-xs font-semibold uppercase tracking-[0.14em]">Payment method</div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {[{ method: "cod", label: "Cash on Delivery", instructions: codMeta?.instructions ?? null }, ...extraMethods].map((m) => (
+                  <button
+                    type="button"
+                    key={m.method}
+                    onClick={() => setPayMethod(m.method)}
+                    className={cx(
+                      "rounded-[var(--st-radius-sm)] border px-3 py-2.5 text-left text-sm",
+                      payMethod === m.method
+                        ? "border-[var(--st-primary)] bg-[var(--st-primary)]/10 text-[var(--st-fg)]"
+                        : borderc,
+                    )}
+                  >
+                    <div className="font-medium capitalize">{m.label}</div>
+                    {m.instructions && <div className={cx("text-xs", muted)}>{m.instructions}</div>}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {extraMethods.length === 0 && (
+            <div className={cx("flex items-start gap-2 rounded-[var(--st-radius-sm)] border border-dashed p-3 text-xs", borderc, muted)}>
+              <Truck className="mt-0.5 h-4 w-4 shrink-0 text-[var(--st-primary)]" />
+              <span>Cash on Delivery — pay the courier when your parcel arrives.</span>
+            </div>
+          )}
+
+          <div className="hidden sm:block">
+            <PrimaryButton disabled={busy} className="w-full">
+              {busy && <Loader2 className="h-4 w-4 animate-spin" />} Place order — {bdt(totals.total)}
+            </PrimaryButton>
+          </div>
+          <p className={cx("flex items-center justify-center gap-2 text-xs sm:justify-start", muted)}>
+            <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-[var(--st-primary)]" /> {store.content.text("co_trust")}
           </p>
 
+          {/* Sticky mobile CTA — same form submit, always in thumb reach. */}
+          <div
+            className={cx(
+              "fixed inset-x-0 bottom-0 z-30 border-t bg-[var(--st-surface)] p-3 shadow-[0_-10px_30px_-24px_rgba(0,0,0,0.6)] sm:hidden",
+              borderc,
+            )}
+          >
+            <PrimaryButton disabled={busy} className="w-full">
+              {busy && <Loader2 className="h-4 w-4 animate-spin" />} Place order — {bdt(totals.total)}
+            </PrimaryButton>
+          </div>
         </form>
 
-        <aside className={cx("h-fit space-y-4 rounded-[var(--st-radius)] border bg-[var(--st-surface)] p-5", borderc)}>
+        <aside className={cx("h-fit space-y-4 rounded-[var(--st-radius)] border bg-[var(--st-surface)] p-4 sm:p-5", borderc)}>
           <Heading className="text-base">Your cart ({store.cartCount})</Heading>
           <div className="space-y-3">
             {lines.map(({ line, listing }) => {
               const img = store.image(listing);
               return (
                 <div key={listing.id} className={cx("flex gap-3 rounded-[var(--st-radius-sm)] border p-3", borderc)}>
-                  {img && <img src={img} alt="" className="h-16 w-16 rounded-[var(--st-radius-sm)] object-cover" />}
+                  {img && <img src={img} alt="" className="h-16 w-16 shrink-0 rounded-[var(--st-radius-sm)] object-cover" />}
                   <div className="min-w-0 flex-1">
-                    <div className="line-clamp-2 text-sm">{store.title(listing)}</div>
+                    <div className="line-clamp-2 text-sm text-[var(--st-fg)]">{store.title(listing)}</div>
                     <div className="mt-1.5 flex items-center gap-2">
                       <div className={cx("inline-flex items-center rounded-[var(--st-radius-sm)] border", borderc)}>
                         <button
                           type="button"
                           aria-label="Decrease"
                           onClick={() => setCartQty(code, listing.id, line.qty - 1)}
-                          className="px-2 py-1"
+                          className="px-2.5 py-1.5"
                         >
                           <Minus className="h-3 w-3" />
                         </button>
@@ -266,7 +358,7 @@ function Checkout() {
                           type="button"
                           aria-label="Increase"
                           onClick={() => setCartQty(code, listing.id, line.qty + 1)}
-                          className="px-2 py-1"
+                          className="px-2.5 py-1.5"
                         >
                           <Plus className="h-3 w-3" />
                         </button>
@@ -275,11 +367,11 @@ function Checkout() {
                         type="button"
                         aria-label="Remove"
                         onClick={() => removeFromCart(code, listing.id)}
-                        className={cx("p-1", muted)}
+                        className={cx("p-1.5", muted, "hover:text-[var(--st-primary)]")}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
-                      <span className="ml-auto text-sm font-semibold">
+                      <span className="ml-auto text-sm font-semibold text-[var(--st-fg)]">
                         {bdt(Number(listing.selling_price) * line.qty)}
                       </span>
                     </div>
@@ -294,8 +386,12 @@ function Checkout() {
             <Row label="Delivery charge" value={totals.ship ? bdt(totals.ship) : "Free"} />
             <Row label="Total payable" value={bdt(totals.total)} bold />
           </div>
-          <Link to="/s/$code" params={{ code }} className={cx("block text-center text-xs hover:text-[var(--st-primary)]", muted)}>
-            ← Continue shopping
+          <Link
+            to="/s/$code"
+            params={{ code }}
+            className={cx("flex items-center justify-center gap-1 text-xs hover:text-[var(--st-primary)]", muted)}
+          >
+            <ChevronDown className="h-3.5 w-3.5 rotate-90" /> Continue shopping
           </Link>
         </aside>
       </div>
@@ -303,13 +399,29 @@ function Checkout() {
   );
 }
 
-function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
+function Field({
+  label,
+  required,
+  hint,
+  error,
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  hint?: string;
+  error?: string | null;
+  children: React.ReactNode;
+}) {
   return (
     <div>
-      <label className="mb-1 block text-xs font-medium">
-        {label} {required && <span className="text-[var(--st-primary)]">*</span>}
-      </label>
+      <div className="mb-1.5 flex items-baseline justify-between gap-2">
+        <label className="text-xs font-medium text-[var(--st-fg)]">
+          {label} {required && <span className="text-[var(--st-primary)]">*</span>}
+        </label>
+        {hint && !error && <span className={cx("text-[11px]", muted)}>{hint}</span>}
+      </div>
       {children}
+      {error && <p className="mt-1 text-[11px] font-medium text-[var(--st-primary)]">{error}</p>}
     </div>
   );
 }

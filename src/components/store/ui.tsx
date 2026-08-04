@@ -21,8 +21,12 @@ export function Heading({
 }) {
   return (
     <As
-      className={cx("font-[var(--st-font-head)] text-[var(--st-fg)]", className)}
-      style={{ fontWeight: "var(--st-head-weight)" as unknown as number, letterSpacing: "var(--st-track)" }}
+      className={cx("text-[var(--st-fg)]", className)}
+      style={{
+        fontFamily: "var(--st-font-head)",
+        fontWeight: "var(--st-head-weight)" as unknown as number,
+        letterSpacing: "var(--st-track)",
+      }}
     >
       {children}
     </As>
@@ -95,8 +99,8 @@ export function GhostButton({
 export function Price({ value, className }: { value: number; className?: string }) {
   return (
     <span
-      className={cx("font-[var(--st-font-head)] text-[var(--st-primary)]", className)}
-      style={{ fontWeight: "var(--st-head-weight)" as unknown as number }}
+      className={cx("text-[var(--st-primary)]", className)}
+      style={{ fontFamily: "var(--st-font-head)", fontWeight: "var(--st-head-weight)" as unknown as number }}
     >
       {bdt(value)}
     </span>
@@ -153,8 +157,9 @@ export function ProductCard({ listing }: { listing: StoreListing }) {
           className={cx(
             "line-clamp-2 text-[var(--st-fg)]",
             variant === "compact" ? "text-[13px] leading-snug" : "text-sm",
-            variant === "bare" && "font-[var(--st-font-head)] text-base",
+            variant === "bare" && "text-base",
           )}
+          style={variant === "bare" ? { fontFamily: "var(--st-font-head)" } : undefined}
         >
           {title(listing)}
         </h3>

@@ -142,7 +142,7 @@ export function StoreHeader() {
                     <Phone className="h-4 w-4" /> {settings.support_phone}
                   </a>
                 )}
-                <div className="rounded-[var(--st-radius-sm)] bg-[var(--st-surface)]">
+                <div className="rounded-[var(--st-radius-sm)] bg-[var(--st-surface)] text-[var(--st-fg)]">
                   <CartButton />
                 </div>
               </div>
