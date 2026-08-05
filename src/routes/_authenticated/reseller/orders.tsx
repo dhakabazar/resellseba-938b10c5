@@ -267,17 +267,17 @@ function OrdersPage() {
         title="Orders"
         description=""
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex w-full items-center gap-2 sm:w-auto">
             <button
               onClick={() => exportCsv(visible)}
               disabled={visible.length === 0}
-              className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm disabled:opacity-50"
+              className="inline-flex flex-1 items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm disabled:opacity-50 sm:flex-none"
             >
-              <Download className="h-4 w-4" /> Export CSV
+              <Download className="h-4 w-4" /> <span className="hidden xs:inline sm:inline">Export</span> CSV
             </button>
             <button
               onClick={() => setOpen(true)}
-              className="btn-brand inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium"
+              className="btn-brand inline-flex flex-1 items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium sm:flex-none"
             >
               <Plus className="h-4 w-4" /> New order
             </button>
@@ -287,12 +287,16 @@ function OrdersPage() {
 
       {/* Merged search: mode select inside the box */}
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <OrderSearch
-          mode={searchMode}
-          onMode={setSearchMode}
-          value={filters.q}
-          onChange={(v) => setFilters({ ...filters, q: v })}
-        />
+        <div className="w-full sm:w-auto sm:min-w-[18rem] sm:flex-1">
+          <OrderSearch
+            mode={searchMode}
+            onMode={setSearchMode}
+            value={filters.q}
+            onChange={(v) => setFilters({ ...filters, q: v })}
+          />
+        </div>
+
+
 
 
         <button
