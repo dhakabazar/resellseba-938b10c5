@@ -273,7 +273,7 @@ function OrdersPage() {
               disabled={visible.length === 0}
               className="inline-flex flex-1 items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm disabled:opacity-50 sm:flex-none"
             >
-              <Download className="h-4 w-4" /> <span className="hidden xs:inline sm:inline">Export</span> CSV
+              <Download className="h-4 w-4" /> Export CSV
             </button>
             <button
               onClick={() => setOpen(true)}
