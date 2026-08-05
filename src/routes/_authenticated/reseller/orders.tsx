@@ -1,12 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { productDeliveryCharge } from "@/lib/delivery";
+import { productDeliveryCharge, deliveryLabel } from "@/lib/delivery";
+import { addressError, nameError, normalizePhone, phoneError, sanitizeName } from "@/lib/checkout-validate";
 import { useAuth } from "@/lib/use-auth";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
 import {
   Loader2,
   Plus,
+  Minus,
   X,
   Trash2,
   FileText,
@@ -517,30 +519,62 @@ function NewOrderModal({
   const [note, setNote] = useState("");
   const [lines, setLines] = useState<Line[]>([]);
   const [busy, setBusy] = useState(false);
+  const [query, setQuery] = useState("");
+
+  /** Search first, then pick — same delivery rules as the storefront checkout. */
+  const results = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const pool = listings.filter((l) => l.products);
+    if (!q) return pool.slice(0, 8);
+    return pool
+      .filter((l) => (l.products?.name ?? "").toLowerCase().includes(q))
+      .slice(0, 20);
+  }, [listings, query]);
+
+  const picked = useMemo(
+    () =>
+      lines
+        .map((line) => ({ line, l: listings.find((x) => x.id === line.listing_id) }))
+        .filter((x) => x.l?.products) as { line: Line; l: Listing }[],
+    [lines, listings],
+  );
 
   const totals = useMemo(() => {
     let subtotal = 0;
     let saCost = 0;
     let shipping = 0;
-    for (const line of lines) {
-      const l = listings.find((x) => x.id === line.listing_id);
-      if (!l?.products) continue;
+    let shipFrom: string | null = null;
+    for (const { line, l } of picked) {
+      const p = l.products!;
       subtotal += Number(l.selling_price) * line.qty;
-      saCost += (Number(l.products.reseller_price) + Number(l.products.packaging_cost)) * line.qty;
-      const dc = productDeliveryCharge(l.products, area);
-      shipping = Math.max(shipping, dc);
+      saCost += (Number(p.reseller_price) + Number(p.packaging_cost)) * line.qty;
+      const dc = productDeliveryCharge(p, area);
+      if (dc > shipping) {
+        shipping = dc;
+        shipFrom = p.name;
+      }
     }
-    const total = subtotal + shipping;
-    const profit = subtotal - saCost;
-    return { subtotal, shipping, total, saCost, profit };
-  }, [lines, listings, area]);
+    return { subtotal, shipping, total: subtotal + shipping, saCost, profit: subtotal - saCost, shipFrom };
+  }, [picked, area]);
 
-  function addLine() {
-    if (!listings[0]) return toast.error("First add active listings from Catalog.");
-    setLines((prev) => [...prev, { listing_id: listings[0].id, qty: 1 }]);
+  const errors = {
+    name: nameError(name),
+    phone: phoneError(phone),
+    address: addressError(address),
+  };
+
+  function pick(id: string) {
+    setLines((prev) =>
+      prev.some((l) => l.listing_id === id)
+        ? prev.map((l) => (l.listing_id === id ? { ...l, qty: l.qty + 1 } : l))
+        : [...prev, { listing_id: id, qty: 1 }],
+    );
+    setQuery("");
   }
-  function updateLine(i: number, patch: Partial<Line>) {
-    setLines((prev) => prev.map((l, idx) => (idx === i ? { ...l, ...patch } : l)));
+  function setQty(i: number, qty: number) {
+    setLines((prev) =>
+      prev.flatMap((l, idx) => (idx === i ? (qty < 1 ? [] : [{ ...l, qty }]) : [l])),
+    );
   }
   function removeLine(i: number) {
     setLines((prev) => prev.filter((_, idx) => idx !== i));
@@ -548,7 +582,9 @@ function NewOrderModal({
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (lines.length === 0) return toast.error("Select at least one product.");
+    if (picked.length === 0) return toast.error("Select at least one product.");
+    const firstError = errors.name || errors.phone || errors.address;
+    if (firstError) return toast.error(firstError);
     setBusy(true);
     try {
       // A reseller-created order is already confirmed, so it goes straight to the admin queue.
@@ -557,9 +593,9 @@ function NewOrderModal({
         .from("orders")
         .insert({
           reseller_id: resellerId,
-          customer_name: name,
-          customer_phone: phone,
-          address_line: address,
+          customer_name: sanitizeName(name).trim(),
+          customer_phone: normalizePhone(phone),
+          address_line: address.trim(),
           area,
           payment_method: paymentMethod as any,
           reseller_note: note || null,
@@ -576,8 +612,7 @@ function NewOrderModal({
         .single();
       if (error) throw error;
 
-      const items = lines.map((line) => {
-        const l = listings.find((x) => x.id === line.listing_id)!;
+      const items = picked.map(({ line, l }) => {
         const p = l.products!;
         const saPrice = Number(p.reseller_price) + Number(p.packaging_cost);
         return {
@@ -606,147 +641,229 @@ function NewOrderModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4">
       <form
         onSubmit={submit}
-        className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl bg-background p-6 shadow-2xl"
+        className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-t-2xl border bg-background shadow-2xl sm:max-h-[90vh] sm:rounded-xl"
       >
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">New order</h2>
-          <button type="button" onClick={onClose} className="rounded-md p-1 hover:bg-accent">
+        <div className="flex items-center justify-between gap-2 border-b px-4 py-3 sm:px-6">
+          <div>
+            <h2 className="text-base font-semibold sm:text-lg">New order</h2>
+            <p className="text-xs text-muted-foreground">
+              Product search kore add korun — delivery charge product onujai apply hobe.
+            </p>
+          </div>
+          <button type="button" onClick={onClose} className="rounded-md p-1.5 hover:bg-accent">
             <X className="h-4 w-4" />
           </button>
         </div>
 
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-          <Field label="Customer name">
-            <input
-              required
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="input"
-            />
-          </Field>
-          <Field label="Phone">
-            <input
-              required
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className="input"
-            />
-          </Field>
-          <Field label="Delivery area" className="md:col-span-2">
-            <select
-              value={area}
-              onChange={(e) => setArea(e.target.value as any)}
-              className="input"
-            >
-              <option value="inside_dhaka">Inside Dhaka</option>
-              <option value="sub_dhaka">Sub Dhaka</option>
-              <option value="outside_dhaka">Outside Dhaka</option>
-            </select>
-          </Field>
-          <Field label="Full address" className="md:col-span-2">
-            <textarea
-              required
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              rows={2}
-              className="input"
-            />
-          </Field>
-          <Field label="Payment method">
-            <select
-              value={paymentMethod}
-              onChange={(e) => setPaymentMethod(e.target.value)}
-              className="input"
-            >
-              <option value="cod">Cash on Delivery</option>
-              <option value="bkash">bKash</option>
-              <option value="nagad">Nagad</option>
-              <option value="rocket">Rocket</option>
-              <option value="sslcommerz">SSLCommerz</option>
-            </select>
-          </Field>
-          <Field label="Note (optional)">
-            <input value={note} onChange={(e) => setNote(e.target.value)} className="input" />
-          </Field>
-        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6">
+          <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
+            <div className="space-y-4">
+              {/* Product picker */}
+              <div className="rounded-lg border p-3">
+                <div className="mb-2 text-sm font-medium">Products</div>
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <input
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="Search your listings by product name…"
+                    className="input pl-9"
+                  />
+                </div>
 
-        <div className="mt-5">
-          <div className="mb-2 flex items-center justify-between">
-            <div className="text-sm font-medium">Products</div>
-            <button
-              type="button"
-              onClick={addLine}
-              className="text-xs text-primary hover:underline"
-            >
-              + Add product
-            </button>
-          </div>
-          <div className="space-y-2">
-            {lines.map((line, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <select
-                  value={line.listing_id}
-                  onChange={(e) => updateLine(i, { listing_id: e.target.value })}
-                  className="input flex-1"
-                >
-                  {listings.map((l) => (
-                    <option key={l.id} value={l.id}>
-                      {l.products?.name} — ৳{l.selling_price}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  type="number"
-                  min={1}
-                  value={line.qty}
-                  onChange={(e) => updateLine(i, { qty: Number(e.target.value) || 1 })}
-                  className="input w-20"
-                />
-                <button
-                  type="button"
-                  onClick={() => removeLine(i)}
-                  className="rounded-md p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
+                {results.length === 0 ? (
+                  <div className="mt-2 rounded-md border border-dashed p-3 text-center text-xs text-muted-foreground">
+                    {listings.length === 0
+                      ? "First add active listings from Catalog."
+                      : "No product matched your search."}
+                  </div>
+                ) : (
+                  <div className="mt-2 max-h-56 divide-y overflow-y-auto rounded-md border">
+                    {results.map((l) => {
+                      const p = l.products!;
+                      const dc = productDeliveryCharge(p, area);
+                      const inCart = lines.some((x) => x.listing_id === l.id);
+                      return (
+                        <button
+                          type="button"
+                          key={l.id}
+                          onClick={() => pick(l.id)}
+                          className="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-accent/50"
+                        >
+                          {p.og_image_url && (
+                            <img src={p.og_image_url} alt="" className="h-9 w-9 shrink-0 rounded object-cover" />
+                          )}
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-sm">{p.name}</span>
+                            <span className="block text-[11px] text-muted-foreground">
+                              ৳{Number(l.selling_price).toFixed(0)} · {deliveryLabel(p)} · this area ৳{dc.toFixed(0)}
+                            </span>
+                          </span>
+                          <span className="shrink-0 text-xs font-medium text-primary">
+                            {inCart ? "+1" : "Add"}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                <div className="mt-3 space-y-2">
+                  {picked.length === 0 && (
+                    <div className="rounded-md border border-dashed p-4 text-center text-xs text-muted-foreground">
+                      No products added yet.
+                    </div>
+                  )}
+                  {picked.map(({ line, l }, i) => {
+                    const p = l.products!;
+                    const dc = productDeliveryCharge(p, area);
+                    return (
+                      <div key={l.id} className="flex items-center gap-3 rounded-md border p-2.5">
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-sm">{p.name}</div>
+                          <div className="text-[11px] text-muted-foreground">
+                            ৳{Number(l.selling_price).toFixed(0)} × {line.qty} · delivery ৳{dc.toFixed(0)}
+                            {totals.shipping > dc && " (not applied — higher one wins)"}
+                          </div>
+                        </div>
+                        <div className="inline-flex shrink-0 items-center rounded-md border">
+                          <button type="button" onClick={() => setQty(i, line.qty - 1)} className="px-2 py-1.5">
+                            <Minus className="h-3 w-3" />
+                          </button>
+                          <span className="min-w-[2.5ch] text-center text-xs font-semibold">{line.qty}</span>
+                          <button type="button" onClick={() => setQty(i, line.qty + 1)} className="px-2 py-1.5">
+                            <Plus className="h-3 w-3" />
+                          </button>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeLine(i)}
+                          className="rounded-md p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            ))}
-            {lines.length === 0 && (
-              <div className="rounded-md border border-dashed p-4 text-center text-xs text-muted-foreground">
-                No products added yet.
+
+              {/* Customer */}
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                <Field label="Customer name">
+                  <input
+                    required
+                    value={name}
+                    onChange={(e) => setName(sanitizeName(e.target.value))}
+                    placeholder="Full name"
+                    className="input"
+                  />
+                  {name && errors.name && <FieldError text={errors.name} />}
+                </Field>
+                <Field label="Phone">
+                  <input
+                    required
+                    value={phone}
+                    onChange={(e) => setPhone(normalizePhone(e.target.value))}
+                    inputMode="numeric"
+                    placeholder="01XXXXXXXXX"
+                    className="input"
+                  />
+                  {phone && errors.phone && <FieldError text={errors.phone} />}
+                </Field>
+                <Field label="Delivery area" className="md:col-span-2">
+                  <div className="grid grid-cols-3 gap-2">
+                    {(
+                      [
+                        ["inside_dhaka", "Inside Dhaka"],
+                        ["sub_dhaka", "Sub Dhaka"],
+                        ["outside_dhaka", "Outside Dhaka"],
+                      ] as const
+                    ).map(([v, label]) => (
+                      <button
+                        key={v}
+                        type="button"
+                        onClick={() => setArea(v)}
+                        aria-pressed={area === v}
+                        className={`rounded-md border px-2 py-2 text-xs font-medium ${
+                          area === v ? "border-primary bg-primary/10 text-primary" : "hover:bg-accent"
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </Field>
+                <Field label="Full address" className="md:col-span-2">
+                  <textarea
+                    required
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    rows={2}
+                    placeholder="House / road, area, upazila, district"
+                    className="input"
+                  />
+                  {address && errors.address && <FieldError text={errors.address} />}
+                </Field>
+                <Field label="Payment method">
+                  <select
+                    value={paymentMethod}
+                    onChange={(e) => setPaymentMethod(e.target.value)}
+                    className="input"
+                  >
+                    <option value="cod">Cash on Delivery</option>
+                    <option value="bkash">bKash</option>
+                    <option value="nagad">Nagad</option>
+                    <option value="rocket">Rocket</option>
+                    <option value="sslcommerz">SSLCommerz</option>
+                  </select>
+                </Field>
+                <Field label="Note (optional)">
+                  <input value={note} onChange={(e) => setNote(e.target.value)} className="input" />
+                </Field>
               </div>
-            )}
+            </div>
+
+            <aside className="h-fit space-y-1 rounded-lg border bg-muted/40 p-4 text-sm lg:sticky lg:top-0">
+              <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Summary
+              </div>
+              <Row label="Subtotal" value={`৳${totals.subtotal.toFixed(0)}`} />
+              <Row label="Delivery charge" value={totals.shipping ? `৳${totals.shipping.toFixed(0)}` : "Free"} />
+              {picked.length > 1 && (
+                <p className="text-[11px] leading-snug text-muted-foreground">
+                  {totals.shipping
+                    ? `Highest single-product charge applied${totals.shipFrom ? ` (${totals.shipFrom})` : ""} — charges are not added up.`
+                    : "Free delivery on this order."}
+                </p>
+              )}
+              <Row label="Total" value={`৳${totals.total.toFixed(0)}`} bold />
+              <Row label="Your profit" value={`৳${totals.profit.toFixed(0)}`} muted />
+            </aside>
           </div>
         </div>
 
-        <div className="mt-5 space-y-1 rounded-lg bg-muted/40 p-4 text-sm">
-          <Row label="Subtotal" value={`৳${totals.subtotal.toFixed(0)}`} />
-          <Row label="Shipping" value={`৳${totals.shipping.toFixed(0)}`} />
-          <Row label="Total" value={`৳${totals.total.toFixed(0)}`} bold />
-          <Row label="Your profit" value={`৳${totals.profit.toFixed(0)}`} muted />
-        </div>
-
-        <div className="mt-6 flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-md border px-4 py-2 text-sm"
-          >
+        <div className="flex items-center justify-end gap-2 border-t px-4 py-3 sm:px-6">
+          <button type="button" onClick={onClose} className="rounded-md border px-4 py-2 text-sm">
             Cancel
           </button>
           <button
             disabled={busy}
             className="btn-brand inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium"
           >
-            {busy && <Loader2 className="h-4 w-4 animate-spin" />} Create order
+            {busy && <Loader2 className="h-4 w-4 animate-spin" />} Create order — ৳{totals.total.toFixed(0)}
           </button>
         </div>
       </form>
     </div>
   );
+}
+
+function FieldError({ text }: { text: string }) {
+  return <p className="mt-1 text-[11px] font-medium text-destructive">{text}</p>;
 }
 
 function Field({
