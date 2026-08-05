@@ -233,6 +233,20 @@ function OrdersPage() {
     setPage(1);
   }, [filters, tab, searchMode]);
   const paged = usePaginated(visible, page, filters.perPage);
+  const stats = useMemo(
+    () =>
+      visible.reduce(
+        (a, o) => ({
+          count: a.count + 1,
+          total: a.total + (Number(o.total) || 0),
+          shipping: a.shipping + (Number(o.shipping_cost) || 0),
+          profit: a.profit + (Number(o.reseller_profit) || 0),
+        }),
+        { count: 0, total: 0, shipping: 0, profit: 0 },
+      ),
+    [visible],
+  );
+
   const tabCount = (key: OrderTabKey) => {
     const sts = ORDER_TABS.find((t) => t.key === key)?.statuses ?? [];
     return sts.length === 0 ? orders.length : orders.filter((o) => (sts as string[]).includes(o.status)).length;
