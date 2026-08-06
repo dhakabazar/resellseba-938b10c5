@@ -12,7 +12,16 @@ import {
   Download,
   Plus,
   X,
+  MoreVertical,
+  Eye,
+  Phone,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { NewOrderModal } from "@/components/NewOrderModal";
 import { toast } from "sonner";
 import { CourierTimeline, type CourierEvent } from "@/components/CourierTimeline";
@@ -399,28 +408,30 @@ function OrdersPage() {
       ) : (
         <>
         <div className="surface-card overflow-hidden">
-          <div className="hidden grid-cols-[auto_1.1fr_1.3fr_1.4fr_0.9fr_0.8fr_0.9fr_auto] gap-3 border-b bg-muted/40 px-4 py-2 text-xs font-medium text-muted-foreground md:grid">
-            <input
-              type="checkbox"
-              className="h-4 w-4 accent-[hsl(var(--primary))]"
-              checked={paged.length > 0 && paged.every((o) => marked.includes(o.id))}
-              onChange={(e) => {
-                const ids = paged.map((o) => o.id);
-                setMarked((prev) =>
-                  e.target.checked
-                    ? [...new Set([...prev, ...ids])]
-                    : prev.filter((id) => !ids.includes(id)),
-                );
-              }}
-              title="Mark all on this page"
-            />
+          <div className="hidden grid-cols-[auto_1.1fr_1.3fr_1.4fr_0.9fr_0.8fr_0.9fr_auto] gap-3 border-b bg-muted/40 px-4 py-3 text-xs font-medium text-muted-foreground md:grid">
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                className="h-4 w-4 accent-[hsl(var(--primary))]"
+                checked={paged.length > 0 && paged.every((o) => marked.includes(o.id))}
+                onChange={(e) => {
+                  const ids = paged.map((o) => o.id);
+                  setMarked((prev) =>
+                    e.target.checked
+                      ? [...new Set([...prev, ...ids])]
+                      : prev.filter((id) => !ids.includes(id)),
+                  );
+                }}
+                title="Mark all on this page"
+              />
+            </div>
             <div>Order</div>
             <div>Customer</div>
             <div>Items</div>
             <div>Total</div>
             <div>Profit</div>
             <div>Status</div>
-            <div></div>
+            <div className="text-right pr-2">Actions</div>
           </div>
           {paged.map((o) => {
             const items = itemsByOrder.get(o.id) ?? [];
@@ -431,32 +442,49 @@ function OrdersPage() {
             const isMarked = marked.includes(o.id);
             const mark = (checked: boolean) =>
               setMarked((prev) => (checked ? [...prev, o.id] : prev.filter((id) => id !== o.id)));
-            const actions = (
-              <>
-                <button
-                  onClick={() => setSelected(o)}
-                  className="rounded-md border px-2 py-1 text-xs hover:bg-accent"
-                >
-                  Details
-                </button>
-                <Link
-                  to="/reseller/orders/$id/invoice"
-                  params={{ id: o.id }}
-                  target="_blank"
-                  className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs hover:bg-accent"
-                >
-                  <FileText className="h-3.5 w-3.5" /> Invoice
-                </Link>
-                {!o.forwarded_to_admin && (o.status === "pending" || o.status === "draft") && (
-                  <button
-                    onClick={() => remove(o.id)}
-                    className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                )}
-              </>
-            );
+                const actions = (
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setSelected(o)}
+                      className="rounded-md border px-2.5 py-1 text-xs hover:bg-accent"
+                    >
+                      Details
+                    </button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="rounded-md border p-1 hover:bg-accent">
+                          <MoreVertical className="h-4 w-4" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-44">
+                        <DropdownMenuItem onClick={() => setSelected(o)}>
+                          <Eye className="mr-2 h-4 w-4" /> View Details
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link
+                            to="/reseller/orders/$id/invoice"
+                            params={{ id: o.id }}
+                            target="_blank"
+                            className="flex w-full items-center"
+                          >
+                            <FileText className="mr-2 h-4 w-4" /> View Invoice
+                          </Link>
+                        </DropdownMenuItem>
+                        {!o.forwarded_to_admin && (o.status === "pending" || o.status === "draft") && (
+                          <>
+                            <div className="my-1 h-px bg-muted" />
+                            <DropdownMenuItem 
+                              onClick={() => remove(o.id)}
+                              className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" /> Delete Order
+                            </DropdownMenuItem>
+                          </>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                );
 
             return (
               <div
@@ -535,12 +563,14 @@ function OrdersPage() {
 
                 {/* Desktop row */}
                 <div className="hidden grid-cols-[auto_1.1fr_1.3fr_1.4fr_0.9fr_0.8fr_0.9fr_auto] items-center gap-3 px-4 py-3 text-sm md:grid">
-                  <input
-                    type="checkbox"
-                    className="h-4 w-4 accent-[hsl(var(--primary))]"
-                    checked={isMarked}
-                    onChange={(e) => mark(e.target.checked)}
-                  />
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 accent-[hsl(var(--primary))]"
+                      checked={isMarked}
+                      onChange={(e) => mark(e.target.checked)}
+                    />
+                  </div>
                   <div className="min-w-0">
                     <div className="truncate font-medium">{o.order_number}</div>
                     <div className="text-xs text-muted-foreground">

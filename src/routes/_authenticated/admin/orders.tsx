@@ -9,7 +9,13 @@ import {
 } from "@/components/order-filters";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
-import { Loader2, Truck, X, Download, Zap, RotateCcw, RefreshCw, Lock, PackageCheck, Repeat, Ban, Search, ListChecks, SlidersHorizontal, ChevronDown, Plus } from "lucide-react";
+import { Loader2, Truck, X, Download, Zap, RotateCcw, RefreshCw, Lock, PackageCheck, Repeat, Ban, Search, ListChecks, SlidersHorizontal, ChevronDown, Plus, MoreVertical, Eye, FileText, Trash2, Phone } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { NewOrderModal } from "@/components/NewOrderModal";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
@@ -381,78 +387,170 @@ function AdminOrdersPage() {
       ) : (
         <>
         <div className="surface-card overflow-hidden">
-          <div className="hidden grid-cols-[auto_1fr_1fr_1.2fr_1fr_1fr_auto] gap-4 border-b bg-muted/40 px-4 py-2 text-xs font-medium text-muted-foreground md:grid">
-            <input
-              type="checkbox"
-              className="h-4 w-4 accent-[hsl(var(--primary))]"
-              checked={paged.length > 0 && paged.every((o) => marked.includes(o.id))}
-              onChange={(e) => {
-                const ids = paged.map((o) => o.id);
-                setMarked((prev) =>
-                  e.target.checked
-                    ? [...new Set([...prev, ...ids])]
-                    : prev.filter((id) => !ids.includes(id)),
-                );
-              }}
-              title="Mark all on this page"
-            />
+          <div className="hidden grid-cols-[auto_1fr_1fr_1.2fr_1fr_1fr_auto] gap-4 border-b bg-muted/40 px-4 py-3 text-xs font-medium text-muted-foreground md:grid">
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                className="h-4 w-4 accent-[hsl(var(--primary))]"
+                checked={paged.length > 0 && paged.every((o) => marked.includes(o.id))}
+                onChange={(e) => {
+                  const ids = paged.map((o) => o.id);
+                  setMarked((prev) =>
+                    e.target.checked
+                      ? [...new Set([...prev, ...ids])]
+                      : prev.filter((id) => !ids.includes(id)),
+                  );
+                }}
+                title="Mark all on this page"
+              />
+            </div>
             <div>Order</div>
             <div>Reseller</div>
             <div>Customer</div>
             <div>Total</div>
             <div>Status</div>
-            <div></div>
+            <div className="text-right pr-2">Actions</div>
           </div>
-          {paged.map((o) => (
-            <div
-              key={o.id}
-              className={`grid grid-cols-1 items-center gap-3 border-b px-4 py-3 text-sm last:border-b-0 md:grid-cols-[auto_1fr_1fr_1.2fr_1fr_1fr_auto] ${
-                marked.includes(o.id) ? "bg-primary/5" : ""
-              }`}
-            >
-              <label className="flex items-center gap-2 text-xs text-muted-foreground md:block">
-                <input
-                  type="checkbox"
-                  className="h-4 w-4 accent-[hsl(var(--primary))]"
-                  checked={marked.includes(o.id)}
-                  onChange={(e) =>
-                    setMarked((prev) =>
-                      e.target.checked ? [...prev, o.id] : prev.filter((id) => id !== o.id),
-                    )
-                  }
-                />
-                <span className="md:hidden">Mark</span>
-              </label>
-              <div>
-                <div className="font-medium">{o.order_number}</div>
-                <div className="text-xs text-muted-foreground">
-                  {new Date(o.created_at).toLocaleDateString()}
+          {paged.map((o) => {
+            const items = itemsByOrder.get(o.id) ?? [];
+            const itemText = items.length
+              ? `${items[0].product_name}${items.length > 1 ? ` +${items.length - 1} more` : ""}`
+              : "—";
+            const qty = items.reduce((s, it) => s + (Number(it.quantity) || 0), 0);
+            
+            return (
+              <div
+                key={o.id}
+                className={`border-b last:border-b-0 ${
+                  marked.includes(o.id) ? "bg-primary/5" : ""
+                }`}
+              >
+                {/* Mobile card view */}
+                <div className="p-3 md:hidden">
+                  <div className="flex items-start gap-3">
+                    <input
+                      type="checkbox"
+                      className="mt-1 h-4 w-4 shrink-0 accent-[hsl(var(--primary))]"
+                      checked={marked.includes(o.id)}
+                      onChange={(e) =>
+                        setMarked((prev) =>
+                          e.target.checked ? [...prev, o.id] : prev.filter((id) => id !== o.id),
+                        )
+                      }
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="truncate text-sm font-semibold">{o.order_number}</div>
+                          <div className="text-[11px] text-muted-foreground">
+                            {new Date(o.created_at).toLocaleString([], {
+                              day: "2-digit",
+                              month: "short",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </div>
+                        </div>
+                        <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] capitalize ${orderStatusTone(o.status)}`}>
+                          {orderStatusLabel(o.status)}
+                        </span>
+                      </div>
+
+                      <div className="mt-2 space-y-0.5 text-xs">
+                        <div className="flex items-center gap-1.5 font-medium">
+                          <span className="truncate">{o.customer_name}</span>
+                          <a href={`tel:${o.customer_phone}`} className="shrink-0 text-primary">
+                            <Phone className="h-3 w-3" />
+                          </a>
+                        </div>
+                        <div className="truncate text-muted-foreground">{o.area || "—"}</div>
+                        <div className="truncate text-[11px] text-muted-foreground italic">
+                          Reseller: {o.resellers?.business_name || "Direct"}
+                        </div>
+                      </div>
+
+                      <div className="mt-2 truncate text-xs text-muted-foreground">
+                        {itemText} {qty > 0 && <span className="ml-1 text-[10px] opacity-70">({qty} pcs)</span>}
+                      </div>
+
+                      <div className="mt-3 flex items-center justify-between border-t pt-2">
+                        <div className="font-semibold text-primary">৳{Number(o.total).toFixed(0)}</div>
+                        <div className="flex gap-2">
+                           <button
+                             onClick={() => setSelected(o)}
+                             className="rounded-md border px-2.5 py-1 text-xs hover:bg-accent"
+                           >
+                             Manage
+                           </button>
+                           <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button className="rounded-md border p-1 hover:bg-accent">
+                                <MoreVertical className="h-4 w-4" />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-40">
+                              <DropdownMenuItem onClick={() => setSelected(o)}>
+                                <Eye className="mr-2 h-4 w-4" /> View Details
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Desktop table row */}
+                <div className="hidden grid-cols-[auto_1fr_1fr_1.2fr_1fr_1fr_auto] items-center gap-4 px-4 py-3 text-sm md:grid">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 accent-[hsl(var(--primary))]"
+                    checked={marked.includes(o.id)}
+                    onChange={(e) =>
+                      setMarked((prev) =>
+                        e.target.checked ? [...prev, o.id] : prev.filter((id) => id !== o.id),
+                      )
+                    }
+                  />
+                  <div>
+                    <div className="font-medium">{o.order_number}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {new Date(o.created_at).toLocaleDateString()}
+                    </div>
+                  </div>
+                  <div className="truncate text-xs">
+                    <div className="font-medium">{o.resellers?.business_name || "Direct"}</div>
+                    {o.resellers && <div className="text-muted-foreground">/{o.resellers?.code}</div>}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="truncate font-medium">{o.customer_name}</div>
+                    <div className="text-xs text-muted-foreground">{o.customer_phone}</div>
+                  </div>
+                  <div className="font-semibold">৳{Number(o.total).toFixed(0)}</div>
+                  <div>
+                    <span className={`rounded-full px-2 py-0.5 text-xs capitalize ${orderStatusTone(o.status)}`}>
+                      {orderStatusLabel(o.status)}
+                    </span>
+                  </div>
+                  <div className="flex justify-end">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="rounded-md p-1 hover:bg-accent">
+                          <MoreVertical className="h-5 w-5 text-muted-foreground" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-40">
+                        <DropdownMenuItem onClick={() => setSelected(o)}>
+                          <Eye className="mr-2 h-4 w-4" /> Manage
+                        </DropdownMenuItem>
+                        {/* We could add more admin actions here like Export PDF/Label if implemented */}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 </div>
               </div>
-              <div className="truncate text-xs">
-                <div className="font-medium">{o.resellers?.business_name}</div>
-                <div className="text-muted-foreground">/{o.resellers?.code}</div>
-              </div>
-              <div>
-                <div className="truncate">{o.customer_name}</div>
-                <div className="text-xs text-muted-foreground">{o.customer_phone}</div>
-              </div>
-              <div className="font-semibold">৳{Number(o.total).toFixed(0)}</div>
-              <div>
-                <span className={`rounded-full px-2 py-0.5 text-xs capitalize ${orderStatusTone(o.status)}`}>
-                  {orderStatusLabel(o.status)}
-                </span>
-              </div>
-              <div className="flex justify-end">
-                <button
-                  onClick={() => setSelected(o)}
-                  className="rounded-md border px-2 py-1 text-xs hover:bg-accent"
-                >
-                  Manage
-                </button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         <Pagination page={page} perPage={filters.perPage} total={filtered.length} onPage={setPage} />
