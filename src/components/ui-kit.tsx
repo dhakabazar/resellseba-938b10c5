@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { Hint } from "@/components/Hint";
 
 export function PageHeader({
   title,
