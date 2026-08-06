@@ -167,8 +167,16 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
             <a href="#features" className="hover:text-foreground">{c.nav.features}</a>
             <a href="#how" className="hover:text-foreground">{c.nav.how}</a>
             <a href="#pricing" className="hover:text-foreground">{c.nav.pricing}</a>
+            <Link to="/catalog" search={{}} className="font-semibold text-primary hover:opacity-80">Catalog</Link>
           </nav>
           <div className="flex shrink-0 items-center gap-2">
+            <Link
+              to="/catalog"
+              search={{}}
+              className="inline-flex items-center gap-1.5 rounded-md border border-primary/30 bg-primary/10 px-3 py-2 text-xs font-bold text-primary hover:bg-primary/20 sm:text-sm"
+            >
+              <Layers className="h-3.5 w-3.5" /> Catalog
+            </Link>
             <Link to="/login" className="hidden rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground sm:inline">
               {c.nav.signIn}
             </Link>
@@ -316,7 +324,12 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
               {stats.categories.map((cat: any) => (
-                <div key={cat.id} className="group relative aspect-square overflow-hidden rounded-2xl bg-card border border-border/60 transition-all hover:border-primary/40 hover:shadow-lg">
+                <Link
+                  key={cat.id}
+                  to="/catalog"
+                  search={{ category: cat.slug }}
+                  className="group relative block aspect-square overflow-hidden rounded-2xl bg-card border border-border/60 transition-all hover:border-primary/40 hover:shadow-lg"
+                >
                   {cat.image_url ? (
                     <img src={cat.image_url} alt={cat.name} className="h-full w-full object-cover transition-transform group-hover:scale-110" />
                   ) : (
@@ -325,7 +338,7 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-3">
                     <span className="text-xs font-bold text-white truncate">{cat.name}</span>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           </div>
@@ -340,10 +353,10 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
                 <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[11px] font-medium text-primary mb-3">
                   <Star className="h-3 w-3" /> Master Catalog Preview
                 </div>
-                <h2 className="text-3xl md:text-4xl font-black tracking-tight">Top Selling Products</h2>
+                <h2 className="text-3xl md:text-4xl font-black tracking-tight">Featured Products</h2>
                 <p className="mt-3 text-muted-foreground">See what's trending across the platform. High-profit products ready to list on your store.</p>
               </div>
-              <Link to="/login" search={{ mode: "signup" }} className="group inline-flex items-center gap-2 font-bold text-primary hover:underline">
+              <Link to="/catalog" search={{}} className="group inline-flex items-center gap-2 font-bold text-primary hover:underline">
                 View Full Catalog <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Link>
             </div>
@@ -357,11 +370,6 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
                     ) : (
                       <div className="grid h-full w-full place-items-center text-xs text-muted-foreground">No image</div>
                     )}
-                    <div className="absolute top-2 left-2 flex flex-col gap-1.5">
-                      <div className="inline-flex items-center gap-1 rounded-full bg-primary px-2 py-1 text-[10px] font-black uppercase text-primary-foreground shadow-lg">
-                        <ShoppingBag className="h-2.5 w-2.5" /> {p.sale_count} Sold
-                      </div>
-                    </div>
                     <div className="absolute top-2 right-2 flex gap-2">
                        <button 
                         onClick={() => copy(p.name)}
@@ -384,7 +392,7 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
                     </div>
                   </div>
                   <div className="p-4 flex-1 flex flex-col">
-                    <h3 className="line-clamp-2 text-sm font-bold leading-tight group-hover:text-primary transition-colors">{p.name}</h3>
+                    <Link to="/catalog/$slug" params={{ slug: p.slug }} className="line-clamp-2 text-sm font-bold leading-tight transition-colors hover:text-primary">{p.name}</Link>
                     <div className="mt-auto pt-3 flex items-center justify-between">
                       <div className="flex flex-col">
                         <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Resell For</span>

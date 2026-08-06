@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { Hint } from "@/components/Hint";
 
 export function PageHeader({
   title,
@@ -31,57 +32,76 @@ export function PageHeader({
   );
 }
 
+const TONES = {
+  primary: { text: "text-primary", ring: "hover:border-primary/50", glow: "from-primary/15" },
+  emerald: { text: "text-emerald-500", ring: "hover:border-emerald-500/50", glow: "from-emerald-500/15" },
+  amber: { text: "text-amber-500", ring: "hover:border-amber-500/50", glow: "from-amber-500/15" },
+  violet: { text: "text-violet-500", ring: "hover:border-violet-500/50", glow: "from-violet-500/15" },
+  sky: { text: "text-sky-500", ring: "hover:border-sky-500/50", glow: "from-sky-500/15" },
+  rose: { text: "text-rose-500", ring: "hover:border-rose-500/50", glow: "from-rose-500/15" },
+} as const;
+
+export type StatTone = keyof typeof TONES;
+
 export function StatCard({
   label,
   value,
   hint,
   icon,
   trend,
+  tone = "primary",
 }: {
   label: string;
   value: string | number;
   hint?: string;
   icon?: ReactNode;
   trend?: { value: string; positive: boolean };
+  tone?: StatTone;
 }) {
+  const t = TONES[tone];
   return (
-    <div className="group relative overflow-hidden rounded-2xl border bg-card p-5 transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-xl hover:shadow-primary/5">
-      <div className="flex items-center justify-between gap-4">
-        <div className="min-w-0 space-y-1">
-          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">
-            {label}
-          </span>
-          <div className="text-2xl font-black tracking-tighter sm:text-3xl">
-            {value}
-          </div>
+    <div
+      className={cn(
+        "group relative overflow-hidden rounded-xl border bg-card px-4 py-3 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg",
+        t.ring,
+      )}
+    >
+      {/* watermark icon */}
+      {icon && (
+        <div className={cn("pointer-events-none absolute -right-2 top-1/2 -translate-y-1/2 opacity-[0.07] [&_svg]:h-16 [&_svg]:w-16", t.text)}>
+          {icon}
         </div>
-        {icon && (
-          <div className="shrink-0 rounded-xl bg-primary/5 p-3 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
-            {icon}
-          </div>
+      )}
+      <div
+        className={cn(
+          "pointer-events-none absolute inset-0 bg-gradient-to-r to-transparent opacity-0 transition-opacity group-hover:opacity-100",
+          t.glow,
         )}
-      </div>
-      {(trend || hint) && (
-        <div className="mt-4 flex items-center gap-3 border-t border-dashed pt-4">
+      />
+      <div className="relative flex items-center justify-between gap-2">
+        <span className="truncate text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground/70">
+          {label}
+        </span>
+        <span className="flex shrink-0 items-center gap-1.5">
           {trend && (
-            <span className={cn(
-              "flex items-center gap-1 text-[11px] font-bold",
-              trend.positive ? "text-emerald-500" : "text-rose-500"
-            )}>
+            <span className={cn("text-[10px] font-bold", trend.positive ? "text-emerald-500" : "text-rose-500")}>
               {trend.positive ? "↑" : "↓"} {trend.value}
             </span>
           )}
           {hint && (
-            <span className="truncate text-[11px] font-bold text-muted-foreground/60">
+            <Hint side="left" className={t.text}>
               {hint}
-            </span>
+            </Hint>
           )}
-        </div>
-      )}
-      <div className="absolute -bottom-6 -right-6 h-24 w-24 rounded-full bg-primary/5 transition-transform duration-500 group-hover:scale-150" />
+        </span>
+      </div>
+      <div className={cn("relative mt-1 truncate text-xl font-black leading-tight tracking-tight sm:text-2xl", t.text)}>
+        {value}
+      </div>
     </div>
   );
 }
+
 
 export function EmptyState({
   title,
