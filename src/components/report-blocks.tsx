@@ -14,11 +14,11 @@ export function ReportCard({
   children: React.ReactNode;
 }) {
   return (
-    <section className="surface-card mb-6 overflow-hidden">
-      <header className="flex flex-wrap items-center gap-2 border-b bg-muted/30 px-4 py-3">
+    <section className="surface-card mb-6 overflow-hidden border-none shadow-elegant">
+      <header className="flex flex-wrap items-center gap-2 border-b bg-muted/20 px-5 py-4">
         <div>
-          <h2 className="text-sm font-semibold">{title}</h2>
-          {hint && <p className="text-[11px] text-muted-foreground">{hint}</p>}
+          <h2 className="text-xs font-black uppercase tracking-widest text-muted-foreground">{title}</h2>
+          {hint && <p className="mt-0.5 text-[11px] font-medium text-muted-foreground/60">{hint}</p>}
         </div>
         <div className="ml-auto flex items-center gap-2">{right}</div>
       </header>
