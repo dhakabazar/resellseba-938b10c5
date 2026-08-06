@@ -15,6 +15,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CatalogIndexRouteImport } from './routes/catalog.index'
 import { Route as SCodeRouteImport } from './routes/s.$code'
+import { Route as CatalogSlugRouteImport } from './routes/catalog.$slug'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedResellerRouteRouteImport } from './routes/_authenticated/reseller/route'
@@ -91,6 +92,11 @@ const SCodeRoute = SCodeRouteImport.update({
   id: '/s/$code',
   path: '/s/$code',
   getParentRoute: () => rootRouteImport,
+} as any)
+const CatalogSlugRoute = CatalogSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => CatalogRoute,
 } as any)
 const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
   id: '/onboarding',
@@ -370,6 +376,7 @@ export interface FileRoutesByFullPath {
   '/reseller': typeof AuthenticatedResellerRouteRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/catalog/$slug': typeof CatalogSlugRoute
   '/s/$code': typeof SCodeRouteWithChildren
   '/catalog/': typeof CatalogIndexRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
@@ -421,6 +428,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/catalog/$slug': typeof CatalogSlugRoute
   '/catalog': typeof CatalogIndexRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/brands': typeof AuthenticatedAdminBrandsRoute
@@ -476,6 +484,7 @@ export interface FileRoutesById {
   '/_authenticated/reseller': typeof AuthenticatedResellerRouteRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
+  '/catalog/$slug': typeof CatalogSlugRoute
   '/s/$code': typeof SCodeRouteWithChildren
   '/catalog/': typeof CatalogIndexRoute
   '/_authenticated/admin/audit': typeof AuthenticatedAdminAuditRoute
@@ -532,6 +541,7 @@ export interface FileRouteTypes {
     | '/reseller'
     | '/dashboard'
     | '/onboarding'
+    | '/catalog/$slug'
     | '/s/$code'
     | '/catalog/'
     | '/admin/audit'
@@ -583,6 +593,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/dashboard'
     | '/onboarding'
+    | '/catalog/$slug'
     | '/catalog'
     | '/admin/audit'
     | '/admin/brands'
@@ -637,6 +648,7 @@ export interface FileRouteTypes {
     | '/_authenticated/reseller'
     | '/_authenticated/dashboard'
     | '/_authenticated/onboarding'
+    | '/catalog/$slug'
     | '/s/$code'
     | '/catalog/'
     | '/_authenticated/admin/audit'
@@ -742,6 +754,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/s/$code'
       preLoaderRoute: typeof SCodeRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/catalog/$slug': {
+      id: '/catalog/$slug'
+      path: '/$slug'
+      fullPath: '/catalog/$slug'
+      preLoaderRoute: typeof CatalogSlugRouteImport
+      parentRoute: typeof CatalogRoute
     }
     '/_authenticated/onboarding': {
       id: '/_authenticated/onboarding'
@@ -1196,10 +1215,12 @@ const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
 interface CatalogRouteChildren {
+  CatalogSlugRoute: typeof CatalogSlugRoute
   CatalogIndexRoute: typeof CatalogIndexRoute
 }
 
 const CatalogRouteChildren: CatalogRouteChildren = {
+  CatalogSlugRoute: CatalogSlugRoute,
   CatalogIndexRoute: CatalogIndexRoute,
 }
 

@@ -101,11 +101,7 @@ function CatalogIndex() {
             className="mx-auto mt-7 flex max-w-md items-center gap-2"
             onSubmit={(e) => {
               e.preventDefault();
-              const url = new URL(window.location.href);
-              if (term.trim()) url.searchParams.set("q", term.trim());
-              else url.searchParams.delete("q");
-              window.history.replaceState({}, "", url.toString());
-              window.location.assign(url.toString());
+              void navigate({ to: "/catalog", search: { category, brand, q: term.trim() || undefined } });
             }}
           >
             <div className="relative flex-1">
