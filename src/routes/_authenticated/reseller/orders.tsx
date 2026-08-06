@@ -127,6 +127,7 @@ function OrdersPage() {
   const [resellerId, setResellerId] = useState<string | null>(null);
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [orderItems, setOrderItems] = useState<OrderItemLite[]>([]);
+  const [shipments, setShipments] = useState<any[]>([]);
   const [listings, setListings] = useState<Listing[]>([]);
   const [allProducts, setAllProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
