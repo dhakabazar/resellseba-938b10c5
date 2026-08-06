@@ -71,6 +71,7 @@ function ResellerLayout() {
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [storeCode, setStoreCode] = useState<string | null>(null);
   const [primary, setPrimary] = useState<string | null>(null);
+  const [approved, setApproved] = useState<boolean | null>(null);
 
   useEffect(() => {
     if (loading) return;
@@ -82,6 +83,10 @@ function ResellerLayout() {
       nav({ to: "/onboarding", replace: true });
     }
   }, [loading, roles, nav]);
+
+  useEffect(() => {
+    if (approved === false) nav({ to: "/onboarding", replace: true });
+  }, [approved, nav]);
 
   useEffect(() => {
     if (!user) return;
@@ -96,10 +101,11 @@ function ResellerLayout() {
 
       const { data: r } = await supabase
         .from("resellers")
-        .select("id, business_name, code")
+        .select("id, business_name, code, status")
         .eq("user_id", user.id)
         .maybeSingle();
       if (r) {
+        setApproved(r.status === "active");
         setStoreName(r.business_name);
         setStoreCode(r.code);
         const { data: s } = await supabase
@@ -109,6 +115,8 @@ function ResellerLayout() {
           .maybeSingle();
         if (s?.logo_url) logo = s.logo_url;
         if (s?.primary_color) color = s.primary_color;
+      } else {
+        setApproved(false);
       }
       setLogoUrl(logo);
       setPrimary(color);
@@ -118,13 +126,19 @@ function ResellerLayout() {
   useBrandingTheme(primary);
 
 
-  if (loading || !user || (!roles.includes("reseller") && !roles.includes("leader"))) {
+  if (
+    loading ||
+    !user ||
+    approved !== true ||
+    (!roles.includes("reseller") && !roles.includes("leader"))
+  ) {
     return (
       <div className="grid min-h-screen place-items-center">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
+
 
   return (
     <AppShell
