@@ -202,9 +202,22 @@ function ResellersPage() {
   async function setStatus(r: Reseller, status: Status) {
     const { error } = await supabase.from("resellers").update({ status }).eq("id", r.id);
     if (error) return toast.error(error.message);
+    if (status === "active") {
+      await supabase
+        .from("user_roles")
+        .upsert({ user_id: r.user_id, role: "reseller" }, { onConflict: "user_id,role" });
+    } else {
+      // Not approved → revoke panel access
+      await supabase
+        .from("user_roles")
+        .delete()
+        .eq("user_id", r.user_id)
+        .eq("role", "reseller");
+    }
     toast.success("Status updated");
     load();
   }
+
 
   async function confirmEmail(r: Reseller) {
     try {
