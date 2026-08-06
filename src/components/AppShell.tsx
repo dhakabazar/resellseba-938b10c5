@@ -215,26 +215,30 @@ export function AppShell({
         </aside>
 
         <main className={cn("flex-1 transition-[margin] duration-200", desktopCollapsed ? "md:ml-16" : "md:ml-64")}>
-          <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b bg-background/80 px-4 backdrop-blur md:px-6">
-            <button
-              type="button"
-              onClick={() => setMobileOpen(true)}
-              className="md:hidden -ml-1 rounded-md p-2 text-foreground hover:bg-muted"
-              aria-label="Open menu"
-            >
-              <Menu className="h-5 w-5" />
-            </button>
-            <button
-              type="button"
-              onClick={() => setDesktopCollapsed((v) => !v)}
-              className="hidden md:inline-flex -ml-1 rounded-md p-2 text-foreground hover:bg-muted"
-              aria-label={desktopCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-              title={desktopCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-            >
-              {desktopCollapsed ? <PanelLeftOpen className="h-5 w-5" /> : <PanelLeftClose className="h-5 w-5" />}
-            </button>
-            <h1 className="flex-1 truncate text-lg font-semibold tracking-tight">{title}</h1>
-            {headerRight}
+          <header className="sticky top-0 z-30 flex h-16 items-center gap-2 border-b bg-background/80 px-4 backdrop-blur md:px-6">
+            <div className="flex flex-1 items-center gap-2 overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setMobileOpen(true)}
+                className="md:hidden -ml-1 rounded-md p-2 text-foreground hover:bg-muted"
+                aria-label="Open menu"
+              >
+                <Menu className="h-5 w-5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setDesktopCollapsed((v) => !v)}
+                className="hidden md:inline-flex -ml-1 rounded-md p-2 text-foreground hover:bg-muted"
+                aria-label={desktopCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                title={desktopCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              >
+                {desktopCollapsed ? <PanelLeftOpen className="h-5 w-5" /> : <PanelLeftClose className="h-5 w-5" />}
+              </button>
+              <h1 className="truncate text-base font-bold tracking-tight sm:text-lg">{title}</h1>
+            </div>
+            <div className="flex items-center gap-2">
+              {headerRight}
+            </div>
           </header>
           <div className="p-4 md:p-6">{children}</div>
         </main>
