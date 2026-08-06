@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { getCatalog } from "@/lib/catalog.functions";
@@ -46,6 +46,7 @@ type Prod = {
 function CatalogIndex() {
   const { category, brand, q } = Route.useSearch();
   const { banner, siteName } = useCatalogBrand();
+  const navigate = useNavigate();
   const fetchCatalog = useServerFn(getCatalog);
   const [data, setData] = useState<{ categories: Cat[]; brands: { id: string; name: string; slug: string }[]; products: Prod[] } | null>(null);
   const [term, setTerm] = useState(q ?? "");
