@@ -270,8 +270,6 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
         </div>
       </section>
 
-      </section>
-
       {stats && (
         <section className="bg-card py-12 border-y border-border/60">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
