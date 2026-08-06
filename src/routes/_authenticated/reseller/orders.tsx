@@ -80,7 +80,7 @@ type OrderRow = {
   created_at: string;
 };
 
-type Line = { listing_id: string; qty: number };
+type Line = { listing_id?: string; product_id?: string; qty: number; name?: string; price?: number; cost?: number; image?: string; delivery?: any };
 
 export const Route = createFileRoute("/_authenticated/reseller/orders")({
   component: OrdersPage,
@@ -124,6 +124,7 @@ function OrdersPage() {
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [orderItems, setOrderItems] = useState<OrderItemLite[]>([]);
   const [listings, setListings] = useState<Listing[]>([]);
+  const [allProducts, setAllProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<OrderTabKey>("new");
@@ -146,7 +147,7 @@ function OrdersPage() {
       .maybeSingle();
     if (!r) return setLoading(false);
     setResellerId(r.id);
-    const [{ data: o }, { data: l }] = await Promise.all([
+    const [{ data: o }, { data: l }, { data: p }] = await Promise.all([
       supabase
         .from("orders")
         .select(ORDER_COLUMNS)
@@ -157,10 +158,16 @@ function OrdersPage() {
         .select("id,selling_price,products(id,name,reseller_price,packaging_cost,delivery_inside,delivery_outside,delivery_mode,delivery_flat,og_image_url)")
         .eq("reseller_id", r.id)
         .eq("is_active", true),
+      supabase
+        .from("products")
+        .select("id,name,reseller_price,packaging_cost,delivery_inside,delivery_outside,delivery_mode,delivery_flat,og_image_url,suggested_price")
+        .eq("is_active", true)
+        .order("created_at", { ascending: false }),
     ]);
     const rows = (o ?? []) as OrderRow[];
     setOrders(rows);
     setListings((l ?? []) as Listing[]);
+    setAllProducts((p ?? []) as any[]);
     if (rows.length > 0) {
       const { data: its } = await supabase
         .from("order_items")
@@ -608,6 +615,7 @@ function OrdersPage() {
       {open && resellerId && (
         <NewOrderModal
           listings={listings}
+          allProducts={allProducts}
           resellerId={resellerId}
           onClose={() => setOpen(false)}
           onCreated={() => {
@@ -622,11 +630,13 @@ function OrdersPage() {
 
 function NewOrderModal({
   listings,
+  allProducts,
   resellerId,
   onClose,
   onCreated,
 }: {
   listings: Listing[];
+  allProducts: any[];
   resellerId: string;
   onClose: () => void;
   onCreated: () => void;
@@ -644,29 +654,46 @@ function NewOrderModal({
   /** Search first, then pick — same delivery rules as the storefront checkout. */
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const pool = listings.filter((l) => l.products);
-    if (!q) return pool.slice(0, 8);
-    return pool
-      .filter((l) => (l.products?.name ?? "").toLowerCase().includes(q))
-      .slice(0, 20);
-  }, [listings, query]);
+    if (!q) {
+      // Show listings by default, if empty show some products
+      return listings.length > 0 
+        ? listings.filter(l => l.products).slice(0, 8).map(l => ({ type: 'listing' as const, data: l }))
+        : allProducts.slice(0, 8).map(p => ({ type: 'product' as const, data: p }));
+    }
 
-  const picked = useMemo(
-    () =>
-      lines
-        .map((line) => ({ line, l: listings.find((x) => x.id === line.listing_id) }))
-        .filter((x) => x.l?.products) as { line: Line; l: Listing }[],
-    [lines, listings],
-  );
+    // Mix listings and products, prioritising listings
+    const listingMatches = listings
+      .filter(l => l.products && l.products.name.toLowerCase().includes(q))
+      .map(l => ({ type: 'listing' as const, data: l }));
+    
+    const productMatches = allProducts
+      .filter(p => p.name.toLowerCase().includes(q) && !listings.some(l => l.products?.id === p.id))
+      .map(p => ({ type: 'product' as const, data: p }));
+
+    return [...listingMatches, ...productMatches].slice(0, 20);
+  }, [listings, allProducts, query]);
+
+  const picked = useMemo(() => {
+    return lines.map(line => {
+      if (line.listing_id) {
+        const l = listings.find(x => x.id === line.listing_id);
+        if (l?.products) return { line, p: l.products, sellPrice: l.selling_price, listingId: l.id };
+      }
+      if (line.product_id) {
+        const p = allProducts.find(x => x.id === line.product_id);
+        if (p) return { line, p, sellPrice: line.price || p.suggested_price || (p.reseller_price + p.packaging_cost), listingId: null };
+      }
+      return null;
+    }).filter(Boolean) as { line: Line; p: any; sellPrice: number; listingId: string | null }[];
+  }, [lines, listings, allProducts]);
 
   const totals = useMemo(() => {
     let subtotal = 0;
     let saCost = 0;
     let shipping = 0;
     let shipFrom: string | null = null;
-    for (const { line, l } of picked) {
-      const p = l.products!;
-      subtotal += Number(l.selling_price) * line.qty;
+    for (const { line, p, sellPrice } of picked) {
+      subtotal += Number(sellPrice) * line.qty;
       saCost += (Number(p.reseller_price) + Number(p.packaging_cost)) * line.qty;
       const dc = productDeliveryCharge(p, area);
       if (dc > shipping) {
@@ -683,12 +710,22 @@ function NewOrderModal({
     address: addressError(address),
   };
 
-  function pick(id: string) {
-    setLines((prev) =>
-      prev.some((l) => l.listing_id === id)
-        ? prev.map((l) => (l.listing_id === id ? { ...l, qty: l.qty + 1 } : l))
-        : [...prev, { listing_id: id, qty: 1 }],
-    );
+  function pick(item: { type: 'listing' | 'product', data: any }) {
+    if (item.type === 'listing') {
+      const l = item.data;
+      setLines(prev =>
+        prev.some(x => x.listing_id === l.id)
+          ? prev.map(x => (x.listing_id === l.id ? { ...x, qty: x.qty + 1 } : x))
+          : [...prev, { listing_id: l.id, qty: 1 }]
+      );
+    } else {
+      const p = item.data;
+      setLines(prev =>
+        prev.some(x => x.product_id === p.id)
+          ? prev.map(x => (x.product_id === p.id ? { ...x, qty: x.qty + 1 } : x))
+          : [...prev, { product_id: p.id, qty: 1, price: p.suggested_price || (p.reseller_price + p.packaging_cost) }]
+      );
+    }
     setQuery("");
   }
   function setQty(i: number, qty: number) {
@@ -732,20 +769,19 @@ function NewOrderModal({
         .single();
       if (error) throw error;
 
-      const items = picked.map(({ line, l }) => {
-        const p = l.products!;
+      const items = picked.map(({ line, p, sellPrice, listingId }) => {
         const saPrice = Number(p.reseller_price) + Number(p.packaging_cost);
         return {
           order_id: order.id,
-          listing_id: l.id,
+          listing_id: listingId,
           product_id: p.id,
           product_name: p.name,
           product_image: p.og_image_url,
           quantity: line.qty,
           sa_price: saPrice,
-          reseller_price: l.selling_price,
-          line_total: Number(l.selling_price) * line.qty,
-          profit: (Number(l.selling_price) - saPrice) * line.qty,
+          reseller_price: sellPrice,
+          line_total: Number(sellPrice) * line.qty,
+          profit: (Number(sellPrice) - saPrice) * line.qty,
         };
       });
       const { error: ie } = await supabase.from("order_items").insert(items);
@@ -770,7 +806,7 @@ function NewOrderModal({
           <div>
             <h2 className="text-base font-semibold sm:text-lg">New order</h2>
             <p className="text-xs text-muted-foreground">
-              Product search kore add korun — delivery charge product onujai apply hobe.
+              Product search kore add korun (listing charao search kora jabe) — delivery charge product onujai apply hobe.
             </p>
           </div>
           <button type="button" onClick={onClose} className="rounded-md p-1.5 hover:bg-accent">
@@ -789,7 +825,7 @@ function NewOrderModal({
                   <input
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Search your listings by product name…"
+                    placeholder="Search your listings or master catalog by name…"
                     className="input pl-9"
                   />
                 </div>
@@ -797,29 +833,35 @@ function NewOrderModal({
                 {results.length === 0 ? (
                   <div className="mt-2 rounded-md border border-dashed p-3 text-center text-xs text-muted-foreground">
                     {listings.length === 0
-                      ? "First add active listings from Catalog."
+                      ? "Checking catalog..."
                       : "No product matched your search."}
                   </div>
                 ) : (
                   <div className="mt-2 max-h-56 divide-y overflow-y-auto rounded-md border">
-                    {results.map((l) => {
-                      const p = l.products!;
+                    {results.map((item) => {
+                      const p = item.type === 'listing' ? item.data.products! : item.data;
+                      const price = item.type === 'listing' ? item.data.selling_price : (p.suggested_price || p.reseller_price + p.packaging_cost);
                       const dc = productDeliveryCharge(p, area);
-                      const inCart = lines.some((x) => x.listing_id === l.id);
+                      const inCart = item.type === 'listing' 
+                        ? lines.some((x) => x.listing_id === item.data.id)
+                        : lines.some((x) => x.product_id === p.id);
                       return (
                         <button
                           type="button"
-                          key={l.id}
-                          onClick={() => pick(l.id)}
+                          key={item.type === 'listing' ? `l-${item.data.id}` : `p-${p.id}`}
+                          onClick={() => pick(item)}
                           className="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-accent/50"
                         >
                           {p.og_image_url && (
                             <img src={p.og_image_url} alt="" className="h-9 w-9 shrink-0 rounded object-cover" />
                           )}
                           <span className="min-w-0 flex-1">
-                            <span className="block truncate text-sm">{p.name}</span>
+                            <span className="block truncate text-sm">
+                              {p.name}
+                              {item.type === 'product' && <span className="ml-1.5 rounded-full bg-muted px-1.5 py-0.5 text-[9px] uppercase tracking-wider">Catalog</span>}
+                            </span>
                             <span className="block text-[11px] text-muted-foreground">
-                              ৳{Number(l.selling_price).toFixed(0)} · {deliveryLabel(p)} · this area ৳{dc.toFixed(0)}
+                              ৳{Number(price).toFixed(0)} · {deliveryLabel(p)} · this area ৳{dc.toFixed(0)}
                             </span>
                           </span>
                           <span className="shrink-0 text-xs font-medium text-primary">
@@ -837,15 +879,14 @@ function NewOrderModal({
                       No products added yet.
                     </div>
                   )}
-                  {picked.map(({ line, l }, i) => {
-                    const p = l.products!;
+                  {picked.map(({ line, p, sellPrice, listingId }, i) => {
                     const dc = productDeliveryCharge(p, area);
                     return (
-                      <div key={l.id} className="flex items-center gap-3 rounded-md border p-2.5">
+                      <div key={listingId || p.id} className="flex items-center gap-3 rounded-md border p-2.5">
                         <div className="min-w-0 flex-1">
                           <div className="truncate text-sm">{p.name}</div>
                           <div className="text-[11px] text-muted-foreground">
-                            ৳{Number(l.selling_price).toFixed(0)} × {line.qty} · delivery ৳{dc.toFixed(0)}
+                            ৳{Number(sellPrice).toFixed(0)} × {line.qty} · delivery ৳{dc.toFixed(0)}
                             {totals.shipping > dc && " (not applied — higher one wins)"}
                           </div>
                         </div>
