@@ -11,6 +11,7 @@ import {
   FileText,
   Download,
   Plus,
+  X,
 } from "lucide-react";
 import { NewOrderModal } from "@/components/NewOrderModal";
 import { toast } from "sonner";
