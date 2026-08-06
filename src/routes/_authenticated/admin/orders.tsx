@@ -9,7 +9,8 @@ import {
 } from "@/components/order-filters";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
-import { Loader2, Truck, X, Download, Zap, RotateCcw, RefreshCw, Lock, PackageCheck, Repeat, Ban, Search, ListChecks, SlidersHorizontal, ChevronDown } from "lucide-react";
+import { Loader2, Truck, X, Download, Zap, RotateCcw, RefreshCw, Lock, PackageCheck, Repeat, Ban, Search, ListChecks, SlidersHorizontal, ChevronDown, Plus } from "lucide-react";
+import { NewOrderModal } from "@/components/NewOrderModal";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -129,6 +130,9 @@ function AdminOrdersPage() {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<OrderTabKey>("confirmed");
   const [selected, setSelected] = useState<OrderRow | null>(null);
+  const [open, setOpen] = useState(false);
+  const [allProducts, setAllProducts] = useState<any[]>([]);
+  const [resellers, setResellers] = useState<any[]>([]);
   const [filters, setFilters] = useState<OrderFilterState>(DEFAULT_ORDER_FILTERS);
   const [searchMode, setSearchMode] = useState<OrderSearchMode>("order");
 
@@ -150,10 +154,11 @@ function AdminOrdersPage() {
       )
       .order("created_at", { ascending: false });
     if (statuses.length > 0) q = q.in("status", statuses);
-    const [{ data }, { data: all }, { data: rs }] = await Promise.all([
+    const [{ data }, { data: all }, { data: rs }, { data: p }] = await Promise.all([
       q,
       supabase.from("orders").select("status"),
       supabase.from("resellers").select("id,business_name,code").order("business_name"),
+      supabase.from("products").select("id,name,reseller_price,packaging_cost,delivery_inside,delivery_outside,delivery_mode,delivery_flat,og_image_url,suggested_price").eq("is_active", true).order("created_at", { ascending: false }),
     ]);
     const rows = (data ?? []) as OrderRow[];
     setOrders(rows);
@@ -172,6 +177,7 @@ function AdminOrdersPage() {
     setResellerOptions(
       (rs ?? []).map((r: any) => ({ value: r.id, label: `${r.business_name} (/${r.code})` })),
     );
+    setResellers(rs ?? []);
     const byStatus: Record<string, number> = {};
     for (const row of all ?? []) byStatus[(row as any).status] = (byStatus[(row as any).status] ?? 0) + 1;
     const tabCounts: Record<string, number> = { all: (all ?? []).length };
@@ -180,6 +186,7 @@ function AdminOrdersPage() {
       tabCounts[t.key] = t.statuses.reduce((s, st) => s + (byStatus[st] ?? 0), 0);
     }
     setCounts(tabCounts);
+    setAllProducts((p ?? []) as any[]);
     setLoading(false);
   }
   useEffect(() => {
@@ -250,13 +257,21 @@ function AdminOrdersPage() {
         title="Orders"
         description=""
         actions={
-          <button
-            onClick={() => exportCsv(filtered)}
-            disabled={filtered.length === 0}
-            className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm disabled:opacity-50"
-          >
-            <Download className="h-4 w-4" /> Export CSV
-          </button>
+          <div className="flex w-full items-center gap-2 sm:w-auto">
+            <button
+              onClick={() => exportCsv(filtered)}
+              disabled={filtered.length === 0}
+              className="inline-flex flex-1 items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm disabled:opacity-50 sm:flex-none"
+            >
+              <Download className="h-4 w-4" /> Export CSV
+            </button>
+            <button
+              onClick={() => setOpen(true)}
+              className="btn-brand inline-flex flex-1 items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium sm:flex-none"
+            >
+              <Plus className="h-4 w-4" /> New order
+            </button>
+          </div>
         }
       />
 
@@ -451,6 +466,19 @@ function AdminOrdersPage() {
           onClose={() => setSelected(null)}
           onChanged={() => {
             setSelected(null);
+            load();
+          }}
+        />
+      )}
+      {open && (
+        <NewOrderModal
+          listings={[]}
+          allProducts={allProducts}
+          resellers={resellers}
+          isAdmin={true}
+          onClose={() => setOpen(false)}
+          onCreated={() => {
+            setOpen(false);
             load();
           }}
         />
