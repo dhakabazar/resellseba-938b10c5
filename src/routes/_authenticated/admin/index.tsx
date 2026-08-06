@@ -225,8 +225,10 @@ function AdminDashboard() {
 
 
       <div className="mt-8 grid gap-4 lg:grid-cols-[2fr_1fr]">
-        <div className="surface-card p-5">
-          <div className="mb-3 text-sm font-semibold">Daily orders & revenue</div>
+        <div className="surface-card group p-6 hover:border-primary/50">
+          <div className="mb-4 flex items-center justify-between border-b pb-2">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground/80">Activity & Revenue</h3>
+          </div>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={daily}>
@@ -242,8 +244,10 @@ function AdminDashboard() {
           </div>
         </div>
 
-        <div className="surface-card p-5">
-          <div className="mb-3 text-sm font-semibold">Top resellers</div>
+        <div className="surface-card group p-6 hover:border-primary/50">
+          <div className="mb-4 flex items-center justify-between border-b pb-2">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground/80">Top Reseller Performance</h3>
+          </div>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={top} layout="vertical" margin={{ left: 20 }}>

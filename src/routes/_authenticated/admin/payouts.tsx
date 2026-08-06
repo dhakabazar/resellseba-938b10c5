@@ -42,7 +42,7 @@ function AdminPayouts() {
 
   return (
     <div>
-      <PageHeader title="Payouts" description="Review requests, then mark as paid after sending payment." />
+      <PageHeader title="Payout Management" description="Review financial requests and process payments to your reseller partners." />
 
       <div className="mb-4 flex flex-wrap gap-2">
         {(["pending", "approved", "paid", "all"] as const).map((f) => (

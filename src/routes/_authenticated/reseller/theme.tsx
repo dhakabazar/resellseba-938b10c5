@@ -105,8 +105,8 @@ function ThemePage() {
   return (
     <div>
       <PageHeader
-        title="Theme"
-        description="Pick a theme, choose a color palette and edit only the sections that theme uses."
+        title="Visual Appearance"
+        description="Customize your storefront theme, color palettes, and interactive section content."
         actions={
           <div className="flex flex-wrap gap-2">
             {code && (

@@ -245,8 +245,8 @@ function ResellersPage() {
   return (
     <div>
       <PageHeader
-        title="Resellers"
-        description="All signups, with email verification and status, in one place."
+        title="Reseller Network"
+        description="Monitor and manage all storefront applications, email verifications, and partner status."
       />
 
       <DataToolbar

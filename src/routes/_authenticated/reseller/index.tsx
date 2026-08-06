@@ -296,8 +296,10 @@ function ResellerDashboard() {
           )}
 
 
-          <div className="surface-card mt-6 p-5">
-            <div className="mb-3 text-sm font-semibold">Orders & delivered profit</div>
+          <div className="surface-card group p-6 hover:border-primary/50">
+            <div className="mb-4 flex items-center justify-between border-b pb-2">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground/80">Profit & Order Insights</h3>
+            </div>
             <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chart}>
