@@ -132,7 +132,7 @@ export function NewOrderModal({
       const { data: order, error } = await supabase
         .from("orders")
         .insert({
-          reseller_id: resellerId,
+          reseller_id: resellerId as any,
           customer_name: sanitizeName(name).trim(),
           customer_phone: normalizePhone(phone),
           address_line: address.trim(),
