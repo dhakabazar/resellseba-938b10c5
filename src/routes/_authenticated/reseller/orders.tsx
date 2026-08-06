@@ -624,6 +624,15 @@ function OrdersPage() {
 }
 // Removed internal NewOrderModal as it is now shared in src/components/NewOrderModal.tsx
 
+function Row({ label, value, bold, muted }: { label: string; value: string; bold?: boolean; muted?: boolean }) {
+  return (
+    <div className={`flex justify-between ${bold ? "font-semibold" : ""} ${muted ? "text-success" : ""}`}>
+      <span className="text-muted-foreground">{label}</span>
+      <span>{value}</span>
+    </div>
+  );
+}
+
 type Item = {
   id: string;
   product_name: string;
