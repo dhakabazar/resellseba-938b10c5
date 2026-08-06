@@ -170,16 +170,21 @@ function AdminOrdersPage() {
     const rows = (data ?? []) as OrderRow[];
     setOrders(rows);
     if (rows.length > 0) {
-      const { data: its } = await supabase
-        .from("order_items")
-        .select("order_id,product_id,product_name,quantity")
-        .in(
-          "order_id",
-          rows.map((r) => r.id),
-        );
+      const [{ data: its }, { data: s }] = await Promise.all([
+        supabase
+          .from("order_items")
+          .select("order_id,product_id,product_name,quantity")
+          .in("order_id", rows.map((r) => r.id)),
+        supabase
+          .from("shipments")
+          .select("order_id,provider,consignment_id")
+          .in("order_id", rows.map(r => r.id))
+      ]);
       setOrderItems((its ?? []) as OrderItemLite[]);
+      setShipments(s ?? []);
     } else {
       setOrderItems([]);
+      setShipments([]);
     }
     setResellerOptions(
       (rs ?? []).map((r: any) => ({ value: r.id, label: `${r.business_name} (/${r.code})` })),

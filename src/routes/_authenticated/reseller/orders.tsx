@@ -152,7 +152,7 @@ function OrdersPage() {
       .maybeSingle();
     if (!r) return setLoading(false);
     setResellerId(r.id);
-    const [{ data: o }, { data: l }, { data: p }] = await Promise.all([
+    const [{ data: o }, { data: l }, { data: p }, { data: sh }] = await Promise.all([
       supabase
         .from("orders")
         .select(ORDER_COLUMNS)
@@ -168,22 +168,32 @@ function OrdersPage() {
         .select("id,name,reseller_price,packaging_cost,delivery_inside,delivery_outside,delivery_mode,delivery_flat,og_image_url,suggested_price")
         .eq("is_active", true)
         .order("created_at", { ascending: false }),
+      supabase
+        .from("shipments")
+        .select("order_id,provider,consignment_id")
+        .in("order_id", orders.map(x => x.id)) // This will be empty on first load, better handle below
     ]);
     const rows = (o ?? []) as OrderRow[];
     setOrders(rows);
     setListings((l ?? []) as Listing[]);
     setAllProducts((p ?? []) as any[]);
+    
     if (rows.length > 0) {
-      const { data: its } = await supabase
-        .from("order_items")
-        .select("order_id,product_id,product_name,quantity")
-        .in(
-          "order_id",
-          rows.map((x) => x.id),
-        );
+      const [{ data: its }, { data: s }] = await Promise.all([
+        supabase
+          .from("order_items")
+          .select("order_id,product_id,product_name,quantity")
+          .in("order_id", rows.map((x) => x.id)),
+        supabase
+          .from("shipments")
+          .select("order_id,provider,consignment_id")
+          .in("order_id", rows.map(x => x.id))
+      ]);
       setOrderItems((its ?? []) as OrderItemLite[]);
+      setShipments(s ?? []);
     } else {
       setOrderItems([]);
+      setShipments([]);
     }
     setLoading(false);
   }
