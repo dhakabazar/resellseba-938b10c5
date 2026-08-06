@@ -45,9 +45,11 @@ function Onboarding() {
   useEffect(() => {
     if (loading) return;
     if (roles.includes("super_admin")) nav({ to: "/admin", replace: true });
-    else if (roles.includes("reseller") || roles.includes("leader"))
+    // Reseller panel only opens after admin approval (status = active)
+    else if (status === "active" && (roles.includes("reseller") || roles.includes("leader")))
       nav({ to: "/reseller", replace: true });
-  }, [loading, roles, nav]);
+  }, [loading, roles, status, nav]);
+
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -88,21 +90,42 @@ function Onboarding() {
   }
 
 
-  if (status === "pending") {
+  if (status === "pending" || status === "suspended" || status === "rejected") {
+    const info =
+      status === "pending"
+        ? {
+            title: "Pending verification",
+            text: "আপনার রেজিস্ট্রেশন সফল হয়েছে। সুপার অ্যাডমিন রিভিউ করে অ্যাপ্রুভ করলেই রিসেলার প্যানেল ওপেন হবে।",
+          }
+        : status === "suspended"
+          ? {
+              title: "Account suspended",
+              text: "আপনার রিসেলার অ্যাকাউন্ট আপাতত সাসপেন্ড করা আছে। সাপোর্টে যোগাযোগ করুন।",
+            }
+          : {
+              title: "Application rejected",
+              text: "আপনার আবেদন অনুমোদন করা হয়নি। বিস্তারিত জানতে সাপোর্টে যোগাযোগ করুন।",
+            };
     return (
       <div className="grid min-h-screen place-items-center px-4">
         <div className="surface-card max-w-md p-8 text-center">
           <div className="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-full bg-warning/20 text-warning-foreground">
             <Loader2 className="h-5 w-5 animate-spin" />
           </div>
-          <h1 className="text-xl font-semibold">Application under review</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            A super admin is reviewing your reseller application. You will get dashboard access once approved.
-          </p>
+          <h1 className="text-xl font-semibold">{info.title}</h1>
+          <p className="mt-2 text-sm text-muted-foreground">{info.text}</p>
+          <button
+            onClick={() => supabase.auth.signOut().then(() => nav({ to: "/login", replace: true }))}
+            className="mt-6 rounded-md border px-4 py-2 text-sm font-medium transition hover:bg-muted"
+          >
+            Sign out
+          </button>
         </div>
       </div>
     );
   }
+
+
 
   return (
     <div
