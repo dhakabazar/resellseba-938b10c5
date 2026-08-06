@@ -50,7 +50,8 @@ export const trackPurchaseServer = createServerFn({ method: "POST" })
           event_name: "Purchase",
           event_time: eventTime,
           event_id: eventId,
-          event_source_url: `https://${data.code}.lovable.app/s/${data.code}/thanks`, // Simplified but better than missing
+          event_source_url: `https://${data.code}.lovable.app/s/${data.code}/checkout`,
+          client_user_agent: typeof window !== "undefined" ? window.navigator.userAgent : undefined,
           action_source: "website",
           user_data: {
             ph: order.customer_phone ? [sha256(order.customer_phone)] : undefined,
@@ -79,7 +80,13 @@ export const trackPurchaseServer = createServerFn({ method: "POST" })
         event_source: "web", event_source_id: tt.pixel_id,
         data: [{
           event: "CompletePayment", event_time: eventTime, event_id: eventId,
-          user: { phone: order.customer_phone ? sha256(order.customer_phone) : undefined },
+          user: { 
+            phone: order.customer_phone ? sha256(order.customer_phone) : undefined,
+          },
+          context: {
+            page: { url: `https://${data.code}.lovable.app/s/${data.code}/checkout` },
+            ad: { callback: undefined } // TikTok Click ID can be added here if captured in URL
+          },
           properties: {
             currency: "BDT", value: Number(order.total), order_id: order.order_number,
             contents: (order.order_items ?? []).map((i: any) => ({

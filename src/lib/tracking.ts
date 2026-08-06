@@ -65,8 +65,8 @@ export function injectTracking(cfg: TrackingConfig) {
       const s = b.getElementsByTagName(e)[0];
       s.parentNode?.insertBefore(t, s);
     })(window, document, "script", "https://connect.facebook.net/en_US/fbevents.js");
-    window.fbq?.("init", cfg.fb_pixel, {}, { agent: "lovable_v1" });
-    window.fbq?.("track", "PageView");
+    window.fbq?.("init", cfg.fb_pixel, {}, { agent: "lovable_v2" });
+    window.fbq?.("track", "PageView", {}, { eventID: `pv_${Date.now()}` });
   }
 
   if (cfg.ga4_id) {
@@ -105,17 +105,19 @@ export function injectTracking(cfg: TrackingConfig) {
 
 export function trackViewContent(p: { id: string; name: string; price: number; currency?: string }) {
   const currency = p.currency ?? "BDT";
-  window.fbq?.("track", "ViewContent", { content_ids: [p.id], content_name: p.name, content_type: "product", value: p.price, currency });
+  const eventId = `vc_${p.id}_${Date.now()}`;
+  window.fbq?.("track", "ViewContent", { content_ids: [p.id], content_name: p.name, content_type: "product", value: p.price, currency }, { eventID: eventId });
   window.gtag?.("event", "view_item", { currency, value: p.price, items: [{ item_id: p.id, item_name: p.name, price: p.price }] });
-  window.ttq?.track("ViewContent", { content_id: p.id, content_name: p.name, value: p.price, currency });
+  window.ttq?.track("ViewContent", { content_id: p.id, content_name: p.name, value: p.price, currency, event_id: eventId });
 }
 
 export function trackAddToCart(p: { id: string; name: string; price: number; qty: number; currency?: string }) {
   const currency = p.currency ?? "BDT";
   const value = p.price * p.qty;
-  window.fbq?.("track", "AddToCart", { content_ids: [p.id], content_name: p.name, value, currency });
+  const eventId = `atc_${p.id}_${Date.now()}`;
+  window.fbq?.("track", "AddToCart", { content_ids: [p.id], content_name: p.name, value, currency }, { eventID: eventId });
   window.gtag?.("event", "add_to_cart", { currency, value, items: [{ item_id: p.id, item_name: p.name, price: p.price, quantity: p.qty }] });
-  window.ttq?.track("AddToCart", { content_id: p.id, content_name: p.name, value, currency });
+  window.ttq?.track("AddToCart", { content_id: p.id, content_name: p.name, value, currency, event_id: eventId });
 }
 
 export function trackPurchase(p: { orderNumber: string; total: number; currency?: string; eventId?: string; items?: Array<{ id: string; name: string; price: number; qty: number }> }) {
