@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, StatCard } from "@/components/ui-kit";
 import { DateRangeBar, DEFAULT_DATE_RANGE, resolveRange, type DateRangeState } from "@/components/date-range-filter";
 import { bdt } from "@/lib/finance-report";
-import { Package, Users, ShoppingCart, Tag, TrendingUp, Wallet, Loader2, RefreshCw } from "lucide-react";
+import { Package, Users, ShoppingCart, Tag, TrendingUp, Wallet, Loader2, RefreshCw, Award, Clock } from "lucide-react";
 import {
   ResponsiveContainer,
   AreaChart,
@@ -174,36 +174,48 @@ function AdminDashboard() {
       <section className="mb-6">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <StatCard
-            label="Total revenue (delivered)"
+            label="Total Revenue"
             value={bdt(lifetime.revenue)}
             icon={<TrendingUp className="h-4 w-4" />}
+            hint="Total from delivered orders"
           />
           <StatCard
-            label="Total admin earning"
+            label="Platform Earnings"
             value={bdt(lifetime.saCost)}
             icon={<Wallet className="h-4 w-4" />}
+            hint="Admin share after payouts"
           />
           <StatCard
-            label="Total reseller profit"
+            label="Reseller Profits"
             value={bdt(lifetime.profit)}
-            icon={<Wallet className="h-4 w-4" />}
+            icon={<Award className="h-4 w-4" />}
+            hint="Total commissions earned"
           />
           <StatCard
-            label="Pending payout"
+            label="Pending Payouts"
             value={bdt(lifetime.payoutDue)}
-            icon={<Wallet className="h-4 w-4" />}
+            icon={<Clock className="h-4 w-4" />}
+            hint="Funds requested by resellers"
           />
         </div>
 
-        <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <StatCard label="Products" value={counts.products} icon={<Package className="h-4 w-4" />} />
-          <StatCard label="Active resellers" value={counts.resellers} icon={<Users className="h-4 w-4" />} />
-          <StatCard label="Brands" value={counts.brands} icon={<Tag className="h-4 w-4" />} />
-          <StatCard
-            label="Pending applications"
-            value={counts.pendingResellers}
-            icon={<Users className="h-4 w-4" />}
-          />
+        <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-4">
+          <div className="surface-card p-4 text-center">
+            <div className="text-2xl font-black text-primary">{counts.products}</div>
+            <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">Products</div>
+          </div>
+          <div className="surface-card p-4 text-center">
+            <div className="text-2xl font-black text-primary">{counts.resellers}</div>
+            <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">Resellers</div>
+          </div>
+          <div className="surface-card p-4 text-center">
+            <div className="text-2xl font-black text-primary">{counts.brands}</div>
+            <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">Brands</div>
+          </div>
+          <div className="surface-card p-4 text-center border-orange-500/20 bg-orange-500/5">
+            <div className="text-2xl font-black text-orange-500">{counts.pendingResellers}</div>
+            <div className="text-[10px] font-bold uppercase tracking-widest text-orange-500/60">Applicants</div>
+          </div>
         </div>
       </section>
 

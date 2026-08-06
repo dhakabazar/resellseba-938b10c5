@@ -200,31 +200,36 @@ function ResellerDashboard() {
       />
 
       <section className="mb-6">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
           <StatCard
-            label="Total earning (lifetime)"
+            label="Total Profit"
             value={bdt(lifetime.delivered + commissionLifetime)}
             icon={<TrendingUp className="h-4 w-4" />}
+            hint="Lifetime earnings"
           />
           <StatCard
-            label="Available payout"
+            label="Available Balance"
             value={bdt(lifetime.available)}
             icon={<Wallet className="h-4 w-4" />}
+            hint="Ready for payout"
           />
           <StatCard
-            label="Paid out (lifetime)"
+            label="Total Paid"
             value={bdt(lifetime.paidOut)}
             icon={<CheckCircle2 className="h-4 w-4" />}
+            hint="Sent to your account"
           />
           <StatCard
-            label="Due (unpaid earning)"
+            label="Outstanding"
             value={bdt(Math.max(lifetime.delivered + commissionLifetime - lifetime.paidOut, 0))}
             icon={<Clock className="h-4 w-4" />}
+            hint="Unpaid profit"
           />
           <StatCard
-            label="Active products"
+            label="Live Products"
             value={listings.active}
             icon={<ShoppingBag className="h-4 w-4" />}
+            hint="Active listings"
           />
         </div>
       </section>
