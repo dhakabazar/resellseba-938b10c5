@@ -151,7 +151,8 @@ function AdminDashboard() {
   return (
     <div>
       <PageHeader
-        title="Dashboard"
+        title="Admin Overview"
+        description="Monitor platform performance, resellers, and financial health."
         actions={
           <button
             type="button"
@@ -159,10 +160,10 @@ function AdminDashboard() {
               void load(range);
               void loadLifetime();
             }}
-            className="inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs"
+            className="group inline-flex items-center gap-2 rounded-xl border-2 border-primary/10 bg-card px-4 py-2.5 text-sm font-bold transition-all hover:border-primary hover:bg-primary hover:text-primary-foreground active:scale-95"
           >
-            {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
-            Refresh
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4 transition-transform group-hover:rotate-180" />}
+            Refresh Data
           </button>
         }
       />
