@@ -118,8 +118,8 @@ function SettingsPage() {
   return (
     <div>
       <PageHeader
-        title="General settings"
-        description="Store identity, branding, contact and SEO."
+        title="Store Configuration"
+        description="Configure your storefront identity, branding assets, and SEO parameters."
         actions={
           code ? (
             <a
