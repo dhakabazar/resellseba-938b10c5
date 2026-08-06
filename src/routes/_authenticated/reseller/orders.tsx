@@ -504,6 +504,10 @@ function OrdersPage() {
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
                           <div className="truncate text-sm font-semibold">{o.order_number}</div>
+                          <div className="text-[10px] font-medium text-primary">
+                            {shipments.find(s => s.order_id === o.id)?.provider?.toUpperCase() || "Manual"} 
+                            {shipments.find(s => s.order_id === o.id)?.consignment_id && ` #${shipments.find(s => s.order_id === o.id)?.consignment_id}`}
+                          </div>
                           <div className="text-[11px] text-muted-foreground">
                             {new Date(o.created_at).toLocaleString([], {
                               day: "2-digit",
@@ -741,7 +745,7 @@ function OrderDrawer({
       <div className="h-full w-full max-w-md space-y-4 overflow-y-auto bg-background p-6 shadow-2xl">
         <div className="flex items-start justify-between">
           <div>
-            <h2 className="text-lg font-semibold">{order.order_number}</h2>
+            <h2 className="text-lg font-semibold">Order #{order.order_number}</h2>
             <p className="text-xs text-muted-foreground">
               {order.customer_name} · {order.customer_phone}
             </p>
