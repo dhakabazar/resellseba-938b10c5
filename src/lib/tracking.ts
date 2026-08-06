@@ -122,17 +122,18 @@ export function trackAddToCart(p: { id: string; name: string; price: number; qty
 
 export function trackPurchase(p: { orderNumber: string; total: number; currency?: string; eventId?: string; items?: Array<{ id: string; name: string; price: number; qty: number }> }) {
   const currency = p.currency ?? "BDT";
+  const eventId = p.eventId ?? `pur_${p.orderNumber}`;
   window.fbq?.("track", "Purchase", {
     value: p.total,
     currency,
     content_ids: p.items?.map((i) => i.id),
     contents: p.items?.map((i) => ({ id: i.id, quantity: i.qty, item_price: i.price })),
-  }, p.eventId ? { eventID: p.eventId } : undefined);
+  }, { eventID: eventId });
   window.gtag?.("event", "purchase", {
     transaction_id: p.orderNumber,
     value: p.total,
     currency,
     items: p.items?.map((i) => ({ item_id: i.id, item_name: i.name, price: i.price, quantity: i.qty })),
   });
-  window.ttq?.track("CompletePayment", { content_id: p.orderNumber, value: p.total, currency, event_id: p.eventId });
+  window.ttq?.track("CompletePayment", { content_id: p.orderNumber, value: p.total, currency, event_id: eventId });
 }
