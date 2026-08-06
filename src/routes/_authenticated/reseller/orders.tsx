@@ -425,7 +425,7 @@ function OrdersPage() {
                 title="Mark all on this page"
               />
             </div>
-            <div>Order</div>
+            <div>Order & Courier</div>
             <div>Customer</div>
             <div>Items</div>
             <div>Total</div>
