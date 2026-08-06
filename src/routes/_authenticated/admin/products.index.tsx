@@ -309,13 +309,21 @@ function ProductsPage() {
                     </td>
                     <td className="min-w-[240px] px-3 py-3">
                       <div className="flex items-center gap-2">
-                        <div className="h-10 w-10 shrink-0 overflow-hidden rounded-md border bg-muted">
+                        <div 
+                          className="h-10 w-10 shrink-0 overflow-hidden rounded-md border bg-muted cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all"
+                          onClick={() => setDetailId(p.id)}
+                        >
                           {p.og_image_url && (
                             <img src={p.og_image_url} className="h-full w-full object-cover" alt="" />
                           )}
                         </div>
-                        <div className="min-w-0">
-                          <div className="font-medium truncate">{p.name}</div>
+                        <div className="min-w-0 flex-1">
+                          <div 
+                            className="font-medium truncate cursor-pointer hover:text-primary transition-colors"
+                            onClick={() => setDetailId(p.id)}
+                          >
+                            {p.name}
+                          </div>
                           <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[10px] text-muted-foreground">
                             <span className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 font-medium">
                               ID: {p.product_code}
@@ -355,6 +363,9 @@ function ProductsPage() {
                     <td className="px-3 py-3">
                       <div className="flex justify-end">
                         <ActionMenu>
+                          <DropdownMenuItem onSelect={() => setDetailId(p.id)}>
+                            <Eye className="mr-2 h-4 w-4" /> View Details
+                          </DropdownMenuItem>
                           <DropdownMenuItem onSelect={() => nav({ to: "/admin/products/$id/edit", params: { id: p.id } })}>
                             <Pencil className="mr-2 h-4 w-4" /> Edit
                           </DropdownMenuItem>

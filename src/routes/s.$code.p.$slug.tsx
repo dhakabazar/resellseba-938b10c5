@@ -123,11 +123,6 @@ function ProductPage() {
               borderc,
             )}
           >
-            {tools && (
-              <div className="absolute right-3 top-3 z-10">
-                <ImageDownloadTools compact images={imageUrls} activeUrl={active} baseName={title} />
-              </div>
-            )}
             {active ? (
               <img src={active} alt={title} className="h-full w-full object-cover" />
             ) : (
@@ -151,17 +146,13 @@ function ProductPage() {
               ))}
             </div>
           )}
-
-          {tools && (
-            <div className={cx("mt-3 rounded-[var(--st-radius-sm)] border p-3", borderc)}>
-              <div className={cx("mb-2 text-[11px] font-semibold uppercase tracking-wide", muted)}>Reseller tools</div>
-              <div className="flex flex-wrap items-center gap-2">
-                <ImageDownloadTools images={imageUrls} activeUrl={active} baseName={title} />
-                <CopyButton value={title} label="title" />
-                {detailsText && <CopyButton value={detailsText} label="details" />}
+            {tools && (
+              <div className="absolute right-3 top-3 z-10 flex flex-col gap-2">
+                <ImageDownloadTools compact images={imageUrls} activeUrl={active} baseName={title} />
+                <CopyButton value={title} className="h-9 w-9 p-0 bg-[var(--st-surface)]/90 backdrop-blur rounded-full shadow-sm" />
+                {detailsText && <CopyButton value={detailsText} label="details" className="h-9 w-9 p-0 bg-[var(--st-surface)]/90 backdrop-blur rounded-full shadow-sm" />}
               </div>
-            </div>
-          )}
+            )}
         </div>
 
         <div>
