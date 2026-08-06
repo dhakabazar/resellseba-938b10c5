@@ -515,6 +515,10 @@ function OrdersPage() {
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
                           <div className="truncate text-sm font-semibold">{o.order_number}</div>
+                          <div className="text-[10px] font-medium text-primary uppercase">
+                            {shipments.find((s: any) => s.order_id === o.id)?.provider || "Manual"} 
+                            {shipments.find((s: any) => s.order_id === o.id)?.consignment_id && ` #${shipments.find((s: any) => s.order_id === o.id)?.consignment_id}`}
+                          </div>
                           <div className="text-[10px] font-medium text-primary">
                             {shipments.find(s => s.order_id === o.id)?.provider?.toUpperCase() || "Manual"} 
                             {shipments.find(s => s.order_id === o.id)?.consignment_id && ` #${shipments.find(s => s.order_id === o.id)?.consignment_id}`}
@@ -587,10 +591,16 @@ function OrdersPage() {
                     />
                   </div>
                   <div className="min-w-0">
-                    <div className="truncate font-medium">{o.order_number}</div>
+                  <div>
+                    <div className="font-medium">{o.order_number}</div>
+                    <div className="text-[11px] font-medium text-primary uppercase">
+                      {shipments.find((s: any) => s.order_id === o.id)?.provider || "Manual"} 
+                      {shipments.find((s: any) => s.order_id === o.id)?.consignment_id && ` #${shipments.find((s: any) => s.order_id === o.id)?.consignment_id}`}
+                    </div>
                     <div className="text-xs text-muted-foreground">
                       {new Date(o.created_at).toLocaleDateString()}
                     </div>
+                  </div>
                   </div>
                   <div className="min-w-0">
                     <div className="truncate">{o.customer_name}</div>
