@@ -127,6 +127,7 @@ function OrdersPage() {
   const [resellerId, setResellerId] = useState<string | null>(null);
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [orderItems, setOrderItems] = useState<OrderItemLite[]>([]);
+  const [shipments, setShipments] = useState<any[]>([]);
   const [listings, setListings] = useState<Listing[]>([]);
   const [allProducts, setAllProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -151,7 +152,7 @@ function OrdersPage() {
       .maybeSingle();
     if (!r) return setLoading(false);
     setResellerId(r.id);
-    const [{ data: o }, { data: l }, { data: p }] = await Promise.all([
+    const [{ data: o }, { data: l }, { data: p }, { data: sh }] = await Promise.all([
       supabase
         .from("orders")
         .select(ORDER_COLUMNS)
@@ -167,22 +168,32 @@ function OrdersPage() {
         .select("id,name,reseller_price,packaging_cost,delivery_inside,delivery_outside,delivery_mode,delivery_flat,og_image_url,suggested_price")
         .eq("is_active", true)
         .order("created_at", { ascending: false }),
+      supabase
+        .from("shipments")
+        .select("order_id,provider,consignment_id")
+        .in("order_id", orders.map(x => x.id)) // This will be empty on first load, better handle below
     ]);
     const rows = (o ?? []) as OrderRow[];
     setOrders(rows);
     setListings((l ?? []) as Listing[]);
     setAllProducts((p ?? []) as any[]);
+    
     if (rows.length > 0) {
-      const { data: its } = await supabase
-        .from("order_items")
-        .select("order_id,product_id,product_name,quantity")
-        .in(
-          "order_id",
-          rows.map((x) => x.id),
-        );
+      const [{ data: its }, { data: s }] = await Promise.all([
+        supabase
+          .from("order_items")
+          .select("order_id,product_id,product_name,quantity")
+          .in("order_id", rows.map((x) => x.id)),
+        supabase
+          .from("shipments")
+          .select("order_id,provider,consignment_id")
+          .in("order_id", rows.map(x => x.id))
+      ]);
       setOrderItems((its ?? []) as OrderItemLite[]);
+      setShipments(s ?? []);
     } else {
       setOrderItems([]);
+      setShipments([]);
     }
     setLoading(false);
   }
@@ -425,7 +436,7 @@ function OrdersPage() {
                 title="Mark all on this page"
               />
             </div>
-            <div>Order</div>
+            <div>Order & Courier</div>
             <div>Customer</div>
             <div>Items</div>
             <div>Total</div>
@@ -504,6 +515,14 @@ function OrdersPage() {
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
                           <div className="truncate text-sm font-semibold">{o.order_number}</div>
+                          <div className="text-[10px] font-medium text-primary uppercase">
+                            {shipments.find((s: any) => s.order_id === o.id)?.provider || "Manual"} 
+                            {shipments.find((s: any) => s.order_id === o.id)?.consignment_id && ` #${shipments.find((s: any) => s.order_id === o.id)?.consignment_id}`}
+                          </div>
+                          <div className="text-[10px] font-medium text-primary">
+                            {shipments.find(s => s.order_id === o.id)?.provider?.toUpperCase() || "Manual"} 
+                            {shipments.find(s => s.order_id === o.id)?.consignment_id && ` #${shipments.find(s => s.order_id === o.id)?.consignment_id}`}
+                          </div>
                           <div className="text-[11px] text-muted-foreground">
                             {new Date(o.created_at).toLocaleString([], {
                               day: "2-digit",
@@ -572,10 +591,16 @@ function OrdersPage() {
                     />
                   </div>
                   <div className="min-w-0">
-                    <div className="truncate font-medium">{o.order_number}</div>
+                  <div>
+                    <div className="font-medium">{o.order_number}</div>
+                    <div className="text-[11px] font-medium text-primary uppercase">
+                      {shipments.find((s: any) => s.order_id === o.id)?.provider || "Manual"} 
+                      {shipments.find((s: any) => s.order_id === o.id)?.consignment_id && ` #${shipments.find((s: any) => s.order_id === o.id)?.consignment_id}`}
+                    </div>
                     <div className="text-xs text-muted-foreground">
                       {new Date(o.created_at).toLocaleDateString()}
                     </div>
+                  </div>
                   </div>
                   <div className="min-w-0">
                     <div className="truncate">{o.customer_name}</div>
@@ -741,7 +766,7 @@ function OrderDrawer({
       <div className="h-full w-full max-w-md space-y-4 overflow-y-auto bg-background p-6 shadow-2xl">
         <div className="flex items-start justify-between">
           <div>
-            <h2 className="text-lg font-semibold">{order.order_number}</h2>
+            <h2 className="text-lg font-semibold">Order #{order.order_number}</h2>
             <p className="text-xs text-muted-foreground">
               {order.customer_name} · {order.customer_phone}
             </p>

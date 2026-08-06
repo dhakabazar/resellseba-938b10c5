@@ -132,6 +132,7 @@ type OrderItemLite = { order_id: string; product_id: string | null; product_name
 function AdminOrdersPage() {
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [orderItems, setOrderItems] = useState<OrderItemLite[]>([]);
+  const [shipments, setShipments] = useState<any[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<OrderTabKey>("confirmed");
@@ -169,16 +170,21 @@ function AdminOrdersPage() {
     const rows = (data ?? []) as OrderRow[];
     setOrders(rows);
     if (rows.length > 0) {
-      const { data: its } = await supabase
-        .from("order_items")
-        .select("order_id,product_id,product_name,quantity")
-        .in(
-          "order_id",
-          rows.map((r) => r.id),
-        );
+      const [{ data: its }, { data: s }] = await Promise.all([
+        supabase
+          .from("order_items")
+          .select("order_id,product_id,product_name,quantity")
+          .in("order_id", rows.map((r) => r.id)),
+        supabase
+          .from("shipments")
+          .select("order_id,provider,consignment_id")
+          .in("order_id", rows.map(r => r.id))
+      ]);
       setOrderItems((its ?? []) as OrderItemLite[]);
+      setShipments(s ?? []);
     } else {
       setOrderItems([]);
+      setShipments([]);
     }
     setResellerOptions(
       (rs ?? []).map((r: any) => ({ value: r.id, label: `${r.business_name} (/${r.code})` })),
@@ -404,7 +410,7 @@ function AdminOrdersPage() {
                 title="Mark all on this page"
               />
             </div>
-            <div>Order</div>
+            <div>Order & Courier</div>
             <div>Reseller</div>
             <div>Customer</div>
             <div>Total</div>
@@ -514,6 +520,10 @@ function AdminOrdersPage() {
                   />
                   <div>
                     <div className="font-medium">{o.order_number}</div>
+                    <div className="text-[11px] font-medium text-primary uppercase">
+                      {shipments.find(s => s.order_id === o.id)?.provider || "Manual"}
+                      {shipments.find(s => s.order_id === o.id)?.consignment_id && ` #${shipments.find(s => s.order_id === o.id)?.consignment_id}`}
+                    </div>
                     <div className="text-xs text-muted-foreground">
                       {new Date(o.created_at).toLocaleDateString()}
                     </div>
@@ -541,7 +551,7 @@ function AdminOrdersPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-40">
                         <DropdownMenuItem onClick={() => setSelected(o)}>
-                          <Eye className="mr-2 h-4 w-4" /> Manage
+                          <Eye className="mr-2 h-4 w-4" /> View Details
                         </DropdownMenuItem>
                         {/* We could add more admin actions here like Export PDF/Label if implemented */}
                       </DropdownMenuContent>
@@ -704,7 +714,7 @@ function OrderDrawer({
       <div className="h-full w-full max-w-xl overflow-y-auto bg-background p-6 shadow-2xl">
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-semibold">{order.order_number}</h2>
+            <h2 className="text-lg font-semibold">Order #{order.order_number}</h2>
             <p className="text-xs text-muted-foreground">
               {order.resellers?.business_name} — /{order.resellers?.code}
             </p>
