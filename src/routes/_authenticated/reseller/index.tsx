@@ -203,30 +203,35 @@ function ResellerDashboard() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
           <StatCard
             label="Total Profit"
+              tone="primary"
             value={bdt(lifetime.delivered + commissionLifetime)}
             icon={<TrendingUp className="h-4 w-4" />}
             hint="Lifetime earnings"
           />
           <StatCard
             label="Available Balance"
+              tone="emerald"
             value={bdt(lifetime.available)}
             icon={<Wallet className="h-4 w-4" />}
             hint="Ready for payout"
           />
           <StatCard
             label="Total Paid"
+              tone="sky"
             value={bdt(lifetime.paidOut)}
             icon={<CheckCircle2 className="h-4 w-4" />}
             hint="Sent to your account"
           />
           <StatCard
             label="Outstanding"
+              tone="amber"
             value={bdt(Math.max(lifetime.delivered + commissionLifetime - lifetime.paidOut, 0))}
             icon={<Clock className="h-4 w-4" />}
             hint="Unpaid profit"
           />
           <StatCard
             label="Live Products"
+              tone="violet"
             value={listings.active}
             icon={<ShoppingBag className="h-4 w-4" />}
             hint="Active listings"
@@ -247,21 +252,25 @@ function ResellerDashboard() {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <StatCard
               label="Orders"
+              tone="sky"
               value={report.all.orders}
               icon={<ClipboardList className="h-4 w-4" />}
             />
             <StatCard
               label="Earned profit"
+              tone="emerald"
               value={bdt(report.realized.profit)}
               icon={<CheckCircle2 className="h-4 w-4" />}
             />
             <StatCard
               label="Pending profit"
+              tone="amber"
               value={bdt(report.pipeline.profit)}
               icon={<Clock className="h-4 w-4" />}
             />
             <StatCard
               label="Paid out (range)"
+              tone="primary"
               value={bdt(paidInRange)}
               icon={<Wallet className="h-4 w-4" />}
             />
@@ -270,21 +279,25 @@ function ResellerDashboard() {
           <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <StatCard
               label="On the way (courier)"
+              tone="sky"
               value={bdt(report.byStatusTab.courier?.customerTotal ?? 0)}
               icon={<Truck className="h-4 w-4" />}
             />
             <StatCard
               label="Return risk"
+              tone="amber"
               value={bdt(report.risk.profit)}
               icon={<AlertTriangle className="h-4 w-4" />}
             />
             <StatCard
               label="Lost (return + cancel)"
+              tone="rose"
               value={bdt(report.lost.profit)}
               icon={<AlertTriangle className="h-4 w-4" />}
             />
             <StatCard
               label="Delivery rate"
+              tone="emerald"
               value={`${report.deliveryRate.toFixed(1)}%`}
               icon={<Award className="h-4 w-4" />}
             />
@@ -294,6 +307,7 @@ function ResellerDashboard() {
             <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               <StatCard
                 label="Team commission (range)"
+              tone="violet"
                 value={bdt(commissionInRange)}
                 icon={<Award className="h-4 w-4" />}
               />

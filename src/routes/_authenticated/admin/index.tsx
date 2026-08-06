@@ -175,24 +175,28 @@ function AdminDashboard() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <StatCard
             label="Total Revenue"
+            tone="primary"
             value={bdt(lifetime.revenue)}
             icon={<TrendingUp className="h-4 w-4" />}
             hint="Total from delivered orders"
           />
           <StatCard
             label="Platform Earnings"
+            tone="emerald"
             value={bdt(lifetime.saCost)}
             icon={<Wallet className="h-4 w-4" />}
             hint="Admin share after payouts"
           />
           <StatCard
             label="Reseller Profits"
+            tone="violet"
             value={bdt(lifetime.profit)}
             icon={<Award className="h-4 w-4" />}
             hint="Total commissions earned"
           />
           <StatCard
             label="Pending Payouts"
+            tone="amber"
             value={bdt(lifetime.payoutDue)}
             icon={<Clock className="h-4 w-4" />}
             hint="Funds requested by resellers"
@@ -221,15 +225,17 @@ function AdminDashboard() {
 
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Orders" value={stats.orders} icon={<ShoppingCart className="h-4 w-4" />} />
+        <StatCard label="Orders" value={stats.orders} tone="sky" icon={<ShoppingCart className="h-4 w-4" />} hint="Range er sob order" />
         <StatCard
           label="Revenue (delivered)"
+            tone="primary"
           value={bdt(stats.revenue)}
           icon={<TrendingUp className="h-4 w-4" />}
         />
-        <StatCard label="Reseller profit" value={bdt(stats.profit)} icon={<Wallet className="h-4 w-4" />} />
+        <StatCard label="Reseller profit" value={bdt(stats.profit)} tone="violet" icon={<Wallet className="h-4 w-4" />} hint="Delivered order theke reseller profit" />
         <StatCard
           label="Admin earning (delivered)"
+            tone="emerald"
           value={bdt(stats.saCost)}
           icon={<Wallet className="h-4 w-4" />}
         />
