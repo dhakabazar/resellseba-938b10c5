@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { createHash } from "crypto";
+import { createHash, randomUUID } from "crypto";
 
 const input = z.object({
   orderNumber: z.string().min(1),

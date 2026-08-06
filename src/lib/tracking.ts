@@ -65,7 +65,7 @@ export function injectTracking(cfg: TrackingConfig) {
       const s = b.getElementsByTagName(e)[0];
       s.parentNode?.insertBefore(t, s);
     })(window, document, "script", "https://connect.facebook.net/en_US/fbevents.js");
-    window.fbq?.("init", cfg.fb_pixel);
+    window.fbq?.("init", cfg.fb_pixel, {}, { agent: "lovable_v1" });
     window.fbq?.("track", "PageView");
   }
 
