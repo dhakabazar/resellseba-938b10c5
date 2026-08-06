@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { createHash } from "crypto";
+import { createHash, randomUUID } from "crypto";
 
 const input = z.object({
   orderNumber: z.string().min(1),
@@ -50,10 +50,12 @@ export const trackPurchaseServer = createServerFn({ method: "POST" })
           event_name: "Purchase",
           event_time: eventTime,
           event_id: eventId,
+          event_source_url: `https://${data.code}.lovable.app/s/${data.code}/thanks`, // Simplified but better than missing
           action_source: "website",
           user_data: {
             ph: order.customer_phone ? [sha256(order.customer_phone)] : undefined,
             fn: order.customer_name ? [sha256(order.customer_name.split(" ")[0])] : undefined,
+            external_id: [sha256(order.id)],
           },
           custom_data: {
             currency: "BDT",
