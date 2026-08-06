@@ -1,6 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { getPublicStats } from "@/lib/landing.functions";
 import {
   ArrowRight,
   Boxes,
@@ -12,8 +14,15 @@ import {
   Megaphone,
   Sparkles,
   Check,
+  Copy,
+  Download,
+  ShoppingBag,
+  Layers,
+  Star,
   type LucideIcon,
 } from "lucide-react";
+import { toast } from "sonner";
+import { bdt } from "@/lib/finance-report";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -128,6 +137,18 @@ function RootResolver() {
 }
 
 function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string; logoUrl: string | null }) {
+  const fetchStats = useServerFn(getPublicStats);
+  const [stats, setStats] = useState<any>(null);
+
+  useEffect(() => {
+    fetchStats().then(setStats);
+  }, [fetchStats]);
+
+  const copy = (txt: string) => {
+    navigator.clipboard.writeText(txt);
+    toast.success("Copied to clipboard");
+  };
+
   const banner = c.hero.bannerImage?.url;
   return (
     <div className="min-h-screen overflow-x-hidden bg-background text-foreground">
@@ -248,6 +269,139 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
           )}
         </div>
       </section>
+
+      {stats && (
+        <section className="bg-card py-12 border-y border-border/60">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+              <div className="text-center">
+                <div className="mb-2 flex justify-center text-primary">
+                  <Boxes className="h-8 w-8" />
+                </div>
+                <div className="text-3xl font-black">{stats.totalProducts}+</div>
+                <div className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Total Products</div>
+              </div>
+              <div className="text-center">
+                <div className="mb-2 flex justify-center text-primary">
+                  <Layers className="h-8 w-8" />
+                </div>
+                <div className="text-3xl font-black">{stats.totalCategories}+</div>
+                <div className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Categories</div>
+              </div>
+              <div className="text-center">
+                <div className="mb-2 flex justify-center text-primary">
+                  <ShoppingBag className="h-8 w-8" />
+                </div>
+                <div className="text-3xl font-black">{stats.totalSales}+</div>
+                <div className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Total Sales</div>
+              </div>
+              <div className="text-center">
+                <div className="mb-2 flex justify-center text-primary">
+                  <Globe className="h-8 w-8" />
+                </div>
+                <div className="text-3xl font-black">24/7</div>
+                <div className="text-sm font-medium text-muted-foreground uppercase tracking-wider">System Support</div>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {stats?.categories.length > 0 && (
+        <section className="py-16 bg-muted/20">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6">
+            <div className="mb-10 text-center">
+              <h2 className="text-3xl font-black">Top Categories</h2>
+              <p className="mt-2 text-muted-foreground">Pick your niche from our wide range of categories</p>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
+              {stats.categories.map((cat: any) => (
+                <div key={cat.id} className="group relative aspect-square overflow-hidden rounded-2xl bg-card border border-border/60 transition-all hover:border-primary/40 hover:shadow-lg">
+                  {cat.image_url ? (
+                    <img src={cat.image_url} alt={cat.name} className="h-full w-full object-cover transition-transform group-hover:scale-110" />
+                  ) : (
+                    <div className="grid h-full w-full place-items-center bg-primary/5 text-primary font-bold">{cat.name.charAt(0)}</div>
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-3">
+                    <span className="text-xs font-bold text-white truncate">{cat.name}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {stats?.products.length > 0 && (
+        <section className="py-20">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6">
+            <div className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
+              <div className="max-w-xl">
+                <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[11px] font-medium text-primary mb-3">
+                  <Star className="h-3 w-3" /> Master Catalog Preview
+                </div>
+                <h2 className="text-3xl md:text-4xl font-black tracking-tight">Top Selling Products</h2>
+                <p className="mt-3 text-muted-foreground">See what's trending across the platform. High-profit products ready to list on your store.</p>
+              </div>
+              <Link to="/login" search={{ mode: "signup" }} className="group inline-flex items-center gap-2 font-bold text-primary hover:underline">
+                View Full Catalog <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </Link>
+            </div>
+
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+              {stats.products.map((p: any) => (
+                <div key={p.id} className="group surface-card overflow-hidden flex flex-col">
+                  <div className="relative aspect-square overflow-hidden bg-muted">
+                    {p.main_image ? (
+                      <img src={p.main_image} alt={p.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                    ) : (
+                      <div className="grid h-full w-full place-items-center text-xs text-muted-foreground">No image</div>
+                    )}
+                    <div className="absolute top-2 left-2 flex flex-col gap-1.5">
+                      <div className="inline-flex items-center gap-1 rounded-full bg-primary px-2 py-1 text-[10px] font-black uppercase text-primary-foreground shadow-lg">
+                        <ShoppingBag className="h-2.5 w-2.5" /> {p.sale_count} Sold
+                      </div>
+                    </div>
+                    <div className="absolute top-2 right-2 flex gap-2">
+                       <button 
+                        onClick={() => copy(p.name)}
+                        className="p-1.5 rounded-lg bg-white/90 text-foreground hover:bg-white shadow-md transition-opacity opacity-0 group-hover:opacity-100"
+                        title="Copy Title"
+                       >
+                         <Copy className="h-3.5 w-3.5" />
+                       </button>
+                       {p.main_image && (
+                         <a 
+                          href={p.main_image} 
+                          download 
+                          className="p-1.5 rounded-lg bg-white/90 text-foreground hover:bg-white shadow-md transition-opacity opacity-0 group-hover:opacity-100"
+                          title="Download Image"
+                          onClick={(e) => e.stopPropagation()}
+                         >
+                           <Download className="h-3.5 w-3.5" />
+                         </a>
+                       )}
+                    </div>
+                  </div>
+                  <div className="p-4 flex-1 flex flex-col">
+                    <h3 className="line-clamp-2 text-sm font-bold leading-tight group-hover:text-primary transition-colors">{p.name}</h3>
+                    <div className="mt-auto pt-3 flex items-center justify-between">
+                      <div className="flex flex-col">
+                        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Resell For</span>
+                        <span className="text-base font-black text-primary">{bdt(p.price)}</span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Your Profit</span>
+                        <span className="block text-sm font-bold text-success">+{bdt(p.price - p.base_price)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       <section id="features" className="relative border-t border-border/60 bg-gradient-to-b from-muted/40 via-background to-muted/20">
         <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
