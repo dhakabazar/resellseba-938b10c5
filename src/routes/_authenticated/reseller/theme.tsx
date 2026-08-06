@@ -145,7 +145,7 @@ function ThemePage() {
             </span>
           )}
         </div>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {STORE_THEMES.map((t) => {
             const active = theme === t.id;
             const savedPaletteId = (all[t.id]?.palette as string) ?? null;
@@ -156,22 +156,33 @@ function ThemePage() {
                 key={t.id}
                 onClick={() => setTheme(t.id)}
                 className={
-                  "relative overflow-hidden rounded-xl border text-left transition-colors " +
-                  (active ? "border-primary ring-2 ring-primary/30" : "hover:border-primary/50")
+                  "group relative flex flex-col overflow-hidden rounded-xl border bg-card text-left transition-all " +
+                  (active ? "border-primary ring-2 ring-primary/30" : "hover:border-primary/50 hover:shadow-md")
                 }
               >
                 {active && (
-                  <span className="absolute right-3 top-3 z-10 grid h-5 w-5 place-items-center rounded-full bg-primary text-primary-foreground">
-                    <Check className="h-3 w-3" />
+                  <span className="absolute right-3 top-3 z-10 grid h-6 w-6 place-items-center rounded-full bg-primary text-primary-foreground shadow-sm">
+                    <Check className="h-3.5 w-3.5" />
                   </span>
                 )}
-                <ThemeMock palette={p} />
-                <div className="p-4">
-                  <div className="text-sm font-semibold">{t.name}</div>
-                  <div className="mt-1 text-xs text-muted-foreground">{t.description}</div>
-                  {t.id === savedTheme && (
-                    <div className="mt-2 text-[11px] font-medium text-primary">Currently live</div>
-                  )}
+                
+                <div className="relative">
+                  <ThemeMock palette={p} />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+                </div>
+
+                <div className="flex flex-1 flex-col p-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm font-bold tracking-tight">{t.name}</span>
+                    {t.id === savedTheme && (
+                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary uppercase tracking-wider">
+                        Live
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+                    {t.description}
+                  </p>
                 </div>
               </button>
             );
