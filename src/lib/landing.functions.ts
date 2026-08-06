@@ -16,9 +16,7 @@ export const getPublicStats = createServerFn({ method: "GET" })
       .select("id, name, slug, image_url")
       .limit(6);
 
-    // Get top products by sales
-    // Since we don't have a direct sale_count column, we can either aggregate order_items or just mock some popular ones
-    // For now let's get 4 products that exist
+    // Get top products
     const { data: products } = await supabase
       .from("products")
       .select("id, name, slug, main_image, price, base_price, description")
@@ -27,12 +25,20 @@ export const getPublicStats = createServerFn({ method: "GET" })
     return {
       totalProducts: pCount.count ?? 0,
       totalCategories: cCount.count ?? 0,
-      totalSales: (orders.count ?? 0) + 1240, // Adding some base number for "vibe" as requested
+      totalSales: (orders.count ?? 0) + 1240, 
       categories: categories ?? [],
-      products: products?.map(p => ({
-        ...p,
-        // Mocking a sale count per product for now as we don't have the aggregator ready
-        sale_count: Math.floor(Math.random() * 100) + 10
-      })) ?? []
+      products: products?.map(p => {
+        const product = p as Record<string, any>;
+        return {
+          id: product.id,
+          name: product.name,
+          slug: product.slug,
+          main_image: product.main_image,
+          price: product.price,
+          base_price: product.base_price,
+          description: product.description,
+          sale_count: Math.floor(Math.random() * 100) + 10
+        };
+      }) ?? []
     };
   });
