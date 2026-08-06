@@ -132,6 +132,7 @@ type OrderItemLite = { order_id: string; product_id: string | null; product_name
 function AdminOrdersPage() {
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [orderItems, setOrderItems] = useState<OrderItemLite[]>([]);
+  const [shipments, setShipments] = useState<any[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<OrderTabKey>("confirmed");
