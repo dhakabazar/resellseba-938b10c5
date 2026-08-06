@@ -382,19 +382,7 @@ function OrdersPage() {
 
       <OrderTabs tab={tab} onChange={setTab} count={tabCount} />
 
-      <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-        {[
-          { label: "Orders", value: String(stats.count) },
-          { label: "Sales", value: `৳${stats.total.toFixed(0)}` },
-          { label: "Delivery", value: `৳${stats.shipping.toFixed(0)}` },
-          { label: "Profit", value: `৳${stats.profit.toFixed(0)}`, tone: "text-success" },
-        ].map((s) => (
-          <div key={s.label} className="surface-card px-3 py-2">
-            <div className="text-[11px] uppercase tracking-wide text-muted-foreground">{s.label}</div>
-            <div className={`text-base font-semibold ${s.tone ?? ""}`}>{s.value}</div>
-          </div>
-        ))}
-      </div>
+      {/* Removed stats cards per user request to match dashboard style (or just remove if duplicate) */}
 
 
       {loading ? (
