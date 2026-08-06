@@ -103,10 +103,10 @@ export function CopyButton({
       onClick={copy}
       title={`Copy ${label ?? "text"}`}
       aria-label={`Copy ${label ?? "text"}`}
-      className={cx(toolBtn, borderc, muted, className)}
+      className={cx(toolBtn, borderc, muted, "justify-center", className)}
     >
       {done ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-      {label ? <span>{done ? "Copied" : `Copy ${label}`}</span> : null}
+      {label && !className?.includes("rounded-full") ? <span>{done ? "Copied" : `Copy ${label}`}</span> : null}
     </button>
   );
 }

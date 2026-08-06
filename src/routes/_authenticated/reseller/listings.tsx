@@ -4,9 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { deliveryLabel } from "@/lib/delivery";
 import { useAuth } from "@/lib/use-auth";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
-import { DataToolbar, Pagination, usePaginated, type FilterDef } from "@/components/data-list";
-import { Loader2, Trash2 } from "lucide-react";
+import { DataToolbar, Pagination, usePaginated, type FilterDef, ActionMenu } from "@/components/data-list";
+import { Loader2, Trash2, Eye, X } from "lucide-react";
 import { toast } from "sonner";
+import { CopyButton, ImageDownloadTools, stripHtml } from "@/components/store/reseller-tools";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
 type L = {
   id: string;
@@ -38,6 +40,7 @@ function ListingsPage() {
   const [sort, setSort] = useState("newest");
   const [perPage, setPerPage] = useState(20);
   const [page, setPage] = useState(1);
+  const [detailId, setDetailId] = useState<string | null>(null);
 
 
   async function load() {
@@ -160,13 +163,21 @@ function ListingsPage() {
             const profit = l.selling_price - cost;
             return (
               <div key={l.id} className="flex flex-wrap items-center gap-4 p-4">
-                <div className="h-14 w-14 overflow-hidden rounded-md border bg-muted">
+                <div 
+                  className="h-14 w-14 overflow-hidden rounded-md border bg-muted cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all"
+                  onClick={() => setDetailId(l.id)}
+                >
                   {l.products?.og_image_url && (
                     <img src={l.products.og_image_url} className="h-full w-full object-cover" alt="" />
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="truncate font-medium">{l.products?.name}</div>
+                  <div 
+                    className="truncate font-medium cursor-pointer hover:text-primary transition-colors"
+                    onClick={() => setDetailId(l.id)}
+                  >
+                    {l.products?.name}
+                  </div>
                   <div className="text-xs text-muted-foreground">
                     Sell ৳{l.selling_price} · Cost ৳{cost} (product + packaging) · Delivery:{" "}
                     {l.products ? deliveryLabel(l.products) : "—"} ·{" "}
@@ -180,12 +191,14 @@ function ListingsPage() {
                 >
                   {l.is_active ? "Live" : "Paused"}
                 </span>
-                <button
-                  onClick={() => remove(l.id)}
-                  className="rounded-md p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
+                <ActionMenu>
+                  <DropdownMenuItem onSelect={() => setDetailId(l.id)}>
+                    <Eye className="mr-2 h-4 w-4" /> View Details
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => remove(l.id)}>
+                    <Trash2 className="mr-2 h-4 w-4" /> Delete Listing
+                  </DropdownMenuItem>
+                </ActionMenu>
               </div>
             );
           })}
@@ -193,6 +206,131 @@ function ListingsPage() {
         <Pagination page={page} perPage={perPage} total={filtered.length} onPage={setPage} />
         </>
       )}
+      {detailId && (
+        <ListingDetailModal id={detailId} onClose={() => setDetailId(null)} />
+      )}
+    </div>
+  );
+}
+
+function ListingDetailModal({ id, onClose }: { id: string; onClose: () => void }) {
+  const [l, setL] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      setLoading(true);
+      const { data } = await supabase
+        .from("reseller_listings")
+        .select(`
+          id, selling_price,
+          products (
+            id, name, product_code, description, short_description, og_image_url, stock, reseller_price, packaging_cost,
+            delivery_mode, delivery_flat, delivery_inside, delivery_outside,
+            product_images (url),
+            brands (name),
+            categories (name)
+          )
+        `)
+        .eq("id", id)
+        .single();
+      if (data) setL(data);
+      setLoading(false);
+    }
+    load();
+  }, [id]);
+
+  if (loading) return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 backdrop-blur-sm">
+      <Loader2 className="h-8 w-8 animate-spin text-white" />
+    </div>
+  );
+
+  const p = l?.products;
+  if (!p) return null;
+
+  const images = [p.og_image_url, ...(p.product_images?.map((i: any) => i.url) || [])].filter(Boolean);
+  const detailsText = stripHtml([p.short_description, p.description].filter(Boolean).join("\n\n"));
+  const myCost = p.reseller_price + p.packaging_cost;
+  const myProfit = l.selling_price - myCost;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={onClose}>
+      <div className="w-full max-w-4xl surface-card max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-background/80 px-6 py-4 backdrop-blur-md">
+          <h3 className="text-lg font-bold">Listing Details</h3>
+          <button onClick={onClose} className="rounded-full p-2 hover:bg-muted">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="p-6">
+          <div className="grid gap-8 md:grid-cols-2">
+            <div className="space-y-4">
+              <div className="relative aspect-square overflow-hidden rounded-xl border bg-muted">
+                {p.og_image_url ? (
+                  <img src={p.og_image_url} className="h-full w-full object-cover" alt="" />
+                ) : (
+                  <div className="grid h-full w-full place-items-center text-muted-foreground">No image</div>
+                )}
+                <div className="absolute right-3 top-3 flex flex-col gap-2">
+                  <ImageDownloadTools compact images={images} activeUrl={p.og_image_url} baseName={p.name} />
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {p.product_images?.map((img: any, i: number) => (
+                  <div key={i} className="h-16 w-16 overflow-hidden rounded-lg border bg-muted">
+                    <img src={img.url} className="h-full w-full object-cover" alt="" />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <div>
+                <div className="flex items-start justify-between gap-4">
+                  <h1 className="text-2xl font-bold">{p.name}</h1>
+                  <CopyButton value={p.name} />
+                </div>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <span className="rounded bg-muted px-2 py-0.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    Code: {p.product_code}
+                  </span>
+                  {p.brands?.name && <span className="rounded bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">{p.brands.name}</span>}
+                  {p.categories?.name && <span className="rounded bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">{p.categories.name}</span>}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 rounded-xl border bg-muted/30 p-4">
+                <div>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Selling Price</div>
+                  <div className="text-lg font-bold">৳{l.selling_price}</div>
+                </div>
+                <div>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Your Profit</div>
+                  <div className="text-lg font-bold text-success">৳{myProfit}</div>
+                </div>
+                <div>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Base Cost</div>
+                  <div className="text-sm font-medium">৳{myCost}</div>
+                </div>
+                <div>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Stock</div>
+                  <div className={`text-sm font-medium ${p.stock <= 5 ? "text-destructive" : ""}`}>{p.stock} in stock</div>
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="font-bold">Product Description</h4>
+                  <CopyButton value={detailsText} label="details" />
+                </div>
+                <div className="prose prose-sm max-w-none text-muted-foreground" dangerouslySetInnerHTML={{ __html: p.description || p.short_description || 'No description provided.' }} />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
