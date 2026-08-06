@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
-import { Plus, Loader2, Pencil, Trash2, Eye, EyeOff, Check, X, CheckSquare, Square } from "lucide-react";
+import { Plus, Loader2, Pencil, Trash2, Eye, EyeOff, Check, X, CheckSquare, Square, Copy, Download } from "lucide-react";
 import { toast } from "sonner";
 import {
   DataToolbar,
@@ -12,6 +12,7 @@ import {
   type FilterDef,
 } from "@/components/data-list";
 import { DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { CopyButton, ImageDownloadTools, stripHtml } from "@/components/store/reseller-tools";
 
 type Row = {
   id: string;
