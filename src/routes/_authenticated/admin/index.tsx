@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, StatCard } from "@/components/ui-kit";
 import { DateRangeBar, DEFAULT_DATE_RANGE, resolveRange, type DateRangeState } from "@/components/date-range-filter";
 import { bdt } from "@/lib/finance-report";
-import { Package, Users, ShoppingCart, Tag, TrendingUp, Wallet, Loader2, RefreshCw } from "lucide-react";
+import { Package, Users, ShoppingCart, Tag, TrendingUp, Wallet, Loader2, RefreshCw, Award, Clock } from "lucide-react";
 import {
   ResponsiveContainer,
   AreaChart,
