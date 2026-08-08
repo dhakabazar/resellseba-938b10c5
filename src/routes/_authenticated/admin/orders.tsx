@@ -687,7 +687,7 @@ function OrderDrawer({
 
 
   async function loadDetails() {
-    const [{ data: i }, { data: s }, { data: ev }] = await Promise.all([
+    const [{ data: i }, { data: s }, { data: ev }, { data: configs }] = await Promise.all([
       supabase
         .from("order_items")
         .select("id,product_name,quantity,reseller_price,sa_price,line_total")
@@ -706,10 +706,21 @@ function OrderDrawer({
         )
         .eq("order_id", order.id)
         .order("event_at", { ascending: false }),
+      supabase
+        .from("courier_configs")
+        .select("provider, config, is_active")
+        .eq("is_active", true)
     ]);
+    
     setItems((i ?? []) as Item[]);
     setShipments((s ?? []) as Shipment[]);
     setEvents((ev ?? []) as CourierEvent[]);
+    
+    const active = (configs ?? []).map(c => ({ provider: c.provider, config: c.config }));
+    setActiveCouriers(active);
+    if (active.length > 0) {
+      setProvider(active[0].provider);
+    }
   }
   useEffect(() => {
     loadDetails();
