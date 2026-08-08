@@ -52,32 +52,75 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
         <title>Shipping Labels - ${size}</title>
         <style>
           @page { size: ${width} ${height}; margin: 0; }
-          body { margin: 0; padding: 0; font-family: sans-serif; }
+          body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #fff; }
           .label { 
             width: ${width}; 
             height: ${height}; 
-            padding: 0.25in; 
+            padding: 0.15in; 
             box-sizing: border-box; 
-            border-bottom: 1px dashed #ccc;
+            border: 2px solid #000;
             page-break-after: always;
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            position: relative;
           }
-          .header { border-bottom: 2px solid #000; padding-bottom: 4px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+          .header { 
+            border-bottom: 2px solid #000; 
+            padding-bottom: 6px; 
+            margin-bottom: 8px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+          }
           .reseller-info { display: flex; align-items: center; gap: 8px; }
-          .reseller-logo { width: 24px; height: 24px; object-fit: cover; border-radius: 2px; }
-          .site-name { font-size: 12pt; font-weight: bold; }
-          .order-num { font-size: 10pt; }
-          .customer { margin-bottom: 10px; flex-grow: 1; }
-          .name { font-size: 14pt; font-weight: bold; margin-bottom: 2px; }
-          .phone { font-size: 12pt; margin-bottom: 4px; }
-          .address { font-size: 10pt; line-height: 1.2; }
-          .items { font-size: 8pt; border-top: 1px solid #eee; padding-top: 4px; margin-top: auto; }
-          .footer { margin-top: 6px; border-top: 1px solid #000; padding-top: 4px; display: flex; justify-content: space-between; align-items: flex-end; }
-          .courier { font-size: 9pt; font-weight: bold; text-transform: uppercase; }
-          .tracking { font-size: 8pt; }
-          .cod { font-size: 12pt; font-weight: bold; }
+          .reseller-logo { width: 32px; height: 32px; object-fit: contain; border: 1px solid #eee; }
+          .site-name { font-size: 11pt; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+          .order-num { font-size: 9pt; font-weight: bold; background: #000; color: #fff; padding: 2px 6px; border-radius: 2px; }
+          
+          .section-title { font-size: 7pt; text-transform: uppercase; color: #666; font-weight: bold; margin-bottom: 2px; }
+          
+          .customer { 
+            border: 1.5px solid #000;
+            padding: 8px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+          }
+          .name { font-size: 13pt; font-weight: 800; margin-bottom: 2px; color: #000; }
+          .phone { font-size: 11pt; font-weight: bold; margin-bottom: 4px; display: block; border-bottom: 1px dashed #000; width: fit-content; }
+          .address { font-size: 9pt; line-height: 1.3; font-weight: 500; }
+          
+          .items-box {
+            border: 1px solid #000;
+            padding: 6px;
+            flex-grow: 1;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            background: #f9f9f9;
+            font-size: 8pt;
+          }
+          .item-row { display: block; margin-bottom: 2px; border-bottom: 1px solid #ddd; padding-bottom: 2px; }
+          .item-row:last-child { border-bottom: none; }
+
+          .footer { 
+            border-top: 2px solid #000; 
+            padding-top: 6px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+          }
+          .courier-info { display: flex; flex-direction: column; }
+          .courier { font-size: 10pt; font-weight: 900; text-transform: uppercase; color: #000; }
+          .tracking { font-size: 7pt; font-family: monospace; font-weight: bold; }
+          .cod-badge { 
+            background: #000; 
+            color: #fff; 
+            padding: 4px 8px; 
+            border-radius: 4px;
+            text-align: right;
+          }
+          .cod-label { font-size: 7pt; text-transform: uppercase; display: block; line-height: 1; }
+          .cod-value { font-size: 12pt; font-weight: 900; }
         </style>
       </head>
       <body>
@@ -97,19 +140,25 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
                 <div class="order-num">#${o.order_number}</div>
               </div>
               <div class="customer">
+                <div class="section-title">Recipient</div>
                 <div class="name">${o.customer_name}</div>
                 <div class="phone">${o.customer_phone}</div>
                 <div class="address">${o.address_line}<br><strong>${o.area.replace("_", " ")}</strong></div>
               </div>
-              <div class="items">
-                <strong>Items:</strong> ${itemLines}
+              <div class="items-box">
+                <div class="section-title">Order Items</div>
+                ${oItems.map(it => `<span class="item-row">${it.product_name} <strong>x ${it.quantity}</strong></span>`).join("")}
               </div>
               <div class="footer">
-                <div>
+                <div class="courier-info">
+                  <div class="section-title">Courier</div>
                   <div class="courier">${s?.provider || "Manual"}</div>
-                  <div class="tracking">${s?.tracking_id || s?.consignment_id || ""}</div>
+                  <div class="tracking">${s?.tracking_id || s?.consignment_id || "PENDING"}</div>
                 </div>
-                <div class="cod">COD: ৳${Number(o.total).toFixed(0)}</div>
+                <div class="cod-badge">
+                  <span class="cod-label">Cash to Collect</span>
+                  <span class="cod-value">৳${Number(o.total).toFixed(0)}</span>
+                </div>
               </div>
             </div>
           `;
