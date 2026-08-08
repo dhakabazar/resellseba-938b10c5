@@ -9,7 +9,7 @@ import {
 } from "@/components/order-filters";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
-import { Loader2, Truck, X, Download, Zap, RotateCcw, RefreshCw, Lock, PackageCheck, Repeat, Ban, Search, ListChecks, SlidersHorizontal, ChevronDown, Plus, MoreVertical, Eye, FileText, Trash2, Phone } from "lucide-react";
+import { Loader2, Truck, X, Download, Zap, RotateCcw, RefreshCw, Lock, PackageCheck, Repeat, Ban, Search, ListChecks, SlidersHorizontal, ChevronDown, Plus, MoreVertical, Eye, FileText, Trash2, Phone, CheckCircle2, AlertCircle, ShoppingCart } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -296,8 +296,6 @@ function AdminOrdersPage() {
           onChange={(v) => setFilters({ ...filters, q: v })}
         />
 
-
-
         <button
           type="button"
           onClick={() => setShowFilters((v) => !v)}
@@ -318,7 +316,42 @@ function AdminOrdersPage() {
           <ListChecks className="h-4 w-4" />
           Pick list
         </button>
-        <span className="text-xs text-muted-foreground">
+
+        {marked.length > 0 && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="btn-brand inline-flex h-10 items-center gap-2 rounded-md px-4 text-sm font-medium">
+                <ShoppingCart className="h-4 w-4" />
+                Bulk action ({marked.length})
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              {/* Only show "Confirm" if some are pending/on_hold */}
+              <DropdownMenuItem onClick={() => bulkUpdateStatus("confirmed")}>
+                <CheckCircle2 className="mr-2 h-4 w-4 text-success" /> Confirm Marked
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => bulkUpdateStatus("cancelled")}>
+                <Ban className="mr-2 h-4 w-4 text-destructive" /> Cancel Marked
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => bulkUpdateStatus("on_hold")}>
+                <Lock className="mr-2 h-4 w-4 text-amber-600" /> Hold Marked
+              </DropdownMenuItem>
+              {tab === "confirmed" && (
+                <DropdownMenuItem onClick={() => {
+                  setPickScope("marked");
+                  setPickOpen(true);
+                }}>
+                  <ListChecks className="mr-2 h-4 w-4" /> Marked pick list
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem onClick={() => exportCsv(markedOrders)}>
+                <Download className="mr-2 h-4 w-4" /> Export Marked CSV
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+
+        <span className="ml-auto text-xs text-muted-foreground">
           {filtered.length} of {orders.length}
         </span>
       </div>
