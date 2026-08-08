@@ -873,8 +873,18 @@ function OrderDrawer({
 
 
         <div className="surface-card mb-4 p-4">
-          <div className="mb-3 flex items-center gap-2 text-sm font-medium">
-            <Truck className="h-4 w-4" /> Shipments
+          <div className="mb-3 flex items-center justify-between gap-2 text-sm font-medium">
+            <div className="flex items-center gap-2">
+              <Truck className="h-4 w-4" /> Shipments
+            </div>
+            {shipments.some(s => s.consignment_id) && (
+              <button 
+                onClick={() => loadDetails()}
+                className="flex items-center gap-1 text-[10px] text-primary hover:underline"
+              >
+                <RefreshCw className="h-3 w-3" /> Recall / Sync API
+              </button>
+            )}
           </div>
           {shipments.length > 0 ? (
             <div className="mb-4 divide-y">
