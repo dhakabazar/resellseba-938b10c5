@@ -655,6 +655,10 @@ function OrderDrawer({
   const [status, setStatus] = useState(order.status);
   const [adminNote, setAdminNote] = useState(order.admin_note ?? "");
   const [busy, setBusy] = useState(false);
+  
+  // Courier configs
+  const [activeCouriers, setActiveCouriers] = useState<{provider: string, config: any}[]>([]);
+  
   const bookAuto = useServerFn(bookSteadfast);
   const bookPathaoFn = useServerFn(bookPathao);
   const syncPathaoFn = useServerFn(syncPathaoStatus);
@@ -671,7 +675,7 @@ function OrderDrawer({
 
 
   // shipment form
-  const [provider, setProvider] = useState("steadfast");
+  const [provider, setProvider] = useState<string>("");
   const [tracking, setTracking] = useState("");
   const [cost, setCost] = useState<number>(0);
   const [deliveryType, setDeliveryType] = useState<0 | 1>(0);
