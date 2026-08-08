@@ -5,12 +5,27 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
 
   const [{ data: settings }, { data: orders }, { data: items }, { data: shipments }] = await Promise.all([
     supabase.from("global_settings").select("*").eq("id", 1).maybeSingle(),
-    supabase.from("orders").select("id,order_number,customer_name,customer_phone,address_line,area,total").in("id", orderIds),
+    supabase.from("orders").select("id,order_number,customer_name,customer_phone,address_line,area,total,reseller_id").in("id", orderIds),
     supabase.from("order_items").select("order_id,product_name,quantity").in("order_id", orderIds),
     supabase.from("shipments").select("order_id,provider,tracking_id,consignment_id").in("order_id", orderIds)
   ]);
 
   if (!orders || orders.length === 0) return;
+
+  const resellerIds = [...new Set(orders.map(o => o.reseller_id))];
+  const { data: resellers } = await supabase
+    .from("resellers")
+    .select("id,business_name,reseller_settings(logo_url,store_name)")
+    .in("id", resellerIds);
+
+  const resellerMap = new Map();
+  resellers?.forEach(r => {
+    const s = Array.isArray(r.reseller_settings) ? r.reseller_settings[0] : r.reseller_settings;
+    resellerMap.set(r.id, {
+      name: s?.store_name || r.business_name,
+      logo: s?.logo_url
+    });
+  });
 
   const size = forceSize || (settings as any)?.label_size || "3x4";
   const siteName = settings?.site_name || "ResellHub";
@@ -50,7 +65,9 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
             overflow: hidden;
           }
           .header { border-bottom: 2px solid #000; padding-bottom: 4px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
-          .site-name { font-size: 14pt; font-weight: bold; }
+          .reseller-info { display: flex; align-items: center; gap: 8px; }
+          .reseller-logo { width: 24px; height: 24px; object-fit: cover; border-radius: 2px; }
+          .site-name { font-size: 12pt; font-weight: bold; }
           .order-num { font-size: 10pt; }
           .customer { margin-bottom: 10px; flex-grow: 1; }
           .name { font-size: 14pt; font-weight: bold; margin-bottom: 2px; }
@@ -65,6 +82,7 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
       </head>
       <body>
         ${orders.map(o => {
+          const reseller = resellerMap.get(o.reseller_id);
           const s = shipmentsByOrder.get(o.id);
           const oItems = itemsByOrder.get(o.id) || [];
           const itemLines = oItems.map(it => `${it.product_name} x ${it.quantity}`).join(", ");
@@ -72,7 +90,10 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
           return `
             <div class="label">
               <div class="header">
-                <div class="site-name">${siteName}</div>
+                <div class="reseller-info">
+                  ${reseller?.logo ? `<img src="${reseller.logo}" class="reseller-logo" />` : ""}
+                  <div class="site-name">${reseller?.name || siteName}</div>
+                </div>
                 <div class="order-num">#${o.order_number}</div>
               </div>
               <div class="customer">
