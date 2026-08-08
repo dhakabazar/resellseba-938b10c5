@@ -340,40 +340,44 @@ function AdminOrdersPage() {
         </button>
 
         {marked.length > 0 && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="btn-brand inline-flex h-10 items-center gap-2 rounded-md px-4 text-sm font-medium">
-                <ShoppingCart className="h-4 w-4" />
-                Bulk action ({marked.length})
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              {/* Only show "Confirm" if some are pending/on_hold */}
-              <DropdownMenuItem onClick={() => bulkUpdateStatus("confirmed")}>
-                <CheckCircle2 className="mr-2 h-4 w-4 text-success" /> Confirm Marked
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => bulkUpdateStatus("cancelled")}>
-                <Ban className="mr-2 h-4 w-4 text-destructive" /> Cancel Marked
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => bulkUpdateStatus("on_hold")}>
-                <Lock className="mr-2 h-4 w-4 text-amber-600" /> Hold Marked
-              </DropdownMenuItem>
-              {tab === "confirmed" && (
-                <DropdownMenuItem onClick={() => {
-                  setPickScope("marked");
-                  setPickOpen(true);
-                }}>
-                  <ListChecks className="mr-2 h-4 w-4" /> Marked pick list
+          <div className="flex flex-wrap gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="btn-brand inline-flex h-10 items-center gap-2 rounded-md px-4 text-sm font-medium">
+                  <ShoppingCart className="h-4 w-4" />
+                  Bulk action ({marked.length})
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem onClick={() => bulkUpdateStatus("confirmed")}>
+                  <CheckCircle2 className="mr-2 h-4 w-4 text-success" /> Confirm Marked
                 </DropdownMenuItem>
-              )}
-              <DropdownMenuItem onClick={() => printShippingLabels(marked)}>
-                <Printer className="mr-2 h-4 w-4" /> Print Labels
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => exportCsv(markedOrders)}>
-                <Download className="mr-2 h-4 w-4" /> Export Marked CSV
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                <DropdownMenuItem onClick={() => bulkUpdateStatus("cancelled")}>
+                  <Ban className="mr-2 h-4 w-4 text-destructive" /> Cancel Marked
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => bulkUpdateStatus("on_hold")}>
+                  <Lock className="mr-2 h-4 w-4 text-amber-600" /> Hold Marked
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => printShippingLabels(marked)}>
+                  <Printer className="mr-2 h-4 w-4" /> Print Labels
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => exportCsv(markedOrders)}>
+                  <Download className="mr-2 h-4 w-4" /> Export CSV
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
+            <button
+              type="button"
+              className="inline-flex h-10 items-center gap-2 rounded-md border border-primary/40 bg-primary/10 px-3 text-sm text-primary hover:bg-primary/20"
+              onClick={() => {
+                // TODO: Bulk send to courier logic
+                toast.info("Bulk courier booking coming soon");
+              }}
+            >
+              <Truck className="h-4 w-4" /> Send Marked to Courier
+            </button>
+          </div>
         )}
 
         <span className="ml-auto text-xs text-muted-foreground">
