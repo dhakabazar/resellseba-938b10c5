@@ -395,35 +395,6 @@ function AdminOrdersPage() {
         />
       )}
 
-      {marked.length > 0 && (
-        <div className="mb-3 flex flex-wrap items-center gap-2 rounded-md border border-primary/40 bg-primary/5 px-3 py-2 text-sm">
-          <span className="font-medium">{marked.length} order marked</span>
-          <button
-            type="button"
-            onClick={() => {
-              setPickScope("marked");
-              setPickOpen(true);
-            }}
-            className="inline-flex items-center gap-1.5 rounded-md border bg-background px-2.5 py-1 text-xs hover:bg-accent"
-          >
-            <ListChecks className="h-3.5 w-3.5" /> Marked pick list
-          </button>
-          <button
-            type="button"
-            onClick={() => exportCsv(markedOrders)}
-            className="inline-flex items-center gap-1.5 rounded-md border bg-background px-2.5 py-1 text-xs hover:bg-accent"
-          >
-            <Download className="h-3.5 w-3.5" /> Export marked
-          </button>
-          <button
-            type="button"
-            onClick={() => setMarked([])}
-            className="ml-auto rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-accent"
-          >
-            Clear
-          </button>
-        </div>
-      )}
 
       {pickOpen && (
         <PickListModal
