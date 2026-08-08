@@ -579,6 +579,7 @@ export const syncCarrybeeStatus = createServerFn({ method: "POST" })
       deliveryCharge: d.delivery_fee != null ? Number(d.delivery_fee) : null,
       note: d.reason ?? null,
       payload: body,
+      bypassFinalLock: true,
     });
 
     return { courierStatus, shipStatus: result.matched ? result.mapped.ship : null };
