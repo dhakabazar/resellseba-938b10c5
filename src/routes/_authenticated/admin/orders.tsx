@@ -891,11 +891,17 @@ function OrderDrawer({
               {shipments.map((s) => (
                 <div key={s.id} className="space-y-2 py-3 text-sm">
                   <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <div className="font-medium capitalize">{s.provider}</div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 font-medium capitalize">
+                        {s.provider}
+                        {s.consignment_id && (
+                          <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold text-primary">
+                            CID: {s.consignment_id}
+                          </span>
+                        )}
+                      </div>
                       <div className="text-xs text-muted-foreground">
                         Tracking: {s.tracking_id ?? "—"}
-                        {s.consignment_id ? ` · CID ${s.consignment_id}` : ""}
                       </div>
                       <div className="mt-1 flex flex-wrap gap-1.5 text-[11px]">
                         <span className="rounded-full bg-primary/15 px-2 py-0.5 capitalize text-primary">
