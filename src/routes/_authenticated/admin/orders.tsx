@@ -817,9 +817,9 @@ function OrderDrawer({
           <div className="text-sm font-medium">Status</div>
           {courierLocked && (
             <div className="flex items-start gap-2 rounded-md bg-amber-500/10 p-2 text-[11px] text-amber-700">
-              <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
               <span>
-                Order is with the courier — only super admin can change status now. Courier updates arrive automatically; use "Receive return" once the parcel comes back.
+                Caution: Order status managed by courier webhook. Super admin can override, but please verify first.
               </span>
             </div>
           )}
