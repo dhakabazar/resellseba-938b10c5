@@ -137,6 +137,25 @@ function SettingsPage() {
           </Field>
         </div>
         <div className="surface-card space-y-3 p-6 lg:col-span-2">
+          <h3 className="text-sm font-semibold">Shipping labels</h3>
+          <p className="text-xs text-muted-foreground">
+            Default label size for bulk and single printing.
+          </p>
+          <div className="grid gap-3 md:grid-cols-2">
+            <Field label="Default label size">
+              <select 
+                value={(settings as any)?.label_size || "3x4"} 
+                onChange={(e) => setSettings({ ...settings, label_size: e.target.value })} 
+                className={inp}
+              >
+                <option value="3x3">3x3 inch</option>
+                <option value="3x4">3x4 inch</option>
+              </select>
+            </Field>
+          </div>
+        </div>
+
+        <div className="surface-card space-y-3 p-6 lg:col-span-2">
           <h3 className="text-sm font-semibold">Contact</h3>
           <div className="grid gap-3 md:grid-cols-2">
             <Field label="Phone"><input value={phone} onChange={(e) => setPhone(e.target.value)} className={inp} /></Field>
