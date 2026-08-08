@@ -141,6 +141,7 @@ export const syncSteadfastStatus = createServerFn({ method: "POST" })
       source: "sync",
       notificationType: "manual_sync",
       payload: body,
+      bypassFinalLock: true, // Super Admin manual sync bypasses lock
     });
 
     return { courierStatus, shipStatus: result.matched ? result.mapped.ship : null };
@@ -394,6 +395,7 @@ export const syncPathaoStatus = createServerFn({ method: "POST" })
       source: "sync",
       notificationType: "manual_sync",
       payload: info,
+      bypassFinalLock: true,
     });
 
     return { courierStatus: info.status, shipStatus: result.matched ? result.mapped.ship : null };
@@ -577,6 +579,7 @@ export const syncCarrybeeStatus = createServerFn({ method: "POST" })
       deliveryCharge: d.delivery_fee != null ? Number(d.delivery_fee) : null,
       note: d.reason ?? null,
       payload: body,
+      bypassFinalLock: true,
     });
 
     return { courierStatus, shipStatus: result.matched ? result.mapped.ship : null };

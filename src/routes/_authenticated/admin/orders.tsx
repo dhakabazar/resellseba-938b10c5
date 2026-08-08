@@ -9,7 +9,7 @@ import {
 } from "@/components/order-filters";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
-import { Loader2, Truck, X, Download, Zap, RotateCcw, RefreshCw, Lock, PackageCheck, Repeat, Ban, Search, ListChecks, SlidersHorizontal, ChevronDown, Plus, MoreVertical, Eye, FileText, Trash2, Phone, CheckCircle2, AlertCircle, ShoppingCart, Printer } from "lucide-react";
+import { Loader2, Truck, X, Download, Zap, RotateCcw, RefreshCw, Lock, PackageCheck, Repeat, Ban, Search, ListChecks, SlidersHorizontal, ChevronDown, Plus, MoreVertical, Eye, FileText, Trash2, Phone, CheckCircle2, AlertCircle, ShoppingCart, Printer, AlertTriangle } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -817,13 +817,18 @@ function OrderDrawer({
           <div className="text-sm font-medium">Status</div>
           {courierLocked && (
             <div className="flex items-start gap-2 rounded-md bg-amber-500/10 p-2 text-[11px] text-amber-700">
-              <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
               <span>
-                Order is with the courier — only super admin can change status now. Courier updates arrive automatically; use "Receive return" once the parcel comes back.
+                Order status gulo sundor kore kore dao... super admin jekono order er status jekono tai poriborton korte parbe.. tobe weebhook theke event ese order status change hole ta super admin change korte parbe kintu worning dibe r onno kew parbe na
+
               </span>
             </div>
           )}
-          <select value={status} onChange={(e) => setStatus(e.target.value)} className="input capitalize">
+          <select 
+            value={status} 
+            onChange={(e) => setStatus(e.target.value)} 
+            className="input capitalize border-primary/50 focus:border-primary shadow-sm"
+          >
             {ORDER_STATUS_OPTIONS.map((s) => (
               <option key={s} value={s}>
                 {orderStatusLabel(s)}

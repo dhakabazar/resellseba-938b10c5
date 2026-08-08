@@ -100,6 +100,7 @@ export async function applyCourierUpdate(
     deliveryCharge?: number | null;
     note?: string | null;
     payload?: unknown;
+    bypassFinalLock?: boolean;
   },
 ) {
   let shipment: any = null;
@@ -171,12 +172,14 @@ export async function applyCourierUpdate(
   // "returned" and "cancelled" are final, manually-confirmed states — courier
   // events must never overwrite them.
   const finalStates = ["returned", "cancelled"];
-  if (order && order.status !== mapped.order && !finalStates.includes(order.status)) {
+  const isLocked = order && finalStates.includes(order.status) && !args.bypassFinalLock;
+  
+  if (order && order.status !== mapped.order && !isLocked) {
     await db.from("orders").update({ status: mapped.order }).eq("id", orderId);
     await db.from("order_status_history").insert({
       order_id: orderId,
       status: mapped.order,
-      note: `${provider} update (${args.source}): ${statusKey}`,
+      note: `${provider} update (${args.source}): ${statusKey}${args.bypassFinalLock ? " (Admin Override)" : ""}`,
     });
   }
 
