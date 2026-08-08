@@ -340,40 +340,44 @@ function AdminOrdersPage() {
         </button>
 
         {marked.length > 0 && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="btn-brand inline-flex h-10 items-center gap-2 rounded-md px-4 text-sm font-medium">
-                <ShoppingCart className="h-4 w-4" />
-                Bulk action ({marked.length})
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              {/* Only show "Confirm" if some are pending/on_hold */}
-              <DropdownMenuItem onClick={() => bulkUpdateStatus("confirmed")}>
-                <CheckCircle2 className="mr-2 h-4 w-4 text-success" /> Confirm Marked
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => bulkUpdateStatus("cancelled")}>
-                <Ban className="mr-2 h-4 w-4 text-destructive" /> Cancel Marked
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => bulkUpdateStatus("on_hold")}>
-                <Lock className="mr-2 h-4 w-4 text-amber-600" /> Hold Marked
-              </DropdownMenuItem>
-              {tab === "confirmed" && (
-                <DropdownMenuItem onClick={() => {
-                  setPickScope("marked");
-                  setPickOpen(true);
-                }}>
-                  <ListChecks className="mr-2 h-4 w-4" /> Marked pick list
+          <div className="flex flex-wrap gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="btn-brand inline-flex h-10 items-center gap-2 rounded-md px-4 text-sm font-medium">
+                  <ShoppingCart className="h-4 w-4" />
+                  Bulk action ({marked.length})
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem onClick={() => bulkUpdateStatus("confirmed")}>
+                  <CheckCircle2 className="mr-2 h-4 w-4 text-success" /> Confirm Marked
                 </DropdownMenuItem>
-              )}
-              <DropdownMenuItem onClick={() => printShippingLabels(marked)}>
-                <Printer className="mr-2 h-4 w-4" /> Print Labels
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => exportCsv(markedOrders)}>
-                <Download className="mr-2 h-4 w-4" /> Export Marked CSV
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                <DropdownMenuItem onClick={() => bulkUpdateStatus("cancelled")}>
+                  <Ban className="mr-2 h-4 w-4 text-destructive" /> Cancel Marked
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => bulkUpdateStatus("on_hold")}>
+                  <Lock className="mr-2 h-4 w-4 text-amber-600" /> Hold Marked
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => printShippingLabels(marked)}>
+                  <Printer className="mr-2 h-4 w-4" /> Print Labels
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => exportCsv(markedOrders)}>
+                  <Download className="mr-2 h-4 w-4" /> Export CSV
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
+            <button
+              type="button"
+              className="inline-flex h-10 items-center gap-2 rounded-md border border-primary/40 bg-primary/10 px-3 text-sm text-primary hover:bg-primary/20"
+              onClick={() => {
+                // TODO: Bulk send to courier logic
+                toast.info("Bulk courier booking coming soon");
+              }}
+            >
+              <Truck className="h-4 w-4" /> Send Marked to Courier
+            </button>
+          </div>
         )}
 
         <span className="ml-auto text-xs text-muted-foreground">
@@ -391,35 +395,6 @@ function AdminOrdersPage() {
         />
       )}
 
-      {marked.length > 0 && (
-        <div className="mb-3 flex flex-wrap items-center gap-2 rounded-md border border-primary/40 bg-primary/5 px-3 py-2 text-sm">
-          <span className="font-medium">{marked.length} order marked</span>
-          <button
-            type="button"
-            onClick={() => {
-              setPickScope("marked");
-              setPickOpen(true);
-            }}
-            className="inline-flex items-center gap-1.5 rounded-md border bg-background px-2.5 py-1 text-xs hover:bg-accent"
-          >
-            <ListChecks className="h-3.5 w-3.5" /> Marked pick list
-          </button>
-          <button
-            type="button"
-            onClick={() => exportCsv(markedOrders)}
-            className="inline-flex items-center gap-1.5 rounded-md border bg-background px-2.5 py-1 text-xs hover:bg-accent"
-          >
-            <Download className="h-3.5 w-3.5" /> Export marked
-          </button>
-          <button
-            type="button"
-            onClick={() => setMarked([])}
-            className="ml-auto rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-accent"
-          >
-            Clear
-          </button>
-        </div>
-      )}
 
       {pickOpen && (
         <PickListModal
@@ -544,7 +519,7 @@ function AdminOrdersPage() {
                              onClick={() => setSelected(o)}
                              className="rounded-md border px-2.5 py-1 text-xs hover:bg-accent"
                            >
-                             Manage
+                             View Details
                            </button>
                            <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -680,6 +655,10 @@ function OrderDrawer({
   const [status, setStatus] = useState(order.status);
   const [adminNote, setAdminNote] = useState(order.admin_note ?? "");
   const [busy, setBusy] = useState(false);
+  
+  // Courier configs
+  const [activeCouriers, setActiveCouriers] = useState<{provider: string, config: any}[]>([]);
+  
   const bookAuto = useServerFn(bookSteadfast);
   const bookPathaoFn = useServerFn(bookPathao);
   const syncPathaoFn = useServerFn(syncPathaoStatus);
@@ -696,7 +675,7 @@ function OrderDrawer({
 
 
   // shipment form
-  const [provider, setProvider] = useState("steadfast");
+  const [provider, setProvider] = useState<string>("");
   const [tracking, setTracking] = useState("");
   const [cost, setCost] = useState<number>(0);
   const [deliveryType, setDeliveryType] = useState<0 | 1>(0);
@@ -708,7 +687,7 @@ function OrderDrawer({
 
 
   async function loadDetails() {
-    const [{ data: i }, { data: s }, { data: ev }] = await Promise.all([
+    const [{ data: i }, { data: s }, { data: ev }, { data: configs }] = await Promise.all([
       supabase
         .from("order_items")
         .select("id,product_name,quantity,reseller_price,sa_price,line_total")
@@ -727,10 +706,21 @@ function OrderDrawer({
         )
         .eq("order_id", order.id)
         .order("event_at", { ascending: false }),
+      supabase
+        .from("courier_configs")
+        .select("provider, config, is_active")
+        .eq("is_active", true)
     ]);
+    
     setItems((i ?? []) as Item[]);
     setShipments((s ?? []) as Shipment[]);
     setEvents((ev ?? []) as CourierEvent[]);
+    
+    const active = (configs ?? []).map(c => ({ provider: c.provider, config: c.config }));
+    setActiveCouriers(active);
+    if (active.length > 0) {
+      setProvider(active[0].provider);
+    }
   }
   useEffect(() => {
     loadDetails();
@@ -883,19 +873,35 @@ function OrderDrawer({
 
 
         <div className="surface-card mb-4 p-4">
-          <div className="mb-3 flex items-center gap-2 text-sm font-medium">
-            <Truck className="h-4 w-4" /> Shipments
+          <div className="mb-3 flex items-center justify-between gap-2 text-sm font-medium">
+            <div className="flex items-center gap-2">
+              <Truck className="h-4 w-4" /> Shipments
+            </div>
+            {shipments.some(s => s.consignment_id) && (
+              <button 
+                onClick={() => loadDetails()}
+                className="flex items-center gap-1 text-[10px] text-primary hover:underline"
+              >
+                <RefreshCw className="h-3 w-3" /> Recall / Sync API
+              </button>
+            )}
           </div>
           {shipments.length > 0 ? (
             <div className="mb-4 divide-y">
               {shipments.map((s) => (
                 <div key={s.id} className="space-y-2 py-3 text-sm">
                   <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <div className="font-medium capitalize">{s.provider}</div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 font-medium capitalize">
+                        {s.provider}
+                        {s.consignment_id && (
+                          <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold text-primary">
+                            CID: {s.consignment_id}
+                          </span>
+                        )}
+                      </div>
                       <div className="text-xs text-muted-foreground">
                         Tracking: {s.tracking_id ?? "—"}
-                        {s.consignment_id ? ` · CID ${s.consignment_id}` : ""}
                       </div>
                       <div className="mt-1 flex flex-wrap gap-1.5 text-[11px]">
                         <span className="rounded-full bg-primary/15 px-2 py-0.5 capitalize text-primary">
@@ -1117,7 +1123,7 @@ function OrderDrawer({
               disabled={busy}
               className="btn-brand col-span-2 inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium"
             >
-              {busy && <Loader2 className="h-4 w-4 animate-spin" />} Manual Booking
+              {busy && <Loader2 className="h-4 w-4 animate-spin" />} Create Manual Shipment
             </button>
             {provider === "steadfast" && (
               <>
@@ -1147,7 +1153,7 @@ function OrderDrawer({
                   }}
                   className="col-span-2 inline-flex items-center justify-center gap-2 rounded-md border border-primary/40 bg-primary/10 px-4 py-2 text-sm font-medium text-primary"
                 >
-                  <Zap className="h-4 w-4" /> Book with Steadfast API
+                  <Zap className="h-4 w-4" /> Send to Steadfast
                 </button>
               </>
             )}
@@ -1195,7 +1201,7 @@ function OrderDrawer({
                   }}
                   className="col-span-2 inline-flex items-center justify-center gap-2 rounded-md border border-primary/40 bg-primary/10 px-4 py-2 text-sm font-medium text-primary"
                 >
-                  <Zap className="h-4 w-4" /> Book with Pathao API
+                  <Zap className="h-4 w-4" /> Send to Pathao
                 </button>
               </>
             )}
@@ -1241,7 +1247,7 @@ function OrderDrawer({
                   }}
                   className="col-span-2 inline-flex items-center justify-center gap-2 rounded-md border border-primary/40 bg-primary/10 px-4 py-2 text-sm font-medium text-primary"
                 >
-                  <Zap className="h-4 w-4" /> Book with Carrybee API
+                  <Zap className="h-4 w-4" /> Send to Carrybee
                 </button>
               </>
             )}
