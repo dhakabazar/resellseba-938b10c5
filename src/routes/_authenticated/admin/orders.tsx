@@ -819,11 +819,16 @@ function OrderDrawer({
             <div className="flex items-start gap-2 rounded-md bg-amber-500/10 p-2 text-[11px] text-amber-700">
               <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
               <span>
-                Caution: Order status managed by courier webhook. Super admin can override, but please verify first.
+                Order status gulo sundor kore kore dao... super admin jekono order er status jekono tai poriborton korte parbe.. tobe weebhook theke event ese order status change hole ta super admin change korte parbe kintu worning dibe r onno kew parbe na
+
               </span>
             </div>
           )}
-          <select value={status} onChange={(e) => setStatus(e.target.value)} className="input capitalize">
+          <select 
+            value={status} 
+            onChange={(e) => setStatus(e.target.value)} 
+            className="input capitalize border-primary/50 focus:border-primary shadow-sm"
+          >
             {ORDER_STATUS_OPTIONS.map((s) => (
               <option key={s} value={s}>
                 {orderStatusLabel(s)}
