@@ -89,7 +89,7 @@ export function StatCard({
             </span>
           )}
           {hint && (
-            <Hint side="left" className={t.text}>
+            <Hint side="bottom" className={t.text}>
               {hint}
             </Hint>
           )}
