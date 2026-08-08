@@ -140,19 +140,25 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
                 <div class="order-num">#${o.order_number}</div>
               </div>
               <div class="customer">
+                <div class="section-title">Recipient</div>
                 <div class="name">${o.customer_name}</div>
                 <div class="phone">${o.customer_phone}</div>
                 <div class="address">${o.address_line}<br><strong>${o.area.replace("_", " ")}</strong></div>
               </div>
-              <div class="items">
-                <strong>Items:</strong> ${itemLines}
+              <div class="items-box">
+                <div class="section-title">Order Items</div>
+                ${oItems.map(it => `<span class="item-row">${it.product_name} <strong>x ${it.quantity}</strong></span>`).join("")}
               </div>
               <div class="footer">
-                <div>
+                <div class="courier-info">
+                  <div class="section-title">Courier</div>
                   <div class="courier">${s?.provider || "Manual"}</div>
-                  <div class="tracking">${s?.tracking_id || s?.consignment_id || ""}</div>
+                  <div class="tracking">${s?.tracking_id || s?.consignment_id || "PENDING"}</div>
                 </div>
-                <div class="cod">COD: ৳${Number(o.total).toFixed(0)}</div>
+                <div class="cod-badge">
+                  <span class="cod-label">Cash to Collect</span>
+                  <span class="cod-value">৳${Number(o.total).toFixed(0)}</span>
+                </div>
               </div>
             </div>
           `;
