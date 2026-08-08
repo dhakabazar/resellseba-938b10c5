@@ -1231,7 +1231,7 @@ function OrderDrawer({
                   }}
                   className="col-span-2 inline-flex items-center justify-center gap-2 rounded-md border border-primary/40 bg-primary/10 px-4 py-2 text-sm font-medium text-primary"
                 >
-                  <Zap className="h-4 w-4" /> Auto-book with Carrybee API
+                  <Zap className="h-4 w-4" /> Book with Carrybee API
                 </button>
               </>
             )}
