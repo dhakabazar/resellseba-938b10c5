@@ -181,14 +181,6 @@ function ResellerDashboard() {
         description="Track your earnings, orders, and business growth."
         actions={
           <div className="flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={() => void load(range)}
-              className="group inline-flex items-center gap-2 rounded-xl border-2 border-primary/10 bg-card px-4 py-2.5 text-sm font-bold transition-all hover:border-primary hover:bg-primary hover:text-primary-foreground active:scale-95"
-            >
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4 transition-transform group-hover:rotate-180" />}
-              Sync
-            </button>
             <Link
               to="/reseller/earnings"
               className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground shadow-elegant transition-all hover:opacity-90 active:scale-95"
