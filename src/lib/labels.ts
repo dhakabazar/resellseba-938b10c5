@@ -4,7 +4,7 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
   if (!orderIds.length) return;
 
   const [{ data: settings }, { data: orders }, { data: items }, { data: shipments }] = await Promise.all([
-    supabase.from("global_settings").select("label_size,site_name").eq("id", 1).maybeSingle(),
+    supabase.from("global_settings").select("*").eq("id", 1).maybeSingle(),
     supabase.from("orders").select("id,order_number,customer_name,customer_phone,address_line,area,total").in("id", orderIds),
     supabase.from("order_items").select("order_id,product_name,quantity").in("order_id", orderIds),
     supabase.from("shipments").select("order_id,provider,tracking_id,consignment_id").in("order_id", orderIds)
