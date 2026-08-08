@@ -519,7 +519,7 @@ function AdminOrdersPage() {
                              onClick={() => setSelected(o)}
                              className="rounded-md border px-2.5 py-1 text-xs hover:bg-accent"
                            >
-                             Manage
+                             View Details
                            </button>
                            <DropdownMenu>
                             <DropdownMenuTrigger asChild>
