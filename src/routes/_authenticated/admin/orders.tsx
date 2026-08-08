@@ -260,7 +260,28 @@ function AdminOrdersPage() {
   useEffect(() => {
     setPage(1);
   }, [filters, tab]);
+  const bulkUpdateStatus = async (newStatus: string) => {
+    if (marked.length === 0) return;
+    if (!confirm(`Are you sure you want to update ${marked.length} orders to ${newStatus}?`)) return;
+    
+    setLoading(true);
+    const { error } = await supabase
+      .from("orders")
+      .update({ status: newStatus as any })
+      .in("id", marked);
+    
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success(`${marked.length} orders updated successfully`);
+      setMarked([]);
+      await load();
+    }
+    setLoading(false);
+  };
+
   const paged = usePaginated(filtered, page, filters.perPage);
+
 
 
   return (
