@@ -9,7 +9,7 @@ import {
 } from "@/components/order-filters";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
-import { Loader2, Truck, X, Download, Zap, RotateCcw, RefreshCw, Lock, PackageCheck, Repeat, Ban, Search, ListChecks, SlidersHorizontal, ChevronDown, Plus, MoreVertical, Eye, FileText, Trash2, Phone, CheckCircle2, AlertCircle, ShoppingCart } from "lucide-react";
+import { Loader2, Truck, X, Download, Zap, RotateCcw, RefreshCw, Lock, PackageCheck, Repeat, Ban, Search, ListChecks, SlidersHorizontal, ChevronDown, Plus, MoreVertical, Eye, FileText, Trash2, Phone, CheckCircle2, AlertCircle, ShoppingCart, Printer } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,6 +38,7 @@ import { CourierTimeline, type CourierEvent } from "@/components/CourierTimeline
 import { OrderTabs } from "@/components/OrderTabs";
 import { PickListModal } from "@/components/pick-list-modal";
 import { OrderSearch, type OrderSearchMode } from "@/components/order-search";
+import { printShippingLabels } from "@/lib/labels";
 
 
 import {
@@ -365,6 +366,9 @@ function AdminOrdersPage() {
                   <ListChecks className="mr-2 h-4 w-4" /> Marked pick list
                 </DropdownMenuItem>
               )}
+              <DropdownMenuItem onClick={() => printShippingLabels(marked)}>
+                <Printer className="mr-2 h-4 w-4" /> Print Labels
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => exportCsv(markedOrders)}>
                 <Download className="mr-2 h-4 w-4" /> Export Marked CSV
               </DropdownMenuItem>
@@ -606,6 +610,12 @@ function AdminOrdersPage() {
                       <DropdownMenuContent align="end" className="w-40">
                         <DropdownMenuItem onClick={() => setSelected(o)}>
                           <Eye className="mr-2 h-4 w-4" /> View Details
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => printShippingLabels([o.id], "3x3")}>
+                          <Printer className="mr-2 h-4 w-4" /> Print Label (3x3)
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => printShippingLabels([o.id], "3x4")}>
+                          <Printer className="mr-2 h-4 w-4" /> Print Label (3x4)
                         </DropdownMenuItem>
                         {/* We could add more admin actions here like Export PDF/Label if implemented */}
                       </DropdownMenuContent>
