@@ -24,6 +24,7 @@ function SettingsPage() {
   const [logo, setLogo] = useState<UploadedImage[]>([]);
   const [favicon, setFavicon] = useState<UploadedImage[]>([]);
   const [og, setOg] = useState<UploadedImage[]>([]);
+  const [labelSize, setLabelSize] = useState("3x4");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
 
@@ -40,6 +41,7 @@ function SettingsPage() {
         setPhone(data.contact_phone ?? "");
         setEmail(data.contact_email ?? "");
         setFlagshipCode((data as any).flagship_reseller_code ?? "");
+        setLabelSize((data as any).label_size || "3x4");
         if (data.logo_url) setLogo([{ path: "", url: data.logo_url, bytes: 0 }]);
         if ((data as any).favicon_url) setFavicon([{ path: "", url: (data as any).favicon_url, bytes: 0 }]);
         if (data.og_image_url) setOg([{ path: "", url: data.og_image_url, bytes: 0 }]);
@@ -67,6 +69,7 @@ function SettingsPage() {
       favicon_url: favicon[0]?.url ?? null,
       og_image_url: og[0]?.url ?? null,
       flagship_reseller_code: flagshipCode || null,
+      label_size: labelSize,
     } as any);
     setBusy(false);
     if (error) toast.error(error.message);
@@ -144,8 +147,8 @@ function SettingsPage() {
           <div className="grid gap-3 md:grid-cols-2">
             <Field label="Default label size">
               <select 
-                value={(settings as any)?.label_size || "3x4"} 
-                onChange={(e) => setSettings({ ...settings, label_size: e.target.value })} 
+                value={labelSize} 
+                onChange={(e) => setLabelSize(e.target.value)} 
                 className={inp}
               >
                 <option value="3x3">3x3 inch</option>
