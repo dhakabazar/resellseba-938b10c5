@@ -41,6 +41,7 @@ export function Hint({
         type="button"
         onClick={(e) => {
           e.preventDefault();
+          e.stopPropagation();
           setOpen((v) => !v);
         }}
         onMouseEnter={() => setOpen(true)}
@@ -52,7 +53,7 @@ export function Hint({
       </button>
       {open && (
         <span
-          className={`pointer-events-none absolute z-50 w-64 rounded-md border bg-popover px-3 py-2 text-xs leading-relaxed text-popover-foreground shadow-lg ${pos}`}
+          className={`pointer-events-none absolute z-[9999] w-64 rounded-md border bg-popover px-3 py-2 text-xs leading-relaxed text-popover-foreground shadow-xl ring-1 ring-black/5 ${pos}`}
         >
           {children}
         </span>
