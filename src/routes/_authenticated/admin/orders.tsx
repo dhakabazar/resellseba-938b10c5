@@ -1107,7 +1107,7 @@ function OrderDrawer({
               disabled={busy}
               className="btn-brand col-span-2 inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium"
             >
-              {busy && <Loader2 className="h-4 w-4 animate-spin" />} Book manually
+              {busy && <Loader2 className="h-4 w-4 animate-spin" />} Manual Booking
             </button>
             {provider === "steadfast" && (
               <>
@@ -1137,7 +1137,7 @@ function OrderDrawer({
                   }}
                   className="col-span-2 inline-flex items-center justify-center gap-2 rounded-md border border-primary/40 bg-primary/10 px-4 py-2 text-sm font-medium text-primary"
                 >
-                  <Zap className="h-4 w-4" /> Auto-book with Steadfast API
+                  <Zap className="h-4 w-4" /> Book with Steadfast API
                 </button>
               </>
             )}
@@ -1185,7 +1185,7 @@ function OrderDrawer({
                   }}
                   className="col-span-2 inline-flex items-center justify-center gap-2 rounded-md border border-primary/40 bg-primary/10 px-4 py-2 text-sm font-medium text-primary"
                 >
-                  <Zap className="h-4 w-4" /> Auto-book with Pathao API
+                  <Zap className="h-4 w-4" /> Book with Pathao API
                 </button>
               </>
             )}
