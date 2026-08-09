@@ -140,6 +140,9 @@ function AdminOrdersPage() {
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  
+  const bookAuto = useServerFn(bookSteadfast);
 
   const [tab, setTab] = useState<OrderTabKey>("confirmed");
   const [selected, setSelected] = useState<OrderRow | null>(null);
@@ -722,6 +725,27 @@ function AdminOrdersPage() {
                           <Settings2 className="mr-2 h-4 w-4" /> Change Status
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={async () => {
+                          const isBooked = shipments.some(s => s.order_id === o.id && (s.consignment_id || s.tracking_id));
+                          if (isBooked) {
+                            toast.error("Already booked in courier");
+                            return;
+                          }
+                          // Default to Steadfast for quick booking from menu
+                          setBusy(true);
+                          try {
+                            const r = await bookAuto({ data: { orderId: o.id, deliveryType: 0 } });
+                            toast.success(`Booked Steadfast · ${r.trackingId}`);
+                            load();
+                          } catch (e) {
+                            toast.error(e instanceof Error ? e.message : "Booking failed");
+                          } finally {
+                            setBusy(false);
+                          }
+                        }}>
+                          <Truck className="mr-2 h-4 w-4" /> Send to Steadfast
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => printShippingLabels([o.id], "3x3")}>
                           <Printer className="mr-2 h-4 w-4" /> Print Label (3x3)
                         </DropdownMenuItem>
@@ -1086,20 +1110,23 @@ function OrderDrawer({
         </div>
 
 
-        <div className="surface-card mb-4 p-4">
-          <div className="mb-3 flex items-center justify-between gap-2 text-sm font-medium">
-            <div className="flex items-center gap-2">
-              <Truck className="h-4 w-4" /> Shipments
+        <div className="surface-card mb-4 overflow-hidden border-primary/20 bg-primary/5">
+          <div className="border-b border-primary/10 bg-primary/10 px-4 py-3">
+            <div className="flex items-center justify-between gap-2 text-sm font-bold text-primary">
+              <div className="flex items-center gap-2">
+                <Truck className="h-4 w-4" /> Courier Booking & Shipments
+              </div>
+              {shipments.some(s => s.consignment_id) && (
+                <button 
+                  onClick={() => loadDetails()}
+                  className="flex items-center gap-1 text-[10px] text-primary hover:underline"
+                >
+                  <RefreshCw className="h-3 w-3" /> Recall / Sync API
+                </button>
+              )}
             </div>
-            {shipments.some(s => s.consignment_id) && (
-              <button 
-                onClick={() => loadDetails()}
-                className="flex items-center gap-1 text-[10px] text-primary hover:underline"
-              >
-                <RefreshCw className="h-3 w-3" /> Recall / Sync API
-              </button>
-            )}
           </div>
+          <div className="p-4">
           {shipments.length > 0 ? (
             <div className="mb-4 divide-y">
               {shipments.map((s) => (
@@ -1468,6 +1495,7 @@ function OrderDrawer({
 
           </form>
         </div>
+      </div>
 
         <CourierTimeline events={events} />
       </div>
