@@ -695,7 +695,6 @@ function AdminOrdersPage() {
                   </div>
                   <div className="truncate text-xs">
                     <div className="font-medium">{o.resellers?.business_name || "Direct"}</div>
-                    {o.resellers && <div className="text-muted-foreground">/{o.resellers?.code}</div>}
                   </div>
                   <div className="min-w-0">
                     <div className="truncate font-medium">{o.customer_name}</div>
@@ -981,7 +980,7 @@ function OrderDrawer({
           <div>
             <h2 className="text-lg font-semibold">Order #{order.order_number}</h2>
             <p className="text-xs text-muted-foreground">
-              {order.resellers?.business_name} — /{order.resellers?.code}
+              {order.resellers?.business_name}
             </p>
           </div>
           <button onClick={onClose} className="rounded-md p-1 hover:bg-accent">
