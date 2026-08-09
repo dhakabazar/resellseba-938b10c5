@@ -646,54 +646,57 @@ function AdminOrdersPage() {
         />
       )}
       {statusModal && statusModal.open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-sm rounded-lg bg-background p-6 shadow-xl">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-bold">Change Order Status</h3>
-              <button onClick={() => setStatusModal(null)} className="rounded-md p-1 hover:bg-accent">
-                <X className="h-5 w-5" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm overflow-hidden rounded-xl bg-background shadow-2xl ring-1 ring-black/5 animate-in fade-in zoom-in duration-200">
+            <div className="flex items-center justify-between border-b px-5 py-4 bg-muted/30">
+              <h3 className="text-sm font-bold text-foreground">Change Status</h3>
+              <button onClick={() => setStatusModal(null)} className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+                <X className="h-4 w-4" />
               </button>
             </div>
             
-            <div className="grid grid-cols-1 gap-2">
-              {ORDER_STATUS_OPTIONS.map((s) => (
-                <button
-                  key={s}
-                  onClick={async () => {
-                    setLoading(true);
-                    const { error } = await supabase
-                      .from("orders")
-                      .update({ status: s as any })
-                      .eq("id", statusModal.orderId);
-                    
-                    if (error) {
-                      toast.error(error.message);
-                    } else {
-                      toast.success(`Status updated to ${orderStatusLabel(s)}`);
-                      setStatusModal(null);
-                      await load();
-                    }
-                    setLoading(false);
-                  }}
-                  className={`flex items-center gap-3 rounded-md border p-3 text-left text-sm transition-colors hover:bg-accent ${
-                    statusModal.currentStatus === s ? "border-primary bg-primary/5" : ""
-                  }`}
-                >
-                  <div className={`h-3 w-3 rounded-full ${orderStatusTone(s)}`} />
-                  <span className="flex-1 font-medium capitalize">{orderStatusLabel(s)}</span>
-                  {statusModal.currentStatus === s && (
-                    <CheckCircle2 className="h-4 w-4 text-primary" />
-                  )}
-                </button>
-              ))}
+            <div className="max-h-[60vh] overflow-y-auto p-4">
+              <div className="grid grid-cols-1 gap-1.5">
+                {ORDER_STATUS_OPTIONS.filter(s => s !== 'forwarded').map((s) => (
+                  <button
+                    key={s}
+                    disabled={loading}
+                    onClick={async () => {
+                      setLoading(true);
+                      const { error } = await supabase
+                        .from("orders")
+                        .update({ status: s as any })
+                        .eq("id", statusModal.orderId);
+                      
+                      if (error) {
+                        toast.error(error.message);
+                      } else {
+                        toast.success(`Status updated to ${orderStatusLabel(s)}`);
+                        setStatusModal(null);
+                        await load();
+                      }
+                      setLoading(false);
+                    }}
+                    className={`group flex items-center gap-3 rounded-lg border px-3 py-2.5 text-left text-xs transition-all hover:bg-accent disabled:opacity-50 ${
+                      statusModal.currentStatus === s ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "border-transparent"
+                    }`}
+                  >
+                    <div className={`h-2.5 w-2.5 rounded-full ring-2 ring-offset-2 ring-offset-background ${orderStatusTone(s).split(' ')[0]} ${statusModal.currentStatus === s ? "ring-primary/40" : "ring-transparent group-hover:ring-accent-foreground/10"}`} />
+                    <span className={`flex-1 font-medium capitalize ${statusModal.currentStatus === s ? "text-primary" : "text-foreground/80"}`}>{orderStatusLabel(s)}</span>
+                    {statusModal.currentStatus === s && (
+                      <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
+                    )}
+                  </button>
+                ))}
+              </div>
             </div>
             
-            <div className="mt-6 flex justify-end">
+            <div className="border-t bg-muted/10 px-5 py-3 flex justify-end">
               <button
                 onClick={() => setStatusModal(null)}
-                className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-accent"
+                className="rounded-lg border px-4 py-1.5 text-xs font-semibold transition-colors hover:bg-accent"
               >
-                Close
+                Cancel
               </button>
             </div>
           </div>

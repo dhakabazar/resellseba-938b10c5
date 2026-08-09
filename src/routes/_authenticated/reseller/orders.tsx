@@ -15,11 +15,14 @@ import {
   MoreVertical,
   Eye,
   Phone,
+  CheckCircle2,
+  Settings2,
 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { NewOrderModal } from "@/components/NewOrderModal";
@@ -35,7 +38,8 @@ import {
   DEFAULT_ORDER_FILTERS,
   type OrderFilterState,
 } from "@/components/order-filters";
-import { Check, Ban, Search, ListChecks, SlidersHorizontal, ChevronDown } from "lucide-react";
+import { Check, Ban, Search, ListChecks, SlidersHorizontal, ChevronDown, Printer } from "lucide-react";
+import { printShippingLabels } from "@/lib/labels";
 
 
 import {
@@ -43,6 +47,7 @@ import {
   courierStatusLabel,
   orderStatusLabel,
   orderStatusTone,
+  ORDER_STATUS_OPTIONS,
   type OrderTabKey,
 } from "@/lib/courier-status";
 
@@ -141,6 +146,7 @@ function OrdersPage() {
   const [pickScope, setPickScope] = useState<"filtered" | "marked">("filtered");
   const [marked, setMarked] = useState<string[]>([]);
   const [page, setPage] = useState(1);
+  const [statusModal, setStatusModal] = useState<{ open: boolean; orderId: string; currentStatus: string } | null>(null);
 
   async function load() {
     if (!user) return;
@@ -269,6 +275,36 @@ function OrdersPage() {
     [visible],
   );
 
+  const bulkUpdateStatus = async (newStatus: string) => {
+    if (marked.length === 0) return;
+    
+    // Check if any order is already booked
+    const bookedIds = shipments.map(s => s.order_id);
+    const lockedCount = marked.filter(id => bookedIds.includes(id)).length;
+    
+    if (lockedCount > 0) {
+      toast.error(`${lockedCount} orders are already booked in courier and cannot be changed.`);
+      return;
+    }
+
+    if (!confirm(`Are you sure you want to update ${marked.length} orders to ${newStatus}?`)) return;
+    
+    setLoading(true);
+    const { error } = await supabase
+      .from("orders")
+      .update({ status: newStatus as any })
+      .in("id", marked);
+    
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success(`${marked.length} orders updated successfully`);
+      setMarked([]);
+      await load();
+    }
+    setLoading(false);
+  };
+
   const tabCount = (key: OrderTabKey) => {
     const sts = ORDER_TABS.find((t) => t.key === key)?.statuses ?? [];
     return sts.length === 0 ? orders.length : orders.filter((o) => (sts as string[]).includes(o.status)).length;
@@ -382,6 +418,21 @@ function OrdersPage() {
           >
             Clear
           </button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="btn-brand ml-2 inline-flex h-8 items-center gap-1.5 rounded-md px-3 text-xs font-medium">
+                Change Status
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              {['pending', 'confirmed', 'cancelled'].map((s) => (
+                <DropdownMenuItem key={s} onClick={() => bulkUpdateStatus(s)} className="capitalize">
+                  <div className={`mr-2 h-2 w-2 rounded-full ${orderStatusTone(s)}`} />
+                  Mark as {orderStatusLabel(s)}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       )}
 
@@ -471,6 +522,18 @@ function OrdersPage() {
                         <DropdownMenuItem onClick={() => setSelected(o)}>
                           <Eye className="mr-2 h-4 w-4" /> View Details
                         </DropdownMenuItem>
+                        {(() => {
+                          const isBooked = shipments.some(s => s.order_id === o.id && (s.consignment_id || s.tracking_id));
+                          if (!isBooked) {
+                            return (
+                              <DropdownMenuItem onClick={() => setStatusModal({ open: true, orderId: o.id, currentStatus: o.status })}>
+                                <Settings2 className="mr-2 h-4 w-4" /> Change Status
+                              </DropdownMenuItem>
+                            );
+                          }
+                          return null;
+                        })()}
+                        <DropdownMenuSeparator />
                         <DropdownMenuItem asChild>
                           <Link
                             to="/reseller/orders/$id/invoice"
@@ -483,7 +546,7 @@ function OrdersPage() {
                         </DropdownMenuItem>
                         {!o.forwarded_to_admin && (o.status === "pending" || o.status === "draft") && (
                           <>
-                            <div className="my-1 h-px bg-muted" />
+                            <DropdownMenuSeparator />
                             <DropdownMenuItem 
                               onClick={() => remove(o.id)}
                               className="text-destructive focus:bg-destructive/10 focus:text-destructive"
@@ -673,6 +736,64 @@ function OrdersPage() {
             load();
           }}
         />
+      )}
+
+      {statusModal && statusModal.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm overflow-hidden rounded-xl bg-background shadow-2xl ring-1 ring-black/5 animate-in fade-in zoom-in duration-200">
+            <div className="flex items-center justify-between border-b px-5 py-4 bg-muted/30">
+              <h3 className="text-sm font-bold text-foreground">Change Status</h3>
+              <button onClick={() => setStatusModal(null)} className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            
+            <div className="p-4">
+              <div className="grid grid-cols-1 gap-1.5">
+                {['pending', 'confirmed', 'cancelled'].map((s) => (
+                  <button
+                    key={s}
+                    disabled={loading}
+                    onClick={async () => {
+                      setLoading(true);
+                      const { error } = await supabase
+                        .from("orders")
+                        .update({ status: s as any })
+                        .eq("id", statusModal.orderId);
+                      
+                      if (error) {
+                        toast.error(error.message);
+                      } else {
+                        toast.success(`Status updated to ${orderStatusLabel(s)}`);
+                        setStatusModal(null);
+                        await load();
+                      }
+                      setLoading(false);
+                    }}
+                    className={`group flex items-center gap-3 rounded-lg border px-3 py-2.5 text-left text-xs transition-all hover:bg-accent disabled:opacity-50 ${
+                      statusModal.currentStatus === s ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "border-transparent"
+                    }`}
+                  >
+                    <div className={`h-2.5 w-2.5 rounded-full ring-2 ring-offset-2 ring-offset-background ${orderStatusTone(s).split(' ')[0]} ${statusModal.currentStatus === s ? "ring-primary/40" : "ring-transparent group-hover:ring-accent-foreground/10"}`} />
+                    <span className={`flex-1 font-medium capitalize ${statusModal.currentStatus === s ? "text-primary" : "text-foreground/80"}`}>{orderStatusLabel(s)}</span>
+                    {statusModal.currentStatus === s && (
+                      <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            <div className="border-t bg-muted/10 px-5 py-3 flex justify-end">
+              <button
+                onClick={() => setStatusModal(null)}
+                className="rounded-lg border px-4 py-1.5 text-xs font-semibold transition-colors hover:bg-accent"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
