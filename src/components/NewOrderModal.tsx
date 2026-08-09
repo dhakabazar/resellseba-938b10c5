@@ -325,57 +325,139 @@ export function NewOrderModal({
                   </div>
                 </div>
 
-                <div className="space-y-3">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80">Order Items</label>
-                  <div className="rounded-xl border bg-background p-3 shadow-sm">
-                    <div className="relative mb-3">
-                      <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/60" />
-                      <input
-                        value={query}
-                        onChange={(e) => setQuery(e.target.value)}
-                        placeholder="Search product to add..."
-                        className="w-full rounded-lg border bg-accent/5 px-9 py-2 text-xs focus:ring-2 focus:ring-primary/20"
-                      />
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80">Order Items</label>
+                    {picked.length > 0 && (
+                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[9px] font-bold text-primary animate-in zoom-in">
+                        {picked.length} {picked.length === 1 ? 'Item' : 'Items'} Selected
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="rounded-2xl border bg-background shadow-sm overflow-hidden flex flex-col">
+                    {/* Search Bar */}
+                    <div className="p-3 border-b bg-muted/5">
+                      <div className="relative">
+                        <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/60" />
+                        <input
+                          value={query}
+                          onChange={(e) => setQuery(e.target.value)}
+                          placeholder="Search product to add..."
+                          className="w-full rounded-xl border bg-background px-9 py-2 text-xs focus:ring-2 focus:ring-primary/20 transition-all"
+                        />
+                      </div>
                     </div>
 
-                    {query && results.length > 0 && (
-                      <div className="max-h-48 divide-y overflow-y-auto rounded-lg border bg-muted/5">
-                        {results.map((item) => {
-                          const p = item.type === 'listing' ? item.data.products! : item.data;
-                          const price = item.type === 'listing' ? item.data.selling_price : (p.suggested_price || p.reseller_price + p.packaging_cost);
-                          const dc = productDeliveryCharge(p, area);
-                          const inCart = item.type === 'listing' 
-                            ? lines.some((x) => x.listing_id === item.data.id)
-                            : lines.some((x) => x.product_id === p.id);
-                          return (
-                            <button
-                              type="button"
-                              key={item.type === 'listing' ? `l-${item.data.id}` : `p-${p.id}`}
-                              onClick={() => pick(item)}
-                              className="flex w-full items-center gap-2 p-2 text-left hover:bg-primary/5 transition-colors"
-                            >
-                              <div className="h-9 w-9 shrink-0 overflow-hidden rounded border bg-muted">
-                                {p.og_image_url ? (
-                                  <img src={p.og_image_url} alt="" className="h-full w-full object-cover" />
-                                ) : <Search className="m-auto h-full w-1/2 text-muted-foreground/30" />}
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <div className="flex items-center gap-1.5">
-                                  <span className="truncate text-[11px] font-bold">{p.name}</span>
-                                  {item.type === 'listing' && <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[8px] font-bold text-primary uppercase">Listing</span>}
+                    {/* Search Results (Visible only when searching) */}
+                    {query && (
+                      <div className="max-h-60 border-b divide-y overflow-y-auto bg-muted/10 animate-in slide-in-from-top-2">
+                        {results.length > 0 ? (
+                          results.map((item) => {
+                            const p = item.type === 'listing' ? item.data.products! : item.data;
+                            const price = item.type === 'listing' ? item.data.selling_price : (p.suggested_price || p.reseller_price + p.packaging_cost);
+                            const dc = productDeliveryCharge(p, area);
+                            const inCart = item.type === 'listing' 
+                              ? lines.some((x) => x.listing_id === item.data.id)
+                              : lines.some((x) => x.product_id === p.id);
+                            return (
+                              <button
+                                type="button"
+                                key={item.type === 'listing' ? `l-${item.data.id}` : `p-${p.id}`}
+                                onClick={() => pick(item)}
+                                className="flex w-full items-center gap-3 p-3 text-left hover:bg-primary/5 transition-colors"
+                              >
+                                <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg border bg-muted shadow-sm">
+                                  {p.og_image_url ? (
+                                    <img src={p.og_image_url} alt="" className="h-full w-full object-cover" />
+                                  ) : <Search className="m-auto h-full w-1/2 text-muted-foreground/30" />}
                                 </div>
-                                <div className="text-[9px] text-muted-foreground mt-0.5">
-                                  ৳{Number(price).toFixed(0)} · Delivery: ৳{dc.toFixed(0)}
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="truncate text-xs font-bold">{p.name}</span>
+                                    {item.type === 'listing' && (
+                                      <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[8px] font-black text-primary uppercase tracking-tighter">Listing</span>
+                                    )}
+                                  </div>
+                                  <div className="text-[10px] text-muted-foreground mt-0.5">
+                                    ৳{Number(price).toFixed(0)} · Delivery: ৳{dc.toFixed(0)}
+                                  </div>
                                 </div>
+                                <div className={`shrink-0 rounded-full p-1.5 transition-all ${inCart ? 'bg-primary text-primary-foreground scale-110' : 'bg-accent hover:bg-primary/20 hover:text-primary'}`}>
+                                  <Plus className="h-3.5 w-3.5" />
+                                </div>
+                              </button>
+                            );
+                          })
+                        ) : (
+                          <div className="p-8 text-center text-muted-foreground">
+                            <p className="text-xs">No products found for "{query}"</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Cart List (Visible when items picked) */}
+                    <div className="flex-1 max-h-[400px] overflow-y-auto divide-y bg-background">
+                      {picked.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground bg-muted/5">
+                          <div className="rounded-full bg-muted p-4 mb-3">
+                            <Plus className="h-6 w-6 opacity-20" />
+                          </div>
+                          <p className="text-xs font-medium">Search and select products to add</p>
+                          <p className="text-[10px] opacity-60 mt-1 uppercase tracking-widest">Cart is empty</p>
+                        </div>
+                      ) : (
+                        picked.map(({ line, p, sellPrice, listingId }, i) => (
+                          <div key={listingId || p.id} className="group relative flex items-center gap-4 p-4 hover:bg-muted/5 transition-colors">
+                            <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl border bg-muted shadow-sm">
+                              {p.og_image_url && <img src={p.og_image_url} alt="" className="h-full w-full object-cover" />}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="truncate text-xs font-black text-foreground">{p.name}</div>
+                              <div className="mt-1 flex items-center gap-2">
+                                <span className="text-[11px] font-bold text-primary">৳{Number(sellPrice).toFixed(0)}</span>
+                                <span className="text-[10px] text-muted-foreground/60">× {line.qty}</span>
                               </div>
-                              <div className={`shrink-0 rounded-full p-1.5 transition-colors ${inCart ? 'bg-primary text-primary-foreground' : 'bg-accent hover:bg-primary/20 hover:text-primary'}`}>
-                                <Plus className="h-3 w-3" />
+                            </div>
+                            
+                            <div className="flex items-center gap-4">
+                              <div className="flex items-center rounded-xl border bg-muted/30 p-1">
+                                <button 
+                                  type="button" 
+                                  onClick={() => setLines(prev => prev.flatMap((l, idx) => idx === i ? (l.qty <= 1 ? [] : [{...l, qty: l.qty - 1}]) : [l]))} 
+                                  className="h-7 w-7 flex items-center justify-center hover:bg-background rounded-lg transition-all active:scale-90"
+                                >
+                                  <Minus className="h-3 w-3" />
+                                </button>
+                                <span className="w-8 text-center text-[12px] font-black">{line.qty}</span>
+                                <button 
+                                  type="button" 
+                                  onClick={() => setLines(prev => prev.map((l, idx) => idx === i ? {...l, qty: l.qty + 1} : l))} 
+                                  className="h-7 w-7 flex items-center justify-center hover:bg-background rounded-lg transition-all active:scale-90"
+                                >
+                                  <Plus className="h-3 w-3" />
+                                </button>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => setLines(prev => prev.filter((_, idx) => idx !== i))}
+                                className="h-8 w-8 flex items-center justify-center text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 rounded-full transition-colors"
+                                title="Remove item"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </div>
+                        ))
+                      )}
                     </div>
 
+                    {/* Delivery Area Picker (Inside Cart Section) */}
                     {lines.length > 0 && (
-                      <div className="mt-4 animate-in fade-in slide-in-from-top-2">
-                        <label className="mb-2 block text-[10px] font-bold text-muted-foreground/80 uppercase">Delivery Area</label>
-                        <div className="grid grid-cols-2 gap-2">
+                      <div className="p-4 border-t bg-muted/10 animate-in fade-in slide-in-from-bottom-2">
+                        <label className="mb-2.5 block text-[10px] font-black text-muted-foreground/80 uppercase tracking-widest">Select Delivery Destination</label>
+                        <div className="grid grid-cols-2 gap-3">
                           {(
                             [
                               ["inside_dhaka", "Inside Dhaka"],
@@ -386,24 +468,19 @@ export function NewOrderModal({
                               key={v}
                               type="button"
                               onClick={() => setArea(v)}
-                              className={`flex flex-col items-center justify-center rounded-xl border py-2.5 px-3 transition-all duration-200 ${
+                              className={`flex flex-col items-center justify-center rounded-2xl border-2 py-3 px-4 transition-all duration-300 ${
                                 area === v 
-                                  ? "bg-primary/10 border-primary text-primary shadow-[0_0_10px_rgba(var(--primary),0.1)]" 
+                                  ? "bg-primary border-primary text-primary-foreground shadow-lg shadow-primary/20 scale-[1.02]" 
                                   : "bg-background border-muted hover:border-primary/30 text-muted-foreground"
                               }`}
                             >
-                              <span className="text-[10px] font-bold">{label}</span>
-                              <span className="mt-0.5 text-[9px] opacity-80">
+                              <span className="text-[11px] font-black uppercase tracking-tight">{label}</span>
+                              <span className={`mt-0.5 text-[10px] font-bold ${area === v ? 'text-primary-foreground/90' : 'text-primary'}`}>
                                 ৳{Math.max(...picked.map(({ p }) => productDeliveryCharge(p, v)))}
                               </span>
                             </button>
                           ))}
                         </div>
-                      </div>
-                    )}
-                            </button>
-                          );
-                        })}
                       </div>
                     )}
                   </div>
@@ -475,38 +552,48 @@ export function NewOrderModal({
                 </div>
               </div>
 
-              {/* Order Totals Section */}
-              <div className="mt-6 space-y-3 rounded-xl border bg-background p-4 shadow-sm">
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>Subtotal</span>
-                  <span className="font-bold text-foreground">৳{totals.subtotal.toFixed(0)}</span>
-                </div>
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <span>Shipping</span>
-                    {picked.length > 1 && <span className="text-[10px] bg-accent px-1 rounded">High</span>}
+              {/* Summary Section (Now a Sticky Footer in the Right Column) */}
+              <div className="mt-auto space-y-4 rounded-2xl border-2 border-primary/20 bg-background p-5 shadow-xl animate-in fade-in slide-in-from-bottom-4">
+                <div className="space-y-2.5">
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span className="font-medium">Subtotal ({picked.length} {picked.length === 1 ? 'item' : 'items'})</span>
+                    <span className="font-black text-foreground">৳{totals.subtotal.toFixed(0)}</span>
                   </div>
-                  <span className="font-bold text-foreground">৳{totals.shipping.toFixed(0)}</span>
-                </div>
-                {totals.shipFrom && picked.length > 1 && (
-                  <div className="text-[9px] text-muted-foreground italic text-right -mt-2">
-                    Applied from: {totals.shipFrom}
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-medium">Shipping Charge</span>
+                      {picked.length > 1 && <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-black uppercase">Max Applied</span>}
+                    </div>
+                    <span className="font-black text-foreground">৳{totals.shipping.toFixed(0)}</span>
                   </div>
-                )}
-                
-                <div className="my-2 border-t border-dashed" />
-                
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-bold">Total Amount</span>
-                  <span className="text-xl font-black text-primary">৳{totals.total.toFixed(0)}</span>
+                  
+                  <div className="my-3 border-t-2 border-dashed border-muted" />
+                  
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 block">Payable Total</span>
+                      <span className="text-2xl font-black text-primary tracking-tight">৳{totals.total.toFixed(0)}</span>
+                    </div>
+                    {!isAdmin && totals.profit > 0 && (
+                      <div className="text-right">
+                        <span className="text-[9px] font-black uppercase tracking-widest text-success/60 block">Estimated Profit</span>
+                        <span className="text-lg font-black text-success tracking-tight">৳{totals.profit.toFixed(0)}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <button
                   type="submit"
                   disabled={busy || picked.length === 0}
-                  className="mt-2 w-full flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3.5 text-sm font-bold text-primary-foreground shadow-lg shadow-primary/25 hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-50 disabled:pointer-events-none"
+                  className="w-full flex items-center justify-center gap-3 rounded-xl bg-primary px-6 py-4 text-sm font-black text-primary-foreground shadow-lg shadow-primary/30 hover:brightness-110 hover:scale-[1.01] active:scale-[0.98] transition-all disabled:opacity-50 disabled:pointer-events-none group"
                 >
-                  {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : "Confirm Order"}
+                  {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : (
+                    <>
+                      <span>Confirm and Place Order</span>
+                      <Plus className="h-4 w-4 group-hover:rotate-90 transition-transform" />
+                    </>
+                  )}
                 </button>
               </div>
             </aside>
