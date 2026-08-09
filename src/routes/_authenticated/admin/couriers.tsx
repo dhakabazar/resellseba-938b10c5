@@ -50,11 +50,7 @@ function CouriersPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Only load if not already loaded to prevent clearing inputs on refocus if refetchOnWindowFocus was true
-    // (though we disabled it globally, this is an extra safety layer for the user's specific concern)
-    if (rows.length === 0) {
-      load();
-    }
+    load();
   }, []);
 
   async function load() {
