@@ -39,11 +39,8 @@ function CatsPage() {
     setLoading(false);
   }
   useEffect(() => {
-    // Audit fix: only load if items empty to prevent resets on tab switch
-    if (items.length === 0) {
-      load();
-    }
-  }, [items.length]);
+    load();
+  }, []);
 
   async function create(e: React.FormEvent) {
     e.preventDefault();

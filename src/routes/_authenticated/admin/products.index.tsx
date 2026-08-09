@@ -66,11 +66,8 @@ function ProductsPage() {
     setLoading(false);
   }
   useEffect(() => {
-    // Only load if current items are empty to prevent jumpy reloads on tab switch
-    if (items.length === 0) {
-      load();
-    }
-  }, [items.length]);
+    load();
+  }, []);
 
   useEffect(() => {
     setPage(1);
