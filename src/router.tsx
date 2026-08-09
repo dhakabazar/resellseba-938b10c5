@@ -21,9 +21,6 @@ export const getRouter = () => {
     defaultPreload: "intent",
     defaultPreloadStaleTime: 0,
     defaultViewTransition: true,
-    // Audit fix: prevent full router invalidation on focus/visibility change
-    // which was causing the "reload" behavior in authenticated layouts.
-    defaultOnFocus: () => {},
   });
 
   return router;
