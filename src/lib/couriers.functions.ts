@@ -108,8 +108,9 @@ export const bookSteadfast = createServerFn({ method: "POST" })
       changed_by: userId,
     });
 
-    return { trackingId, consignmentId: String(c.consignment_id ?? ""), status: c.status ?? "in_review" };
+    return { success: true, trackingId, consignmentId: String(c.consignment_id ?? ""), status: c.status ?? "in_review" };
   });
+
 
 export const syncSteadfastStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -366,8 +367,9 @@ export const bookPathao = createServerFn({ method: "POST" })
       changed_by: userId,
     });
 
-    return { trackingId: consignmentId, consignmentId, deliveryFee: deliveryFee ?? 0 };
+    return { success: true, trackingId: consignmentId, consignmentId, deliveryFee: deliveryFee ?? 0 };
   });
+
 
 export const syncPathaoStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -545,8 +547,9 @@ export const bookCarrybee = createServerFn({ method: "POST" })
       changed_by: userId,
     });
 
-    return { trackingId: consignmentId, consignmentId, deliveryFee: Number(o.delivery_fee ?? 0) };
+    return { success: true, trackingId: consignmentId, consignmentId, deliveryFee: Number(o.delivery_fee ?? 0) };
   });
+
 
 export const syncCarrybeeStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

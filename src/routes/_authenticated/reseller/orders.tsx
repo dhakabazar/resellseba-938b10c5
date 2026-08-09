@@ -658,12 +658,16 @@ function OrdersPage() {
                   </div>
                 );
 
+            const orderShipment = shipments.find((s) => s.order_id === o.id);
+
             return (
               <div
                 key={o.id}
                 className={`border-b last:border-b-0 ${isMarked ? "bg-primary/5" : ""}`}
               >
                 {/* Mobile card */}
+
+
                 <div className="p-3 md:hidden">
                   <div className="flex items-start gap-3">
                     <input
@@ -755,7 +759,7 @@ function OrdersPage() {
                 </div>
 
                 {/* Desktop row */}
-                <div className="hidden grid-cols-[auto_1.1fr_1.3fr_1.4fr_0.9fr_0.8fr_0.9fr_auto] items-center gap-3 px-4 py-3 text-sm md:grid">
+                <div className="hidden grid-cols-[auto_1.1fr_1.3fr_1fr_0.9fr_0.8fr_0.8fr_0.9fr_auto] items-center gap-3 px-4 py-3 text-sm md:grid">
                   <div className="flex items-center">
                     <input
                       type="checkbox"
@@ -765,55 +769,39 @@ function OrdersPage() {
                     />
                   </div>
                   <div className="min-w-0">
-                  <div>
                     <div className="font-medium">{o.order_number}</div>
-                    <div className="text-[11px] font-medium text-primary uppercase">
-                      {shipments.find((s: any) => s.order_id === o.id)?.provider || "Manual"} 
-                      {shipments.find((s: any) => s.order_id === o.id)?.consignment_id && ` #${shipments.find((s: any) => s.order_id === o.id)?.consignment_id}`}
-                    </div>
-
-
                     <div className="text-xs text-muted-foreground">
                       {new Date(o.created_at).toLocaleDateString()}
                     </div>
                   </div>
+                  <div className="min-w-0 text-xs text-muted-foreground">
+                    <div className="font-medium text-foreground">{o.customer_name}</div>
+                    <div>{o.customer_phone}</div>
                   </div>
+                  
                   <div className="min-w-0">
-                    <div className="text-xs text-muted-foreground">
-                      <div className="font-medium">{o.customer_name}</div>
-                      <div>{o.customer_phone}</div>
-                      {shipments.some(s => s.order_id === o.id) && (
-                        <div className="mt-0.5 flex flex-wrap gap-1">
-                          {shipments.filter(s => s.order_id === o.id).map(s => (
-                            <div key={s.id} className="inline-flex items-center gap-1 rounded bg-muted/50 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground ring-1 ring-inset ring-muted-foreground/10">
-                              <Truck className="h-2.5 w-2.5" />
-                              <span className="capitalize">{s.provider}</span>
-                              {s.consignment_id && (
-                                <span className="opacity-70">({s.consignment_id})</span>
-                              )}
-                            </div>
-                          ))}
+                    {orderShipment ? (
+                      <div>
+                        <div className="text-[10px] font-bold text-primary uppercase leading-tight">
+                          {orderShipment.provider}
                         </div>
-                      )}
-                    </div>
-                    <div className="truncate text-[11px] text-muted-foreground italic">
-                      {[o.area, o.city].filter(Boolean).join(", ")}
-                    </div>
+                        <div className="text-[10px] text-muted-foreground tabular-nums font-medium">
+                          #{orderShipment.consignment_id || "N/A"}
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="text-[10px] font-medium text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded border border-dashed">
+                        Not Booked
+                      </span>
+                    )}
                   </div>
 
                   <div className="min-w-0">
                     <div className="truncate text-xs">{itemText}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {qty} pcs · <span className="uppercase">{o.payment_method}</span>
-                    </div>
+                    <div className="text-xs text-muted-foreground uppercase">{o.payment_method}</div>
                   </div>
-                  <div className="min-w-0">
-                    <div className="font-semibold">৳{Number(o.total).toFixed(0)}</div>
-                    <div className="text-xs text-muted-foreground">
-                      +৳{Number(o.shipping_cost).toFixed(0)} del.
-                    </div>
-                  </div>
-                  <div className="text-xs font-medium text-success">
+                  <div className="min-w-0 font-medium">৳{Number(o.total).toFixed(0)}</div>
+                  <div className="min-w-0 text-[11px] font-medium text-success">
                     ৳{Number(o.reseller_profit).toFixed(0)}
                   </div>
                   <div className="min-w-0">
@@ -823,14 +811,14 @@ function OrdersPage() {
                       {orderStatusLabel(o.status)}
                     </span>
                     {o.status === "confirmed" && o.forwarded_to_admin && (
-                      <div className="mt-1 text-[11px] text-success">
+                      <div className="mt-0.5 text-[10px] text-success font-medium">
                         Sent to admin
                       </div>
                     )}
-
                   </div>
                   <div className="flex justify-end gap-2">{actions}</div>
                 </div>
+
               </div>
             );
           })}

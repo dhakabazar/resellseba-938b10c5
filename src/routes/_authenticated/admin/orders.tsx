@@ -690,7 +690,7 @@ function AdminOrdersPage() {
                 </div>
 
                 {/* Desktop table row */}
-                <div className="hidden grid-cols-[auto_1fr_1fr_1.2fr_1fr_1fr_auto] items-center gap-4 px-4 py-3 text-sm md:grid">
+                <div className="hidden grid-cols-[auto_1fr_1fr_1fr_1fr_1fr_1fr_auto] items-center gap-4 px-4 py-3 text-sm md:grid">
                   <input
                     type="checkbox"
                     className="h-4 w-4 accent-[hsl(var(--primary))]"
@@ -703,32 +703,36 @@ function AdminOrdersPage() {
                   />
                   <div>
                     <div className="font-medium">{o.order_number}</div>
-                    <div className="text-[11px] font-medium text-primary uppercase">
-                      {shipments.find(s => s.order_id === o.id)?.provider || "Manual"}
-                      {shipments.find(s => s.order_id === o.id)?.consignment_id && ` #${shipments.find(s => s.order_id === o.id)?.consignment_id}`}
-                    </div>
                     <div className="text-xs text-muted-foreground">
                       {new Date(o.created_at).toLocaleDateString()}
                     </div>
                   </div>
-                  <div className="truncate text-xs">
-                    <div className="font-medium">{o.resellers?.business_name || "Direct"}</div>
-                  </div>
                   <div className="min-w-0">
                     <div className="truncate font-medium">{o.customer_name}</div>
                     <div className="text-xs text-muted-foreground">{o.customer_phone}</div>
-                    {shipments.some(s => s.order_id === o.id) && (
-                      <div className="mt-0.5 flex flex-wrap gap-1">
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-medium">{o.resellers?.business_name || "Direct"}</div>
+                  </div>
+                  
+                  <div className="min-w-0">
+                    {shipments.some(s => s.order_id === o.id) ? (
+                      <div>
                         {shipments.filter(s => s.order_id === o.id).map(s => (
-                          <div key={s.id} className="inline-flex items-center gap-1 rounded bg-muted/50 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground ring-1 ring-inset ring-muted-foreground/10">
-                            <Truck className="h-2.5 w-2.5" />
-                            <span className="capitalize">{s.provider}</span>
-                            {s.consignment_id && (
-                              <span className="opacity-70">({s.consignment_id})</span>
-                            )}
+                          <div key={s.id} className="flex flex-col">
+                            <div className="text-[10px] font-bold text-primary uppercase leading-tight">
+                              {s.provider}
+                            </div>
+                            <div className="text-[10px] text-muted-foreground tabular-nums font-medium">
+                              #{s.consignment_id || "N/A"}
+                            </div>
                           </div>
                         ))}
                       </div>
+                    ) : (
+                      <span className="text-[10px] font-medium text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded border border-dashed">
+                        Not Booked
+                      </span>
                     )}
                   </div>
 
@@ -738,6 +742,7 @@ function AdminOrdersPage() {
                       {orderStatusLabel(o.status)}
                     </span>
                   </div>
+
                   <div className="flex justify-end">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
