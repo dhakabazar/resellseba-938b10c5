@@ -455,11 +455,11 @@ export function NewOrderModal({
                 <div className="flex justify-between text-xs text-muted-foreground">
                   <div className="flex items-center gap-1">
                     <span>Shipping</span>
-                    {totals.picked.length > 1 && <span className="text-[10px] bg-accent px-1 rounded">High</span>}
+                    {picked.length > 1 && <span className="text-[10px] bg-accent px-1 rounded">High</span>}
                   </div>
                   <span className="font-bold text-foreground">৳{totals.shipping.toFixed(0)}</span>
                 </div>
-                {totals.shipFrom && totals.picked.length > 1 && (
+                {totals.shipFrom && picked.length > 1 && (
                   <div className="text-[9px] text-muted-foreground italic text-right -mt-2">
                     Applied from: {totals.shipFrom}
                   </div>
@@ -485,39 +485,9 @@ export function NewOrderModal({
         </div>
       </form>
     </div>
-
-
-            <aside className="h-fit space-y-4 rounded-lg border bg-muted/40 p-4 text-sm lg:sticky lg:top-0">
-              <div className="space-y-1">
-                <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Summary
-                </div>
-                <Row label="Subtotal" value={`৳${totals.subtotal.toFixed(0)}`} />
-                <Row label="Delivery charge" value={totals.shipping ? `৳${totals.shipping.toFixed(0)}` : "Free"} />
-                {picked.length > 1 && (
-                  <p className="text-[11px] leading-snug text-muted-foreground">
-                    Highest single-product charge applied — not added up.
-                  </p>
-                )}
-                <Row label="Total" value={`৳${totals.total.toFixed(0)}`} bold />
-                {resellerId && <Row label="Reseller profit" value={`৳${totals.profit.toFixed(0)}`} muted />}
-              </div>
-              
-              <button
-                type="submit"
-                disabled={busy || picked.length === 0}
-                className="btn-brand w-full flex items-center justify-center gap-2 rounded-md py-3 text-sm font-semibold shadow-sm"
-              >
-                {busy && <Loader2 className="h-4 w-4 animate-spin" />}
-                Create order — ৳{totals.total.toFixed(0)}
-              </button>
-            </aside>
-          </div>
-        </div>
-      </form>
-    </div>
   );
 }
+
 
 function FieldError({ text }: { text: string }) {
   return <p className="mt-1 text-[11px] font-medium text-destructive">{text}</p>;
