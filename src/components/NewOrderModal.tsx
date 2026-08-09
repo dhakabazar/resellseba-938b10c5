@@ -30,7 +30,7 @@ export function NewOrderModal({
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
-  const [area, setArea] = useState<"inside_dhaka" | "outside_dhaka" | "sub_dhaka">("outside_dhaka");
+  const [area, setArea] = useState<"inside_dhaka" | "outside_dhaka">("outside_dhaka");
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [note, setNote] = useState("");
   const [lines, setLines] = useState<Line[]>([]);
@@ -299,33 +299,6 @@ export function NewOrderModal({
                       {address && errors.address && <FieldError text={errors.address} />}
                     </Field>
 
-                    <div className="sm:col-span-2">
-                      <label className="mb-1 block text-[10px] font-bold text-muted-foreground/80 uppercase">Delivery Area</label>
-                      <div className="grid grid-cols-3 gap-2">
-                        {(
-                          [
-                            ["inside_dhaka", "Inside Dhaka"],
-                            ["sub_dhaka", "Sub Dhaka"],
-                            ["outside_dhaka", "Outside Dhaka"],
-                          ] as const
-                        ).map(([v, label]) => {
-                          return (
-                            <button
-                              key={v}
-                              type="button"
-                              onClick={() => setArea(v)}
-                              className={`rounded-lg border py-2 text-[10px] font-bold transition-all ${
-                                area === v 
-                                  ? "bg-primary text-primary-foreground border-primary shadow-sm" 
-                                  : "bg-background hover:border-primary/50"
-                              }`}
-                            >
-                              {label}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
 
                     <Field label="Payment Method">
                       <select
@@ -397,7 +370,37 @@ export function NewOrderModal({
                               </div>
                               <div className={`shrink-0 rounded-full p-1.5 transition-colors ${inCart ? 'bg-primary text-primary-foreground' : 'bg-accent hover:bg-primary/20 hover:text-primary'}`}>
                                 <Plus className="h-3 w-3" />
-                              </div>
+                    </div>
+
+                    {lines.length > 0 && (
+                      <div className="mt-4 animate-in fade-in slide-in-from-top-2">
+                        <label className="mb-2 block text-[10px] font-bold text-muted-foreground/80 uppercase">Delivery Area</label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {(
+                            [
+                              ["inside_dhaka", "Inside Dhaka"],
+                              ["outside_dhaka", "Outside Dhaka"],
+                            ] as const
+                          ).map(([v, label]) => (
+                            <button
+                              key={v}
+                              type="button"
+                              onClick={() => setArea(v)}
+                              className={`flex flex-col items-center justify-center rounded-xl border py-2.5 px-3 transition-all duration-200 ${
+                                area === v 
+                                  ? "bg-primary/10 border-primary text-primary shadow-[0_0_10px_rgba(var(--primary),0.1)]" 
+                                  : "bg-background border-muted hover:border-primary/30 text-muted-foreground"
+                              }`}
+                            >
+                              <span className="text-[10px] font-bold">{label}</span>
+                              <span className="mt-0.5 text-[9px] opacity-80">
+                                ৳{Math.max(...picked.map(({ p }) => productDeliveryCharge(p, v)))}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                             </button>
                           );
                         })}
