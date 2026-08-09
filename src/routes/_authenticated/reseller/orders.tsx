@@ -21,7 +21,11 @@ import {
   Settings2,
   Truck,
   Copy,
+  PackageCheck,
+  ShoppingCart,
 } from "lucide-react";
+
+
 
 import {
   DropdownMenu,
@@ -151,6 +155,7 @@ function OrdersPage() {
   const [pickOpen, setPickOpen] = useState(false);
   const [pickScope, setPickScope] = useState<"filtered" | "marked">("filtered");
   const [marked, setMarked] = useState<string[]>([]);
+  const [expandedOrders, setExpandedOrders] = useState<string[]>([]);
   const [page, setPage] = useState(1);
   const [statusModal, setStatusModal] = useState<{ open: boolean; orderId: string; currentStatus: string; isBulk?: boolean } | null>(null);
   const [confirmModal, setConfirmModal] = useState<{
@@ -582,7 +587,7 @@ function OrdersPage() {
       ) : (
         <>
         <div className="surface-card overflow-hidden">
-          <div className="hidden grid-cols-[40px_minmax(120px,1fr)_minmax(180px,1.5fr)_minmax(150px,1.2fr)_minmax(150px,1fr)_100px_100px_120px_60px] gap-3 border-b bg-muted/40 px-4 py-3 text-xs font-medium text-muted-foreground md:grid">
+          <div className="hidden grid-cols-[40px_minmax(120px,1fr)_minmax(180px,1.5fr)_minmax(150px,1.2fr)_100px_100px_120px_60px] gap-3 border-b bg-muted/40 px-4 py-3 text-xs font-medium text-muted-foreground md:grid">
             <div className="flex items-center justify-center">
               <input
                 type="checkbox"
@@ -602,7 +607,6 @@ function OrdersPage() {
             <div>Order</div>
             <div>Customer</div>
             <div>Courier</div>
-            <div>Items</div>
             <div>Total</div>
             <div>Profit</div>
             <div>Status</div>
@@ -632,6 +636,13 @@ function OrdersPage() {
                         </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-44">
+                        <DropdownMenuItem onClick={() => {
+                          setExpandedOrders(prev => prev.includes(o.id) ? prev.filter(id => id !== o.id) : [...prev, o.id]);
+                        }}>
+                          {expandedOrders.includes(o.id) ? <ChevronDown className="mr-2 h-4 w-4 rotate-180" /> : <ChevronDown className="mr-2 h-4 w-4" />}
+                          {expandedOrders.includes(o.id) ? "Collapse Details" : "Show Products"}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => setSelected(o)}>
                           <Eye className="mr-2 h-4 w-4" /> View Details
                         </DropdownMenuItem>
@@ -800,7 +811,7 @@ function OrdersPage() {
                 </div>
 
                 {/* Desktop row */}
-                <div className="hidden grid-cols-[40px_minmax(120px,1fr)_minmax(180px,1.5fr)_minmax(150px,1.2fr)_minmax(150px,1fr)_100px_100px_120px_60px] items-center gap-3 px-4 py-3 text-sm md:grid">
+                <div className="hidden grid-cols-[40px_minmax(120px,1fr)_minmax(180px,1.5fr)_minmax(150px,1.2fr)_100px_100px_120px_60px] items-center gap-3 px-4 py-3 text-sm md:grid">
                   <div className="flex justify-center">
                     <input
                       type="checkbox"
@@ -862,10 +873,6 @@ function OrdersPage() {
                     )}
                   </div>
 
-                  <div className="min-w-0">
-                    <div className="truncate text-[11px] font-medium">{itemText}</div>
-                    <div className="text-[10px] text-muted-foreground uppercase">{o.payment_method}</div>
-                  </div>
                   <div className="min-w-0 font-semibold whitespace-nowrap">৳{Number(o.total).toFixed(0)}</div>
                   <div className="min-w-0 text-[11px] font-medium text-success whitespace-nowrap">
                     ৳{Number(o.reseller_profit).toFixed(0)}
@@ -884,6 +891,88 @@ function OrdersPage() {
                   </div>
                   <div className="flex justify-end">{actions}</div>
                 </div>
+
+                {/* Collapsible content section */}
+                {expandedOrders.includes(o.id) && (
+                  <div className="border-t bg-muted/20 px-4 py-4 animate-in slide-in-from-top-2 duration-200">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Products list */}
+                      <div>
+                        <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
+                          <PackageCheck className="h-3.5 w-3.5" /> Ordered Products ({items.length})
+                        </h4>
+                        <div className="space-y-2">
+                          {items.map((it, idx) => (
+                            <div key={idx} className="flex items-center justify-between rounded-lg border bg-background p-3 shadow-sm">
+                              <div className="flex items-center gap-3">
+                                <div className="h-10 w-10 shrink-0 overflow-hidden rounded-md border bg-muted flex items-center justify-center">
+                                  {allProducts.find(p => p.id === it.product_id)?.og_image_url ? (
+                                    <img src={allProducts.find(p => p.id === it.product_id).og_image_url} alt="" className="h-full w-full object-cover" />
+                                  ) : (
+                                    <ShoppingCart className="h-5 w-5 text-muted-foreground/40" />
+                                  )}
+                                </div>
+                                <div className="min-w-0">
+                                  <div className="truncate text-sm font-semibold">{it.product_name}</div>
+                                  <div className="text-xs text-muted-foreground font-medium">Qty: {it.quantity}</div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Order metadata & shipping details */}
+                      <div className="space-y-4">
+                        <div>
+                          <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Shipping Address</h4>
+                          <div className="rounded-lg border bg-background p-3 text-sm shadow-sm">
+                            <div className="font-medium">{o.customer_name}</div>
+                            <div className="text-muted-foreground mt-1">{o.address_line}</div>
+                            <div className="text-muted-foreground">{o.area}, {o.city}</div>
+                            <div className="mt-2 text-xs font-medium inline-block rounded bg-primary/10 px-2 py-1 text-primary uppercase">
+                              Payment: {o.payment_method}
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {o.reseller_note && (
+                          <div>
+                            <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Your Note</h4>
+                            <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900 shadow-sm italic">
+                              {o.reseller_note}
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="rounded-lg border bg-background p-3 text-sm shadow-sm">
+                           <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Financial Summary</h4>
+                           <div className="flex justify-between py-1 border-b border-dashed">
+                             <span>Subtotal</span>
+                             <span>৳{Number(o.subtotal).toFixed(0)}</span>
+                           </div>
+                           <div className="flex justify-between py-1 border-b border-dashed">
+                             <span>Shipping</span>
+                             <span>৳{Number(o.shipping_cost).toFixed(0)}</span>
+                           </div>
+                           <div className="flex justify-between py-1 border-b border-dashed">
+                             <span>Discount</span>
+                             <span>৳{Number(o.discount).toFixed(0)}</span>
+                           </div>
+                           <div className="flex justify-between py-1 font-bold text-primary mt-1">
+                             <span>Grand Total</span>
+                             <span>৳{Number(o.total).toFixed(0)}</span>
+                           </div>
+                           <div className="flex justify-between py-1 font-bold text-success mt-1 pt-1 border-t">
+                             <span>Your Profit</span>
+                             <span>৳{Number(o.reseller_profit).toFixed(0)}</span>
+                           </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
 
               </div>
             );

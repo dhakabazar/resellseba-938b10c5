@@ -151,6 +151,7 @@ function AdminOrdersPage() {
   const [resellers, setResellers] = useState<any[]>([]);
   const [filters, setFilters] = useState<OrderFilterState>(DEFAULT_ORDER_FILTERS);
   const [searchMode, setSearchMode] = useState<OrderSearchMode>("order");
+  const [expandedOrders, setExpandedOrders] = useState<string[]>([]);
 
   const [showFilters, setShowFilters] = useState(false);
     const [pickOpen, setPickOpen] = useState(false);
@@ -568,7 +569,7 @@ function AdminOrdersPage() {
       ) : (
         <>
         <div className="surface-card overflow-hidden">
-          <div className="hidden grid-cols-[40px_minmax(120px,1.2fr)_minmax(180px,1.5fr)_minmax(180px,1.5fr)_minmax(150px,1.2fr)_100px_120px_60px] gap-4 border-b bg-muted/40 px-4 py-3 text-xs font-medium text-muted-foreground md:grid">
+          <div className="hidden grid-cols-[40px_minmax(120px,1.2fr)_minmax(180px,1.5fr)_minmax(180px,1.5fr)_minmax(120px,1fr)_120px_60px] gap-4 border-b bg-muted/40 px-4 py-3 text-xs font-medium text-muted-foreground md:grid">
             <div className="flex items-center justify-center">
               <input
                 type="checkbox"
@@ -740,16 +741,80 @@ function AdminOrdersPage() {
                               <DropdownMenuItem onClick={() => printShippingLabels([o.id], "3x3")}>
                                 <Printer className="mr-2 h-4 w-4" /> Print Label (3x3)
                               </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </div>
+
+                {/* Collapsible content section */}
+                {expandedOrders.includes(o.id) && (
+                  <div className="border-t bg-muted/20 px-4 py-4 animate-in slide-in-from-top-2 duration-200">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Products list */}
+                      <div>
+                        <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
+                          <PackageCheck className="h-3.5 w-3.5" /> Ordered Products ({items.length})
+                        </h4>
+                        <div className="space-y-2">
+                          {items.map((it, idx) => (
+                            <div key={idx} className="flex items-center justify-between rounded-lg border bg-background p-3 shadow-sm">
+                              <div className="flex items-center gap-3">
+                                <div className="h-10 w-10 shrink-0 overflow-hidden rounded-md border bg-muted flex items-center justify-center">
+                                  {allProducts.find(p => p.id === it.product_id)?.og_image_url ? (
+                                    <img src={allProducts.find(p => p.id === it.product_id).og_image_url} alt="" className="h-full w-full object-cover" />
+                                  ) : (
+                                    <ShoppingCart className="h-5 w-5 text-muted-foreground/40" />
+                                  )}
+                                </div>
+                                <div className="min-w-0">
+                                  <div className="truncate text-sm font-semibold">{it.product_name}</div>
+                                  <div className="text-xs text-muted-foreground font-medium">Qty: {it.quantity}</div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       </div>
+
+                      {/* Order metadata & shipping details */}
+                      <div className="space-y-4">
+                        <div>
+                          <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Shipping Address</h4>
+                          <div className="rounded-lg border bg-background p-3 text-sm shadow-sm">
+                            <div className="font-medium">{o.customer_name}</div>
+                            <div className="text-muted-foreground mt-1">{o.address_line}</div>
+                            <div className="text-muted-foreground">{o.area}</div>
+                          </div>
+                        </div>
+
+                        {o.admin_note && (
+                          <div>
+                            <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Admin Note</h4>
+                            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 shadow-sm italic">
+                              {o.admin_note}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {o.reseller_note && (
+                          <div>
+                            <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Reseller Note</h4>
+                            <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900 shadow-sm italic">
+                              {o.reseller_note}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
+                  </div>
+                )}
+              </div>
+
                   </div>
                 </div>
 
                 {/* Desktop table row */}
-                <div className="hidden grid-cols-[40px_minmax(120px,1.2fr)_minmax(180px,1.5fr)_minmax(180px,1.5fr)_minmax(150px,1.2fr)_100px_120px_60px] items-center gap-4 px-4 py-3 text-sm md:grid">
+                <div className="hidden grid-cols-[40px_minmax(120px,1.2fr)_minmax(180px,1.5fr)_minmax(180px,1.5fr)_minmax(120px,1fr)_120px_60px] items-center gap-4 px-4 py-3 text-sm md:grid">
                   <div className="flex justify-center">
                     <input
                       type="checkbox"
@@ -852,6 +917,7 @@ function AdminOrdersPage() {
                     </span>
                   </div>
 
+
                   <div className="flex justify-end">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -860,6 +926,13 @@ function AdminOrdersPage() {
                         </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-40">
+                        <DropdownMenuItem onClick={() => {
+                          setExpandedOrders(prev => prev.includes(o.id) ? prev.filter(id => id !== o.id) : [...prev, o.id]);
+                        }}>
+                          {expandedOrders.includes(o.id) ? <ChevronDown className="mr-2 h-4 w-4 rotate-180" /> : <ChevronDown className="mr-2 h-4 w-4" />}
+                          {expandedOrders.includes(o.id) ? "Collapse Details" : "Show Products"}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => setSelected(o)}>
                           <Eye className="mr-2 h-4 w-4" /> View Details
                         </DropdownMenuItem>
