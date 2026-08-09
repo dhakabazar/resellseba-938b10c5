@@ -305,7 +305,38 @@ function OrdersPage() {
     setLoading(false);
   };
 
+  const bulkDeleteOrders = async () => {
+    if (marked.length === 0) return;
+    
+    // Check if any order is NOT pending/confirmed or is booked
+    const bookedIds = shipments.filter(s => s.consignment_id || s.tracking_id).map(s => s.order_id);
+    const restricted = visible.filter(o => marked.includes(o.id) && (!["pending", "confirmed"].includes(o.status) || bookedIds.includes(o.id)));
+    
+    if (restricted.length > 0) {
+      toast.error(`${restricted.length} orders cannot be deleted (must be Pending/Confirmed and NOT booked).`);
+      return;
+    }
+
+    if (!confirm(`Delete ${marked.length} selected orders?`)) return;
+    
+    setLoading(true);
+    const { error } = await supabase
+      .from("orders")
+      .delete()
+      .in("id", marked);
+    
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success(`${marked.length} orders deleted`);
+      setMarked([]);
+      await load();
+    }
+    setLoading(false);
+  };
+
   const tabCount = (key: OrderTabKey) => {
+
     const sts = ORDER_TABS.find((t) => t.key === key)?.statuses ?? [];
     return sts.length === 0 ? orders.length : orders.filter((o) => (sts as string[]).includes(o.status)).length;
   };
@@ -313,11 +344,26 @@ function OrdersPage() {
 
 
   async function remove(id: string) {
+    const order = orders.find(o => o.id === id);
+    if (!order) return;
+
+    const isBooked = shipments.some(s => s.order_id === id && (s.consignment_id || s.tracking_id));
+    if (!["pending", "confirmed"].includes(order.status) || isBooked) {
+      toast.error("You can only delete Pending or Confirmed orders that are not booked.");
+      return;
+    }
+
     if (!confirm("Delete this order?")) return;
+    setLoading(true);
     const { error } = await supabase.from("orders").delete().eq("id", id);
     if (error) toast.error(error.message);
-    else load();
+    else {
+      toast.success("Order deleted");
+      load();
+    }
+    setLoading(false);
   }
+
 
   return (
     <div>
@@ -431,10 +477,18 @@ function OrdersPage() {
                   Mark as {orderStatusLabel(s)}
                 </DropdownMenuItem>
               ))}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem 
+                onClick={bulkDeleteOrders}
+                className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+              >
+                <Trash2 className="mr-2 h-4 w-4" /> Delete Marked
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       )}
+
 
       {pickOpen && (
         <PickListModal
@@ -544,7 +598,7 @@ function OrdersPage() {
                             <FileText className="mr-2 h-4 w-4" /> View Invoice
                           </Link>
                         </DropdownMenuItem>
-                        {!o.forwarded_to_admin && (o.status === "pending" || o.status === "draft") && (
+                        {!o.forwarded_to_admin && (o.status === "pending" || o.status === "confirmed") && !shipments.some(s => s.order_id === o.id && (s.consignment_id || s.tracking_id)) && (
                           <>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem 
@@ -556,6 +610,7 @@ function OrdersPage() {
                           </>
                         )}
                       </DropdownMenuContent>
+
                     </DropdownMenu>
                   </div>
                 );
