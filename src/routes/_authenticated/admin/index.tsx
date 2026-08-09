@@ -105,8 +105,11 @@ function AdminDashboard() {
   }, [loadLifetime]);
 
   useEffect(() => {
-    void load(range);
-  }, [load, range]);
+    // Only load if current rows are empty to prevent jumpy reloads on tab switch
+    if (rows.length === 0) {
+      void load(range);
+    }
+  }, [load, range, rows.length]);
 
 
   const { stats, daily, top } = useMemo(() => {
