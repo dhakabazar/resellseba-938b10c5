@@ -214,7 +214,7 @@ export function NewOrderModal({
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px]">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[1fr_350px]">
             {/* Left Column: Selection & Details */}
             <div className="space-y-6 p-4 sm:p-6 border-r">
               {isAdmin && (
@@ -279,7 +279,7 @@ export function NewOrderModal({
               <div className="space-y-6">
                 <div className="space-y-3">
                   <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80">Customer Information</label>
-                  <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="grid gap-x-4 gap-y-3 sm:grid-cols-2">
                     <Field label="Customer Full Name">
                       <input
                         required
@@ -315,28 +315,30 @@ export function NewOrderModal({
                     </Field>
 
 
-                    <Field label="Payment Method">
-                      <select
-                        value={paymentMethod}
-                        onChange={(e) => setPaymentMethod(e.target.value)}
-                        className="w-full rounded-lg border bg-background px-3 py-1.5 text-xs focus:ring-2 focus:ring-primary/20"
-                      >
-                        <option value="cod">Cash on Delivery</option>
-                        <option value="bkash">bKash</option>
-                        <option value="nagad">Nagad</option>
-                        <option value="rocket">Rocket</option>
-                        <option value="sslcommerz">SSLCommerz</option>
-                      </select>
-                    </Field>
+                    <div className="grid grid-cols-2 gap-3 sm:col-span-2">
+                      <Field label="Payment Method">
+                        <select
+                          value={paymentMethod}
+                          onChange={(e) => setPaymentMethod(e.target.value)}
+                          className="w-full rounded-lg border bg-background px-3 py-1.5 text-xs focus:ring-2 focus:ring-primary/20"
+                        >
+                          <option value="cod">Cash on Delivery</option>
+                          <option value="bkash">bKash</option>
+                          <option value="nagad">Nagad</option>
+                          <option value="rocket">Rocket</option>
+                          <option value="sslcommerz">SSLCommerz</option>
+                        </select>
+                      </Field>
 
-                    <Field label="Order Note (Optional)">
-                      <input 
-                        value={note} 
-                        onChange={(e) => setNote(e.target.value)} 
-                        placeholder="Special instructions..."
-                        className="w-full rounded-lg border px-3 py-1.5 text-xs focus:ring-2 focus:ring-primary/20" 
-                      />
-                    </Field>
+                      <Field label="Order Note (Optional)">
+                        <input 
+                          value={note} 
+                          onChange={(e) => setNote(e.target.value)} 
+                          placeholder="Special instructions..."
+                          className="w-full rounded-lg border px-3 py-1.5 text-xs focus:ring-2 focus:ring-primary/20" 
+                        />
+                      </Field>
+                    </div>
                   </div>
                 </div>
 
@@ -413,7 +415,7 @@ export function NewOrderModal({
                     )}
 
                     {/* Cart List (Visible when items picked) */}
-                    <div className="flex-1 max-h-[400px] overflow-y-auto divide-y bg-background">
+                    <div className="flex-1 max-h-[300px] overflow-y-auto divide-y bg-background">
                       {picked.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground bg-muted/5">
                           <div className="rounded-full bg-muted p-4 mb-3">
@@ -504,7 +506,7 @@ export function NewOrderModal({
             </div>
 
             {/* Right Column: Order Summary */}
-            <aside className="flex flex-col bg-muted/20 p-4 sm:p-6 h-full">
+            <aside className="flex flex-col bg-muted/20 p-4 sm:p-6 h-full border-t lg:border-t-0">
               <div className="flex-1">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/80">Order Summary</h3>
