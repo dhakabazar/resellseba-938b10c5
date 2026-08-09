@@ -122,11 +122,8 @@ function ResellerDashboard() {
   );
 
   useEffect(() => {
-    // Only load if current orders are empty to prevent jumpy reloads on tab switch
-    if (orders.length === 0) {
-      void load(range);
-    }
-  }, [load, range, orders.length]);
+    void load(range);
+  }, [load, range]);
 
   const report = useMemo(() => buildFinanceReport(orders, items, { trend: "day" }), [orders, items]);
 
