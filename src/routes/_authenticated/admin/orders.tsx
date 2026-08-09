@@ -168,7 +168,7 @@ function AdminOrdersPage() {
               <Settings2 className="h-3.5 w-3.5" /> Change Status
             </button>
             <button
-              onClick={() => printShippingLabels(marked, orders.map(o => ({ ...o, items: itemsByOrder.get(o.id) ?? [] })))}
+              onClick={() => printShippingLabels(marked)}
               className="inline-flex h-9 items-center gap-2 rounded-md border bg-background px-3 text-xs font-medium hover:bg-accent"
             >
               <Printer className="h-3.5 w-3.5" /> Print Labels
