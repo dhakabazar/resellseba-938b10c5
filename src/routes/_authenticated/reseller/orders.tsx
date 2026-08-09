@@ -567,8 +567,8 @@ function OrdersPage() {
       ) : (
         <>
         <div className="surface-card overflow-hidden">
-          <div className="hidden grid-cols-[auto_1.1fr_1.3fr_1.4fr_0.9fr_0.8fr_0.9fr_auto] gap-3 border-b bg-muted/40 px-4 py-3 text-xs font-medium text-muted-foreground md:grid">
-            <div className="flex items-center">
+          <div className="hidden grid-cols-[40px_1fr_1.2fr_1.2fr_1fr_0.8fr_0.8fr_1fr_80px] gap-3 border-b bg-muted/40 px-4 py-3 text-xs font-medium text-muted-foreground md:grid">
+            <div className="flex items-center justify-center">
               <input
                 type="checkbox"
                 className="h-4 w-4 accent-[hsl(var(--primary))]"
@@ -584,13 +584,14 @@ function OrdersPage() {
                 title="Mark all on this page"
               />
             </div>
-            <div>Order & Courier</div>
+            <div>Order</div>
             <div>Customer</div>
+            <div>Courier</div>
             <div>Items</div>
             <div>Total</div>
             <div>Profit</div>
             <div>Status</div>
-            <div className="text-right pr-2">Actions</div>
+            <div className="text-right">Actions</div>
           </div>
           {paged.map((o) => {
             const items = itemsByOrder.get(o.id) ?? [];
@@ -759,8 +760,8 @@ function OrdersPage() {
                 </div>
 
                 {/* Desktop row */}
-                <div className="hidden grid-cols-[auto_1.1fr_1.3fr_1fr_0.9fr_0.8fr_0.8fr_0.9fr_auto] items-center gap-3 px-4 py-3 text-sm md:grid">
-                  <div className="flex items-center">
+                <div className="hidden grid-cols-[40px_1fr_1.2fr_1.2fr_1fr_0.8fr_0.8fr_1fr_80px] items-center gap-3 px-4 py-3 text-sm md:grid">
+                  <div className="flex justify-center">
                     <input
                       type="checkbox"
                       className="h-4 w-4 accent-[hsl(var(--primary))]"
@@ -769,19 +770,19 @@ function OrdersPage() {
                     />
                   </div>
                   <div className="min-w-0">
-                    <div className="font-medium">{o.order_number}</div>
-                    <div className="text-xs text-muted-foreground">
+                    <div className="font-medium truncate">{o.order_number}</div>
+                    <div className="text-[11px] text-muted-foreground">
                       {new Date(o.created_at).toLocaleDateString()}
                     </div>
                   </div>
                   <div className="min-w-0 text-xs text-muted-foreground">
-                    <div className="font-medium text-foreground">{o.customer_name}</div>
+                    <div className="font-medium text-foreground truncate">{o.customer_name}</div>
                     <div>{o.customer_phone}</div>
                   </div>
                   
                   <div className="min-w-0">
                     {orderShipment ? (
-                      <div>
+                      <div className="flex flex-col gap-0.5">
                         <div className="text-[10px] font-bold text-primary uppercase leading-tight">
                           {orderShipment.provider}
                         </div>
@@ -790,33 +791,33 @@ function OrdersPage() {
                         </div>
                       </div>
                     ) : (
-                      <span className="text-[10px] font-medium text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded border border-dashed">
+                      <span className="text-[9px] font-medium text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded border border-dashed">
                         Not Booked
                       </span>
                     )}
                   </div>
 
                   <div className="min-w-0">
-                    <div className="truncate text-xs">{itemText}</div>
-                    <div className="text-xs text-muted-foreground uppercase">{o.payment_method}</div>
+                    <div className="truncate text-[11px] font-medium">{itemText}</div>
+                    <div className="text-[10px] text-muted-foreground uppercase">{o.payment_method}</div>
                   </div>
-                  <div className="min-w-0 font-medium">৳{Number(o.total).toFixed(0)}</div>
-                  <div className="min-w-0 text-[11px] font-medium text-success">
+                  <div className="min-w-0 font-semibold whitespace-nowrap">৳{Number(o.total).toFixed(0)}</div>
+                  <div className="min-w-0 text-[11px] font-medium text-success whitespace-nowrap">
                     ৳{Number(o.reseller_profit).toFixed(0)}
                   </div>
                   <div className="min-w-0">
                     <span
-                      className={`inline-block rounded-full px-2 py-0.5 text-xs capitalize ${orderStatusTone(o.status)}`}
+                      className={`inline-block rounded-full px-2 py-0.5 text-[11px] capitalize whitespace-nowrap ${orderStatusTone(o.status)}`}
                     >
                       {orderStatusLabel(o.status)}
                     </span>
                     {o.status === "confirmed" && o.forwarded_to_admin && (
-                      <div className="mt-0.5 text-[10px] text-success font-medium">
+                      <div className="mt-0.5 text-[9px] text-success font-medium">
                         Sent to admin
                       </div>
                     )}
                   </div>
-                  <div className="flex justify-end gap-2">{actions}</div>
+                  <div className="flex justify-end">{actions}</div>
                 </div>
 
               </div>

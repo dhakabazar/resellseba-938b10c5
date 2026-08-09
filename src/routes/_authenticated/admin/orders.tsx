@@ -554,8 +554,8 @@ function AdminOrdersPage() {
       ) : (
         <>
         <div className="surface-card overflow-hidden">
-          <div className="hidden grid-cols-[auto_1fr_1fr_1.2fr_1fr_1fr_auto] gap-4 border-b bg-muted/40 px-4 py-3 text-xs font-medium text-muted-foreground md:grid">
-            <div className="flex items-center">
+          <div className="hidden grid-cols-[40px_1fr_1fr_1.2fr_1fr_1fr_1fr_80px] gap-4 border-b bg-muted/40 px-4 py-3 text-xs font-medium text-muted-foreground md:grid">
+            <div className="flex items-center justify-center">
               <input
                 type="checkbox"
                 className="h-4 w-4 accent-[hsl(var(--primary))]"
@@ -571,12 +571,13 @@ function AdminOrdersPage() {
                 title="Mark all on this page"
               />
             </div>
-            <div>Order & Courier</div>
-            <div>Reseller</div>
+            <div>Order</div>
             <div>Customer</div>
+            <div>Reseller</div>
+            <div>Courier</div>
             <div>Total</div>
             <div>Status</div>
-            <div className="text-right pr-2">Actions</div>
+            <div className="text-right">Actions</div>
           </div>
           {paged.map((o) => {
             const items = itemsByOrder.get(o.id) ?? [];
@@ -690,34 +691,36 @@ function AdminOrdersPage() {
                 </div>
 
                 {/* Desktop table row */}
-                <div className="hidden grid-cols-[auto_1fr_1fr_1fr_1fr_1fr_1fr_auto] items-center gap-4 px-4 py-3 text-sm md:grid">
-                  <input
-                    type="checkbox"
-                    className="h-4 w-4 accent-[hsl(var(--primary))]"
-                    checked={marked.includes(o.id)}
-                    onChange={(e) =>
-                      setMarked((prev) =>
-                        e.target.checked ? [...prev, o.id] : prev.filter((id) => id !== o.id),
-                      )
-                    }
-                  />
-                  <div>
-                    <div className="font-medium">{o.order_number}</div>
-                    <div className="text-xs text-muted-foreground">
+                <div className="hidden grid-cols-[40px_1fr_1fr_1.2fr_1fr_1fr_1fr_80px] items-center gap-4 px-4 py-3 text-sm md:grid">
+                  <div className="flex justify-center">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 accent-[hsl(var(--primary))]"
+                      checked={marked.includes(o.id)}
+                      onChange={(e) =>
+                        setMarked((prev) =>
+                          e.target.checked ? [...prev, o.id] : prev.filter((id) => id !== o.id),
+                        )
+                      }
+                    />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-medium truncate">{o.order_number}</div>
+                    <div className="text-[11px] text-muted-foreground">
                       {new Date(o.created_at).toLocaleDateString()}
                     </div>
                   </div>
                   <div className="min-w-0">
                     <div className="truncate font-medium">{o.customer_name}</div>
-                    <div className="text-xs text-muted-foreground">{o.customer_phone}</div>
+                    <div className="text-[11px] text-muted-foreground">{o.customer_phone}</div>
                   </div>
                   <div className="min-w-0">
-                    <div className="font-medium">{o.resellers?.business_name || "Direct"}</div>
+                    <div className="font-medium truncate">{o.resellers?.business_name || "Direct"}</div>
                   </div>
                   
                   <div className="min-w-0">
                     {shipments.some(s => s.order_id === o.id) ? (
-                      <div>
+                      <div className="flex flex-col gap-0.5">
                         {shipments.filter(s => s.order_id === o.id).map(s => (
                           <div key={s.id} className="flex flex-col">
                             <div className="text-[10px] font-bold text-primary uppercase leading-tight">
@@ -730,15 +733,15 @@ function AdminOrdersPage() {
                         ))}
                       </div>
                     ) : (
-                      <span className="text-[10px] font-medium text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded border border-dashed">
+                      <span className="text-[9px] font-medium text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded border border-dashed">
                         Not Booked
                       </span>
                     )}
                   </div>
 
-                  <div className="font-semibold">৳{Number(o.total).toFixed(0)}</div>
-                  <div>
-                    <span className={`rounded-full px-2 py-0.5 text-xs capitalize ${orderStatusTone(o.status)}`}>
+                  <div className="font-semibold whitespace-nowrap">৳{Number(o.total).toFixed(0)}</div>
+                  <div className="min-w-0">
+                    <span className={`rounded-full px-2 py-0.5 text-[11px] capitalize inline-block whitespace-nowrap ${orderStatusTone(o.status)}`}>
                       {orderStatusLabel(o.status)}
                     </span>
                   </div>
