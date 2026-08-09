@@ -261,6 +261,7 @@ export function NewOrderModal({
                 </div>
               )}
 
+              <div className="space-y-6">
                 <div className="space-y-3">
                   <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80">Customer Information</label>
                   <div className="grid gap-3 sm:grid-cols-2">
