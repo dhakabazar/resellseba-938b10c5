@@ -752,6 +752,7 @@ function OrdersPage() {
                       {shipments.find((s: any) => s.order_id === o.id)?.provider || "Manual"} 
                       {shipments.find((s: any) => s.order_id === o.id)?.consignment_id && ` #${shipments.find((s: any) => s.order_id === o.id)?.consignment_id}`}
                     </div>
+
                     <div className="text-xs text-muted-foreground">
                       {new Date(o.created_at).toLocaleDateString()}
                     </div>
