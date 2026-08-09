@@ -307,38 +307,35 @@ export function NewOrderModal({
                         required
                         value={address}
                         onChange={(e) => setAddress(e.target.value)}
-                        rows={2}
+                        rows={1}
                         placeholder="Complete address (Road, Area, City...)"
-                        className="w-full rounded-lg border px-3 py-1.5 text-xs focus:ring-2 focus:ring-primary/20"
+                        className="w-full rounded-lg border px-3 py-1.5 text-xs focus:ring-2 focus:ring-primary/20 min-h-[38px]"
                       />
                       {address && errors.address && <FieldError text={errors.address} />}
                     </Field>
 
+                    <Field label="Payment Method">
+                      <select
+                        value={paymentMethod}
+                        onChange={(e) => setPaymentMethod(e.target.value)}
+                        className="w-full rounded-lg border bg-background px-3 py-1.5 text-xs focus:ring-2 focus:ring-primary/20"
+                      >
+                        <option value="cod">Cash on Delivery</option>
+                        <option value="bkash">bKash</option>
+                        <option value="nagad">Nagad</option>
+                        <option value="rocket">Rocket</option>
+                        <option value="sslcommerz">SSLCommerz</option>
+                      </select>
+                    </Field>
 
-                    <div className="grid grid-cols-2 gap-3 sm:col-span-2">
-                      <Field label="Payment Method">
-                        <select
-                          value={paymentMethod}
-                          onChange={(e) => setPaymentMethod(e.target.value)}
-                          className="w-full rounded-lg border bg-background px-3 py-1.5 text-xs focus:ring-2 focus:ring-primary/20"
-                        >
-                          <option value="cod">Cash on Delivery</option>
-                          <option value="bkash">bKash</option>
-                          <option value="nagad">Nagad</option>
-                          <option value="rocket">Rocket</option>
-                          <option value="sslcommerz">SSLCommerz</option>
-                        </select>
-                      </Field>
-
-                      <Field label="Order Note (Optional)">
-                        <input 
-                          value={note} 
-                          onChange={(e) => setNote(e.target.value)} 
-                          placeholder="Special instructions..."
-                          className="w-full rounded-lg border px-3 py-1.5 text-xs focus:ring-2 focus:ring-primary/20" 
-                        />
-                      </Field>
-                    </div>
+                    <Field label="Order Note (Optional)">
+                      <input 
+                        value={note} 
+                        onChange={(e) => setNote(e.target.value)} 
+                        placeholder="Special instructions..."
+                        className="w-full rounded-lg border px-3 py-1.5 text-xs focus:ring-2 focus:ring-primary/20" 
+                      />
+                    </Field>
                   </div>
                 </div>
 
