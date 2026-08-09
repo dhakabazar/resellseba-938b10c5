@@ -50,13 +50,16 @@ function applySession(session: Session | null) {
   // temporarily unmount the protected layout and destroy every open form or
   // modal. Refresh the session object without disturbing the mounted panel.
   if (authState.user?.id === session.user.id) {
+    // Keep the SAME user object identity so that `useEffect(..., [user])` in the
+    // admin/reseller panels does not re-run and re-fetch (which would wipe
+    // unsaved form state and reset open modals).
     publish({
       ...authState,
       session,
-      user: session.user,
     });
     return;
   }
+
 
   const version = ++authVersion;
 
@@ -76,9 +79,10 @@ function initAuth() {
 
   supabase.auth.onAuthStateChange((event, session) => {
     if (event === "TOKEN_REFRESHED") {
-      publish({ ...authState, session, user: session?.user ?? null });
+      publish({ ...authState, session });
       return;
     }
+
     applySession(session);
   });
 }
