@@ -478,56 +478,54 @@ function OrdersPage() {
       )}
 
       {marked.length > 0 && (
-        <div className="mb-3 flex flex-wrap items-center gap-2 rounded-md border border-primary/40 bg-primary/5 px-3 py-2 text-sm">
-          <span className="font-medium">{marked.length} order marked</span>
+        <div className="mb-3 flex flex-wrap items-center gap-2 rounded-md border border-primary/40 bg-primary/5 px-3 py-2">
+          <span className="mr-2 text-sm font-medium">{marked.length} marked</span>
+          
           <button
             type="button"
+            className="inline-flex h-9 items-center gap-2 rounded-md border bg-background px-3 text-xs font-medium hover:bg-accent"
+            onClick={() => setStatusModal({ open: true, orderId: marked[0], currentStatus: orders.find(o => o.id === marked[0])?.status || "pending", isBulk: true })}
+          >
+            <Settings2 className="h-3.5 w-3.5" /> Change Status
+          </button>
+
+          <button
+            type="button"
+            className="inline-flex h-9 items-center gap-2 rounded-md border bg-background px-3 text-xs font-medium hover:bg-accent"
             onClick={() => {
               setPickScope("marked");
               setPickOpen(true);
             }}
-            className="inline-flex items-center gap-1.5 rounded-md border bg-background px-2.5 py-1 text-xs hover:bg-accent"
           >
-            <ListChecks className="h-3.5 w-3.5" /> Marked pick list
+            <ListChecks className="h-3.5 w-3.5" /> Pick list
           </button>
+
           <button
             type="button"
+            className="inline-flex h-9 items-center gap-2 rounded-md border bg-background px-3 text-xs font-medium hover:bg-accent"
             onClick={() => exportCsv(markedOrders)}
-            className="inline-flex items-center gap-1.5 rounded-md border bg-background px-2.5 py-1 text-xs hover:bg-accent"
           >
-            <Download className="h-3.5 w-3.5" /> Export marked
+            <Download className="h-3.5 w-3.5" /> Export
           </button>
+
+          <button
+            type="button"
+            className="inline-flex h-9 items-center gap-2 rounded-md border border-destructive/20 bg-destructive/10 px-3 text-xs font-medium text-destructive hover:bg-destructive/20"
+            onClick={bulkDeleteOrders}
+          >
+            <Trash2 className="h-3.5 w-3.5" /> Delete
+          </button>
+
           <button
             type="button"
             onClick={() => setMarked([])}
-            className="ml-auto rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-accent"
+            className="ml-auto text-xs text-muted-foreground hover:underline"
           >
             Clear
           </button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="btn-brand ml-2 inline-flex h-8 items-center gap-1.5 rounded-md px-3 text-xs font-medium">
-                Change Status
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              {['pending', 'confirmed', 'cancelled'].map((s) => (
-                <DropdownMenuItem key={s} onClick={() => bulkUpdateStatus(s)} className="capitalize">
-                  <div className={`mr-2 h-2 w-2 rounded-full ${orderStatusTone(s)}`} />
-                  Mark as {orderStatusLabel(s)}
-                </DropdownMenuItem>
-              ))}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem 
-                onClick={bulkDeleteOrders}
-                className="text-destructive focus:bg-destructive/10 focus:text-destructive"
-              >
-                <Trash2 className="mr-2 h-4 w-4" /> Delete Marked
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
       )}
+
 
 
       {pickOpen && (

@@ -448,54 +448,61 @@ function AdminOrdersPage() {
         </button>
 
         {marked.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="btn-brand inline-flex h-10 items-center gap-2 rounded-md px-4 text-sm font-medium">
-                  <ShoppingCart className="h-4 w-4" />
-                  Bulk action ({marked.length})
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <div className="px-2 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                  Bulk Status Update
-                </div>
-                {ORDER_STATUS_OPTIONS.map((s) => (
-                  <DropdownMenuItem key={s} onClick={() => bulkUpdateStatus(s)} className="capitalize">
-                    <div className={`mr-2 h-2 w-2 rounded-full ${orderStatusTone(s)}`} />
-                    Mark as {orderStatusLabel(s)}
-                  </DropdownMenuItem>
-                ))}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => printShippingLabels(marked)}>
-                  <Printer className="mr-2 h-4 w-4" /> Print Labels
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => exportCsv(markedOrders)}>
-                  <Download className="mr-2 h-4 w-4" /> Export CSV
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem 
-                  onClick={bulkDeleteOrders}
-                  className="text-destructive focus:bg-destructive/10 focus:text-destructive"
-                >
-                  <Trash2 className="mr-2 h-4 w-4" /> Delete Marked
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-
-            </DropdownMenu>
+          <div className="flex flex-wrap items-center gap-2 rounded-md border border-primary/40 bg-primary/5 px-3 py-2">
+            <span className="mr-2 text-sm font-medium">{marked.length} marked</span>
             
             <button
               type="button"
-              className="inline-flex h-10 items-center gap-2 rounded-md border border-primary/40 bg-primary/10 px-3 text-sm text-primary hover:bg-primary/20"
+              className="inline-flex h-9 items-center gap-2 rounded-md border bg-background px-3 text-xs font-medium hover:bg-accent"
+              onClick={() => setStatusModal({ open: true, orderId: marked[0], currentStatus: orders.find(o => o.id === marked[0])?.status || "pending", isBulk: true })}
+            >
+              <Settings2 className="h-3.5 w-3.5" /> Change Status
+            </button>
+
+            <button
+              type="button"
+              className="inline-flex h-9 items-center gap-2 rounded-md border bg-background px-3 text-xs font-medium hover:bg-accent"
+              onClick={() => printShippingLabels(marked)}
+            >
+              <Printer className="h-3.5 w-3.5" /> Print Labels
+            </button>
+
+            <button
+              type="button"
+              className="inline-flex h-9 items-center gap-2 rounded-md border bg-background px-3 text-xs font-medium hover:bg-accent"
+              onClick={() => exportCsv(markedOrders)}
+            >
+              <Download className="h-3.5 w-3.5" /> Export CSV
+            </button>
+
+            <button
+              type="button"
+              className="inline-flex h-9 items-center gap-2 rounded-md border border-primary/40 bg-primary/10 px-3 text-xs font-medium text-primary hover:bg-primary/20"
               onClick={() => {
-                // TODO: Bulk send to courier logic
                 toast.info("Bulk courier booking coming soon");
               }}
             >
-              <Truck className="h-4 w-4" /> Send Marked to Courier
+              <Truck className="h-3.5 w-3.5" /> Send to Courier
+            </button>
+
+            <button
+              type="button"
+              className="inline-flex h-9 items-center gap-2 rounded-md border border-destructive/20 bg-destructive/10 px-3 text-xs font-medium text-destructive hover:bg-destructive/20"
+              onClick={bulkDeleteOrders}
+            >
+              <Trash2 className="h-3.5 w-3.5" /> Delete
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setMarked([])}
+              className="ml-auto text-xs text-muted-foreground hover:underline"
+            >
+              Clear
             </button>
           </div>
         )}
+
 
         <span className="ml-auto text-xs text-muted-foreground">
           {filtered.length} of {orders.length}
