@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Store } from "lucide-react";
+import { Loader2, Store, Mail } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
   head: () => ({
@@ -94,36 +94,89 @@ function Onboarding() {
     const info =
       status === "pending"
         ? {
-            title: "Pending verification",
-            text: "আপনার রেজিস্ট্রেশন সফল হয়েছে। সুপার অ্যাডমিন রিভিউ করে অ্যাপ্রুভ করলেই রিসেলার প্যানেল ওপেন হবে।",
+            title: "Approval pending",
+            text: "আপনার রেজিস্ট্রেশন সফল হয়েছে। সুপার অ্যাডমিন আপনার স্টোর চেক করে অনুমোদন দিলে আপনি রিসেলার প্যানেলে অ্যাক্সেস পাবেন।",
           }
         : status === "suspended"
           ? {
-              title: "Account suspended",
-              text: "আপনার রিসেলার অ্যাকাউন্ট আপাতত সাসপেন্ড করা আছে। সাপোর্টে যোগাযোগ করুন।",
+              title: "Account deactivated",
+              text: "আপনার রিসেলার অ্যাকাউন্ট বর্তমানে ডিঅ্যাক্টিভেট করা আছে। পুনরায় সক্রিয় করতে অ্যাডমিনের সাথে যোগাযোগ করুন।",
             }
           : {
               title: "Application rejected",
-              text: "আপনার আবেদন অনুমোদন করা হয়নি। বিস্তারিত জানতে সাপোর্টে যোগাযোগ করুন।",
+              text: "আপনার রিসেলার আবেদনটি এই মুহূর্তে অনুমোদন করা সম্ভব হয়নি। বিস্তারিত জানতে সাপোর্টে যোগাযোগ করুন।",
             };
+
     return (
-      <div className="grid min-h-screen place-items-center px-4">
-        <div className="surface-card max-w-md p-8 text-center">
-          <div className="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-full bg-warning/20 text-warning-foreground">
-            <Loader2 className="h-5 w-5 animate-spin" />
+      <div className="grid min-h-screen place-items-center px-4" style={{ background: "var(--gradient-hero)" }}>
+        <div className="w-full max-w-md">
+          <div className="surface-card p-8 text-center shadow-elegant">
+            <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-full bg-primary/10 text-primary">
+              {status === "pending" ? <Loader2 className="h-6 w-6 animate-spin" /> : <Store className="h-6 w-6 opacity-40" />}
+            </div>
+            <h1 className="text-2xl font-bold tracking-tight">{info.title}</h1>
+            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{info.text}</p>
+            
+            <div className="mt-8 grid grid-cols-2 gap-3">
+              <ContactButton variant="whatsapp" />
+              <ContactButton variant="email" />
+            </div>
+
+            <div className="mt-8 border-t pt-6">
+              <button
+                onClick={() => supabase.auth.signOut().then(() => nav({ to: "/login", replace: true }))}
+                className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Sign out from this account
+              </button>
+            </div>
           </div>
-          <h1 className="text-xl font-semibold">{info.title}</h1>
-          <p className="mt-2 text-sm text-muted-foreground">{info.text}</p>
-          <button
-            onClick={() => supabase.auth.signOut().then(() => nav({ to: "/login", replace: true }))}
-            className="mt-6 rounded-md border px-4 py-2 text-sm font-medium transition hover:bg-muted"
-          >
-            Sign out
-          </button>
         </div>
       </div>
     );
   }
+
+function ContactButton({ variant }: { variant: "whatsapp" | "email" }) {
+  const [contact, setContact] = useState<{ phone: string | null; email: string | null } | null>(null);
+
+  useEffect(() => {
+    supabase.from("global_settings").select("contact_phone, contact_email").eq("id", 1).maybeSingle()
+      .then(({ data }) => setContact({ phone: data?.contact_phone ?? null, email: data?.contact_email ?? null }));
+  }, []);
+
+  if (variant === "whatsapp") {
+    const phone = contact?.phone?.replace(/\D/g, "");
+    if (!phone) return null;
+    return (
+      <a
+        href={`https://wa.me/${phone}`}
+        target="_blank"
+        rel="noreferrer"
+        className="flex items-center justify-center gap-2 rounded-lg bg-[#25D366]/10 py-2.5 text-xs font-semibold text-[#25D366] transition hover:bg-[#25D366]/20"
+      >
+        <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current">
+          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
+        </svg>
+        WhatsApp
+      </a>
+    );
+  }
+
+  if (variant === "email") {
+    if (!contact?.email) return null;
+    return (
+      <a
+        href={`mailto:${contact.email}`}
+        className="flex items-center justify-center gap-2 rounded-lg bg-primary/10 py-2.5 text-xs font-semibold text-primary transition hover:bg-primary/20"
+      >
+        <Mail className="h-4 w-4" />
+        Email Support
+      </a>
+    );
+  }
+
+  return null;
+}
 
 
 

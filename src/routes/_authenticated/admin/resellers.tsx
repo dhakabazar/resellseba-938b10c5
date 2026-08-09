@@ -76,9 +76,9 @@ const FILTERS = [
 type Filter = (typeof FILTERS)[number];
 
 const FILTER_LABELS: Record<Filter, string> = {
-  pending: "Pending approval",
+  pending: "Approval pending",
   active: "Active",
-  suspended: "Suspended",
+  suspended: "Deactivated",
   rejected: "Rejected",
   email_unverified: "Email unverified",
   all: "All",
@@ -365,7 +365,7 @@ function ResellersPage() {
                       )}
                       {r.status === "active" && (
                         <DropdownMenuItem onClick={() => setStatus(r, "suspended")}>
-                          <Pause className="mr-2 h-4 w-4" /> Deactivate
+                          <ShieldOff className="mr-2 h-4 w-4" /> Deactivate access
                         </DropdownMenuItem>
                       )}
                       {(r.status === "suspended" || r.status === "rejected") && (
@@ -465,12 +465,12 @@ function StatusBadge({ status }: { status: Status }) {
   const map: Record<Status, string> = {
     active: "bg-success/15 text-success",
     pending: "bg-warning/20 text-warning-foreground",
-    suspended: "bg-muted text-muted-foreground",
+    suspended: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
     rejected: "bg-destructive/15 text-destructive",
   };
   return (
     <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium capitalize ${map[status]}`}>
-      {status}
+      {status === "suspended" ? "deactivated" : status}
     </span>
   );
 }
