@@ -136,7 +136,9 @@ function AdminOrdersPage() {
   const [orderItems, setOrderItems] = useState<OrderItemLite[]>([]);
   const [shipments, setShipments] = useState<any[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
+  const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
   const [tab, setTab] = useState<OrderTabKey>("confirmed");
   const [selected, setSelected] = useState<OrderRow | null>(null);
   const [open, setOpen] = useState(false);
@@ -173,7 +175,7 @@ function AdminOrdersPage() {
     const rows = (data ?? []) as OrderRow[];
     setOrders(rows);
     if (rows.length > 0) {
-      const [{ data: its }, { data: s }] = await Promise.all([
+      const [{ data: its }, { data: s }, { data: ev }] = await Promise.all([
         supabase
           .from("order_items")
           .select("order_id,product_id,product_name,quantity")
@@ -181,14 +183,21 @@ function AdminOrdersPage() {
         supabase
           .from("shipments")
           .select("order_id,provider,consignment_id")
+          .in("order_id", rows.map(r => r.id)),
+        supabase
+          .from("courier_events")
+          .select("order_id")
           .in("order_id", rows.map(r => r.id))
       ]);
       setOrderItems((its ?? []) as OrderItemLite[]);
       setShipments(s ?? []);
+      setEvents(ev ?? []);
     } else {
       setOrderItems([]);
       setShipments([]);
+      setEvents([]);
     }
+
     setResellerOptions(
       (rs ?? []).map((r: any) => ({ value: r.id, label: `${r.business_name} (/${r.code})` })),
     );
@@ -283,7 +292,66 @@ function AdminOrdersPage() {
     setLoading(false);
   };
 
+  const bulkDeleteOrders = async () => {
+    if (marked.length === 0) return;
+    
+    // Check for sensitive statuses/bookings
+    const sensitiveOrders = orders.filter(o => {
+      if (!marked.includes(o.id)) return false;
+      const isBooked = shipments.some(s => s.order_id === o.id && (s.consignment_id || s.tracking_id));
+      const hasWebhooks = events.some((e: any) => e.order_id === o.id);
+      const isAdvanced = ["to_courier", "delivered", "pending_return", "returned"].includes(o.status);
+      return isBooked || hasWebhooks || isAdvanced;
+    });
+
+
+    const msg = sensitiveOrders.length > 0 
+      ? `⚠️ WARNING: ${sensitiveOrders.length} of the selected orders have active courier bookings or advanced statuses. Deleting them might cause record mismatches. Are you sure you want to PERMANENTLY delete these ${marked.length} orders?`
+      : `Are you sure you want to delete ${marked.length} orders? This action cannot be undone.`;
+
+    if (!confirm(msg)) return;
+    
+    setLoading(true);
+    const { error } = await supabase
+      .from("orders")
+      .delete()
+      .in("id", marked);
+    
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success(`${marked.length} orders deleted successfully`);
+      setMarked([]);
+      await load();
+    }
+    setLoading(false);
+  };
+
+  const removeOrder = async (order: OrderRow) => {
+    const isBooked = shipments.some(s => s.order_id === order.id && (s.consignment_id || s.tracking_id));
+    const hasWebhooks = events.some((e: any) => e.order_id === order.id);
+    const isAdvanced = ["to_courier", "delivered", "pending_return", "returned"].includes(order.status);
+
+
+    const msg = (isBooked || hasWebhooks || isAdvanced)
+      ? `⚠️ HARD WARNING: This order has active courier data or advanced status (${order.status}). Deleting it may break tracking records. Delete anyway?`
+      : "Are you sure you want to delete this order?";
+
+    if (!confirm(msg)) return;
+    
+    setLoading(true);
+    const { error } = await supabase.from("orders").delete().eq("id", order.id);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Order deleted");
+      await load();
+    }
+    setLoading(false);
+  };
+
   const paged = usePaginated(filtered, page, filters.perPage);
+
 
 
 
@@ -367,7 +435,15 @@ function AdminOrdersPage() {
                 <DropdownMenuItem onClick={() => exportCsv(markedOrders)}>
                   <Download className="mr-2 h-4 w-4" /> Export CSV
                 </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  onClick={bulkDeleteOrders}
+                  className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" /> Delete Marked
+                </DropdownMenuItem>
               </DropdownMenuContent>
+
             </DropdownMenu>
             
             <button
@@ -608,7 +684,15 @@ function AdminOrdersPage() {
                         <DropdownMenuItem onClick={() => printShippingLabels([o.id], "3x4")}>
                           <Printer className="mr-2 h-4 w-4" /> Print Label (3x4)
                         </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem 
+                          onClick={() => removeOrder(o)}
+                          className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" /> Delete Order
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
+
                     </DropdownMenu>
                   </div>
                 </div>
