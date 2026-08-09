@@ -191,8 +191,8 @@ function OrdersPage() {
         .order("created_at", { ascending: false }),
       supabase
         .from("shipments")
-        .select("order_id,provider,consignment_id")
-        .in("order_id", orders.map(x => x.id)) // This will be empty on first load, better handle below
+        .select("order_id,provider,consignment_id,status,courier_status,last_event_at")
+        .in("order_id", rows.map(x => x.id))
     ]);
     const rows = (o ?? []) as OrderRow[];
     setOrders(rows);
@@ -207,7 +207,11 @@ function OrdersPage() {
           .in("order_id", rows.map((x) => x.id)),
         supabase
           .from("shipments")
-          .select("order_id,provider,consignment_id")
+          .select("order_id,provider,consignment_id,status,courier_status,last_event_at")
+          .in("order_id", rows.map(x => x.id)),
+        supabase
+          .from("courier_events")
+          .select("order_id,provider,courier_status,note,event_at")
           .in("order_id", rows.map(x => x.id))
       ]);
       setOrderItems((its ?? []) as OrderItemLite[]);
