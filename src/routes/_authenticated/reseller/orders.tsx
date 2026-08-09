@@ -573,7 +573,14 @@ function OrdersPage() {
         />
       )}
 
-      <OrderTabs tab={tab} onChange={setTab} count={tabCount} />
+      <OrderTabs 
+        tab={tab} 
+        onChange={setTab} 
+        count={(key) => {
+          const sts = ORDER_TABS.find((t) => t.key === key)?.statuses ?? [];
+          return sts.length === 0 ? orders.length : orders.filter((o) => (sts as string[]).includes(o.status)).length;
+        }} 
+      />
 
       {/* Removed stats cards per user request to match dashboard style (or just remove if duplicate) */}
 
