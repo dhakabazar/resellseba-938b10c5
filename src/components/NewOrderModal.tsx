@@ -201,9 +201,11 @@ export function NewOrderModal({
       >
         <div className="flex items-center justify-between gap-2 border-b px-4 py-3 sm:px-6 bg-muted/30">
           <div>
-            <h2 className="text-sm font-bold sm:text-lg">Create New Order</h2>
+            <h2 className="text-sm font-bold sm:text-lg">
+              {isAdmin ? "Create New Order (Admin)" : "Add New Order"}
+            </h2>
             <p className="text-[10px] text-muted-foreground uppercase tracking-tight">
-              {isAdmin ? "Super Admin Portal" : "Standard Order Placement"}
+              {isAdmin ? "Super Admin Portal" : "Reseller Order Placement"}
             </p>
           </div>
           <button type="button" onClick={onClose} className="rounded-full p-2 hover:bg-accent transition-colors">
@@ -356,7 +358,7 @@ export function NewOrderModal({
                         <input
                           value={query}
                           onChange={(e) => setQuery(e.target.value)}
-                          placeholder="Search product to add..."
+                          placeholder={isAdmin ? "Search product to add..." : "Search catalog to add..."}
                           className="w-full rounded-xl border bg-background px-9 py-2 text-xs focus:ring-2 focus:ring-primary/20 transition-all"
                         />
                       </div>
@@ -548,7 +550,7 @@ export function NewOrderModal({
                 >
                   {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : (
                     <>
-                      <span>Confirm and Place Order</span>
+                      <span>{isAdmin ? "Confirm and Place Order" : "Place Order & Send to Admin"}</span>
                       <Plus className="h-4 w-4 group-hover:rotate-90 transition-transform" />
                     </>
                   )}
