@@ -1,0 +1,9 @@
+ALTER TABLE public.reseller_settings DROP CONSTRAINT IF EXISTS reseller_settings_reseller_id_fkey, ADD CONSTRAINT reseller_settings_reseller_id_fkey FOREIGN KEY (reseller_id) REFERENCES public.resellers(id) ON DELETE CASCADE;
+ALTER TABLE public.reseller_listings DROP CONSTRAINT IF EXISTS reseller_listings_reseller_id_fkey, ADD CONSTRAINT reseller_listings_reseller_id_fkey FOREIGN KEY (reseller_id) REFERENCES public.resellers(id) ON DELETE CASCADE;
+ALTER TABLE public.reseller_domains DROP CONSTRAINT IF EXISTS reseller_domains_reseller_id_fkey, ADD CONSTRAINT reseller_domains_reseller_id_fkey FOREIGN KEY (reseller_id) REFERENCES public.resellers(id) ON DELETE CASCADE;
+ALTER TABLE public.marketing_configs DROP CONSTRAINT IF EXISTS marketing_configs_reseller_id_fkey, ADD CONSTRAINT marketing_configs_reseller_id_fkey FOREIGN KEY (reseller_id) REFERENCES public.resellers(id) ON DELETE CASCADE;
+ALTER TABLE public.payment_configs DROP CONSTRAINT IF EXISTS payment_configs_reseller_id_fkey, ADD CONSTRAINT payment_configs_reseller_id_fkey FOREIGN KEY (reseller_id) REFERENCES public.resellers(id) ON DELETE CASCADE;
+ALTER TABLE public.notification_configs DROP CONSTRAINT IF EXISTS notification_configs_reseller_id_fkey, ADD CONSTRAINT notification_configs_reseller_id_fkey FOREIGN KEY (reseller_id) REFERENCES public.resellers(id) ON DELETE CASCADE;
+ALTER TABLE public.payouts DROP CONSTRAINT IF EXISTS payouts_reseller_id_fkey, ADD CONSTRAINT payouts_reseller_id_fkey FOREIGN KEY (reseller_id) REFERENCES public.resellers(id) ON DELETE CASCADE;
+ALTER TABLE public.leader_commissions DROP CONSTRAINT IF EXISTS leader_commissions_reseller_id_fkey, ADD CONSTRAINT leader_commissions_reseller_id_fkey FOREIGN KEY (reseller_id) REFERENCES public.resellers(id) ON DELETE CASCADE;
+ALTER TABLE public.user_roles DROP CONSTRAINT IF EXISTS user_roles_user_id_fkey, ADD CONSTRAINT user_roles_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
