@@ -1495,6 +1495,7 @@ function OrderDrawer({
 
           </form>
         </div>
+      </div>
 
         <CourierTimeline events={events} />
       </div>
