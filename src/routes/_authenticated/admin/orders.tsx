@@ -852,9 +852,7 @@ function AdminOrdersPage() {
                       {orderStatusLabel(o.status)}
                     </span>
                   </div>
-                      {orderStatusLabel(o.status)}
-                    </span>
-                  </div>
+
 
                   <div className="flex justify-end">
                     <DropdownMenu>
