@@ -349,15 +349,16 @@ function AdminOrdersPage() {
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuItem onClick={() => bulkUpdateStatus("confirmed")}>
-                  <CheckCircle2 className="mr-2 h-4 w-4 text-success" /> Confirm Marked
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => bulkUpdateStatus("cancelled")}>
-                  <Ban className="mr-2 h-4 w-4 text-destructive" /> Cancel Marked
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => bulkUpdateStatus("on_hold")}>
-                  <Lock className="mr-2 h-4 w-4 text-amber-600" /> Hold Marked
-                </DropdownMenuItem>
+                <div className="px-2 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                  Bulk Status Update
+                </div>
+                {ORDER_STATUS_OPTIONS.map((s) => (
+                  <DropdownMenuItem key={s} onClick={() => bulkUpdateStatus(s)} className="capitalize">
+                    <div className={`mr-2 h-2 w-2 rounded-full ${orderStatusTone(s)}`} />
+                    Mark as {orderStatusLabel(s)}
+                  </DropdownMenuItem>
+                ))}
+                <DropdownMenu separator />
                 <DropdownMenuItem onClick={() => printShippingLabels(marked)}>
                   <Printer className="mr-2 h-4 w-4" /> Print Labels
                 </DropdownMenuItem>
@@ -586,6 +587,31 @@ function AdminOrdersPage() {
                         <DropdownMenuItem onClick={() => setSelected(o)}>
                           <Eye className="mr-2 h-4 w-4" /> View Details
                         </DropdownMenuItem>
+                        <DropdownMenu separator />
+                        <div className="px-2 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                          Update Status
+                        </div>
+                        {ORDER_STATUS_OPTIONS.map((s) => (
+                          <DropdownMenuItem
+                            key={s}
+                            onClick={async () => {
+                              const { error } = await supabase
+                                .from("orders")
+                                .update({ status: s as any })
+                                .eq("id", o.id);
+                              if (error) toast.error(error.message);
+                              else {
+                                toast.success(`Order ${o.order_number} marked as ${orderStatusLabel(s)}`);
+                                await load();
+                              }
+                            }}
+                            className="capitalize"
+                          >
+                            <div className={`mr-2 h-2 w-2 rounded-full ${orderStatusTone(s)}`} />
+                            {orderStatusLabel(s)}
+                          </DropdownMenuItem>
+                        ))}
+                        <DropdownMenu separator />
                         <DropdownMenuItem onClick={() => printShippingLabels([o.id], "3x3")}>
                           <Printer className="mr-2 h-4 w-4" /> Print Label (3x3)
                         </DropdownMenuItem>
@@ -815,12 +841,11 @@ function OrderDrawer({
 
         <div className="surface-card mb-4 space-y-3 p-4">
           <div className="text-sm font-medium">Status</div>
-          {courierLocked && (
+          {events.length > 0 && (
             <div className="flex items-start gap-2 rounded-md bg-amber-500/10 p-2 text-[11px] text-amber-700">
               <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
               <span>
-                Order status gulo sundor kore kore dao... super admin jekono order er status jekono tai poriborton korte parbe.. tobe weebhook theke event ese order status change hole ta super admin change korte parbe kintu worning dibe r onno kew parbe na
-
+                Warning: This order has courier webhook updates. Manual status changes may conflict with real-time tracking.
               </span>
             </div>
           )}
