@@ -672,8 +672,9 @@ function AdminOrdersPage() {
                         <div className="truncate text-[11px] text-muted-foreground italic">
                           Reseller: {o.resellers?.business_name || "Direct"}
                           <div className="flex items-center gap-1 mt-0.5">
-                             {resellers.find(r => r.id === o.reseller_id)?.phone && (
+                             {resellers.find(r => r.id === o.reseller_id)?.phone ? (
                                <>
+                                 <span className="tabular-nums">{resellers.find(r => r.id === o.reseller_id).phone}</span>
                                  <a href={`tel:${resellers.find(r => r.id === o.reseller_id).phone}`} className="text-primary hover:text-primary/80 transition-colors">
                                    <Phone className="h-2.5 w-2.5" />
                                  </a>
@@ -687,6 +688,8 @@ function AdminOrdersPage() {
                                    <Copy className="h-2.5 w-2.5" />
                                  </button>
                                </>
+                             ) : (
+                               <span className="opacity-50">No phone</span>
                              )}
                           </div>
                         </div>
@@ -771,20 +774,27 @@ function AdminOrdersPage() {
                   </div>
                   <div className="min-w-0">
                     <div className="font-medium truncate">{o.resellers?.business_name || "Direct"}</div>
-                    {o.resellers && resellers.find(r => r.id === o.reseller_id)?.phone && (
+                    {o.resellers && (
                       <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mt-0.5">
-                        <a href={`tel:${resellers.find(r => r.id === o.reseller_id).phone}`} className="text-primary hover:text-primary/80 transition-colors">
-                          <Phone className="h-2.5 w-2.5" />
-                        </a>
-                        <button 
-                          onClick={() => {
-                            navigator.clipboard.writeText(resellers.find(r => r.id === o.reseller_id).phone);
-                            toast.success("Reseller phone copied");
-                          }}
-                          className="text-muted-foreground hover:text-foreground transition-colors"
-                        >
-                          <Copy className="h-2.5 w-2.5" />
-                        </button>
+                        {resellers.find(r => r.id === o.reseller_id)?.phone ? (
+                          <>
+                            <span className="tabular-nums">{resellers.find(r => r.id === o.reseller_id).phone}</span>
+                            <a href={`tel:${resellers.find(r => r.id === o.reseller_id).phone}`} className="text-primary hover:text-primary/80 transition-colors">
+                              <Phone className="h-2.5 w-2.5" />
+                            </a>
+                            <button 
+                              onClick={() => {
+                                navigator.clipboard.writeText(resellers.find(r => r.id === o.reseller_id).phone);
+                                toast.success("Reseller phone copied");
+                              }}
+                              className="text-muted-foreground hover:text-foreground transition-colors"
+                            >
+                              <Copy className="h-2.5 w-2.5" />
+                            </button>
+                          </>
+                        ) : (
+                          <span className="opacity-50">No phone</span>
+                        )}
                       </div>
                     )}
                   </div>
