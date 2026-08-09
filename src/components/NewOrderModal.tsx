@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { productDeliveryCharge, deliveryLabel } from "@/lib/delivery";
+import { productDeliveryCharge, deliveryLabel, deliveryMode } from "@/lib/delivery";
 import { addressError, nameError, normalizePhone, phoneError, sanitizeName } from "@/lib/checkout-validate";
 import { Loader2, Plus, Minus, X, Trash2, Search } from "lucide-react";
 import { toast } from "sonner";
@@ -85,16 +85,29 @@ export function NewOrderModal({
     let saCost = 0;
     let shipping = 0;
     let shipFrom: string | null = null;
+    let isUniversalFree = true;
+    let isUniversalFlat = true;
+
     for (const { line, p, sellPrice } of picked) {
       subtotal += Number(sellPrice) * line.qty;
       saCost += (Number(p.reseller_price) + Number(p.packaging_cost)) * line.qty;
+      
+      const mode = deliveryMode(p);
+      if (mode !== "free") isUniversalFree = false;
+      if (mode !== "flat") isUniversalFlat = false;
+
       const dc = productDeliveryCharge(p, area);
       if (dc > shipping) {
         shipping = dc;
         shipFrom = p.name;
       }
     }
-    return { subtotal, shipping, total: subtotal + shipping, saCost, profit: subtotal - saCost, shipFrom };
+    
+    // Determine if we should show area selection
+    // If all items are "free", or all items are "flat" with the same charge, we don't need area picker
+    const showAreaPicker = picked.length > 0 && !isUniversalFree && !isUniversalFlat;
+
+    return { subtotal, shipping, total: subtotal + shipping, saCost, profit: subtotal - saCost, shipFrom, showAreaPicker };
   }, [picked, area]);
 
   const errors = {
@@ -454,7 +467,7 @@ export function NewOrderModal({
                     </div>
 
                     {/* Delivery Area Picker (Inside Cart Section) */}
-                    {lines.length > 0 && (
+                    {totals.showAreaPicker && (
                       <div className="p-4 border-t bg-muted/10 animate-in fade-in slide-in-from-bottom-2">
                         <label className="mb-2.5 block text-[10px] font-black text-muted-foreground/80 uppercase tracking-widest">Select Delivery Destination</label>
                         <div className="grid grid-cols-2 gap-3">
@@ -468,14 +481,14 @@ export function NewOrderModal({
                               key={v}
                               type="button"
                               onClick={() => setArea(v)}
-                              className={`flex flex-col items-center justify-center rounded-2xl border-2 py-3 px-4 transition-all duration-300 ${
+                              className={`flex items-center justify-between rounded-2xl border-2 py-3 px-4 transition-all duration-300 ${
                                 area === v 
                                   ? "bg-primary border-primary text-primary-foreground shadow-lg shadow-primary/20 scale-[1.02]" 
                                   : "bg-background border-muted hover:border-primary/30 text-muted-foreground"
                               }`}
                             >
                               <span className="text-[11px] font-black uppercase tracking-tight">{label}</span>
-                              <span className={`mt-0.5 text-[10px] font-bold ${area === v ? 'text-primary-foreground/90' : 'text-primary'}`}>
+                              <span className={`text-[10px] font-bold ${area === v ? 'text-primary-foreground/90' : 'text-primary'}`}>
                                 ৳{Math.max(...picked.map(({ p }) => productDeliveryCharge(p, v)))}
                               </span>
                             </button>
