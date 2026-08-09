@@ -50,7 +50,7 @@ type OrderRow = {
   created_at: string;
   reseller_note: string | null;
   admin_note: string | null;
-  resellers: { business_name: string; code: string; phone: string | null } | null;
+  resellers: { business_name: string; code: string; contact_phone: string | null } | null;
 };
 
 type OrderItemLite = { order_id: string; product_id: string | null; product_name: string; quantity: number };
