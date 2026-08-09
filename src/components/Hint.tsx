@@ -53,7 +53,14 @@ export function Hint({
       </button>
       {open && (
         <span
-          className={`pointer-events-none absolute z-[9999] w-max max-w-[200px] break-words rounded-lg border border-white/20 bg-black/80 backdrop-blur-xl px-3 py-2 text-[11px] font-medium leading-tight text-white shadow-2xl ring-1 ring-white/10 ${pos}`}
+          className={`fixed z-[99999] w-max max-w-[200px] break-words rounded-lg border border-white/20 bg-black/90 backdrop-blur-xl px-3 py-2 text-[11px] font-medium leading-tight text-white shadow-2xl ring-1 ring-white/10 transition-opacity duration-200 ${pos}`}
+          style={{
+            transform: side === 'top' ? 'translate(-50%, -100%)' : 
+                       side === 'bottom' ? 'translate(-50%, 0)' : 
+                       side === 'left' ? 'translate(-100%, -50%)' : 'translate(0, -50%)',
+            left: side === 'left' ? 'auto' : '50%',
+            top: side === 'bottom' ? '100%' : 'auto',
+          }}
         >
           {children}
         </span>
