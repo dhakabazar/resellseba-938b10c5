@@ -79,9 +79,10 @@ function initAuth() {
 
   supabase.auth.onAuthStateChange((event, session) => {
     if (event === "TOKEN_REFRESHED") {
-      publish({ ...authState, session, user: session?.user ?? null });
+      publish({ ...authState, session });
       return;
     }
+
     applySession(session);
   });
 }
