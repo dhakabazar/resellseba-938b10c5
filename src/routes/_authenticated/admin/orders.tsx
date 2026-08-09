@@ -437,36 +437,36 @@ function AdminOrdersPage() {
                 <div className="grid grid-cols-1 gap-1.5">
                   {ORDER_STATUS_OPTIONS.map((s) => (
                     <button
-                      key={s.value}
+                      key={s}
                       disabled={loading}
                       onClick={async () => {
                         if (statusModal.isBulk) {
-                          await bulkUpdateStatus(s.value);
+                          await bulkUpdateStatus(s);
                           setStatusModal(null);
                           return;
                         }
                         setLoading(true);
                         const { error } = await supabase
                           .from("orders")
-                          .update({ status: s.value as any })
+                          .update({ status: s as any })
                           .eq("id", statusModal.orderId);
                         
                         if (error) {
                           toast.error(error.message);
                         } else {
-                          toast.success(`Status updated to ${s.label}`);
+                          toast.success(`Status updated to ${orderStatusLabel(s)}`);
                           setStatusModal(null);
                           await load();
                         }
                         setLoading(false);
                       }}
                       className={`group flex items-center gap-3 rounded-lg border px-3 py-2.5 text-left text-xs transition-all hover:bg-accent disabled:opacity-50 ${
-                        statusModal.currentStatus === s.value ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "border-transparent"
+                        statusModal.currentStatus === s ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "border-transparent"
                       }`}
                     >
-                      <div className={`h-2.5 w-2.5 rounded-full ring-2 ring-offset-2 ring-offset-background ${orderStatusTone(s.value).split(' ')[0]} ${statusModal.currentStatus === s.value ? "ring-primary/40" : "ring-transparent group-hover:ring-accent-foreground/10"}`} />
-                      <span className={`flex-1 font-medium capitalize ${statusModal.currentStatus === s.value ? "text-primary" : "text-foreground/80"}`}>{s.label}</span>
-                      {statusModal.currentStatus === s.value && (
+                      <div className={`h-2.5 w-2.5 rounded-full ring-2 ring-offset-2 ring-offset-background ${orderStatusTone(s).split(' ')[0]} ${statusModal.currentStatus === s ? "ring-primary/40" : "ring-transparent group-hover:ring-accent-foreground/10"}`} />
+                      <span className={`flex-1 font-medium capitalize ${statusModal.currentStatus === s ? "text-primary" : "text-foreground/80"}`}>{orderStatusLabel(s)}</span>
+                      {statusModal.currentStatus === s && (
                         <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
                       )}
                     </button>
