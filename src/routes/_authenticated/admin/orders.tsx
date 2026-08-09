@@ -256,7 +256,7 @@ function AdminOrdersPage() {
         
         {loading ? <div className="py-12 text-center"><Loader2 className="mx-auto h-6 w-6 animate-spin" /></div> : (
           <div className="surface-card overflow-hidden">
-            <div className="hidden grid-cols-[40px_minmax(80px,1fr)_minmax(140px,1.2fr)_minmax(140px,1.2fr)_minmax(120px,1fr)_80px_100px_60px] gap-2 border-b bg-muted/40 px-4 py-3 text-xs font-medium text-muted-foreground md:grid">
+            <div className="hidden grid-cols-[40px_minmax(70px,0.8fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(120px,1fr)_80px_100px_60px] gap-1 border-b bg-muted/40 px-4 py-3 text-xs font-medium text-muted-foreground md:grid">
                <div className="flex justify-center">
                  <input
                    type="checkbox"
@@ -269,7 +269,7 @@ function AdminOrdersPage() {
             </div>
             {paged.map((o) => (
               <div key={o.id} className="border-b">
-                <div className="hidden grid-cols-[40px_minmax(80px,1fr)_minmax(140px,1.2fr)_minmax(140px,1.2fr)_minmax(120px,1fr)_80px_100px_60px] items-center gap-2 px-4 py-3 text-sm md:grid">
+                <div className="hidden grid-cols-[40px_minmax(70px,0.8fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(120px,1fr)_80px_100px_60px] items-center gap-1 px-4 py-3 text-sm md:grid">
                   <div className="flex flex-col items-center gap-1.5">
                     <input
                       type="checkbox"
