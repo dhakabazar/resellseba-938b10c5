@@ -14,6 +14,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { NewOrderModal } from "@/components/NewOrderModal";
@@ -358,7 +359,7 @@ function AdminOrdersPage() {
                     Mark as {orderStatusLabel(s)}
                   </DropdownMenuItem>
                 ))}
-                <DropdownMenu separator />
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => printShippingLabels(marked)}>
                   <Printer className="mr-2 h-4 w-4" /> Print Labels
                 </DropdownMenuItem>
@@ -587,7 +588,7 @@ function AdminOrdersPage() {
                         <DropdownMenuItem onClick={() => setSelected(o)}>
                           <Eye className="mr-2 h-4 w-4" /> View Details
                         </DropdownMenuItem>
-                        <DropdownMenu separator />
+                        <DropdownMenuSeparator />
                         <div className="px-2 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                           Update Status
                         </div>
@@ -611,7 +612,7 @@ function AdminOrdersPage() {
                             {orderStatusLabel(s)}
                           </DropdownMenuItem>
                         ))}
-                        <DropdownMenu separator />
+                        <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => printShippingLabels([o.id], "3x3")}>
                           <Printer className="mr-2 h-4 w-4" /> Print Label (3x3)
                         </DropdownMenuItem>
