@@ -808,7 +808,7 @@ function OrdersPage() {
                 </div>
 
                 {/* Desktop row */}
-                <div className="hidden grid-cols-[40px_minmax(120px,1fr)_minmax(180px,1.5fr)_minmax(150px,1.2fr)_100px_100px_120px_60px] items-center gap-3 px-4 py-3 text-sm md:grid">
+                <div className="hidden grid-cols-[40px_minmax(100px,1fr)_minmax(180px,2fr)_minmax(150px,1.5fr)_80px_100px_120px_60px] items-center gap-3 px-4 py-3 text-sm md:grid">
                   <div className="flex flex-col items-center gap-1.5">
                     <input
                       type="checkbox"
