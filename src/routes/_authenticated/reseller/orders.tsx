@@ -779,12 +779,28 @@ function OrdersPage() {
                   </div>
                   </div>
                   <div className="min-w-0">
-                    <div className="truncate">{o.customer_name}</div>
-                    <div className="text-xs text-muted-foreground">{o.customer_phone}</div>
-                    <div className="truncate text-xs text-muted-foreground">
+                    <div className="text-xs text-muted-foreground">
+                      <div className="font-medium">{o.customer_name}</div>
+                      <div>{o.customer_phone}</div>
+                      {shipments.some(s => s.order_id === o.id) && (
+                        <div className="mt-0.5 flex flex-wrap gap-1">
+                          {shipments.filter(s => s.order_id === o.id).map(s => (
+                            <div key={s.id} className="inline-flex items-center gap-1 rounded bg-muted/50 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground ring-1 ring-inset ring-muted-foreground/10">
+                              <Truck className="h-2.5 w-2.5" />
+                              <span className="capitalize">{s.provider}</span>
+                              {s.consignment_id && (
+                                <span className="opacity-70">({s.consignment_id})</span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <div className="truncate text-[11px] text-muted-foreground italic">
                       {[o.area, o.city].filter(Boolean).join(", ")}
                     </div>
                   </div>
+
                   <div className="min-w-0">
                     <div className="truncate text-xs">{itemText}</div>
                     <div className="text-xs text-muted-foreground">
