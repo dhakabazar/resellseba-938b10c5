@@ -319,16 +319,20 @@ function AdminOrdersPage() {
                     </div>
                   </div>
                   <div className="text-[11px] text-muted-foreground">
-                     {shipments.filter(s => s.order_id === o.id).map(s => (
-                       <div key={s.id} className="truncate">
-                         {s.provider} {s.consignment_id ? `#${s.consignment_id}` : ""}
-                         {s.consignment_id && (
-                           <button onClick={() => { navigator.clipboard.writeText(s.consignment_id); toast.success("Booking ID copied"); }} className="ml-1 hover:text-foreground inline-block align-middle">
-                             <Copy className="h-2.5 w-2.5" />
-                           </button>
-                         )}
-                       </div>
-                     ))}
+                     {shipments.filter(s => s.order_id === o.id).length > 0 ? (
+                       shipments.filter(s => s.order_id === o.id).map(s => (
+                         <div key={s.id} className="truncate">
+                           {s.provider} {s.consignment_id ? `#${s.consignment_id}` : ""}
+                           {s.consignment_id && (
+                             <button onClick={() => { navigator.clipboard.writeText(s.consignment_id); toast.success("Booking ID copied"); }} className="ml-1 hover:text-foreground inline-block align-middle">
+                               <Copy className="h-2.5 w-2.5" />
+                             </button>
+                           )}
+                         </div>
+                       ))
+                     ) : (
+                       <span className="text-muted-foreground/60 italic">No courier booking</span>
+                     )}
                   </div>
                   <div className="font-semibold">৳{Number(o.total).toFixed(0)}</div>
                   <div><span className={`px-2 py-0.5 rounded-full text-[11px] ${orderStatusTone(o.status)}`}>{orderStatusLabel(o.status)}</span></div>
