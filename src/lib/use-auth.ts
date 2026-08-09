@@ -38,14 +38,29 @@ async function loadRoles(userId: string): Promise<Role[]> {
 }
 
 function applySession(session: Session | null) {
-  const version = ++authVersion;
-
   if (!session?.user) {
+    authVersion++;
     publish({ session: null, user: null, roles: [], loading: false });
     return;
   }
 
-  publish({ session, user: session.user, roles: authState.roles, loading: true });
+  // Auth can emit INITIAL_SESSION or SIGNED_IN again when a background tab
+  // becomes active and the persisted session is recovered. The user has not
+  // changed in that case, so putting auth back into a loading state would
+  // temporarily unmount the protected layout and destroy every open form or
+  // modal. Refresh the session object without disturbing the mounted panel.
+  if (authState.user?.id === session.user.id) {
+    publish({
+      ...authState,
+      session,
+      user: session.user,
+    });
+    return;
+  }
+
+  const version = ++authVersion;
+
+  publish({ session, user: session.user, roles: [], loading: true });
 
   void loadRoles(session.user.id).then((roles) => {
     if (version !== authVersion) return;
