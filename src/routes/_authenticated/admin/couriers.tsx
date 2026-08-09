@@ -55,7 +55,7 @@ function CouriersPage() {
     if (rows.length === 0) {
       load();
     }
-  }, []);
+  }, [rows.length]);
 
   async function load() {
     const { data } = await supabase.from("courier_configs").select("*").order("display_name");
