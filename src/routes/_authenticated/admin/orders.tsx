@@ -162,6 +162,14 @@ function AdminOrdersPage() {
             {paged.map((o) => (
               <div key={o.id} className="border-b">
                 <div className="hidden grid-cols-[40px_minmax(120px,1.2fr)_minmax(180px,1.5fr)_minmax(180px,1.5fr)_minmax(150px,1.2fr)_100px_120px_60px] items-center gap-4 px-4 py-3 text-sm md:grid">
+                  <div className="flex justify-center">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 accent-[hsl(var(--primary))]"
+                      checked={marked.includes(o.id)}
+                      onChange={(e) => setMarked(prev => e.target.checked ? [...prev, o.id] : prev.filter(x => x !== o.id))}
+                    />
+                  </div>
                   <div className="min-w-0 flex items-center gap-2">
                     <button
                       onClick={() => setExpandedOrders(prev => prev.includes(o.id) ? prev.filter(id => id !== o.id) : [...prev, o.id])}
@@ -176,23 +184,52 @@ function AdminOrdersPage() {
                       </div>
                     </div>
                   </div>
-                  <div>
-                     <div className="font-medium">{o.customer_name}</div>
-                     <div className="text-[11px] text-muted-foreground">{o.customer_phone}</div>
+                  <div className="min-w-0">
+                     <div className="font-medium truncate">{o.customer_name}</div>
+                     <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                       {o.customer_phone}
+                       <a href={`tel:${o.customer_phone}`} className="text-primary hover:text-primary/80">
+                         <Phone className="h-3 w-3" />
+                       </a>
+                       <button onClick={() => { navigator.clipboard.writeText(o.customer_phone); toast.success("Copied"); }} className="hover:text-foreground">
+                         <Copy className="h-3 w-3" />
+                       </button>
+                     </div>
                   </div>
-                  <div>
-                    <div className="font-medium">{o.resellers?.business_name || "Direct"}</div>
-                    <div className="text-[11px] text-muted-foreground">{o.resellers?.contact_phone || ""}</div>
+                  <div className="min-w-0">
+                    <div className="font-medium truncate">{o.resellers?.business_name || "Direct"}</div>
+                    <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                      {o.resellers?.contact_phone || "—"}
+                      {o.resellers?.contact_phone && (
+                        <>
+                          <a href={`tel:${o.resellers.contact_phone}`} className="text-primary hover:text-primary/80">
+                            <Phone className="h-3 w-3" />
+                          </a>
+                          <button onClick={() => { navigator.clipboard.writeText(o.resellers?.contact_phone || ""); toast.success("Copied"); }} className="hover:text-foreground">
+                            <Copy className="h-3 w-3" />
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </div>
-                  <div className="text-[11px]">
-                     {shipments.filter(s => s.order_id === o.id).map(s => <div key={s.id}>{s.provider} (#{s.consignment_id})</div>)}
+                  <div className="text-[11px] text-muted-foreground">
+                     {shipments.filter(s => s.order_id === o.id).map(s => (
+                       <div key={s.id} className="truncate">
+                         {s.provider} {s.consignment_id ? `#${s.consignment_id}` : ""}
+                         {s.consignment_id && (
+                           <button onClick={() => { navigator.clipboard.writeText(s.consignment_id); toast.success("Booking ID copied"); }} className="ml-1 hover:text-foreground inline-block align-middle">
+                             <Copy className="h-2.5 w-2.5" />
+                           </button>
+                         )}
+                       </div>
+                     ))}
                   </div>
                   <div className="font-semibold">৳{Number(o.total).toFixed(0)}</div>
                   <div><span className={`px-2 py-0.5 rounded-full text-[11px] ${orderStatusTone(o.status)}`}>{orderStatusLabel(o.status)}</span></div>
                   <div className="flex justify-end">
                      <DropdownMenu>
                        <DropdownMenuTrigger><MoreVertical className="h-4 w-4" /></DropdownMenuTrigger>
-                       <DropdownMenuContent>
+                       <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => setSelected(o)}><Eye className="mr-2 h-4 w-4"/>Details</DropdownMenuItem>
                           <DropdownMenuItem onClick={() => setStatusModal({ open: true, orderId: o.id, currentStatus: o.status })}><Settings2 className="mr-2 h-4 w-4"/>Status</DropdownMenuItem>
                        </DropdownMenuContent>
