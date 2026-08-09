@@ -270,26 +270,24 @@ function AdminOrdersPage() {
             {paged.map((o) => (
               <div key={o.id} className="border-b">
                 <div className="hidden grid-cols-[40px_minmax(120px,1.2fr)_minmax(180px,1.5fr)_minmax(180px,1.5fr)_minmax(150px,1.2fr)_100px_120px_60px] items-center gap-4 px-4 py-3 text-sm md:grid">
-                  <div className="flex justify-center">
+                  <div className="flex flex-col items-center gap-1.5">
                     <input
                       type="checkbox"
                       className="h-4 w-4 accent-[hsl(var(--primary))]"
                       checked={marked.includes(o.id)}
                       onChange={(e) => setMarked(prev => e.target.checked ? [...prev, o.id] : prev.filter(x => x !== o.id))}
                     />
-                  </div>
-                  <div className="min-w-0 flex items-center gap-2">
                     <button
                       onClick={() => setExpandedOrders(prev => prev.includes(o.id) ? prev.filter(id => id !== o.id) : [...prev, o.id])}
                       className="rounded-full p-1 hover:bg-muted transition-colors shrink-0"
                     >
                       <ChevronDown className={`h-4 w-4 transition-transform ${expandedOrders.includes(o.id) ? "rotate-180" : ""}`} />
                     </button>
-                    <div className="min-w-0">
-                      <div className="font-medium truncate">{o.order_number}</div>
-                      <div className="text-[11px] text-muted-foreground">
-                        {new Date(o.created_at).toLocaleDateString()}
-                      </div>
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-medium truncate">{o.order_number}</div>
+                    <div className="text-[11px] text-muted-foreground">
+                      {new Date(o.created_at).toLocaleDateString()}
                     </div>
                   </div>
                   <div className="min-w-0">
