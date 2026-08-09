@@ -722,6 +722,27 @@ function AdminOrdersPage() {
                           <Settings2 className="mr-2 h-4 w-4" /> Change Status
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={async () => {
+                          const isBooked = shipments.some(s => s.order_id === o.id && (s.consignment_id || s.tracking_id));
+                          if (isBooked) {
+                            toast.error("Already booked in courier");
+                            return;
+                          }
+                          // Default to Steadfast for quick booking from menu
+                          setBusy(true);
+                          try {
+                            const r = await bookAuto({ data: { orderId: o.id, deliveryType: 0 } });
+                            toast.success(`Booked Steadfast · ${r.trackingId}`);
+                            load();
+                          } catch (e) {
+                            toast.error(e instanceof Error ? e.message : "Booking failed");
+                          } finally {
+                            setBusy(false);
+                          }
+                        }}>
+                          <Truck className="mr-2 h-4 w-4" /> Send to Steadfast
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => printShippingLabels([o.id], "3x3")}>
                           <Printer className="mr-2 h-4 w-4" /> Print Label (3x3)
                         </DropdownMenuItem>
