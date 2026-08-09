@@ -710,6 +710,7 @@ function OrdersPage() {
                         </div>
                       </div>
 
+
                       <div className="mt-2 truncate text-xs text-muted-foreground">
                         {itemText}
                         {qty > 0 && <span className="ml-1">({qty} pcs)</span>}
