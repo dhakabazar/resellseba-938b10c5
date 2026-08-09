@@ -231,7 +231,7 @@ function OrdersPage() {
   }
   useEffect(() => {
     load();
-  }, [user]);
+  }, [user, tab]);
 
   const itemsByOrder = useMemo(() => {
     const m = new Map<string, OrderItemLite[]>();

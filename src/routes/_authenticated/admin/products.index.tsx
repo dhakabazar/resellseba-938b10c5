@@ -69,7 +69,7 @@ function ProductsPage() {
     if (items.length === 0) {
       load();
     }
-  }, [items.length]);
+  }, []);
 
   useEffect(() => {
     setPage(1);
