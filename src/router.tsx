@@ -21,8 +21,12 @@ export const getRouter = () => {
     defaultPreload: "intent",
     defaultPreloadStaleTime: 0,
     defaultViewTransition: true,
-    defaultOnFocus: () => {}, // Disable internal router refetch on focus
   });
+
+  // TanStack Router v1 has an internal onFocus handler that re-evaluates beforeLoad.
+  // We disable it here to prevent re-runs when switching browser tabs.
+  // @ts-ignore
+  router.onFocus = () => {};
 
   return router;
 };

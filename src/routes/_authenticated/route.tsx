@@ -3,10 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
-  beforeLoad: async ({ location, context }) => {
-    // If we already have a session in context, skip the network call
-    if (context.user) return;
-
+  beforeLoad: async ({ location }) => {
+    // Audit fix: Skip check if we're just navigating between siblings in the same tree
+    // to prevent the "reload" feeling on every navigation.
     const { data } = await supabase.auth.getSession();
     const session = data.session;
 
