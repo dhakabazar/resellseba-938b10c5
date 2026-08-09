@@ -50,8 +50,12 @@ function CouriersPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    load();
-  }, []);
+    // Audit fix: only load if data is empty to prevent resetting unsaved form inputs 
+    // when switching tabs or refocusing, even with global refetch disabled.
+    if (rows.length === 0) {
+      load();
+    }
+  }, [rows.length]);
 
   async function load() {
     const { data } = await supabase.from("courier_configs").select("*").order("display_name");
