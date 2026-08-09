@@ -808,6 +808,77 @@ function OrdersPage() {
                 </div>
 
                 {/* Desktop row */}
+                <div className="hidden grid-cols-[40px_minmax(100px,1fr)_minmax(180px,2fr)_minmax(150px,1.5fr)_80px_100px_120px_60px] items-center gap-3 px-4 py-3 text-sm md:grid">
+                                toast.success("Phone number copied");
+                              }}
+                              className="text-muted-foreground hover:text-foreground transition-colors"
+                            >
+                              <Copy className="h-3 w-3" />
+                            </button>
+                          </div>
+                        </div>
+                        {shipments.some(s => s.order_id === o.id) && (
+                          <div className="flex flex-wrap gap-1">
+                            {shipments.filter(s => s.order_id === o.id).map(s => (
+                              <div key={s.id} className="inline-flex items-center gap-1 rounded bg-muted/50 px-1.5 py-0.5 text-[9px] font-medium text-muted-foreground ring-1 ring-inset ring-muted-foreground/10">
+                                <Truck className="h-2.5 w-2.5" />
+                                <span className="capitalize">{s.provider}</span>
+                                {s.consignment_id && (
+                                  <>
+                                    <span className="opacity-70">({s.consignment_id})</span>
+                                    <button 
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        navigator.clipboard.writeText(s.consignment_id || "");
+                                        toast.success("Booking ID copied");
+                                      }}
+                                      className="ml-0.5 opacity-50 hover:opacity-100"
+                                    >
+                                      <Copy className="h-2 w-2" />
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        <div className="truncate text-muted-foreground">
+                          {[o.area, o.city].filter(Boolean).join(", ") || "—"}
+                        </div>
+                      </div>
+
+
+                      <div className="mt-2 truncate text-xs text-muted-foreground">
+                        {itemText}
+                        {qty > 0 && <span className="ml-1">({qty} pcs)</span>}
+                      </div>
+
+                      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+                        <span className="font-semibold">৳{Number(o.total).toFixed(0)}</span>
+                        <span className="text-muted-foreground">
+                          Delivery ৳{Number(o.shipping_cost).toFixed(0)}
+                        </span>
+                        <span className="font-medium text-success">
+                          Profit ৳{Number(o.reseller_profit).toFixed(0)}
+                        </span>
+                        <span className="rounded border px-1.5 py-0.5 uppercase text-muted-foreground">
+                          {o.payment_method}
+                        </span>
+                        <span
+                          className={`rounded px-1.5 py-0.5 ${o.status === "confirmed" && o.forwarded_to_admin ? "bg-success/10 text-success" : "hidden"}`}
+                        >
+                          {o.forwarded_to_admin ? "Sent to admin" : ""}
+                        </span>
+
+                      </div>
+
+                      <div className="mt-3 flex flex-wrap items-center gap-2">{actions}</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Desktop row */}
                 <div className="hidden grid-cols-[40px_minmax(120px,1fr)_minmax(180px,1.5fr)_minmax(150px,1.2fr)_100px_100px_120px_60px] items-center gap-3 px-4 py-3 text-sm md:grid">
                   <div className="flex flex-col items-center gap-1.5">
                     <input
