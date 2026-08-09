@@ -636,16 +636,10 @@ function OrdersPage() {
                         </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-44">
-                        <DropdownMenuItem onClick={() => {
-                          setExpandedOrders(prev => prev.includes(o.id) ? prev.filter(id => id !== o.id) : [...prev, o.id]);
-                        }}>
-                          {expandedOrders.includes(o.id) ? <ChevronDown className="mr-2 h-4 w-4 rotate-180" /> : <ChevronDown className="mr-2 h-4 w-4" />}
-                          {expandedOrders.includes(o.id) ? "Collapse Details" : "Show Products"}
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => setSelected(o)}>
                           <Eye className="mr-2 h-4 w-4" /> View Details
                         </DropdownMenuItem>
+
                         {(() => {
                           const isBooked = shipments.some(s => s.order_id === o.id && (s.consignment_id || s.tracking_id));
                           if (!isBooked) {
@@ -820,12 +814,21 @@ function OrdersPage() {
                       onChange={(e) => mark(e.target.checked)}
                     />
                   </div>
-                  <div className="min-w-0">
-                    <div className="font-medium truncate">{o.order_number}</div>
-                    <div className="text-[11px] text-muted-foreground">
-                      {new Date(o.created_at).toLocaleDateString()}
+                  <div className="min-w-0 flex items-center gap-2">
+                    <button
+                      onClick={() => setExpandedOrders(prev => prev.includes(o.id) ? prev.filter(id => id !== o.id) : [...prev, o.id])}
+                      className="rounded-full p-1 hover:bg-muted transition-colors shrink-0"
+                    >
+                      <ChevronDown className={`h-4 w-4 transition-transform ${expandedOrders.includes(o.id) ? "rotate-180" : ""}`} />
+                    </button>
+                    <div className="min-w-0">
+                      <div className="font-medium truncate">{o.order_number}</div>
+                      <div className="text-[11px] text-muted-foreground">
+                        {new Date(o.created_at).toLocaleDateString()}
+                      </div>
                     </div>
                   </div>
+
                   <div className="min-w-0 text-xs text-muted-foreground">
                     <div className="font-medium text-foreground truncate">{o.customer_name}</div>
                     <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
