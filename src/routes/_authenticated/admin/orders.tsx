@@ -169,7 +169,7 @@ function AdminOrdersPage() {
                   </div>
                   <div>
                     <div className="font-medium">{o.resellers?.business_name || "Direct"}</div>
-                    <div className="text-[11px] text-muted-foreground">{o.resellers?.phone || ""}</div>
+                    <div className="text-[11px] text-muted-foreground">{o.resellers?.contact_phone || ""}</div>
                   </div>
                   <div className="text-[11px]">
                      {shipments.filter(s => s.order_id === o.id).map(s => <div key={s.id}>{s.provider} (#{s.consignment_id})</div>)}
