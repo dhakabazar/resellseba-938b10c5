@@ -149,7 +149,15 @@ function AdminOrdersPage() {
         {loading ? <div className="py-12 text-center"><Loader2 className="mx-auto h-6 w-6 animate-spin" /></div> : (
           <div className="surface-card overflow-hidden">
             <div className="hidden grid-cols-[40px_minmax(120px,1.2fr)_minmax(180px,1.5fr)_minmax(180px,1.5fr)_minmax(150px,1.2fr)_100px_120px_60px] gap-4 border-b bg-muted/40 px-4 py-3 text-xs font-medium text-muted-foreground md:grid">
-               <div /> <div>Order</div> <div>Customer</div> <div>Reseller</div> <div>Courier</div> <div>Total</div> <div>Status</div> <div>Actions</div>
+               <div className="flex justify-center">
+                 <input
+                   type="checkbox"
+                   className="h-4 w-4 accent-[hsl(var(--primary))]"
+                   checked={marked.length > 0 && marked.length === paged.length}
+                   onChange={(e) => setMarked(e.target.checked ? paged.map(x => x.id) : [])}
+                 />
+               </div>
+               <div>Order</div> <div>Customer</div> <div>Reseller</div> <div>Courier</div> <div>Total</div> <div>Status</div> <div className="text-right">Actions</div>
             </div>
             {paged.map((o) => (
               <div key={o.id} className="border-b">
