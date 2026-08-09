@@ -91,16 +91,37 @@ export function Hint({
         <HelpCircle className="h-3.5 w-3.5" />
       </button>
       {open && typeof document !== 'undefined' && createPortal(
-        <span
-          className="pointer-events-none fixed z-[99999] w-max max-w-[200px] break-words rounded-lg border border-white/20 bg-black/90 backdrop-blur-xl px-3 py-2 text-[11px] font-medium leading-tight text-white shadow-2xl ring-1 ring-white/10"
+        <div
+          className="pointer-events-none fixed z-[99999] px-3 py-2"
           style={{
             top: coords.top - window.scrollY,
             left: coords.left - window.scrollX,
             transform: translate,
           }}
         >
-          {children}
-        </span>,
+          <div
+            className="w-max max-w-[200px] break-words rounded-lg border border-white/20 bg-black/90 backdrop-blur-xl px-3 py-2 text-[11px] font-medium leading-tight text-white shadow-2xl ring-1 ring-white/10"
+            ref={(el) => {
+              if (el) {
+                const rect = el.getBoundingClientRect();
+                const padding = 12;
+                let offset = 0;
+                
+                if (rect.left < padding) {
+                  offset = padding - rect.left;
+                } else if (rect.right > window.innerWidth - padding) {
+                  offset = window.innerWidth - padding - rect.right;
+                }
+                
+                if (offset !== 0) {
+                  el.style.transform = `translateX(${offset}px)`;
+                }
+              }
+            }}
+          >
+            {children}
+          </div>
+        </div>,
         document.body
       )}
     </span>
