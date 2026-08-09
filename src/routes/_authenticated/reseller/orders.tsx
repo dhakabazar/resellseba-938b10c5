@@ -852,6 +852,11 @@ function OrdersPage() {
                     key={s}
                     disabled={loading}
                     onClick={async () => {
+                      if (statusModal.isBulk) {
+                        await bulkUpdateStatus(s);
+                        setStatusModal(null);
+                        return;
+                      }
                       setLoading(true);
                       const { error } = await supabase
                         .from("orders")
