@@ -214,9 +214,9 @@ export function NewOrderModal({
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_350px]">
+          <div className="flex flex-col">
             {/* Left Column: Selection & Details */}
-            <div className="space-y-6 p-4 sm:p-6 border-r">
+            <div className="space-y-6 p-4 sm:p-6 border-b">
               {isAdmin && (
                 <div className="space-y-3">
                   <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80">Reseller Selection</label>
@@ -503,7 +503,7 @@ export function NewOrderModal({
             </div>
 
             {/* Right Column: Order Summary */}
-            <aside className="flex flex-col bg-muted/20 p-4 sm:p-6 h-full border-t lg:border-t-0">
+            <aside className="flex flex-col bg-muted/20 p-4 sm:p-6 h-full border-t">
               <div className="flex-1">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/80">Order Summary</h3>
