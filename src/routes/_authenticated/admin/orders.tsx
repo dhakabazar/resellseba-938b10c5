@@ -285,9 +285,6 @@ function AdminOrdersPage() {
                     </button>
                   </div>
                   <div className="min-w-0">
-                      <ChevronDown className={`h-4 w-4 transition-transform ${expandedOrders.includes(o.id) ? "rotate-180" : ""}`} />
-                    </button>
-                    <div className="min-w-0">
                       <div className="font-medium truncate">{o.order_number}</div>
                       <div className="text-[11px] text-muted-foreground">
                         {new Date(o.created_at).toLocaleDateString()}
