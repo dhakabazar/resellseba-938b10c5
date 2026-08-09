@@ -630,6 +630,20 @@ function AdminOrdersPage() {
                             <Phone className="h-3 w-3" />
                           </a>
                         </div>
+                        {shipments.some(s => s.order_id === o.id) && (
+                          <div className="flex flex-wrap gap-1">
+                            {shipments.filter(s => s.order_id === o.id).map(s => (
+                              <div key={s.id} className="inline-flex items-center gap-1 rounded bg-muted/50 px-1.5 py-0.5 text-[9px] font-medium text-muted-foreground ring-1 ring-inset ring-muted-foreground/10">
+                                <Truck className="h-2.5 w-2.5" />
+                                <span className="capitalize">{s.provider}</span>
+                                {s.consignment_id && (
+                                  <span className="opacity-70">({s.consignment_id})</span>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
                         <div className="truncate text-muted-foreground">{o.area || "—"}</div>
                         <div className="truncate text-[11px] text-muted-foreground italic">
                           Reseller: {o.resellers?.business_name || "Direct"}
@@ -703,7 +717,21 @@ function AdminOrdersPage() {
                   <div className="min-w-0">
                     <div className="truncate font-medium">{o.customer_name}</div>
                     <div className="text-xs text-muted-foreground">{o.customer_phone}</div>
+                    {shipments.some(s => s.order_id === o.id) && (
+                      <div className="mt-0.5 flex flex-wrap gap-1">
+                        {shipments.filter(s => s.order_id === o.id).map(s => (
+                          <div key={s.id} className="inline-flex items-center gap-1 rounded bg-muted/50 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground ring-1 ring-inset ring-muted-foreground/10">
+                            <Truck className="h-2.5 w-2.5" />
+                            <span className="capitalize">{s.provider}</span>
+                            {s.consignment_id && (
+                              <span className="opacity-70">({s.consignment_id})</span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
+
                   <div className="font-semibold">৳{Number(o.total).toFixed(0)}</div>
                   <div>
                     <span className={`rounded-full px-2 py-0.5 text-xs capitalize ${orderStatusTone(o.status)}`}>
