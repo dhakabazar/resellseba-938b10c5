@@ -274,7 +274,67 @@ function AdminOrdersPage() {
                      </DropdownMenu>
                   </div>
                 </div>
-                {expandedOrders.includes(o.id) && <div className="p-4 bg-muted/20 border-t">Details: {o.admin_note || "No notes"}</div>}
+                {expandedOrders.includes(o.id) && (
+                  <div className="bg-muted/30 px-12 py-6">
+                    <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+                      <div>
+                        <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">Order Items</h4>
+                        <div className="space-y-3">
+                          {itemsByOrder.get(o.id)?.map((it, idx) => {
+                            const p = allProducts.find(x => x.id === it.product_id);
+                            return (
+                              <div key={idx} className="flex items-center gap-3 rounded-lg border bg-background p-2">
+                                {p?.og_image_url && (
+                                  <img src={p.og_image_url} className="h-10 w-10 rounded object-cover" />
+                                )}
+                                <div className="min-w-0 flex-1">
+                                  <div className="truncate text-sm font-medium">{it.product_name}</div>
+                                  <div className="text-xs text-muted-foreground">Quantity: {it.quantity}</div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                      <div>
+                        <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">Shipping Details</h4>
+                        <div className="rounded-lg border bg-background p-4 text-sm shadow-sm">
+                          <div className="mb-1 font-semibold">{o.customer_name}</div>
+                          <div className="mb-3 font-mono text-xs">{o.customer_phone}</div>
+                          <div className="text-muted-foreground">{o.address_line}</div>
+                          <div className="mt-1 font-medium text-primary uppercase text-[10px]">{o.area.replace("_", " ")}</div>
+                        </div>
+                      </div>
+                      <div>
+                        <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">Notes & Financials</h4>
+                        <div className="space-y-3">
+                          {o.admin_note && (
+                            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+                              <span className="mb-1 block text-[10px] font-bold uppercase">Admin Note:</span>
+                              {o.admin_note}
+                            </div>
+                          )}
+                          {o.reseller_note && (
+                            <div className="rounded-lg border bg-background p-3 text-sm italic text-muted-foreground">
+                              <span className="mb-1 block text-[10px] font-bold uppercase not-italic">Reseller Note:</span>
+                              "{o.reseller_note}"
+                            </div>
+                          )}
+                          <div className="rounded-lg border bg-background p-3 text-sm">
+                             <div className="flex justify-between font-bold">
+                               <span>Total Bill</span>
+                               <span className="text-primary">৳{Number(o.total).toFixed(0)}</span>
+                             </div>
+                             <div className="mt-1 flex justify-between text-xs text-muted-foreground uppercase">
+                               <span>Payment Method</span>
+                               <span>{o.payment_method}</span>
+                             </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>
