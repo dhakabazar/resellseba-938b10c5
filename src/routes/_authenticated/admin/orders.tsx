@@ -151,6 +151,7 @@ function AdminOrdersPage() {
   const [resellers, setResellers] = useState<any[]>([]);
   const [filters, setFilters] = useState<OrderFilterState>(DEFAULT_ORDER_FILTERS);
   const [searchMode, setSearchMode] = useState<OrderSearchMode>("order");
+  const [expandedOrders, setExpandedOrders] = useState<string[]>([]);
 
   const [showFilters, setShowFilters] = useState(false);
     const [pickOpen, setPickOpen] = useState(false);
@@ -568,7 +569,7 @@ function AdminOrdersPage() {
       ) : (
         <>
         <div className="surface-card overflow-hidden">
-          <div className="hidden grid-cols-[40px_minmax(120px,1.2fr)_minmax(180px,1.5fr)_minmax(180px,1.5fr)_minmax(150px,1.2fr)_100px_120px_60px] gap-4 border-b bg-muted/40 px-4 py-3 text-xs font-medium text-muted-foreground md:grid">
+          <div className="hidden grid-cols-[40px_minmax(120px,1.2fr)_minmax(180px,1.5fr)_minmax(180px,1.5fr)_minmax(120px,1fr)_120px_60px] gap-4 border-b bg-muted/40 px-4 py-3 text-xs font-medium text-muted-foreground md:grid">
             <div className="flex items-center justify-center">
               <input
                 type="checkbox"
@@ -749,7 +750,7 @@ function AdminOrdersPage() {
                 </div>
 
                 {/* Desktop table row */}
-                <div className="hidden grid-cols-[40px_minmax(120px,1.2fr)_minmax(180px,1.5fr)_minmax(180px,1.5fr)_minmax(150px,1.2fr)_100px_120px_60px] items-center gap-4 px-4 py-3 text-sm md:grid">
+                <div className="hidden grid-cols-[40px_minmax(120px,1.2fr)_minmax(180px,1.5fr)_minmax(180px,1.5fr)_minmax(120px,1fr)_120px_60px] items-center gap-4 px-4 py-3 text-sm md:grid">
                   <div className="flex justify-center">
                     <input
                       type="checkbox"
@@ -851,6 +852,9 @@ function AdminOrdersPage() {
                       {orderStatusLabel(o.status)}
                     </span>
                   </div>
+                      {orderStatusLabel(o.status)}
+                    </span>
+                  </div>
 
                   <div className="flex justify-end">
                     <DropdownMenu>
@@ -860,6 +864,13 @@ function AdminOrdersPage() {
                         </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-40">
+                        <DropdownMenuItem onClick={() => {
+                          setExpandedOrders(prev => prev.includes(o.id) ? prev.filter(id => id !== o.id) : [...prev, o.id]);
+                        }}>
+                          {expandedOrders.includes(o.id) ? <ChevronDown className="mr-2 h-4 w-4 rotate-180" /> : <ChevronDown className="mr-2 h-4 w-4" />}
+                          {expandedOrders.includes(o.id) ? "Collapse Details" : "Show Products"}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => setSelected(o)}>
                           <Eye className="mr-2 h-4 w-4" /> View Details
                         </DropdownMenuItem>
