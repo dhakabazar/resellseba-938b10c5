@@ -19,7 +19,9 @@ import {
   Phone,
   CheckCircle2,
   Settings2,
+  Truck,
 } from "lucide-react";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
