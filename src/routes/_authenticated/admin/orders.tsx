@@ -143,7 +143,45 @@ function AdminOrdersPage() {
         }/>
         <div className="mb-4 flex flex-wrap items-center gap-2">
             <OrderSearch mode={searchMode} onMode={setSearchMode} value={filters.q} onChange={(v) => setFilters({ ...filters, q: v })} />
+            <div className="ml-auto flex items-center gap-2">
+              <span className="text-xs font-medium text-muted-foreground hidden sm:inline">Per page:</span>
+              <select 
+                value={filters.perPage}
+                onChange={(e) => setFilters({ ...filters, perPage: Number(e.target.value) })}
+                className="h-9 rounded-md border bg-background px-2 text-xs font-medium outline-none focus:ring-1 focus:ring-primary"
+              >
+                {[10, 20, 50, 100].map((n) => (
+                  <option key={n} value={n}>{n}</option>
+                ))}
+                <option value={-1}>All</option>
+              </select>
+            </div>
         </div>
+
+        {marked.length > 0 && (
+          <div className="mb-4 flex flex-wrap items-center gap-2 rounded-md border border-primary/40 bg-primary/5 px-3 py-2">
+            <span className="mr-2 text-sm font-medium">{marked.length} marked</span>
+            <button
+              onClick={() => setStatusModal({ open: true, orderId: marked[0], currentStatus: orders.find(x => x.id === marked[0])?.status || "confirmed" })}
+              className="inline-flex h-9 items-center gap-2 rounded-md border bg-background px-3 text-xs font-medium hover:bg-accent"
+            >
+              <Settings2 className="h-3.5 w-3.5" /> Change Status
+            </button>
+            <button
+              onClick={() => printShippingLabels(marked, orders.map(o => ({ ...o, items: itemsByOrder.get(o.id) ?? [] })))}
+              className="inline-flex h-9 items-center gap-2 rounded-md border bg-background px-3 text-xs font-medium hover:bg-accent"
+            >
+              <Printer className="h-3.5 w-3.5" /> Print Labels
+            </button>
+            <button
+              onClick={() => setMarked([])}
+              className="ml-auto text-xs text-muted-foreground hover:text-foreground"
+            >
+              Clear
+            </button>
+          </div>
+        )}
+
         <OrderTabs tab={tab} onChange={setTab} count={() => orders.length} />
         
         {loading ? <div className="py-12 text-center"><Loader2 className="mx-auto h-6 w-6 animate-spin" /></div> : (
