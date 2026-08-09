@@ -10,7 +10,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
 import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
-import { Loader2, Truck, X, Download, Zap, RotateCcw, RefreshCw, Lock, PackageCheck, Repeat, Ban, Search, ListChecks, SlidersHorizontal, ChevronDown, Plus, MoreVertical, Eye, FileText, Trash2, Phone, CheckCircle2, AlertCircle, ShoppingCart, Printer, AlertTriangle, Settings2 } from "lucide-react";
+import { Loader2, Truck, X, Download, Zap, RotateCcw, RefreshCw, Lock, PackageCheck, Repeat, Ban, Search, ListChecks, SlidersHorizontal, ChevronDown, Plus, MoreVertical, Eye, FileText, Trash2, Phone, CheckCircle2, AlertCircle, ShoppingCart, Printer, AlertTriangle, Settings2, Copy } from "lucide-react";
 
 import {
   DropdownMenu,
@@ -188,7 +188,7 @@ function AdminOrdersPage() {
     const [{ data }, { data: all }, { data: rs }, { data: p }] = await Promise.all([
       q,
       supabase.from("orders").select("status"),
-      supabase.from("resellers").select("id,business_name,code").order("business_name"),
+      supabase.from("resellers").select("id,business_name,code,phone").order("business_name"),
       supabase.from("products").select("id,name,reseller_price,packaging_cost,delivery_inside,delivery_outside,delivery_mode,delivery_flat,og_image_url,suggested_price").eq("is_active", true).order("created_at", { ascending: false }),
     ]);
     const rows = (data ?? []) as OrderRow[];
@@ -627,9 +627,20 @@ function AdminOrdersPage() {
                       <div className="mt-2 space-y-0.5 text-xs">
                         <div className="flex items-center gap-1.5 font-medium">
                           <span className="truncate">{o.customer_name}</span>
-                          <a href={`tel:${o.customer_phone}`} className="shrink-0 text-primary">
-                            <Phone className="h-3 w-3" />
-                          </a>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <a href={`tel:${o.customer_phone}`} className="text-primary hover:text-primary/80 transition-colors">
+                              <Phone className="h-3.5 w-3.5" />
+                            </a>
+                            <button 
+                              onClick={() => {
+                                navigator.clipboard.writeText(o.customer_phone);
+                                toast.success("Phone number copied");
+                              }}
+                              className="text-muted-foreground hover:text-foreground transition-colors"
+                            >
+                              <Copy className="h-3 w-3" />
+                            </button>
+                          </div>
                         </div>
                         {shipments.some(s => s.order_id === o.id) && (
                           <div className="flex flex-wrap gap-1">
@@ -638,7 +649,19 @@ function AdminOrdersPage() {
                                 <Truck className="h-2.5 w-2.5" />
                                 <span className="capitalize">{s.provider}</span>
                                 {s.consignment_id && (
-                                  <span className="opacity-70">({s.consignment_id})</span>
+                                  <>
+                                    <span className="opacity-70">({s.consignment_id})</span>
+                                    <button 
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        navigator.clipboard.writeText(s.consignment_id || "");
+                                        toast.success("Booking ID copied");
+                                      }}
+                                      className="ml-0.5 opacity-50 hover:opacity-100"
+                                    >
+                                      <Copy className="h-2 w-2" />
+                                    </button>
+                                  </>
                                 )}
                               </div>
                             ))}
@@ -648,6 +671,24 @@ function AdminOrdersPage() {
                         <div className="truncate text-muted-foreground">{o.area || "—"}</div>
                         <div className="truncate text-[11px] text-muted-foreground italic">
                           Reseller: {o.resellers?.business_name || "Direct"}
+                          <div className="flex items-center gap-1 mt-0.5">
+                             {resellers.find(r => r.id === o.reseller_id)?.phone && (
+                               <>
+                                 <a href={`tel:${resellers.find(r => r.id === o.reseller_id).phone}`} className="text-primary hover:text-primary/80 transition-colors">
+                                   <Phone className="h-2.5 w-2.5" />
+                                 </a>
+                                 <button 
+                                   onClick={() => {
+                                     navigator.clipboard.writeText(resellers.find(r => r.id === o.reseller_id).phone);
+                                     toast.success("Reseller phone copied");
+                                   }}
+                                   className="text-muted-foreground hover:text-foreground transition-colors"
+                                 >
+                                   <Copy className="h-2.5 w-2.5" />
+                                 </button>
+                               </>
+                             )}
+                          </div>
                         </div>
                       </div>
 
@@ -712,10 +753,40 @@ function AdminOrdersPage() {
                   </div>
                   <div className="min-w-0">
                     <div className="truncate font-medium">{o.customer_name}</div>
-                    <div className="text-[11px] text-muted-foreground">{o.customer_phone}</div>
+                    <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                      {o.customer_phone}
+                      <a href={`tel:${o.customer_phone}`} className="text-primary hover:text-primary/80 transition-colors">
+                        <Phone className="h-3 w-3" />
+                      </a>
+                      <button 
+                        onClick={() => {
+                          navigator.clipboard.writeText(o.customer_phone);
+                          toast.success("Phone number copied");
+                        }}
+                        className="text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        <Copy className="h-3 w-3" />
+                      </button>
+                    </div>
                   </div>
                   <div className="min-w-0">
                     <div className="font-medium truncate">{o.resellers?.business_name || "Direct"}</div>
+                    {o.resellers && resellers.find(r => r.id === o.reseller_id)?.phone && (
+                      <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mt-0.5">
+                        <a href={`tel:${resellers.find(r => r.id === o.reseller_id).phone}`} className="text-primary hover:text-primary/80 transition-colors">
+                          <Phone className="h-2.5 w-2.5" />
+                        </a>
+                        <button 
+                          onClick={() => {
+                            navigator.clipboard.writeText(resellers.find(r => r.id === o.reseller_id).phone);
+                            toast.success("Reseller phone copied");
+                          }}
+                          className="text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          <Copy className="h-2.5 w-2.5" />
+                        </button>
+                      </div>
+                    )}
                   </div>
                   
                   <div className="min-w-0">
@@ -728,6 +799,17 @@ function AdminOrdersPage() {
                             </div>
                             <div className="text-[10px] text-muted-foreground tabular-nums font-medium">
                               #{s.consignment_id || "N/A"}
+                              {s.consignment_id && (
+                                <button 
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(s.consignment_id || "");
+                                    toast.success("Booking ID copied");
+                                  }}
+                                  className="ml-1 opacity-50 hover:opacity-100 transition-opacity"
+                                >
+                                  <Copy className="h-2.5 w-2.5 inline-block -mt-0.5" />
+                                </button>
+                              )}
                             </div>
                           </div>
                         ))}

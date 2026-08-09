@@ -20,6 +20,7 @@ import {
   CheckCircle2,
   Settings2,
   Truck,
+  Copy,
 } from "lucide-react";
 
 import {
@@ -703,13 +704,26 @@ function OrdersPage() {
                       </div>
 
                       <div className="mt-2 space-y-0.5 text-xs">
-                        <div className="truncate font-medium">{o.customer_name}</div>
-                        <a
-                          href={`tel:${o.customer_phone}`}
-                          className="text-muted-foreground underline-offset-2 hover:underline"
-                        >
-                          {o.customer_phone}
-                        </a>
+                        <div className="flex items-center gap-1.5 font-medium">
+                          <span className="truncate">{o.customer_name}</span>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <a 
+                              href={`tel:${o.customer_phone}`}
+                              className="text-primary hover:text-primary/80 transition-colors"
+                            >
+                              <Phone className="h-3.5 w-3.5" />
+                            </a>
+                            <button 
+                              onClick={() => {
+                                navigator.clipboard.writeText(o.customer_phone);
+                                toast.success("Phone number copied");
+                              }}
+                              className="text-muted-foreground hover:text-foreground transition-colors"
+                            >
+                              <Copy className="h-3 w-3" />
+                            </button>
+                          </div>
+                        </div>
                         {shipments.some(s => s.order_id === o.id) && (
                           <div className="flex flex-wrap gap-1">
                             {shipments.filter(s => s.order_id === o.id).map(s => (
@@ -717,7 +731,19 @@ function OrdersPage() {
                                 <Truck className="h-2.5 w-2.5" />
                                 <span className="capitalize">{s.provider}</span>
                                 {s.consignment_id && (
-                                  <span className="opacity-70">({s.consignment_id})</span>
+                                  <>
+                                    <span className="opacity-70">({s.consignment_id})</span>
+                                    <button 
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        navigator.clipboard.writeText(s.consignment_id || "");
+                                        toast.success("Booking ID copied");
+                                      }}
+                                      className="ml-0.5 opacity-50 hover:opacity-100"
+                                    >
+                                      <Copy className="h-2 w-2" />
+                                    </button>
+                                  </>
                                 )}
                               </div>
                             ))}
@@ -777,7 +803,21 @@ function OrdersPage() {
                   </div>
                   <div className="min-w-0 text-xs text-muted-foreground">
                     <div className="font-medium text-foreground truncate">{o.customer_name}</div>
-                    <div>{o.customer_phone}</div>
+                    <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                      {o.customer_phone}
+                      <a href={`tel:${o.customer_phone}`} className="text-primary hover:text-primary/80 transition-colors">
+                        <Phone className="h-3 w-3" />
+                      </a>
+                      <button 
+                        onClick={() => {
+                          navigator.clipboard.writeText(o.customer_phone);
+                          toast.success("Phone number copied");
+                        }}
+                        className="text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        <Copy className="h-3 w-3" />
+                      </button>
+                    </div>
                   </div>
                   
                   <div className="min-w-0">
@@ -788,6 +828,17 @@ function OrdersPage() {
                         </div>
                         <div className="text-[10px] text-muted-foreground tabular-nums font-medium">
                           #{orderShipment.consignment_id || "N/A"}
+                          {orderShipment.consignment_id && (
+                            <button 
+                              onClick={() => {
+                                navigator.clipboard.writeText(orderShipment.consignment_id || "");
+                                toast.success("Booking ID copied");
+                              }}
+                              className="ml-1 opacity-50 hover:opacity-100 transition-opacity"
+                            >
+                              <Copy className="h-2.5 w-2.5 inline-block -mt-0.5" />
+                            </button>
+                          )}
                         </div>
                       </div>
                     ) : (
