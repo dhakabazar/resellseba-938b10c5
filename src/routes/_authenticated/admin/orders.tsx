@@ -645,6 +645,60 @@ function AdminOrdersPage() {
           }}
         />
       )}
+      {statusModal && statusModal.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-sm rounded-lg bg-background p-6 shadow-xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-lg font-bold">Change Order Status</h3>
+              <button onClick={() => setStatusModal(null)} className="rounded-md p-1 hover:bg-accent">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            
+            <div className="grid grid-cols-1 gap-2">
+              {ORDER_STATUS_OPTIONS.map((s) => (
+                <button
+                  key={s}
+                  onClick={async () => {
+                    setLoading(true);
+                    const { error } = await supabase
+                      .from("orders")
+                      .update({ status: s as any })
+                      .eq("id", statusModal.orderId);
+                    
+                    if (error) {
+                      toast.error(error.message);
+                    } else {
+                      toast.success(`Status updated to ${orderStatusLabel(s)}`);
+                      setStatusModal(null);
+                      await load();
+                    }
+                    setLoading(false);
+                  }}
+                  className={`flex items-center gap-3 rounded-md border p-3 text-left text-sm transition-colors hover:bg-accent ${
+                    statusModal.currentStatus === s ? "border-primary bg-primary/5" : ""
+                  }`}
+                >
+                  <div className={`h-3 w-3 rounded-full ${orderStatusTone(s)}`} />
+                  <span className="flex-1 font-medium capitalize">{orderStatusLabel(s)}</span>
+                  {statusModal.currentStatus === s && (
+                    <CheckCircle2 className="h-4 w-4 text-primary" />
+                  )}
+                </button>
+              ))}
+            </div>
+            
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={() => setStatusModal(null)}
+                className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-accent"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
