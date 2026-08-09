@@ -184,241 +184,302 @@ export function NewOrderModal({
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4">
       <form
         onSubmit={submit}
-        className="flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-t-2xl border bg-background shadow-2xl sm:max-h-[90vh] sm:rounded-xl"
+        className="flex max-h-[95vh] w-full max-w-5xl flex-col overflow-hidden rounded-t-2xl border bg-background shadow-2xl sm:max-h-[90vh] sm:rounded-xl"
       >
-        <div className="flex items-center justify-between gap-2 border-b px-4 py-3 sm:px-6">
+        <div className="flex items-center justify-between gap-2 border-b px-4 py-3 sm:px-6 bg-muted/30">
           <div>
-            <h2 className="text-base font-semibold sm:text-lg">New order</h2>
+            <h2 className="text-base font-bold sm:text-xl">Create New Order</h2>
             <p className="text-xs text-muted-foreground">
-              {isAdmin ? "Manual order create korun — reseller select kora optional." : "Product search kore add korun — delivery charge product onujai apply hobe."}
+              {isAdmin ? "Super Admin manual order creation" : "Add products and customer details"}
             </p>
           </div>
-          <button type="button" onClick={onClose} className="rounded-md p-1.5 hover:bg-accent">
-            <X className="h-4 w-4" />
+          <button type="button" onClick={onClose} className="rounded-full p-2 hover:bg-accent transition-colors">
+            <X className="h-5 w-5" />
           </button>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6">
-          <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
-            <div className="space-y-6">
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px]">
+            {/* Left Column: Selection & Details */}
+            <div className="space-y-6 p-4 sm:p-6 border-r">
               {isAdmin && (
-                <div className="rounded-lg border p-3 bg-muted/20">
-                  <div className="mb-2 text-sm font-medium">Assign to Reseller (Optional)</div>
-                  <div className="relative mb-2">
-                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <input
-                      value={resellerSearch}
-                      onChange={(e) => setResellerSearch(e.target.value)}
-                      placeholder="Search reseller by name or code..."
-                      className="input pl-9"
-                    />
-                  </div>
-                  <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
-                    <button
-                      type="button"
-                      onClick={() => setResellerId(null)}
-                      className={`rounded-full px-3 py-1 text-xs font-medium border transition-colors ${!resellerId ? 'bg-primary text-primary-foreground border-primary' : 'hover:bg-accent'}`}
-                    >
-                      None (Direct Order)
-                    </button>
-                    {filteredResellers.map(r => (
+                <div className="space-y-3">
+                  <label className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Reseller Selection</label>
+                  <div className="rounded-xl border bg-accent/20 p-4">
+                    <div className="relative mb-3">
+                      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <input
+                        value={resellerSearch}
+                        onChange={(e) => setResellerSearch(e.target.value)}
+                        placeholder="Search reseller name or code..."
+                        className="w-full rounded-lg border bg-background px-9 py-2 text-sm focus:ring-2 focus:ring-primary/20"
+                      />
+                    </div>
+                    <div className="flex flex-wrap gap-2">
                       <button
-                        key={r.id}
                         type="button"
-                        onClick={() => setResellerId(r.id)}
-                        className={`rounded-full px-3 py-1 text-xs font-medium border transition-colors ${resellerId === r.id ? 'bg-primary text-primary-foreground border-primary' : 'hover:bg-accent'}`}
+                        onClick={() => setResellerId(null)}
+                        className={`rounded-full px-4 py-1.5 text-xs font-bold transition-all ${!resellerId ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/25' : 'bg-background hover:bg-accent border'}`}
                       >
-                        {r.business_name}
+                        None (Direct)
                       </button>
-                    ))}
+                      {filteredResellers.map(r => (
+                        <button
+                          key={r.id}
+                          type="button"
+                          onClick={() => setResellerId(r.id)}
+                          className={`rounded-full px-4 py-1.5 text-xs font-bold transition-all ${resellerId === r.id ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/25' : 'bg-background hover:bg-accent border'}`}
+                        >
+                          {r.business_name}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}
 
-              <div className="rounded-lg border p-3">
-                <div className="mb-2 text-sm font-medium">Products</div>
-                <div className="relative">
-                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <input
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Search master catalog by name…"
-                    className="input pl-9"
-                  />
-                </div>
+              <div className="space-y-3">
+                <label className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Product Selection</label>
+                <div className="rounded-xl border bg-background p-4 shadow-sm">
+                  <div className="relative mb-4">
+                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <input
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      placeholder="Type product name to search..."
+                      className="w-full rounded-lg border bg-accent/10 px-9 py-2.5 text-sm focus:ring-2 focus:ring-primary/20"
+                    />
+                  </div>
 
-                <div className="mt-2 max-h-56 divide-y overflow-y-auto rounded-md border">
-                  {results.map((item) => {
-                    const p = item.type === 'listing' ? item.data.products! : item.data;
-                    const price = item.type === 'listing' ? item.data.selling_price : (p.suggested_price || p.reseller_price + p.packaging_cost);
-                    const dc = productDeliveryCharge(p, area);
-                    const inCart = item.type === 'listing' 
-                      ? lines.some((x) => x.listing_id === item.data.id)
-                      : lines.some((x) => x.product_id === p.id);
-                    return (
-                      <button
-                        type="button"
-                        key={item.type === 'listing' ? `l-${item.data.id}` : `p-${p.id}`}
-                        onClick={() => pick(item)}
-                        className="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-accent/50"
-                      >
-                        {p.og_image_url && (
-                          <img src={p.og_image_url} alt="" className="h-9 w-9 shrink-0 rounded object-cover" />
-                        )}
-                        <span className="min-w-0 flex-1">
-                          <span className="block truncate text-sm">
-                            {p.name}
-                            {item.type === 'listing' && <span className="ml-1.5 rounded-full bg-muted px-1.5 py-0.5 text-[9px] uppercase tracking-wider">My Listing</span>}
-                          </span>
-                          <span className="block text-[11px] text-muted-foreground">
-                            ৳{Number(price).toFixed(0)} · {deliveryLabel(p)} · this area ৳{dc.toFixed(0)}
-                          </span>
-                        </span>
-                        <span className="shrink-0 text-xs font-medium text-primary">
-                          {inCart ? "+1" : "Add"}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <div className="mt-3 space-y-2">
-                  {picked.map(({ line, p, sellPrice, listingId }, i) => {
-                    const dc = productDeliveryCharge(p, area);
-                    return (
-                      <div key={listingId || p.id} className="flex items-center gap-3 rounded-md border p-2.5">
-                        <div className="min-w-0 flex-1">
-                          <div className="truncate text-sm">{p.name}</div>
-                          <div className="text-[11px] text-muted-foreground">
-                            ৳{Number(sellPrice).toFixed(0)} × {line.qty} · delivery ৳{dc.toFixed(0)}
-                            {totals.shipping > dc && " (not applied — higher one wins)"}
-                          </div>
-                        </div>
-                        <div className="inline-flex shrink-0 items-center rounded-md border">
-                          <button type="button" onClick={() => {
-                            setLines(prev => prev.flatMap((l, idx) => idx === i ? (l.qty <= 1 ? [] : [{...l, qty: l.qty - 1}]) : [l]));
-                          }} className="px-2 py-1.5">
-                            <Minus className="h-3 w-3" />
+                  {results.length > 0 && (
+                    <div className="max-h-60 divide-y overflow-y-auto rounded-lg border bg-muted/5">
+                      {results.map((item) => {
+                        const p = item.type === 'listing' ? item.data.products! : item.data;
+                        const price = item.type === 'listing' ? item.data.selling_price : (p.suggested_price || p.reseller_price + p.packaging_cost);
+                        const dc = productDeliveryCharge(p, area);
+                        const inCart = item.type === 'listing' 
+                          ? lines.some((x) => x.listing_id === item.data.id)
+                          : lines.some((x) => x.product_id === p.id);
+                        return (
+                          <button
+                            type="button"
+                            key={item.type === 'listing' ? `l-${item.data.id}` : `p-${p.id}`}
+                            onClick={() => pick(item)}
+                            className="flex w-full items-center gap-3 p-3 text-left hover:bg-primary/5 transition-colors"
+                          >
+                            <div className="h-12 w-12 shrink-0 overflow-hidden rounded-md border bg-muted">
+                              {p.og_image_url ? (
+                                <img src={p.og_image_url} alt="" className="h-full w-full object-cover" />
+                              ) : <Search className="m-auto h-full w-1/2 text-muted-foreground/30" />}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2">
+                                <span className="truncate text-sm font-bold">{p.name}</span>
+                                {item.type === 'listing' && <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[9px] font-bold text-primary uppercase">Listing</span>}
+                              </div>
+                              <div className="text-[11px] text-muted-foreground mt-0.5">
+                                Price: <span className="font-bold text-foreground">৳{Number(price).toFixed(0)}</span> · 
+                                Delivery: <span className="font-bold">৳{dc.toFixed(0)}</span>
+                              </div>
+                            </div>
+                            <div className={`shrink-0 rounded-full p-2 transition-colors ${inCart ? 'bg-primary text-primary-foreground' : 'bg-accent hover:bg-primary/20 hover:text-primary'}`}>
+                              {inCart ? <Plus className="h-4 w-4" /> : <Search className="h-4 w-4" />}
+                            </div>
                           </button>
-                          <span className="min-w-[2.5ch] text-center text-xs font-semibold">{line.qty}</span>
-                          <button type="button" onClick={() => {
-                            setLines(prev => prev.map((l, idx) => idx === i ? {...l, qty: l.qty + 1} : l));
-                          }} className="px-2 py-1.5">
-                            <Plus className="h-3 w-3" />
-                          </button>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setLines(prev => prev.filter((_, idx) => idx !== i))}
-                          className="rounded-md p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    );
-                  })}
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <Field label="Customer name">
-                  <input
-                    required
-                    value={name}
-                    onChange={(e) => setName(sanitizeName(e.target.value))}
-                    placeholder="Full name"
-                    className="input"
-                  />
-                  {name && errors.name && <FieldError text={errors.name} />}
-                </Field>
-                <Field label="Phone">
-                  <input
-                    required
-                    value={phone}
-                    onChange={(e) => setPhone(normalizePhone(e.target.value))}
-                    inputMode="numeric"
-                    placeholder="01XXXXXXXXX"
-                    className="input"
-                  />
-                  {phone && errors.phone && <FieldError text={errors.phone} />}
-                </Field>
-                <Field label="Delivery area" className="md:col-span-2">
-                  <div className="grid grid-cols-3 gap-2">
-                    {(
-                      [
-                        ["inside_dhaka", "Inside Dhaka"],
-                        ["sub_dhaka", "Sub Dhaka"],
-                        ["outside_dhaka", "Outside Dhaka"],
-                      ] as const
-                    ).map(([v, label]) => (
-                      <button
-                        key={v}
-                        type="button"
-                        onClick={() => setArea(v)}
-                        aria-pressed={area === v}
-                        className={`rounded-md border px-2 py-2 text-xs font-medium ${
-                          area === v ? "border-primary bg-primary/10 text-primary" : "hover:bg-accent"
-                        }`}
-                      >
-                        {label}
-                      </button>
-                    ))}
+              <div className="space-y-3">
+                <label className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Customer Information</label>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Field label="Customer Full Name">
+                    <input
+                      required
+                      value={name}
+                      onChange={(e) => setName(sanitizeName(e.target.value))}
+                      placeholder="Enter customer name"
+                      className="w-full rounded-lg border px-4 py-2 text-sm focus:ring-2 focus:ring-primary/20"
+                    />
+                    {name && errors.name && <FieldError text={errors.name} />}
+                  </Field>
+                  <Field label="Mobile Number">
+                    <input
+                      required
+                      value={phone}
+                      onChange={(e) => setPhone(normalizePhone(e.target.value))}
+                      inputMode="numeric"
+                      placeholder="01XXXXXXXXX"
+                      className="w-full rounded-lg border px-4 py-2 text-sm focus:ring-2 focus:ring-primary/20"
+                    />
+                    {phone && errors.phone && <FieldError text={errors.phone} />}
+                  </Field>
+                  
+                  <div className="sm:col-span-2">
+                    <label className="mb-2 block text-xs font-bold text-muted-foreground">Delivery Area</label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {(
+                        [
+                          ["inside_dhaka", "Inside Dhaka"],
+                          ["sub_dhaka", "Sub Dhaka"],
+                          ["outside_dhaka", "Outside Dhaka"],
+                        ] as const
+                      ).map(([v, label]) => (
+                        <button
+                          key={v}
+                          type="button"
+                          onClick={() => setArea(v)}
+                          className={`rounded-lg border py-2.5 text-xs font-bold transition-all ${
+                            area === v 
+                              ? "bg-primary text-primary-foreground border-primary shadow-md shadow-primary/20" 
+                              : "bg-background hover:border-primary/50"
+                          }`}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </Field>
-                <Field label="Full address" className="md:col-span-2">
-                  <textarea
-                    required
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    rows={2}
-                    placeholder="House / road, area, upazila, district"
-                    className="input"
-                  />
-                  {address && errors.address && <FieldError text={errors.address} />}
-                </Field>
-                <Field label="Payment method">
-                  <select
-                    value={paymentMethod}
-                    onChange={(e) => setPaymentMethod(e.target.value)}
-                    className="input"
-                  >
-                    <option value="cod">Cash on Delivery</option>
-                    <option value="bkash">bKash</option>
-                    <option value="nagad">Nagad</option>
-                    <option value="rocket">Rocket</option>
-                    <option value="sslcommerz">SSLCommerz</option>
-                  </select>
-                </Field>
-                <Field label="Note (optional)">
-                  <input value={note} onChange={(e) => setNote(e.target.value)} className="input" />
-                </Field>
+
+                  <Field label="Shipping Address" className="sm:col-span-2">
+                    <textarea
+                      required
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
+                      rows={3}
+                      placeholder="Complete address (Road, Area, City...)"
+                      className="w-full rounded-lg border px-4 py-2 text-sm focus:ring-2 focus:ring-primary/20"
+                    />
+                    {address && errors.address && <FieldError text={errors.address} />}
+                  </Field>
+
+                  <Field label="Payment Method">
+                    <select
+                      value={paymentMethod}
+                      onChange={(e) => setPaymentMethod(e.target.value)}
+                      className="w-full rounded-lg border bg-background px-4 py-2 text-sm focus:ring-2 focus:ring-primary/20"
+                    >
+                      <option value="cod">Cash on Delivery</option>
+                      <option value="bkash">bKash</option>
+                      <option value="nagad">Nagad</option>
+                      <option value="rocket">Rocket</option>
+                      <option value="sslcommerz">SSLCommerz</option>
+                    </select>
+                  </Field>
+
+                  <Field label="Order Note (Optional)">
+                    <input 
+                      value={note} 
+                      onChange={(e) => setNote(e.target.value)} 
+                      placeholder="Special instructions..."
+                      className="w-full rounded-lg border px-4 py-2 text-sm focus:ring-2 focus:ring-primary/20" 
+                    />
+                  </Field>
+                </div>
               </div>
             </div>
 
-            <aside className="h-fit space-y-4 rounded-lg border bg-muted/40 p-4 text-sm lg:sticky lg:top-0">
-              <div className="space-y-1">
-                <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Summary
+            {/* Right Column: Summary & Cart */}
+            <aside className="flex flex-col bg-muted/20 p-4 sm:p-6 h-full">
+              <div className="flex-1 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Order Items</h3>
+                  <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary">
+                    {picked.length} Items
+                  </span>
                 </div>
-                <Row label="Subtotal" value={`৳${totals.subtotal.toFixed(0)}`} />
-                <Row label="Delivery charge" value={totals.shipping ? `৳${totals.shipping.toFixed(0)}` : "Free"} />
-                {picked.length > 1 && (
-                  <p className="text-[11px] leading-snug text-muted-foreground">
-                    Highest single-product charge applied — not added up.
-                  </p>
-                )}
-                <Row label="Total" value={`৳${totals.total.toFixed(0)}`} bold />
-                {resellerId && <Row label="Reseller profit" value={`৳${totals.profit.toFixed(0)}`} muted />}
+
+                <div className="space-y-3 max-h-[40vh] overflow-y-auto pr-1 custom-scrollbar">
+                  {picked.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed py-12 text-center text-muted-foreground bg-background/50">
+                      <Search className="mb-2 h-8 w-8 opacity-20" />
+                      <p className="text-xs">No products added yet</p>
+                    </div>
+                  ) : (
+                    picked.map(({ line, p, sellPrice, listingId }, i) => {
+                      const dc = productDeliveryCharge(p, area);
+                      return (
+                        <div key={listingId || p.id} className="group relative flex items-center gap-3 rounded-xl border bg-background p-3 shadow-sm hover:shadow-md transition-shadow">
+                          <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg border bg-muted">
+                            {p.og_image_url && <img src={p.og_image_url} alt="" className="h-full w-full object-cover" />}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="truncate text-xs font-bold">{p.name}</div>
+                            <div className="mt-0.5 text-[10px] text-muted-foreground">
+                              ৳{Number(sellPrice).toFixed(0)} × {line.qty}
+                            </div>
+                          </div>
+                          
+                          <div className="flex flex-col items-end gap-1">
+                            <div className="flex items-center rounded-lg border bg-accent/30 p-0.5">
+                              <button 
+                                type="button" 
+                                onClick={() => setLines(prev => prev.flatMap((l, idx) => idx === i ? (l.qty <= 1 ? [] : [{...l, qty: l.qty - 1}]) : [l]))} 
+                                className="px-1.5 py-1 hover:bg-background rounded-md transition-colors"
+                              >
+                                <Minus className="h-3 w-3" />
+                              </button>
+                              <span className="min-w-[2ch] text-center text-[11px] font-bold">{line.qty}</span>
+                              <button 
+                                type="button" 
+                                onClick={() => setLines(prev => prev.map((l, idx) => idx === i ? {...l, qty: l.qty + 1} : l))} 
+                                className="px-1.5 py-1 hover:bg-background rounded-md transition-colors"
+                              >
+                                <Plus className="h-3 w-3" />
+                              </button>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setLines(prev => prev.filter((_, idx) => idx !== i))}
+                              className="text-[10px] font-bold text-destructive hover:underline"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
               </div>
-              
-              <button
-                type="submit"
-                disabled={busy || picked.length === 0}
-                className="btn-brand w-full flex items-center justify-center gap-2 rounded-md py-3 text-sm font-semibold shadow-sm"
-              >
-                {busy && <Loader2 className="h-4 w-4 animate-spin" />}
-                Create order — ৳{totals.total.toFixed(0)}
-              </button>
+
+              {/* Order Totals Section */}
+              <div className="mt-6 space-y-3 rounded-xl border bg-background p-4 shadow-sm">
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>Subtotal</span>
+                  <span className="font-bold text-foreground">৳{totals.subtotal.toFixed(0)}</span>
+                </div>
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1">
+                    <span>Shipping</span>
+                    {picked.length > 1 && <span className="text-[10px] bg-accent px-1 rounded">High</span>}
+                  </div>
+                  <span className="font-bold text-foreground">৳{totals.shipping.toFixed(0)}</span>
+                </div>
+                {totals.shipFrom && picked.length > 1 && (
+                  <div className="text-[9px] text-muted-foreground italic text-right -mt-2">
+                    Applied from: {totals.shipFrom}
+                  </div>
+                )}
+                
+                <div className="my-2 border-t border-dashed" />
+                
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-bold">Total Amount</span>
+                  <span className="text-xl font-black text-primary">৳{totals.total.toFixed(0)}</span>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={busy || picked.length === 0}
+                  className="mt-2 w-full flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3.5 text-sm font-bold text-primary-foreground shadow-lg shadow-primary/25 hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-50 disabled:pointer-events-none"
+                >
+                  {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : "Confirm Order"}
+                </button>
+              </div>
             </aside>
           </div>
         </div>
@@ -426,6 +487,7 @@ export function NewOrderModal({
     </div>
   );
 }
+
 
 function FieldError({ text }: { text: string }) {
   return <p className="mt-1 text-[11px] font-medium text-destructive">{text}</p>;
