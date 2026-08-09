@@ -20,8 +20,10 @@ export const getRouter = () => {
     scrollRestoration: true,
     defaultPreload: "intent",
     defaultPreloadStaleTime: 0,
-    // Audit fix: ensure router doesn't re-render entire trees on focus
     defaultViewTransition: true,
+    // Audit fix: prevent full router invalidation on focus/visibility change
+    // which was causing the "reload" behavior in authenticated layouts.
+    defaultOnFocus: () => {},
   });
 
   return router;
