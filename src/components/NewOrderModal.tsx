@@ -403,6 +403,8 @@ export function NewOrderModal({
                       </div>
                     )}
                   </div>
+                </div>
+              </div>
             </div>
 
             {/* Right Column: Summary & Cart */}
