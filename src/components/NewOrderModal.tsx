@@ -509,8 +509,8 @@ export function NewOrderModal({
               </div>
             </aside>
           </div>
+        </div>
       </form>
-    </div>
     </div>
   );
 }
