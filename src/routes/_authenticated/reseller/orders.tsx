@@ -824,11 +824,9 @@ function OrdersPage() {
                     </button>
                   </div>
                   <div className="min-w-0">
-                    <div className="min-w-0">
-                      <div className="font-medium truncate">{o.order_number}</div>
-                      <div className="text-[11px] text-muted-foreground">
-                        {new Date(o.created_at).toLocaleDateString()}
-                      </div>
+                    <div className="font-medium truncate">{o.order_number}</div>
+                    <div className="text-[11px] text-muted-foreground">
+                      {new Date(o.created_at).toLocaleDateString()}
                     </div>
                   </div>
 
