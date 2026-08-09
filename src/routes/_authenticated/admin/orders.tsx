@@ -534,6 +534,14 @@ function AdminOrdersPage() {
                               <DropdownMenuItem onClick={() => setSelected(o)}>
                                 <Eye className="mr-2 h-4 w-4" /> View Details
                               </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => setStatusModal({ open: true, orderId: o.id, currentStatus: o.status })}>
+                                <Settings2 className="mr-2 h-4 w-4" /> Change Status
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => printShippingLabels([o.id], "3x3")}>
+                                <Printer className="mr-2 h-4 w-4" /> Print Label (3x3)
+                              </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </div>
@@ -590,29 +598,9 @@ function AdminOrdersPage() {
                           <Eye className="mr-2 h-4 w-4" /> View Details
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <div className="px-2 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                          Update Status
-                        </div>
-                        {ORDER_STATUS_OPTIONS.map((s) => (
-                          <DropdownMenuItem
-                            key={s}
-                            onClick={async () => {
-                              const { error } = await supabase
-                                .from("orders")
-                                .update({ status: s as any })
-                                .eq("id", o.id);
-                              if (error) toast.error(error.message);
-                              else {
-                                toast.success(`Order ${o.order_number} marked as ${orderStatusLabel(s)}`);
-                                await load();
-                              }
-                            }}
-                            className="capitalize"
-                          >
-                            <div className={`mr-2 h-2 w-2 rounded-full ${orderStatusTone(s)}`} />
-                            {orderStatusLabel(s)}
-                          </DropdownMenuItem>
-                        ))}
+                        <DropdownMenuItem onClick={() => setStatusModal({ open: true, orderId: o.id, currentStatus: o.status })}>
+                          <Settings2 className="mr-2 h-4 w-4" /> Change Status
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => printShippingLabels([o.id], "3x3")}>
                           <Printer className="mr-2 h-4 w-4" /> Print Label (3x3)
@@ -620,7 +608,6 @@ function AdminOrdersPage() {
                         <DropdownMenuItem onClick={() => printShippingLabels([o.id], "3x4")}>
                           <Printer className="mr-2 h-4 w-4" /> Print Label (3x4)
                         </DropdownMenuItem>
-                        {/* We could add more admin actions here like Export PDF/Label if implemented */}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
