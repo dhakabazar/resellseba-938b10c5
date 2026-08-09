@@ -38,22 +38,22 @@ export function NewOrderModal({
   const [query, setQuery] = useState("");
   const [resellerSearch, setResellerSearch] = useState("");
 
+  const trendingResellers = useMemo(() => {
+    return resellers.slice(0, 5);
+  }, [resellers]);
+
   const filteredResellers = useMemo(() => {
     const q = resellerSearch.trim().toLowerCase();
-    if (!q) return resellers.slice(0, 10);
+    if (!q) return [];
     return resellers.filter(r => 
       r.business_name.toLowerCase().includes(q) || 
       (r.code && r.code.toLowerCase().includes(q))
-    ).slice(0, 10);
+    ).slice(0, 5);
   }, [resellers, resellerSearch]);
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) {
-      return listings.length > 0 
-        ? listings.filter(l => l.products).slice(0, 8).map(l => ({ type: 'listing' as const, data: l }))
-        : allProducts.slice(0, 8).map(p => ({ type: 'product' as const, data: p }));
-    }
+    if (!q) return [];
 
     const listingMatches = listings
       .filter(l => l.products && l.products.name.toLowerCase().includes(q))
@@ -63,7 +63,7 @@ export function NewOrderModal({
       .filter(p => p.name.toLowerCase().includes(q) && !listings.some(l => l.products?.id === p.id))
       .map(p => ({ type: 'product' as const, data: p }));
 
-    return [...listingMatches, ...productMatches].slice(0, 20);
+    return [...listingMatches, ...productMatches].slice(0, 15);
   }, [listings, allProducts, query]);
 
   const picked = useMemo(() => {
@@ -188,9 +188,9 @@ export function NewOrderModal({
       >
         <div className="flex items-center justify-between gap-2 border-b px-4 py-3 sm:px-6 bg-muted/30">
           <div>
-            <h2 className="text-base font-bold sm:text-xl">Create New Order</h2>
-            <p className="text-xs text-muted-foreground">
-              {isAdmin ? "Super Admin manual order creation" : "Add products and customer details"}
+            <h2 className="text-sm font-bold sm:text-lg">Create New Order</h2>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-tight">
+              {isAdmin ? "Super Admin Portal" : "Standard Order Placement"}
             </p>
           </div>
           <button type="button" onClick={onClose} className="rounded-full p-2 hover:bg-accent transition-colors">
@@ -204,157 +204,206 @@ export function NewOrderModal({
             <div className="space-y-6 p-4 sm:p-6 border-r">
               {isAdmin && (
                 <div className="space-y-3">
-                  <label className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Reseller Selection</label>
-                  <div className="rounded-xl border bg-accent/20 p-4">
-                    <div className="relative mb-3">
-                      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80">Reseller Selection</label>
+                  <div className="rounded-xl border bg-muted/30 p-3 space-y-3">
+                    <div className="relative">
+                      <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/60" />
                       <input
                         value={resellerSearch}
                         onChange={(e) => setResellerSearch(e.target.value)}
-                        placeholder="Search reseller name or code..."
-                        className="w-full rounded-lg border bg-background px-9 py-2 text-sm focus:ring-2 focus:ring-primary/20"
+                        placeholder="Search reseller..."
+                        className="w-full rounded-lg border bg-background px-9 py-1.5 text-xs focus:ring-2 focus:ring-primary/20"
                       />
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setResellerId(null)}
-                        className={`rounded-full px-4 py-1.5 text-xs font-bold transition-all ${!resellerId ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/25' : 'bg-background hover:bg-accent border'}`}
-                      >
-                        None (Direct)
-                      </button>
-                      {filteredResellers.map(r => (
+                    
+                    <div className="space-y-2">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span className="text-[9px] font-bold text-muted-foreground mr-1">Trending:</span>
                         <button
-                          key={r.id}
                           type="button"
-                          onClick={() => setResellerId(r.id)}
-                          className={`rounded-full px-4 py-1.5 text-xs font-bold transition-all ${resellerId === r.id ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/25' : 'bg-background hover:bg-accent border'}`}
+                          onClick={() => setResellerId(null)}
+                          className={`rounded-md px-2.5 py-1 text-[10px] font-bold transition-all border ${!resellerId ? 'bg-primary text-primary-foreground border-primary' : 'bg-background hover:bg-accent'}`}
                         >
-                          {r.business_name}
+                          Direct
                         </button>
-                      ))}
+                        {trendingResellers.map(r => (
+                          <button
+                            key={r.id}
+                            type="button"
+                            onClick={() => setResellerId(r.id)}
+                            className={`rounded-md px-2.5 py-1 text-[10px] font-bold transition-all border ${resellerId === r.id ? 'bg-primary text-primary-foreground border-primary' : 'bg-background hover:bg-accent'}`}
+                          >
+                            {r.business_name}
+                          </button>
+                        ))}
+                      </div>
+
+                      {resellerSearch && filteredResellers.length > 0 && (
+                        <div className="rounded-lg border bg-background shadow-sm divide-y overflow-hidden animate-in fade-in slide-in-from-top-1">
+                          {filteredResellers.map(r => (
+                            <button
+                              key={r.id}
+                              type="button"
+                              onClick={() => {
+                                setResellerId(r.id);
+                                setResellerSearch("");
+                              }}
+                              className="flex w-full items-center justify-between p-2 text-left hover:bg-primary/5 transition-colors"
+                            >
+                              <span className="text-[10px] font-bold">{r.business_name}</span>
+                              <span className="text-[9px] text-muted-foreground uppercase">{r.code}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
               )}
 
-              <div className="space-y-3">
-                <label className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Product Selection</label>
-                <div className="rounded-xl border bg-background p-4 shadow-sm">
-                  <div className="relative mb-4">
-                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <input
-                      value={query}
-                      onChange={(e) => setQuery(e.target.value)}
-                      placeholder="Type product name to search..."
-                      className="w-full rounded-lg border bg-accent/10 px-9 py-2.5 text-sm focus:ring-2 focus:ring-primary/20"
-                    />
-                  </div>
+                <div className="space-y-3">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80">Customer Information</label>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <Field label="Customer Full Name">
+                      <input
+                        required
+                        value={name}
+                        onChange={(e) => setName(sanitizeName(e.target.value))}
+                        placeholder="Enter full name"
+                        className="w-full rounded-lg border px-3 py-1.5 text-xs focus:ring-2 focus:ring-primary/20"
+                      />
+                      {name && errors.name && <FieldError text={errors.name} />}
+                    </Field>
+                    <Field label="Mobile Number">
+                      <input
+                        required
+                        value={phone}
+                        onChange={(e) => setPhone(normalizePhone(e.target.value))}
+                        inputMode="numeric"
+                        placeholder="01XXXXXXXXX"
+                        className="w-full rounded-lg border px-3 py-1.5 text-xs focus:ring-2 focus:ring-primary/20"
+                      />
+                      {phone && errors.phone && <FieldError text={errors.phone} />}
+                    </Field>
+                    
+                    <Field label="Shipping Address" className="sm:col-span-2">
+                      <textarea
+                        required
+                        value={address}
+                        onChange={(e) => setAddress(e.target.value)}
+                        rows={2}
+                        placeholder="Complete address (Road, Area, City...)"
+                        className="w-full rounded-lg border px-3 py-1.5 text-xs focus:ring-2 focus:ring-primary/20"
+                      />
+                      {address && errors.address && <FieldError text={errors.address} />}
+                    </Field>
 
-                  {results.length > 0 && (
-                    <div className="max-h-60 divide-y overflow-y-auto rounded-lg border bg-muted/5">
-                      {results.map((item) => {
-                        const p = item.type === 'listing' ? item.data.products! : item.data;
-                        const price = item.type === 'listing' ? item.data.selling_price : (p.suggested_price || p.reseller_price + p.packaging_cost);
-                        const dc = productDeliveryCharge(p, area);
-                        const inCart = item.type === 'listing' 
-                          ? lines.some((x) => x.listing_id === item.data.id)
-                          : lines.some((x) => x.product_id === p.id);
-                        return (
-                          <button
-                            type="button"
-                            key={item.type === 'listing' ? `l-${item.data.id}` : `p-${p.id}`}
-                            onClick={() => pick(item)}
-                            className="flex w-full items-center gap-3 p-3 text-left hover:bg-primary/5 transition-colors"
-                          >
-                            <div className="h-12 w-12 shrink-0 overflow-hidden rounded-md border bg-muted">
-                              {p.og_image_url ? (
-                                <img src={p.og_image_url} alt="" className="h-full w-full object-cover" />
-                              ) : <Search className="m-auto h-full w-1/2 text-muted-foreground/30" />}
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-2">
-                                <span className="truncate text-sm font-bold">{p.name}</span>
-                                {item.type === 'listing' && <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[9px] font-bold text-primary uppercase">Listing</span>}
-                              </div>
-                              <div className="text-[11px] text-muted-foreground mt-0.5">
-                                Price: <span className="font-bold text-foreground">৳{Number(price).toFixed(0)}</span> · 
-                                Delivery: <span className="font-bold">৳{dc.toFixed(0)}</span>
-                              </div>
-                            </div>
-                            <div className={`shrink-0 rounded-full p-2 transition-colors ${inCart ? 'bg-primary text-primary-foreground' : 'bg-accent hover:bg-primary/20 hover:text-primary'}`}>
-                              {inCart ? <Plus className="h-4 w-4" /> : <Search className="h-4 w-4" />}
-                            </div>
-                          </button>
-                        );
-                      })}
+                    <div className="sm:col-span-2">
+                      <label className="mb-1 block text-[10px] font-bold text-muted-foreground/80 uppercase">Delivery Area</label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {(
+                          [
+                            ["inside_dhaka", "Inside Dhaka"],
+                            ["sub_dhaka", "Sub Dhaka"],
+                            ["outside_dhaka", "Outside Dhaka"],
+                          ] as const
+                        ).map(([v, label]) => {
+                          return (
+                            <button
+                              key={v}
+                              type="button"
+                              onClick={() => setArea(v)}
+                              className={`rounded-lg border py-2 text-[10px] font-bold transition-all ${
+                                area === v 
+                                  ? "bg-primary text-primary-foreground border-primary shadow-sm" 
+                                  : "bg-background hover:border-primary/50"
+                              }`}
+                            >
+                              {label}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
-                  )}
+
+                    <Field label="Payment Method">
+                      <select
+                        value={paymentMethod}
+                        onChange={(e) => setPaymentMethod(e.target.value)}
+                        className="w-full rounded-lg border bg-background px-3 py-1.5 text-xs focus:ring-2 focus:ring-primary/20"
+                      >
+                        <option value="cod">Cash on Delivery</option>
+                        <option value="bkash">bKash</option>
+                        <option value="nagad">Nagad</option>
+                        <option value="rocket">Rocket</option>
+                        <option value="sslcommerz">SSLCommerz</option>
+                      </select>
+                    </Field>
+
+                    <Field label="Order Note (Optional)">
+                      <input 
+                        value={note} 
+                        onChange={(e) => setNote(e.target.value)} 
+                        placeholder="Special instructions..."
+                        className="w-full rounded-lg border px-3 py-1.5 text-xs focus:ring-2 focus:ring-primary/20" 
+                      />
+                    </Field>
+                  </div>
                 </div>
-              </div>
 
-              <div className="space-y-3">
-                <label className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Customer Information</label>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <Field label="Customer Full Name">
-                    <input
-                      required
-                      value={name}
-                      onChange={(e) => setName(sanitizeName(e.target.value))}
-                      placeholder="Enter customer name"
-                      className="w-full rounded-lg border px-4 py-2 text-sm focus:ring-2 focus:ring-primary/20"
-                    />
-                    {name && errors.name && <FieldError text={errors.name} />}
-                  </Field>
-                  <Field label="Mobile Number">
-                    <input
-                      required
-                      value={phone}
-                      onChange={(e) => setPhone(normalizePhone(e.target.value))}
-                      inputMode="numeric"
-                      placeholder="01XXXXXXXXX"
-                      className="w-full rounded-lg border px-4 py-2 text-sm focus:ring-2 focus:ring-primary/20"
-                    />
-                    {phone && errors.phone && <FieldError text={errors.phone} />}
-                  </Field>
-                  
-                  <div className="sm:col-span-2">
-                    <label className="mb-2 block text-xs font-bold text-muted-foreground">Delivery Area</label>
-                    <div className="grid grid-cols-3 gap-2">
-                      {(
-                        [
-                          ["inside_dhaka", "Inside Dhaka"],
-                          ["sub_dhaka", "Sub Dhaka"],
-                          ["outside_dhaka", "Outside Dhaka"],
-                        ] as const
-                      ).map(([v, label]) => (
-                        <button
-                          key={v}
-                          type="button"
-                          onClick={() => setArea(v)}
-                          className={`rounded-lg border py-2.5 text-xs font-bold transition-all ${
-                            area === v 
-                              ? "bg-primary text-primary-foreground border-primary shadow-md shadow-primary/20" 
-                              : "bg-background hover:border-primary/50"
-                          }`}
-                        >
-                          {label}
-                        </button>
-                      ))}
+                <div className="space-y-3">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80">Order Items</label>
+                  <div className="rounded-xl border bg-background p-3 shadow-sm">
+                    <div className="relative mb-3">
+                      <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/60" />
+                      <input
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                        placeholder="Search product to add..."
+                        className="w-full rounded-lg border bg-accent/5 px-9 py-2 text-xs focus:ring-2 focus:ring-primary/20"
+                      />
                     </div>
-                  </div>
 
-                  <Field label="Shipping Address" className="sm:col-span-2">
-                    <textarea
-                      required
-                      value={address}
-                      onChange={(e) => setAddress(e.target.value)}
-                      rows={3}
-                      placeholder="Complete address (Road, Area, City...)"
-                      className="w-full rounded-lg border px-4 py-2 text-sm focus:ring-2 focus:ring-primary/20"
-                    />
-                    {address && errors.address && <FieldError text={errors.address} />}
-                  </Field>
+                    {query && results.length > 0 && (
+                      <div className="max-h-48 divide-y overflow-y-auto rounded-lg border bg-muted/5">
+                        {results.map((item) => {
+                          const p = item.type === 'listing' ? item.data.products! : item.data;
+                          const price = item.type === 'listing' ? item.data.selling_price : (p.suggested_price || p.reseller_price + p.packaging_cost);
+                          const dc = productDeliveryCharge(p, area);
+                          const inCart = item.type === 'listing' 
+                            ? lines.some((x) => x.listing_id === item.data.id)
+                            : lines.some((x) => x.product_id === p.id);
+                          return (
+                            <button
+                              type="button"
+                              key={item.type === 'listing' ? `l-${item.data.id}` : `p-${p.id}`}
+                              onClick={() => pick(item)}
+                              className="flex w-full items-center gap-2 p-2 text-left hover:bg-primary/5 transition-colors"
+                            >
+                              <div className="h-9 w-9 shrink-0 overflow-hidden rounded border bg-muted">
+                                {p.og_image_url ? (
+                                  <img src={p.og_image_url} alt="" className="h-full w-full object-cover" />
+                                ) : <Search className="m-auto h-full w-1/2 text-muted-foreground/30" />}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="truncate text-[11px] font-bold">{p.name}</span>
+                                  {item.type === 'listing' && <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[8px] font-bold text-primary uppercase">Listing</span>}
+                                </div>
+                                <div className="text-[9px] text-muted-foreground mt-0.5">
+                                  ৳{Number(price).toFixed(0)} · Delivery: ৳{dc.toFixed(0)}
+                                </div>
+                              </div>
+                              <div className={`shrink-0 rounded-full p-1.5 transition-colors ${inCart ? 'bg-primary text-primary-foreground' : 'bg-accent hover:bg-primary/20 hover:text-primary'}`}>
+                                <Plus className="h-3 w-3" />
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
 
                   <Field label="Payment Method">
                     <select
@@ -386,9 +435,9 @@ export function NewOrderModal({
             <aside className="flex flex-col bg-muted/20 p-4 sm:p-6 h-full">
               <div className="flex-1 space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Order Items</h3>
-                  <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary">
-                    {picked.length} Items
+                  <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80">Selected Items</h3>
+                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
+                    {picked.length}
                   </span>
                 </div>
 
