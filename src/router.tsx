@@ -9,6 +9,7 @@ export const getRouter = () => {
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,
         staleTime: 1000 * 60 * 5, // 5 minutes
+        retry: false, // Extra measure to prevent unexpected loops
       },
     },
   });
@@ -17,6 +18,7 @@ export const getRouter = () => {
     routeTree,
     context: { queryClient },
     scrollRestoration: true,
+    defaultPreload: "intent",
     defaultPreloadStaleTime: 0,
   });
 
