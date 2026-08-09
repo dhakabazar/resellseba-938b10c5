@@ -9,7 +9,9 @@ import {
 } from "@/components/order-filters";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
+import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
 import { Loader2, Truck, X, Download, Zap, RotateCcw, RefreshCw, Lock, PackageCheck, Repeat, Ban, Search, ListChecks, SlidersHorizontal, ChevronDown, Plus, MoreVertical, Eye, FileText, Trash2, Phone, CheckCircle2, AlertCircle, ShoppingCart, Printer, AlertTriangle, Settings2 } from "lucide-react";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -155,6 +157,19 @@ function AdminOrdersPage() {
   const [page, setPage] = useState(1);
   const [statusModal, setStatusModal] = useState<{ open: boolean; orderId: string; currentStatus: string } | null>(null);
   const [resellerOptions, setResellerOptions] = useState<FilterOption[]>([]);
+  const [confirmModal, setConfirmModal] = useState<{
+    open: boolean;
+    title: string;
+    description: string;
+    onConfirm: () => Promise<void>;
+    variant?: "danger" | "warning";
+  }>({
+    open: false,
+    title: "",
+    description: "",
+    onConfirm: async () => {},
+  });
+
 
   async function load() {
     setLoading(true);
@@ -274,23 +289,32 @@ function AdminOrdersPage() {
   }, [filters, tab]);
   const bulkUpdateStatus = async (newStatus: string) => {
     if (marked.length === 0) return;
-    if (!confirm(`Are you sure you want to update ${marked.length} orders to ${newStatus}?`)) return;
     
-    setLoading(true);
-    const { error } = await supabase
-      .from("orders")
-      .update({ status: newStatus as any })
-      .in("id", marked);
-    
-    if (error) {
-      toast.error(error.message);
-    } else {
-      toast.success(`${marked.length} orders updated successfully`);
-      setMarked([]);
-      await load();
-    }
-    setLoading(false);
+    setConfirmModal({
+      open: true,
+      title: "Bulk Status Update",
+      description: `Are you sure you want to update ${marked.length} orders to ${newStatus}?`,
+      variant: "warning",
+      onConfirm: async () => {
+        setLoading(true);
+        const { error } = await supabase
+          .from("orders")
+          .update({ status: newStatus as any })
+          .in("id", marked);
+        
+        if (error) {
+          toast.error(error.message);
+        } else {
+          toast.success(`${marked.length} orders updated successfully`);
+          setMarked([]);
+          await load();
+        }
+        setConfirmModal(prev => ({ ...prev, open: false }));
+        setLoading(false);
+      }
+    });
   };
+
 
   const bulkDeleteOrders = async () => {
     if (marked.length === 0) return;
@@ -304,51 +328,65 @@ function AdminOrdersPage() {
       return isBooked || hasWebhooks || isAdvanced;
     });
 
-
-    const msg = sensitiveOrders.length > 0 
-      ? `⚠️ WARNING: ${sensitiveOrders.length} of the selected orders have active courier bookings or advanced statuses. Deleting them might cause record mismatches. Are you sure you want to PERMANENTLY delete these ${marked.length} orders?`
-      : `Are you sure you want to delete ${marked.length} orders? This action cannot be undone.`;
-
-    if (!confirm(msg)) return;
+    const isSensitive = sensitiveOrders.length > 0;
     
-    setLoading(true);
-    const { error } = await supabase
-      .from("orders")
-      .delete()
-      .in("id", marked);
-    
-    if (error) {
-      toast.error(error.message);
-    } else {
-      toast.success(`${marked.length} orders deleted successfully`);
-      setMarked([]);
-      await load();
-    }
-    setLoading(false);
+    setConfirmModal({
+      open: true,
+      title: isSensitive ? "Hard Warning: Delete Orders" : "Delete Orders",
+      description: isSensitive 
+        ? `⚠️ WARNING: ${sensitiveOrders.length} of the selected orders have active courier bookings or advanced statuses. Deleting them might cause record mismatches. Are you sure you want to PERMANENTLY delete these ${marked.length} orders?`
+        : `Are you sure you want to delete ${marked.length} orders? This action cannot be undone.`,
+      variant: "danger",
+      onConfirm: async () => {
+        setLoading(true);
+        const { error } = await supabase
+          .from("orders")
+          .delete()
+          .in("id", marked);
+        
+        if (error) {
+          toast.error(error.message);
+        } else {
+          toast.success(`${marked.length} orders deleted successfully`);
+          setMarked([]);
+          await load();
+        }
+        setConfirmModal(prev => ({ ...prev, open: false }));
+        setLoading(false);
+      }
+    });
   };
+
 
   const removeOrder = async (order: OrderRow) => {
     const isBooked = shipments.some(s => s.order_id === order.id && (s.consignment_id || s.tracking_id));
     const hasWebhooks = events.some((e: any) => e.order_id === order.id);
     const isAdvanced = ["to_courier", "delivered", "pending_return", "returned"].includes(order.status);
 
+    const isSensitive = isBooked || hasWebhooks || isAdvanced;
 
-    const msg = (isBooked || hasWebhooks || isAdvanced)
-      ? `⚠️ HARD WARNING: This order has active courier data or advanced status (${order.status}). Deleting it may break tracking records. Delete anyway?`
-      : "Are you sure you want to delete this order?";
-
-    if (!confirm(msg)) return;
-    
-    setLoading(true);
-    const { error } = await supabase.from("orders").delete().eq("id", order.id);
-    if (error) {
-      toast.error(error.message);
-    } else {
-      toast.success("Order deleted");
-      await load();
-    }
-    setLoading(false);
+    setConfirmModal({
+      open: true,
+      title: isSensitive ? "Hard Warning: Delete Order" : "Delete Order",
+      description: isSensitive
+        ? `⚠️ HARD WARNING: This order has active courier data or advanced status (${order.status}). Deleting it may break tracking records. Delete anyway?`
+        : "Are you sure you want to delete this order?",
+      variant: "danger",
+      onConfirm: async () => {
+        setLoading(true);
+        const { error } = await supabase.from("orders").delete().eq("id", order.id);
+        if (error) {
+          toast.error(error.message);
+        } else {
+          toast.success("Order deleted");
+          await load();
+        }
+        setConfirmModal(prev => ({ ...prev, open: false }));
+        setLoading(false);
+      }
+    });
   };
+
 
   const paged = usePaginated(filtered, page, filters.perPage);
 
@@ -786,7 +824,17 @@ function AdminOrdersPage() {
           </div>
         </div>
       )}
+      <ConfirmModal
+        isOpen={confirmModal.open}
+        onClose={() => setConfirmModal(prev => ({ ...prev, open: false }))}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        description={confirmModal.description}
+        variant={confirmModal.variant}
+        isLoading={loading}
+      />
     </div>
+
   );
 }
 
