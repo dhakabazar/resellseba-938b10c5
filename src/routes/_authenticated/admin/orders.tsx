@@ -92,7 +92,7 @@ function AdminOrdersPage() {
     const [{ data }, { data: all }, { data: rs }, { data: p }] = await Promise.all([
       q,
       supabase.from("orders").select("status"),
-      supabase.from("resellers").select("id,business_name,code,phone").order("business_name"),
+      supabase.from("resellers").select("id,business_name,code,contact_phone").order("business_name"),
       supabase.from("products").select("id,name,og_image_url").eq("is_active", true),
     ]);
     const rows = (data ?? []) as OrderRow[];
