@@ -44,8 +44,11 @@ function BrandsPage() {
     setLoading(false);
   }
   useEffect(() => {
-    load();
-  }, []);
+    // Audit fix: only load if rows empty
+    if (rows.length === 0) {
+      load();
+    }
+  }, [rows.length]);
 
   async function create(e: React.FormEvent) {
     e.preventDefault();
