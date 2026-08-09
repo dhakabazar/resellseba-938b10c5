@@ -9,7 +9,9 @@ import {
 } from "@/components/order-filters";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
+import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
 import { Loader2, Truck, X, Download, Zap, RotateCcw, RefreshCw, Lock, PackageCheck, Repeat, Ban, Search, ListChecks, SlidersHorizontal, ChevronDown, Plus, MoreVertical, Eye, FileText, Trash2, Phone, CheckCircle2, AlertCircle, ShoppingCart, Printer, AlertTriangle, Settings2 } from "lucide-react";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -155,6 +157,19 @@ function AdminOrdersPage() {
   const [page, setPage] = useState(1);
   const [statusModal, setStatusModal] = useState<{ open: boolean; orderId: string; currentStatus: string } | null>(null);
   const [resellerOptions, setResellerOptions] = useState<FilterOption[]>([]);
+  const [confirmModal, setConfirmModal] = useState<{
+    open: boolean;
+    title: string;
+    description: string;
+    onConfirm: () => Promise<void>;
+    variant?: "danger" | "warning";
+  }>({
+    open: false,
+    title: "",
+    description: "",
+    onConfirm: async () => {},
+  });
+
 
   async function load() {
     setLoading(true);
@@ -274,23 +289,32 @@ function AdminOrdersPage() {
   }, [filters, tab]);
   const bulkUpdateStatus = async (newStatus: string) => {
     if (marked.length === 0) return;
-    if (!confirm(`Are you sure you want to update ${marked.length} orders to ${newStatus}?`)) return;
     
-    setLoading(true);
-    const { error } = await supabase
-      .from("orders")
-      .update({ status: newStatus as any })
-      .in("id", marked);
-    
-    if (error) {
-      toast.error(error.message);
-    } else {
-      toast.success(`${marked.length} orders updated successfully`);
-      setMarked([]);
-      await load();
-    }
-    setLoading(false);
+    setConfirmModal({
+      open: true,
+      title: "Bulk Status Update",
+      description: `Are you sure you want to update ${marked.length} orders to ${newStatus}?`,
+      variant: "warning",
+      onConfirm: async () => {
+        setLoading(true);
+        const { error } = await supabase
+          .from("orders")
+          .update({ status: newStatus as any })
+          .in("id", marked);
+        
+        if (error) {
+          toast.error(error.message);
+        } else {
+          toast.success(`${marked.length} orders updated successfully`);
+          setMarked([]);
+          await load();
+        }
+        setConfirmModal(prev => ({ ...prev, open: false }));
+        setLoading(false);
+      }
+    });
   };
+
 
   const bulkDeleteOrders = async () => {
     if (marked.length === 0) return;
@@ -786,7 +810,17 @@ function AdminOrdersPage() {
           </div>
         </div>
       )}
+      <ConfirmModal
+        isOpen={confirmModal.open}
+        onClose={() => setConfirmModal(prev => ({ ...prev, open: false }))}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        description={confirmModal.description}
+        variant={confirmModal.variant}
+        isLoading={loading}
+      />
     </div>
+
   );
 }
 

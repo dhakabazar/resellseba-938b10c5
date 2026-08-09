@@ -5,7 +5,9 @@ import { productDeliveryCharge, deliveryLabel } from "@/lib/delivery";
 import { addressError, nameError, normalizePhone, phoneError, sanitizeName } from "@/lib/checkout-validate";
 import { useAuth } from "@/lib/use-auth";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
+import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
 import {
+
   Loader2,
   Trash2,
   FileText,
@@ -147,6 +149,19 @@ function OrdersPage() {
   const [marked, setMarked] = useState<string[]>([]);
   const [page, setPage] = useState(1);
   const [statusModal, setStatusModal] = useState<{ open: boolean; orderId: string; currentStatus: string } | null>(null);
+  const [confirmModal, setConfirmModal] = useState<{
+    open: boolean;
+    title: string;
+    description: string;
+    onConfirm: () => Promise<void>;
+    variant?: "danger" | "warning";
+  }>({
+    open: false,
+    title: "",
+    description: "",
+    onConfirm: async () => {},
+  });
+
 
   async function load() {
     if (!user) return;
@@ -287,23 +302,31 @@ function OrdersPage() {
       return;
     }
 
-    if (!confirm(`Are you sure you want to update ${marked.length} orders to ${newStatus}?`)) return;
-    
-    setLoading(true);
-    const { error } = await supabase
-      .from("orders")
-      .update({ status: newStatus as any })
-      .in("id", marked);
-    
-    if (error) {
-      toast.error(error.message);
-    } else {
-      toast.success(`${marked.length} orders updated successfully`);
-      setMarked([]);
-      await load();
-    }
-    setLoading(false);
+    setConfirmModal({
+      open: true,
+      title: "Bulk Status Update",
+      description: `Are you sure you want to update ${marked.length} orders to ${newStatus}?`,
+      variant: "warning",
+      onConfirm: async () => {
+        setLoading(true);
+        const { error } = await supabase
+          .from("orders")
+          .update({ status: newStatus as any })
+          .in("id", marked);
+        
+        if (error) {
+          toast.error(error.message);
+        } else {
+          toast.success(`${marked.length} orders updated successfully`);
+          setMarked([]);
+          await load();
+        }
+        setConfirmModal(prev => ({ ...prev, open: false }));
+        setLoading(false);
+      }
+    });
   };
+
 
   const bulkDeleteOrders = async () => {
     if (marked.length === 0) return;
@@ -317,23 +340,31 @@ function OrdersPage() {
       return;
     }
 
-    if (!confirm(`Delete ${marked.length} selected orders?`)) return;
-    
-    setLoading(true);
-    const { error } = await supabase
-      .from("orders")
-      .delete()
-      .in("id", marked);
-    
-    if (error) {
-      toast.error(error.message);
-    } else {
-      toast.success(`${marked.length} orders deleted`);
-      setMarked([]);
-      await load();
-    }
-    setLoading(false);
+    setConfirmModal({
+      open: true,
+      title: "Delete Orders",
+      description: `Delete ${marked.length} selected orders? This action cannot be undone.`,
+      variant: "danger",
+      onConfirm: async () => {
+        setLoading(true);
+        const { error } = await supabase
+          .from("orders")
+          .delete()
+          .in("id", marked);
+        
+        if (error) {
+          toast.error(error.message);
+        } else {
+          toast.success(`${marked.length} orders deleted`);
+          setMarked([]);
+          await load();
+        }
+        setConfirmModal(prev => ({ ...prev, open: false }));
+        setLoading(false);
+      }
+    });
   };
+
 
   const tabCount = (key: OrderTabKey) => {
 
@@ -353,16 +384,25 @@ function OrdersPage() {
       return;
     }
 
-    if (!confirm("Delete this order?")) return;
-    setLoading(true);
-    const { error } = await supabase.from("orders").delete().eq("id", id);
-    if (error) toast.error(error.message);
-    else {
-      toast.success("Order deleted");
-      load();
-    }
-    setLoading(false);
+    setConfirmModal({
+      open: true,
+      title: "Delete Order",
+      description: "Are you sure you want to delete this order? This action cannot be undone.",
+      variant: "danger",
+      onConfirm: async () => {
+        setLoading(true);
+        const { error } = await supabase.from("orders").delete().eq("id", id);
+        if (error) toast.error(error.message);
+        else {
+          toast.success("Order deleted");
+          load();
+        }
+        setConfirmModal(prev => ({ ...prev, open: false }));
+        setLoading(false);
+      }
+    });
   }
+
 
 
   return (
@@ -854,7 +894,17 @@ function OrdersPage() {
           </div>
         </div>
       )}
+      <ConfirmModal
+        isOpen={confirmModal.open}
+        onClose={() => setConfirmModal(prev => ({ ...prev, open: false }))}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        description={confirmModal.description}
+        variant={confirmModal.variant}
+        isLoading={loading}
+      />
     </div>
+
   );
 }
 // Removed internal NewOrderModal as it is now shared in src/components/NewOrderModal.tsx
