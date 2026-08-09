@@ -74,7 +74,7 @@ export function StatCard({
       )}
       <div
         className={cn(
-          "pointer-events-none absolute inset-0 bg-gradient-to-r to-transparent opacity-0 transition-opacity group-hover:opacity-100",
+          "pointer-events-none absolute inset-0 rounded-[inherit] bg-gradient-to-r to-transparent opacity-0 transition-opacity group-hover:opacity-100",
           t.glow,
         )}
       />

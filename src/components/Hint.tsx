@@ -28,12 +28,12 @@ export function Hint({
 
   const pos =
     side === "bottom"
-      ? "top-full mt-1 left-1/2 -translate-x-1/2"
+      ? "top-full mt-2 left-1/2 -translate-x-1/2"
       : side === "right"
-        ? "left-full ml-1 top-1/2 -translate-y-1/2"
+        ? "left-full ml-2 top-1/2 -translate-y-1/2"
         : side === "left"
-          ? "right-full mr-1 top-1/2 -translate-y-1/2 md:translate-x-0 sm:max-w-[calc(100vw-40px)]"
-          : "bottom-full mb-1 left-1/2 -translate-x-1/2";
+          ? "right-full mr-2 top-1/2 -translate-y-1/2"
+          : "bottom-full mb-2 left-1/2 -translate-x-1/2";
 
   return (
     <span ref={ref} className={`relative inline-flex align-middle ${className}`}>
@@ -53,7 +53,7 @@ export function Hint({
       </button>
       {open && (
         <span
-          className={`pointer-events-none absolute z-[9999] w-64 rounded-md border border-white/10 bg-black/60 backdrop-blur-md px-3 py-2 text-xs leading-relaxed text-white shadow-2xl ring-1 ring-white/10 ${pos}`}
+          className={`pointer-events-none absolute z-[9999] w-max max-w-[200px] break-words rounded-lg border border-white/20 bg-black/80 backdrop-blur-xl px-3 py-2 text-[11px] font-medium leading-tight text-white shadow-2xl ring-1 ring-white/10 ${pos}`}
         >
           {children}
         </span>
