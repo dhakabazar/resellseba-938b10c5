@@ -135,9 +135,9 @@ function RootComponent() {
       if (event === "SIGNED_OUT") {
         queryClient.clear();
         router.navigate({ to: "/login", replace: true });
-      } else if (event === "SIGNED_IN") {
-        queryClient.invalidateQueries();
       }
+      // Note: Removed automatic query invalidation on SIGNED_IN to prevent reloads
+      // The session is already managed by the client.
     });
     return () => sub.subscription.unsubscribe();
   }, [router, queryClient]);

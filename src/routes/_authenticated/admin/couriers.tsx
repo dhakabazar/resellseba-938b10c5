@@ -50,10 +50,7 @@ function CouriersPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (rows.length === 0) {
-      load();
-    }
-    // Added protection against tab-focus reloads triggering double calls
+    load();
   }, []);
 
   async function load() {

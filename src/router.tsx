@@ -20,7 +20,6 @@ export const getRouter = () => {
     scrollRestoration: true,
     defaultPreload: "intent",
     defaultPreloadStaleTime: 0,
-    // Audit fix: ensure router doesn't re-render entire trees on focus
     defaultViewTransition: true,
   });
 
