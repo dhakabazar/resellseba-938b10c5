@@ -10,7 +10,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
 import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
-import { Loader2, X, Download, PackageCheck, ChevronDown, Plus, MoreVertical, Eye, Phone, CheckCircle2, Settings2, Trash2, Copy, ShoppingCart, Printer } from "lucide-react";
+import { Loader2, X, Download, PackageCheck, ChevronDown, Plus, MoreVertical, Eye, Phone, CheckCircle2, Settings2, Trash2, Copy, ShoppingCart, Printer, Truck } from "lucide-react";
 
 import {
   DropdownMenu,
@@ -19,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { NewOrderModal } from "@/components/NewOrderModal";
+import { ShipmentBookingModal } from "@/components/ShipmentBookingModal";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { bookSteadfast } from "@/lib/couriers.functions";
@@ -79,6 +80,7 @@ function AdminOrdersPage() {
   const [marked, setMarked] = useState<string[]>([]);
   const [page, setPage] = useState(1);
   const [statusModal, setStatusModal] = useState<{ open: boolean; orderId: string; currentStatus: string; isBulk?: boolean } | null>(null);
+  const [bookingModal, setBookingModal] = useState<{ open: boolean; orderIds: string[] }>({ open: false, orderIds: [] });
   const [confirmModal, setConfirmModal] = useState<{
     open: boolean;
     title: string;
@@ -235,6 +237,12 @@ function AdminOrdersPage() {
               <Printer className="h-3.5 w-3.5" /> Print Labels
             </button>
             <button
+              onClick={() => setBookingModal({ open: true, orderIds: marked })}
+              className="inline-flex h-9 items-center gap-2 rounded-md border bg-background px-3 text-xs font-medium hover:bg-accent"
+            >
+              <Truck className="h-3.5 w-3.5" /> Book Courier
+            </button>
+            <button
               onClick={() => setMarked([])}
               className="ml-auto text-xs text-muted-foreground hover:text-foreground"
             >
@@ -335,6 +343,17 @@ function AdminOrdersPage() {
                           <DropdownMenuItem onClick={() => setStatusModal({ open: true, orderId: o.id, currentStatus: o.status })}>
                             <Settings2 className="mr-2 h-4 w-4" /> Change Status
                           </DropdownMenuItem>
+                          {(() => {
+                            const isBooked = shipments.some(s => s.order_id === o.id && (s.consignment_id || s.tracking_id));
+                            if (!isBooked) {
+                              return (
+                                <DropdownMenuItem onClick={() => setBookingModal({ open: true, orderIds: [o.id] })}>
+                                  <Truck className="mr-2 h-4 w-4" /> Book Courier
+                                </DropdownMenuItem>
+                              );
+                            }
+                            return null;
+                          })()}
                           {(() => {
                             const isBooked = shipments.some(s => s.order_id === o.id && (s.consignment_id || s.tracking_id));
                             return (
@@ -484,6 +503,15 @@ function AdminOrdersPage() {
             </div>
           </div>
         )}
+        <ShipmentBookingModal
+          isOpen={bookingModal.open}
+          onClose={() => setBookingModal({ open: false, orderIds: [] })}
+          orderIds={bookingModal.orderIds}
+          onSuccess={() => {
+            setMarked([]);
+            load();
+          }}
+        />
     </div>
   );
 }

@@ -286,6 +286,9 @@ function OrdersPage() {
   useEffect(() => {
     setPage(1);
   }, [filters, tab, searchMode]);
+  
+  // Re-read file to find where to add the chevron toggle and grid columns
+  // (The previous AI message mentioned reconstructing the grid)
   const paged = usePaginated(visible, page, filters.perPage);
   const stats = useMemo(
     () =>
