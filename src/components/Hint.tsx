@@ -1,9 +1,10 @@
 import { HelpCircle } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 
 /**
  * Hint icon — shows an explanation on hover (desktop) or tap (mobile).
- * Global, reusable. Text prop e jekono string ba node dite paren.
+ * Uses a portal to ensure it stays above all other elements and doesn't get clipped.
  */
 export function Hint({
   children,
@@ -15,29 +16,67 @@ export function Hint({
   side?: "top" | "bottom" | "right" | "left";
 }) {
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLSpanElement>(null);
+  const [coords, setCoords] = useState({ top: 0, left: 0 });
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  const updatePosition = () => {
+    if (triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      const scrollY = window.scrollY;
+      const scrollX = window.scrollX;
+
+      let top = 0;
+      let left = 0;
+
+      if (side === "top") {
+        top = rect.top + scrollY - 8;
+        left = rect.left + scrollX + rect.width / 2;
+      } else if (side === "bottom") {
+        top = rect.bottom + scrollY + 8;
+        left = rect.left + scrollX + rect.width / 2;
+      } else if (side === "left") {
+        top = rect.top + scrollY + rect.height / 2;
+        left = rect.left + scrollX - 8;
+      } else if (side === "right") {
+        top = rect.top + scrollY + rect.height / 2;
+        left = rect.right + scrollX + 8;
+      }
+
+      setCoords({ top, left });
+    }
+  };
+
+  useEffect(() => {
+    if (open) {
+      updatePosition();
+      window.addEventListener("scroll", updatePosition);
+      window.addEventListener("resize", updatePosition);
+    }
+    return () => {
+      window.removeEventListener("scroll", updatePosition);
+      window.removeEventListener("resize", updatePosition);
+    };
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
     const onDoc = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      if (triggerRef.current && !triggerRef.current.contains(e.target as Node)) setOpen(false);
     };
     document.addEventListener("mousedown", onDoc);
     return () => document.removeEventListener("mousedown", onDoc);
   }, [open]);
 
-  const pos =
-    side === "bottom"
-      ? "top-full mt-2 left-1/2 -translate-x-1/2"
-      : side === "right"
-        ? "left-full ml-2 top-1/2 -translate-y-1/2"
-        : side === "left"
-          ? "right-full mr-2 top-1/2 -translate-y-1/2"
-          : "bottom-full mb-2 left-1/2 -translate-x-1/2";
+  const translate = 
+    side === "top" ? "translate(-50%, -100%)" :
+    side === "bottom" ? "translate(-50%, 0)" :
+    side === "left" ? "translate(-100%, -50%)" :
+    "translate(0, -50%)";
 
   return (
-    <span ref={ref} className={`relative inline-flex align-middle ${className}`}>
+    <span className={`relative inline-flex align-middle ${className}`}>
       <button
+        ref={triggerRef}
         type="button"
         onClick={(e) => {
           e.preventDefault();
@@ -46,17 +85,23 @@ export function Hint({
         }}
         onMouseEnter={() => setOpen(true)}
         onMouseLeave={() => setOpen(false)}
-        className="inline-flex h-4 w-4 items-center justify-center rounded-full text-muted-foreground hover:text-primary"
+        className="inline-flex h-4 w-4 items-center justify-center rounded-full text-muted-foreground hover:text-primary transition-colors"
         aria-label="Hint"
       >
         <HelpCircle className="h-3.5 w-3.5" />
       </button>
-      {open && (
+      {open && typeof document !== 'undefined' && createPortal(
         <span
-          className={`pointer-events-none absolute z-[9999] w-max max-w-[200px] break-words rounded-lg border border-white/20 bg-black/80 backdrop-blur-xl px-3 py-2 text-[11px] font-medium leading-tight text-white shadow-2xl ring-1 ring-white/10 ${pos}`}
+          className="pointer-events-none fixed z-[99999] w-max max-w-[200px] break-words rounded-lg border border-white/20 bg-black/90 backdrop-blur-xl px-3 py-2 text-[11px] font-medium leading-tight text-white shadow-2xl ring-1 ring-white/10"
+          style={{
+            top: coords.top - window.scrollY,
+            left: coords.left - window.scrollX,
+            transform: translate,
+          }}
         >
           {children}
-        </span>
+        </span>,
+        document.body
       )}
     </span>
   );
