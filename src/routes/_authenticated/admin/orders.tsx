@@ -188,7 +188,7 @@ function AdminOrdersPage() {
     const [{ data }, { data: all }, { data: rs }, { data: p }] = await Promise.all([
       q,
       supabase.from("orders").select("status"),
-      supabase.from("resellers").select("id,business_name,code").order("business_name"),
+      supabase.from("resellers").select("id,business_name,code,phone").order("business_name"),
       supabase.from("products").select("id,name,reseller_price,packaging_cost,delivery_inside,delivery_outside,delivery_mode,delivery_flat,og_image_url,suggested_price").eq("is_active", true).order("created_at", { ascending: false }),
     ]);
     const rows = (data ?? []) as OrderRow[];
@@ -649,17 +649,19 @@ function AdminOrdersPage() {
                                 <Truck className="h-2.5 w-2.5" />
                                 <span className="capitalize">{s.provider}</span>
                                 {s.consignment_id && (
-                                  <span className="opacity-70">({s.consignment_id})</span>
-                                  <button 
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      navigator.clipboard.writeText(s.consignment_id || "");
-                                      toast.success("Booking ID copied");
-                                    }}
-                                    className="ml-0.5 opacity-50 hover:opacity-100"
-                                  >
-                                    <Copy className="h-2 w-2" />
-                                  </button>
+                                  <>
+                                    <span className="opacity-70">({s.consignment_id})</span>
+                                    <button 
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        navigator.clipboard.writeText(s.consignment_id || "");
+                                        toast.success("Booking ID copied");
+                                      }}
+                                      className="ml-0.5 opacity-50 hover:opacity-100"
+                                    >
+                                      <Copy className="h-2 w-2" />
+                                    </button>
+                                  </>
                                 )}
                               </div>
                             ))}

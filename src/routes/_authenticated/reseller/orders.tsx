@@ -731,17 +731,19 @@ function OrdersPage() {
                                 <Truck className="h-2.5 w-2.5" />
                                 <span className="capitalize">{s.provider}</span>
                                 {s.consignment_id && (
-                                  <span className="opacity-70">({s.consignment_id})</span>
-                                  <button 
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      navigator.clipboard.writeText(s.consignment_id || "");
-                                      toast.success("Booking ID copied");
-                                    }}
-                                    className="ml-0.5 opacity-50 hover:opacity-100"
-                                  >
-                                    <Copy className="h-2 w-2" />
-                                  </button>
+                                  <>
+                                    <span className="opacity-70">({s.consignment_id})</span>
+                                    <button 
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        navigator.clipboard.writeText(s.consignment_id || "");
+                                        toast.success("Booking ID copied");
+                                      }}
+                                      className="ml-0.5 opacity-50 hover:opacity-100"
+                                    >
+                                      <Copy className="h-2 w-2" />
+                                    </button>
+                                  </>
                                 )}
                               </div>
                             ))}
