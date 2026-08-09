@@ -50,17 +50,19 @@ function CouriersPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    load();
+    // Only load if not already loaded to prevent clearing inputs on refocus if refetchOnWindowFocus was true
+    // (though we disabled it globally, this is an extra safety layer for the user's specific concern)
+    if (rows.length === 0) {
+      load();
+    }
   }, []);
 
   async function load() {
-    setLoading(true);
     const { data } = await supabase.from("courier_configs").select("*").order("display_name");
     const sorted = [...((data ?? []) as Row[])]
       .filter((r) => PROVIDER_ORDER.includes(r.provider))
       .sort((a, b) => PROVIDER_ORDER.indexOf(a.provider) - PROVIDER_ORDER.indexOf(b.provider));
     setRows(sorted);
-
     setLoading(false);
   }
 
