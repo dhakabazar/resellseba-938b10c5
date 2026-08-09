@@ -155,7 +155,7 @@ function AdminOrdersPage() {
   const [pickScope, setPickScope] = useState<"filtered" | "marked">("filtered");
 
   const [page, setPage] = useState(1);
-  const [statusModal, setStatusModal] = useState<{ open: boolean; orderId: string; currentStatus: string } | null>(null);
+  const [statusModal, setStatusModal] = useState<{ open: boolean; orderId: string; currentStatus: string; isBulk?: boolean } | null>(null);
   const [resellerOptions, setResellerOptions] = useState<FilterOption[]>([]);
   const [confirmModal, setConfirmModal] = useState<{
     open: boolean;
