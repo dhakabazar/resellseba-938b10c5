@@ -104,7 +104,7 @@ export const bookSteadfast = createServerFn({ method: "POST" })
     // courier webhook/sync event arrives (received -> to courier, delivered, return).
     await supabase.from("order_status_history").insert({
       order_id: order.id,
-      status: order.status,
+      status: (order as { status: string }).status,
       note: `Steadfast booked · ${trackingId}`,
       changed_by: userId,
     });
@@ -364,7 +364,7 @@ export const bookPathao = createServerFn({ method: "POST" })
     // courier webhook/sync event arrives (received -> to courier, delivered, return).
     await supabase.from("order_status_history").insert({
       order_id: order.id,
-      status: order.status,
+      status: (order as { status: string }).status,
       note: `Pathao booked · ${consignmentId}`,
       changed_by: userId,
     });
@@ -545,7 +545,7 @@ export const bookCarrybee = createServerFn({ method: "POST" })
     // courier webhook/sync event arrives (received -> to courier, delivered, return).
     await supabase.from("order_status_history").insert({
       order_id: order.id,
-      status: order.status,
+      status: (order as { status: string }).status,
       note: `Carrybee booked · ${consignmentId}`,
       changed_by: userId,
     });
