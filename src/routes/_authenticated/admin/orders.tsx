@@ -9,7 +9,7 @@ import {
 } from "@/components/order-filters";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
-import { Loader2, Truck, X, Download, Zap, RotateCcw, RefreshCw, Lock, PackageCheck, Repeat, Ban, Search, ListChecks, SlidersHorizontal, ChevronDown, Plus, MoreVertical, Eye, FileText, Trash2, Phone, CheckCircle2, AlertCircle, ShoppingCart, Printer, AlertTriangle } from "lucide-react";
+import { Loader2, Truck, X, Download, Zap, RotateCcw, RefreshCw, Lock, PackageCheck, Repeat, Ban, Search, ListChecks, SlidersHorizontal, ChevronDown, Plus, MoreVertical, Eye, FileText, Trash2, Phone, CheckCircle2, AlertCircle, ShoppingCart, Printer, AlertTriangle, Settings2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -151,6 +151,7 @@ function AdminOrdersPage() {
   const [pickScope, setPickScope] = useState<"filtered" | "marked">("filtered");
 
   const [page, setPage] = useState(1);
+  const [statusModal, setStatusModal] = useState<{ open: boolean; orderId: string; currentStatus: string } | null>(null);
   const [resellerOptions, setResellerOptions] = useState<FilterOption[]>([]);
 
   async function load() {
@@ -533,6 +534,14 @@ function AdminOrdersPage() {
                               <DropdownMenuItem onClick={() => setSelected(o)}>
                                 <Eye className="mr-2 h-4 w-4" /> View Details
                               </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => setStatusModal({ open: true, orderId: o.id, currentStatus: o.status })}>
+                                <Settings2 className="mr-2 h-4 w-4" /> Change Status
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => printShippingLabels([o.id], "3x3")}>
+                                <Printer className="mr-2 h-4 w-4" /> Print Label (3x3)
+                              </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </div>
@@ -589,29 +598,9 @@ function AdminOrdersPage() {
                           <Eye className="mr-2 h-4 w-4" /> View Details
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <div className="px-2 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                          Update Status
-                        </div>
-                        {ORDER_STATUS_OPTIONS.map((s) => (
-                          <DropdownMenuItem
-                            key={s}
-                            onClick={async () => {
-                              const { error } = await supabase
-                                .from("orders")
-                                .update({ status: s as any })
-                                .eq("id", o.id);
-                              if (error) toast.error(error.message);
-                              else {
-                                toast.success(`Order ${o.order_number} marked as ${orderStatusLabel(s)}`);
-                                await load();
-                              }
-                            }}
-                            className="capitalize"
-                          >
-                            <div className={`mr-2 h-2 w-2 rounded-full ${orderStatusTone(s)}`} />
-                            {orderStatusLabel(s)}
-                          </DropdownMenuItem>
-                        ))}
+                        <DropdownMenuItem onClick={() => setStatusModal({ open: true, orderId: o.id, currentStatus: o.status })}>
+                          <Settings2 className="mr-2 h-4 w-4" /> Change Status
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => printShippingLabels([o.id], "3x3")}>
                           <Printer className="mr-2 h-4 w-4" /> Print Label (3x3)
@@ -619,7 +608,6 @@ function AdminOrdersPage() {
                         <DropdownMenuItem onClick={() => printShippingLabels([o.id], "3x4")}>
                           <Printer className="mr-2 h-4 w-4" /> Print Label (3x4)
                         </DropdownMenuItem>
-                        {/* We could add more admin actions here like Export PDF/Label if implemented */}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
@@ -656,6 +644,60 @@ function AdminOrdersPage() {
             load();
           }}
         />
+      )}
+      {statusModal && statusModal.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-sm rounded-lg bg-background p-6 shadow-xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-lg font-bold">Change Order Status</h3>
+              <button onClick={() => setStatusModal(null)} className="rounded-md p-1 hover:bg-accent">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            
+            <div className="grid grid-cols-1 gap-2">
+              {ORDER_STATUS_OPTIONS.map((s) => (
+                <button
+                  key={s}
+                  onClick={async () => {
+                    setLoading(true);
+                    const { error } = await supabase
+                      .from("orders")
+                      .update({ status: s as any })
+                      .eq("id", statusModal.orderId);
+                    
+                    if (error) {
+                      toast.error(error.message);
+                    } else {
+                      toast.success(`Status updated to ${orderStatusLabel(s)}`);
+                      setStatusModal(null);
+                      await load();
+                    }
+                    setLoading(false);
+                  }}
+                  className={`flex items-center gap-3 rounded-md border p-3 text-left text-sm transition-colors hover:bg-accent ${
+                    statusModal.currentStatus === s ? "border-primary bg-primary/5" : ""
+                  }`}
+                >
+                  <div className={`h-3 w-3 rounded-full ${orderStatusTone(s)}`} />
+                  <span className="flex-1 font-medium capitalize">{orderStatusLabel(s)}</span>
+                  {statusModal.currentStatus === s && (
+                    <CheckCircle2 className="h-4 w-4 text-primary" />
+                  )}
+                </button>
+              ))}
+            </div>
+            
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={() => setStatusModal(null)}
+                className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-accent"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
