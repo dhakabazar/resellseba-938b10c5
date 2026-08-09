@@ -512,6 +512,149 @@ function AdminOrdersPage() {
             load();
           }}
         />
+
+        {selected && (
+          <OrderDrawer
+            order={selected}
+            onClose={() => setSelected(null)}
+            items={itemsByOrder.get(selected.id) || []}
+            shipments={shipments.filter(s => s.order_id === selected.id)}
+            events={[]} // We should fetch events if needed
+            allProducts={allProducts}
+          />
+        )}
+    </div>
+  );
+}
+
+function OrderDrawer({ 
+  order, 
+  onClose, 
+  items, 
+  shipments,
+  events,
+  allProducts 
+}: { 
+  order: OrderRow; 
+  onClose: () => void; 
+  items: OrderItemLite[]; 
+  shipments: any[];
+  events: any[];
+  allProducts: any[];
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="h-full w-full max-w-2xl overflow-y-auto bg-background p-6 shadow-2xl animate-in slide-in-from-right duration-300 sm:p-8">
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold">{order.order_number}</h2>
+            <p className="text-sm text-muted-foreground">{new Date(order.created_at).toLocaleString()}</p>
+          </div>
+          <button onClick={onClose} className="rounded-full p-2 hover:bg-muted transition-colors">
+            <X className="h-6 w-6" />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+          <div className="space-y-6">
+            <div className="surface-card p-4">
+              <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-muted-foreground">Customer Info</h3>
+              <div className="space-y-2 text-sm">
+                <p className="font-semibold text-base">{order.customer_name}</p>
+                <div className="flex items-center gap-2">
+                  <Phone className="h-4 w-4 text-primary" />
+                  <span>{order.customer_phone}</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Truck className="h-4 w-4 text-primary mt-1" />
+                  <p>{order.address_line}, {order.area}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="surface-card p-4">
+              <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-muted-foreground">Reseller Info</h3>
+              {order.resellers ? (
+                <div className="space-y-2 text-sm">
+                  <p className="font-semibold">{order.resellers.business_name}</p>
+                  <p className="text-muted-foreground">Code: {order.resellers.code}</p>
+                  <div className="flex items-center gap-2">
+                    <Phone className="h-4 w-4 text-primary" />
+                    <span>{order.resellers.contact_phone || "—"}</span>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground italic">Direct Sale</p>
+              )}
+            </div>
+
+            <div className="surface-card p-4">
+              <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-muted-foreground">Internal Notes</h3>
+              <div className="space-y-3 text-sm">
+                <div>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase">Reseller Note</p>
+                  <p className="mt-1 italic">{order.reseller_note || "No note"}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase">Admin Note</p>
+                  <p className="mt-1">{order.admin_note || "No note"}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            <div className="surface-card p-4">
+              <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-muted-foreground">Order Items</h3>
+              <div className="space-y-3">
+                {items.map((it, idx) => {
+                  const p = allProducts.find(x => x.id === it.product_id);
+                  return (
+                    <div key={idx} className="flex items-center gap-3 rounded-lg border bg-background/50 p-2">
+                      {p?.og_image_url && <img src={p.og_image_url} className="h-12 w-12 rounded object-cover shadow-sm" />}
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium">{it.product_name}</p>
+                        <p className="text-xs text-muted-foreground">Qty: {it.quantity}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="surface-card p-4">
+              <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-muted-foreground">Courier Info</h3>
+              {shipments.length > 0 ? (
+                <div className="space-y-4">
+                  {shipments.map(s => (
+                    <div key={s.id} className="rounded-lg border border-primary/20 bg-primary/5 p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-bold uppercase text-primary">{s.provider}</span>
+                        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary capitalize">{s.status}</span>
+                      </div>
+                      <div className="text-sm font-mono tracking-wider">#{s.consignment_id || s.tracking_id}</div>
+                      <div className="mt-2 text-[10px] text-muted-foreground">Courier Status: {s.courier_status || "—"}</div>
+                    </div>
+                  ))}
+                  <CourierTimeline events={events} />
+                </div>
+              ) : (
+                <div className="text-center py-4 text-sm text-muted-foreground italic">
+                  Not booked yet
+                </div>
+              )}
+            </div>
+
+            <div className="surface-card bg-primary/5 border-primary/20 p-4">
+              <div className="flex items-center justify-between text-lg font-bold">
+                <span>Total Amount</span>
+                <span className="text-primary">৳{Number(order.total).toFixed(0)}</span>
+              </div>
+              <p className="text-right text-xs text-muted-foreground mt-1 capitalize">{order.payment_method} · {order.payment_status}</p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
