@@ -21,6 +21,7 @@ export const getRouter = () => {
     defaultPreload: "intent",
     defaultPreloadStaleTime: 0,
     defaultViewTransition: true,
+    defaultOnFocus: () => {}, // Disable internal router refetch on focus
   });
 
   return router;
