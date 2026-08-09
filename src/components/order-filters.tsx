@@ -268,14 +268,6 @@ export function OrderFilterBar({
             </option>
           ))}
         </Select>
-        <Select label="Per page" value={String(value.perPage)} onChange={(v) => set({ perPage: Number(v) })}>
-          {[10, 20, 50, 100].map((n) => (
-            <option key={n} value={n}>
-              {n} / page
-            </option>
-          ))}
-          <option value={-1}>All</option>
-        </Select>
       </div>
 
       {value.datePreset === "custom" && (

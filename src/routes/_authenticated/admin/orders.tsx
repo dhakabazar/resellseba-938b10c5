@@ -451,6 +451,20 @@ function AdminOrdersPage() {
           Pick list
         </button>
 
+        <div className="ml-auto flex items-center gap-2">
+          <span className="text-xs font-medium text-muted-foreground hidden sm:inline">Per page:</span>
+          <select 
+            value={filters.perPage}
+            onChange={(e) => setFilters({ ...filters, perPage: Number(e.target.value) })}
+            className="h-9 rounded-md border bg-background px-2 text-xs font-medium outline-none focus:ring-1 focus:ring-primary"
+          >
+            {[10, 20, 50, 100].map((n) => (
+              <option key={n} value={n}>{n}</option>
+            ))}
+            <option value={-1}>All</option>
+          </select>
+        </div>
+
         {marked.length > 0 && (
           <div className="flex flex-wrap items-center gap-2 rounded-md border border-primary/40 bg-primary/5 px-3 py-2">
             <span className="mr-2 text-sm font-medium">{marked.length} marked</span>
