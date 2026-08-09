@@ -488,69 +488,14 @@ export function NewOrderModal({
               </div>
             </div>
 
-            {/* Right Column: Summary & Cart */}
+            {/* Right Column: Order Summary */}
             <aside className="flex flex-col bg-muted/20 p-4 sm:p-6 h-full">
-              <div className="flex-1 space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80">Selected Items</h3>
-                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
-                    {picked.length}
-                  </span>
-                </div>
-
-                <div className="space-y-3 max-h-[40vh] overflow-y-auto pr-1 custom-scrollbar">
-                  {picked.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed py-12 text-center text-muted-foreground bg-background/50">
-                      <Search className="mb-2 h-8 w-8 opacity-20" />
-                      <p className="text-xs">No products added yet</p>
-                    </div>
-                  ) : (
-                    picked.map(({ line, p, sellPrice, listingId }, i) => {
-                      const dc = productDeliveryCharge(p, area);
-                      return (
-                        <div key={listingId || p.id} className="group relative flex items-center gap-3 rounded-xl border bg-background p-3 shadow-sm hover:shadow-md transition-shadow">
-                          <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg border bg-muted">
-                            {p.og_image_url && <img src={p.og_image_url} alt="" className="h-full w-full object-cover" />}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="truncate text-xs font-bold">{p.name}</div>
-                            <div className="mt-0.5 text-[10px] text-muted-foreground">
-                              ৳{Number(sellPrice).toFixed(0)} × {line.qty}
-                            </div>
-                          </div>
-                          
-                          <div className="flex flex-col items-end gap-1">
-                            <div className="flex items-center rounded-lg border bg-accent/30 p-0.5">
-                              <button 
-                                type="button" 
-                                onClick={() => setLines(prev => prev.flatMap((l, idx) => idx === i ? (l.qty <= 1 ? [] : [{...l, qty: l.qty - 1}]) : [l]))} 
-                                className="px-1.5 py-1 hover:bg-background rounded-md transition-colors"
-                              >
-                                <Minus className="h-3 w-3" />
-                              </button>
-                              <span className="min-w-[2ch] text-center text-[11px] font-bold">{line.qty}</span>
-                              <button 
-                                type="button" 
-                                onClick={() => setLines(prev => prev.map((l, idx) => idx === i ? {...l, qty: l.qty + 1} : l))} 
-                                className="px-1.5 py-1 hover:bg-background rounded-md transition-colors"
-                              >
-                                <Plus className="h-3 w-3" />
-                              </button>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => setLines(prev => prev.filter((_, idx) => idx !== i))}
-                              className="text-[10px] font-bold text-destructive hover:underline"
-                            >
-                              Remove
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
+              <div className="flex-1">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/80">Order Summary</h3>
                 </div>
               </div>
+
 
               {/* Summary Section (Now a Sticky Footer in the Right Column) */}
               <div className="mt-auto space-y-4 rounded-2xl border-2 border-primary/20 bg-background p-5 shadow-xl animate-in fade-in slide-in-from-bottom-4">
