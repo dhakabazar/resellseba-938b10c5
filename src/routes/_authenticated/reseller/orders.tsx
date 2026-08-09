@@ -582,7 +582,7 @@ function OrdersPage() {
       ) : (
         <>
         <div className="surface-card overflow-hidden">
-          <div className="hidden grid-cols-[40px_1fr_1.2fr_1.2fr_1fr_0.8fr_0.8fr_1fr_80px] gap-3 border-b bg-muted/40 px-4 py-3 text-xs font-medium text-muted-foreground md:grid">
+          <div className="hidden grid-cols-[40px_minmax(120px,1fr)_minmax(180px,1.5fr)_minmax(150px,1.2fr)_minmax(150px,1fr)_100px_100px_120px_60px] gap-3 border-b bg-muted/40 px-4 py-3 text-xs font-medium text-muted-foreground md:grid">
             <div className="flex items-center justify-center">
               <input
                 type="checkbox"
@@ -800,7 +800,7 @@ function OrdersPage() {
                 </div>
 
                 {/* Desktop row */}
-                <div className="hidden grid-cols-[40px_1fr_1.2fr_1.2fr_1fr_0.8fr_0.8fr_1fr_80px] items-center gap-3 px-4 py-3 text-sm md:grid">
+                <div className="hidden grid-cols-[40px_minmax(120px,1fr)_minmax(180px,1.5fr)_minmax(150px,1.2fr)_minmax(150px,1fr)_100px_100px_120px_60px] items-center gap-3 px-4 py-3 text-sm md:grid">
                   <div className="flex justify-center">
                     <input
                       type="checkbox"
