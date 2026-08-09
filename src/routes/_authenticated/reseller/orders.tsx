@@ -687,10 +687,11 @@ function OrdersPage() {
                           {o.payment_method}
                         </span>
                         <span
-                          className={`rounded px-1.5 py-0.5 ${o.forwarded_to_admin ? "bg-success/10 text-success" : "bg-muted text-muted-foreground"}`}
+                          className={`rounded px-1.5 py-0.5 ${o.status === "confirmed" && o.forwarded_to_admin ? "bg-success/10 text-success" : "hidden"}`}
                         >
-                          {o.forwarded_to_admin ? "Sent to admin" : "Not sent"}
+                          {o.forwarded_to_admin ? "Sent to admin" : ""}
                         </span>
+
                       </div>
 
                       <div className="mt-3 flex flex-wrap items-center gap-2">{actions}</div>
@@ -748,9 +749,12 @@ function OrdersPage() {
                     >
                       {orderStatusLabel(o.status)}
                     </span>
-                    <div className="mt-1 text-[11px] text-muted-foreground">
-                      {o.forwarded_to_admin ? "Sent to admin" : "Not sent"}
-                    </div>
+                    {o.status === "confirmed" && o.forwarded_to_admin && (
+                      <div className="mt-1 text-[11px] text-success">
+                        Sent to admin
+                      </div>
+                    )}
+
                   </div>
                   <div className="flex justify-end gap-2">{actions}</div>
                 </div>
