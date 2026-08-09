@@ -140,6 +140,9 @@ function AdminOrdersPage() {
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  
+  const bookAuto = useServerFn(bookSteadfast);
 
   const [tab, setTab] = useState<OrderTabKey>("confirmed");
   const [selected, setSelected] = useState<OrderRow | null>(null);
