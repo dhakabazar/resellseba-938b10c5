@@ -658,12 +658,15 @@ function OrdersPage() {
                   </div>
                 );
 
+            const orderShipment = shipments.find((s) => s.order_id === o.id);
+
             return (
               <div
                 key={o.id}
                 className={`border-b last:border-b-0 ${isMarked ? "bg-primary/5" : ""}`}
               >
                 {/* Mobile card */}
+
 
                 <div className="p-3 md:hidden">
                   <div className="flex items-start gap-3">
