@@ -62,7 +62,7 @@ export function StatCard({
   return (
     <div
       className={cn(
-        "group relative overflow-hidden rounded-xl border bg-card px-4 py-3 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg",
+        "group relative rounded-xl border bg-card px-4 py-3 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg",
         t.ring,
       )}
     >
@@ -74,7 +74,7 @@ export function StatCard({
       )}
       <div
         className={cn(
-          "pointer-events-none absolute inset-0 bg-gradient-to-r to-transparent opacity-0 transition-opacity group-hover:opacity-100",
+          "pointer-events-none absolute inset-0 rounded-[inherit] bg-gradient-to-r to-transparent opacity-0 transition-opacity group-hover:opacity-100",
           t.glow,
         )}
       />
