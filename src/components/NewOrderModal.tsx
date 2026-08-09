@@ -158,7 +158,7 @@ export function NewOrderModal({
           total: totals.total,
           sa_cost_total: totals.saCost,
           reseller_profit: totals.profit,
-          status: "confirmed",
+          status: "pending",
           forwarded_to_admin: true,
           forwarded_at: new Date().toISOString(),
         })
