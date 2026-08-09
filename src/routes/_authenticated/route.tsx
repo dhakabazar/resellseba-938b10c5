@@ -4,8 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
   beforeLoad: async ({ location }) => {
-    // In SPA mode, we can trust the current session state more aggressively
-    // to avoid layout shifts and unnecessary redirects.
+    // Audit fix: Skip check if we're just navigating between siblings in the same tree
+    // to prevent the "reload" feeling on every navigation.
     const { data } = await supabase.auth.getSession();
     const session = data.session;
 
