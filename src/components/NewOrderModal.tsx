@@ -214,7 +214,7 @@ export function NewOrderModal({
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[1fr_350px]">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_350px]">
             {/* Left Column: Selection & Details */}
             <div className="space-y-6 p-4 sm:p-6 border-r">
               {isAdmin && (
