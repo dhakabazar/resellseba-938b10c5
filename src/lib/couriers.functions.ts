@@ -100,10 +100,11 @@ export const bookSteadfast = createServerFn({ method: "POST" })
       event_at: nowIso,
     });
 
-    await supabase.from("orders").update({ status: "shipped" }).eq("id", order.id);
+    // Booking alone does NOT change the order status. The status only moves when a
+    // courier webhook/sync event arrives (received -> to courier, delivered, return).
     await supabase.from("order_status_history").insert({
       order_id: order.id,
-      status: "shipped",
+      status: order.status,
       note: `Steadfast booked · ${trackingId}`,
       changed_by: userId,
     });
@@ -359,10 +360,11 @@ export const bookPathao = createServerFn({ method: "POST" })
       event_at: nowIso,
     });
 
-    await supabase.from("orders").update({ status: "shipped" }).eq("id", order.id);
+    // Booking alone does NOT change the order status. The status only moves when a
+    // courier webhook/sync event arrives (received -> to courier, delivered, return).
     await supabase.from("order_status_history").insert({
       order_id: order.id,
-      status: "shipped",
+      status: order.status,
       note: `Pathao booked · ${consignmentId}`,
       changed_by: userId,
     });
@@ -539,10 +541,11 @@ export const bookCarrybee = createServerFn({ method: "POST" })
       event_at: nowIso,
     });
 
-    await supabase.from("orders").update({ status: "shipped" }).eq("id", order.id);
+    // Booking alone does NOT change the order status. The status only moves when a
+    // courier webhook/sync event arrives (received -> to courier, delivered, return).
     await supabase.from("order_status_history").insert({
       order_id: order.id,
-      status: "shipped",
+      status: order.status,
       note: `Carrybee booked · ${consignmentId}`,
       changed_by: userId,
     });
