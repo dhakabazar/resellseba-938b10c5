@@ -78,7 +78,19 @@ function AdminOrdersPage() {
   const [pickOpen, setPickOpen] = useState(false);
   const [marked, setMarked] = useState<string[]>([]);
   const [page, setPage] = useState(1);
-  const [statusModal, setStatusModal] = useState<{ open: boolean; orderId: string; currentStatus: string } | null>(null);
+  const [statusModal, setStatusModal] = useState<{ open: boolean; orderId: string; currentStatus: string; isBulk?: boolean } | null>(null);
+  const [confirmModal, setConfirmModal] = useState<{
+    open: boolean;
+    title: string;
+    description: string;
+    onConfirm: () => Promise<void>;
+    variant?: "danger" | "warning";
+  }>({
+    open: false,
+    title: "",
+    description: "",
+    onConfirm: async () => {},
+  });
   const [resellerOptions, setResellerOptions] = useState<FilterOption[]>([]);
 
   async function load() {
@@ -109,6 +121,55 @@ function AdminOrdersPage() {
     setResellers(rs ?? []);
     setAllProducts((p ?? []) as any[]);
     setLoading(false);
+  }
+
+  async function removeOrder(id: string) {
+    const order = orders.find(o => o.id === id);
+    if (!order) return;
+
+    const isBooked = shipments.some(s => s.order_id === id && (s.consignment_id || s.tracking_id));
+    
+    setConfirmModal({
+      open: true,
+      title: "Delete Order",
+      description: isBooked 
+        ? "Warning: This order is already booked with a courier. Deleting it will NOT cancel the parcel in the courier system. Are you sure you want to proceed?"
+        : "Are you sure you want to delete this order? This action cannot be undone.",
+      variant: isBooked ? "warning" : "danger",
+      onConfirm: async () => {
+        setLoading(true);
+        const { error } = await supabase.from("orders").delete().eq("id", id);
+        if (error) toast.error(error.message);
+        else {
+          toast.success("Order deleted");
+          load();
+        }
+        setConfirmModal(prev => ({ ...prev, open: false }));
+        setLoading(false);
+      }
+    });
+  }
+
+  async function bulkUpdateStatus(newStatus: string) {
+    if (marked.length === 0) return;
+    setConfirmModal({
+      open: true,
+      title: "Bulk Status Update",
+      description: `Update ${marked.length} orders to ${orderStatusLabel(newStatus)}?`,
+      variant: "warning",
+      onConfirm: async () => {
+        setLoading(true);
+        const { error } = await supabase.from("orders").update({ status: newStatus as any }).in("id", marked);
+        if (error) toast.error(error.message);
+        else {
+          toast.success(`${marked.length} orders updated`);
+          setMarked([]);
+          load();
+        }
+        setConfirmModal(prev => ({ ...prev, open: false }));
+        setLoading(false);
+      }
+    });
   }
   useEffect(() => { load(); }, [tab]);
 
@@ -268,8 +329,23 @@ function AdminOrdersPage() {
                      <DropdownMenu>
                        <DropdownMenuTrigger><MoreVertical className="h-4 w-4" /></DropdownMenuTrigger>
                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => setSelected(o)}><Eye className="mr-2 h-4 w-4"/>Details</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => setStatusModal({ open: true, orderId: o.id, currentStatus: o.status })}><Settings2 className="mr-2 h-4 w-4"/>Status</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setSelected(o)}>
+                            <Eye className="mr-2 h-4 w-4" /> View Details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setStatusModal({ open: true, orderId: o.id, currentStatus: o.status })}>
+                            <Settings2 className="mr-2 h-4 w-4" /> Change Status
+                          </DropdownMenuItem>
+                          {(() => {
+                            const isBooked = shipments.some(s => s.order_id === o.id && (s.consignment_id || s.tracking_id));
+                            return (
+                              <DropdownMenuItem
+                                onClick={() => removeOrder(o.id)}
+                                className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" /> Delete Order
+                              </DropdownMenuItem>
+                            );
+                          })()}
                        </DropdownMenuContent>
                      </DropdownMenu>
                   </div>
@@ -337,6 +413,75 @@ function AdminOrdersPage() {
                 )}
               </div>
             ))}
+          </div>
+        )}
+        <ConfirmModal
+          isOpen={confirmModal.open}
+          onClose={() => setConfirmModal(prev => ({ ...prev, open: false }))}
+          onConfirm={confirmModal.onConfirm}
+          title={confirmModal.title}
+          description={confirmModal.description}
+          variant={confirmModal.variant}
+          isLoading={loading}
+        />
+        {statusModal && statusModal.open && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-sm overflow-hidden rounded-xl bg-background shadow-2xl ring-1 ring-black/5 animate-in fade-in zoom-in duration-200 sm:max-w-md">
+              <div className="flex items-center justify-between border-b px-5 py-4 bg-muted/30">
+                <h3 className="text-sm font-bold text-foreground">Change Status</h3>
+                <button onClick={() => setStatusModal(null)} className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="p-4">
+                <div className="grid grid-cols-1 gap-1.5">
+                  {ORDER_STATUS_OPTIONS.map((s) => (
+                    <button
+                      key={s.value}
+                      disabled={loading}
+                      onClick={async () => {
+                        if (statusModal.isBulk) {
+                          await bulkUpdateStatus(s.value);
+                          setStatusModal(null);
+                          return;
+                        }
+                        setLoading(true);
+                        const { error } = await supabase
+                          .from("orders")
+                          .update({ status: s.value as any })
+                          .eq("id", statusModal.orderId);
+                        
+                        if (error) {
+                          toast.error(error.message);
+                        } else {
+                          toast.success(`Status updated to ${s.label}`);
+                          setStatusModal(null);
+                          await load();
+                        }
+                        setLoading(false);
+                      }}
+                      className={`group flex items-center gap-3 rounded-lg border px-3 py-2.5 text-left text-xs transition-all hover:bg-accent disabled:opacity-50 ${
+                        statusModal.currentStatus === s.value ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "border-transparent"
+                      }`}
+                    >
+                      <div className={`h-2.5 w-2.5 rounded-full ring-2 ring-offset-2 ring-offset-background ${orderStatusTone(s.value).split(' ')[0]} ${statusModal.currentStatus === s.value ? "ring-primary/40" : "ring-transparent group-hover:ring-accent-foreground/10"}`} />
+                      <span className={`flex-1 font-medium capitalize ${statusModal.currentStatus === s.value ? "text-primary" : "text-foreground/80"}`}>{s.label}</span>
+                      {statusModal.currentStatus === s.value && (
+                        <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="border-t bg-muted/10 px-5 py-3 flex justify-end">
+                <button
+                  onClick={() => setStatusModal(null)}
+                  className="rounded-lg border px-4 py-1.5 text-xs font-semibold transition-colors hover:bg-accent"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
           </div>
         )}
     </div>
