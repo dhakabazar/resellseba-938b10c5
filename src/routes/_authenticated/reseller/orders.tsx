@@ -677,10 +677,7 @@ function OrdersPage() {
                             {shipments.find((s: any) => s.order_id === o.id)?.provider || "Manual"} 
                             {shipments.find((s: any) => s.order_id === o.id)?.consignment_id && ` #${shipments.find((s: any) => s.order_id === o.id)?.consignment_id}`}
                           </div>
-                          <div className="text-[10px] font-medium text-primary">
-                            {shipments.find(s => s.order_id === o.id)?.provider?.toUpperCase() || "Manual"} 
-                            {shipments.find(s => s.order_id === o.id)?.consignment_id && ` #${shipments.find(s => s.order_id === o.id)?.consignment_id}`}
-                          </div>
+
                           <div className="text-[11px] text-muted-foreground">
                             {new Date(o.created_at).toLocaleString([], {
                               day: "2-digit",
