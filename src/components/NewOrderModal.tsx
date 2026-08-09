@@ -403,8 +403,7 @@ export function NewOrderModal({
                       </div>
                     )}
                   </div>
-                </div>
-                </div>
+            </div>
 
             {/* Right Column: Summary & Cart */}
             <aside className="flex flex-col bg-muted/20 p-4 sm:p-6 h-full">
