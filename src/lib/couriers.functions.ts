@@ -547,8 +547,9 @@ export const bookCarrybee = createServerFn({ method: "POST" })
       changed_by: userId,
     });
 
-    return { trackingId: consignmentId, consignmentId, deliveryFee: Number(o.delivery_fee ?? 0) };
+    return { success: true, trackingId: consignmentId, consignmentId, deliveryFee: Number(o.delivery_fee ?? 0) };
   });
+
 
 export const syncCarrybeeStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
