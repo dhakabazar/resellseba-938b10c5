@@ -7,7 +7,8 @@ export const getRouter = () => {
     defaultOptions: {
       queries: {
         refetchOnWindowFocus: false,
-        retry: false,
+        refetchOnReconnect: false,
+        staleTime: 1000 * 60 * 5, // 5 minutes
       },
     },
   });
