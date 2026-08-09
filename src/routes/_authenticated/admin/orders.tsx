@@ -21,6 +21,7 @@ import {
 import { NewOrderModal } from "@/components/NewOrderModal";
 import { ShipmentBookingModal } from "@/components/ShipmentBookingModal";
 import { toast } from "sonner";
+import { CourierTimeline, type CourierEvent } from "@/components/CourierTimeline";
 import { useServerFn } from "@tanstack/react-start";
 import { bookSteadfast } from "@/lib/couriers.functions";
 import { OrderTabs } from "@/components/OrderTabs";
