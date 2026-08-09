@@ -153,13 +153,14 @@ function AdminOrdersPage() {
   const [searchMode, setSearchMode] = useState<OrderSearchMode>("order");
 
   const [showFilters, setShowFilters] = useState(false);
-  const [pickOpen, setPickOpen] = useState(false);
-  const [marked, setMarked] = useState<string[]>([]);
-  const [pickScope, setPickScope] = useState<"filtered" | "marked">("filtered");
+    const [pickOpen, setPickOpen] = useState(false);
+    const [marked, setMarked] = useState<string[]>([]);
+    const [pickScope, setPickScope] = useState<"filtered" | "marked">("filtered");
 
-  const [page, setPage] = useState(1);
-  const [statusModal, setStatusModal] = useState<{ open: boolean; orderId: string; currentStatus: string; isBulk?: boolean } | null>(null);
-  const [resellerOptions, setResellerOptions] = useState<FilterOption[]>([]);
+    const [page, setPage] = useState(1);
+    const [statusModal, setStatusModal] = useState<{ open: boolean; orderId: string; currentStatus: string; isBulk?: boolean } | null>(null);
+    const [resellerOptions, setResellerOptions] = useState<FilterOption[]>([]);
+
   const [confirmModal, setConfirmModal] = useState<{
     open: boolean;
     title: string;
@@ -629,6 +630,20 @@ function AdminOrdersPage() {
                             <Phone className="h-3 w-3" />
                           </a>
                         </div>
+                        {shipments.some(s => s.order_id === o.id) && (
+                          <div className="flex flex-wrap gap-1">
+                            {shipments.filter(s => s.order_id === o.id).map(s => (
+                              <div key={s.id} className="inline-flex items-center gap-1 rounded bg-muted/50 px-1.5 py-0.5 text-[9px] font-medium text-muted-foreground ring-1 ring-inset ring-muted-foreground/10">
+                                <Truck className="h-2.5 w-2.5" />
+                                <span className="capitalize">{s.provider}</span>
+                                {s.consignment_id && (
+                                  <span className="opacity-70">({s.consignment_id})</span>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
                         <div className="truncate text-muted-foreground">{o.area || "—"}</div>
                         <div className="truncate text-[11px] text-muted-foreground italic">
                           Reseller: {o.resellers?.business_name || "Direct"}
@@ -702,7 +717,21 @@ function AdminOrdersPage() {
                   <div className="min-w-0">
                     <div className="truncate font-medium">{o.customer_name}</div>
                     <div className="text-xs text-muted-foreground">{o.customer_phone}</div>
+                    {shipments.some(s => s.order_id === o.id) && (
+                      <div className="mt-0.5 flex flex-wrap gap-1">
+                        {shipments.filter(s => s.order_id === o.id).map(s => (
+                          <div key={s.id} className="inline-flex items-center gap-1 rounded bg-muted/50 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground ring-1 ring-inset ring-muted-foreground/10">
+                            <Truck className="h-2.5 w-2.5" />
+                            <span className="capitalize">{s.provider}</span>
+                            {s.consignment_id && (
+                              <span className="opacity-70">({s.consignment_id})</span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
+
                   <div className="font-semibold">৳{Number(o.total).toFixed(0)}</div>
                   <div>
                     <span className={`rounded-full px-2 py-0.5 text-xs capitalize ${orderStatusTone(o.status)}`}>
@@ -799,7 +828,7 @@ function AdminOrdersPage() {
       )}
       {statusModal && statusModal.open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-sm overflow-hidden rounded-xl bg-background shadow-2xl ring-1 ring-black/5 animate-in fade-in zoom-in duration-200">
+          <div className="w-full max-w-sm overflow-hidden rounded-xl bg-background shadow-2xl ring-1 ring-black/5 animate-in fade-in zoom-in duration-200 sm:max-w-md">
             <div className="flex items-center justify-between border-b px-5 py-4 bg-muted/30">
               <h3 className="text-sm font-bold text-foreground">Change Status</h3>
               <button onClick={() => setStatusModal(null)} className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
