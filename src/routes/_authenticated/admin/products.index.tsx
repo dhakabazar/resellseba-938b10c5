@@ -66,8 +66,10 @@ function ProductsPage() {
     setLoading(false);
   }
   useEffect(() => {
-    load();
-  }, []);
+    if (items.length === 0) {
+      load();
+    }
+  }, [items.length]);
 
   useEffect(() => {
     setPage(1);

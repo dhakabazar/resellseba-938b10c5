@@ -122,8 +122,10 @@ function ResellerDashboard() {
   );
 
   useEffect(() => {
-    void load(range);
-  }, [load, range]);
+    if (orders.length === 0) {
+      void load(range);
+    }
+  }, [load, range, orders.length]);
 
   const report = useMemo(() => buildFinanceReport(orders, items, { trend: "day" }), [orders, items]);
 

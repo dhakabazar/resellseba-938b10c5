@@ -39,8 +39,10 @@ function CatsPage() {
     setLoading(false);
   }
   useEffect(() => {
-    load();
-  }, []);
+    if (items.length === 0) {
+      load();
+    }
+  }, [items.length]);
 
   async function create(e: React.FormEvent) {
     e.preventDefault();

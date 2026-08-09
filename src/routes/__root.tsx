@@ -135,7 +135,7 @@ function RootComponent() {
       if (event === "SIGNED_OUT") {
         queryClient.clear();
         router.navigate({ to: "/login", replace: true });
-      } else if (event === "SIGNED_IN" || event === "USER_UPDATED") {
+      } else if (event === "SIGNED_IN") {
         queryClient.invalidateQueries();
       }
     });

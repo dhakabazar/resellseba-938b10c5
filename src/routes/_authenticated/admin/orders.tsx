@@ -176,8 +176,10 @@ function AdminOrdersPage() {
     });
   }
   useEffect(() => {
-    load();
-  }, [tab]);
+    if (orders.length === 0) {
+      load();
+    }
+  }, [tab, orders.length]);
 
   const itemsByOrder = useMemo(() => {
     const m = new Map<string, OrderItemLite[]>();

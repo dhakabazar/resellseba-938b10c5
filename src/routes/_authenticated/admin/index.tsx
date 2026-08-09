@@ -105,8 +105,10 @@ function AdminDashboard() {
   }, [loadLifetime]);
 
   useEffect(() => {
-    void load(range);
-  }, [load, range]);
+    if (rows.length === 0) {
+      void load(range);
+    }
+  }, [load, range, rows.length]);
 
 
   const { stats, daily, top } = useMemo(() => {
