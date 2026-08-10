@@ -33,9 +33,13 @@ export function CourierTimeline({
             <li key={e.id} className="relative">
               <span className="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full bg-primary" />
               <div className="text-sm font-medium">{courierStatusLabel(e.courier_status)}</div>
-              <div className="text-[11px] text-muted-foreground">
-                {new Date(e.event_at).toLocaleString()} · {e.provider} · {e.source}
-                {e.notification_type ? ` · ${e.notification_type}` : ""}
+              <div className="flex flex-wrap items-center gap-1 text-[11px] text-muted-foreground">
+                <span>{new Date(e.event_at).toLocaleString()}</span>
+                <span>·</span>
+                <CourierLogo provider={e.provider} size={13} />
+                <span>{courierLabel(e.provider)}</span>
+                <span>· {e.source}</span>
+                {e.notification_type ? <span>· {e.notification_type}</span> : null}
               </div>
               <div className="mt-0.5 flex flex-wrap gap-1.5 text-[11px] text-muted-foreground">
                 {e.tracking_code && <span>Tracking {e.tracking_code}</span>}
