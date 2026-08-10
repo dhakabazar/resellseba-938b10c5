@@ -78,21 +78,17 @@ export function ShipmentBookingModal({
           </p>
 
           <div className="grid grid-cols-1 gap-3">
-            {[
-              { id: "steadfast", name: "Steadfast", icon: "🚀" },
-              { id: "pathao", name: "Pathao", icon: "🛵" },
-              { id: "carrybee", name: "Carrybee", icon: "🐝" },
-            ].map((p) => (
+            {COURIER_LIST.map((p) => (
               <button
                 key={p.id}
-                onClick={() => setProvider(p.id as any)}
+                onClick={() => setProvider(p.id)}
                 className={`flex items-center justify-between rounded-lg border p-4 text-left transition-all hover:bg-accent ${
                   provider === p.id ? "border-primary bg-primary/5 ring-1 ring-primary" : "border-border"
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <span className="text-xl">{p.icon}</span>
-                  <span className="font-semibold">{p.name}</span>
+                  <CourierLogo provider={p.id} size={30} />
+                  <span className="font-semibold">{p.label}</span>
                 </div>
                 {provider === p.id && <div className="h-2 w-2 rounded-full bg-primary" />}
               </button>
