@@ -219,11 +219,17 @@ function AdminOrdersPage() {
 
   return (
     <div>
-        <PageHeader title="Orders" actions={
-            <button onClick={() => setOpen(true)} className="btn-brand inline-flex items-center gap-2 px-4 py-2 text-sm">
-                <Plus className="h-4 w-4" /> New Order
-            </button>
-        }/>
+        <PageHeader 
+            title="Orders" 
+            className="flex-row items-center justify-between"
+            actions={
+                <div className="flex items-center gap-2">
+                    <button onClick={() => setOpen(true)} className="btn-brand inline-flex items-center gap-2 px-3 py-2 text-xs sm:px-4 sm:py-2 sm:text-sm whitespace-nowrap">
+                        <Plus className="h-4 w-4" /> New Order
+                    </button>
+                </div>
+            }
+        />
         <div className="mb-4 flex flex-wrap items-center gap-2">
             <OrderSearch mode={searchMode} onMode={setSearchMode} value={filters.q} onChange={(v) => setFilters({ ...filters, q: v })} />
             <div className="ml-auto flex items-center gap-2">

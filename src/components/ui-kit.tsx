@@ -6,13 +6,15 @@ export function PageHeader({
   title,
   description,
   actions,
+  className,
 }: {
   title: string;
   description?: string;
   actions?: ReactNode;
+  className?: string;
 }) {
   return (
-    <div className="mb-8 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+    <div className={cn("mb-8 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between", className)}>
       <div className="min-w-0 flex-1">
         <h1 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl md:text-4xl">
           {title}
