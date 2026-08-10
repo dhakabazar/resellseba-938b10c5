@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
 import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
 import { Loader2, X, Download, PackageCheck, ChevronDown, Plus, MoreVertical, Eye, Phone, CheckCircle2, Settings2, Trash2, Copy, ShoppingCart, Printer, Truck } from "lucide-react";
+import { CourierLogo, courierLabel } from "@/components/courier-brand";
 
 import {
   DropdownMenu,
