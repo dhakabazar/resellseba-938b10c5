@@ -380,7 +380,7 @@ function AdminOrdersPage() {
                             if (!isBooked) {
                               return (
                                 <DropdownMenuItem onClick={() => setBookingModal({ open: true, orderIds: [o.id] })}>
-                                  <Truck className="mr-2 h-4 w-4" /> Book Courier
+                                  <Truck className="mr-2 h-4 w-4" /> {activeProviderLabel ? `Book ${activeProviderLabel}` : "Book Courier"}
                                 </DropdownMenuItem>
                               );
                             }
