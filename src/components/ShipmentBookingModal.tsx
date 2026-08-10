@@ -8,8 +8,10 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { bookSteadfast, bookPathao, bookCarrybee } from "@/lib/couriers.functions";
-import { COURIER_LIST, CourierLogo } from "@/components/courier-brand";
+import { getActiveCouriers } from "@/lib/courier-config.functions";
+import { COURIER_BRANDS, CourierLogo } from "@/components/courier-brand";
 import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
 
 interface BookingModalProps {
   isOpen: boolean;
