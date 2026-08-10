@@ -424,19 +424,20 @@ function OrdersPage() {
     <div>
       <PageHeader
         title="Orders"
+        className="flex-row items-center justify-between"
         description=""
         actions={
-          <div className="flex w-full items-center gap-2 sm:w-auto">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => exportCsv(visible)}
               disabled={visible.length === 0}
-              className="inline-flex flex-1 items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm disabled:opacity-50 sm:flex-none"
+              className="inline-flex h-9 items-center justify-center gap-2 rounded-md border px-2 text-xs disabled:opacity-50 sm:px-3 sm:text-sm"
             >
-              <Download className="h-4 w-4" /> Export CSV
+              <Download className="h-4 w-4" /> <span className="hidden xs:inline">Export</span>
             </button>
             <button
               onClick={() => setOpen(true)}
-              className="btn-brand inline-flex flex-1 items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium sm:flex-none"
+              className="btn-brand inline-flex h-9 items-center justify-center gap-2 rounded-md px-3 text-xs font-medium sm:px-4 sm:text-sm whitespace-nowrap"
             >
               <Plus className="h-4 w-4" /> New order
             </button>
