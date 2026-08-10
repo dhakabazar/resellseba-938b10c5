@@ -260,7 +260,7 @@ function AdminOrdersPage() {
               onClick={() => setBookingModal({ open: true, orderIds: marked })}
               className="inline-flex h-9 items-center gap-2 rounded-md border bg-background px-3 text-xs font-medium hover:bg-accent"
             >
-              <Truck className="h-3.5 w-3.5" /> Book Courier
+              <Truck className="h-3.5 w-3.5" /> {activeProviderLabel ? `Book ${activeProviderLabel}` : "Book Courier"}
             </button>
             <button
               onClick={() => setMarked([])}
