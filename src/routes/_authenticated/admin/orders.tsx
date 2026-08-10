@@ -344,23 +344,32 @@ function AdminOrdersPage() {
                       )}
                     </div>
                   </div>
-                  <div className="text-[11px] text-muted-foreground">
+                  <div className="min-w-0">
                      {shipments.filter(s => s.order_id === o.id).length > 0 ? (
                        shipments.filter(s => s.order_id === o.id).map(s => (
-                         <div key={s.id} className="flex min-w-0 items-center gap-1">
-                           <CourierLogo provider={s.provider} size={16} />
-                           <span className="truncate">
-                             {courierLabel(s.provider)} {s.consignment_id ? `#${s.consignment_id}` : ""}
-                           </span>
-                           {s.consignment_id && (
-                             <button onClick={() => { navigator.clipboard.writeText(s.consignment_id); toast.success("Booking ID copied"); }} className="hover:text-foreground">
-                               <Copy className="h-2.5 w-2.5" />
-                             </button>
-                           )}
+                         <div key={s.id} className="flex flex-col gap-0.5 min-w-0">
+                           <div className="flex items-center gap-1 text-[10px] font-bold text-primary leading-tight">
+                             <CourierLogo provider={s.provider} size={14} />
+                             <span className="truncate">{courierLabel(s.provider)}</span>
+                           </div>
+                           <div className="text-[10px] text-muted-foreground tabular-nums font-medium flex items-center gap-1">
+                             <span className="truncate">#{s.consignment_id || "N/A"}</span>
+                             {s.consignment_id && (
+                               <button 
+                                 onClick={() => { 
+                                   navigator.clipboard.writeText(s.consignment_id); 
+                                   toast.success("Booking ID copied"); 
+                                 }} 
+                                 className="opacity-50 hover:opacity-100 transition-opacity"
+                               >
+                                 <Copy className="h-2.5 w-2.5" />
+                               </button>
+                             )}
+                           </div>
                          </div>
                        ))
                      ) : (
-                       <span className="text-muted-foreground/60 italic">No courier booking</span>
+                       <span className="text-[10px] text-muted-foreground/60 italic">No courier booking</span>
                      )}
                   </div>
                   <div className="font-semibold">৳{Number(o.total).toFixed(0)}</div>
