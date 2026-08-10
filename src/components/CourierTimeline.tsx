@@ -1,4 +1,5 @@
 import { courierStatusLabel } from "@/lib/courier-status";
+import { CourierLogo, courierLabel } from "@/components/courier-brand";
 
 export type CourierEvent = {
   id: string;
