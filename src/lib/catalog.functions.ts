@@ -1,14 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
-
-type ImgRow = { url: string; is_primary: boolean; sort_order: number };
-
-function pickImage(imgs: ImgRow[] | null | undefined) {
-  const list = [...(imgs ?? [])].sort(
-    (a, b) => Number(b.is_primary) - Number(a.is_primary) || a.sort_order - b.sort_order,
-  );
-  return list[0]?.url ?? null;
-}
+import { pickImage, type ImgRow } from "@/lib/catalog.server";
 
 /** Public master catalog — active products only, no cost/profit leak beyond reseller price. */
 export const getCatalog = createServerFn({ method: "GET" }).handler(async () => {

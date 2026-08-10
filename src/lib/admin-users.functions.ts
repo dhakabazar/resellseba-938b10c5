@@ -1,13 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertAdmin } from "@/lib/admin-users.server";
 
 const input = z.object({ userId: z.string().uuid() });
-
-async function assertAdmin(supabase: any, userId: string) {
-  const { data: isAdmin } = await supabase.rpc("is_super_admin", { _user_id: userId });
-  if (!isAdmin) throw new Response("Forbidden", { status: 403 });
-}
 
 export const confirmUserEmail = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

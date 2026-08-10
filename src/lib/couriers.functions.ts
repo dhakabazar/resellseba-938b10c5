@@ -224,17 +224,13 @@ export const steadfastReturnRequests = createServerFn({ method: "POST" })
 
 /* -------------------------------- Pathao -------------------------------- */
 
-async function pathaoConf(supabase: any) {
-  return getCourierConfig(supabase, "pathao");
-}
-
 export const pathaoStores = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
     await assertAdmin(supabase, userId);
     const { pathaoStoreList } = await import("@/lib/pathao.server");
-    const conf = await pathaoConf(supabase);
+    const conf = await getCourierConfig(supabase, "pathao");
     return { stores: await pathaoStoreList(supabase, conf) };
   });
 
@@ -254,7 +250,7 @@ export const pathaoPricePlan = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     await assertAdmin(supabase, userId);
     const { pathaoPricePlanRequest } = await import("@/lib/pathao.server");
-    const conf = await pathaoConf(supabase);
+    const conf = await getCourierConfig(supabase, "pathao");
     if (!conf.store_id) throw new Response("Pathao store id set korun", { status: 400 });
     return pathaoPricePlanRequest(supabase, conf, { storeId: conf.store_id, ...data });
   });
@@ -275,7 +271,7 @@ export const bookPathao = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     await assertAdmin(supabase, userId);
     const { pathaoRequest } = await import("@/lib/pathao.server");
-    const conf = await pathaoConf(supabase);
+    const conf = await getCourierConfig(supabase, "pathao");
     if (!conf.store_id) throw new Response("Pathao store id set korun", { status: 400 });
     const order = await getOrderForBooking(supabase, data.orderId);
 
@@ -381,7 +377,7 @@ export const syncPathaoStatus = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     await assertAdmin(supabase, userId);
     const { pathaoOrderInfo } = await import("@/lib/pathao.server");
-    const conf = await pathaoConf(supabase);
+    const conf = await getCourierConfig(supabase, "pathao");
     const { data: sh } = await supabase
       .from("shipments")
       .select("id, consignment_id, tracking_id, order_id")
@@ -409,17 +405,13 @@ export const syncPathaoStatus = createServerFn({ method: "POST" })
 
 /* ------------------------------- Carrybee ------------------------------- */
 
-async function carrybeeConf(supabase: any) {
-  return getCourierConfig(supabase, "carrybee");
-}
-
 export const carrybeeStores = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
     await assertAdmin(supabase, userId);
     const { carrybeeRequest } = await import("@/lib/carrybee.server");
-    const conf = await carrybeeConf(supabase);
+    const conf = await getCourierConfig(supabase, "carrybee");
     const body = await carrybeeRequest(conf, "/api/v2/stores");
     const stores = (body?.data?.stores ?? []).map((s: any) => ({
       id: String(s.id),
@@ -449,7 +441,7 @@ export const bookCarrybee = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     await assertAdmin(supabase, userId);
     const { carrybeeRequest, carrybeeResolveLocation } = await import("@/lib/carrybee.server");
-    const conf = await carrybeeConf(supabase);
+    const conf = await getCourierConfig(supabase, "carrybee");
     if (!conf.store_id) throw new Response("Carrybee store id set korun", { status: 400 });
     const order = await getOrderForBooking(supabase, data.orderId);
 
@@ -562,7 +554,7 @@ export const syncCarrybeeStatus = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     await assertAdmin(supabase, userId);
     const { carrybeeRequest } = await import("@/lib/carrybee.server");
-    const conf = await carrybeeConf(supabase);
+    const conf = await getCourierConfig(supabase, "carrybee");
     const { data: sh } = await supabase
       .from("shipments")
       .select("id, consignment_id, tracking_id, order_id")
@@ -601,7 +593,7 @@ export const cancelCarrybee = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     await assertAdmin(supabase, userId);
     const { carrybeeRequest } = await import("@/lib/carrybee.server");
-    const conf = await carrybeeConf(supabase);
+    const conf = await getCourierConfig(supabase, "carrybee");
     const { data: sh } = await supabase
       .from("shipments")
       .select("id, consignment_id, tracking_id, order_id")
@@ -652,7 +644,7 @@ export const carrybeeReversePickup = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     await assertAdmin(supabase, userId);
     const { carrybeeRequest } = await import("@/lib/carrybee.server");
-    const conf = await carrybeeConf(supabase);
+    const conf = await getCourierConfig(supabase, "carrybee");
     const { data: sh } = await supabase
       .from("shipments")
       .select("id, consignment_id, tracking_id, order_id")
@@ -716,7 +708,7 @@ export const carrybeeExchange = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     await assertAdmin(supabase, userId);
     const { carrybeeRequest } = await import("@/lib/carrybee.server");
-    const conf = await carrybeeConf(supabase);
+    const conf = await getCourierConfig(supabase, "carrybee");
     const { data: sh } = await supabase
       .from("shipments")
       .select("id, consignment_id, tracking_id, order_id")
