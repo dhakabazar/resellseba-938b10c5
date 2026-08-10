@@ -1275,7 +1275,10 @@ function OrderDrawer({
           ) : (
             shipments.map((s) => (
               <div key={s.id} className="space-y-1 border-b py-2 text-sm last:border-b-0">
-                <div className="font-medium capitalize">{s.provider}</div>
+                <div className="flex items-center gap-1.5 font-medium">
+                  <CourierLogo provider={s.provider} size={18} />
+                  {courierLabel(s.provider)}
+                </div>
                 <div className="text-xs text-muted-foreground">
                   Tracking: {s.tracking_id ?? "—"}
                   {s.consignment_id ? ` · CID ${s.consignment_id}` : ""}
