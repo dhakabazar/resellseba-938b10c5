@@ -85,6 +85,19 @@ function AdminOrdersPage() {
   const [page, setPage] = useState(1);
   const [statusModal, setStatusModal] = useState<{ open: boolean; orderId: string; currentStatus: string; isBulk?: boolean } | null>(null);
   const [bookingModal, setBookingModal] = useState<{ open: boolean; orderIds: string[] }>({ open: false, orderIds: [] });
+  
+  const fetchActive = useServerFn(getActiveCouriers);
+  const { data: activeProviders = [] } = useQuery({
+    queryKey: ["active-couriers"],
+    queryFn: () => fetchActive(),
+  });
+
+  const activeProviderLabel = useMemo(() => {
+    if (activeProviders.length === 1) {
+      return (COURIER_BRANDS as any)[activeProviders[0]]?.label || "Courier";
+    }
+    return null;
+  }, [activeProviders]);
   const [confirmModal, setConfirmModal] = useState<{
     open: boolean;
     title: string;
