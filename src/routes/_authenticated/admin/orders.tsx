@@ -10,11 +10,13 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
 import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
-import { Loader2, X, Download, PackageCheck, ChevronDown, Plus, MoreVertical, Eye, Phone, CheckCircle2, Settings2, Trash2, Copy, ShoppingCart, Printer, Truck } from "lucide-react";
+import { Loader2, X, Download, PackageCheck, ChevronDown, Plus, MoreVertical, Eye, Phone, CheckCircle2, Settings2, Trash2, Copy, ShoppingCart, Printer, Truck, RefreshCw, TrendingUp, DollarSign, Wallet } from "lucide-react";
 import { CourierLogo, courierLabel, COURIER_BRANDS } from "@/components/courier-brand";
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getActiveCouriers } from "@/lib/courier-config.functions";
+import { getOrderDetails, recheckCourierStatus } from "@/lib/order-details.functions";
+import { syncSteadfastStatus, syncPathaoStatus } from "@/lib/couriers.functions";
 
 import {
   DropdownMenu,
@@ -23,6 +25,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { NewOrderModal } from "@/components/NewOrderModal";
+
 import { ShipmentBookingModal } from "@/components/ShipmentBookingModal";
 import { toast } from "sonner";
 import { CourierTimeline, type CourierEvent } from "@/components/CourierTimeline";
@@ -579,39 +582,84 @@ function AdminOrdersPage() {
 
         {selected && (
           <OrderDrawer
-            order={selected}
+            orderId={selected.id}
             onClose={() => setSelected(null)}
-            items={itemsByOrder.get(selected.id) || []}
-            shipments={shipments.filter(s => s.order_id === selected.id)}
-            events={[]} // We should fetch events if needed
             allProducts={allProducts}
           />
         )}
+
     </div>
   );
 }
 
 function OrderDrawer({ 
-  order, 
-  onClose, 
-  items, 
-  shipments,
-  events,
+  orderId, 
+  onClose,
   allProducts 
 }: { 
-  order: OrderRow; 
+  orderId: string; 
   onClose: () => void; 
-  items: OrderItemLite[]; 
-  shipments: any[];
-  events: any[];
   allProducts: any[];
 }) {
+  const fetchDetails = useServerFn(getOrderDetails);
+  const recheckStatus = useServerFn(recheckCourierStatus);
+  const syncSteadfast = useServerFn(syncSteadfastStatus);
+  const syncPathao = useServerFn(syncPathaoStatus);
+  const queryClient = useQueryClient();
+
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ["order-details", orderId],
+    queryFn: () => fetchDetails({ data: { orderId } }),
+  });
+
+  const recheckMutation = useMutation({
+    mutationFn: async () => {
+      const shipment = data?.shipments?.[0];
+      if (!shipment) return;
+
+      if (shipment.provider === "steadfast") {
+        return syncSteadfast({ data: { shipmentId: shipment.id } });
+      } else if (shipment.provider === "pathao") {
+        return syncPathao({ data: { shipmentId: shipment.id } });
+      }
+      return recheckStatus({ data: { orderId } });
+    },
+    onSuccess: () => {
+      toast.success("Courier status updated");
+      refetch();
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+    },
+    onError: (err: any) => toast.error(err.message || "Failed to recheck status"),
+  });
+
+  if (isLoading || !data?.order) {
+    return (
+      <div className="fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-sm">
+        <div className="h-full w-full max-w-2xl bg-background p-8 flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </div>
+    );
+  }
+
+  const { order, items, shipments, events } = data;
+  const subtotal = Number(order.subtotal || 0);
+  const shipping = Number(order.shipping_cost || 0);
+  const saCost = Number(order.sa_cost_total || 0);
+  const profit = Number(order.reseller_profit || 0);
+  const adminProfit = saCost > 0 ? (subtotal - saCost) : 0; // Simplified logic: Admin profit is what's left after SA cost? Actually saCost is what reseller pays admin.
+
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="h-full w-full max-w-2xl overflow-y-auto bg-background p-6 shadow-2xl animate-in slide-in-from-right duration-300 sm:p-8">
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold">{order.order_number}</h2>
+            <div className="flex items-center gap-2 mb-1">
+              <h2 className="text-2xl font-bold">{order.order_number}</h2>
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${orderStatusTone(order.status)}`}>
+                {orderStatusLabel(order.status)}
+              </span>
+            </div>
             <p className="text-sm text-muted-foreground">{new Date(order.created_at).toLocaleString()}</p>
           </div>
           <button onClick={onClose} className="rounded-full p-2 hover:bg-muted transition-colors">
@@ -619,109 +667,226 @@ function OrderDrawer({
           </button>
         </div>
 
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-          <div className="space-y-6">
+        <div className="space-y-8">
+          {/* Top Section: Customer & Reseller */}
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div className="surface-card p-4">
-              <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-muted-foreground">Customer Info</h3>
+              <h3 className="mb-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Customer Information</h3>
               <div className="space-y-2 text-sm">
-                <p className="font-semibold text-base">{order.customer_name}</p>
-                <div className="flex items-center gap-2">
+                <p className="font-bold text-base text-foreground">{order.customer_name}</p>
+                <div className="flex items-center gap-2 text-muted-foreground">
                   <Phone className="h-4 w-4 text-primary" />
-                  <span>{order.customer_phone}</span>
+                  <span className="font-medium">{order.customer_phone}</span>
                 </div>
-                <div className="flex items-start gap-2">
-                  <Truck className="h-4 w-4 text-primary mt-1" />
-                  <p>{order.address_line}, {order.area}</p>
+                <div className="flex items-start gap-2 text-muted-foreground">
+                  <Truck className="h-4 w-4 text-primary mt-1 shrink-0" />
+                  <p className="leading-relaxed">{order.address_line}, <span className="font-bold text-primary uppercase text-[10px]">{order.area.replace("_", " ")}</span></p>
                 </div>
               </div>
             </div>
 
             <div className="surface-card p-4">
-              <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-muted-foreground">Reseller Info</h3>
+              <h3 className="mb-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Source / Reseller</h3>
               {order.resellers ? (
                 <div className="space-y-2 text-sm">
-                  <p className="font-semibold">{order.resellers.business_name}</p>
-                  <p className="text-muted-foreground">Code: {order.resellers.code}</p>
-                  <div className="flex items-center gap-2">
+                  <p className="font-bold text-foreground">{order.resellers.business_name}</p>
+                  <p className="text-xs font-mono bg-muted/50 px-2 py-0.5 rounded inline-block">ID: {order.resellers.code}</p>
+                  <div className="flex items-center gap-2 text-muted-foreground">
                     <Phone className="h-4 w-4 text-primary" />
                     <span>{order.resellers.contact_phone || "—"}</span>
                   </div>
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground italic">Direct Sale</p>
+                <div className="flex items-center gap-2 py-2 text-primary">
+                  <TrendingUp className="h-5 w-5" />
+                  <span className="font-bold">Direct Platform Sale</span>
+                </div>
               )}
             </div>
+          </div>
 
-            <div className="surface-card p-4">
-              <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-muted-foreground">Internal Notes</h3>
-              <div className="space-y-3 text-sm">
-                <div>
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase">Reseller Note</p>
-                  <p className="mt-1 italic">{order.reseller_note || "No note"}</p>
+          {/* Financial Calculation Section - More Informative */}
+          <div className="surface-card overflow-hidden border-primary/20 bg-primary/[0.02]">
+            <div className="border-b border-primary/10 bg-primary/5 px-4 py-3">
+              <h3 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2">
+                <DollarSign className="h-3.5 w-3.5" />
+                Financial Breakdown
+              </h3>
+            </div>
+            <div className="p-5">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+                <div className="space-y-1">
+                  <span className="text-[10px] font-medium text-muted-foreground uppercase">Revenue</span>
+                  <p className="text-xl font-bold">৳{subtotal.toLocaleString()}</p>
+                  <p className="text-[10px] text-muted-foreground">Excluding delivery</p>
                 </div>
-                <div>
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase">Admin Note</p>
-                  <p className="mt-1">{order.admin_note || "No note"}</p>
+                <div className="space-y-1">
+                  <span className="text-[10px] font-medium text-amber-600 uppercase flex items-center gap-1">
+                    <Wallet className="h-3 w-3" />
+                    Reseller Profit
+                  </span>
+                  <p className="text-xl font-bold text-amber-600">৳{profit.toLocaleString()}</p>
+                  <p className="text-[10px] text-muted-foreground">Net earnings</p>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[10px] font-medium text-green-600 uppercase flex items-center gap-1">
+                    <PackageCheck className="h-3 w-3" />
+                    Admin Profit
+                  </span>
+                  <p className="text-xl font-bold text-green-600">৳{adminProfit.toLocaleString()}</p>
+                  <p className="text-[10px] text-muted-foreground">Platform net</p>
+                </div>
+              </div>
+
+              <div className="mt-6 space-y-2 border-t pt-4">
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">Base Cost (SA Cost)</span>
+                  <span className="font-medium">৳{saCost.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">Shipping Cost</span>
+                  <span className="font-medium">৳{shipping.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between border-t pt-2 text-sm font-bold">
+                  <span>Grand Total</span>
+                  <span className="text-primary text-base">৳{Number(order.total).toLocaleString()}</span>
+                </div>
+                <div className="mt-1 flex justify-end gap-2 text-[10px] font-bold uppercase text-muted-foreground/60">
+                   <span>{order.payment_method}</span>
+                   <span>•</span>
+                   <span>{order.payment_status}</span>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="space-y-6">
-            <div className="surface-card p-4">
-              <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-muted-foreground">Order Items</h3>
-              <div className="space-y-3">
-                {items.map((it, idx) => {
-                  const p = allProducts.find(x => x.id === it.product_id);
-                  return (
-                    <div key={idx} className="flex items-center gap-3 rounded-lg border bg-background/50 p-2">
-                      {p?.og_image_url && <img src={p.og_image_url} className="h-12 w-12 rounded object-cover shadow-sm" />}
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium">{it.product_name}</p>
-                        <p className="text-xs text-muted-foreground">Qty: {it.quantity}</p>
+          {/* Items Section */}
+          <div className="surface-card p-4">
+            <h3 className="mb-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Ordered Products ({items.length})</h3>
+            <div className="space-y-3">
+              {items.map((it: any, idx: number) => {
+                const p = allProducts.find(x => x.id === it.product_id);
+                return (
+                  <div key={idx} className="flex items-center gap-4 rounded-xl border bg-muted/20 p-3 transition-colors hover:bg-muted/30">
+                    <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg border bg-background shadow-sm">
+                      {p?.og_image_url ? (
+                        <img src={p.og_image_url} className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center bg-muted">
+                          <ShoppingCart className="h-6 w-6 text-muted-foreground/40" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-bold text-foreground">{it.product_name}</p>
+                      <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
+                        <span className="bg-primary/5 text-primary px-1.5 py-0.5 rounded font-bold">Qty: {it.quantity}</span>
+                        <span>৳{Number(it.reseller_price || 0).toLocaleString()} / unit</span>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
+                    <div className="text-right">
+                      <p className="text-sm font-bold text-foreground">৳{Number(it.line_total || 0).toLocaleString()}</p>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
+          </div>
 
-            <div className="surface-card p-4">
-              <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-muted-foreground">Courier Info</h3>
+          {/* Notes Section */}
+          {(order.reseller_note || order.admin_note) && (
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              {order.reseller_note && (
+                <div className="rounded-xl border bg-muted/10 p-4">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block mb-2">Reseller Note</span>
+                  <p className="text-sm italic text-foreground/80">"{order.reseller_note}"</p>
+                </div>
+              )}
+              {order.admin_note && (
+                <div className="rounded-xl border border-primary/10 bg-primary/[0.01] p-4">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-primary block mb-2">Admin Internal Note</span>
+                  <p className="text-sm text-foreground/80">{order.admin_note}</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Courier Section - Moved to Bottom and Enhanced */}
+          <div className="surface-card overflow-hidden">
+            <div className="flex items-center justify-between border-b px-4 py-3 bg-muted/30">
+              <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                <Truck className="h-3.5 w-3.5" />
+                Courier Logistics
+              </h3>
+              {shipments.length > 0 && (
+                <button 
+                  onClick={() => recheckMutation.mutate()}
+                  disabled={recheckMutation.isPending}
+                  className="inline-flex items-center gap-1.5 rounded-lg border bg-background px-2.5 py-1 text-[10px] font-bold text-foreground shadow-sm transition-all hover:bg-accent disabled:opacity-50"
+                >
+                  <RefreshCw className={`h-3 w-3 ${recheckMutation.isPending ? "animate-spin" : ""}`} />
+                  Recheck Status
+                </button>
+              )}
+            </div>
+            
+            <div className="p-4">
               {shipments.length > 0 ? (
-                <div className="space-y-4">
-                  {shipments.map(s => (
-                    <div key={s.id} className="rounded-lg border border-primary/20 bg-primary/5 p-3">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="inline-flex items-center gap-1.5 text-xs font-bold text-primary">
-                          <CourierLogo provider={s.provider} size={18} />
-                          {courierLabel(s.provider)}
-                        </span>
-                        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary capitalize">{s.status}</span>
+                <div className="space-y-6">
+                  {shipments.map((s: any) => (
+                    <div key={s.id} className="rounded-xl border border-primary/20 bg-primary/[0.02] p-4">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 rounded-lg bg-background shadow-sm border">
+                            <CourierLogo provider={s.provider} size={24} />
+                          </div>
+                          <div>
+                            <span className="text-sm font-bold block">{courierLabel(s.provider)}</span>
+                            <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">#{s.consignment_id || s.tracking_id}</span>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <span className="rounded-full bg-primary/10 px-3 py-1 text-[10px] font-bold text-primary uppercase tracking-wider border border-primary/20">{s.status}</span>
+                          <p className="mt-1 text-[10px] text-muted-foreground">Courier: <span className="text-foreground font-medium">{s.courier_status || "Processing"}</span></p>
+                        </div>
                       </div>
-                      <div className="text-sm font-mono tracking-wider">#{s.consignment_id || s.tracking_id}</div>
-                      <div className="mt-2 text-[10px] text-muted-foreground">Courier Status: {s.courier_status || "—"}</div>
+                      
+                      <div className="grid grid-cols-2 gap-4 border-t pt-4">
+                        <div className="text-center p-2 rounded-lg bg-background/50 border">
+                          <span className="text-[9px] font-bold text-muted-foreground uppercase block mb-1">COD Amount</span>
+                          <span className="text-sm font-bold">৳{Number(s.cod_amount || 0).toLocaleString()}</span>
+                        </div>
+                        <div className="text-center p-2 rounded-lg bg-background/50 border">
+                          <span className="text-[9px] font-bold text-muted-foreground uppercase block mb-1">Shipping Charge</span>
+                          <span className="text-sm font-bold">৳{Number(s.delivery_charge || 0).toLocaleString()}</span>
+                        </div>
+                      </div>
                     </div>
                   ))}
-                  <CourierTimeline events={events} />
+                  
+                  <div className="space-y-3 pt-2">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground border-b pb-2">Status Timeline</h4>
+                    <CourierTimeline events={events} />
+                  </div>
                 </div>
               ) : (
-                <div className="text-center py-4 text-sm text-muted-foreground italic">
-                  Not booked yet
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-3">
+                    <Truck className="h-6 w-6 text-muted-foreground/30" />
+                  </div>
+                  <p className="text-sm font-medium text-muted-foreground italic">Order not yet booked with any courier</p>
+                  <p className="text-[10px] text-muted-foreground/60 mt-1 uppercase tracking-wider">Booking required to start tracking</p>
                 </div>
               )}
             </div>
-
-            <div className="surface-card bg-primary/5 border-primary/20 p-4">
-              <div className="flex items-center justify-between text-lg font-bold">
-                <span>Total Amount</span>
-                <span className="text-primary">৳{Number(order.total).toFixed(0)}</span>
-              </div>
-              <p className="text-right text-xs text-muted-foreground mt-1 capitalize">{order.payment_method} · {order.payment_status}</p>
-            </div>
           </div>
+        </div>
+        
+        <div className="mt-12 text-center text-[10px] text-muted-foreground/40 font-mono tracking-widest pb-8">
+          ORDER_ID: {order.id}
         </div>
       </div>
     </div>
   );
 }
+

@@ -7,7 +7,6 @@ import { useAuth } from "@/lib/use-auth";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
 import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
 import {
-
   Loader2,
   Trash2,
   FileText,
@@ -23,19 +22,19 @@ import {
   Copy,
   PackageCheck,
   ShoppingCart,
+  RefreshCw,
+  TrendingUp,
+  DollarSign,
+  Wallet,
 } from "lucide-react";
-
-
-
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { NewOrderModal } from "@/components/NewOrderModal";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { getOrderDetails, recheckCourierStatus } from "@/lib/order-details.functions";
+import { syncSteadfastStatus, syncPathaoStatus } from "@/lib/couriers.functions";
+
 import { CourierTimeline, type CourierEvent } from "@/components/CourierTimeline";
 import { OrderTabs } from "@/components/OrderTabs";
 import { PickListModal } from "@/components/pick-list-modal";
@@ -1003,14 +1002,16 @@ function OrdersPage() {
 
       {selected && (
         <OrderDrawer
-          order={selected}
+          orderId={selected.id}
           onClose={() => setSelected(null)}
           onChanged={() => {
             setSelected(null);
             load();
           }}
+          allProducts={allProducts}
         />
       )}
+
 
       {open && resellerId && (
         <NewOrderModal
@@ -1120,51 +1121,49 @@ type Item = {
   profit: number;
 };
 
-function OrderDrawer({
-  order,
+function OrderDrawer({ 
+  orderId, 
   onClose,
   onChanged,
-}: {
-  order: OrderRow;
-  onClose: () => void;
+  allProducts 
+}: { 
+  orderId: string; 
+  onClose: () => void; 
   onChanged: () => void;
+  allProducts: any[];
 }) {
-  const [items, setItems] = useState<Item[]>([]);
-  const [events, setEvents] = useState<CourierEvent[]>([]);
-  const [shipments, setShipments] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const fetchDetails = useServerFn(getOrderDetails);
+  const recheckStatus = useServerFn(recheckCourierStatus);
+  const syncSteadfast = useServerFn(syncSteadfastStatus);
+  const syncPathao = useServerFn(syncPathaoStatus);
+  const queryClient = useQueryClient();
+
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ["order-details", orderId],
+    queryFn: () => fetchDetails({ data: { orderId } }),
+  });
+
   const [busy, setBusy] = useState(false);
 
-  // A reseller can only Confirm or Cancel a new order (draft/pending).
-  // After that, admin logic takes over.
-  const canAct = !order.forwarded_to_admin && (order.status === "pending" || order.status === "draft");
+  const recheckMutation = useMutation({
+    mutationFn: async () => {
+      const shipment = data?.shipments?.[0];
+      if (!shipment) return;
 
-  useEffect(() => {
-    (async () => {
-      const [{ data: it }, { data: ev }, { data: sh }] = await Promise.all([
-        supabase
-          .from("order_items")
-          .select("id,product_name,quantity,reseller_price,line_total,profit")
-          .eq("order_id", order.id),
-        supabase
-          .from("courier_events")
-          .select(
-            "id,provider,source,notification_type,courier_status,tracking_code,cod_amount,delivery_charge,note,event_at",
-          )
-          .eq("order_id", order.id)
-          .order("event_at", { ascending: false }),
-        supabase
-          .from("shipments")
-          .select("id,provider,tracking_id,consignment_id,status,courier_status,cod_amount,delivery_charge,last_event_at")
-          .eq("order_id", order.id)
-          .order("created_at", { ascending: false }),
-      ]);
-      setItems((it ?? []) as Item[]);
-      setEvents((ev ?? []) as CourierEvent[]);
-      setShipments(sh ?? []);
-      setLoading(false);
-    })();
-  }, [order.id]);
+      if (shipment.provider === "steadfast") {
+        return syncSteadfast({ data: { shipmentId: shipment.id } });
+      } else if (shipment.provider === "pathao") {
+        return syncPathao({ data: { shipmentId: shipment.id } });
+      }
+      return recheckStatus({ data: { orderId } });
+    },
+    onSuccess: () => {
+      toast.success("Courier status updated");
+      refetch();
+      onChanged();
+    },
+    onError: (err: any) => toast.error(err.message || "Failed to recheck status"),
+  });
 
   async function setStatus(next: "confirmed" | "cancelled") {
     setBusy(true);
@@ -1172,145 +1171,276 @@ function OrderDrawer({
       next === "confirmed"
         ? { status: "confirmed", forwarded_to_admin: true, forwarded_at: new Date().toISOString() }
         : { status: "cancelled" };
-    const { error } = await supabase.from("orders").update(patch as any).eq("id", order.id);
+    const { error } = await supabase.from("orders").update(patch as any).eq("id", orderId);
     if (error) {
       toast.error(error.message);
       setBusy(false);
       return;
     }
-    await supabase.from("order_status_history").insert({ order_id: order.id, status: next as any });
+    await supabase.from("order_status_history").insert({ order_id: orderId, status: next as any });
     toast.success(next === "confirmed" ? "Order confirmed and sent to admin" : "Order cancelled");
     setBusy(false);
     onChanged();
+    refetch();
   }
 
+  if (isLoading || !data?.order) {
+    return (
+      <div className="fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-sm">
+        <div className="h-full w-full max-w-2xl bg-background p-8 flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </div>
+    );
+  }
+
+  const { order, items, shipments, events } = data;
+  const subtotal = Number(order.subtotal || 0);
+  const shipping = Number(order.shipping_cost || 0);
+  const discount = Number(order.discount || 0);
+  const profit = Number(order.reseller_profit || 0);
+  const total = Number(order.total || 0);
+  
+  // Reseller can only confirm/cancel if pending and not forwarded
+  const canAct = !order.forwarded_to_admin && (order.status === "pending" || order.status === "draft");
+
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/40">
-      <div className="h-full w-full max-w-md space-y-4 overflow-y-auto bg-background p-6 shadow-2xl">
-        <div className="flex items-start justify-between">
+    <div className="fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="h-full w-full max-w-2xl overflow-y-auto bg-background p-6 shadow-2xl animate-in slide-in-from-right duration-300 sm:p-8">
+        <div className="mb-8 flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-semibold">Order #{order.order_number}</h2>
-            <p className="text-xs text-muted-foreground">
-              {order.customer_name} · {order.customer_phone}
-            </p>
-            <span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-xs capitalize ${orderStatusTone(order.status)}`}>
-              {orderStatusLabel(order.status)}
-            </span>
+            <div className="flex items-center gap-2 mb-1">
+              <h2 className="text-2xl font-bold">{order.order_number}</h2>
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${orderStatusTone(order.status)}`}>
+                {orderStatusLabel(order.status)}
+              </span>
+            </div>
+            <p className="text-sm text-muted-foreground">{new Date(order.created_at).toLocaleString()}</p>
           </div>
-          <button onClick={onClose} className="rounded-md p-1 hover:bg-accent">
-            <X className="h-4 w-4" />
+          <button onClick={onClose} className="rounded-full p-2 hover:bg-muted transition-colors">
+            <X className="h-6 w-6" />
           </button>
         </div>
 
-        {canAct ? (
-          <div className="flex gap-2">
-            <button
-              disabled={busy}
-              onClick={() => setStatus("confirmed")}
-              className="btn-brand inline-flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium disabled:opacity-50"
-            >
-              <Check className="h-4 w-4" /> Confirm
-            </button>
-            <button
-              disabled={busy}
-              onClick={() => setStatus("cancelled")}
-              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-md border border-destructive/40 px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/10 disabled:opacity-50"
-            >
-              <Ban className="h-4 w-4" /> Cancel
-            </button>
-          </div>
-        ) : (
-          <p className="rounded-md bg-muted/50 p-3 text-xs text-muted-foreground">
-            This order has been sent to admin — only admin/courier can update its status now.
-          </p>
-        )}
-
-        <div className="surface-card p-4 text-sm">
-          <div className="mb-2 font-medium">Delivery</div>
-          <p className="text-xs text-muted-foreground">
-            {order.address_line}
-            {order.city ? `, ${order.city}` : ""} · {String(order.area).replace(/_/g, " ")}
-          </p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Payment: {order.payment_method} ({order.payment_status})
-          </p>
-          {order.notes && <p className="mt-1 text-xs text-muted-foreground">Customer note: {order.notes}</p>}
-          {order.reseller_note && (
-            <p className="mt-1 text-xs text-muted-foreground">Your note: {order.reseller_note}</p>
+        <div className="space-y-8">
+          {canAct && (
+            <div className="flex gap-3 surface-card p-4 border-primary/20 bg-primary/5">
+              <button
+                disabled={busy}
+                onClick={() => setStatus("confirmed")}
+                className="btn-brand inline-flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-bold shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+              >
+                <CheckCircle2 className="h-4 w-4" /> Confirm Order
+              </button>
+              <button
+                disabled={busy}
+                onClick={() => setStatus("cancelled")}
+                className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-destructive/20 bg-background px-4 py-2.5 text-sm font-bold text-destructive shadow-sm hover:bg-destructive/5 transition-all disabled:opacity-50"
+              >
+                <Ban className="h-4 w-4" /> Cancel Order
+              </button>
+            </div>
           )}
-        </div>
 
-        <div className="surface-card p-4">
-          <div className="mb-2 text-sm font-medium">Items</div>
-          {loading ? (
-            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-          ) : (
-            items.map((it) => (
-              <div key={it.id} className="flex items-center justify-between border-b py-2 text-sm last:border-b-0">
-                <div className="min-w-0">
-                  <div className="truncate">{it.product_name}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {it.quantity} × ৳{Number(it.reseller_price).toFixed(0)} · profit ৳
-                    {Number(it.profit).toFixed(0)}
-                  </div>
+          {/* Top Section: Customer */}
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <div className="surface-card p-4">
+              <h3 className="mb-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Customer Information</h3>
+              <div className="space-y-2 text-sm">
+                <p className="font-bold text-base text-foreground">{order.customer_name}</p>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Phone className="h-4 w-4 text-primary" />
+                  <span className="font-medium">{order.customer_phone}</span>
                 </div>
-                <div className="font-medium">৳{Number(it.line_total).toFixed(0)}</div>
+                <div className="flex items-start gap-2 text-muted-foreground">
+                  <Truck className="h-4 w-4 text-primary mt-1 shrink-0" />
+                  <p className="leading-relaxed">{order.address_line}, <span className="font-bold text-primary uppercase text-[10px]">{String(order.area || "").replace("_", " ")}</span></p>
+                </div>
               </div>
-            ))
-          )}
-          <div className="mt-3 space-y-1 border-t pt-3 text-sm">
-            <Row label="Subtotal" value={`৳${Number(order.subtotal).toFixed(0)}`} />
-            <Row label="Shipping" value={`৳${Number(order.shipping_cost).toFixed(0)}`} />
-            {Number(order.discount) > 0 && (
-              <Row label="Discount" value={`-৳${Number(order.discount).toFixed(0)}`} />
-            )}
-            <Row label="Total" value={`৳${Number(order.total).toFixed(0)}`} bold />
-            <Row label="Your profit" value={`৳${Number(order.reseller_profit).toFixed(0)}`} muted />
-          </div>
-        </div>
+            </div>
 
-        <div className="surface-card p-4">
-          <div className="mb-2 text-sm font-medium">Parcel info</div>
-          {shipments.length === 0 ? (
-            <p className="text-xs text-muted-foreground">Admin has not booked a courier yet.</p>
-          ) : (
-            shipments.map((s) => (
-              <div key={s.id} className="space-y-1 border-b py-2 text-sm last:border-b-0">
-                <div className="flex items-center gap-1.5 font-medium">
-                  <CourierLogo provider={s.provider} size={18} />
-                  {courierLabel(s.provider)}
+            <div className="surface-card p-4">
+              <h3 className="mb-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Order Meta</h3>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center text-sm">
+                   <span className="text-muted-foreground">Payment Mode</span>
+                   <span className="font-bold uppercase text-[10px] bg-muted px-2 py-0.5 rounded">{order.payment_method}</span>
                 </div>
-                <div className="text-xs text-muted-foreground">
-                  Tracking: {s.tracking_id ?? "—"}
-                  {s.consignment_id ? ` · CID ${s.consignment_id}` : ""}
+                <div className="flex justify-between items-center text-sm">
+                   <span className="text-muted-foreground">Payment Status</span>
+                   <span className={`font-bold uppercase text-[10px] px-2 py-0.5 rounded ${order.payment_status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>{order.payment_status}</span>
                 </div>
-                <div className="flex flex-wrap gap-1.5 text-[11px]">
-                  <span className="rounded-full bg-primary/15 px-2 py-0.5 capitalize text-primary">
-                    {String(s.status).replace(/_/g, " ")}
-                  </span>
-                  {s.courier_status && (
-                    <span className="rounded-full bg-muted px-2 py-0.5">
-                      Courier: {courierStatusLabel(s.courier_status, s.provider)}
-                    </span>
-                  )}
-                  {s.cod_amount != null && (
-                    <span className="rounded-full bg-muted px-2 py-0.5">
-                      COD ৳{Number(s.cod_amount).toFixed(0)}
-                    </span>
-                  )}
-                </div>
-                {s.last_event_at && (
-                  <div className="text-[11px] text-muted-foreground">
-                    Last update: {new Date(s.last_event_at).toLocaleString()}
+                {order.forwarded_at && (
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-muted-foreground">Sent to Admin</span>
+                    <span className="text-[10px] font-medium">{new Date(order.forwarded_at).toLocaleDateString()}</span>
                   </div>
                 )}
               </div>
-            ))
-          )}
-        </div>
+            </div>
+          </div>
 
-        <CourierTimeline events={events} title="Courier tracking history" />
+          {/* Reseller Calculation Section */}
+          <div className="surface-card overflow-hidden border-amber-200 bg-amber-50/30">
+            <div className="border-b border-amber-100 bg-amber-50 px-4 py-3">
+              <h3 className="text-[10px] font-bold uppercase tracking-widest text-amber-700 flex items-center gap-2">
+                <TrendingUp className="h-3.5 w-3.5" />
+                Earnings Summary
+              </h3>
+            </div>
+            <div className="p-5">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <div className="space-y-1">
+                  <span className="text-[10px] font-medium text-muted-foreground uppercase">Sale Amount</span>
+                  <p className="text-2xl font-bold">৳{subtotal.toLocaleString()}</p>
+                  <p className="text-[10px] text-muted-foreground">Customer billing subtotal</p>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[10px] font-medium text-green-600 uppercase flex items-center gap-1">
+                    <Wallet className="h-3 w-3" />
+                    Your Net Profit
+                  </span>
+                  <p className="text-2xl font-bold text-green-600">৳{profit.toLocaleString()}</p>
+                  <p className="text-[10px] text-muted-foreground italic">After platform costs</p>
+                </div>
+              </div>
+
+              <div className="mt-6 space-y-2 border-t border-amber-100 pt-4">
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">Shipping Charge</span>
+                  <span className="font-medium">৳{shipping.toLocaleString()}</span>
+                </div>
+                {discount > 0 && (
+                  <div className="flex justify-between text-xs text-destructive">
+                    <span>Discount Applied</span>
+                    <span>-৳{discount.toLocaleString()}</span>
+                  </div>
+                )}
+                <div className="flex justify-between border-t border-amber-100 pt-2 text-sm font-bold">
+                  <span>Grand Total (COD)</span>
+                  <span className="text-primary text-base">৳{total.toLocaleString()}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Items Section */}
+          <div className="surface-card p-4">
+            <h3 className="mb-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Ordered Products ({items.length})</h3>
+            <div className="space-y-3">
+              {items.map((it: any, idx: number) => {
+                const p = allProducts.find(x => x.id === it.product_id);
+                return (
+                  <div key={idx} className="flex items-center gap-4 rounded-xl border bg-muted/20 p-3 transition-colors hover:bg-muted/30">
+                    <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg border bg-background shadow-sm">
+                      {p?.og_image_url ? (
+                        <img src={p.og_image_url} className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center bg-muted">
+                          <ShoppingCart className="h-6 w-6 text-muted-foreground/40" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-bold text-foreground">{it.product_name}</p>
+                      <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
+                        <span className="bg-primary/5 text-primary px-1.5 py-0.5 rounded font-bold">Qty: {it.quantity}</span>
+                        <span>৳{Number(it.reseller_price || 0).toLocaleString()} / unit</span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-bold text-foreground">৳{Number(it.line_total || 0).toLocaleString()}</p>
+                      <p className="text-[10px] font-bold text-green-600">Profit: ৳{Number(it.profit || 0).toLocaleString()}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Notes Section */}
+          {(order.reseller_note || order.notes) && (
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              {order.notes && (
+                <div className="rounded-xl border bg-muted/10 p-4">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block mb-2">Customer Note</span>
+                  <p className="text-sm italic text-foreground/80">"{order.notes}"</p>
+                </div>
+              )}
+              {order.reseller_note && (
+                <div className="rounded-xl border border-primary/10 bg-primary/[0.01] p-4">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-primary block mb-2">Your Internal Note</span>
+                  <p className="text-sm text-foreground/80">{order.reseller_note}</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Courier Section - Moved to Bottom */}
+          <div className="surface-card overflow-hidden">
+            <div className="flex items-center justify-between border-b px-4 py-3 bg-muted/30">
+              <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                <Truck className="h-3.5 w-3.5" />
+                Delivery Information
+              </h3>
+              {shipments.length > 0 && (
+                <button 
+                  onClick={() => recheckMutation.mutate()}
+                  disabled={recheckMutation.isPending}
+                  className="inline-flex items-center gap-1.5 rounded-lg border bg-background px-2.5 py-1 text-[10px] font-bold text-foreground shadow-sm transition-all hover:bg-accent disabled:opacity-50"
+                >
+                  <RefreshCw className={`h-3 w-3 ${recheckMutation.isPending ? "animate-spin" : ""}`} />
+                  Check Updates
+                </button>
+              )}
+            </div>
+            
+            <div className="p-4">
+              {shipments.length > 0 ? (
+                <div className="space-y-6">
+                  {shipments.map((s: any) => (
+                    <div key={s.id} className="rounded-xl border border-primary/20 bg-primary/[0.02] p-4">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 rounded-lg bg-background shadow-sm border">
+                            <CourierLogo provider={s.provider} size={24} />
+                          </div>
+                          <div>
+                            <span className="text-sm font-bold block">{courierLabel(s.provider)}</span>
+                            <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">#{s.consignment_id || s.tracking_id}</span>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <span className="rounded-full bg-primary/10 px-3 py-1 text-[10px] font-bold text-primary uppercase tracking-wider border border-primary/20">{s.status}</span>
+                          <p className="mt-1 text-[10px] text-muted-foreground">Courier: <span className="text-foreground font-medium">{courierStatusLabel(s.courier_status, s.provider)}</span></p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  <div className="space-y-3 pt-2">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground border-b pb-2">Status History</h4>
+                    <CourierTimeline events={events} />
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-10 text-center">
+                  <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center mb-3">
+                    <Truck className="h-5 w-5 text-muted-foreground/30" />
+                  </div>
+                  <p className="text-sm font-medium text-muted-foreground italic">Awaiting admin booking</p>
+                  <p className="text-[10px] text-muted-foreground/60 mt-1 uppercase tracking-wider">Tracking starts after courier pickup</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        
+        <div className="mt-12 text-center text-[10px] text-muted-foreground/40 font-mono tracking-widest pb-8">
+          ORDER_ID: {order.id}
+        </div>
       </div>
     </div>
   );
 }
+
