@@ -48,6 +48,7 @@ import {
   type OrderFilterState,
 } from "@/components/order-filters";
 import { Check, Ban, Search, ListChecks, SlidersHorizontal, ChevronDown, Printer } from "lucide-react";
+import { CourierLogo, courierLabel } from "@/components/courier-brand";
 import { printShippingLabels } from "@/lib/labels";
 
 
@@ -757,8 +758,8 @@ function OrdersPage() {
                           <div className="flex flex-wrap gap-1">
                             {shipments.filter(s => s.order_id === o.id).map(s => (
                               <div key={s.id} className="inline-flex items-center gap-1 rounded bg-muted/50 px-1.5 py-0.5 text-[9px] font-medium text-muted-foreground ring-1 ring-inset ring-muted-foreground/10">
-                                <Truck className="h-2.5 w-2.5" />
-                                <span className="capitalize">{s.provider}</span>
+                                <CourierLogo provider={s.provider} size={12} />
+                                <span>{courierLabel(s.provider)}</span>
                                 {s.consignment_id && (
                                   <>
                                     <span className="opacity-70">({s.consignment_id})</span>
@@ -859,8 +860,9 @@ function OrdersPage() {
                   <div className="min-w-0">
                     {orderShipment ? (
                       <div className="flex flex-col gap-0.5">
-                        <div className="text-[10px] font-bold text-primary uppercase leading-tight">
-                          {orderShipment.provider}
+                        <div className="flex min-w-0 items-center gap-1 text-[10px] font-bold text-primary leading-tight">
+                          <CourierLogo provider={orderShipment.provider} size={14} />
+                          <span className="truncate">{courierLabel(orderShipment.provider)}</span>
                         </div>
                         <div className="text-[10px] text-muted-foreground tabular-nums font-medium">
                           #{orderShipment.consignment_id || "N/A"}
@@ -1273,7 +1275,10 @@ function OrderDrawer({
           ) : (
             shipments.map((s) => (
               <div key={s.id} className="space-y-1 border-b py-2 text-sm last:border-b-0">
-                <div className="font-medium capitalize">{s.provider}</div>
+                <div className="flex items-center gap-1.5 font-medium">
+                  <CourierLogo provider={s.provider} size={18} />
+                  {courierLabel(s.provider)}
+                </div>
                 <div className="text-xs text-muted-foreground">
                   Tracking: {s.tracking_id ?? "—"}
                   {s.consignment_id ? ` · CID ${s.consignment_id}` : ""}

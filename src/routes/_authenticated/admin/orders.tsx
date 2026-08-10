@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
 import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
 import { Loader2, X, Download, PackageCheck, ChevronDown, Plus, MoreVertical, Eye, Phone, CheckCircle2, Settings2, Trash2, Copy, ShoppingCart, Printer, Truck } from "lucide-react";
+import { CourierLogo, courierLabel } from "@/components/courier-brand";
 
 import {
   DropdownMenu,
@@ -331,10 +332,13 @@ function AdminOrdersPage() {
                   <div className="text-[11px] text-muted-foreground">
                      {shipments.filter(s => s.order_id === o.id).length > 0 ? (
                        shipments.filter(s => s.order_id === o.id).map(s => (
-                         <div key={s.id} className="truncate">
-                           {s.provider} {s.consignment_id ? `#${s.consignment_id}` : ""}
+                         <div key={s.id} className="flex min-w-0 items-center gap-1">
+                           <CourierLogo provider={s.provider} size={16} />
+                           <span className="truncate">
+                             {courierLabel(s.provider)} {s.consignment_id ? `#${s.consignment_id}` : ""}
+                           </span>
                            {s.consignment_id && (
-                             <button onClick={() => { navigator.clipboard.writeText(s.consignment_id); toast.success("Booking ID copied"); }} className="ml-1 hover:text-foreground inline-block align-middle">
+                             <button onClick={() => { navigator.clipboard.writeText(s.consignment_id); toast.success("Booking ID copied"); }} className="hover:text-foreground">
                                <Copy className="h-2.5 w-2.5" />
                              </button>
                            )}
@@ -642,7 +646,10 @@ function OrderDrawer({
                   {shipments.map(s => (
                     <div key={s.id} className="rounded-lg border border-primary/20 bg-primary/5 p-3">
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-bold uppercase text-primary">{s.provider}</span>
+                        <span className="inline-flex items-center gap-1.5 text-xs font-bold text-primary">
+                          <CourierLogo provider={s.provider} size={18} />
+                          {courierLabel(s.provider)}
+                        </span>
                         <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary capitalize">{s.status}</span>
                       </div>
                       <div className="text-sm font-mono tracking-wider">#{s.consignment_id || s.tracking_id}</div>
