@@ -82,9 +82,11 @@ function CouriersPage() {
           return (
             <div key={r.id} className="surface-card p-5">
               <div className="mb-3 flex items-center gap-2">
-                <div className="grid h-9 w-9 place-items-center rounded-md bg-primary-soft text-primary"><Truck className="h-4 w-4" /></div>
+                <div className="grid h-10 w-10 place-items-center rounded-md border bg-background">
+                  <CourierLogo provider={r.provider} size={26} />
+                </div>
                 <div className="flex-1">
-                  <div className="font-semibold">{r.display_name}</div>
+                  <div className="font-semibold">{courierLabel(r.provider) || r.display_name}</div>
                   <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{r.provider}</div>
                 </div>
                 <div className="flex items-center gap-2">
