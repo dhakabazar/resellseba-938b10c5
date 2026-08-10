@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { courierLabel } from "@/components/courier-brand";
 
 export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" | "3x4") {
   if (!orderIds.length) return;
