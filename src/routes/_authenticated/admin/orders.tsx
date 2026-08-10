@@ -11,7 +11,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
 import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
 import { Loader2, X, Download, PackageCheck, ChevronDown, Plus, MoreVertical, Eye, Phone, CheckCircle2, Settings2, Trash2, Copy, ShoppingCart, Printer, Truck } from "lucide-react";
-import { CourierLogo, courierLabel } from "@/components/courier-brand";
+import { CourierLogo, courierLabel, COURIER_BRANDS } from "@/components/courier-brand";
+import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
+import { getActiveCouriers } from "@/lib/courier-config.functions";
 
 import {
   DropdownMenu,
@@ -23,7 +26,6 @@ import { NewOrderModal } from "@/components/NewOrderModal";
 import { ShipmentBookingModal } from "@/components/ShipmentBookingModal";
 import { toast } from "sonner";
 import { CourierTimeline, type CourierEvent } from "@/components/CourierTimeline";
-import { useServerFn } from "@tanstack/react-start";
 import { bookSteadfast } from "@/lib/couriers.functions";
 import { OrderTabs } from "@/components/OrderTabs";
 import { PickListModal } from "@/components/pick-list-modal";
@@ -83,6 +85,19 @@ function AdminOrdersPage() {
   const [page, setPage] = useState(1);
   const [statusModal, setStatusModal] = useState<{ open: boolean; orderId: string; currentStatus: string; isBulk?: boolean } | null>(null);
   const [bookingModal, setBookingModal] = useState<{ open: boolean; orderIds: string[] }>({ open: false, orderIds: [] });
+  
+  const fetchActive = useServerFn(getActiveCouriers);
+  const { data: activeProviders = [] } = useQuery({
+    queryKey: ["active-couriers"],
+    queryFn: () => fetchActive(),
+  });
+
+  const activeProviderLabel = useMemo(() => {
+    if (activeProviders.length === 1) {
+      return (COURIER_BRANDS as any)[activeProviders[0]]?.label || "Courier";
+    }
+    return null;
+  }, [activeProviders]);
   const [confirmModal, setConfirmModal] = useState<{
     open: boolean;
     title: string;
@@ -245,7 +260,7 @@ function AdminOrdersPage() {
               onClick={() => setBookingModal({ open: true, orderIds: marked })}
               className="inline-flex h-9 items-center gap-2 rounded-md border bg-background px-3 text-xs font-medium hover:bg-accent"
             >
-              <Truck className="h-3.5 w-3.5" /> Book Courier
+              <Truck className="h-3.5 w-3.5" /> {activeProviderLabel ? `Book ${activeProviderLabel}` : "Book Courier"}
             </button>
             <button
               onClick={() => setMarked([])}
@@ -365,7 +380,7 @@ function AdminOrdersPage() {
                             if (!isBooked) {
                               return (
                                 <DropdownMenuItem onClick={() => setBookingModal({ open: true, orderIds: [o.id] })}>
-                                  <Truck className="mr-2 h-4 w-4" /> Book Courier
+                                  <Truck className="mr-2 h-4 w-4" /> {activeProviderLabel ? `Book ${activeProviderLabel}` : "Book Courier"}
                                 </DropdownMenuItem>
                               );
                             }
@@ -415,6 +430,23 @@ function AdminOrdersPage() {
                           <div className="mb-3 font-mono text-xs">{o.customer_phone}</div>
                           <div className="text-muted-foreground">{o.address_line}</div>
                           <div className="mt-1 font-medium text-primary uppercase text-[10px]">{o.area.replace("_", " ")}</div>
+                          
+                          <div className="mt-4 flex flex-wrap gap-2 border-t pt-4">
+                            {(() => {
+                              const isBooked = shipments.some(s => s.order_id === o.id && (s.consignment_id || s.tracking_id));
+                              if (!isBooked) {
+                                return (
+                                  <button
+                                    onClick={() => setBookingModal({ open: true, orderIds: [o.id] })}
+                                    className="inline-flex items-center gap-1.5 rounded-md bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary transition-colors hover:bg-primary/20"
+                                  >
+                                    <Truck className="h-3 w-3" /> {activeProviderLabel ? `Book ${activeProviderLabel}` : "Book Courier"}
+                                  </button>
+                                );
+                              }
+                              return null;
+                            })()}
+                          </div>
                         </div>
                       </div>
                       <div>
