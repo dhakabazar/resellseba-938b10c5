@@ -152,7 +152,7 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
               <div class="footer">
                 <div class="courier-info">
                   <div class="section-title">Courier</div>
-                  <div class="courier">${s?.provider || "Manual"}</div>
+                  <div class="courier">${courierLabel(s?.provider) === "—" ? "Manual" : courierLabel(s?.provider)}</div>
                   <div class="tracking">${s?.tracking_id || s?.consignment_id || "PENDING"}</div>
                 </div>
                 <div class="cod-badge">
