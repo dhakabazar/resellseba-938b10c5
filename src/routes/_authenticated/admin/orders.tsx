@@ -331,10 +331,13 @@ function AdminOrdersPage() {
                   <div className="text-[11px] text-muted-foreground">
                      {shipments.filter(s => s.order_id === o.id).length > 0 ? (
                        shipments.filter(s => s.order_id === o.id).map(s => (
-                         <div key={s.id} className="truncate">
-                           {s.provider} {s.consignment_id ? `#${s.consignment_id}` : ""}
+                         <div key={s.id} className="flex min-w-0 items-center gap-1">
+                           <CourierLogo provider={s.provider} size={16} />
+                           <span className="truncate">
+                             {courierLabel(s.provider)} {s.consignment_id ? `#${s.consignment_id}` : ""}
+                           </span>
                            {s.consignment_id && (
-                             <button onClick={() => { navigator.clipboard.writeText(s.consignment_id); toast.success("Booking ID copied"); }} className="ml-1 hover:text-foreground inline-block align-middle">
+                             <button onClick={() => { navigator.clipboard.writeText(s.consignment_id); toast.success("Booking ID copied"); }} className="hover:text-foreground">
                                <Copy className="h-2.5 w-2.5" />
                              </button>
                            )}
