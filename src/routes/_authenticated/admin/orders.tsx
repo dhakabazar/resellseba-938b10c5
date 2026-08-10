@@ -632,7 +632,7 @@ function OrderDrawer({
     onError: (err: any) => toast.error(err.message || "Failed to recheck status"),
   });
 
-  if (isLoading || !data?.order) {
+  if (isLoading) {
     return (
       <div className="fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-sm">
         <div className="h-full w-full max-w-2xl bg-background p-8 flex items-center justify-center">
@@ -641,6 +641,26 @@ function OrderDrawer({
       </div>
     );
   }
+
+  if (!data?.order) {
+    return (
+      <div className="fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-sm">
+        <div className="h-full w-full max-w-2xl bg-background p-8">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-2xl font-bold">Order Not Found</h2>
+            <button onClick={onClose} className="rounded-full p-2 hover:bg-muted transition-colors">
+              <X className="h-6 w-6" />
+            </button>
+          </div>
+          <div className="surface-card p-8 text-center">
+            <p className="text-muted-foreground">The requested order details could not be loaded. It might have been deleted or you may not have permission to view it.</p>
+            <button onClick={onClose} className="mt-4 btn-brand px-6 py-2 rounded-lg font-bold">Close Drawer</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
 
   const { order, items, shipments, events } = data;
   const subtotal = Number(order.subtotal || 0);
