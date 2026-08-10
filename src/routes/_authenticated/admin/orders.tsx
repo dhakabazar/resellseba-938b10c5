@@ -582,14 +582,12 @@ function AdminOrdersPage() {
 
         {selected && (
           <OrderDrawer
-            order={selected}
+            orderId={selected.id}
             onClose={() => setSelected(null)}
-            items={itemsByOrder.get(selected.id) || []}
-            shipments={shipments.filter(s => s.order_id === selected.id)}
-            events={[]} // We should fetch events if needed
             allProducts={allProducts}
           />
         )}
+
     </div>
   );
 }
