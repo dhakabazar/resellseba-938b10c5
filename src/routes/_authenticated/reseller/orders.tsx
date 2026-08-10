@@ -860,8 +860,9 @@ function OrdersPage() {
                   <div className="min-w-0">
                     {orderShipment ? (
                       <div className="flex flex-col gap-0.5">
-                        <div className="text-[10px] font-bold text-primary uppercase leading-tight">
-                          {orderShipment.provider}
+                        <div className="flex min-w-0 items-center gap-1 text-[10px] font-bold text-primary leading-tight">
+                          <CourierLogo provider={orderShipment.provider} size={14} />
+                          <span className="truncate">{courierLabel(orderShipment.provider)}</span>
                         </div>
                         <div className="text-[10px] text-muted-foreground tabular-nums font-medium">
                           #{orderShipment.consignment_id || "N/A"}
