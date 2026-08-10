@@ -430,6 +430,23 @@ function AdminOrdersPage() {
                           <div className="mb-3 font-mono text-xs">{o.customer_phone}</div>
                           <div className="text-muted-foreground">{o.address_line}</div>
                           <div className="mt-1 font-medium text-primary uppercase text-[10px]">{o.area.replace("_", " ")}</div>
+                          
+                          <div className="mt-4 flex flex-wrap gap-2 border-t pt-4">
+                            {(() => {
+                              const isBooked = shipments.some(s => s.order_id === o.id && (s.consignment_id || s.tracking_id));
+                              if (!isBooked) {
+                                return (
+                                  <button
+                                    onClick={() => setBookingModal({ open: true, orderIds: [o.id] })}
+                                    className="inline-flex items-center gap-1.5 rounded-md bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary transition-colors hover:bg-primary/20"
+                                  >
+                                    <Truck className="h-3 w-3" /> {activeProviderLabel ? `Book ${activeProviderLabel}` : "Book Courier"}
+                                  </button>
+                                );
+                              }
+                              return null;
+                            })()}
+                          </div>
                         </div>
                       </div>
                       <div>
