@@ -758,8 +758,8 @@ function OrdersPage() {
                           <div className="flex flex-wrap gap-1">
                             {shipments.filter(s => s.order_id === o.id).map(s => (
                               <div key={s.id} className="inline-flex items-center gap-1 rounded bg-muted/50 px-1.5 py-0.5 text-[9px] font-medium text-muted-foreground ring-1 ring-inset ring-muted-foreground/10">
-                                <Truck className="h-2.5 w-2.5" />
-                                <span className="capitalize">{s.provider}</span>
+                                <CourierLogo provider={s.provider} size={12} />
+                                <span>{courierLabel(s.provider)}</span>
                                 {s.consignment_id && (
                                   <>
                                     <span className="opacity-70">({s.consignment_id})</span>
