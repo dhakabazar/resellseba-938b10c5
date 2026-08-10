@@ -1002,14 +1002,16 @@ function OrdersPage() {
 
       {selected && (
         <OrderDrawer
-          order={selected}
+          orderId={selected.id}
           onClose={() => setSelected(null)}
           onChanged={() => {
             setSelected(null);
             load();
           }}
+          allProducts={allProducts}
         />
       )}
+
 
       {open && resellerId && (
         <NewOrderModal
