@@ -12,4 +12,9 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  nitro: {
+    // Cloudflare Workers: the SSR bundle imports node: built-ins (crypto, stream, buffer),
+    // so the worker must be deployed with the nodejs_compat flag.
+    cloudflare: { nodeCompat: true },
+  },
 });
