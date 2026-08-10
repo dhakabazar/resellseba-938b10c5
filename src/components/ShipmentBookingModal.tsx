@@ -124,7 +124,7 @@ export function ShipmentBookingModal({
           </p>
 
           <div className="grid grid-cols-1 gap-3">
-            {COURIER_LIST.map((p) => (
+            {activeCourierList.map((p: any) => (
               <button
                 key={p.id}
                 onClick={() => setProvider(p.id)}
