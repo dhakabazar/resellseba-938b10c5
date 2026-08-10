@@ -646,7 +646,10 @@ function OrderDrawer({
                   {shipments.map(s => (
                     <div key={s.id} className="rounded-lg border border-primary/20 bg-primary/5 p-3">
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-bold uppercase text-primary">{s.provider}</span>
+                        <span className="inline-flex items-center gap-1.5 text-xs font-bold text-primary">
+                          <CourierLogo provider={s.provider} size={18} />
+                          {courierLabel(s.provider)}
+                        </span>
                         <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary capitalize">{s.status}</span>
                       </div>
                       <div className="text-sm font-mono tracking-wider">#{s.consignment_id || s.tracking_id}</div>
