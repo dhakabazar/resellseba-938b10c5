@@ -159,12 +159,12 @@ export function ShipmentBookingModal({
             Cancel
           </button>
           <button
-            disabled={loading}
+            disabled={loading || activeProviders.length === 0}
             onClick={handleBook}
             className="btn-brand flex items-center gap-2 rounded-lg px-6 py-2 text-sm font-semibold disabled:opacity-50"
           >
             {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-            Confirm Booking
+            Confirm {provider ? (COURIER_BRANDS as any)[provider]?.label : "Courier"} Booking
           </button>
         </div>
       </DialogContent>
