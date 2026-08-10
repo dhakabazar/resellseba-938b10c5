@@ -1,44 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { loadOrder, loadConfig, siteOrigin, bkashToken } from "@/lib/payments.server";
 
 /**
  * Payment gateway initialization. All are public (no auth) but require a real
  * order_number so amounts can be derived server-side and cannot be tampered.
  */
-
-async function loadOrder(orderNumber: string) {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data: order } = await supabaseAdmin
-    .from("orders")
-    .select("id, order_number, total, customer_name, customer_phone, customer_email, address_line, city, area, reseller_id, payment_method, payment_status")
-    .eq("order_number", orderNumber)
-    .maybeSingle();
-  if (!order) throw new Response("Order not found", { status: 404 });
-  if (order.payment_status === "paid") throw new Response("Already paid", { status: 400 });
-  return { order, supabaseAdmin };
-}
-
-async function loadConfig(supabaseAdmin: any, method: string, resellerId: string) {
-  // reseller override first, then global
-  const { data } = await supabaseAdmin
-    .from("payment_configs")
-    .select("config, mode, is_active, reseller_id")
-    .eq("method", method)
-    .or(`reseller_id.eq.${resellerId},reseller_id.is.null`);
-  const rows = (data ?? []).filter((r: any) => r.is_active);
-  const cfg = rows.find((r: any) => r.reseller_id === resellerId) ?? rows.find((r: any) => r.reseller_id === null);
-  if (!cfg) throw new Response(`${method} not configured`, { status: 400 });
-  return cfg;
-}
-
-function siteOrigin(request?: Request): string {
-  if (request) {
-    const proto = request.headers.get("x-forwarded-proto") ?? "https";
-    const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
-    if (host) return `${proto}://${host}`;
-  }
-  return process.env.SITE_URL || "";
-}
 
 /* -------------------- SSLCommerz -------------------- */
 export const initSslcommerz = createServerFn({ method: "POST" })
@@ -86,17 +53,6 @@ export const initSslcommerz = createServerFn({ method: "POST" })
   });
 
 /* -------------------- bKash Tokenized Checkout -------------------- */
-async function bkashToken(base: string, appKey: string, appSecret: string, username: string, password: string) {
-  const res = await fetch(`${base}/tokenized/checkout/token/grant`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", accept: "application/json", username, password },
-    body: JSON.stringify({ app_key: appKey, app_secret: appSecret }),
-  });
-  const body = (await res.json().catch(() => ({}))) as any;
-  if (!body.id_token) throw new Response(body.statusMessage || "bKash auth failed", { status: 502 });
-  return body.id_token as string;
-}
-
 export const initBkash = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({ orderNumber: z.string(), code: z.string() }).parse(d))
   .handler(async ({ data }) => {
