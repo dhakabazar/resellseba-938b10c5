@@ -29,11 +29,30 @@ export function ShipmentBookingModal({
   const [loading, setLoading] = useState(false);
   const [provider, setProvider] = useState<"steadfast" | "pathao" | "carrybee">("steadfast");
   
+  const fetchActive = useServerFn(getActiveCouriers);
+  const { data: activeProviders = [], isLoading: loadingActive } = useQuery({
+    queryKey: ["active-couriers"],
+    queryFn: () => fetchActive(),
+  });
+
+  const activeCourierList = useMemo(() => {
+    return activeProviders
+      .map((id) => (COURIER_BRANDS as any)[id])
+      .filter(Boolean);
+  }, [activeProviders]);
+
+  useEffect(() => {
+    if (activeProviders.length > 0 && !activeProviders.includes(provider)) {
+      setProvider(activeProviders[0] as any);
+    }
+  }, [activeProviders]);
+
   const doSteadfast = useServerFn(bookSteadfast);
   const doPathao = useServerFn(bookPathao);
   const doCarrybee = useServerFn(bookCarrybee);
 
   const handleBook = async () => {
+    if (orderIds.length === 0) return;
     setLoading(true);
     let successCount = 0;
     let failCount = 0;
@@ -64,6 +83,30 @@ export function ShipmentBookingModal({
     }
     setLoading(false);
   };
+
+  // Logic: if only 1 active, we'll auto-book or show a simplified state.
+  // The user said: "if active 1ti hoi tahole popup asbe na sorasori booking"
+  // But usually we need to call handleBook. 
+  // However, the component is rendered as a modal controlled by state.
+  // We can trigger handleBook in a useEffect if activeProviders.length === 1 and it's open.
+  useEffect(() => {
+    if (isOpen && !loading && activeProviders.length === 1 && orderIds.length > 0) {
+      handleBook();
+    }
+  }, [isOpen, activeProviders, orderIds]);
+
+  if (activeProviders.length === 1 && isOpen) {
+    return (
+      <Dialog open={isOpen} onOpenChange={(open) => !loading && !open && onClose()}>
+        <DialogContent className="max-w-sm">
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+            <p className="text-sm font-medium">Booking {orderIds.length} order(s) with {activeCourierList[0]?.label}...</p>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !loading && !open && onClose()}>
