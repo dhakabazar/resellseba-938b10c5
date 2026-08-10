@@ -424,6 +424,7 @@ function OrdersPage() {
     <div>
       <PageHeader
         title="Orders"
+        className="flex-row items-center justify-between"
         description=""
         actions={
           <div className="flex items-center gap-2">

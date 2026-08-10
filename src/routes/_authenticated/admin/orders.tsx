@@ -221,6 +221,7 @@ function AdminOrdersPage() {
     <div>
         <PageHeader 
             title="Orders" 
+            className="flex-row items-center justify-between"
             actions={
                 <div className="flex items-center gap-2">
                     <button onClick={() => setOpen(true)} className="btn-brand inline-flex items-center gap-2 px-3 py-2 text-xs sm:px-4 sm:py-2 sm:text-sm whitespace-nowrap">
