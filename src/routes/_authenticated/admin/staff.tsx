@@ -283,32 +283,50 @@ function RolesPage() {
       </div>
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-[500px] max-h-[85vh] flex flex-col p-0 overflow-hidden">
-          <form onSubmit={handleSubmit} className="flex flex-col h-full">
+        <DialogContent className="w-[95vw] sm:max-w-[600px] max-h-[90vh] flex flex-col p-0 overflow-hidden rounded-xl">
+          <form onSubmit={handleSubmit} className="flex flex-col h-full overflow-hidden">
             <DialogHeader className="p-6 pb-2">
-              <DialogTitle>Create Custom Role</DialogTitle>
+              <DialogTitle className="text-xl font-bold">Create Custom Role</DialogTitle>
               <DialogDescription>Define a role and its associated permissions.</DialogDescription>
             </DialogHeader>
             
-            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6">
-              <div className="grid gap-2">
-                <Label htmlFor="roleName">Role Name</Label>
-                <Input id="roleName" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="e.g. Content Manager" required />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="description">Description</Label>
-                <Input id="description" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} placeholder="What can this role do?" />
+            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6 scrollbar-thin">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid gap-2">
+                  <Label htmlFor="roleName" className="font-semibold">Role Name</Label>
+                  <Input id="roleName" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="e.g. Content Manager" className="bg-muted/50" required />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="description" className="font-semibold">Description</Label>
+                  <Input id="description" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} placeholder="What can this role do?" className="bg-muted/50" />
+                </div>
               </div>
               
               <div className="space-y-4">
-                <Label className="text-base font-bold">Permissions</Label>
+                <div className="flex items-center justify-between border-b pb-2">
+                  <Label className="text-base font-bold">Permissions</Label>
+                  <span className="text-xs text-muted-foreground">{formData.permissionIds.length} selected</span>
+                </div>
                 <div className="grid gap-3 sm:grid-cols-2">
                   {permissions.map((perm) => (
-                    <div key={perm.id} className="flex items-start space-x-3 space-y-0 rounded-md border p-3 hover:bg-muted/50 cursor-pointer transition-colors" onClick={() => togglePermission(perm.id)}>
-                      <Checkbox id={perm.id} checked={formData.permissionIds.includes(perm.id)} onCheckedChange={() => togglePermission(perm.id)} />
-                      <div className="grid gap-1.5 leading-none">
-                        <label htmlFor={perm.id} className="text-sm font-medium leading-none cursor-pointer">{perm.name}</label>
-                        {perm.description && <p className="text-xs text-muted-foreground line-clamp-1">{perm.description}</p>}
+                    <div 
+                      key={perm.id} 
+                      className={`flex items-start space-x-3 space-y-0 rounded-lg border p-3 hover:shadow-sm cursor-pointer transition-all ${
+                        formData.permissionIds.includes(perm.id) 
+                          ? "border-primary bg-primary/5 shadow-sm" 
+                          : "hover:bg-muted/50"
+                      }`}
+                      onClick={() => togglePermission(perm.id)}
+                    >
+                      <Checkbox 
+                        id={perm.id} 
+                        checked={formData.permissionIds.includes(perm.id)} 
+                        onCheckedChange={() => togglePermission(perm.id)}
+                        className="mt-0.5"
+                      />
+                      <div className="grid gap-1 leading-none">
+                        <label htmlFor={perm.id} className="text-sm font-semibold leading-none cursor-pointer">{perm.name}</label>
+                        {perm.description && <p className="text-[11px] text-muted-foreground leading-tight mt-1">{perm.description}</p>}
                       </div>
                     </div>
                   ))}
@@ -317,10 +335,13 @@ function RolesPage() {
             </div>
             
             <DialogFooter className="p-6 pt-2 border-t bg-muted/20">
-              <button type="submit" disabled={isSubmitting} className="btn-brand w-full py-2.5 flex items-center justify-center gap-2">
-                {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Shield className="h-4 w-4" />}
-                Save Role
-              </button>
+              <div className="flex w-full gap-3">
+                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 px-4 py-2.5 rounded-lg border font-medium hover:bg-muted transition-colors">Cancel</button>
+                <button type="submit" disabled={isSubmitting} className="flex-[2] btn-brand py-2.5 flex items-center justify-center gap-2 rounded-lg shadow-sm">
+                  {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Shield className="h-4 w-4" />}
+                  Save Role
+                </button>
+              </div>
             </DialogFooter>
           </form>
         </DialogContent>
