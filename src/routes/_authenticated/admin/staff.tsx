@@ -209,8 +209,7 @@ function StaffPage() {
         actions={
           <button
             onClick={() => setIsAddModalOpen(true)}
-            className="btn-brand px-4 py-2 text-sm font-medium flex items-center gap-2"
-
+            className="btn-brand inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium"
           >
             <UserPlus className="h-4 w-4" />
             Add New User
