@@ -76,8 +76,9 @@ export const updateAdminUserPassword = createServerFn({ method: "POST" })
 
 const updateRoleInput = z.object({
   userId: z.string().uuid(),
-  role: z.enum(["super_admin", "staff", "reseller", "leader"]),
+  role: z.string(),
 });
+
 
 export const updateAdminUserRole = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
