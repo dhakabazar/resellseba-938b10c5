@@ -358,11 +358,24 @@ function StaffPage() {
                 </SelectTrigger>
 
                 <SelectContent>
-                  {/* Super Admin role hidden unless specifically needed, but typically only one exists */}
+                  <DropdownMenuLabel className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">System Roles</DropdownMenuLabel>
                   <SelectItem value="staff">Staff (Limited Access)</SelectItem>
                   <SelectItem value="reseller">Reseller</SelectItem>
                   <SelectItem value="leader">Leader Reseller</SelectItem>
+                  
+                  {customRoles.length > 0 && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuLabel className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">Custom Roles</DropdownMenuLabel>
+                      {customRoles.filter(r => !r.is_system).map(role => (
+                        <SelectItem key={role.id} value={role.id}>
+                          {role.name}
+                        </SelectItem>
+                      ))}
+                    </>
+                  )}
                 </SelectContent>
+
               </Select>
             </div>
             <DialogFooter className="pt-4">
