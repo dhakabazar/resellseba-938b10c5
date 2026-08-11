@@ -13,7 +13,9 @@ import {
   ShoppingCart,
   Megaphone,
   Award,
+  Shield,
   ScrollText,
+
   Bell,
   FileText,
   ShoppingBag,
