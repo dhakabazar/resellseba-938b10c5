@@ -350,13 +350,17 @@ function RolesPage() {
                           ? "border-primary bg-primary/5 shadow-sm" 
                           : "hover:bg-muted/50"
                       }`}
-                      onClick={() => togglePermission(perm.id)}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        togglePermission(perm.id);
+                      }}
                     >
                       <Checkbox 
                         id={perm.id} 
                         checked={formData.permissionIds.includes(perm.id)} 
                         onCheckedChange={() => togglePermission(perm.id)}
                         className="mt-0.5"
+                        onClick={(e) => e.stopPropagation()}
                       />
                       <div className="grid gap-1 leading-none">
                         <label htmlFor={perm.id} className="text-sm font-semibold leading-none cursor-pointer">{perm.name}</label>
