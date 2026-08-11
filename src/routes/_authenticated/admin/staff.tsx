@@ -90,32 +90,39 @@ function StaffPage() {
   const loadUsers = async () => {
     setLoading(true);
     try {
-      // Get profiles and roles
-      const { data: profiles, error: pError } = await supabase
-        .from("profiles")
-        .select(`
-          id,
-          full_name,
-          created_at,
-          user_roles(role)
-        `);
+      // Fetch profiles and roles separately to avoid relationship cache issues
+      const [profilesRes, rolesRes] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("id, full_name, created_at"),
+        supabase
+          .from("user_roles")
+          .select("user_id, role")
+      ]);
 
-      if (pError) throw pError;
+      if (profilesRes.error) throw profilesRes.error;
+      if (rolesRes.error) throw rolesRes.error;
 
       // Get emails from auth list (using existing server fn)
       const emailStatus = await listEmailStatusFn();
       const emailMap = Object.fromEntries(emailStatus.map(e => [e.user_id, e.email]));
+      
+      const roleMap = (rolesRes.data || []).reduce((acc: any, curr) => {
+        acc[curr.user_id] = curr.role;
+        return acc;
+      }, {});
 
-      const mappedUsers: SystemUser[] = (profiles || []).map((p: any) => ({
+      const mappedUsers: SystemUser[] = (profilesRes.data || []).map((p: any) => ({
         id: p.id,
         full_name: p.full_name,
         created_at: p.created_at,
-        role: p.user_roles?.[0]?.role || "reseller",
+        role: roleMap[p.id] || "reseller",
         email: emailMap[p.id] || "No email",
       }));
 
       setUsers(mappedUsers);
     } catch (err: any) {
+      console.error("Staff load error:", err);
       toast.error("Failed to load users: " + err.message);
     } finally {
       setLoading(false);
