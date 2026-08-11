@@ -7,8 +7,9 @@ const createUserInput = z.object({
   email: z.string().email(),
   password: z.string().min(6),
   fullName: z.string().min(2),
-  role: z.enum(["super_admin", "staff", "reseller", "leader"]),
+  role: z.string(), // Changed to string to support UUIDs or enum values
 });
+
 
 export const createAdminUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
