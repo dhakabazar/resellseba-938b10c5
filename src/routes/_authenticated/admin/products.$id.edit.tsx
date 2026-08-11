@@ -161,11 +161,17 @@ function EditProduct() {
           keywords: keywords || null,
         })
         .eq("id", id);
-      if (error) throw error;
+      
+      if (error) {
+        console.error("Database update error:", error);
+        throw new Error(error.message || "Failed to update product details");
+      }
 
-      await supabase.from("product_images").delete().eq("product_id", id);
+      const { error: de } = await supabase.from("product_images").delete().eq("product_id", id);
+      if (de) console.warn("Failed to clean old images:", de);
+
       if (images.length) {
-        await supabase.from("product_images").insert(
+        const { error: ie } = await supabase.from("product_images").insert(
           images.map((im, i) => ({
             product_id: id,
             url: im.url,
@@ -173,11 +179,17 @@ function EditProduct() {
             sort_order: i,
           })),
         );
+        if (ie) {
+          console.error("Image insert error:", ie);
+          throw new Error(ie.message || "Details updated, but failed to save images");
+        }
       }
-      toast.success("Product updated");
+      
+      toast.success("Product updated successfully");
       nav({ to: "/admin/products" });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed");
+      console.error("Save product catch block:", err);
+      toast.error(err instanceof Error ? err.message : "Failed to update product");
     } finally {
       setBusy(false);
     }

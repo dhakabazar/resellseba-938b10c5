@@ -72,6 +72,7 @@ function NewProduct() {
     setBusy(true);
     try {
       const slug = await uniqueProductSlug(name);
+      
       const { data: p, error } = await supabase
         .from("products")
         .insert({
@@ -97,10 +98,14 @@ function NewProduct() {
         })
         .select("id")
         .single();
-      if (error) throw error;
+      
+      if (error) {
+        console.error("Database insert error:", error);
+        throw new Error(error.message || "Failed to create product in database");
+      }
 
       if (images.length && p) {
-        await supabase.from("product_images").insert(
+        const { error: ie } = await supabase.from("product_images").insert(
           images.map((im, i) => ({
             product_id: p.id,
             url: im.url,
@@ -108,11 +113,17 @@ function NewProduct() {
             sort_order: i,
           })),
         );
+        if (ie) {
+          console.error("Image insert error:", ie);
+          throw new Error(ie.message || "Product created, but failed to save images");
+        }
       }
-      toast.success("Product created");
+      
+      toast.success("Product created successfully");
       nav({ to: "/admin/products" });
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed");
+    } catch (err) {
+      console.error("Save product catch block:", err);
+      toast.error(err instanceof Error ? err.message : "Failed to create product");
     } finally {
       setBusy(false);
     }
