@@ -84,7 +84,7 @@ function StaffPage() {
   const [isPassModalOpen, setIsPassModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<SystemUser | null>(null);
-  const [formData, setFormData] = useState({ email: "", password: "", fullName: "", role: "staff" as string });
+  const [formData, setFormData] = useState({ email: "", password: "", fullName: "", role: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const createUserMutation = useServerFn(createAdminUser);
@@ -121,7 +121,7 @@ function StaffPage() {
       await createUserMutation({ data: formData });
       toast.success("User created successfully");
       setIsAddModalOpen(false);
-      setFormData({ email: "", password: "", fullName: "", role: "staff" });
+      setFormData({ email: "", password: "", fullName: "", role: "" });
       loadUsers();
     } catch (error: any) {
       toast.error(error.message || "Failed to create user");
@@ -192,18 +192,14 @@ function StaffPage() {
                     <SelectValue placeholder="Select a role" />
                   </SelectTrigger>
                   <SelectContent>
-                    <DropdownMenuLabel className="px-2 py-1.5 text-xs font-semibold uppercase text-muted-foreground">System Roles</DropdownMenuLabel>
-                    <SelectItem value="staff">Staff</SelectItem>
-                    <SelectItem value="reseller">Reseller</SelectItem>
-                    <SelectItem value="leader">Leader</SelectItem>
-                    {customRoles.length > 0 && (
-                      <>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuLabel className="px-2 py-1.5 text-xs font-semibold uppercase text-muted-foreground">Custom Roles</DropdownMenuLabel>
-                        {customRoles.map((role) => (
-                          <SelectItem key={role.id} value={role.id}>{role.name}</SelectItem>
-                        ))}
-                      </>
+                    {customRoles.length > 0 ? (
+                      customRoles.map((role) => (
+                        <SelectItem key={role.id} value={role.id}>{role.name}</SelectItem>
+                      ))
+                    ) : (
+                      <div className="p-2 text-xs text-center text-muted-foreground">
+                        No custom roles created. Please create a role in the Roles tab first.
+                      </div>
                     )}
                   </SelectContent>
                 </Select>
