@@ -90,9 +90,20 @@ export const updateAdminUserRole = createServerFn({ method: "POST" })
     // Delete existing roles first to maintain the simple 1-role per user model requested
     await supabaseAdmin.from("user_roles").delete().eq("user_id", data.userId);
     
+    const isCustomRole = data.role.includes("-");
+    const rolePayload: any = { user_id: data.userId };
+    
+    if (isCustomRole) {
+      rolePayload.custom_role_id = data.role;
+      rolePayload.role = 'staff';
+    } else {
+      rolePayload.role = data.role;
+    }
+
     const { error } = await supabaseAdmin
       .from("user_roles")
-      .insert({ user_id: data.userId, role: data.role });
+      .insert(rolePayload);
+
 
     if (error) throw new Response(error.message, { status: 400 });
     return { ok: true };
