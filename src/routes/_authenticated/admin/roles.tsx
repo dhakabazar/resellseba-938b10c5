@@ -161,7 +161,7 @@ function RolesPage() {
                   <h3 className="font-bold text-foreground">{role.name}</h3>
                 </div>
                 {role.is_system && (
-                  <Lock className="h-4 w-4 text-muted-foreground" title="System Role" />
+                  <Lock className="h-4 w-4 text-muted-foreground" />
                 )}
               </div>
               <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
