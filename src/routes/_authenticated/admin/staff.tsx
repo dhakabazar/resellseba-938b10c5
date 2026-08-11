@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
+import { useAuth } from "@/lib/use-auth";
 import { 
   createAdminUser, 
   updateAdminUserPassword, 
@@ -180,10 +181,17 @@ function StaffPage() {
     }
   };
 
-  const filteredUsers = users.filter(u => 
-    u.full_name?.toLowerCase().includes(search.toLowerCase()) ||
-    u.email?.toLowerCase().includes(search.toLowerCase())
-  );
+  const { user: currentUser, roles: currentRoles } = useAuth();
+  const isSuperAdmin = currentRoles.includes("super_admin");
+
+  const filteredUsers = users.filter(u => {
+    // If not super_admin, only see yourself
+    if (!isSuperAdmin && u.id !== currentUser?.id) return false;
+    
+    // Search filter
+    return u.full_name?.toLowerCase().includes(search.toLowerCase()) ||
+           u.email?.toLowerCase().includes(search.toLowerCase());
+  });
 
   return (
     <div className="space-y-6">
@@ -234,31 +242,40 @@ function StaffPage() {
                 </div>
               </div>
               
-              <DropdownMenu>
-                <DropdownMenuTrigger className="p-1 hover:bg-muted rounded-md transition-colors">
-                  <MoreHorizontal className="h-5 w-5 text-muted-foreground" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuLabel>Manage User</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => {
-                    setSelectedUser(user);
-                    setIsPassModalOpen(true);
-                  }}>
-                    <Key className="mr-2 h-4 w-4" /> Change Password
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem 
-                    className="text-destructive focus:text-destructive"
-                    onClick={() => {
+              {/* Only Super Admin can manage others, and cannot delete themselves */}
+              {isSuperAdmin && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="p-1 hover:bg-muted rounded-md transition-colors">
+                    <MoreHorizontal className="h-5 w-5 text-muted-foreground" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuLabel>Manage User</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => {
                       setSelectedUser(user);
-                      setIsDeleteModalOpen(true);
-                    }}
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" /> Delete User
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                      setIsPassModalOpen(true);
+                    }}>
+                      <Key className="mr-2 h-4 w-4" /> Change Password
+                    </DropdownMenuItem>
+                    
+                    {/* Cannot delete themselves or other super admins if you want strict "one super admin" rule */}
+                    {user.id !== currentUser?.id && user.role !== 'super_admin' && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem 
+                          className="text-destructive focus:text-destructive"
+                          onClick={() => {
+                            setSelectedUser(user);
+                            setIsDeleteModalOpen(true);
+                          }}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" /> Delete User
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </div>
 
             <div className="mt-4 flex items-center justify-between">
@@ -331,7 +348,7 @@ function StaffPage() {
                   <SelectValue placeholder="Select a role" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="super_admin">Super Admin (Full Access)</SelectItem>
+                  {/* Super Admin role hidden unless specifically needed, but typically only one exists */}
                   <SelectItem value="staff">Staff (Limited Access)</SelectItem>
                   <SelectItem value="reseller">Reseller</SelectItem>
                   <SelectItem value="leader">Leader Reseller</SelectItem>
