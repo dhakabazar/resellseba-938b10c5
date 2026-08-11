@@ -27,7 +27,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
 
-export const Route = createFileRoute("/_authenticated/admin/roles")({
+export const Route = createFileRoute("/_authenticated/admin/roles-page")({
   component: RolesPage,
 });
 

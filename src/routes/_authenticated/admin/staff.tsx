@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import StaffPage from "./staff";
-import RolesPage from "./roles";
+import StaffPage from "./staff-page";
+import RolesPage from "./roles-page";
 
-export const Route = createFileRoute("/_authenticated/admin/staff-page")({
+export const Route = createFileRoute("/_authenticated/admin/staff")({
   component: StaffTabsPage,
 });
 
