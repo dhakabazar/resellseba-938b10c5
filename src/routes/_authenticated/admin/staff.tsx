@@ -72,7 +72,9 @@ function StaffPage() {
   const listEmailStatusFn = useServerFn(listResellerEmailStatus);
 
   const [users, setUsers] = useState<SystemUser[]>([]);
+  const [customRoles, setCustomRoles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
   const [search, setSearch] = useState("");
   
   // Modals state
