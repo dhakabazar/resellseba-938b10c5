@@ -113,11 +113,7 @@ function StaffPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4 bg-card p-4 rounded-xl border shadow-sm">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search users..." className="pl-9" value={search} onChange={(e) => setSearch(e.target.value)} />
-        </div>
+      <div className="flex items-center justify-end gap-4 bg-card p-4 rounded-xl border shadow-sm">
         <button onClick={() => setIsAddModalOpen(true)} className="btn-brand inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium">
           <UserPlus className="h-4 w-4" /> Add New User
         </button>
