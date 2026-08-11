@@ -180,10 +180,17 @@ function StaffPage() {
     }
   };
 
-  const filteredUsers = users.filter(u => 
-    u.full_name?.toLowerCase().includes(search.toLowerCase()) ||
-    u.email?.toLowerCase().includes(search.toLowerCase())
-  );
+  const { user: currentUser, roles: currentRoles } = useAuth();
+  const isSuperAdmin = currentRoles.includes("super_admin");
+
+  const filteredUsers = users.filter(u => {
+    // If not super_admin, only see yourself
+    if (!isSuperAdmin && u.id !== currentUser?.id) return false;
+    
+    // Search filter
+    return u.full_name?.toLowerCase().includes(search.toLowerCase()) ||
+           u.email?.toLowerCase().includes(search.toLowerCase());
+  });
 
   return (
     <div className="space-y-6">
