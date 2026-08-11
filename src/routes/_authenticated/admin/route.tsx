@@ -73,6 +73,7 @@ const NAV: NavEntry[] = [
       { label: "Couriers", to: "/admin/couriers", icon: <Truck className="h-4 w-4" /> },
       { label: "Payment methods", to: "/admin/payments", icon: <Wallet className="h-4 w-4" /> },
 
+      { label: "Staff", to: "/admin/staff", icon: <Users className="h-4 w-4" /> },
       { label: "Audit log", to: "/admin/audit", icon: <ScrollText className="h-4 w-4" /> },
       { label: "Settings", to: "/admin/settings", icon: <Settings className="h-4 w-4" /> },
 
