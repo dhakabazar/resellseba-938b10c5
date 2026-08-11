@@ -50,7 +50,7 @@ export function ConfirmModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !isLoading && !open && onClose()}>
-      <DialogContent className="max-w-md gap-0 p-0 overflow-hidden [&>button]:hidden">
+      <DialogContent className="max-w-md gap-0 p-0 overflow-hidden hide-close-button">
         <div className="flex items-center justify-between border-b px-5 py-4 bg-muted/30">
           <div className="flex items-center gap-3">
             <div className={`rounded-full p-2 ${iconColors[variant]}`}>
