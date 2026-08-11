@@ -281,10 +281,11 @@ function RolesPage() {
                 <h3 className="font-bold">{role.name}</h3>
               </div>
               <button 
+                type="button"
                 onClick={async () => {
                   if (confirm("Are you sure you want to delete this role?")) {
                     try {
-                      await useServerFn(deleteRole)({ data: { id: role.id } });
+                      await deleteRoleMutation({ data: { id: role.id } });
                       toast.success("Role deleted");
                       loadData();
                     } catch (e: any) {
