@@ -228,6 +228,7 @@ function RolesPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const saveRoleMutation = useServerFn(saveRole);
+  const deleteRoleMutation = useServerFn(deleteRole);
 
   const loadData = async () => {
     setLoading(true);
