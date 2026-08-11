@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
+import { useAuth } from "@/lib/use-auth";
 import { 
   createAdminUser, 
   updateAdminUserPassword, 
