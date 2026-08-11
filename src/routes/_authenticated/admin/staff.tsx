@@ -183,15 +183,16 @@ function StaffPage() {
       <PageHeader
         title="Staff & User Management"
         description="Create and manage administrative users and their system roles."
-      >
-        <button
-          onClick={() => setIsAddModalOpen(true)}
-          className="btn-brand flex items-center gap-2"
-        >
-          <UserPlus className="h-4 w-4" />
-          Add New User
-        </button>
-      </PageHeader>
+        actions={
+          <button
+            onClick={() => setIsAddModalOpen(true)}
+            className="btn-brand flex items-center gap-2"
+          >
+            <UserPlus className="h-4 w-4" />
+            Add New User
+          </button>
+        }
+      />
 
       <div className="flex items-center gap-4 bg-card p-4 rounded-xl border shadow-sm">
         <div className="relative flex-1 max-w-sm">
