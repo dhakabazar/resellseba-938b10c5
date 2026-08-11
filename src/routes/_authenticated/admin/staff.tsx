@@ -348,7 +348,7 @@ function StaffPage() {
                   <SelectValue placeholder="Select a role" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="super_admin">Super Admin (Full Access)</SelectItem>
+                  {/* Super Admin role hidden unless specifically needed, but typically only one exists */}
                   <SelectItem value="staff">Staff (Limited Access)</SelectItem>
                   <SelectItem value="reseller">Reseller</SelectItem>
                   <SelectItem value="leader">Leader Reseller</SelectItem>
