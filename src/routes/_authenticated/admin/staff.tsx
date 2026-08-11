@@ -84,7 +84,10 @@ function StaffPage() {
   const [isPassModalOpen, setIsPassModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<SystemUser | null>(null);
-  const [formData, setFormData] = useState({ email: "", password: "", fullName: "", role: "staff" as AppRole });
+  const [formData, setFormData] = useState({ email: "", password: "", fullName: "", role: "staff" as string });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const createUserMutation = useServerFn(createAdminUser);
 
   const loadUsers = async () => {
     setLoading(true);
@@ -109,7 +112,23 @@ function StaffPage() {
 
   const { user: currentUser, roles: currentRoles } = useAuth();
   const isSuperAdmin = currentRoles.includes("super_admin");
-  const filteredUsers = users.filter(u => (isSuperAdmin || u.id === currentUser?.id) && (u.full_name?.toLowerCase().includes(search.toLowerCase()) || u.email?.toLowerCase().includes(search.toLowerCase())));
+  const filteredUsers = users.filter(u => (isSuperAdmin || u.id === currentUser?.id));
+
+  const handleAddUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      await createUserMutation({ data: formData });
+      toast.success("User created successfully");
+      setIsAddModalOpen(false);
+      setFormData({ email: "", password: "", fullName: "", role: "staff" });
+      loadUsers();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to create user");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -145,6 +164,60 @@ function StaffPage() {
           </div>
         ))}
       </div>
+
+      <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <form onSubmit={handleAddUser}>
+            <DialogHeader>
+              <DialogTitle>Add New User</DialogTitle>
+              <DialogDescription>Create a new staff member or reseller. They will be able to log in with these credentials.</DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="fullName">Full Name</Label>
+                <Input id="fullName" value={formData.fullName} onChange={(e) => setFormData({ ...formData, fullName: e.target.value })} placeholder="John Doe" required />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} placeholder="john@example.com" required />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="password">Password</Label>
+                <Input id="password" type="password" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} placeholder="••••••••" required />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="role">Role</Label>
+                <Select value={formData.role} onValueChange={(v) => setFormData({ ...formData, role: v })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <DropdownMenuLabel className="px-2 py-1.5 text-xs font-semibold uppercase text-muted-foreground">System Roles</DropdownMenuLabel>
+                    <SelectItem value="staff">Staff</SelectItem>
+                    <SelectItem value="reseller">Reseller</SelectItem>
+                    <SelectItem value="leader">Leader</SelectItem>
+                    {customRoles.length > 0 && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuLabel className="px-2 py-1.5 text-xs font-semibold uppercase text-muted-foreground">Custom Roles</DropdownMenuLabel>
+                        {customRoles.map((role) => (
+                          <SelectItem key={role.id} value={role.id}>{role.name}</SelectItem>
+                        ))}
+                      </>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <button type="submit" disabled={isSubmitting} className="btn-brand w-full py-2.5 flex items-center justify-center gap-2">
+                {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
+                Create User
+              </button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -156,6 +229,9 @@ function RolesPage() {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({ name: "", description: "", permissionIds: [] as string[] });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const saveRoleMutation = useServerFn(saveRole);
 
   const loadData = async () => {
     setLoading(true);
@@ -166,6 +242,33 @@ function RolesPage() {
   };
 
   useEffect(() => { loadData(); }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.name) return toast.error("Role name is required");
+    
+    setIsSubmitting(true);
+    try {
+      await saveRoleMutation({ data: formData });
+      toast.success("Role saved successfully");
+      setIsModalOpen(false);
+      setFormData({ name: "", description: "", permissionIds: [] });
+      loadData();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to save role");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const togglePermission = (id: string) => {
+    setFormData(prev => ({
+      ...prev,
+      permissionIds: prev.permissionIds.includes(id) 
+        ? prev.permissionIds.filter(pid => pid !== id)
+        : [...prev.permissionIds, id]
+    }));
+  };
 
   return (
     <div className="space-y-6">
@@ -182,6 +285,50 @@ function RolesPage() {
           </div>
         ))}
       </div>
+
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="sm:max-w-[500px] max-h-[85vh] flex flex-col p-0 overflow-hidden">
+          <form onSubmit={handleSubmit} className="flex flex-col h-full">
+            <DialogHeader className="p-6 pb-2">
+              <DialogTitle>Create Custom Role</DialogTitle>
+              <DialogDescription>Define a role and its associated permissions.</DialogDescription>
+            </DialogHeader>
+            
+            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6">
+              <div className="grid gap-2">
+                <Label htmlFor="roleName">Role Name</Label>
+                <Input id="roleName" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="e.g. Content Manager" required />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="description">Description</Label>
+                <Input id="description" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} placeholder="What can this role do?" />
+              </div>
+              
+              <div className="space-y-4">
+                <Label className="text-base font-bold">Permissions</Label>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {permissions.map((perm) => (
+                    <div key={perm.id} className="flex items-start space-x-3 space-y-0 rounded-md border p-3 hover:bg-muted/50 cursor-pointer transition-colors" onClick={() => togglePermission(perm.id)}>
+                      <Checkbox id={perm.id} checked={formData.permissionIds.includes(perm.id)} onCheckedChange={() => togglePermission(perm.id)} />
+                      <div className="grid gap-1.5 leading-none">
+                        <label htmlFor={perm.id} className="text-sm font-medium leading-none cursor-pointer">{perm.name}</label>
+                        {perm.description && <p className="text-xs text-muted-foreground line-clamp-1">{perm.description}</p>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            
+            <DialogFooter className="p-6 pt-2 border-t bg-muted/20">
+              <button type="submit" disabled={isSubmitting} className="btn-brand w-full py-2.5 flex items-center justify-center gap-2">
+                {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Shield className="h-4 w-4" />}
+                Save Role
+              </button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
