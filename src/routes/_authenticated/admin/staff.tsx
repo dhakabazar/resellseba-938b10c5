@@ -72,7 +72,9 @@ function StaffPage() {
   const listEmailStatusFn = useServerFn(listResellerEmailStatus);
 
   const [users, setUsers] = useState<SystemUser[]>([]);
+  const [customRoles, setCustomRoles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
   const [search, setSearch] = useState("");
   
   // Modals state
@@ -91,25 +93,30 @@ function StaffPage() {
   const loadUsers = async () => {
     setLoading(true);
     try {
-      // Fetch profiles and roles separately to avoid relationship cache issues
-      const [profilesRes, rolesRes] = await Promise.all([
+      const [profilesRes, rolesRes, customRolesRes] = await Promise.all([
         supabase
           .from("profiles")
           .select("id, full_name, created_at"),
         supabase
           .from("user_roles")
-          .select("user_id, role")
+          .select("user_id, role, custom_role_id"),
+        supabase
+          .from("roles")
+          .select("*")
       ]);
 
       if (profilesRes.error) throw profilesRes.error;
       if (rolesRes.error) throw rolesRes.error;
+      if (customRolesRes.error) throw customRolesRes.error;
+
+      setCustomRoles(customRolesRes.data || []);
 
       // Get emails from auth list (using existing server fn)
       const emailStatus = await listEmailStatusFn();
       const emailMap = Object.fromEntries(emailStatus.map(e => [e.user_id, e.email]));
       
       const roleMap = (rolesRes.data || []).reduce((acc: any, curr) => {
-        acc[curr.user_id] = curr.role;
+        acc[curr.user_id] = { role: curr.role, custom_role_id: curr.custom_role_id };
         return acc;
       }, {});
 
@@ -117,7 +124,7 @@ function StaffPage() {
         id: p.id,
         full_name: p.full_name,
         created_at: p.created_at,
-        role: roleMap[p.id] || "reseller",
+        role: roleMap[p.id]?.role || "reseller",
         email: emailMap[p.id] || "No email",
       }));
 
@@ -129,6 +136,7 @@ function StaffPage() {
       setLoading(false);
     }
   };
+
 
   useEffect(() => {
     loadUsers();
@@ -348,12 +356,26 @@ function StaffPage() {
                 <SelectTrigger>
                   <SelectValue placeholder="Select a role" />
                 </SelectTrigger>
+
                 <SelectContent>
-                  {/* Super Admin role hidden unless specifically needed, but typically only one exists */}
+                  <DropdownMenuLabel className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">System Roles</DropdownMenuLabel>
                   <SelectItem value="staff">Staff (Limited Access)</SelectItem>
                   <SelectItem value="reseller">Reseller</SelectItem>
                   <SelectItem value="leader">Leader Reseller</SelectItem>
+                  
+                  {customRoles.length > 0 && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuLabel className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">Custom Roles</DropdownMenuLabel>
+                      {customRoles.filter(r => !r.is_system).map(role => (
+                        <SelectItem key={role.id} value={role.id}>
+                          {role.name}
+                        </SelectItem>
+                      ))}
+                    </>
+                  )}
                 </SelectContent>
+
               </Select>
             </div>
             <DialogFooter className="pt-4">

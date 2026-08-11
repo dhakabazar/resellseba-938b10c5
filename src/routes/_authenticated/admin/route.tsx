@@ -13,7 +13,9 @@ import {
   ShoppingCart,
   Megaphone,
   Award,
+  Shield,
   ScrollText,
+
   Bell,
   FileText,
   ShoppingBag,
@@ -74,7 +76,9 @@ const NAV: NavEntry[] = [
       { label: "Payment methods", to: "/admin/payments", icon: <Wallet className="h-4 w-4" /> },
 
       { label: "Staff", to: "/admin/staff", icon: <Users className="h-4 w-4" /> },
+      { label: "Roles & Permissions", to: "/admin/roles", icon: <Shield className="h-4 w-4" /> },
       { label: "Audit log", to: "/admin/audit", icon: <ScrollText className="h-4 w-4" /> },
+
       { label: "Settings", to: "/admin/settings", icon: <Settings className="h-4 w-4" /> },
 
     ],

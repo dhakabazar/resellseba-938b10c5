@@ -7,8 +7,9 @@ const createUserInput = z.object({
   email: z.string().email(),
   password: z.string().min(6),
   fullName: z.string().min(2),
-  role: z.enum(["super_admin", "staff", "reseller", "leader"]),
+  role: z.string(), // Changed to string to support UUIDs or enum values
 });
+
 
 export const createAdminUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -29,15 +30,26 @@ export const createAdminUser = createServerFn({ method: "POST" })
     if (!authUser.user) throw new Response("Failed to create user", { status: 500 });
 
     // 2. Assign role
+    const isCustomRole = data.role.includes("-"); // Simple UUID check
+    const rolePayload: any = { user_id: authUser.user.id };
+    
+    if (isCustomRole) {
+      rolePayload.custom_role_id = data.role;
+      rolePayload.role = 'staff'; // Default system role for custom roles
+    } else {
+      rolePayload.role = data.role;
+    }
+
     const { error: roleError } = await supabaseAdmin
       .from("user_roles")
-      .insert({ user_id: authUser.user.id, role: data.role });
+      .insert(rolePayload);
 
     if (roleError) {
       // Cleanup if role assignment fails
       await supabaseAdmin.auth.admin.deleteUser(authUser.user.id);
       throw new Response(roleError.message, { status: 400 });
     }
+
 
     return { ok: true, userId: authUser.user.id };
   });
@@ -64,8 +76,9 @@ export const updateAdminUserPassword = createServerFn({ method: "POST" })
 
 const updateRoleInput = z.object({
   userId: z.string().uuid(),
-  role: z.enum(["super_admin", "staff", "reseller", "leader"]),
+  role: z.string(),
 });
+
 
 export const updateAdminUserRole = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -77,9 +90,20 @@ export const updateAdminUserRole = createServerFn({ method: "POST" })
     // Delete existing roles first to maintain the simple 1-role per user model requested
     await supabaseAdmin.from("user_roles").delete().eq("user_id", data.userId);
     
+    const isCustomRole = data.role.includes("-");
+    const rolePayload: any = { user_id: data.userId };
+    
+    if (isCustomRole) {
+      rolePayload.custom_role_id = data.role;
+      rolePayload.role = 'staff';
+    } else {
+      rolePayload.role = data.role;
+    }
+
     const { error } = await supabaseAdmin
       .from("user_roles")
-      .insert({ user_id: data.userId, role: data.role });
+      .insert(rolePayload);
+
 
     if (error) throw new Response(error.message, { status: 400 });
     return { ok: true };
