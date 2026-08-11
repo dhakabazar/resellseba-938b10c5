@@ -228,6 +228,7 @@ function RolesPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const saveRoleMutation = useServerFn(saveRole);
+  const deleteRoleMutation = useServerFn(deleteRole);
 
   const loadData = async () => {
     setLoading(true);
@@ -272,14 +273,47 @@ function RolesPage() {
          <button onClick={() => setIsModalOpen(true)} className="btn-brand inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium"><Plus className="h-4 w-4" /> Create Role</button>
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {roles.map(role => (
-          <div key={role.id} className="surface-card p-5">
+        {roles.filter(role => !role.is_system).map(role => (
+          <div key={role.id} className="surface-card p-5 group relative">
             <div className="flex items-start justify-between">
-              <div className="flex items-center gap-2"><Shield className="h-5 w-5" /><h3 className="font-bold">{role.name}</h3></div>
+              <div className="flex items-center gap-2">
+                <Shield className="h-5 w-5 text-primary" />
+                <h3 className="font-bold">{role.name}</h3>
+              </div>
+              <button 
+                type="button"
+                onClick={async () => {
+                  if (confirm("Are you sure you want to delete this role?")) {
+                    try {
+                      await deleteRoleMutation({ data: { id: role.id } });
+                      toast.success("Role deleted");
+                      loadData();
+                    } catch (e: any) {
+                      toast.error(e.message);
+                    }
+                  }
+                }}
+                className="text-muted-foreground hover:text-destructive transition-colors p-1"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
             </div>
             <p className="text-sm text-muted-foreground mt-2">{role.description}</p>
+            {role.role_permissions && role.role_permissions.length > 0 && (
+              <div className="mt-4 flex flex-wrap gap-1">
+                <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground">
+                  {role.role_permissions.length} Permissions
+                </span>
+              </div>
+            )}
           </div>
         ))}
+        {roles.filter(role => !role.is_system).length === 0 && (
+          <div className="col-span-full py-12 text-center surface-card border-dashed">
+            <Shield className="h-12 w-12 text-muted-foreground/20 mx-auto mb-3" />
+            <p className="text-muted-foreground">No custom roles created yet.</p>
+          </div>
+        )}
       </div>
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
