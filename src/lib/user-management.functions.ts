@@ -30,15 +30,26 @@ export const createAdminUser = createServerFn({ method: "POST" })
     if (!authUser.user) throw new Response("Failed to create user", { status: 500 });
 
     // 2. Assign role
+    const isCustomRole = data.role.includes("-"); // Simple UUID check
+    const rolePayload: any = { user_id: authUser.user.id };
+    
+    if (isCustomRole) {
+      rolePayload.custom_role_id = data.role;
+      rolePayload.role = 'staff'; // Default system role for custom roles
+    } else {
+      rolePayload.role = data.role;
+    }
+
     const { error: roleError } = await supabaseAdmin
       .from("user_roles")
-      .insert({ user_id: authUser.user.id, role: data.role });
+      .insert(rolePayload);
 
     if (roleError) {
       // Cleanup if role assignment fails
       await supabaseAdmin.auth.admin.deleteUser(authUser.user.id);
       throw new Response(roleError.message, { status: 400 });
     }
+
 
     return { ok: true, userId: authUser.user.id };
   });
