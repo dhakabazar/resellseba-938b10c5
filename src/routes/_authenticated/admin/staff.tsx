@@ -242,31 +242,40 @@ function StaffPage() {
                 </div>
               </div>
               
-              <DropdownMenu>
-                <DropdownMenuTrigger className="p-1 hover:bg-muted rounded-md transition-colors">
-                  <MoreHorizontal className="h-5 w-5 text-muted-foreground" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuLabel>Manage User</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => {
-                    setSelectedUser(user);
-                    setIsPassModalOpen(true);
-                  }}>
-                    <Key className="mr-2 h-4 w-4" /> Change Password
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem 
-                    className="text-destructive focus:text-destructive"
-                    onClick={() => {
+              {/* Only Super Admin can manage others, and cannot delete themselves */}
+              {isSuperAdmin && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="p-1 hover:bg-muted rounded-md transition-colors">
+                    <MoreHorizontal className="h-5 w-5 text-muted-foreground" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuLabel>Manage User</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => {
                       setSelectedUser(user);
-                      setIsDeleteModalOpen(true);
-                    }}
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" /> Delete User
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                      setIsPassModalOpen(true);
+                    }}>
+                      <Key className="mr-2 h-4 w-4" /> Change Password
+                    </DropdownMenuItem>
+                    
+                    {/* Cannot delete themselves or other super admins if you want strict "one super admin" rule */}
+                    {user.id !== currentUser?.id && user.role !== 'super_admin' && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem 
+                          className="text-destructive focus:text-destructive"
+                          onClick={() => {
+                            setSelectedUser(user);
+                            setIsDeleteModalOpen(true);
+                          }}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" /> Delete User
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </div>
 
             <div className="mt-4 flex items-center justify-between">
