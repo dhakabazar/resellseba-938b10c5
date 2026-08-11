@@ -36,10 +36,7 @@ import { Route as AuthenticatedResellerEarningsRouteImport } from './routes/_aut
 import { Route as AuthenticatedResellerDomainRouteImport } from './routes/_authenticated/reseller/domain'
 import { Route as AuthenticatedResellerCommissionsRouteImport } from './routes/_authenticated/reseller/commissions'
 import { Route as AuthenticatedResellerCatalogRouteImport } from './routes/_authenticated/reseller/catalog'
-import { Route as AuthenticatedAdminStaffPageRouteImport } from './routes/_authenticated/admin/staff-page'
-import { Route as AuthenticatedAdminStaffRouteImport } from './routes/_authenticated/admin/staff'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin/settings'
-import { Route as AuthenticatedAdminRolesPageRouteImport } from './routes/_authenticated/admin/roles-page'
 import { Route as AuthenticatedAdminResellersRouteImport } from './routes/_authenticated/admin/resellers'
 import { Route as AuthenticatedAdminPayoutsRouteImport } from './routes/_authenticated/admin/payouts'
 import { Route as AuthenticatedAdminPaymentsRouteImport } from './routes/_authenticated/admin/payments'
@@ -213,27 +210,10 @@ const AuthenticatedResellerCatalogRoute =
     path: '/catalog',
     getParentRoute: () => AuthenticatedResellerRouteRoute,
   } as any)
-const AuthenticatedAdminStaffPageRoute =
-  AuthenticatedAdminStaffPageRouteImport.update({
-    id: '/staff-page',
-    path: '/staff-page',
-    getParentRoute: () => AuthenticatedAdminRouteRoute,
-  } as any)
-const AuthenticatedAdminStaffRoute = AuthenticatedAdminStaffRouteImport.update({
-  id: '/staff',
-  path: '/staff',
-  getParentRoute: () => AuthenticatedAdminRouteRoute,
-} as any)
 const AuthenticatedAdminSettingsRoute =
   AuthenticatedAdminSettingsRouteImport.update({
     id: '/settings',
     path: '/settings',
-    getParentRoute: () => AuthenticatedAdminRouteRoute,
-  } as any)
-const AuthenticatedAdminRolesPageRoute =
-  AuthenticatedAdminRolesPageRouteImport.update({
-    id: '/roles-page',
-    path: '/roles-page',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
 const AuthenticatedAdminResellersRoute =
@@ -413,10 +393,7 @@ export interface FileRoutesByFullPath {
   '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
   '/admin/payouts': typeof AuthenticatedAdminPayoutsRoute
   '/admin/resellers': typeof AuthenticatedAdminResellersRoute
-  '/admin/roles-page': typeof AuthenticatedAdminRolesPageRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
-  '/admin/staff': typeof AuthenticatedAdminStaffRoute
-  '/admin/staff-page': typeof AuthenticatedAdminStaffPageRoute
   '/reseller/catalog': typeof AuthenticatedResellerCatalogRoute
   '/reseller/commissions': typeof AuthenticatedResellerCommissionsRoute
   '/reseller/domain': typeof AuthenticatedResellerDomainRoute
@@ -467,10 +444,7 @@ export interface FileRoutesByTo {
   '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
   '/admin/payouts': typeof AuthenticatedAdminPayoutsRoute
   '/admin/resellers': typeof AuthenticatedAdminResellersRoute
-  '/admin/roles-page': typeof AuthenticatedAdminRolesPageRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
-  '/admin/staff': typeof AuthenticatedAdminStaffRoute
-  '/admin/staff-page': typeof AuthenticatedAdminStaffPageRoute
   '/reseller/catalog': typeof AuthenticatedResellerCatalogRoute
   '/reseller/commissions': typeof AuthenticatedResellerCommissionsRoute
   '/reseller/domain': typeof AuthenticatedResellerDomainRoute
@@ -527,10 +501,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/payments': typeof AuthenticatedAdminPaymentsRoute
   '/_authenticated/admin/payouts': typeof AuthenticatedAdminPayoutsRoute
   '/_authenticated/admin/resellers': typeof AuthenticatedAdminResellersRoute
-  '/_authenticated/admin/roles-page': typeof AuthenticatedAdminRolesPageRoute
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
-  '/_authenticated/admin/staff': typeof AuthenticatedAdminStaffRoute
-  '/_authenticated/admin/staff-page': typeof AuthenticatedAdminStaffPageRoute
   '/_authenticated/reseller/catalog': typeof AuthenticatedResellerCatalogRoute
   '/_authenticated/reseller/commissions': typeof AuthenticatedResellerCommissionsRoute
   '/_authenticated/reseller/domain': typeof AuthenticatedResellerDomainRoute
@@ -587,10 +558,7 @@ export interface FileRouteTypes {
     | '/admin/payments'
     | '/admin/payouts'
     | '/admin/resellers'
-    | '/admin/roles-page'
     | '/admin/settings'
-    | '/admin/staff'
-    | '/admin/staff-page'
     | '/reseller/catalog'
     | '/reseller/commissions'
     | '/reseller/domain'
@@ -641,10 +609,7 @@ export interface FileRouteTypes {
     | '/admin/payments'
     | '/admin/payouts'
     | '/admin/resellers'
-    | '/admin/roles-page'
     | '/admin/settings'
-    | '/admin/staff'
-    | '/admin/staff-page'
     | '/reseller/catalog'
     | '/reseller/commissions'
     | '/reseller/domain'
@@ -700,10 +665,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/payments'
     | '/_authenticated/admin/payouts'
     | '/_authenticated/admin/resellers'
-    | '/_authenticated/admin/roles-page'
     | '/_authenticated/admin/settings'
-    | '/_authenticated/admin/staff'
-    | '/_authenticated/admin/staff-page'
     | '/_authenticated/reseller/catalog'
     | '/_authenticated/reseller/commissions'
     | '/_authenticated/reseller/domain'
@@ -940,32 +902,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedResellerCatalogRouteImport
       parentRoute: typeof AuthenticatedResellerRouteRoute
     }
-    '/_authenticated/admin/staff-page': {
-      id: '/_authenticated/admin/staff-page'
-      path: '/staff-page'
-      fullPath: '/admin/staff-page'
-      preLoaderRoute: typeof AuthenticatedAdminStaffPageRouteImport
-      parentRoute: typeof AuthenticatedAdminRouteRoute
-    }
-    '/_authenticated/admin/staff': {
-      id: '/_authenticated/admin/staff'
-      path: '/staff'
-      fullPath: '/admin/staff'
-      preLoaderRoute: typeof AuthenticatedAdminStaffRouteImport
-      parentRoute: typeof AuthenticatedAdminRouteRoute
-    }
     '/_authenticated/admin/settings': {
       id: '/_authenticated/admin/settings'
       path: '/settings'
       fullPath: '/admin/settings'
       preLoaderRoute: typeof AuthenticatedAdminSettingsRouteImport
-      parentRoute: typeof AuthenticatedAdminRouteRoute
-    }
-    '/_authenticated/admin/roles-page': {
-      id: '/_authenticated/admin/roles-page'
-      path: '/roles-page'
-      fullPath: '/admin/roles-page'
-      preLoaderRoute: typeof AuthenticatedAdminRolesPageRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
     '/_authenticated/admin/resellers': {
@@ -1168,10 +1109,7 @@ interface AuthenticatedAdminRouteRouteChildren {
   AuthenticatedAdminPaymentsRoute: typeof AuthenticatedAdminPaymentsRoute
   AuthenticatedAdminPayoutsRoute: typeof AuthenticatedAdminPayoutsRoute
   AuthenticatedAdminResellersRoute: typeof AuthenticatedAdminResellersRoute
-  AuthenticatedAdminRolesPageRoute: typeof AuthenticatedAdminRolesPageRoute
   AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
-  AuthenticatedAdminStaffRoute: typeof AuthenticatedAdminStaffRoute
-  AuthenticatedAdminStaffPageRoute: typeof AuthenticatedAdminStaffPageRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
   AuthenticatedAdminProductsNewRoute: typeof AuthenticatedAdminProductsNewRoute
   AuthenticatedAdminProductsIndexRoute: typeof AuthenticatedAdminProductsIndexRoute
@@ -1195,10 +1133,7 @@ const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren
     AuthenticatedAdminPaymentsRoute: AuthenticatedAdminPaymentsRoute,
     AuthenticatedAdminPayoutsRoute: AuthenticatedAdminPayoutsRoute,
     AuthenticatedAdminResellersRoute: AuthenticatedAdminResellersRoute,
-    AuthenticatedAdminRolesPageRoute: AuthenticatedAdminRolesPageRoute,
     AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
-    AuthenticatedAdminStaffRoute: AuthenticatedAdminStaffRoute,
-    AuthenticatedAdminStaffPageRoute: AuthenticatedAdminStaffPageRoute,
     AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
     AuthenticatedAdminProductsNewRoute: AuthenticatedAdminProductsNewRoute,
     AuthenticatedAdminProductsIndexRoute: AuthenticatedAdminProductsIndexRoute,
