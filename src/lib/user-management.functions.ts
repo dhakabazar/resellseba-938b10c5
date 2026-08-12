@@ -15,7 +15,7 @@ export const createAdminUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => createUserInput.parse(d))
   .handler(async ({ data, context }) => {
-    // await assertAdmin(context.supabase, context.userId);
+    await assertAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     // 1. Create the auth user
@@ -66,7 +66,7 @@ export const updateAdminUserPassword = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => updatePasswordInput.parse(d))
   .handler(async ({ data, context }) => {
-    // await assertAdmin(context.supabase, context.userId);
+    await assertAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const { error } = await supabaseAdmin.auth.admin.updateUserById(data.userId, {
@@ -87,20 +87,20 @@ export const updateAdminUserRole = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => updateRoleInput.parse(d))
   .handler(async ({ data, context }) => {
-    // await assertAdmin(context.supabase, context.userId);
+    await assertAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     // Delete existing roles first to maintain the simple 1-role per user model requested
     await supabaseAdmin.from("user_roles").delete().eq("user_id", data.userId);
     
-    const isCustomRole = data.role.includes("-");
+    const isCustomRole = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(data.role);
     const rolePayload: any = { user_id: data.userId };
     
     if (isCustomRole) {
       rolePayload.custom_role_id = data.role;
       rolePayload.role = 'staff';
     } else {
-      rolePayload.role = data.role;
+      rolePayload.role = data.role || 'staff';
     }
 
     const { error } = await supabaseAdmin
