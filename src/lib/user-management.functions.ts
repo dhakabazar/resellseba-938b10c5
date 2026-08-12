@@ -30,14 +30,17 @@ export const createAdminUser = createServerFn({ method: "POST" })
     if (!authUser.user) throw new Response("Failed to create user", { status: 500 });
 
     // 2. Assign role
-    const isCustomRole = data.role.includes("-"); // Simple UUID check
+    // Check if role is a UUID (custom role)
+    const isCustomRole = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(data.role);
     const rolePayload: any = { user_id: authUser.user.id };
     
     if (isCustomRole) {
       rolePayload.custom_role_id = data.role;
       rolePayload.role = 'staff'; // Default system role for custom roles
     } else {
-      rolePayload.role = data.role;
+      // If it's not a custom role ID, it must be a system role name (staff, super_admin, etc.)
+      // Note: In this app, we only use custom roles for staff.
+      rolePayload.role = data.role || 'staff';
     }
 
     const { error: roleError } = await supabaseAdmin
@@ -90,14 +93,14 @@ export const updateAdminUserRole = createServerFn({ method: "POST" })
     // Delete existing roles first to maintain the simple 1-role per user model requested
     await supabaseAdmin.from("user_roles").delete().eq("user_id", data.userId);
     
-    const isCustomRole = data.role.includes("-");
+    const isCustomRole = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(data.role);
     const rolePayload: any = { user_id: data.userId };
     
     if (isCustomRole) {
       rolePayload.custom_role_id = data.role;
       rolePayload.role = 'staff';
     } else {
-      rolePayload.role = data.role;
+      rolePayload.role = data.role || 'staff';
     }
 
     const { error } = await supabaseAdmin
