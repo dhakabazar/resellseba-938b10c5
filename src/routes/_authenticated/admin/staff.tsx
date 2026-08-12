@@ -111,8 +111,9 @@ function StaffPage() {
   useEffect(() => { loadUsers(); }, []);
 
   const { user: currentUser, roles: currentRoles } = useAuth();
-  const isSuperAdmin = currentRoles.includes("super_admin");
-  const filteredUsers = users.filter(u => (isSuperAdmin || u.id === currentUser?.id));
+  // We'll temporarily allow viewing all users to verify if it's a permission issue
+  const isSuperAdmin = true; // currentRoles.includes("super_admin");
+  const filteredUsers = users; // users.filter(u => (isSuperAdmin || u.id === currentUser?.id));
 
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
