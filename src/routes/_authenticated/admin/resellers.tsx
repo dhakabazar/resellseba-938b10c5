@@ -934,6 +934,7 @@ function DepositModal({
                   <th>Method</th>
                   <th>Reference</th>
                   <th>Note</th>
+                  <th className="p-2 text-right">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -944,11 +945,21 @@ function DepositModal({
                     <td className="capitalize">{r.method ?? "—"}</td>
                     <td className="text-muted-foreground">{r.reference ?? "—"}</td>
                     <td className="text-muted-foreground">{r.note ?? "—"}</td>
+                    <td className="p-2 text-right">
+                      <button
+                        type="button"
+                        onClick={() => setDeleteRow(r)}
+                        className="rounded-md p-1 text-destructive hover:bg-destructive/10"
+                        aria-label="Delete entry"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </td>
                   </tr>
                 ))}
                 {!loading && rows.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="p-6 text-center text-muted-foreground">
+                    <td colSpan={6} className="p-6 text-center text-muted-foreground">
                       কোনো ডিপোজিট এন্ট্রি নেই।
                     </td>
                   </tr>
@@ -956,6 +967,26 @@ function DepositModal({
               </tbody>
             </table>
           </div>
+
+          {deleteRow && (
+            <ConfirmModal
+              open
+              tone="danger"
+              title="ডিপোজিট এন্ট্রি ডিলিট?"
+              description={`৳${Number(deleteRow.amount).toLocaleString()} (${deleteRow.method ?? "—"}) এন্ট্রিটি ডিলিট হলে reseller-এর ডিপোজিট ব্যালান্স কমে যাবে এবং ডিপোজিট বাকি থাকলে order confirm ব্লক হয়ে যাবে।`}
+              confirmLabel="ডিলিট করুন"
+              onCancel={() => setDeleteRow(null)}
+              onConfirm={async () => {
+                const row = deleteRow;
+                setDeleteRow(null);
+                if (!row) return;
+                const { error } = await supabase.from("reseller_deposits").delete().eq("id", row.id);
+                if (error) return toast.error(error.message);
+                toast.success("এন্ট্রি ডিলিট হয়েছে");
+                loadRows();
+              }}
+            />
+          )}
         </div>
       </div>
     </div>
