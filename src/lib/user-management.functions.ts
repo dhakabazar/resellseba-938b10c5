@@ -23,7 +23,7 @@ export const createAdminUser = createServerFn({ method: "POST" })
       email: data.email,
       password: data.password,
       email_confirm: true,
-      user_metadata: { full_name: data.fullName },
+      user_metadata: { full_name: data.fullName, is_staff: "true" },
     });
 
     if (authError) throw new Response(authError.message, { status: 400 });
@@ -53,6 +53,8 @@ export const createAdminUser = createServerFn({ method: "POST" })
       throw new Response(roleError.message, { status: 400 });
     }
 
+    // Staff accounts must never own a reseller store (defensive cleanup).
+    await supabaseAdmin.from("resellers").delete().eq("user_id", authUser.user.id);
 
     return { ok: true, userId: authUser.user.id };
   });
