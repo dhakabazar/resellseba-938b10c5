@@ -256,11 +256,11 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
             <Brand siteName={siteName} logoUrl={logoUrl} />
           </Link>
 
-          <nav className="hidden items-center gap-7 text-sm font-medium text-muted-foreground lg:flex">
+          <nav className="hidden items-center gap-7 text-base font-semibold text-muted-foreground lg:flex">
             {navLinks.map((l) => (
               <a key={l.href} href={l.href} className="transition-colors hover:text-primary">{l.label}</a>
             ))}
-            <Link to="/catalog" search={{}} className="font-semibold text-primary hover:opacity-80">Catalog</Link>
+            <Link to="/catalog" search={{}} className="font-bold text-primary hover:opacity-80">Catalog</Link>
           </nav>
 
           <div className="flex shrink-0 items-center gap-2">
