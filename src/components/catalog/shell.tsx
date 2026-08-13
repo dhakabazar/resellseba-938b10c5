@@ -57,11 +57,15 @@ export function CatalogFooter() {
   const { siteName, tagline } = useCatalogBrand();
   return (
     <footer className="mt-16 border-t border-border/60">
-      <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-4 py-8 text-xs text-muted-foreground sm:flex-row sm:px-6">
+      <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 py-8 text-xs text-muted-foreground sm:flex-row sm:px-6">
         <span>
           © {new Date().getFullYear()} {siteName} {tagline ? `· ${tagline}` : ""}
         </span>
-        <span>Master catalog · শুধু দেখার জন্য, অর্ডার রিসেলার স্টোর থেকে</span>
+        <div className="flex items-center gap-4">
+          <Link to="/" className="hover:text-primary">Home</Link>
+          <Link to="/catalog" search={{}} className="hover:text-primary">Catalog</Link>
+          <Link to="/privacy" className="font-semibold text-primary hover:text-primary/80">Privacy Policy</Link>
+        </div>
       </div>
     </footer>
   );
