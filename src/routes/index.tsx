@@ -549,7 +549,6 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
                 search={{}}
                 className="btn-brand btn-live group relative inline-flex items-center gap-2 rounded-full px-7 py-3 text-sm font-bold"
               >
-                <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
                 <Layers className="relative h-4 w-4" />
                 <span className="relative">সম্পূর্ণ ক্যাটালগ দেখুন</span>
                 <ArrowRight className="relative h-4 w-4 transition-transform group-hover:translate-x-1" />
