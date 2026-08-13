@@ -21,6 +21,7 @@ Big scope, tai ami phase-wise build korbo. Nicher plan e full scope + flow + pha
 ## 2. Phased Delivery (bড় project, tai step by step)
 
 ### Phase 0 – Foundation (ei phase e ami start korbo)
+
 - Lovable Cloud enable (DB, auth, storage, edge)
 - Global design system: color tokens, typography, spacing, radius, shadow — sob `styles.css` e semantic token. Card, Button, Input, Modal/Popup, Table, EmptyState, Toast — ekta shared UI kit. Sob screen ei kit use korbe (consistency).
 - Global settings table (site name, logo, favicon, OG image, primary color, title template) — SA ekbar set korbe, sob jaigai use hobe. **Kono hardcode nai.**
@@ -29,6 +30,7 @@ Big scope, tai ami phase-wise build korbo. Nicher plan e full scope + flow + pha
 - SEO base: dynamic `<head>` per route, sitemap, robots, JSON-LD helper
 
 ### Phase 1 – Catalog (SA)
+
 - Brand CRUD (name, slug, logo, SEO fields)
 - Category CRUD (nested, slug, SEO fields, banner)
 - Product CRUD:
@@ -47,6 +49,7 @@ Big scope, tai ami phase-wise build korbo. Nicher plan e full scope + flow + pha
   - Return only sanitized URL
 
 ### Phase 2 – Reseller Onboarding & Store
+
 - Signup / login, KYC fields (name, phone, address, NID optional)
 - Reseller dashboard: sales, due, commission, order stats, top products
 - **Store design settings (per reseller):**
@@ -58,12 +61,14 @@ Big scope, tai ami phase-wise build korbo. Nicher plan e full scope + flow + pha
 - **Info isolation:** storefront e SA branding/name kothao nai. Invoice/email/SMS sob reseller branding use kore.
 
 ### Phase 3 – Reseller Listing
+
 - Product browser (SA catalog) → "Add to my store"
 - Set own selling price (validated ≥ min price), own title/desc override optional, own SEO override optional
 - Reseller store frontend: home, category, product, cart, checkout, order tracking — SA er design pattern, but reseller branding/pricing
 - Wishlist, search, filter (brand/category/price)
 
 ### Phase 4 – Order Flow
+
 - Customer places order on reseller storefront (COD default + online gateways)
 - Order sits in **reseller's panel** – status: `Pending / Confirmed / Ready to Send`
 - **Reseller "Send to Admin" action** → tokhoni order SA panel e visible hobe (auto forward na)
@@ -73,7 +78,9 @@ Big scope, tai ami phase-wise build korbo. Nicher plan e full scope + flow + pha
 - Bulk actions, filter, export CSV, invoice PDF (reseller branding)
 
 ### Phase 5 – Courier Integrations
+
 Config UI (SA global) — enable/disable + credentials per courier:
+
 - **Steadfast** – API booking, status webhook, fetch balance
 - **Pathao** – OAuth + booking API + city/zone/area fetch
 - **RedX / eCourier** – (extensible adapter pattern)
@@ -82,7 +89,9 @@ Config UI (SA global) — enable/disable + credentials per courier:
 - SA order screen e "Book with [courier]" dropdown, auto sync tracking
 
 ### Phase 6 – Payment Gateways
+
 Config UI (SA global) — each toggle + credentials:
+
 - **bKash / Nagad / Rocket – Personal** (manual: TxID input from customer, reseller/SA verify)
 - **bKash / Nagad – API** (Merchant / Tokenized Checkout)
 - **SSLCommerz**
@@ -91,12 +100,15 @@ Config UI (SA global) — each toggle + credentials:
 - Payment reconciliation, refund status
 
 ### Phase 7 – Delivery Charge Engine
+
 Rules cascade: product-level → category-level → brand-level → global
+
 - Inside Dhaka / Outside Dhaka / Sub-city custom
 - Flat rate / weight-based / free above X
 - Reseller can add own extra charge (markup) on top
 
 ### Phase 8 – Financials
+
 - Per-reseller ledger: sales, cost (SA price), profit, delivery, packaging, courier fee, COD collected, paid to reseller, due
 - SA dashboard: total sales, gross, net, per-reseller breakdown, commission payable, pending payout
 - **Leader reseller commission:** % from downline reseller's profit, auto-calc
@@ -104,6 +116,7 @@ Rules cascade: product-level → category-level → brand-level → global
 - Invoice generation
 
 ### Phase 9 – Marketing / Ads / SEO
+
 - **Facebook Ads config (per reseller):** Pixel ID, Conversion API access token, test event code, event mapping (ViewContent, AddToCart, InitiateCheckout, Purchase). Server-side CAPI edge function auto fires.
 - **TikTok Ads config (per reseller):** Pixel ID, Events API access token — via TikTok connector. Same event mapping.
 - Google Analytics 4 + GTM ID
@@ -111,12 +124,14 @@ Rules cascade: product-level → category-level → brand-level → global
 - Blog module (optional) for SEO content
 
 ### Phase 10 – Notifications
+
 - Email (SMTP config global) — order, signup, payout
 - SMS gateway config (BulkSMSBD / SSL / Alpha) — order confirm, delivery update
 - In-app notifications
 - WhatsApp click-to-chat
 
 ### Phase 11 – Polish
+
 - Analytics dashboards (Recharts)
 - Activity log / audit trail
 - Role-based permission fine-tune
@@ -128,6 +143,7 @@ Rules cascade: product-level → category-level → brand-level → global
 ## 3. Global UI Kit (age banabo, sob screen use korbe)
 
 Ei components sob jaigai identical:
+
 - `<PageHeader>`, `<StatCard>`, `<DataTable>` (sorting/filter/pagination/bulk-action built-in)
 - `<FormField>`, `<ImageUploader>` (200KB pipeline built-in), `<RichTextEditor>`
 - `<Modal>`, `<ConfirmDialog>`, `<Drawer>`, `<Toast>`, `<EmptyState>`, `<StatusBadge>`
@@ -169,6 +185,7 @@ Sob table e RLS + `reseller_id` scoping (jekhane applicable). `has_role()` secur
 ## 7. First Delivery (ei chat er por ki hobe)
 
 Ami start korbo **Phase 0 + Phase 1** ekshathe:
+
 1. Lovable Cloud enable
 2. Design system + global UI kit
 3. Auth + roles (SA / Reseller)
