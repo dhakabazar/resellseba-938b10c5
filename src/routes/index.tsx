@@ -377,11 +377,13 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
                 const Icon = ICON_MAP[f.icon] ?? Sparkles;
                 return (
                   <div key={i} className={`surface-card p-5 ${i % 2 ? "sm:translate-y-6" : ""}`}>
-                    <span className="mb-3 grid h-10 w-10 place-items-center rounded-xl bg-[image:var(--gradient-brand)] text-primary-foreground">
-                      <Icon className="h-4.5 w-4.5" />
-                    </span>
-                    <h3 className="text-sm font-bold">{f.title}</h3>
-                    <p className="mt-1.5 line-clamp-3 text-xs leading-relaxed text-muted-foreground">{f.desc}</p>
+                    <div className="flex items-center gap-2.5">
+                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[image:var(--gradient-brand)] text-primary-foreground">
+                        <Icon className="h-4.5 w-4.5" />
+                      </span>
+                      <h3 className="min-w-0 flex-1 truncate text-sm font-bold">{f.title}</h3>
+                    </div>
+                    <p className="mt-2 line-clamp-3 text-xs leading-relaxed text-muted-foreground">{f.desc}</p>
                   </div>
                 );
               })}
@@ -510,11 +512,13 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
               return (
                 <div key={i} className="surface-card surface-card-hover group relative overflow-hidden p-6">
                   <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-primary/20 opacity-0 blur-2xl transition-opacity group-hover:opacity-100" />
-                  <div className="relative mb-4 grid h-12 w-12 place-items-center rounded-xl bg-[image:var(--gradient-brand)] text-primary-foreground">
-                    <Icon className="h-5 w-5" />
+                  <div className="relative flex items-center gap-3">
+                    <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[image:var(--gradient-brand)] text-primary-foreground">
+                      <Icon className="h-5 w-5" />
+                    </span>
+                    <h3 className="min-w-0 flex-1 truncate text-base font-bold sm:text-lg">{f.title}</h3>
                   </div>
-                  <h3 className="relative text-base font-bold sm:text-lg">{f.title}</h3>
-                  <p className="relative mt-2 text-sm leading-relaxed text-muted-foreground">{f.desc}</p>
+                  <p className="relative mt-3 text-sm leading-relaxed text-muted-foreground">{f.desc}</p>
                 </div>
               );
             })}
