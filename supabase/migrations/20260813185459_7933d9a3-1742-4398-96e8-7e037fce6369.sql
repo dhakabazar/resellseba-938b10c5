@@ -1,0 +1,1 @@
+ALTER TABLE public.global_settings ADD COLUMN IF NOT EXISTS label_size text NOT NULL DEFAULT '3x4';
