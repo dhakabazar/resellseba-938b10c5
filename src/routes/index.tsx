@@ -18,9 +18,6 @@ import {
   Download,
   ShoppingBag,
   Layers,
-  
-  Menu,
-  X,
   Users,
   ClipboardList,
   Send,
