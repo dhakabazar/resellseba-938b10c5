@@ -432,9 +432,9 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
                     >
                       {/* Icon bubble */}
                       <div
-                        className={`grid h-20 w-20 shrink-0 place-items-center rounded-2xl shadow-lg shadow-primary/10 transition-transform duration-300 group-hover:-translate-y-2 ${iconClass}`}
+                        className={`grid h-16 w-16 shrink-0 place-items-center rounded-2xl shadow-lg shadow-primary/10 transition-transform duration-300 group-hover:-translate-y-2 sm:h-20 sm:w-20 ${iconClass}`}
                       >
-                        <Icon className="h-9 w-9" />
+                        <Icon className="h-7 w-7 sm:h-9 sm:w-9" />
                       </div>
 
                       {/* Card */}
