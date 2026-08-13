@@ -62,7 +62,9 @@ const NAV: NavEntry[] = [
       { label: "Domain", to: "/reseller/domain", icon: <Globe className="h-4 w-4" /> },
     ],
   },
+  { label: "Support", to: "/reseller/support", icon: <Headphones className="h-4 w-4" /> },
 ];
+
 
 function ResellerLayout() {
   const { user, roles, loading } = useAuth();
