@@ -248,6 +248,7 @@ export type Database = {
           contact_phone: string | null
           deposit_default_amount: number
           deposit_default_frozen: number
+          deposit_texts: Json
           deposit_trigger_default_on: boolean
           favicon_url: string | null
           flagship_reseller_code: string | null
@@ -269,6 +270,7 @@ export type Database = {
           contact_phone?: string | null
           deposit_default_amount?: number
           deposit_default_frozen?: number
+          deposit_texts?: Json
           deposit_trigger_default_on?: boolean
           favicon_url?: string | null
           flagship_reseller_code?: string | null
@@ -290,6 +292,7 @@ export type Database = {
           contact_phone?: string | null
           deposit_default_amount?: number
           deposit_default_frozen?: number
+          deposit_texts?: Json
           deposit_trigger_default_on?: boolean
           favicon_url?: string | null
           flagship_reseller_code?: string | null
