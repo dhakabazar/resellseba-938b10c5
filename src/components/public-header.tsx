@@ -27,7 +27,7 @@ const FALLBACK: PublicHeaderContent = {
   },
 };
 
-function Brand({
+export function Brand({
   siteName,
   logoUrl,
   size = "md",
