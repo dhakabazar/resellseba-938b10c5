@@ -260,6 +260,7 @@ export type Database = {
           meta_title_template: string | null
           og_image_url: string | null
           primary_color: string | null
+          privacy_policy: string | null
           site_name: string
           tagline: string | null
           updated_at: string
@@ -282,6 +283,7 @@ export type Database = {
           meta_title_template?: string | null
           og_image_url?: string | null
           primary_color?: string | null
+          privacy_policy?: string | null
           site_name?: string
           tagline?: string | null
           updated_at?: string
@@ -304,6 +306,7 @@ export type Database = {
           meta_title_template?: string | null
           og_image_url?: string | null
           primary_color?: string | null
+          privacy_policy?: string | null
           site_name?: string
           tagline?: string | null
           updated_at?: string
