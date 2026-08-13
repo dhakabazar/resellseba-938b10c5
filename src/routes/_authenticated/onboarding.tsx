@@ -55,7 +55,7 @@ function Onboarding() {
     const isSuperAdmin = roles.includes("super_admin");
     const isStaff = roles.includes("staff");
     
-    if (isSuperAdmin || (isStaff && permissions.length > 0)) {
+    if (isSuperAdmin || isStaff) {
       nav({ to: "/admin", replace: true });
     } else if (status === "active" && (roles.includes("reseller") || roles.includes("leader"))) {
       nav({ to: "/reseller", replace: true });
