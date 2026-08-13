@@ -376,7 +376,9 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
                   <span className="mx-auto mb-3 grid h-11 w-11 place-items-center rounded-xl bg-primary/10 text-primary">
                     <Icon className="h-5 w-5" />
                   </span>
-                  <div className="text-2xl font-black sm:text-3xl">{s.value}</div>
+                  <div className="text-2xl font-black sm:text-3xl">
+                    <CountUp value={s.value ?? ""} />
+                  </div>
                   <div className="mt-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground sm:text-xs">{s.label}</div>
                 </div>
               );
