@@ -19,6 +19,9 @@ import {
   ShoppingBag,
   Layers,
   Star,
+  Menu,
+  X,
+  Users,
   type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -49,6 +52,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
 type Feature = { icon: string; title: string; desc: string };
 type Step = { title: string; desc: string };
 type HeroImage = { path: string; url: string; bytes: number } | null;
+type StatItem = { value: string; label: string };
 type LandingContent = {
   nav: { features: string; how: string; pricing: string; signIn: string; cta: string };
   hero: {
@@ -56,6 +60,8 @@ type LandingContent = {
     ctaPrimary: string; ctaSecondary: string; badges: string[];
     bannerImage?: HeroImage;
   };
+  stats?: { title?: string; items: StatItem[] };
+  about?: { badge: string; title: string; body: string; points: string[] };
   features: { title: string; subtitle: string; items: Feature[] };
   how: { title: string; subtitle: string; steps: Step[] };
   cta: { badge: string; title: string; subtitle: string; button: string };
@@ -136,9 +142,20 @@ function RootResolver() {
   return <Landing c={content} siteName={siteName} logoUrl={logoUrl} />;
 }
 
+function Brand({ siteName, logoUrl, size = "md" }: { siteName: string; logoUrl: string | null; size?: "md" | "sm" }) {
+  const h = size === "md" ? "h-11 sm:h-13" : "h-9";
+  if (logoUrl) return <img src={logoUrl} alt={siteName} className={`${h} max-w-40 shrink-0 object-contain`} />;
+  return (
+    <span className={`grid ${size === "md" ? "h-11 w-11" : "h-9 w-9"} shrink-0 place-items-center rounded-xl bg-[image:var(--gradient-brand)] text-lg font-black text-primary-foreground`}>
+      {siteName.charAt(0).toUpperCase()}
+    </span>
+  );
+}
+
 function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string; logoUrl: string | null }) {
   const fetchStats = useServerFn(getPublicStats);
   const [stats, setStats] = useState<any>(null);
+  const [menu, setMenu] = useState(false);
 
   useEffect(() => {
     fetchStats().then(setStats);
@@ -150,193 +167,249 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
   };
 
   const banner = c.hero.bannerImage?.url;
+
+  const statIcons = [Boxes, Layers, ShoppingBag, Users];
+  const customStats = c.stats?.items?.filter((s) => s.value?.trim() || s.label?.trim()) ?? [];
+  const autoStats: StatItem[] = stats
+    ? [
+        { value: `${stats.totalProducts}+`, label: "প্রোডাক্ট" },
+        { value: `${stats.totalCategories}+`, label: "ক্যাটেগরি" },
+        { value: `${stats.totalSales}+`, label: "টোটাল সেল" },
+        { value: "24/7", label: "সাপোর্ট" },
+      ]
+    : [];
+  const statItems = customStats.length ? customStats : autoStats;
+
+  const navLinks = [
+    { href: "#about", label: "আমাদের সম্পর্কে" },
+    { href: "#features", label: c.nav.features },
+    { href: "#how", label: c.nav.how },
+    { href: "#pricing", label: c.nav.pricing },
+  ];
+
   return (
     <div className="min-h-screen overflow-x-hidden bg-background text-foreground">
-      <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
+      {/* ── Nav ─────────────────────────────────────────── */}
+      <header className="sticky top-0 z-50 border-b border-border/60 bg-background/85 backdrop-blur-xl">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4 sm:h-18 sm:px-6">
           <Link to="/" className="flex min-w-0 items-center" aria-label={siteName}>
-            {logoUrl ? (
-              <img src={logoUrl} alt={siteName} className="h-12 max-w-44 shrink-0 object-contain sm:h-14" />
-            ) : (
-              <span className="grid h-12 w-12 shrink-0 place-items-center rounded-lg bg-primary text-lg font-bold text-primary-foreground sm:h-14 sm:w-14">
-                {siteName.charAt(0).toUpperCase()}
-              </span>
-            )}
+            <Brand siteName={siteName} logoUrl={logoUrl} />
           </Link>
-          <nav className="hidden gap-8 text-sm text-muted-foreground md:flex">
-            <a href="#features" className="hover:text-foreground">{c.nav.features}</a>
-            <a href="#how" className="hover:text-foreground">{c.nav.how}</a>
-            <a href="#pricing" className="hover:text-foreground">{c.nav.pricing}</a>
+
+          <nav className="hidden items-center gap-7 text-sm font-medium text-muted-foreground lg:flex">
+            {navLinks.map((l) => (
+              <a key={l.href} href={l.href} className="transition-colors hover:text-primary">{l.label}</a>
+            ))}
             <Link to="/catalog" search={{}} className="font-semibold text-primary hover:opacity-80">Catalog</Link>
           </nav>
+
           <div className="flex shrink-0 items-center gap-2">
-            <Link
-              to="/catalog"
-              search={{}}
-              className="inline-flex items-center gap-1.5 rounded-md border border-primary/30 bg-primary/10 px-3 py-2 text-xs font-bold text-primary hover:bg-primary/20 sm:text-sm"
-            >
-              <Layers className="h-3.5 w-3.5" /> Catalog
-            </Link>
-            <Link to="/login" className="hidden rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground sm:inline">
+            <Link to="/login" className="hidden rounded-lg border border-border px-4 py-2 text-sm font-semibold hover:border-primary/50 hover:text-primary sm:inline-flex">
               {c.nav.signIn}
             </Link>
-            <Link to="/login" search={{ mode: "signup" }} className="btn-brand inline-flex items-center gap-1 rounded-md px-3 py-2 text-sm font-medium sm:px-4">
+            <Link to="/login" search={{ mode: "signup" }} className="btn-brand inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-bold">
               {c.nav.cta} <ArrowRight className="h-3.5 w-3.5" />
             </Link>
+            <button
+              type="button"
+              onClick={() => setMenu((v) => !v)}
+              aria-label="Menu"
+              className="grid h-10 w-10 place-items-center rounded-lg border border-border lg:hidden"
+            >
+              {menu ? <X className="h-4.5 w-4.5" /> : <Menu className="h-4.5 w-4.5" />}
+            </button>
           </div>
-
         </div>
+
+        {menu && (
+          <nav className="border-t border-border/60 bg-background px-4 py-3 text-sm lg:hidden">
+            {[...navLinks].map((l) => (
+              <a
+                key={l.href}
+                href={l.href}
+                onClick={() => setMenu(false)}
+                className="block rounded-lg px-3 py-2.5 font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+              >
+                {l.label}
+              </a>
+            ))}
+            <Link to="/catalog" search={{}} onClick={() => setMenu(false)} className="block rounded-lg px-3 py-2.5 font-bold text-primary hover:bg-primary/10">
+              Master Catalog
+            </Link>
+            <Link to="/login" onClick={() => setMenu(false)} className="block rounded-lg px-3 py-2.5 font-medium text-muted-foreground hover:bg-muted hover:text-foreground">
+              {c.nav.signIn}
+            </Link>
+          </nav>
+        )}
       </header>
 
+      {/* ── Hero ────────────────────────────────────────── */}
       <section className="relative isolate overflow-hidden">
-        {banner ? (
-          <div className="pointer-events-none absolute inset-0 z-0">
-            <img src={banner} alt="" aria-hidden="true" className="h-full w-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/40 to-black/55" />
-            <div className="absolute inset-0 bg-gradient-to-tr from-primary/30 via-transparent to-accent/25 mix-blend-multiply" />
-          </div>
-        ) : (
-          <div className="pointer-events-none absolute inset-0 z-0">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/15 via-background to-accent/15" />
-            <div className="absolute -top-32 -right-32 h-96 w-96 rounded-full bg-primary/25 blur-3xl" />
-            <div className="absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-accent/25 blur-3xl" />
-          </div>
-        )}
-        <div className="relative z-10 mx-auto max-w-5xl px-4 pt-14 pb-20 text-center sm:px-6 sm:pt-24 sm:pb-28 lg:pt-32 lg:pb-32">
-          <div
-            className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-medium shadow-sm backdrop-blur-md sm:px-4 sm:text-xs ${
-              banner
-                ? "border-white/30 bg-white/15 text-white"
-                : "border-primary/25 bg-primary/10 text-primary"
-            }`}
-          >
-            <Sparkles className={`h-3.5 w-3.5 shrink-0 ${banner ? "text-white" : "text-primary"}`} />
-            <span className="truncate">{c.hero.badge}</span>
-          </div>
-          <h1
-            className={`mx-auto mt-5 max-w-4xl text-balance text-[28px] font-extrabold leading-[1.25] tracking-tight sm:mt-6 sm:text-5xl sm:leading-[1.15] lg:text-6xl ${
-              banner ? "text-white" : "text-foreground"
-            }`}
-            style={banner ? { textShadow: "0 2px 24px rgba(0,0,0,0.55)" } : undefined}
-          >
-            {c.hero.titleStart}{" "}
-            <span
-              className={
-                banner
-                  ? "inline-block bg-gradient-to-r from-white via-white to-white/90 bg-clip-text text-transparent"
-                  : "inline-block bg-gradient-to-r from-primary via-primary to-accent bg-clip-text text-transparent"
-              }
-            >
-              {c.hero.titleHighlight}
-            </span>
-          </h1>
-          <p
-            className={`mx-auto mt-4 max-w-2xl text-pretty text-[15px] leading-relaxed sm:mt-6 sm:text-base lg:text-lg ${
-              banner ? "font-medium text-white/95" : "text-muted-foreground"
-            }`}
-            style={banner ? { textShadow: "0 1px 12px rgba(0,0,0,0.5)" } : undefined}
-          >
-            {c.hero.subtitle}
-          </p>
-          <div className="mt-7 flex flex-col items-stretch justify-center gap-3 sm:mt-9 sm:flex-row sm:flex-wrap sm:items-center">
-            <Link
-              to="/login"
-              search={{ mode: "signup" }}
-              className="btn-brand inline-flex items-center justify-center gap-2 rounded-lg px-6 py-3 text-sm font-semibold shadow-xl shadow-primary/30 transition-transform hover:-translate-y-0.5 sm:px-7 sm:text-base"
-            >
-              {c.hero.ctaPrimary} <ArrowRight className="h-4 w-4" />
-            </Link>
-            <Link
-              to="/login"
-              className={`inline-flex items-center justify-center gap-2 rounded-lg px-6 py-3 text-sm font-semibold backdrop-blur-md transition sm:px-7 sm:text-base ${
-                banner
-                  ? "border border-white/40 bg-white/10 text-white hover:bg-white/20"
-                  : "border border-border bg-card/80 text-foreground hover:bg-card"
-              }`}
-            >
-              {c.hero.ctaSecondary}
-            </Link>
+        <div className="pointer-events-none absolute inset-0 -z-10 bg-[image:var(--gradient-hero)]" />
+        <div className="pointer-events-none absolute -top-40 -left-32 -z-10 h-96 w-96 rounded-full bg-primary/25 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-40 -right-24 -z-10 h-96 w-96 rounded-full bg-accent/25 blur-3xl" />
+
+        <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 pt-12 pb-14 sm:px-6 sm:pt-20 sm:pb-20 lg:grid-cols-[1.05fr_.95fr] lg:gap-14">
+          <div className="text-center lg:text-left">
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-3.5 py-1.5 text-[11px] font-semibold text-primary sm:text-xs">
+              <Sparkles className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">{c.hero.badge}</span>
+            </div>
+
+            <h1 className="mt-5 text-balance text-[30px] font-black leading-[1.22] tracking-tight sm:text-5xl sm:leading-[1.12] lg:text-[56px]">
+              {c.hero.titleStart}{" "}
+              <span className="bg-[image:var(--gradient-brand)] bg-clip-text text-transparent">{c.hero.titleHighlight}</span>
+            </h1>
+
+            <p className="mx-auto mt-5 max-w-xl text-pretty text-[15px] leading-relaxed text-muted-foreground sm:text-base lg:mx-0 lg:text-lg">
+              {c.hero.subtitle}
+            </p>
+
+            <div className="mt-7 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-center lg:justify-start">
+              <Link
+                to="/login"
+                search={{ mode: "signup" }}
+                className="btn-brand inline-flex items-center justify-center gap-2 rounded-xl px-7 py-3.5 text-sm font-bold transition-transform hover:-translate-y-0.5 sm:text-base"
+              >
+                {c.hero.ctaPrimary} <ArrowRight className="h-4 w-4" />
+              </Link>
+              <a
+                href="#about"
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-card px-7 py-3.5 text-sm font-bold transition hover:border-primary/50 hover:text-primary sm:text-base"
+              >
+                {c.hero.ctaSecondary}
+              </a>
+            </div>
+
+            {c.hero.badges.length > 0 && (
+              <div className="mt-7 flex flex-wrap items-center justify-center gap-2 text-[11px] font-semibold sm:text-xs lg:justify-start">
+                {c.hero.badges.map((b) => (
+                  <span key={b} className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 px-3 py-1.5">
+                    <Check className="h-3.5 w-3.5 shrink-0 text-primary" /> {b}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
 
-          {c.hero.badges.length > 0 && (
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-2 text-[11px] font-medium sm:mt-10 sm:gap-3 sm:text-xs">
-              {c.hero.badges.map((b) => (
-                <span
-                  key={b}
-                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 backdrop-blur-md ${
-                    banner
-                      ? "border border-white/25 bg-white/15 text-white"
-                      : "border border-primary/20 bg-primary/5 text-foreground"
-                  }`}
-                >
-                  <Check className={`h-3.5 w-3.5 shrink-0 ${banner ? "text-white" : "text-primary"}`} />
-                  {b}
-                </span>
-              ))}
+          <div className="relative">
+            <div className="surface-card overflow-hidden p-2 shadow-[var(--shadow-elegant)]">
+              {banner ? (
+                <img src={banner} alt={siteName} className="aspect-[4/3] w-full rounded-xl object-cover" />
+              ) : (
+                <div className="grid aspect-[4/3] w-full place-items-center rounded-xl bg-[image:var(--gradient-brand)] text-primary-foreground">
+                  <Boxes className="h-16 w-16 opacity-80" />
+                </div>
+              )}
             </div>
-          )}
+            {statItems[0] && (
+              <div className="surface-card absolute -bottom-5 left-4 flex items-center gap-2.5 px-4 py-3 sm:left-8">
+                <span className="grid h-9 w-9 place-items-center rounded-lg bg-primary/10 text-primary">
+                  <ShoppingBag className="h-4.5 w-4.5" />
+                </span>
+                <span>
+                  <span className="block text-base font-black leading-none">{statItems[0].value}</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{statItems[0].label}</span>
+                </span>
+              </div>
+            )}
+          </div>
         </div>
       </section>
 
-      {stats && (
-        <section className="bg-card py-12 border-y border-border/60">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-              <div className="text-center">
-                <div className="mb-2 flex justify-center text-primary">
-                  <Boxes className="h-8 w-8" />
+      {/* ── Stats band ──────────────────────────────────── */}
+      {statItems.length > 0 && (
+        <section className="border-y border-border/60 bg-card">
+          <div className="mx-auto grid max-w-6xl grid-cols-2 gap-6 px-4 py-10 sm:px-6 md:grid-cols-4 md:py-12">
+            {statItems.slice(0, 4).map((s, i) => {
+              const Icon = statIcons[i] ?? Sparkles;
+              return (
+                <div key={i} className="text-center">
+                  <span className="mx-auto mb-3 grid h-11 w-11 place-items-center rounded-xl bg-primary/10 text-primary">
+                    <Icon className="h-5 w-5" />
+                  </span>
+                  <div className="text-2xl font-black sm:text-3xl">{s.value}</div>
+                  <div className="mt-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground sm:text-xs">{s.label}</div>
                 </div>
-                <div className="text-3xl font-black">{stats.totalProducts}+</div>
-                <div className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Total Products</div>
-              </div>
-              <div className="text-center">
-                <div className="mb-2 flex justify-center text-primary">
-                  <Layers className="h-8 w-8" />
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* ── About ───────────────────────────────────────── */}
+      {(c.about?.title || c.about?.body) && (
+        <section id="about" className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
+          <div className="grid items-center gap-10 lg:grid-cols-2">
+            <div>
+              {c.about.badge && (
+                <div className="inline-flex items-center gap-1.5 rounded-full border border-accent/30 bg-accent/10 px-3 py-1 text-[11px] font-bold text-accent-foreground">
+                  <Star className="h-3 w-3" /> {c.about.badge}
                 </div>
-                <div className="text-3xl font-black">{stats.totalCategories}+</div>
-                <div className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Categories</div>
-              </div>
-              <div className="text-center">
-                <div className="mb-2 flex justify-center text-primary">
-                  <ShoppingBag className="h-8 w-8" />
-                </div>
-                <div className="text-3xl font-black">{stats.totalSales}+</div>
-                <div className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Total Sales</div>
-              </div>
-              <div className="text-center">
-                <div className="mb-2 flex justify-center text-primary">
-                  <Globe className="h-8 w-8" />
-                </div>
-                <div className="text-3xl font-black">24/7</div>
-                <div className="text-sm font-medium text-muted-foreground uppercase tracking-wider">System Support</div>
-              </div>
+              )}
+              <h2 className="mt-4 text-balance text-3xl font-black tracking-tight sm:text-4xl">{c.about.title}</h2>
+              <p className="mt-4 text-pretty text-sm leading-relaxed text-muted-foreground sm:text-base">{c.about.body}</p>
+              {(c.about.points?.length ?? 0) > 0 && (
+                <ul className="mt-6 grid gap-3 sm:grid-cols-2">
+                  {c.about.points.map((p) => (
+                    <li key={p} className="flex items-start gap-2 text-sm font-medium">
+                      <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
+                        <Check className="h-3 w-3" />
+                      </span>
+                      {p}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <Link
+                to="/catalog"
+                search={{}}
+                className="mt-8 inline-flex items-center gap-2 text-sm font-bold text-primary hover:underline"
+              >
+                Master Catalog দেখুন <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {c.features.items.slice(0, 4).map((f, i) => {
+                const Icon = ICON_MAP[f.icon] ?? Sparkles;
+                return (
+                  <div key={i} className={`surface-card p-5 ${i % 2 ? "sm:translate-y-6" : ""}`}>
+                    <span className="mb-3 grid h-10 w-10 place-items-center rounded-xl bg-[image:var(--gradient-brand)] text-primary-foreground">
+                      <Icon className="h-4.5 w-4.5" />
+                    </span>
+                    <h3 className="text-sm font-bold">{f.title}</h3>
+                    <p className="mt-1.5 line-clamp-3 text-xs leading-relaxed text-muted-foreground">{f.desc}</p>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </section>
       )}
 
-      {stats?.categories.length > 0 && (
-        <section className="py-16 bg-muted/20">
+      {/* ── Categories ──────────────────────────────────── */}
+      {stats?.categories?.length > 0 && (
+        <section className="border-y border-border/60 bg-muted/30 py-16 sm:py-20">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
             <div className="mb-10 text-center">
-              <h2 className="text-3xl font-black">Top Categories</h2>
-              <p className="mt-2 text-muted-foreground">Pick your niche from our wide range of categories</p>
+              <h2 className="text-3xl font-black tracking-tight sm:text-4xl">ক্যাটেগরি সমূহ</h2>
+              <p className="mt-3 text-sm text-muted-foreground sm:text-base">নিজের পছন্দের নিশ বেছে নিন</p>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-6">
               {stats.categories.map((cat: any) => (
                 <Link
                   key={cat.id}
                   to="/catalog"
                   search={{ category: cat.slug }}
-                  className="group relative block aspect-square overflow-hidden rounded-2xl bg-card border border-border/60 transition-all hover:border-primary/40 hover:shadow-lg"
+                  className="group relative block aspect-square overflow-hidden rounded-2xl border border-border/60 bg-card transition-all hover:-translate-y-1 hover:border-primary/40 hover:shadow-[var(--shadow-elegant)]"
                 >
                   {cat.image_url ? (
-                    <img src={cat.image_url} alt={cat.name} className="h-full w-full object-cover transition-transform group-hover:scale-110" />
+                    <img src={cat.image_url} alt={cat.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />
                   ) : (
-                    <div className="grid h-full w-full place-items-center bg-primary/5 text-primary font-bold">{cat.name.charAt(0)}</div>
+                    <div className="grid h-full w-full place-items-center bg-primary/5 text-2xl font-black text-primary">{cat.name.charAt(0)}</div>
                   )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-3">
-                    <span className="text-xs font-bold text-white truncate">{cat.name}</span>
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-foreground/85 to-transparent p-3 pt-8">
+                    <span className="block truncate text-xs font-bold text-background">{cat.name}</span>
                   </div>
                 </Link>
               ))}
@@ -345,61 +418,66 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
         </section>
       )}
 
-      {stats?.products.length > 0 && (
-        <section className="py-20">
+      {/* ── Featured products ───────────────────────────── */}
+      {stats?.products?.length > 0 && (
+        <section className="py-16 sm:py-24">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <div className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div className="mb-10 flex flex-col justify-between gap-5 md:flex-row md:items-end">
               <div className="max-w-xl">
-                <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[11px] font-medium text-primary mb-3">
+                <div className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[11px] font-bold text-primary">
                   <Star className="h-3 w-3" /> Master Catalog Preview
                 </div>
-                <h2 className="text-3xl md:text-4xl font-black tracking-tight">Featured Products</h2>
-                <p className="mt-3 text-muted-foreground">See what's trending across the platform. High-profit products ready to list on your store.</p>
+                <h2 className="text-3xl font-black tracking-tight sm:text-4xl">ট্রেন্ডি প্রোডাক্টস</h2>
+                <p className="mt-3 text-sm text-muted-foreground sm:text-base">
+                  হাই-প্রফিট প্রোডাক্ট, রেডি টু লিস্ট আপনার স্টোরে।
+                </p>
               </div>
-              <Link to="/catalog" search={{}} className="group inline-flex items-center gap-2 font-bold text-primary hover:underline">
-                View Full Catalog <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              <Link to="/catalog" search={{}} className="group inline-flex items-center gap-2 text-sm font-bold text-primary hover:underline">
+                সব প্রোডাক্ট <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Link>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {stats.products.map((p: any) => (
-                <div key={p.id} className="group surface-card overflow-hidden flex flex-col">
+                <div key={p.id} className="group surface-card surface-card-hover flex flex-col overflow-hidden">
                   <div className="relative aspect-square overflow-hidden bg-muted">
                     {p.main_image ? (
                       <img src={p.main_image} alt={p.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
                     ) : (
                       <div className="grid h-full w-full place-items-center text-xs text-muted-foreground">No image</div>
                     )}
-                    <div className="absolute top-2 right-2 flex gap-2">
-                       <button 
+                    <div className="absolute right-2 top-2 flex gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+                      <button
                         onClick={() => copy(p.name)}
-                        className="p-1.5 rounded-lg bg-white/90 text-foreground hover:bg-white shadow-md transition-opacity opacity-0 group-hover:opacity-100"
+                        className="rounded-lg border border-border bg-card/95 p-1.5 shadow-sm backdrop-blur hover:text-primary"
                         title="Copy Title"
-                       >
-                         <Copy className="h-3.5 w-3.5" />
-                       </button>
-                       {p.main_image && (
-                         <a 
-                          href={p.main_image} 
-                          download 
-                          className="p-1.5 rounded-lg bg-white/90 text-foreground hover:bg-white shadow-md transition-opacity opacity-0 group-hover:opacity-100"
+                      >
+                        <Copy className="h-3.5 w-3.5" />
+                      </button>
+                      {p.main_image && (
+                        <a
+                          href={p.main_image}
+                          download
+                          className="rounded-lg border border-border bg-card/95 p-1.5 shadow-sm backdrop-blur hover:text-primary"
                           title="Download Image"
                           onClick={(e) => e.stopPropagation()}
-                         >
-                           <Download className="h-3.5 w-3.5" />
-                         </a>
-                       )}
+                        >
+                          <Download className="h-3.5 w-3.5" />
+                        </a>
+                      )}
                     </div>
                   </div>
-                  <div className="p-4 flex-1 flex flex-col">
-                    <Link to="/catalog/$slug" params={{ slug: p.slug }} className="line-clamp-2 text-sm font-bold leading-tight transition-colors hover:text-primary">{p.name}</Link>
-                    <div className="mt-auto pt-3 flex items-center justify-between">
-                      <div className="flex flex-col">
-                        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Resell For</span>
+                  <div className="flex flex-1 flex-col p-4">
+                    <Link to="/catalog/$slug" params={{ slug: p.slug }} className="line-clamp-2 text-sm font-bold leading-tight hover:text-primary">
+                      {p.name}
+                    </Link>
+                    <div className="mt-auto flex items-center justify-between pt-3">
+                      <div>
+                        <span className="block text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Resell For</span>
                         <span className="text-base font-black text-primary">{bdt(p.price)}</span>
                       </div>
                       <div className="text-right">
-                        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Your Profit</span>
+                        <span className="block text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Your Profit</span>
                         <span className="block text-sm font-bold text-success">+{bdt(p.price - p.base_price)}</span>
                       </div>
                     </div>
@@ -411,34 +489,28 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
         </section>
       )}
 
-      <section id="features" className="relative border-t border-border/60 bg-gradient-to-b from-muted/40 via-background to-muted/20">
+      {/* ── Features ────────────────────────────────────── */}
+      <section id="features" className="border-t border-border/60 bg-muted/30">
         <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
           <div className="mx-auto max-w-2xl text-center">
-            <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[11px] font-medium text-primary">
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[11px] font-bold text-primary">
               <Sparkles className="h-3 w-3" /> Features
             </div>
-            <h2 className="mt-4 text-balance text-3xl font-extrabold tracking-tight sm:text-4xl lg:text-5xl">
-              <span className="bg-gradient-to-r from-foreground via-foreground to-primary bg-clip-text text-transparent">
-                {c.features.title}
-              </span>
-            </h2>
+            <h2 className="mt-4 text-balance text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">{c.features.title}</h2>
             {c.features.subtitle && (
               <p className="mt-4 text-pretty text-sm leading-relaxed text-muted-foreground sm:text-base">{c.features.subtitle}</p>
             )}
           </div>
-          <div className="mt-12 grid gap-4 sm:mt-14 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
+          <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {c.features.items.map((f, i) => {
               const Icon = ICON_MAP[f.icon] ?? Sparkles;
               return (
-                <div
-                  key={i}
-                  className="group relative overflow-hidden rounded-2xl border border-border/60 bg-card p-6 shadow-sm transition-all hover:-translate-y-1 hover:border-primary/40 hover:shadow-xl hover:shadow-primary/10"
-                >
-                  <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-gradient-to-br from-primary/20 to-accent/10 opacity-0 blur-2xl transition-opacity group-hover:opacity-100" />
-                  <div className="relative mb-4 grid h-12 w-12 place-items-center rounded-xl bg-gradient-to-br from-primary to-accent text-primary-foreground shadow-lg shadow-primary/20">
+                <div key={i} className="surface-card surface-card-hover group relative overflow-hidden p-6">
+                  <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-primary/20 opacity-0 blur-2xl transition-opacity group-hover:opacity-100" />
+                  <div className="relative mb-4 grid h-12 w-12 place-items-center rounded-xl bg-[image:var(--gradient-brand)] text-primary-foreground">
                     <Icon className="h-5 w-5" />
                   </div>
-                  <h3 className="relative text-base font-semibold sm:text-lg">{f.title}</h3>
+                  <h3 className="relative text-base font-bold sm:text-lg">{f.title}</h3>
                   <p className="relative mt-2 text-sm leading-relaxed text-muted-foreground">{f.desc}</p>
                 </div>
               );
@@ -447,32 +519,25 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
         </div>
       </section>
 
-      <section id="how" className="relative border-t border-border/60 overflow-hidden">
-        <div className="pointer-events-none absolute inset-x-0 top-1/2 -z-10 h-64 -translate-y-1/2 bg-gradient-to-r from-primary/5 via-accent/5 to-primary/5 blur-3xl" />
+      {/* ── How it works ────────────────────────────────── */}
+      <section id="how" className="relative overflow-hidden border-t border-border/60">
         <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
           <div className="mx-auto max-w-2xl text-center">
-            <div className="inline-flex items-center gap-1.5 rounded-full border border-accent/30 bg-accent/10 px-3 py-1 text-[11px] font-medium text-accent-foreground">
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-accent/30 bg-accent/10 px-3 py-1 text-[11px] font-bold text-accent-foreground">
               <ArrowRight className="h-3 w-3" /> Steps
             </div>
-            <h2 className="mt-4 text-balance text-3xl font-extrabold tracking-tight sm:text-4xl lg:text-5xl">
-              <span className="bg-gradient-to-r from-primary via-foreground to-accent bg-clip-text text-transparent">
-                {c.how.title}
-              </span>
-            </h2>
+            <h2 className="mt-4 text-balance text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">{c.how.title}</h2>
             {c.how.subtitle && (
               <p className="mt-4 text-pretty text-sm leading-relaxed text-muted-foreground sm:text-base">{c.how.subtitle}</p>
             )}
           </div>
-          <div className="relative mt-12 grid gap-6 sm:mt-14 md:grid-cols-3">
+          <div className="relative mt-14 grid gap-6 md:grid-cols-3">
             {c.how.steps.map((s, i) => (
-              <div
-                key={i}
-                className="relative rounded-2xl border border-border/60 bg-card p-6 pt-8 shadow-sm transition-all hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg"
-              >
-                <div className="absolute -top-5 left-6 grid h-11 w-11 place-items-center rounded-xl bg-gradient-to-br from-primary to-accent text-base font-bold text-primary-foreground shadow-lg shadow-primary/30 ring-4 ring-background">
+              <div key={i} className="surface-card surface-card-hover relative p-6 pt-8">
+                <div className="absolute -top-5 left-6 grid h-11 w-11 place-items-center rounded-xl bg-[image:var(--gradient-brand)] text-base font-black text-primary-foreground ring-4 ring-background">
                   {String(i + 1).padStart(2, "0")}
                 </div>
-                <h3 className="text-base font-semibold sm:text-lg">{s.title}</h3>
+                <h3 className="text-base font-bold sm:text-lg">{s.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{s.desc}</p>
               </div>
             ))}
@@ -480,53 +545,70 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
         </div>
       </section>
 
-      <section id="pricing" className="relative border-t border-border/60 overflow-hidden">
-        <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-br from-primary/10 via-background to-accent/10" />
-        <div className="pointer-events-none absolute -top-24 left-1/2 -z-10 h-72 w-[36rem] -translate-x-1/2 rounded-full bg-primary/20 blur-3xl" />
-        <div className="mx-auto max-w-4xl px-4 py-20 text-center sm:px-6 sm:py-28">
+      {/* ── CTA ─────────────────────────────────────────── */}
+      <section id="pricing" className="px-4 pb-16 sm:px-6 sm:pb-24">
+        <div className="relative mx-auto max-w-6xl overflow-hidden rounded-3xl bg-[image:var(--gradient-brand)] px-6 py-16 text-center sm:px-12 sm:py-20">
+          <div className="pointer-events-none absolute -top-24 left-1/2 h-72 w-[36rem] -translate-x-1/2 rounded-full bg-primary-foreground/10 blur-3xl" />
           {c.cta.badge && (
-            <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-4 py-1.5 text-[11px] font-medium text-primary sm:text-xs">
+            <div className="relative mx-auto inline-flex items-center gap-2 rounded-full border border-primary-foreground/25 bg-primary-foreground/10 px-4 py-1.5 text-[11px] font-bold text-primary-foreground sm:text-xs">
               <Sparkles className="h-3 w-3" /> {c.cta.badge}
             </div>
           )}
-          <h2 className="mt-5 text-balance text-3xl font-extrabold tracking-tight sm:mt-6 sm:text-4xl lg:text-5xl">
-            <span className="bg-gradient-to-r from-primary via-foreground to-accent bg-clip-text text-transparent">
-              {c.cta.title}
-            </span>
+          <h2 className="relative mt-5 text-balance text-3xl font-black tracking-tight text-primary-foreground sm:text-4xl lg:text-5xl">
+            {c.cta.title}
           </h2>
           {c.cta.subtitle && (
-            <p className="mx-auto mt-5 max-w-xl text-pretty text-sm leading-relaxed text-muted-foreground sm:text-base">{c.cta.subtitle}</p>
+            <p className="relative mx-auto mt-5 max-w-xl text-pretty text-sm leading-relaxed text-primary-foreground/85 sm:text-base">
+              {c.cta.subtitle}
+            </p>
           )}
-          <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Link to="/login" search={{ mode: "signup" }} className="btn-brand inline-flex items-center gap-2 rounded-lg px-7 py-3 text-sm font-semibold shadow-xl shadow-primary/30 transition-transform hover:-translate-y-0.5 sm:text-base">
+          <div className="relative mt-8 flex flex-wrap justify-center gap-3">
+            <Link
+              to="/login"
+              search={{ mode: "signup" }}
+              className="inline-flex items-center gap-2 rounded-xl bg-background px-7 py-3.5 text-sm font-bold text-foreground transition-transform hover:-translate-y-0.5 sm:text-base"
+            >
               {c.cta.button} <ArrowRight className="h-4 w-4" />
             </Link>
+            <Link
+              to="/catalog"
+              search={{}}
+              className="inline-flex items-center gap-2 rounded-xl border border-primary-foreground/30 px-7 py-3.5 text-sm font-bold text-primary-foreground hover:bg-primary-foreground/10 sm:text-base"
+            >
+              <Layers className="h-4 w-4" /> Catalog
+            </Link>
           </div>
-
         </div>
       </section>
 
-
-      <footer className="border-t border-border/60 bg-background">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 py-8 text-xs text-muted-foreground sm:flex-row sm:px-6">
-          <div className="flex min-w-0 items-center gap-2 text-center sm:text-left">
-            {logoUrl ? (
-              <img src={logoUrl} alt={siteName} className="h-10 max-w-36 shrink-0 object-contain" />
-            ) : (
-              <span className="grid h-10 w-10 shrink-0 place-items-center rounded bg-primary text-sm font-bold text-primary-foreground">
-                {siteName.charAt(0).toUpperCase()}
-              </span>
-            )}
-            <span className="truncate">© {new Date().getFullYear()} {siteName} · {c.footer.tagline}</span>
+      {/* ── Footer ──────────────────────────────────────── */}
+      <footer className="border-t border-border/60 bg-card">
+        <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:px-6 md:grid-cols-[1.4fr_1fr_1fr]">
+          <div>
+            <Brand siteName={siteName} logoUrl={logoUrl} size="sm" />
+            <p className="mt-4 max-w-sm text-sm leading-relaxed text-muted-foreground">{c.footer.tagline}</p>
           </div>
-          <div className="flex flex-wrap justify-center gap-4 sm:gap-5">
-            <Link to="/login" className="hover:text-foreground">{c.nav.signIn}</Link>
-            <a href="#features" className="hover:text-foreground">{c.nav.features}</a>
-            <a href="#how" className="hover:text-foreground">{c.nav.how}</a>
+          <div>
+            <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">প্ল্যাটফর্ম</h4>
+            <ul className="mt-3 space-y-2 text-sm">
+              <li><a href="#about" className="text-muted-foreground hover:text-primary">আমাদের সম্পর্কে</a></li>
+              <li><a href="#features" className="text-muted-foreground hover:text-primary">{c.nav.features}</a></li>
+              <li><a href="#how" className="text-muted-foreground hover:text-primary">{c.nav.how}</a></li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">অ্যাকাউন্ট</h4>
+            <ul className="mt-3 space-y-2 text-sm">
+              <li><Link to="/login" search={{ mode: "signup" }} className="text-muted-foreground hover:text-primary">{c.nav.cta}</Link></li>
+              <li><Link to="/login" className="text-muted-foreground hover:text-primary">{c.nav.signIn}</Link></li>
+              <li><Link to="/catalog" search={{}} className="text-muted-foreground hover:text-primary">Master Catalog</Link></li>
+            </ul>
           </div>
         </div>
+        <div className="border-t border-border/60 px-4 py-5 text-center text-xs text-muted-foreground sm:px-6">
+          © {new Date().getFullYear()} {siteName}. All rights reserved.
+        </div>
       </footer>
-
     </div>
   );
 }
