@@ -264,13 +264,13 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
               <Link
                 to="/login"
                 search={{ mode: "signup" }}
-                className="btn-brand inline-flex items-center justify-center gap-2 rounded-xl px-7 py-3.5 text-sm font-bold transition-transform hover:-translate-y-0.5 sm:text-base"
+                className="btn-brand btn-live inline-flex items-center justify-center gap-2 rounded-xl px-7 py-3.5 text-sm font-bold sm:text-base"
               >
                 {c.hero.ctaPrimary} <ArrowRight className="h-4 w-4" />
               </Link>
               <a
                 href="#about"
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-card px-7 py-3.5 text-sm font-bold transition hover:border-primary/50 hover:text-primary sm:text-base"
+                className="btn-live inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-card px-7 py-3.5 text-sm font-bold transition hover:border-primary/50 hover:text-primary sm:text-base"
               >
                 {c.hero.ctaSecondary}
               </a>
@@ -414,10 +414,10 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
             </div>
 
             <div className="mt-12 flex flex-wrap items-center justify-center gap-3">
-              <Link to="/login" search={{ mode: "signup" }} className="btn-brand inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold">
+              <Link to="/login" search={{ mode: "signup" }} className="btn-brand btn-live inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold">
                 {c.hero.ctaPrimary} <ArrowRight className="h-4 w-4" />
               </Link>
-              <Link to="/catalog" search={{}} className="inline-flex items-center gap-2 rounded-xl border px-5 py-2.5 text-sm font-bold hover:bg-muted">
+              <Link to="/catalog" search={{}} className="btn-live inline-flex items-center gap-2 rounded-xl border px-5 py-2.5 text-sm font-bold hover:bg-muted">
                 Master Catalog দেখুন
               </Link>
             </div>
@@ -547,7 +547,7 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
               <Link
                 to="/catalog"
                 search={{}}
-                className="btn-brand group relative inline-flex items-center gap-2 overflow-hidden rounded-full px-7 py-3 text-sm font-bold shadow-[var(--shadow-elegant)] transition-transform hover:scale-[1.03] active:scale-95"
+                className="btn-brand btn-live group relative inline-flex items-center gap-2 rounded-full px-7 py-3 text-sm font-bold"
               >
                 <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
                 <Layers className="relative h-4 w-4" />
@@ -601,14 +601,14 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
             <Link
               to="/login"
               search={{ mode: "signup" }}
-              className="inline-flex items-center gap-2 rounded-xl bg-background px-7 py-3.5 text-sm font-bold text-foreground transition-transform hover:-translate-y-0.5 sm:text-base"
+              className="btn-live inline-flex items-center gap-2 rounded-xl bg-background px-7 py-3.5 text-sm font-bold text-foreground sm:text-base"
             >
               {c.cta.button} <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
               to="/catalog"
               search={{}}
-              className="inline-flex items-center gap-2 rounded-xl border border-primary-foreground/30 px-7 py-3.5 text-sm font-bold text-primary-foreground hover:bg-primary-foreground/10 sm:text-base"
+              className="btn-live inline-flex items-center gap-2 rounded-xl border border-primary-foreground/30 px-7 py-3.5 text-sm font-bold text-primary-foreground hover:bg-primary-foreground/10 sm:text-base"
             >
               <Layers className="h-4 w-4" /> প্রোডাক্টস
             </Link>
