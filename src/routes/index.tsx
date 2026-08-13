@@ -401,10 +401,10 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
 
             <div className="relative mt-10 sm:mt-14">
               {/* Desktop connecting line */}
-              <div className="pointer-events-none absolute top-10 left-0 right-0 hidden h-1.5 rounded-full flow-line lg:block" />
+              <div className="pointer-events-none absolute top-10 left-0 right-0 hidden h-1 rounded-full flow-line lg:block" />
 
               {/* Mobile connecting line */}
-              <div className="pointer-events-none absolute top-0 bottom-0 left-10 w-1.5 rounded-full flow-line-vertical lg:hidden" />
+              <div className="pointer-events-none absolute top-0 bottom-0 left-1/2 hidden w-1 -translate-x-1/2 rounded-full flow-line-vertical lg:hidden" />
 
               <ol className="relative flex flex-col items-center gap-8 lg:flex-row lg:justify-between lg:gap-4">
                 {(c.about?.flow ?? []).map((f, i) => {
