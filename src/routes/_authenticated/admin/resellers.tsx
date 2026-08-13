@@ -465,6 +465,17 @@ function ResellersPage() {
           }}
         />
       )}
+
+      {depositFor && (
+        <DepositModal
+          reseller={depositFor}
+          onClose={() => setDepositFor(null)}
+          onSaved={() => {
+            setDepositFor(null);
+            load();
+          }}
+        />
+      )}
     </div>
   );
 }
