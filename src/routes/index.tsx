@@ -457,7 +457,7 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
 
       {/* ── Categories ──────────────────────────────────── */}
       {stats?.categories?.length > 0 && (
-        <section className="border-y border-border/60 bg-muted/30 py-10 sm:py-14">
+        <section id="categories" className="border-y border-border/60 bg-muted/30 py-10 sm:py-14">
           <div className="mx-auto max-w-7xl px-4 sm:px-6">
             <div className="mx-auto max-w-2xl text-center">
               <h2 className="text-xl font-extrabold sm:text-3xl">ক্যাটাগরি</h2>
