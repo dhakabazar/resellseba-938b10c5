@@ -12,6 +12,7 @@ export const Route = createFileRoute("/_authenticated/admin/landing")({
 
 type Feature = { icon: string; title: string; desc: string };
 type Step = { title: string; desc: string };
+type FlowStep = { icon: string; title: string; desc: string };
 type StatItem = { value: string; label: string };
 type LandingContent = {
   nav: { features: string; how: string; pricing: string; signIn: string; cta: string };
@@ -26,14 +27,14 @@ type LandingContent = {
     bannerImage?: UploadedImage | null;
   };
   stats?: { items: StatItem[] };
-  about?: { badge: string; title: string; body: string; points: string[] };
+  about?: { badge: string; title: string; body: string; points: string[]; flow?: FlowStep[] };
   features: { title: string; subtitle: string; items: Feature[] };
   how: { title: string; subtitle: string; steps: Step[] };
   cta: { badge: string; title: string; subtitle: string; button: string };
   footer: { tagline: string };
 };
 
-const ICONS = ["Boxes", "Truck", "Wallet", "Megaphone", "Globe", "BarChart3", "ShieldCheck", "Sparkles"];
+const ICONS = ["Boxes", "Truck", "Wallet", "Megaphone", "Globe", "BarChart3", "ShieldCheck", "Sparkles", "ClipboardList", "Send", "PackageCheck", "PiggyBank", "BanknoteArrowDown", "ShoppingBag", "Users"];
 
 
 function LandingEditor() {
@@ -129,15 +130,44 @@ function LandingEditor() {
         </div>
       </Section>
 
-      <Section title="About section">
+      <Section title="আমরা কীভাবে কাজ করি (flow section)">
         <Grid>
-          <F label="Badge"><I value={c.about?.badge ?? ""} onChange={(v) => update((d) => { d.about = { badge: v, title: d.about?.title ?? "", body: d.about?.body ?? "", points: d.about?.points ?? [] }; })} /></F>
-          <F label="Title"><I value={c.about?.title ?? ""} onChange={(v) => update((d) => { d.about = { badge: d.about?.badge ?? "", title: v, body: d.about?.body ?? "", points: d.about?.points ?? [] }; })} /></F>
+          <F label="Badge"><I value={c.about?.badge ?? ""} onChange={(v) => update((d) => { d.about = { ...(d.about ?? { badge: "", title: "", body: "", points: [] }), badge: v }; })} /></F>
+          <F label="Title"><I value={c.about?.title ?? ""} onChange={(v) => update((d) => { d.about = { ...(d.about ?? { badge: "", title: "", body: "", points: [] }), title: v }; })} /></F>
         </Grid>
-        <F label="Body text"><T value={c.about?.body ?? ""} onChange={(v) => update((d) => { d.about = { badge: d.about?.badge ?? "", title: d.about?.title ?? "", body: v, points: d.about?.points ?? [] }; })} /></F>
-        <F label="Bullet points (comma separated)">
-          <I value={(c.about?.points ?? []).join(", ")} onChange={(v) => update((d) => { d.about = { badge: d.about?.badge ?? "", title: d.about?.title ?? "", body: d.about?.body ?? "", points: v.split(",").map(s => s.trim()).filter(Boolean) }; })} />
-        </F>
+        <F label="Intro text"><T value={c.about?.body ?? ""} onChange={(v) => update((d) => { d.about = { ...(d.about ?? { badge: "", title: "", body: "", points: [] }), body: v }; })} /></F>
+        <div className="space-y-3">
+          {(c.about?.flow ?? []).map((f, i) => (
+            <div key={i} className="rounded-lg border p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-muted-foreground">Step #{i + 1}</span>
+                <button type="button" onClick={() => update((d) => { d.about!.flow!.splice(i, 1); })} className="text-destructive hover:opacity-70"><Trash2 className="h-3.5 w-3.5" /></button>
+              </div>
+              <Grid>
+                <F label="Icon">
+                  <select
+                    value={f.icon}
+                    onChange={(e) => update((d) => { d.about!.flow![i].icon = e.target.value; })}
+                    className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                  >
+                    {ICONS.map((ic) => <option key={ic} value={ic}>{ic}</option>)}
+                  </select>
+                </F>
+                <F label="Title"><I value={f.title} onChange={(v) => update((d) => { d.about!.flow![i].title = v; })} /></F>
+              </Grid>
+              <F label="Description"><T value={f.desc} onChange={(v) => update((d) => { d.about!.flow![i].desc = v; })} /></F>
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={() => update((d) => {
+              d.about = { ...(d.about ?? { badge: "", title: "", body: "", points: [] }), flow: [...(d.about?.flow ?? []), { icon: "ClipboardList", title: "", desc: "" }] };
+            })}
+            className="inline-flex items-center gap-1 rounded-md border px-3 py-1.5 text-xs hover:bg-muted"
+          >
+            <Plus className="h-3.5 w-3.5" /> Step add
+          </button>
+        </div>
       </Section>
 
       <Section title="Features section">
