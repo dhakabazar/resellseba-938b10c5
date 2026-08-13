@@ -639,6 +639,7 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
               <li><a href="#about" className="text-muted-foreground hover:text-primary">কীভাবে কাজ করি</a></li>
               <li><a href="#features" className="text-muted-foreground hover:text-primary">{c.nav.features}</a></li>
               <li><a href="#how" className="text-muted-foreground hover:text-primary">{c.nav.how}</a></li>
+              <li><a href="#faq" className="text-muted-foreground hover:text-primary">{c.nav.faq || "FAQ"}</a></li>
             </ul>
           </div>
           <div>
