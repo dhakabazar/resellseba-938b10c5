@@ -30,22 +30,27 @@ function publish(next: AuthState) {
 }
 
 async function loadAccess(userId: string): Promise<{ roles: Role[]; permissions: string[] }> {
+  // Hard timeout: metadata fetching must never keep the panel on a spinner.
+  const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), 10000));
   try {
-    const [rolesRes, permsRes] = await Promise.all([
+    const work = Promise.all([
       supabase.from("user_roles").select("role").eq("user_id", userId),
       supabase.rpc("my_permissions"),
     ]);
 
-    if (rolesRes.error) {
-      console.error("Error loading roles:", rolesRes.error);
+    const res = await Promise.race([work, timeout]);
+    if (!res) {
+      console.error("Access lookup timed out");
+      return { roles: [], permissions: [] };
     }
-    if (permsRes.error) {
-      console.error("Error loading permissions:", permsRes.error);
-    }
+    const [rolesRes, permsRes] = res;
+
+    if (rolesRes.error) console.error("Error loading roles:", rolesRes.error);
+    if (permsRes.error) console.error("Error loading permissions:", permsRes.error);
 
     const roles = rolesRes.error ? [] : (rolesRes.data ?? []).map((row: any) => row.role as Role);
     const permissions = permsRes.error ? [] : ((permsRes.data as string[] | null) ?? []);
-    
+
     return { roles, permissions };
   } catch (err) {
     console.error("Failed to load access data:", err);
@@ -104,7 +109,11 @@ function initAuth() {
       return;
     }
 
-    applySession(session);
+    // NEVER await supabase calls inside this callback: the auth client holds an
+    // internal lock while it runs, so any query issued here deadlocks and the
+    // panel stays on a loading spinner forever (exactly what happens right
+    // after sign-in). Defer the role/permission lookup to a fresh task.
+    setTimeout(() => applySession(session), 0);
   });
 }
 

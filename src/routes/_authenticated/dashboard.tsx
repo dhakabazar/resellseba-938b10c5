@@ -19,17 +19,14 @@ function DashboardRouter() {
     const isStaff = roles.includes("staff");
     const isReseller = roles.includes("reseller") || roles.includes("leader");
 
-    if (isSuperAdmin || (isStaff && permissions.length > 0)) {
-      done.current = true;
+    done.current = true;
+    if (isSuperAdmin || isStaff) {
+      // Staff without any permission gets a clear "no access" screen inside the
+      // admin layout — never the reseller application form.
       nav({ to: "/admin", replace: true });
     } else if (isReseller) {
-      done.current = true;
       nav({ to: "/reseller", replace: true });
-    } else if (isStaff && permissions.length === 0) {
-      done.current = true;
-      nav({ to: "/onboarding", replace: true });
     } else {
-      done.current = true;
       nav({ to: "/onboarding", replace: true });
     }
   }, [roles, permissions, loading, user, nav]);

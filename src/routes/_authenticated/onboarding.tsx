@@ -29,6 +29,14 @@ function Onboarding() {
   const [payoutRouting, setPayoutRouting] = useState("");
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<"none" | "pending" | "active" | "suspended" | "rejected">("none");
+  const [storePrefix, setStorePrefix] = useState("/s/");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setStorePrefix(`${window.location.host}/s/`);
+    }
+  }, []);
+
 
   useEffect(() => {
     if (!user) return;
@@ -47,7 +55,7 @@ function Onboarding() {
     const isSuperAdmin = roles.includes("super_admin");
     const isStaff = roles.includes("staff");
     
-    if (isSuperAdmin || (isStaff && permissions.length > 0)) {
+    if (isSuperAdmin || isStaff) {
       nav({ to: "/admin", replace: true });
     } else if (status === "active" && (roles.includes("reseller") || roles.includes("leader"))) {
       nav({ to: "/reseller", replace: true });
@@ -219,7 +227,7 @@ function ContactButton({ variant }: { variant: "whatsapp" | "email" }) {
               <label className="mb-1 block text-xs font-medium">Store code</label>
               <div className="flex items-center rounded-md border bg-background focus-within:ring-2 focus-within:ring-ring">
                 <span className="border-r bg-muted px-3 py-2 text-xs text-muted-foreground">
-                  resellhub.com/s/
+                  {storePrefix}
                 </span>
                 <input
                   required

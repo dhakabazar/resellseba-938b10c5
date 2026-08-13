@@ -129,19 +129,36 @@ function filterNav(nav: NavEntry[], permissions: string[], isSuperAdmin: boolean
   return out;
 }
 
+/** First admin route this permission set can actually open (nav order). */
+function firstAllowedRoute(nav: NavEntry[], permissions: string[]): string | null {
+  for (const entry of nav) {
+    const group = entry as { items?: { to?: string }[] };
+    if (group.items) {
+      for (const item of group.items) {
+        if (item.to && allowed(item.to, permissions, false)) return item.to;
+      }
+      continue;
+    }
+    const to = (entry as { to?: string }).to;
+    if (to && allowed(to, permissions, false)) return to;
+  }
+  return null;
+}
+
 function AdminLayout() {
   const { user, roles, permissions, loading } = useAuth();
   const nav = useNavigate();
   const pathname = useLocation({ select: (location) => location.pathname });
   const isSuperAdmin = roles.includes("super_admin");
   const isStaff = roles.includes("staff");
-  const canEnter = isSuperAdmin || (isStaff && permissions.length > 0);
+  const canEnter = isSuperAdmin || isStaff;
   const routePermission = Object.entries(ROUTE_PERMISSIONS)
     .sort(([a], [b]) => b.length - a.length)
     .find(([route]) => pathname === route || pathname.startsWith(`${route}/`))?.[1];
   const canViewRoute =
     isSuperAdmin ||
     (isStaff && routePermission != null && routePermission.some((permission) => permissions.includes(permission)));
+  const landing = isSuperAdmin ? "/admin" : firstAllowedRoute(NAV, permissions);
   const [brand, setBrand] = useState<{ name: string; logoUrl: string | null; primary: string | null }>({
     name: "Admin",
     logoUrl: null,
@@ -150,23 +167,25 @@ function AdminLayout() {
 
   useEffect(() => {
     if (loading || !user) return;
-    
-    if (!canEnter || !canViewRoute) {
-      console.log("Access denied to", pathname, { roles, permissions, canEnter, canViewRoute });
-      
-      if (roles.includes("reseller") || roles.includes("leader")) {
-        nav({ to: "/reseller", replace: true });
-      } else if (isStaff && permissions.length === 0) {
-        nav({ to: "/onboarding", replace: true });
-      } else if (pathname.startsWith("/admin")) {
-        if (pathname !== "/admin") {
-          nav({ to: "/admin", replace: true });
-        } else {
-          nav({ to: "/dashboard", replace: true });
-        }
-      }
+    if (canEnter && canViewRoute) return;
+
+    // Resellers never belong in the admin tree.
+    if (!isSuperAdmin && !isStaff && (roles.includes("reseller") || roles.includes("leader"))) {
+      nav({ to: "/reseller", replace: true });
+      return;
     }
-  }, [loading, user, canEnter, canViewRoute, roles, permissions, pathname, nav, isStaff]);
+    // No admin access at all -> let the dashboard router decide.
+    if (!canEnter) {
+      nav({ to: "/dashboard", replace: true });
+      return;
+    }
+    // Staff with permissions but not for THIS route: send them to the first
+    // page they can open. Never bounce back to /admin or /dashboard, that
+    // ping-pongs forever and shows an endless spinner.
+    if (landing && landing !== pathname) {
+      nav({ to: landing, replace: true });
+    }
+  }, [loading, user, canEnter, canViewRoute, roles, permissions, pathname, nav, isStaff, isSuperAdmin, landing]);
 
   useEffect(() => {
     supabase
@@ -185,6 +204,30 @@ function AdminLayout() {
   }, []);
 
   useBrandingTheme(brand.primary);
+
+  // Staff account that has zero openable pages: show a message instead of a
+  // spinner that never resolves.
+  if (!loading && user && canEnter && !canViewRoute && !landing) {
+    return (
+      <div className="grid min-h-screen place-items-center px-4">
+        <div className="surface-card max-w-sm p-8 text-center">
+          <h1 className="text-lg font-semibold">No panel access</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            আপনার অ্যাকাউন্টে এখনো কোনো পেজের পারমিশন দেওয়া হয়নি। সুপার অ্যাডমিনের সাথে যোগাযোগ করুন।
+          </p>
+          <button
+            onClick={async () => {
+              await supabase.auth.signOut();
+              window.location.href = "/login";
+            }}
+            className="mt-6 text-xs font-medium text-muted-foreground hover:text-foreground"
+          >
+            Sign out
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (loading || !user || !canEnter || !canViewRoute) {
     return (
