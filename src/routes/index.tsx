@@ -22,6 +22,11 @@ import {
   Menu,
   X,
   Users,
+  ClipboardList,
+  Send,
+  PackageCheck,
+  PiggyBank,
+  BanknoteArrowDown,
   type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -47,9 +52,11 @@ export const Route = createFileRoute("/")({
 
 const ICON_MAP: Record<string, LucideIcon> = {
   Boxes, Truck, Wallet, Megaphone, Globe, BarChart3, ShieldCheck, Sparkles,
+  ClipboardList, Send, PackageCheck, PiggyBank, BanknoteArrowDown, ShoppingBag, Users,
 };
 
 type Feature = { icon: string; title: string; desc: string };
+type FlowStep = { icon: string; title: string; desc: string };
 type Step = { title: string; desc: string };
 type HeroImage = { path: string; url: string; bytes: number } | null;
 type StatItem = { value: string; label: string };
@@ -61,7 +68,7 @@ type LandingContent = {
     bannerImage?: HeroImage;
   };
   stats?: { title?: string; items: StatItem[] };
-  about?: { badge: string; title: string; body: string; points: string[] };
+  about?: { badge: string; title: string; body: string; points: string[]; flow?: FlowStep[] };
   features: { title: string; subtitle: string; items: Feature[] };
   how: { title: string; subtitle: string; steps: Step[] };
   cta: { badge: string; title: string; subtitle: string; button: string };
@@ -81,17 +88,17 @@ const FALLBACK: LandingContent = {
     bannerImage: null,
   },
   about: {
-    badge: "আমাদের সম্পর্কে",
-    title: "বাংলাদেশের রিসেলারদের জন্য সম্পূর্ণ বিজনেস প্ল্যাটফর্ম",
+    badge: "আমরা কীভাবে কাজ করি",
+    title: "রিসেলার থেকে প্রফিট উইথড্র — পুরো জার্নি",
     body:
-      "ভেরিফাইড মাস্টার ক্যাটালগ থেকে প্রোডাক্ট বেছে নিয়ে নিজের প্রফিট বসিয়ে লিস্ট করুন, নিজের ব্র্যান্ডেড স্টোর থেকে অর্ডার নিন — স্টক, প্যাকেজিং, কুরিয়ার বুকিং ও ডেলিভারি ফলোআপ আমরা সামলাই।",
-    points: [
-      "SEO রেডি প্রোডাক্ট কনটেন্ট, ছবি ও ডিটেইলস রেডিমেড",
-      "প্রোডাক্ট প্রাইস, ডেলিভারি ও প্যাকেজিং কস্ট আগেই পরিষ্কার",
-      "কাস্টম ডোমেইন, লোগো, কালার ও OG সেটিংস",
-      "Steadfast, Pathao ও CarryBee কুরিয়ার ট্র্যাকিং",
-      "bKash, Nagad, Rocket, SSLCommerz ও EPS পেমেন্ট",
-      "সেল, প্রফিট, কমিশন ও ডিউ পেমেন্ট রিপোর্ট",
+      "আপনি শুধু সেল করবেন, বাকি সব আমরা। অর্ডার জেনারেট করা থেকে প্রফিট উইথড্র পর্যন্ত প্রতিটি ধাপ পরিষ্কার ও ট্র্যাকেবল।",
+    points: [],
+    flow: [
+      { icon: "ClipboardList", title: "অর্ডার জেনারেট", desc: "রিসেলার নিজের স্টোর থেকে কাস্টমারের অর্ডার প্যানেলে তোলে।" },
+      { icon: "Send", title: "অ্যাডমিনে পাঠানো", desc: "কনফার্ম অর্ডার এক ক্লিকে অ্যাডমিনের কাছে ফরওয়ার্ড হয়।" },
+      { icon: "PackageCheck", title: "প্যাকিং ও কুরিয়ার", desc: "অ্যাডমিন প্রোডাক্ট প্যাক করে কুরিয়ারে বুক ও ডেলিভারি ফলোআপ করে।" },
+      { icon: "PiggyBank", title: "প্রফিট জমা", desc: "ডেলিভারি সফল হলে প্রফিট রিসেলার প্যানেলে অটো যোগ হয়।" },
+      { icon: "BanknoteArrowDown", title: "উইথড্র", desc: "bKash/Nagad/ব্যাংকে উইথড্র রিকোয়েস্ট — পেমেন্ট হিস্ট্রি সহ।" },
     ],
   },
   features: {
@@ -354,44 +361,54 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
         </section>
       )}
 
-      {/* ── About ───────────────────────────────────────── */}
-      {(c.about?.title || c.about?.body) && (
-        <section id="about" className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
-          <div className="grid items-center gap-10 lg:grid-cols-2">
-            <div>
-              {(c.about.points?.length ?? 0) > 0 && (
-                <ul className="mt-6 grid gap-3 sm:grid-cols-2">
-                  {c.about.points.map((p) => (
-                    <li key={p} className="flex items-start gap-2 text-sm font-medium">
-                      <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
-                        <Check className="h-3 w-3" />
-                      </span>
-                      {p}
-                    </li>
-                  ))}
-                </ul>
+      {/* ── How we work (flow) ──────────────────────────── */}
+      {((c.about?.flow?.length ?? 0) > 0 || c.about?.title || c.about?.body) && (
+        <section id="about" className="relative overflow-hidden py-14 sm:py-20">
+          <div className="pointer-events-none absolute inset-0 bg-[image:var(--gradient-brand)] opacity-[0.06]" />
+          <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
+            <div className="mx-auto max-w-2xl text-center">
+              {c.about?.badge && (
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
+                  <Sparkles className="h-3 w-3" /> {c.about.badge}
+                </span>
               )}
-              <Link
-                to="/catalog"
-                search={{}}
-                className="mt-8 inline-flex items-center gap-2 text-sm font-bold text-primary hover:underline"
-              >
-                Master Catalog দেখুন <ArrowRight className="h-4 w-4" />
-              </Link>
+              {c.about?.title && (
+                <h2 className="mt-3 text-xl font-extrabold leading-snug sm:text-3xl">{c.about.title}</h2>
+              )}
+              {c.about?.body && (
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{c.about.body}</p>
+              )}
             </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              {c.features.items.slice(0, 4).map((f, i) => {
+
+            <ol className="relative mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-5 lg:gap-3">
+              <span className="pointer-events-none absolute left-0 right-0 top-9 hidden h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent lg:block" />
+              {(c.about?.flow ?? []).map((f, i) => {
                 const Icon = ICON_MAP[f.icon] ?? Sparkles;
                 return (
-                  <div key={i} className={`surface-card p-5 ${i % 2 ? "sm:translate-y-6" : ""}`}>
-                    <span className="grid h-9 w-9 place-items-center rounded-xl bg-[image:var(--gradient-brand)] text-primary-foreground">
-                      <Icon className="h-4 w-4" />
+                  <li key={i} className="surface-card group relative flex flex-col items-center p-5 text-center transition-transform hover:-translate-y-1">
+                    <span className="absolute right-3 top-3 text-[11px] font-black text-muted-foreground/40">
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                    <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[image:var(--gradient-brand)] text-primary-foreground shadow-md">
+                      <Icon className="h-5 w-5" />
                     </span>
                     <h3 className="mt-3 text-sm font-bold leading-tight">{f.title}</h3>
-                    <p className="mt-1.5 line-clamp-3 text-xs leading-relaxed text-muted-foreground">{f.desc}</p>
-                  </div>
+                    <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{f.desc}</p>
+                    {i < (c.about?.flow?.length ?? 0) - 1 && (
+                      <ArrowRight className="absolute -right-2.5 top-1/2 hidden h-4 w-4 -translate-y-1/2 text-primary/50 lg:block" />
+                    )}
+                  </li>
                 );
               })}
+            </ol>
+
+            <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
+              <Link to="/signup" className="inline-flex items-center gap-2 rounded-xl bg-[image:var(--gradient-brand)] px-5 py-2.5 text-sm font-bold text-primary-foreground shadow-md">
+                {c.hero.ctaPrimary} <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link to="/catalog" search={{}} className="inline-flex items-center gap-2 rounded-xl border px-5 py-2.5 text-sm font-bold hover:bg-muted">
+                Master Catalog দেখুন
+              </Link>
             </div>
           </div>
         </section>
