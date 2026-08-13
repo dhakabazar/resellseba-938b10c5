@@ -206,6 +206,26 @@
   box-shadow: 0 0 0 2px var(--color-ring);
 }
 
+@utility flow-line {
+  background: linear-gradient(90deg, var(--flow-step-1), var(--flow-step-3), var(--flow-step-5));
+  opacity: 0.25;
+}
+@utility flow-line-vertical {
+  background: linear-gradient(180deg, var(--flow-step-1), var(--flow-step-3), var(--flow-step-5));
+  opacity: 0.25;
+}
+@utility flow-card {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-soft);
+}
+@utility flow-icon-1 { background: var(--flow-step-1); color: var(--color-primary-foreground); }
+@utility flow-icon-2 { background: var(--flow-step-2); color: var(--color-primary-foreground); }
+@utility flow-icon-3 { background: var(--flow-step-3); color: var(--color-primary-foreground); }
+@utility flow-icon-4 { background: var(--flow-step-4); color: var(--color-success-foreground); }
+@utility flow-icon-5 { background: var(--flow-step-5); color: var(--color-warning-foreground); }
+
 @keyframes float {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-12px); }
