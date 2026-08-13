@@ -15,7 +15,7 @@ function DashboardRouter() {
   useEffect(() => {
     if (loading || !user || done.current) return;
     done.current = true;
-    if (roles.includes("super_admin") || roles.includes("staff")) nav({ to: "/admin", replace: true });
+    if (roles.includes("super_admin") || (roles.includes("staff") && permissions.length > 0)) nav({ to: "/admin", replace: true });
     else if (roles.includes("reseller") || roles.includes("leader"))
       nav({ to: "/reseller", replace: true });
     else nav({ to: "/onboarding", replace: true });
