@@ -75,7 +75,7 @@ function ResellerLayout() {
 
   useEffect(() => {
     if (loading) return;
-    if (roles.includes("super_admin")) {
+    if (roles.includes("super_admin") || roles.includes("staff")) {
       nav({ to: "/admin", replace: true });
       return;
     }

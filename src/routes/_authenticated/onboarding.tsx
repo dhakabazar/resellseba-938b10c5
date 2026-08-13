@@ -44,10 +44,13 @@ function Onboarding() {
 
   useEffect(() => {
     if (loading) return;
-    if (roles.includes("super_admin")) nav({ to: "/admin", replace: true });
+    if (roles.includes("super_admin") || roles.includes("staff")) {
+      nav({ to: "/admin", replace: true });
+    }
     // Reseller panel only opens after admin approval (status = active)
-    else if (status === "active" && (roles.includes("reseller") || roles.includes("leader")))
+    else if (status === "active" && (roles.includes("reseller") || roles.includes("leader"))) {
       nav({ to: "/reseller", replace: true });
+    }
   }, [loading, roles, status, nav]);
 
 

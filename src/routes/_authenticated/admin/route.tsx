@@ -150,7 +150,13 @@ function AdminLayout() {
 
   useEffect(() => {
     if (loading) return;
-    if (!canEnter || !canViewRoute) nav({ to: "/dashboard", replace: true });
+    if (!canEnter || !canViewRoute) {
+      if (roles.includes("reseller") || roles.includes("leader")) {
+        nav({ to: "/reseller", replace: true });
+      } else {
+        nav({ to: "/dashboard", replace: true });
+      }
+    }
   }, [loading, canEnter, canViewRoute, nav]);
 
   useEffect(() => {
