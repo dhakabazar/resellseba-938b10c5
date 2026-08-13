@@ -256,11 +256,11 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
             <Brand siteName={siteName} logoUrl={logoUrl} />
           </Link>
 
-          <nav className="hidden items-center gap-7 text-sm font-medium text-muted-foreground lg:flex">
+          <nav className="hidden items-center gap-7 text-base font-semibold text-muted-foreground lg:flex">
             {navLinks.map((l) => (
               <a key={l.href} href={l.href} className="transition-colors hover:text-primary">{l.label}</a>
             ))}
-            <Link to="/catalog" search={{}} className="font-semibold text-primary hover:opacity-80">Catalog</Link>
+            <Link to="/catalog" search={{}} className="font-bold text-primary hover:opacity-80">Catalog</Link>
           </nav>
 
           <div className="flex shrink-0 items-center gap-2">
@@ -282,13 +282,13 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
         </div>
 
         {menu && (
-          <nav className="border-t border-border/60 bg-background px-4 py-3 text-sm lg:hidden">
+          <nav className="border-t border-border/60 bg-background px-4 py-3 text-base lg:hidden">
             {[...navLinks].map((l) => (
               <a
                 key={l.href}
                 href={l.href}
                 onClick={() => setMenu(false)}
-                className="block rounded-lg px-3 py-2.5 font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+                className="block rounded-lg px-3 py-2.5 font-semibold text-muted-foreground hover:bg-muted hover:text-foreground"
               >
                 {l.label}
               </a>
@@ -296,7 +296,7 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
             <Link to="/catalog" search={{}} onClick={() => setMenu(false)} className="block rounded-lg px-3 py-2.5 font-bold text-primary hover:bg-primary/10">
               Master Catalog
             </Link>
-            <Link to="/login" onClick={() => setMenu(false)} className="block rounded-lg px-3 py-2.5 font-medium text-muted-foreground hover:bg-muted hover:text-foreground">
+            <Link to="/login" onClick={() => setMenu(false)} className="block rounded-lg px-3 py-2.5 font-semibold text-muted-foreground hover:bg-muted hover:text-foreground">
               {c.nav.signIn}
             </Link>
           </nav>
