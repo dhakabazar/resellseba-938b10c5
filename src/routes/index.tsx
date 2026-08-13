@@ -399,29 +399,61 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
               )}
             </div>
 
-            <ol className="relative mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-5 lg:gap-3">
-              <span className="pointer-events-none absolute left-0 right-0 top-9 hidden h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent lg:block" />
-              {(c.about?.flow ?? []).map((f, i) => {
-                const Icon = ICON_MAP[f.icon] ?? Sparkles;
-                return (
-                  <li key={i} className="surface-card group relative flex flex-col items-center p-5 text-center transition-transform hover:-translate-y-1">
-                    <span className="absolute right-3 top-3 text-[11px] font-black text-muted-foreground/40">
-                      {String(i + 1).padStart(2, "0")}
-                    </span>
-                    <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[image:var(--gradient-brand)] text-primary-foreground shadow-md">
-                      <Icon className="h-5 w-5" />
-                    </span>
-                    <h3 className="mt-3 text-sm font-bold leading-tight">{f.title}</h3>
-                    <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{f.desc}</p>
-                    {i < (c.about?.flow?.length ?? 0) - 1 && (
-                      <ArrowRight className="absolute -right-2.5 top-1/2 hidden h-4 w-4 -translate-y-1/2 text-primary/50 lg:block" />
-                    )}
-                  </li>
-                );
-              })}
-            </ol>
+            <div className="relative mt-10 sm:mt-14">
+              {/* Desktop connecting line */}
+              <div className="pointer-events-none absolute top-10 left-0 right-0 hidden h-1 rounded-full flow-line lg:block" />
 
-            <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
+              {/* Mobile connecting line */}
+              <div className="pointer-events-none absolute top-0 bottom-0 left-1/2 hidden w-1 -translate-x-1/2 rounded-full flow-line-vertical lg:hidden" />
+
+              <ol className="relative flex flex-col items-center gap-8 lg:flex-row lg:justify-between lg:gap-4">
+                {(c.about?.flow ?? []).map((f, i) => {
+                  const Icon = ICON_MAP[f.icon] ?? Sparkles;
+                  const stepLabel = ["০১", "০২", "০৩", "০৪", "০৫"][i] ?? String(i + 1).padStart(2, "0");
+                  const iconClass = [
+                    "flow-icon-1",
+                    "flow-icon-2",
+                    "flow-icon-3",
+                    "flow-icon-4",
+                    "flow-icon-5",
+                  ][i] ?? "flow-icon-1";
+                  const isLast = i === (c.about?.flow?.length ?? 0) - 1;
+
+                  return (
+                    <li
+                      key={i}
+                      className="group relative z-10 flex w-full max-w-[280px] flex-col items-center sm:max-w-xs lg:w-[18%] lg:max-w-[240px]"
+                      style={{ animationDelay: `${(i + 1) * 100}ms` }}
+                    >
+                      {/* Icon bubble */}
+                      <div
+                        className={`grid h-20 w-20 shrink-0 place-items-center rounded-2xl shadow-lg shadow-primary/10 transition-transform duration-300 group-hover:-translate-y-2 ${iconClass}`}
+                      >
+                        <Icon className="h-9 w-9" />
+                      </div>
+
+                      {/* Card */}
+                      <div className="flow-card mt-6 w-full px-5 py-5 text-center transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-elegant">
+                        <span className={`mb-1 block text-[11px] font-bold uppercase tracking-wider`} style={{ color: `var(--flow-step-${i + 1})` }}>
+                          ধাপ {stepLabel}
+                        </span>
+                        <h3 className="text-sm font-bold leading-tight sm:text-[15px]">{f.title}</h3>
+                        <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{f.desc}</p>
+                      </div>
+
+                      {/* Mobile arrow (not on last step) */}
+                      {!isLast && (
+                        <div className="mt-6 text-primary/40 lg:hidden">
+                          <ArrowRight className="h-5 w-5 rotate-90" />
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
+              </ol>
+            </div>
+
+            <div className="mt-12 flex flex-wrap items-center justify-center gap-3">
               <Link to="/login" search={{ mode: "signup" }} className="btn-brand inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold">
                 {c.hero.ctaPrimary} <ArrowRight className="h-4 w-4" />
               </Link>
