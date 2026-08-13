@@ -167,11 +167,14 @@ export function PublicHeader({
               <Link
                 key={l.to}
                 to={l.to}
-                search={{}}
                 onClick={() => setMenu(false)}
-                className="block rounded-lg px-3 py-2.5 font-bold text-primary hover:bg-primary/10"
+                className={
+                  isCatalog
+                    ? "flex items-center gap-2 rounded-lg bg-primary/10 px-3 py-2.5 font-bold text-primary"
+                    : "block rounded-lg px-3 py-2.5 font-bold text-primary hover:bg-primary/10"
+                }
               >
-                {l.label}
+                {l.icon} {l.label}
               </Link>
             ) : (
               <a
@@ -184,6 +187,7 @@ export function PublicHeader({
               </a>
             ),
           )}
+
 
           <Link
             to="/login"
