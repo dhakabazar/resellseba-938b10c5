@@ -377,11 +377,13 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
                 const Icon = ICON_MAP[f.icon] ?? Sparkles;
                 return (
                   <div key={i} className={`surface-card p-5 ${i % 2 ? "sm:translate-y-6" : ""}`}>
-                    <span className="mb-3 grid h-10 w-10 place-items-center rounded-xl bg-[image:var(--gradient-brand)] text-primary-foreground">
-                      <Icon className="h-4.5 w-4.5" />
-                    </span>
-                    <h3 className="text-sm font-bold">{f.title}</h3>
-                    <p className="mt-1.5 line-clamp-3 text-xs leading-relaxed text-muted-foreground">{f.desc}</p>
+                    <div className="flex items-center gap-2.5">
+                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[image:var(--gradient-brand)] text-primary-foreground">
+                        <Icon className="h-4.5 w-4.5" />
+                      </span>
+                      <h3 className="min-w-0 flex-1 truncate text-sm font-bold">{f.title}</h3>
+                    </div>
+                    <p className="mt-2 line-clamp-3 text-xs leading-relaxed text-muted-foreground">{f.desc}</p>
                   </div>
                 );
               })}
