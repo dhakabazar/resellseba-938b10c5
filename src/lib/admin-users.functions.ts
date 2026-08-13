@@ -71,9 +71,11 @@ export const listStaffUsers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<StaffUser[]> => {
     await assertPermission(context.supabase, context.userId, "staff.manage");
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    // Read through the caller's RLS-scoped client: the service-role key is not
+    // available in every deployment environment, and this page must still work.
+    const db = context.supabase;
 
-    const { data: roleRows, error: roleErr } = await supabaseAdmin
+    const { data: roleRows, error: roleErr } = await db
       .from("user_roles")
       .select("user_id, role, custom_role_id, roles:custom_role_id (name)")
       .in("role", ["super_admin", "staff"]);
@@ -82,17 +84,24 @@ export const listStaffUsers = createServerFn({ method: "GET" })
     const ids = (roleRows ?? []).map((r: any) => r.user_id);
     if (ids.length === 0) return [];
 
-    const { data: profiles } = await supabaseAdmin
+    const { data: profiles } = await db
       .from("profiles")
       .select("id, full_name, created_at")
       .in("id", ids);
 
+    // Emails live in the auth schema and need the privileged key. Best effort:
+    // if it is unavailable, the list still renders without email addresses.
     const emails: Record<string, string | null> = {};
-    for (let page = 1; page <= 10; page++) {
-      const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 100 });
-      if (error) break;
-      for (const u of data?.users ?? []) emails[u.id] = u.email ?? null;
-      if (!data?.users || data.users.length < 100) break;
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      for (let page = 1; page <= 10; page++) {
+        const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 100 });
+        if (error) break;
+        for (const u of data?.users ?? []) emails[u.id] = u.email ?? null;
+        if (!data?.users || data.users.length < 100) break;
+      }
+    } catch (err) {
+      console.error("[staff] email lookup unavailable", err);
     }
 
     const profileMap: Record<string, any> = Object.fromEntries((profiles ?? []).map((p: any) => [p.id, p]));
