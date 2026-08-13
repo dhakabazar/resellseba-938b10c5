@@ -151,24 +151,22 @@ function AdminLayout() {
   useEffect(() => {
     if (loading) return;
     
-    console.log(`[AdminLayout] Guard check: canEnter=${canEnter}, canViewRoute=${canViewRoute}, roles=${roles}`);
-
+    // Guard check: canEnter includes super_admin or staff with perms.
+    // canViewRoute handles the specific sub-path permission.
     if (!canEnter || !canViewRoute) {
       if (roles.includes("reseller") || roles.includes("leader")) {
-        console.log("[AdminLayout] Redirecting to /reseller");
         nav({ to: "/reseller", replace: true });
       } else if (isStaff && permissions.length === 0) {
-        console.log("[AdminLayout] Redirecting to /onboarding (staff with no perms)");
         nav({ to: "/onboarding", replace: true });
-      } else if (pathname !== "/admin") {
-        console.log("[AdminLayout] Redirecting to /admin (root)");
-        nav({ to: "/admin", replace: true });
-      } else if (roles.length > 0) {
-        // Fallback for when they have a role but not an admin one
-        console.log("[AdminLayout] Redirecting to /dashboard fallback");
+      } else if (pathname === "/admin") {
+        // If we are at the root admin route and still don't have access,
+        // it means either the user is a reseller (handled above) or a staff with no dashboard perms.
         nav({ to: "/dashboard", replace: true });
+      } else {
+        // If they have access to /admin but not this specific sub-route,
+        // send them to the main admin dashboard instead of looping to /dashboard.
+        nav({ to: "/admin", replace: true });
       }
-      // If roles.length === 0, they might be in the middle of a fetch
     }
   }, [loading, canEnter, canViewRoute, roles, permissions, pathname, nav]);
 
