@@ -88,13 +88,14 @@ export function PublicHeader({
   const logoUrl = logoUrlProp ?? loadedBrand.logoUrl;
   const c = content ?? loadedContent ?? FALLBACK;
 
-  const navLinks = [
-    { href: "#about", label: "কীভাবে কাজ করি" },
+  const navLinks: Array<{ href?: string; to?: "/catalog"; label?: string }> = [
     { href: "#features", label: c.nav.features },
     { href: "#how", label: c.nav.how },
-    { href: "#faq", label: c.nav.faq || "FAQ" },
     { href: "#pricing", label: c.nav.pricing },
+    { to: "/catalog" as const, label: "প্রোডাক্টস" },
+    { href: "#faq", label: c.nav.faq || "FAQ" },
   ];
+
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/60 bg-background/85 backdrop-blur-xl">
@@ -104,15 +105,19 @@ export function PublicHeader({
         </Link>
 
         <nav className="hidden items-center gap-7 text-base font-semibold text-muted-foreground lg:flex">
-          {navLinks.map((l) => (
-            <a key={l.href} href={l.href} className="transition-colors hover:text-primary">
-              {l.label}
-            </a>
-          ))}
-          <Link to="/catalog" search={{}} className="font-bold text-primary hover:opacity-80">
-            প্রোডাক্টস
-          </Link>
+          {navLinks.map((l) =>
+            l.to ? (
+              <Link key={l.to} to={l.to} search={{}} className="font-bold text-primary hover:opacity-80">
+                {l.label}
+              </Link>
+            ) : (
+              <a key={l.href} href={l.href} className="transition-colors hover:text-primary">
+                {l.label}
+              </a>
+            ),
+          )}
         </nav>
+
 
         <div className="flex shrink-0 items-center gap-2">
           <Link
@@ -141,24 +146,29 @@ export function PublicHeader({
 
       {menu && (
         <nav className="border-t border-border/60 bg-background px-4 py-3 text-base lg:hidden">
-          {navLinks.map((l) => (
-            <a
-              key={l.href}
-              href={l.href}
-              onClick={() => setMenu(false)}
-              className="block rounded-lg px-3 py-2.5 font-semibold text-muted-foreground hover:bg-muted hover:text-foreground"
-            >
-              {l.label}
-            </a>
-          ))}
-          <Link
-            to="/catalog"
-            search={{}}
-            onClick={() => setMenu(false)}
-            className="block rounded-lg px-3 py-2.5 font-bold text-primary hover:bg-primary/10"
-          >
-            প্রোডাক্টস
-          </Link>
+          {navLinks.map((l) =>
+            l.to ? (
+              <Link
+                key={l.to}
+                to={l.to}
+                search={{}}
+                onClick={() => setMenu(false)}
+                className="block rounded-lg px-3 py-2.5 font-bold text-primary hover:bg-primary/10"
+              >
+                {l.label}
+              </Link>
+            ) : (
+              <a
+                key={l.href}
+                href={l.href}
+                onClick={() => setMenu(false)}
+                className="block rounded-lg px-3 py-2.5 font-semibold text-muted-foreground hover:bg-muted hover:text-foreground"
+              >
+                {l.label}
+              </a>
+            ),
+          )}
+
           <Link
             to="/login"
             onClick={() => setMenu(false)}
