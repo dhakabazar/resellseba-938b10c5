@@ -43,7 +43,7 @@ async function loadAccess(userId: string): Promise<{ roles: Role[]; permissions:
 function applySession(session: Session | null) {
   if (!session?.user) {
     authVersion++;
-    publish({ session: null, user: null, roles: [], loading: false });
+    publish({ session: null, user: null, roles: [], permissions: [], loading: false });
     return;
   }
 
@@ -66,11 +66,11 @@ function applySession(session: Session | null) {
 
   const version = ++authVersion;
 
-  publish({ session, user: session.user, roles: [], loading: true });
+  publish({ session, user: session.user, roles: [], permissions: [], loading: true });
 
-  void loadRoles(session.user.id).then((roles) => {
+  void loadAccess(session.user.id).then(({ roles, permissions }) => {
     if (version !== authVersion) return;
-    publish({ session, user: session.user, roles, loading: false });
+    publish({ session, user: session.user, roles, permissions, loading: false });
   });
 }
 
