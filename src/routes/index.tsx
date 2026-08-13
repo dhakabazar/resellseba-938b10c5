@@ -503,17 +503,8 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
 
       {/* ── How it works ────────────────────────────────── */}
       <section id="how" className="relative overflow-hidden border-t border-border/60">
-        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
-          <div className="mx-auto max-w-2xl text-center">
-            <div className="inline-flex items-center gap-1.5 rounded-full border border-accent/30 bg-accent/10 px-3 py-1 text-[11px] font-bold text-accent-foreground">
-              <ArrowRight className="h-3 w-3" /> Steps
-            </div>
-            <h2 className="mt-4 text-balance text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">{c.how.title}</h2>
-            {c.how.subtitle && (
-              <p className="mt-4 text-pretty text-sm leading-relaxed text-muted-foreground sm:text-base">{c.how.subtitle}</p>
-            )}
-          </div>
-          <div className="relative mt-14 grid gap-6 md:grid-cols-3">
+        <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
+          <div className="relative grid gap-6 md:grid-cols-3">
             {c.how.steps.map((s, i) => (
               <div key={i} className="surface-card surface-card-hover relative p-6 pt-8">
                 <div className="absolute -top-5 left-6 grid h-11 w-11 place-items-center rounded-xl bg-[image:var(--gradient-brand)] text-base font-black text-primary-foreground ring-4 ring-background">
