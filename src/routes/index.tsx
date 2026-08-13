@@ -14,8 +14,6 @@ import {
   Megaphone,
   Sparkles,
   Check,
-  Copy,
-  Download,
   ShoppingBag,
   Layers,
   Users,
@@ -35,7 +33,6 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 
-import { bdt } from "@/lib/finance-report";
 import { CountUp } from "@/components/count-up";
 import { PublicHeader, Brand } from "@/components/public-header";
 
