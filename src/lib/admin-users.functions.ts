@@ -29,13 +29,20 @@ export const listResellerEmailStatus = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<EmailStatus[]> => {
     await assertPermission(context.supabase, context.userId, "resellers.manage");
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    // Auth emails need the privileged key. If it is unavailable in this
+    // deployment, return an empty list instead of breaking the whole page.
     const users: any[] = [];
-    for (let page = 1; page <= 10; page++) {
-      const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 100 });
-      if (error) break;
-      users.push(...(data?.users ?? []));
-      if (!data?.users || data.users.length < 100) break;
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      for (let page = 1; page <= 10; page++) {
+        const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 100 });
+        if (error) break;
+        users.push(...(data?.users ?? []));
+        if (!data?.users || data.users.length < 100) break;
+      }
+    } catch (err) {
+      console.error("[resellers] email status unavailable", err);
+      return [];
     }
     return users.map((u) => ({
       user_id: u.id,
