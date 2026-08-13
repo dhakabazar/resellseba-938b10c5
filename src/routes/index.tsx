@@ -216,7 +216,7 @@ function Brand({ siteName, logoUrl, size = "md" }: { siteName: string; logoUrl: 
 function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string; logoUrl: string | null }) {
   const fetchStats = useServerFn(getPublicStats);
   const [stats, setStats] = useState<any>(null);
-  const [menu, setMenu] = useState(false);
+  
 
   useEffect(() => {
     fetchStats().then(setStats);
