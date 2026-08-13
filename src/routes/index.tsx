@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { getPublicStats } from "@/lib/landing.functions";
+import { bdt } from "@/lib/finance-report";
 import {
   ArrowRight,
   Boxes,
