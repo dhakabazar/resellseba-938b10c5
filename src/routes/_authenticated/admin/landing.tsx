@@ -107,6 +107,38 @@ function LandingEditor() {
         </F>
       </Section>
 
+      <Section title="Stats band (khali rakhle auto count dekhabe)">
+        <div className="space-y-3">
+          {(c.stats?.items ?? []).map((s, i) => (
+            <div key={i} className="rounded-lg border p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-muted-foreground">Stat #{i + 1}</span>
+                <button type="button" onClick={() => update((d) => { d.stats!.items.splice(i, 1); })} className="text-destructive hover:opacity-70"><Trash2 className="h-3.5 w-3.5" /></button>
+              </div>
+              <Grid>
+                <F label="Value"><I value={s.value} onChange={(v) => update((d) => { d.stats!.items[i].value = v; })} /></F>
+                <F label="Label"><I value={s.label} onChange={(v) => update((d) => { d.stats!.items[i].label = v; })} /></F>
+              </Grid>
+            </div>
+          ))}
+          {(c.stats?.items?.length ?? 0) < 4 && (
+            <button type="button" onClick={() => update((d) => { d.stats = { items: [...(d.stats?.items ?? []), { value: "10,000+", label: "প্রোডাক্ট" }] }; })} className="inline-flex items-center gap-1 rounded-md border px-3 py-1.5 text-xs hover:bg-muted">
+              <Plus className="h-3.5 w-3.5" /> Stat add
+            </button>
+          )}
+        </div>
+      </Section>
+
+      <Section title="About section">
+        <Grid>
+          <F label="Badge"><I value={c.about?.badge ?? ""} onChange={(v) => update((d) => { d.about = { badge: v, title: d.about?.title ?? "", body: d.about?.body ?? "", points: d.about?.points ?? [] }; })} /></F>
+          <F label="Title"><I value={c.about?.title ?? ""} onChange={(v) => update((d) => { d.about = { badge: d.about?.badge ?? "", title: v, body: d.about?.body ?? "", points: d.about?.points ?? [] }; })} /></F>
+        </Grid>
+        <F label="Body text"><T value={c.about?.body ?? ""} onChange={(v) => update((d) => { d.about = { badge: d.about?.badge ?? "", title: d.about?.title ?? "", body: v, points: d.about?.points ?? [] }; })} /></F>
+        <F label="Bullet points (comma separated)">
+          <I value={(c.about?.points ?? []).join(", ")} onChange={(v) => update((d) => { d.about = { badge: d.about?.badge ?? "", title: d.about?.title ?? "", body: d.about?.body ?? "", points: v.split(",").map(s => s.trim()).filter(Boolean) }; })} />
+        </F>
+      </Section>
 
       <Section title="Features section">
         <F label="Title"><I value={c.features.title} onChange={(v) => update((d) => { d.features.title = v; })} /></F>
