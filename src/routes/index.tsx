@@ -408,10 +408,10 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
               {/* Desktop connecting line */}
               <div className="pointer-events-none absolute top-10 left-0 right-0 hidden h-1 rounded-full flow-line lg:block" />
 
-              {/* Mobile connecting line */}
-              <div className="pointer-events-none absolute top-0 bottom-0 left-1/2 hidden w-1 -translate-x-1/2 rounded-full flow-line-vertical lg:hidden" />
+              {/* Mobile connecting line — runs through the centre of the icon bubbles */}
+              <div className="pointer-events-none absolute top-5 bottom-5 left-5 hidden w-1 rounded-full flow-line-vertical lg:hidden" />
 
-              <ol className="relative flex flex-col items-center gap-8 lg:flex-row lg:justify-between lg:gap-4">
+              <ol className="relative flex flex-col gap-6 lg:flex-row lg:justify-between lg:gap-4">
                 {(c.about?.flow ?? []).map((f, i) => {
                   const Icon = ICON_MAP[f.icon] ?? Sparkles;
                   const stepLabel = ["০১", "০২", "০৩", "০৪", "০৫"][i] ?? String(i + 1).padStart(2, "0");
@@ -422,36 +422,28 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
                     "flow-icon-4",
                     "flow-icon-5",
                   ][i] ?? "flow-icon-1";
-                  const isLast = i === (c.about?.flow?.length ?? 0) - 1;
 
                   return (
                     <li
                       key={i}
-                      className="group relative z-10 flex w-full max-w-[280px] flex-col items-center sm:max-w-xs lg:w-[18%] lg:max-w-[240px]"
+                      className="group relative z-10 flex w-full items-start gap-3 lg:w-[18%] lg:max-w-[240px] lg:flex-col lg:items-center lg:gap-0"
                       style={{ animationDelay: `${(i + 1) * 100}ms` }}
                     >
-                      {/* Icon bubble */}
+                      {/* Icon bubble — smaller on mobile, stacked above on desktop */}
                       <div
-                        className={`grid h-16 w-16 shrink-0 place-items-center rounded-2xl shadow-lg shadow-primary/10 transition-transform duration-300 group-hover:-translate-y-2 sm:h-20 sm:w-20 ${iconClass}`}
+                        className={`grid h-10 w-10 shrink-0 place-items-center rounded-2xl shadow-lg shadow-primary/10 transition-transform duration-300 group-hover:scale-105 lg:h-20 lg:w-20 lg:group-hover:-translate-y-2 ${iconClass}`}
                       >
-                        <Icon className="h-7 w-7 sm:h-9 sm:w-9" />
+                        <Icon className="h-5 w-5 lg:h-9 lg:w-9" />
                       </div>
 
-                      {/* Card */}
-                      <div className="flow-card mt-6 w-full px-5 py-5 text-center transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-elegant">
+                      {/* Card — side-by-side with icon on mobile, below icon on desktop */}
+                      <div className="flow-card flex-1 px-4 py-4 text-left transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-elegant lg:mt-6 lg:w-full lg:px-5 lg:py-5 lg:text-center">
                         <span className={`mb-1 block text-[11px] font-bold uppercase tracking-wider`} style={{ color: `var(--flow-step-${i + 1})` }}>
                           ধাপ {stepLabel}
                         </span>
                         <h3 className="text-sm font-bold leading-tight sm:text-[15px]">{f.title}</h3>
                         <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{f.desc}</p>
                       </div>
-
-                      {/* Mobile arrow (not on last step) */}
-                      {!isLast && (
-                        <div className="mt-6 text-primary/40 lg:hidden">
-                          <ArrowRight className="h-5 w-5 rotate-90" />
-                        </div>
-                      )}
                     </li>
                   );
                 })}
