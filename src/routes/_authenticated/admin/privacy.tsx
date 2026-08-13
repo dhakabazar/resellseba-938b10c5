@@ -9,8 +9,7 @@ export const Route = createFileRoute("/_authenticated/admin/privacy")({
   component: PrivacyEditor,
 });
 
-const STARTER = `<h1>Privacy Policy</h1>
-<p>Your privacy is important to us. This policy explains how we collect, use, store, and protect your information when you use our reseller platform.</p>
+const STARTER = `<p>Your privacy is important to us. This policy explains how we collect, use, store, and protect your information when you use our reseller platform.</p>
 
 <h2>Information We Collect</h2>
 <ul>
