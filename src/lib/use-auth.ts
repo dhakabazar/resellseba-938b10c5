@@ -8,6 +8,7 @@ export interface AuthState {
   session: Session | null;
   user: User | null;
   roles: Role[];
+  permissions: string[];
   loading: boolean;
 }
 
@@ -19,6 +20,7 @@ let authState: AuthState = {
   session: null,
   user: null,
   roles: [],
+  permissions: [],
   loading: true,
 };
 
@@ -27,14 +29,15 @@ function publish(next: AuthState) {
   listeners.forEach((listener) => listener(authState));
 }
 
-async function loadRoles(userId: string): Promise<Role[]> {
-  const { data, error } = await supabase
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", userId);
+async function loadAccess(userId: string): Promise<{ roles: Role[]; permissions: string[] }> {
+  const [rolesRes, permsRes] = await Promise.all([
+    supabase.from("user_roles").select("role").eq("user_id", userId),
+    supabase.rpc("my_permissions"),
+  ]);
 
-  if (error) return [];
-  return (data ?? []).map((row) => row.role as Role);
+  const roles = rolesRes.error ? [] : (rolesRes.data ?? []).map((row: any) => row.role as Role);
+  const permissions = permsRes.error ? [] : ((permsRes.data as string[] | null) ?? []);
+  return { roles, permissions };
 }
 
 function applySession(session: Session | null) {
