@@ -193,6 +193,38 @@
   box-shadow: var(--shadow-elegant);
 }
 
+/* Global "live" animated button: pulse glow + continuous shine sweep */
+@utility btn-live {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  animation: live-pulse 2.6s ease-in-out infinite;
+}
+.btn-live::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(100deg, transparent 20%, rgb(255 255 255 / 0.35) 50%, transparent 80%);
+  transform: translateX(-120%);
+  animation: live-shine 3.2s ease-in-out infinite;
+}
+.btn-live:hover {
+  transform: translateY(-2px) scale(1.02);
+  animation-play-state: paused;
+}
+.btn-live:active {
+  transform: translateY(0) scale(0.98);
+}
+@media (prefers-reduced-motion: reduce) {
+  .btn-live,
+  .btn-live::after {
+    animation: none;
+  }
+}
+
+
 @utility input {
   width: 100%;
   border-radius: var(--radius-md);
