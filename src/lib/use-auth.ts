@@ -65,13 +65,24 @@ function applySession(session: Session | null) {
 
 
   const version = ++authVersion;
+  console.log(`[Auth] User ID ${session.user.id} detected, fetching roles and permissions (version ${version})...`);
 
   publish({ session, user: session.user, roles: [], permissions: [], loading: true });
 
-  void loadAccess(session.user.id).then(({ roles, permissions }) => {
-    if (version !== authVersion) return;
-    publish({ session, user: session.user, roles, permissions, loading: false });
-  });
+  void loadAccess(session.user.id)
+    .then(({ roles, permissions }) => {
+      if (version !== authVersion) {
+        console.log(`[Auth] version ${version} is stale, current is ${authVersion}. Ignoring.`);
+        return;
+      }
+      console.log(`[Auth] Roles/permissions loaded for ${session.user.id}:`, { roles, permissions });
+      publish({ session, user: session.user, roles, permissions, loading: false });
+    })
+    .catch((err) => {
+      if (version !== authVersion) return;
+      console.error(`[Auth] Failed to load access for ${session.user.id}:`, err);
+      publish({ session, user: session.user, roles: [], permissions: [], loading: false });
+    });
 }
 
 function initAuth() {
