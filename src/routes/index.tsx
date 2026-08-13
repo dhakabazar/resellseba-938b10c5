@@ -426,23 +426,8 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
 
       {/* ── Featured products ───────────────────────────── */}
       {stats?.products?.length > 0 && (
-        <section className="py-16 sm:py-24">
+        <section className="py-10 sm:py-14">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <div className="mb-10 flex flex-col justify-between gap-5 md:flex-row md:items-end">
-              <div className="max-w-xl">
-                <div className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[11px] font-bold text-primary">
-                  <Star className="h-3 w-3" /> Master Catalog Preview
-                </div>
-                <h2 className="text-3xl font-black tracking-tight sm:text-4xl">ট্রেন্ডি প্রোডাক্টস</h2>
-                <p className="mt-3 text-sm text-muted-foreground sm:text-base">
-                  হাই-প্রফিট প্রোডাক্ট, রেডি টু লিস্ট আপনার স্টোরে।
-                </p>
-              </div>
-              <Link to="/catalog" search={{}} className="group inline-flex items-center gap-2 text-sm font-bold text-primary hover:underline">
-                সব প্রোডাক্ট <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </Link>
-            </div>
-
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {stats.products.map((p: any) => (
                 <div key={p.id} className="group surface-card surface-card-hover flex flex-col overflow-hidden">
