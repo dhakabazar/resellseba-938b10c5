@@ -69,7 +69,7 @@ type FaqItem = { q: string; a: string };
 type HeroImage = { path: string; url: string; bytes: number } | null;
 type StatItem = { value: string; label: string };
 type LandingContent = {
-  nav: { features: string; how: string; pricing: string; signIn: string; cta: string; faq?: string };
+  nav: { features: string; how: string; categories?: string; products?: string; signIn: string; cta: string; faq?: string };
   hero: {
     badge: string; titleStart: string; titleHighlight: string; subtitle: string;
     ctaPrimary: string; ctaSecondary: string; badges: string[];
