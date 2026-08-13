@@ -25,7 +25,7 @@ import {
   ClipboardList,
   Send,
   PackageCheck,
-  PiggyBank,
+  Coins,
   BanknoteArrowDown,
   type LucideIcon,
 } from "lucide-react";
@@ -52,7 +52,7 @@ export const Route = createFileRoute("/")({
 
 const ICON_MAP: Record<string, LucideIcon> = {
   Boxes, Truck, Wallet, Megaphone, Globe, BarChart3, ShieldCheck, Sparkles,
-  ClipboardList, Send, PackageCheck, PiggyBank, BanknoteArrowDown, ShoppingBag, Users,
+  ClipboardList, Send, PackageCheck, Coins, BanknoteArrowDown, ShoppingBag, Users,
 };
 
 type Feature = { icon: string; title: string; desc: string };
@@ -88,8 +88,8 @@ const FALLBACK: LandingContent = {
     bannerImage: null,
   },
   about: {
-    badge: "আমরা কীভাবে কাজ করি",
-    title: "রিসেলার থেকে প্রফিট উইথড্র — পুরো জার্নি",
+    badge: "",
+    title: "",
     body:
       "আপনি শুধু সেল করবেন, বাকি সব আমরা। অর্ডার জেনারেট করা থেকে প্রফিট উইথড্র পর্যন্ত প্রতিটি ধাপ পরিষ্কার ও ট্র্যাকেবল।",
     points: [],
@@ -97,7 +97,7 @@ const FALLBACK: LandingContent = {
       { icon: "ClipboardList", title: "অর্ডার জেনারেট", desc: "রিসেলার নিজের স্টোর থেকে কাস্টমারের অর্ডার প্যানেলে তোলে।" },
       { icon: "Send", title: "অ্যাডমিনে পাঠানো", desc: "কনফার্ম অর্ডার এক ক্লিকে অ্যাডমিনের কাছে ফরওয়ার্ড হয়।" },
       { icon: "PackageCheck", title: "প্যাকিং ও কুরিয়ার", desc: "অ্যাডমিন প্রোডাক্ট প্যাক করে কুরিয়ারে বুক ও ডেলিভারি ফলোআপ করে।" },
-      { icon: "PiggyBank", title: "প্রফিট জমা", desc: "ডেলিভারি সফল হলে প্রফিট রিসেলার প্যানেলে অটো যোগ হয়।" },
+      { icon: "Coins", title: "প্রফিট জমা", desc: "ডেলিভারি সফল হলে প্রফিট রিসেলার প্যানেলে অটো যোগ হয়।" },
       { icon: "BanknoteArrowDown", title: "উইথড্র", desc: "bKash/Nagad/ব্যাংকে উইথড্র রিকোয়েস্ট — পেমেন্ট হিস্ট্রি সহ।" },
     ],
   },
@@ -367,11 +367,6 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
           <div className="pointer-events-none absolute inset-0 bg-[image:var(--gradient-brand)] opacity-[0.06]" />
           <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
             <div className="mx-auto max-w-2xl text-center">
-              {c.about?.badge && (
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
-                  <Sparkles className="h-3 w-3" /> {c.about.badge}
-                </span>
-              )}
               {c.about?.title && (
                 <h2 className="mt-3 text-xl font-extrabold leading-snug sm:text-3xl">{c.about.title}</h2>
               )}

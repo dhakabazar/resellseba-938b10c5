@@ -34,7 +34,7 @@ type LandingContent = {
   footer: { tagline: string };
 };
 
-const ICONS = ["Boxes", "Truck", "Wallet", "Megaphone", "Globe", "BarChart3", "ShieldCheck", "Sparkles", "ClipboardList", "Send", "PackageCheck", "PiggyBank", "BanknoteArrowDown", "ShoppingBag", "Users"];
+const ICONS = ["Boxes", "Truck", "Wallet", "Megaphone", "Globe", "BarChart3", "ShieldCheck", "Sparkles", "ClipboardList", "Send", "PackageCheck", "Coins", "BanknoteArrowDown", "ShoppingBag", "Users"];
 
 
 function LandingEditor() {
