@@ -510,11 +510,13 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
               return (
                 <div key={i} className="surface-card surface-card-hover group relative overflow-hidden p-6">
                   <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-primary/20 opacity-0 blur-2xl transition-opacity group-hover:opacity-100" />
-                  <div className="relative mb-4 grid h-12 w-12 place-items-center rounded-xl bg-[image:var(--gradient-brand)] text-primary-foreground">
-                    <Icon className="h-5 w-5" />
+                  <div className="relative flex items-center gap-3">
+                    <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[image:var(--gradient-brand)] text-primary-foreground">
+                      <Icon className="h-5 w-5" />
+                    </span>
+                    <h3 className="min-w-0 flex-1 truncate text-base font-bold sm:text-lg">{f.title}</h3>
                   </div>
-                  <h3 className="relative text-base font-bold sm:text-lg">{f.title}</h3>
-                  <p className="relative mt-2 text-sm leading-relaxed text-muted-foreground">{f.desc}</p>
+                  <p className="relative mt-3 text-sm leading-relaxed text-muted-foreground">{f.desc}</p>
                 </div>
               );
             })}
