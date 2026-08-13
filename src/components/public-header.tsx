@@ -6,7 +6,8 @@ import { ArrowRight, Menu, X } from "lucide-react";
 type NavContent = {
   features?: string;
   how?: string;
-  pricing?: string;
+  categories?: string;
+  products?: string;
   signIn?: string;
   cta?: string;
   faq?: string;
@@ -20,7 +21,8 @@ const FALLBACK: PublicHeaderContent = {
   nav: {
     features: "ফিচার",
     how: "কীভাবে কাজ করে",
-    pricing: "প্রাইসিং",
+    categories: "ক্যাটাগরি",
+    products: "প্রোডাক্ট",
     faq: "FAQ",
     signIn: "সাইন ইন",
     cta: "শুরু করুন",
