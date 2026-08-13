@@ -40,18 +40,20 @@ export const saveRole = createServerFn({ method: "POST" })
   .inputValidator((d) => saveRoleInput.parse(d))
   .handler(async ({ data, context }) => {
     await assertPermission(context.supabase, context.userId, "staff.manage");
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    // RLS lets staff.manage holders manage roles, so no service-role key needed
+    // (it is not available in every deployment environment).
+    const db = context.supabase;
 
     let roleId = data.id;
 
     if (roleId) {
-      const { error } = await supabaseAdmin
+      const { error } = await db
         .from("roles")
         .update({ name: data.name, description: data.description })
         .eq("id", roleId);
       if (error) throw new Response(error.message, { status: 400 });
     } else {
-      const { data: newRole, error } = await supabaseAdmin
+      const { data: newRole, error } = await db
         .from("roles")
         .insert({ name: data.name, description: data.description })
         .select("id")
@@ -61,9 +63,9 @@ export const saveRole = createServerFn({ method: "POST" })
     }
 
     // Sync permissions
-    await supabaseAdmin.from("role_permissions").delete().eq("role_id", roleId);
+    await db.from("role_permissions").delete().eq("role_id", roleId);
     if (data.permissionIds.length > 0) {
-      const { error: permError } = await supabaseAdmin
+      const { error: permError } = await db
         .from("role_permissions")
         .insert(data.permissionIds.map(pid => ({ role_id: roleId, permission_id: pid })));
       if (permError) throw new Response(permError.message, { status: 400 });
