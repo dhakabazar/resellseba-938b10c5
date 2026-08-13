@@ -1,5 +1,5 @@
 # Reseller Platform – Full Build Plan
-
+#
 Ekta multi-tenant reseller e-commerce platform banabo. Super Admin (SA) product/brand/category own korbe, resellers nijeder store e listing korbe with own pricing, own domain, own branding — customer ke SA er kono info dekha jabe na.
 
 Big scope, tai ami phase-wise build korbo. Nicher plan e full scope + flow + phases sob thakbe.
