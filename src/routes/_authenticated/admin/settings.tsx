@@ -25,7 +25,6 @@ function SettingsPage() {
   const [favicon, setFavicon] = useState<UploadedImage[]>([]);
   const [og, setOg] = useState<UploadedImage[]>([]);
   const [labelSize, setLabelSize] = useState("3x4");
-  const [frozenAmount, setFrozenAmount] = useState("0");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
 

@@ -1052,7 +1052,7 @@ function OrdersPage() {
                     disabled={loading}
                     onClick={async () => {
                       if (s === "confirmed" && deposit.blocked) {
-                        toast.error(`সিকিউরিটি ডিপোজিট বাকি — ${bdt(deposit.due)}। ডিপোজিট জমা না দিলে অর্ডার কনফার্ম করা যাবে না।`);
+                        toast.error(fillText(depositTexts.orderBlockToast, { due: deposit.due, required: deposit.requiredAmount, balance: deposit.balance, frozen: deposit.frozenAmount }));
                         return;
                       }
                       if (statusModal.isBulk) {
@@ -1183,7 +1183,7 @@ function OrderDrawer({
 
   async function setStatus(next: "confirmed" | "cancelled") {
     if (next === "confirmed" && depositBlocked) {
-      toast.error(`সিকিউরিটি ডিপোজিট বাকি — ${bdt(depositDue ?? 0)}। ডিপোজিট জমা না দিলে অর্ডার কনফার্ম করা যাবে না।`);
+      toast.error(fillText(depositBlockText, { due: depositDue ?? 0 }));
       return;
     }
     setBusy(true);
