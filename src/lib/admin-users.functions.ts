@@ -56,3 +56,53 @@ export const deleteAuthUser = createServerFn({ method: "POST" })
   });
 
 
+export type StaffUser = {
+  id: string;
+  email: string | null;
+  full_name: string | null;
+  role: string;
+  custom_role_id: string | null;
+  custom_role_name: string | null;
+  created_at: string | null;
+};
+
+/** Lists only admin/staff accounts (never resellers) with their assigned custom role. */
+export const listStaffUsers = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<StaffUser[]> => {
+    await assertAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: roleRows, error: roleErr } = await supabaseAdmin
+      .from("user_roles")
+      .select("user_id, role, custom_role_id, roles:custom_role_id (name)")
+      .in("role", ["super_admin", "staff"]);
+    if (roleErr) throw new Response(roleErr.message, { status: 400 });
+
+    const ids = (roleRows ?? []).map((r: any) => r.user_id);
+    if (ids.length === 0) return [];
+
+    const { data: profiles } = await supabaseAdmin
+      .from("profiles")
+      .select("id, full_name, created_at")
+      .in("id", ids);
+
+    const emails: Record<string, string | null> = {};
+    for (let page = 1; page <= 10; page++) {
+      const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 100 });
+      if (error) break;
+      for (const u of data?.users ?? []) emails[u.id] = u.email ?? null;
+      if (!data?.users || data.users.length < 100) break;
+    }
+
+    const profileMap: Record<string, any> = Object.fromEntries((profiles ?? []).map((p: any) => [p.id, p]));
+    return (roleRows ?? []).map((r: any) => ({
+      id: r.user_id,
+      email: emails[r.user_id] ?? null,
+      full_name: profileMap[r.user_id]?.full_name ?? null,
+      role: r.role,
+      custom_role_id: r.custom_role_id ?? null,
+      custom_role_name: r.roles?.name ?? null,
+      created_at: profileMap[r.user_id]?.created_at ?? null,
+    }));
+  });
