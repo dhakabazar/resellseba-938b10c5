@@ -18,7 +18,7 @@ import {
   Download,
   ShoppingBag,
   Layers,
-  Star,
+  
   Menu,
   X,
   Users,
@@ -356,16 +356,9 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
 
       {/* ── About ───────────────────────────────────────── */}
       {(c.about?.title || c.about?.body) && (
-        <section id="about" className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
+        <section id="about" className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
           <div className="grid items-center gap-10 lg:grid-cols-2">
             <div>
-              {c.about.badge && (
-                <div className="inline-flex items-center gap-1.5 rounded-full border border-accent/30 bg-accent/10 px-3 py-1 text-[11px] font-bold text-accent-foreground">
-                  <Star className="h-3 w-3" /> {c.about.badge}
-                </div>
-              )}
-              <h2 className="mt-4 text-balance text-3xl font-black tracking-tight sm:text-4xl">{c.about.title}</h2>
-              <p className="mt-4 text-pretty text-sm leading-relaxed text-muted-foreground sm:text-base">{c.about.body}</p>
               {(c.about.points?.length ?? 0) > 0 && (
                 <ul className="mt-6 grid gap-3 sm:grid-cols-2">
                   {c.about.points.map((p) => (
@@ -406,12 +399,8 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
 
       {/* ── Categories ──────────────────────────────────── */}
       {stats?.categories?.length > 0 && (
-        <section className="border-y border-border/60 bg-muted/30 py-16 sm:py-20">
+        <section className="border-y border-border/60 bg-muted/30 py-10 sm:py-14">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <div className="mb-10 text-center">
-              <h2 className="text-3xl font-black tracking-tight sm:text-4xl">ক্যাটেগরি সমূহ</h2>
-              <p className="mt-3 text-sm text-muted-foreground sm:text-base">নিজের পছন্দের নিশ বেছে নিন</p>
-            </div>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-6">
               {stats.categories.map((cat: any) => (
                 <Link
@@ -437,23 +426,8 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
 
       {/* ── Featured products ───────────────────────────── */}
       {stats?.products?.length > 0 && (
-        <section className="py-16 sm:py-24">
+        <section className="py-10 sm:py-14">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <div className="mb-10 flex flex-col justify-between gap-5 md:flex-row md:items-end">
-              <div className="max-w-xl">
-                <div className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[11px] font-bold text-primary">
-                  <Star className="h-3 w-3" /> Master Catalog Preview
-                </div>
-                <h2 className="text-3xl font-black tracking-tight sm:text-4xl">ট্রেন্ডি প্রোডাক্টস</h2>
-                <p className="mt-3 text-sm text-muted-foreground sm:text-base">
-                  হাই-প্রফিট প্রোডাক্ট, রেডি টু লিস্ট আপনার স্টোরে।
-                </p>
-              </div>
-              <Link to="/catalog" search={{}} className="group inline-flex items-center gap-2 text-sm font-bold text-primary hover:underline">
-                সব প্রোডাক্ট <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </Link>
-            </div>
-
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {stats.products.map((p: any) => (
                 <div key={p.id} className="group surface-card surface-card-hover flex flex-col overflow-hidden">
@@ -508,17 +482,8 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
 
       {/* ── Features ────────────────────────────────────── */}
       <section id="features" className="border-t border-border/60 bg-muted/30">
-        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
-          <div className="mx-auto max-w-2xl text-center">
-            <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[11px] font-bold text-primary">
-              <Sparkles className="h-3 w-3" /> Features
-            </div>
-            <h2 className="mt-4 text-balance text-2xl font-black tracking-tight sm:text-3xl">{c.features.title}</h2>
-            {c.features.subtitle && (
-              <p className="mt-3 text-pretty text-xs leading-relaxed text-muted-foreground sm:text-sm">{c.features.subtitle}</p>
-            )}
-          </div>
-          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {c.features.items.map((f, i) => {
               const Icon = ICON_MAP[f.icon] ?? Sparkles;
               return (
@@ -538,17 +503,8 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
 
       {/* ── How it works ────────────────────────────────── */}
       <section id="how" className="relative overflow-hidden border-t border-border/60">
-        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
-          <div className="mx-auto max-w-2xl text-center">
-            <div className="inline-flex items-center gap-1.5 rounded-full border border-accent/30 bg-accent/10 px-3 py-1 text-[11px] font-bold text-accent-foreground">
-              <ArrowRight className="h-3 w-3" /> Steps
-            </div>
-            <h2 className="mt-4 text-balance text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">{c.how.title}</h2>
-            {c.how.subtitle && (
-              <p className="mt-4 text-pretty text-sm leading-relaxed text-muted-foreground sm:text-base">{c.how.subtitle}</p>
-            )}
-          </div>
-          <div className="relative mt-14 grid gap-6 md:grid-cols-3">
+        <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
+          <div className="relative grid gap-6 md:grid-cols-3">
             {c.how.steps.map((s, i) => (
               <div key={i} className="surface-card surface-card-hover relative p-6 pt-8">
                 <div className="absolute -top-5 left-6 grid h-11 w-11 place-items-center rounded-xl bg-[image:var(--gradient-brand)] text-base font-black text-primary-foreground ring-4 ring-background">
@@ -564,22 +520,9 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
 
       {/* ── CTA ─────────────────────────────────────────── */}
       <section id="pricing" className="px-4 pb-16 sm:px-6 sm:pb-24">
-        <div className="relative mx-auto max-w-6xl overflow-hidden rounded-3xl bg-[image:var(--gradient-brand)] px-6 py-16 text-center sm:px-12 sm:py-20">
+        <div className="relative mx-auto max-w-6xl overflow-hidden rounded-3xl bg-[image:var(--gradient-brand)] px-6 py-12 text-center sm:px-12 sm:py-16">
           <div className="pointer-events-none absolute -top-24 left-1/2 h-72 w-[36rem] -translate-x-1/2 rounded-full bg-primary-foreground/10 blur-3xl" />
-          {c.cta.badge && (
-            <div className="relative mx-auto inline-flex items-center gap-2 rounded-full border border-primary-foreground/25 bg-primary-foreground/10 px-4 py-1.5 text-[11px] font-bold text-primary-foreground sm:text-xs">
-              <Sparkles className="h-3 w-3" /> {c.cta.badge}
-            </div>
-          )}
-          <h2 className="relative mt-5 text-balance text-3xl font-black tracking-tight text-primary-foreground sm:text-4xl lg:text-5xl">
-            {c.cta.title}
-          </h2>
-          {c.cta.subtitle && (
-            <p className="relative mx-auto mt-5 max-w-xl text-pretty text-sm leading-relaxed text-primary-foreground/85 sm:text-base">
-              {c.cta.subtitle}
-            </p>
-          )}
-          <div className="relative mt-8 flex flex-wrap justify-center gap-3">
+          <div className="relative flex flex-wrap justify-center gap-3">
             <Link
               to="/login"
               search={{ mode: "signup" }}
