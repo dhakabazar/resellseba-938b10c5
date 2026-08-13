@@ -18,7 +18,7 @@ import {
   Download,
   ShoppingBag,
   Layers,
-  Star,
+  
   Menu,
   X,
   Users,
