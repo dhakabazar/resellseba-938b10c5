@@ -129,7 +129,7 @@ export function PublicHeader({
           <Link
             to="/login"
             search={{ mode: "signup" }}
-            className="btn-brand inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-bold"
+            className="btn-brand btn-live inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-bold"
           >
             {c.nav.cta} <ArrowRight className="h-3.5 w-3.5" />
           </Link>
