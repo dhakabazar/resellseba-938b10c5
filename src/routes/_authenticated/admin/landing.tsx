@@ -79,6 +79,7 @@ function LandingEditor() {
           <F label="Features"><I value={c.nav.features} onChange={(v) => update((d) => { d.nav.features = v; })} /></F>
           <F label="How it works"><I value={c.nav.how} onChange={(v) => update((d) => { d.nav.how = v; })} /></F>
           <F label="Pricing"><I value={c.nav.pricing} onChange={(v) => update((d) => { d.nav.pricing = v; })} /></F>
+          <F label="FAQ"><I value={c.nav.faq ?? ""} onChange={(v) => update((d) => { d.nav.faq = v; })} /></F>
           <F label="Sign in"><I value={c.nav.signIn} onChange={(v) => update((d) => { d.nav.signIn = v; })} /></F>
           <F label="CTA button"><I value={c.nav.cta} onChange={(v) => update((d) => { d.nav.cta = v; })} /></F>
         </Grid>
