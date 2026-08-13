@@ -109,7 +109,11 @@ function initAuth() {
       return;
     }
 
-    applySession(session);
+    // NEVER await supabase calls inside this callback: the auth client holds an
+    // internal lock while it runs, so any query issued here deadlocks and the
+    // panel stays on a loading spinner forever (exactly what happens right
+    // after sign-in). Defer the role/permission lookup to a fresh task.
+    setTimeout(() => applySession(session), 0);
   });
 }
 
