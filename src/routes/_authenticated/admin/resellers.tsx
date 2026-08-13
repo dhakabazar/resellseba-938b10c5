@@ -25,6 +25,7 @@ import {
   Plus,
 } from "lucide-react";
 import { toast } from "sonner";
+import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
 import { useServerFn } from "@tanstack/react-start";
 import { confirmUserEmail, listResellerEmailStatus, deleteAuthUser } from "@/lib/admin-users.functions";
 import {
@@ -748,6 +749,7 @@ function DepositModal({
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [deleteRow, setDeleteRow] = useState<DepositRow | null>(null);
 
   const balance = rows.reduce((n, r) => n + Number(r.amount), 0);
   const due = required ? Math.max(Number(requiredAmount || 0) - balance, 0) : 0;
@@ -970,12 +972,13 @@ function DepositModal({
 
           {deleteRow && (
             <ConfirmModal
-              open
-              tone="danger"
+              isOpen
+              variant="danger"
               title="ডিপোজিট এন্ট্রি ডিলিট?"
               description={`৳${Number(deleteRow.amount).toLocaleString()} (${deleteRow.method ?? "—"}) এন্ট্রিটি ডিলিট হলে reseller-এর ডিপোজিট ব্যালান্স কমে যাবে এবং ডিপোজিট বাকি থাকলে order confirm ব্লক হয়ে যাবে।`}
-              confirmLabel="ডিলিট করুন"
-              onCancel={() => setDeleteRow(null)}
+              confirmText="ডিলিট করুন"
+              cancelText="বাতিল"
+              onClose={() => setDeleteRow(null)}
               onConfirm={async () => {
                 const row = deleteRow;
                 setDeleteRow(null);
