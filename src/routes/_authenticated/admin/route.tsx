@@ -118,12 +118,13 @@ function filterNav(nav: NavEntry[], permissions: string[], isSuperAdmin: boolean
   if (isSuperAdmin) return nav;
   const out: NavEntry[] = [];
   for (const entry of nav) {
-    if (entry.items) {
-      const items = entry.items.filter((i) => allowed(i.to, permissions, isSuperAdmin));
-      if (items.length > 0) out.push({ ...entry, items });
+    const group = entry as { items?: { to?: string }[] };
+    if (group.items) {
+      const items = group.items.filter((i) => allowed(i.to, permissions, isSuperAdmin));
+      if (items.length > 0) out.push({ ...(entry as any), items } as NavEntry);
       continue;
     }
-    if (allowed(entry.to, permissions, isSuperAdmin)) out.push(entry);
+    if (allowed((entry as { to?: string }).to, permissions, isSuperAdmin)) out.push(entry);
   }
   return out;
 }
