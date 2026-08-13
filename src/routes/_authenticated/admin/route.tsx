@@ -153,16 +153,15 @@ function AdminLayout() {
     if (!canEnter || !canViewRoute) {
       if (roles.includes("reseller") || roles.includes("leader")) {
         nav({ to: "/reseller", replace: true });
+      } else if (isStaff && permissions.length === 0) {
+        nav({ to: "/onboarding", replace: true });
       } else if (pathname !== "/admin") {
-        // If they can't view a specific sub-route, try sending them to the admin dashboard first
         nav({ to: "/admin", replace: true });
       } else {
-        // If they can't even view the main admin dashboard, send to the root dashboard router
-        // which will now correctly send them to /onboarding if permissions are missing.
         nav({ to: "/dashboard", replace: true });
       }
     }
-  }, [loading, canEnter, canViewRoute, nav]);
+  }, [loading, canEnter, canViewRoute, roles, permissions, pathname, nav]);
 
   useEffect(() => {
     supabase

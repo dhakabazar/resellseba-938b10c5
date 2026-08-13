@@ -14,12 +14,27 @@ function DashboardRouter() {
 
   useEffect(() => {
     if (loading || !user || done.current) return;
-    done.current = true;
-    if (roles.includes("super_admin") || (roles.includes("staff") && permissions.length > 0)) nav({ to: "/admin", replace: true });
-    else if (roles.includes("reseller") || roles.includes("leader"))
+    
+    const isSuperAdmin = roles.includes("super_admin");
+    const isStaff = roles.includes("staff");
+    const isReseller = roles.includes("reseller") || roles.includes("leader");
+
+    if (isSuperAdmin || (isStaff && permissions.length > 0)) {
+      done.current = true;
+      nav({ to: "/admin", replace: true });
+    } else if (isReseller) {
+      done.current = true;
       nav({ to: "/reseller", replace: true });
-    else nav({ to: "/onboarding", replace: true });
-  }, [roles, loading, user, nav]);
+    } else if (isStaff && permissions.length === 0) {
+      // Staff but no permissions yet - wait or go to onboarding? 
+      // Usually staff are managed by admin, but if they are stuck, onboarding is a safe fallback.
+      done.current = true;
+      nav({ to: "/onboarding", replace: true });
+    } else {
+      done.current = true;
+      nav({ to: "/onboarding", replace: true });
+    }
+  }, [roles, permissions, loading, user, nav]);
 
   return (
     <div className="grid min-h-screen place-items-center">

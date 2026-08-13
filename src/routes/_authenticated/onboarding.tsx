@@ -44,11 +44,12 @@ function Onboarding() {
 
   useEffect(() => {
     if (loading) return;
-    if (roles.includes("super_admin") || (roles.includes("staff") && permissions.length > 0)) {
+    const isSuperAdmin = roles.includes("super_admin");
+    const isStaff = roles.includes("staff");
+    
+    if (isSuperAdmin || (isStaff && permissions.length > 0)) {
       nav({ to: "/admin", replace: true });
-    }
-    // Reseller panel only opens after admin approval (status = active)
-    else if (status === "active" && (roles.includes("reseller") || roles.includes("leader"))) {
+    } else if (status === "active" && (roles.includes("reseller") || roles.includes("leader"))) {
       nav({ to: "/reseller", replace: true });
     }
   }, [loading, roles, permissions, status, nav]);
