@@ -1,17 +1,26 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowRight, Copy, Download } from "lucide-react";
+import { Copy, Download } from "lucide-react";
 import { toast } from "sonner";
+import { PublicHeaderContent } from "@/components/public-header";
 
 export type CatalogBrand = {
   siteName: string;
   logoUrl: string | null;
   banner: string | null;
   tagline: string;
+  landingContent?: PublicHeaderContent | null;
 };
 
-const Ctx = createContext<CatalogBrand>({ siteName: "Catalog", logoUrl: null, banner: null, tagline: "" });
+const Ctx = createContext<CatalogBrand>({
+  siteName: "Catalog",
+  logoUrl: null,
+  banner: null,
+  tagline: "",
+  landingContent: null,
+});
+
 export const useCatalogBrand = () => useContext(Ctx);
 export const CatalogBrandProvider = Ctx.Provider;
 
@@ -21,6 +30,7 @@ export function useLoadCatalogBrand() {
     logoUrl: null,
     banner: null,
     tagline: "",
+    landingContent: null,
   });
   useEffect(() => {
     (async () => {
@@ -36,49 +46,11 @@ export function useLoadCatalogBrand() {
         logoUrl: (data as Record<string, any>).logo_url ?? null,
         banner: lc?.hero?.bannerImage?.url ?? null,
         tagline: lc?.footer?.tagline ?? "",
+        landingContent: lc ?? null,
       });
     })();
   }, []);
   return brand;
-}
-
-export function CatalogHeader() {
-  const { siteName, logoUrl } = useCatalogBrand();
-  return (
-    <header className="sticky top-0 z-40 border-b border-border/60 bg-background/85 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
-        <Link to="/" className="flex min-w-0 items-center gap-2" aria-label={siteName}>
-          {logoUrl ? (
-            <img src={logoUrl} alt={siteName} className="h-10 max-w-36 shrink-0 object-contain sm:h-12" />
-          ) : (
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-primary text-base font-bold text-primary-foreground">
-              {siteName.charAt(0).toUpperCase()}
-            </span>
-          )}
-          <span className="hidden truncate text-sm font-bold sm:inline">{siteName}</span>
-        </Link>
-        <nav className="flex items-center gap-1 text-sm sm:gap-4">
-          <Link to="/" className="rounded-md px-2 py-1.5 text-muted-foreground hover:text-foreground">
-            Home
-          </Link>
-          <Link
-            to="/catalog"
-            className="rounded-md px-2 py-1.5 font-semibold text-primary"
-            activeProps={{ className: "rounded-md px-2 py-1.5 font-semibold text-primary" }}
-          >
-            Catalog
-          </Link>
-          <Link
-            to="/login"
-            search={{ mode: "signup" }}
-            className="btn-brand inline-flex items-center gap-1 rounded-md px-3 py-2 text-xs font-semibold sm:text-sm"
-          >
-            Reseller হোন <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
-        </nav>
-      </div>
-    </header>
-  );
 }
 
 export function CatalogFooter() {
