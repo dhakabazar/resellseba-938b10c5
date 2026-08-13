@@ -570,6 +570,35 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
         </div>
       </section>
 
+      {/* ── FAQ ─────────────────────────────────────────── */}
+      {c.faq && c.faq.items.length > 0 && (
+        <section id="faq" className="border-t border-border/60 bg-muted/30">
+          <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
+            <div className="mx-auto max-w-2xl text-center">
+              {c.faq.title && <h2 className="text-xl font-extrabold sm:text-3xl">{c.faq.title}</h2>}
+              {c.faq.subtitle && <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{c.faq.subtitle}</p>}
+            </div>
+            <div className="mt-8">
+              <Accordion type="single" collapsible className="w-full">
+                {c.faq.items.map((item, i) => (
+                  <AccordionItem key={i} value={`item-${i}`}>
+                    <AccordionTrigger className="text-sm font-semibold sm:text-base">
+                      <span className="flex items-center gap-2 text-left">
+                        <HelpCircle className="h-4 w-4 shrink-0 text-primary" />
+                        {item.q}
+                      </span>
+                    </AccordionTrigger>
+                    <AccordionContent className="text-sm leading-relaxed text-muted-foreground">
+                      {item.a}
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* ── CTA ─────────────────────────────────────────── */}
       <section id="pricing" className="px-4 pb-16 sm:px-6 sm:pb-24">
         <div className="relative mx-auto max-w-6xl overflow-hidden rounded-3xl bg-[image:var(--gradient-brand)] px-6 py-12 text-center sm:px-12 sm:py-16">
