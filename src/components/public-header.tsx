@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowRight, Menu, X } from "lucide-react";
+import { ArrowRight, Home, Menu, X } from "lucide-react";
 
 type NavContent = {
   features?: string;
