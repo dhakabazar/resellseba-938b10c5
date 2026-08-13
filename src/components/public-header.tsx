@@ -96,9 +96,10 @@ export function PublicHeader({
         { href: "#features", label: c.nav.features },
         { href: "#about", label: c.nav.how },
         { href: "#categories", label: c.nav.categories || "ক্যাটাগরি" },
-        { to: "/catalog", label: "ক্যাটালগ" },
+        { to: "/catalog", label: "প্রোডাক্টস" },
         { href: "#faq", label: c.nav.faq || "FAQ" },
       ];
+
 
 
 

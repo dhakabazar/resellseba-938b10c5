@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { getPublicStats } from "@/lib/landing.functions";
+import { bdt } from "@/lib/finance-report";
 import {
   ArrowRight,
   Boxes,
@@ -492,9 +493,56 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
         </section>
       )}
 
-
+      {/* ── Products ────────────────────────────────────── */}
+      {stats?.products && stats.products.length > 0 && (
+        <section id="products" className="border-y border-border/60 bg-muted/30 py-10 sm:py-14">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6">
+            <div className="mx-auto max-w-2xl text-center">
+              <h2 className="text-xl font-extrabold sm:text-3xl">ফিচার্ড প্রোডাক্টস</h2>
+              <p className="mt-2 text-sm text-muted-foreground">এই মাসের সেরা ও সবচেয়ে বেশি সেল হওয়া প্রোডাক্টস</p>
+            </div>
+            <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+              {stats.products.map((p: any) => (
+                <div key={p.id} className="group surface-card surface-card-hover flex flex-col overflow-hidden">
+                  <div className="relative aspect-square overflow-hidden bg-primary/5">
+                    {p.main_image ? (
+                      <img
+                        src={p.main_image}
+                        alt={p.name}
+                        loading="lazy"
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
+                    ) : (
+                      <div className="grid h-full w-full place-items-center text-2xl font-black text-primary">
+                        {p.name.charAt(0)}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex flex-1 flex-col p-3">
+                    <h3 className="line-clamp-2 text-sm font-bold leading-tight">{p.name}</h3>
+                    <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{p.description}</p>
+                    <div className="mt-auto pt-3">
+                      <span className="text-sm font-black text-primary">{bdt(p.price)}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-8 flex justify-center">
+              <Link
+                to="/catalog"
+                search={{}}
+                className="btn-live inline-flex items-center gap-2 rounded-xl border border-border bg-card px-6 py-2.5 text-sm font-bold hover:border-primary/50 hover:text-primary"
+              >
+                <ShoppingBag className="h-4 w-4" /> সব প্রোডাক্টস দেখুন
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ── FAQ ─────────────────────────────────────────── */}
+
       {c.faq && c.faq.items.length > 0 && (
         <section id="faq" className="border-t border-border/60 bg-muted/30">
           <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
