@@ -163,6 +163,7 @@ function OrdersPage() {
   const [page, setPage] = useState(1);
   const [statusModal, setStatusModal] = useState<{ open: boolean; orderId: string; currentStatus: string; isBulk?: boolean } | null>(null);
   const { status: deposit } = useDepositStatus(resellerId);
+  const { texts: depositTexts } = useDepositSettings();
   const [confirmModal, setConfirmModal] = useState<{
     open: boolean;
     title: string;
