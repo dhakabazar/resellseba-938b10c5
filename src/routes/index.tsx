@@ -18,9 +18,6 @@ import {
   Download,
   ShoppingBag,
   Layers,
-  
-  Menu,
-  X,
   Users,
   ClipboardList,
   Send,
@@ -40,6 +37,7 @@ import {
 
 import { bdt } from "@/lib/finance-report";
 import { CountUp } from "@/components/count-up";
+import { PublicHeader, Brand } from "@/components/public-header";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -205,20 +203,11 @@ function RootResolver() {
   return <Landing c={content} siteName={siteName} logoUrl={logoUrl} />;
 }
 
-function Brand({ siteName, logoUrl, size = "md" }: { siteName: string; logoUrl: string | null; size?: "md" | "sm" }) {
-  const h = size === "md" ? "h-11 sm:h-13" : "h-9";
-  if (logoUrl) return <img src={logoUrl} alt={siteName} className={`${h} max-w-40 shrink-0 object-contain`} />;
-  return (
-    <span className={`grid ${size === "md" ? "h-11 w-11" : "h-9 w-9"} shrink-0 place-items-center rounded-xl bg-[image:var(--gradient-brand)] text-lg font-black text-primary-foreground`}>
-      {siteName.charAt(0).toUpperCase()}
-    </span>
-  );
-}
 
 function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string; logoUrl: string | null }) {
   const fetchStats = useServerFn(getPublicStats);
   const [stats, setStats] = useState<any>(null);
-  const [menu, setMenu] = useState(false);
+  
 
   useEffect(() => {
     fetchStats().then(setStats);
@@ -243,69 +232,11 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
     : [];
   const statItems = customStats.length ? customStats : autoStats;
 
-  const navLinks = [
-    { href: "#about", label: "কীভাবে কাজ করি" },
-    { href: "#features", label: c.nav.features },
-    { href: "#how", label: c.nav.how },
-    { href: "#faq", label: c.nav.faq || "FAQ" },
-    { href: "#pricing", label: c.nav.pricing },
-  ];
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-background text-foreground">
       {/* ── Nav ─────────────────────────────────────────── */}
-      <header className="sticky top-0 z-50 border-b border-border/60 bg-background/85 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4 sm:h-18 sm:px-6">
-          <Link to="/" className="flex min-w-0 items-center" aria-label={siteName}>
-            <Brand siteName={siteName} logoUrl={logoUrl} />
-          </Link>
-
-          <nav className="hidden items-center gap-7 text-base font-semibold text-muted-foreground lg:flex">
-            {navLinks.map((l) => (
-              <a key={l.href} href={l.href} className="transition-colors hover:text-primary">{l.label}</a>
-            ))}
-            <Link to="/catalog" search={{}} className="font-bold text-primary hover:opacity-80">Catalog</Link>
-          </nav>
-
-          <div className="flex shrink-0 items-center gap-2">
-            <Link to="/login" className="hidden rounded-lg border border-border px-4 py-2 text-sm font-semibold hover:border-primary/50 hover:text-primary sm:inline-flex">
-              {c.nav.signIn}
-            </Link>
-            <Link to="/login" search={{ mode: "signup" }} className="btn-brand inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-bold">
-              {c.nav.cta} <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-            <button
-              type="button"
-              onClick={() => setMenu((v) => !v)}
-              aria-label="Menu"
-              className="grid h-10 w-10 place-items-center rounded-lg border border-border lg:hidden"
-            >
-              {menu ? <X className="h-4.5 w-4.5" /> : <Menu className="h-4.5 w-4.5" />}
-            </button>
-          </div>
-        </div>
-
-        {menu && (
-          <nav className="border-t border-border/60 bg-background px-4 py-3 text-base lg:hidden">
-            {[...navLinks].map((l) => (
-              <a
-                key={l.href}
-                href={l.href}
-                onClick={() => setMenu(false)}
-                className="block rounded-lg px-3 py-2.5 font-semibold text-muted-foreground hover:bg-muted hover:text-foreground"
-              >
-                {l.label}
-              </a>
-            ))}
-            <Link to="/catalog" search={{}} onClick={() => setMenu(false)} className="block rounded-lg px-3 py-2.5 font-bold text-primary hover:bg-primary/10">
-              Master Catalog
-            </Link>
-            <Link to="/login" onClick={() => setMenu(false)} className="block rounded-lg px-3 py-2.5 font-semibold text-muted-foreground hover:bg-muted hover:text-foreground">
-              {c.nav.signIn}
-            </Link>
-          </nav>
-        )}
-      </header>
+      <PublicHeader siteName={siteName} logoUrl={logoUrl} content={c} />
 
       {/* ── Hero ────────────────────────────────────────── */}
       <section className="relative isolate overflow-hidden">
@@ -380,7 +311,7 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
                 <div key={i} className="flex flex-col items-center text-center">
                   <div className="flex items-center gap-2">
                     <span className="grid h-9 w-9 place-items-center rounded-lg bg-primary/10 text-primary">
-                      <Icon className="h-4.5 w-4.5" />
+                      <Icon className="h-5 w-5" />
                     </span>
                     <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground sm:text-sm">{s.label}</span>
                   </div>
@@ -678,7 +609,7 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
               search={{}}
               className="inline-flex items-center gap-2 rounded-xl border border-primary-foreground/30 px-7 py-3.5 text-sm font-bold text-primary-foreground hover:bg-primary-foreground/10 sm:text-base"
             >
-              <Layers className="h-4 w-4" /> Catalog
+              <Layers className="h-4 w-4" /> প্রোডাক্টস
             </Link>
           </div>
         </div>
@@ -705,7 +636,7 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
             <ul className="mt-3 space-y-2 text-sm">
               <li><Link to="/login" search={{ mode: "signup" }} className="text-muted-foreground hover:text-primary">{c.nav.cta}</Link></li>
               <li><Link to="/login" className="text-muted-foreground hover:text-primary">{c.nav.signIn}</Link></li>
-              <li><Link to="/catalog" search={{}} className="text-muted-foreground hover:text-primary">Master Catalog</Link></li>
+              <li><Link to="/catalog" search={{}} className="text-muted-foreground hover:text-primary">প্রোডাক্টস</Link></li>
             </ul>
           </div>
         </div>
