@@ -203,15 +203,6 @@ function RootResolver() {
   return <Landing c={content} siteName={siteName} logoUrl={logoUrl} />;
 }
 
-function Brand({ siteName, logoUrl, size = "md" }: { siteName: string; logoUrl: string | null; size?: "md" | "sm" }) {
-  const h = size === "md" ? "h-11 sm:h-13" : "h-9";
-  if (logoUrl) return <img src={logoUrl} alt={siteName} className={`${h} max-w-40 shrink-0 object-contain`} />;
-  return (
-    <span className={`grid ${size === "md" ? "h-11 w-11" : "h-9 w-9"} shrink-0 place-items-center rounded-xl bg-[image:var(--gradient-brand)] text-lg font-black text-primary-foreground`}>
-      {siteName.charAt(0).toUpperCase()}
-    </span>
-  );
-}
 
 function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string; logoUrl: string | null }) {
   const fetchStats = useServerFn(getPublicStats);
@@ -320,7 +311,7 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
                 <div key={i} className="flex flex-col items-center text-center">
                   <div className="flex items-center gap-2">
                     <span className="grid h-9 w-9 place-items-center rounded-lg bg-primary/10 text-primary">
-                      <Icon className="h-4.5 w-4.5" />
+                      <Icon className="h-5 w-5" />
                     </span>
                     <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground sm:text-sm">{s.label}</span>
                   </div>

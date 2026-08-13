@@ -36,7 +36,7 @@ function Brand({
   logoUrl: string | null;
   size?: "md" | "sm";
 }) {
-  const h = size === "md" ? "h-11 sm:h-13" : "h-9";
+  const h = size === "md" ? "h-11 sm:h-12" : "h-9";
   if (logoUrl) return <img src={logoUrl} alt={siteName} className={`${h} max-w-40 shrink-0 object-contain`} />;
   return (
     <span
@@ -134,7 +134,7 @@ export function PublicHeader({
             aria-label="Menu"
             className="grid h-10 w-10 place-items-center rounded-lg border border-border lg:hidden"
           >
-            {menu ? <X className="h-4.5 w-4.5" /> : <Menu className="h-4.5 w-4.5" />}
+            {menu ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
         </div>
       </div>
