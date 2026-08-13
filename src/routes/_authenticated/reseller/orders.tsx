@@ -31,6 +31,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { NewOrderModal } from "@/components/NewOrderModal";
 import { toast } from "sonner";
 import { useDepositStatus } from "@/lib/deposit";
+import { DEFAULT_DEPOSIT_TEXTS, fillText, useDepositSettings } from "@/lib/deposit-settings";
 import { bdt } from "@/lib/finance-report";
 import { DepositNotice } from "@/components/deposit-notice";
 import { useServerFn } from "@tanstack/react-start";
@@ -1017,6 +1018,7 @@ function OrdersPage() {
           allProducts={allProducts}
           depositBlocked={deposit.blocked}
           depositDue={deposit.due}
+          depositBlockText={depositTexts.orderBlockToast}
         />
       )}
 
@@ -1140,6 +1142,7 @@ function OrderDrawer({
   allProducts,
   depositBlocked,
   depositDue,
+  depositBlockText,
 }: { 
   orderId: string; 
   onClose: () => void; 
@@ -1147,6 +1150,7 @@ function OrderDrawer({
   allProducts: any[];
   depositBlocked?: boolean;
   depositDue?: number;
+  depositBlockText?: string;
 }) {
   const fetchDetails = useServerFn(getOrderDetails);
   const recheckStatus = useServerFn(recheckCourierStatus);
@@ -1183,7 +1187,7 @@ function OrderDrawer({
 
   async function setStatus(next: "confirmed" | "cancelled") {
     if (next === "confirmed" && depositBlocked) {
-      toast.error(fillText(depositBlockText, { due: depositDue ?? 0 }));
+      toast.error(fillText(depositBlockText ?? DEFAULT_DEPOSIT_TEXTS.orderBlockToast, { due: depositDue ?? 0 }));
       return;
     }
     setBusy(true);
