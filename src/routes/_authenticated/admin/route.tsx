@@ -57,6 +57,7 @@ const ROUTE_PERMISSIONS: Record<string, string[]> = {
   "/admin/audit": ["audit.view"],
   "/admin/deposits": ["settings.manage", "resellers.manage", "finance.view"],
   "/admin/settings": ["settings.manage"],
+  "/admin/privacy": ["settings.manage"],
 };
 
 const NAV: NavEntry[] = [
@@ -103,6 +104,7 @@ const NAV: NavEntry[] = [
       { label: "Audit log", to: "/admin/audit", icon: <ScrollText className="h-4 w-4" /> },
 
       { label: "Security deposit", to: "/admin/deposits", icon: <ShieldCheck className="h-4 w-4" /> },
+      { label: "Privacy policy", to: "/admin/privacy", icon: <Shield className="h-4 w-4" /> },
       { label: "Settings", to: "/admin/settings", icon: <Settings className="h-4 w-4" /> },
 
     ],

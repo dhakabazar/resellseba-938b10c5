@@ -620,6 +620,7 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
               <li><Link to="/login" search={{ mode: "signup" }} className="text-muted-foreground hover:text-primary">{c.nav.cta}</Link></li>
               <li><Link to="/login" className="text-muted-foreground hover:text-primary">{c.nav.signIn}</Link></li>
               <li><Link to="/catalog" search={{}} className="text-muted-foreground hover:text-primary">প্রোডাক্টস</Link></li>
+              <li><Link to="/privacy" className="text-muted-foreground hover:text-primary">Privacy Policy</Link></li>
             </ul>
           </div>
         </div>
