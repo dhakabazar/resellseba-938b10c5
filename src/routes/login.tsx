@@ -36,11 +36,7 @@ function AuthPage() {
     supabase.auth.getSession().then(({ data }) => {
       if (data.session?.user) {
         const target =
-          search.redirect &&
-          search.redirect.startsWith("/") &&
-          !search.redirect.startsWith("/login") &&
-          !search.redirect.includes("/admin") &&
-          !search.redirect.includes("/reseller")
+          search.redirect && search.redirect.startsWith("/") && !search.redirect.startsWith("/login")
             ? search.redirect
             : "/dashboard";
         nav({ to: target, replace: true });
@@ -78,11 +74,7 @@ function AuthPage() {
         if (error) throw error;
         toast.success("স্বাগতম!");
         const target =
-          search.redirect &&
-          search.redirect.startsWith("/") &&
-          !search.redirect.startsWith("/login") &&
-          !search.redirect.includes("/admin") &&
-          !search.redirect.includes("/reseller")
+          search.redirect && search.redirect.startsWith("/") && !search.redirect.startsWith("/login")
             ? search.redirect
             : "/dashboard";
         nav({ to: target, replace: true });
