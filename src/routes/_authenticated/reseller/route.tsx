@@ -15,6 +15,8 @@ import {
   Store,
   Rocket,
   TrendingUp,
+  Headphones,
+
 } from "lucide-react";
 import { AppShell, type NavEntry } from "@/components/AppShell";
 import { useAuth } from "@/lib/use-auth";
