@@ -53,7 +53,7 @@ export const saveRole = createServerFn({ method: "POST" })
         .eq("id", roleId);
       if (error) throw new Response(error.message, { status: 400 });
     } else {
-      const { data: newRole, error } = await supabaseAdmin
+      const { data: newRole, error } = await db
         .from("roles")
         .insert({ name: data.name, description: data.description })
         .select("id")
@@ -63,9 +63,9 @@ export const saveRole = createServerFn({ method: "POST" })
     }
 
     // Sync permissions
-    await supabaseAdmin.from("role_permissions").delete().eq("role_id", roleId);
+    await db.from("role_permissions").delete().eq("role_id", roleId);
     if (data.permissionIds.length > 0) {
-      const { error: permError } = await supabaseAdmin
+      const { error: permError } = await db
         .from("role_permissions")
         .insert(data.permissionIds.map(pid => ({ role_id: roleId, permission_id: pid })));
       if (permError) throw new Response(permError.message, { status: 400 });
