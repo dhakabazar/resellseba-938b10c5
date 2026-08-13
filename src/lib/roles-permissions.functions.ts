@@ -40,12 +40,14 @@ export const saveRole = createServerFn({ method: "POST" })
   .inputValidator((d) => saveRoleInput.parse(d))
   .handler(async ({ data, context }) => {
     await assertPermission(context.supabase, context.userId, "staff.manage");
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    // RLS lets staff.manage holders manage roles, so no service-role key needed
+    // (it is not available in every deployment environment).
+    const db = context.supabase;
 
     let roleId = data.id;
 
     if (roleId) {
-      const { error } = await supabaseAdmin
+      const { error } = await db
         .from("roles")
         .update({ name: data.name, description: data.description })
         .eq("id", roleId);
