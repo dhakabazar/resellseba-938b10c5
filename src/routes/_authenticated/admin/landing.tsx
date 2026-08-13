@@ -220,6 +220,26 @@ function LandingEditor() {
         </div>
       </Section>
 
+      <Section title="FAQ">
+        <F label="Title"><I value={c.faq?.title ?? ""} onChange={(v) => update((d) => { d.faq = { ...(d.faq ?? { title: "", subtitle: "", items: [] }), title: v }; })} /></F>
+        <F label="Subtitle"><T value={c.faq?.subtitle ?? ""} onChange={(v) => update((d) => { d.faq = { ...(d.faq ?? { title: "", subtitle: "", items: [] }), subtitle: v }; })} /></F>
+        <div className="space-y-3">
+          {(c.faq?.items ?? []).map((item, i) => (
+            <div key={i} className="rounded-lg border p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-muted-foreground">FAQ #{i + 1}</span>
+                <button type="button" onClick={() => update((d) => { d.faq!.items.splice(i, 1); })} className="text-destructive hover:opacity-70"><Trash2 className="h-3.5 w-3.5" /></button>
+              </div>
+              <F label="Question"><I value={item.q} onChange={(v) => update((d) => { d.faq!.items[i].q = v; })} /></F>
+              <F label="Answer"><T value={item.a} onChange={(v) => update((d) => { d.faq!.items[i].a = v; })} /></F>
+            </div>
+          ))}
+          <button type="button" onClick={() => update((d) => { d.faq = { ...(d.faq ?? { title: "", subtitle: "", items: [] }), items: [...(d.faq?.items ?? []), { q: "", a: "" }] }; })} className="inline-flex items-center gap-1 rounded-md border px-3 py-1.5 text-xs hover:bg-muted">
+            <Plus className="h-3.5 w-3.5" /> FAQ add
+          </button>
+        </div>
+      </Section>
+
       <Section title="Call to action">
         <F label="Badge"><I value={c.cta.badge} onChange={(v) => update((d) => { d.cta.badge = v; })} /></F>
         <F label="Title"><I value={c.cta.title} onChange={(v) => update((d) => { d.cta.title = v; })} /></F>
