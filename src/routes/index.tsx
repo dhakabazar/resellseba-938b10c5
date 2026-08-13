@@ -564,13 +564,15 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
             {c.features.items.map((f, i) => {
               const Icon = ICON_MAP[f.icon] ?? Sparkles;
               return (
-                <div key={i} className="surface-card surface-card-hover group relative overflow-hidden p-5">
+                <div key={i} className="surface-card surface-card-hover group relative flex flex-col overflow-hidden p-4">
                   <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-primary/20 opacity-0 blur-2xl transition-opacity group-hover:opacity-100" />
-                  <span className="relative grid h-9 w-9 place-items-center rounded-xl bg-[image:var(--gradient-brand)] text-primary-foreground">
-                    <Icon className="h-4 w-4" />
-                  </span>
-                  <h3 className="relative mt-3 text-sm font-bold leading-tight">{f.title}</h3>
-                  <p className="relative mt-1.5 text-xs leading-relaxed text-muted-foreground">{f.desc}</p>
+                  <div className="relative flex items-start gap-2.5">
+                    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground">
+                      <Icon className="h-3.5 w-3.5" />
+                    </span>
+                    <h3 className="flex-1 pt-0.5 text-[13px] font-bold leading-tight">{f.title}</h3>
+                  </div>
+                  <p className="relative mt-2 text-xs leading-relaxed text-muted-foreground">{f.desc}</p>
                 </div>
               );
             })}
