@@ -508,17 +508,8 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
 
       {/* ── Features ────────────────────────────────────── */}
       <section id="features" className="border-t border-border/60 bg-muted/30">
-        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
-          <div className="mx-auto max-w-2xl text-center">
-            <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[11px] font-bold text-primary">
-              <Sparkles className="h-3 w-3" /> Features
-            </div>
-            <h2 className="mt-4 text-balance text-2xl font-black tracking-tight sm:text-3xl">{c.features.title}</h2>
-            {c.features.subtitle && (
-              <p className="mt-3 text-pretty text-xs leading-relaxed text-muted-foreground sm:text-sm">{c.features.subtitle}</p>
-            )}
-          </div>
-          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {c.features.items.map((f, i) => {
               const Icon = ICON_MAP[f.icon] ?? Sparkles;
               return (
