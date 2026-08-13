@@ -418,7 +418,11 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
       {stats?.categories?.length > 0 && (
         <section className="border-y border-border/60 bg-muted/30 py-10 sm:py-14">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-6">
+            <div className="mx-auto max-w-2xl text-center">
+              <h2 className="text-xl font-extrabold sm:text-3xl">ক্যাটাগরি</h2>
+              <p className="mt-2 text-sm text-muted-foreground">আপনার নিশ অনুযায়ী ক্যাটাগরি বেছে নিয়ে প্রোডাক্ট লিস্ট করুন</p>
+            </div>
+            <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-6">
               {stats.categories.map((cat: any) => (
                 <Link
                   key={cat.id}
@@ -445,7 +449,11 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
       {stats?.products?.length > 0 && (
         <section className="py-10 sm:py-14">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mx-auto max-w-2xl text-center">
+              <h2 className="text-xl font-extrabold sm:text-3xl">ফিচার্ড প্রোডাক্ট</h2>
+              <p className="mt-2 text-sm text-muted-foreground">মাস্টার ক্যাটালগের জনপ্রিয় প্রোডাক্ট — প্রফিট সহ দেখুন</p>
+            </div>
+            <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {stats.products.map((p: any) => (
                 <div key={p.id} className="group surface-card surface-card-hover flex flex-col overflow-hidden">
                   <div className="relative aspect-square overflow-hidden bg-muted">
@@ -500,7 +508,11 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
       {/* ── Features ────────────────────────────────────── */}
       <section id="features" className="border-t border-border/60 bg-muted/30">
         <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mx-auto max-w-2xl text-center">
+            {c.features.title && <h2 className="text-xl font-extrabold sm:text-3xl">{c.features.title}</h2>}
+            {c.features.subtitle && <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{c.features.subtitle}</p>}
+          </div>
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {c.features.items.map((f, i) => {
               const Icon = ICON_MAP[f.icon] ?? Sparkles;
               return (
@@ -521,7 +533,11 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
       {/* ── How it works ────────────────────────────────── */}
       <section id="how" className="relative overflow-hidden border-t border-border/60">
         <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
-          <div className="relative grid gap-6 md:grid-cols-3">
+          <div className="mx-auto max-w-2xl text-center">
+            {c.how.title && <h2 className="text-xl font-extrabold sm:text-3xl">{c.how.title}</h2>}
+            {c.how.subtitle && <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{c.how.subtitle}</p>}
+          </div>
+          <div className="relative mt-10 grid gap-6 md:grid-cols-3">
             {c.how.steps.map((s, i) => (
               <div key={i} className="surface-card surface-card-hover relative p-6 pt-8">
                 <div className="absolute -top-5 left-6 grid h-11 w-11 place-items-center rounded-xl bg-[image:var(--gradient-brand)] text-base font-black text-primary-foreground ring-4 ring-background">
@@ -539,7 +555,11 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
       <section id="pricing" className="px-4 pb-16 sm:px-6 sm:pb-24">
         <div className="relative mx-auto max-w-6xl overflow-hidden rounded-3xl bg-[image:var(--gradient-brand)] px-6 py-12 text-center sm:px-12 sm:py-16">
           <div className="pointer-events-none absolute -top-24 left-1/2 h-72 w-[36rem] -translate-x-1/2 rounded-full bg-primary-foreground/10 blur-3xl" />
-          <div className="relative flex flex-wrap justify-center gap-3">
+          <div className="relative mx-auto max-w-2xl">
+            {c.cta.title && <h2 className="text-2xl font-extrabold text-primary-foreground sm:text-3xl">{c.cta.title}</h2>}
+            {c.cta.subtitle && <p className="mt-3 text-sm leading-relaxed text-primary-foreground/85">{c.cta.subtitle}</p>}
+          </div>
+          <div className="relative mt-7 flex flex-wrap justify-center gap-3">
             <Link
               to="/login"
               search={{ mode: "signup" }}
