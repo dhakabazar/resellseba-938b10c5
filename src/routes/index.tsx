@@ -403,7 +403,7 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
             </ol>
 
             <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
-              <Link to="/signup" className="inline-flex items-center gap-2 rounded-xl bg-[image:var(--gradient-brand)] px-5 py-2.5 text-sm font-bold text-primary-foreground shadow-md">
+              <Link to="/login" search={{ mode: "signup" }} className="btn-brand inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold">
                 {c.hero.ctaPrimary} <ArrowRight className="h-4 w-4" />
               </Link>
               <Link to="/catalog" search={{}} className="inline-flex items-center gap-2 rounded-xl border px-5 py-2.5 text-sm font-bold hover:bg-muted">
