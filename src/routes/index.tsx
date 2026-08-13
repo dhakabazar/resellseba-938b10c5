@@ -399,12 +399,8 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
 
       {/* ── Categories ──────────────────────────────────── */}
       {stats?.categories?.length > 0 && (
-        <section className="border-y border-border/60 bg-muted/30 py-16 sm:py-20">
+        <section className="border-y border-border/60 bg-muted/30 py-10 sm:py-14">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <div className="mb-10 text-center">
-              <h2 className="text-3xl font-black tracking-tight sm:text-4xl">ক্যাটেগরি সমূহ</h2>
-              <p className="mt-3 text-sm text-muted-foreground sm:text-base">নিজের পছন্দের নিশ বেছে নিন</p>
-            </div>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-6">
               {stats.categories.map((cat: any) => (
                 <Link
