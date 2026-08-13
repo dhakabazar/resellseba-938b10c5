@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { useEffect, useState, type ReactNode } from "react";
+import { Link, useRouterState } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowRight, Menu, X } from "lucide-react";
+import { ArrowRight, Home, Menu, X } from "lucide-react";
 
 type NavContent = {
   features?: string;
@@ -87,14 +87,20 @@ export function PublicHeader({
   const siteName = siteNameProp ?? loadedBrand.siteName;
   const logoUrl = logoUrlProp ?? loadedBrand.logoUrl;
   const c = content ?? loadedContent ?? FALLBACK;
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const isCatalog = pathname === "/catalog" || pathname.startsWith("/catalog/");
 
-  const navLinks: Array<{ href?: string; to?: "/catalog"; label?: string }> = [
-    { href: "#features", label: c.nav.features },
-    { href: "#about", label: c.nav.how },
-    { href: "#categories", label: c.nav.categories || "ক্যাটাগরি" },
-    { to: "/catalog" as const, label: "ক্যাটালগ" },
-    { href: "#faq", label: c.nav.faq || "FAQ" },
-  ];
+  const navLinks: Array<{ href?: string; to?: string; label?: string; icon?: ReactNode }> = isCatalog
+    ? [{ to: "/", label: "হোমে ফিরুন", icon: <Home className="h-4 w-4" /> }]
+    : [
+        { href: "#features", label: c.nav.features },
+        { href: "#about", label: c.nav.how },
+        { href: "#categories", label: c.nav.categories || "ক্যাটাগরি" },
+        { to: "/catalog", label: "ক্যাটালগ" },
+        { href: "#faq", label: c.nav.faq || "FAQ" },
+      ];
+
+
 
 
   return (
@@ -104,19 +110,28 @@ export function PublicHeader({
           <Brand siteName={siteName} logoUrl={logoUrl} />
         </Link>
 
-        <nav className="hidden items-center gap-5 text-[13px] font-semibold text-muted-foreground lg:flex">
+        <nav className="hidden items-center gap-5 text-[13px] font-semibold lg:flex">
           {navLinks.map((l) =>
             l.to ? (
-              <Link key={l.to} to={l.to} search={{}} className="font-bold text-primary hover:opacity-80">
-                {l.label}
+              <Link
+                key={l.to}
+                to={l.to}
+                className={
+                  isCatalog
+                    ? "inline-flex items-center gap-1.5 rounded-lg border border-border px-4 py-2 text-sm font-semibold text-foreground hover:border-primary/50 hover:text-primary"
+                    : "font-bold text-primary hover:opacity-80"
+                }
+              >
+                {l.icon} {l.label}
               </Link>
             ) : (
-              <a key={l.href} href={l.href} className="whitespace-nowrap transition-colors hover:text-primary">
-                {l.label}
+              <a key={l.href} href={l.href} className="whitespace-nowrap text-muted-foreground transition-colors hover:text-primary">
+                {l.icon} {l.label}
               </a>
             ),
           )}
         </nav>
+
 
 
 
@@ -152,11 +167,14 @@ export function PublicHeader({
               <Link
                 key={l.to}
                 to={l.to}
-                search={{}}
                 onClick={() => setMenu(false)}
-                className="block rounded-lg px-3 py-2.5 font-bold text-primary hover:bg-primary/10"
+                className={
+                  isCatalog
+                    ? "flex items-center gap-2 rounded-lg bg-primary/10 px-3 py-2.5 font-bold text-primary"
+                    : "block rounded-lg px-3 py-2.5 font-bold text-primary hover:bg-primary/10"
+                }
               >
-                {l.label}
+                {l.icon} {l.label}
               </Link>
             ) : (
               <a
@@ -169,6 +187,7 @@ export function PublicHeader({
               </a>
             ),
           )}
+
 
           <Link
             to="/login"
