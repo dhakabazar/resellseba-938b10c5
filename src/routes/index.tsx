@@ -86,7 +86,7 @@ type LandingContent = {
 
 
 const FALLBACK: LandingContent = {
-  nav: { features: "ফিচার", how: "কীভাবে কাজ করে", pricing: "প্রাইসিং", faq: "FAQ", signIn: "সাইন ইন", cta: "শুরু করুন" },
+  nav: { features: "ফিচার", how: "কীভাবে কাজ করে", categories: "ক্যাটাগরি", products: "প্রোডাক্ট", faq: "FAQ", signIn: "সাইন ইন", cta: "শুরু করুন" },
   hero: {
     badge: "বাংলাদেশের রিসেলার প্ল্যাটফর্ম",
     titleStart: "নিজের অনলাইন স্টোর চালু করুন",
