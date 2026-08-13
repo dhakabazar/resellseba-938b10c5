@@ -249,6 +249,7 @@ export type Database = {
           favicon_url: string | null
           flagship_reseller_code: string | null
           id: number
+          label_size: string
           landing_content: Json
           logo_url: string | null
           meta_description: string | null
@@ -266,6 +267,7 @@ export type Database = {
           favicon_url?: string | null
           flagship_reseller_code?: string | null
           id?: number
+          label_size?: string
           landing_content?: Json
           logo_url?: string | null
           meta_description?: string | null
@@ -283,6 +285,7 @@ export type Database = {
           favicon_url?: string | null
           flagship_reseller_code?: string | null
           id?: number
+          label_size?: string
           landing_content?: Json
           logo_url?: string | null
           meta_description?: string | null
