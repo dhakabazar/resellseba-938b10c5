@@ -18,6 +18,11 @@ import {
   Copy,
   MailCheck,
   MailX,
+  ShieldCheck,
+  AlertTriangle,
+  Lock,
+  Wallet,
+  Plus,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
@@ -52,6 +57,9 @@ type Reseller = {
   payout_bank_name: string | null;
   payout_branch: string | null;
   payout_routing: string | null;
+  deposit_required: boolean;
+  deposit_required_amount: number;
+  frozen_amount: number;
 };
 
 type Summary = {
@@ -59,6 +67,8 @@ type Summary = {
   pending_payout: number;
   paid_out: number;
   available: number;
+  deposit_balance: number;
+  frozen_amount: number;
 };
 
 export const Route = createFileRoute("/_authenticated/admin/resellers")({
@@ -98,6 +108,7 @@ function ResellersPage() {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(20);
   const [editing, setEditing] = useState<Reseller | null>(null);
+  const [depositFor, setDepositFor] = useState<Reseller | null>(null);
 
   async function load() {
     setLoading(true);
@@ -105,7 +116,7 @@ function ResellersPage() {
       supabase
         .from("resellers")
         .select(
-          "id,user_id,business_name,code,contact_phone,address,status,commission_rate,leader_id,notes,approved_at,created_at,payout_method,payout_account_name,payout_account_number,payout_bank_name,payout_branch,payout_routing",
+          "id,user_id,business_name,code,contact_phone,address,status,commission_rate,leader_id,notes,approved_at,created_at,payout_method,payout_account_name,payout_account_number,payout_bank_name,payout_branch,payout_routing,deposit_required,deposit_required_amount,frozen_amount",
         )
         .order("created_at", { ascending: false }),
       supabase.rpc("admin_reseller_metrics"),
@@ -120,6 +131,8 @@ function ResellersPage() {
       pending_payout: number;
       paid_out: number;
       available: number;
+      deposit_balance: number;
+      frozen_amount: number;
     }>;
     setSummaries(
       Object.fromEntries(
@@ -130,6 +143,8 @@ function ResellersPage() {
             pending_payout: Number(m.pending_payout ?? 0),
             paid_out: Number(m.paid_out ?? 0),
             available: Number(m.available ?? 0),
+            deposit_balance: Number(m.deposit_balance ?? 0),
+            frozen_amount: Number(m.frozen_amount ?? 0),
           } as Summary,
         ]),
       ),
@@ -323,6 +338,23 @@ function ResellersPage() {
                           <MailX className="h-3 w-3" /> Email unverified
                         </span>
                       )}
+                      {r.deposit_required && Number(r.deposit_required_amount) > 0 && (
+                        (s?.deposit_balance ?? 0) >= Number(r.deposit_required_amount) ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-2 py-0.5 text-[10px] font-medium text-success">
+                            <ShieldCheck className="h-3 w-3" /> Deposit ok
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-destructive/15 px-2 py-0.5 text-[10px] font-medium text-destructive">
+                            <AlertTriangle className="h-3 w-3" /> Deposit due ৳
+                            {(Number(r.deposit_required_amount) - (s?.deposit_balance ?? 0)).toLocaleString()}
+                          </span>
+                        )
+                      )}
+                      {Number(r.frozen_amount) > 0 && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                          <Lock className="h-3 w-3" /> Frozen ৳{Number(r.frozen_amount).toLocaleString()}
+                        </span>
+                      )}
                     </div>
                     <div className="mt-0.5 break-words text-xs text-muted-foreground">
                       {em?.email ? <span>{em.email} · </span> : null}
@@ -382,6 +414,9 @@ function ResellersPage() {
                       <DropdownMenuItem onClick={() => setEditing(r)}>
                         <Pencil className="mr-2 h-4 w-4" /> Edit details
                       </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setDepositFor(r)}>
+                        <Wallet className="mr-2 h-4 w-4" /> Deposit & freeze
+                      </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => copyStoreLink(r)}>
                         <Copy className="mr-2 h-4 w-4" /> Copy store link
                       </DropdownMenuItem>
@@ -401,12 +436,13 @@ function ResellersPage() {
                   </DropdownMenu>
                 </div>
 
-                <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+                <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
                   <Metric label="Orders" value={orderCounts[r.id] ?? 0} plain />
                   <Metric label="Delivered profit" value={s?.delivered_profit} accent />
                   <Metric label="Available" value={s?.available} />
                   <Metric label="Paid out" value={s?.paid_out} />
                   <Metric label="Payout pending" value={s?.pending_payout} muted />
+                  <Metric label="Deposit balance" value={s?.deposit_balance} />
                 </div>
               </div>
             );
