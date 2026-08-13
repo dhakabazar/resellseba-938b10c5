@@ -16,7 +16,7 @@ type FlowStep = { icon: string; title: string; desc: string };
 type FaqItem = { q: string; a: string };
 type StatItem = { value: string; label: string };
 type LandingContent = {
-  nav: { features: string; how: string; categories: string; products: string; signIn: string; cta: string; faq?: string };
+  nav: { features: string; how: string; categories: string; signIn: string; cta: string; faq?: string };
   hero: {
     badge: string;
     titleStart: string;
@@ -79,7 +79,6 @@ function LandingEditor() {
           <F label="Features"><I value={c.nav.features} onChange={(v) => update((d) => { d.nav.features = v; })} /></F>
           <F label="How it works"><I value={c.nav.how} onChange={(v) => update((d) => { d.nav.how = v; })} /></F>
           <F label="Categories"><I value={c.nav.categories} onChange={(v) => update((d) => { d.nav.categories = v; })} /></F>
-          <F label="Products"><I value={c.nav.products} onChange={(v) => update((d) => { d.nav.products = v; })} /></F>
           <F label="FAQ"><I value={c.nav.faq ?? ""} onChange={(v) => update((d) => { d.nav.faq = v; })} /></F>
           <F label="Sign in"><I value={c.nav.signIn} onChange={(v) => update((d) => { d.nav.signIn = v; })} /></F>
           <F label="CTA button"><I value={c.nav.cta} onChange={(v) => update((d) => { d.nav.cta = v; })} /></F>
@@ -222,7 +221,7 @@ function LandingEditor() {
         </div>
       </Section>
 
-      <Section title="7. FAQ  —  (Category ও প্রোডাক্ট সেকশন অটো দেখায়)">
+      <Section title="7. FAQ">
         <F label="Title"><I value={c.faq?.title ?? ""} onChange={(v) => update((d) => { d.faq = { ...(d.faq ?? { title: "", subtitle: "", items: [] }), title: v }; })} /></F>
         <F label="Subtitle"><T value={c.faq?.subtitle ?? ""} onChange={(v) => update((d) => { d.faq = { ...(d.faq ?? { title: "", subtitle: "", items: [] }), subtitle: v }; })} /></F>
         <div className="space-y-3">

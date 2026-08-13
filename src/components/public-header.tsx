@@ -7,7 +7,6 @@ type NavContent = {
   features?: string;
   how?: string;
   categories?: string;
-  products?: string;
   signIn?: string;
   cta?: string;
   faq?: string;
@@ -22,7 +21,6 @@ const FALLBACK: PublicHeaderContent = {
     features: "ফিচার",
     how: "কীভাবে কাজ করে",
     categories: "ক্যাটাগরি",
-    products: "প্রোডাক্ট",
     faq: "FAQ",
     signIn: "সাইন ইন",
     cta: "শুরু করুন",
@@ -94,7 +92,6 @@ export function PublicHeader({
     { href: "#features", label: c.nav.features },
     { href: "#about", label: c.nav.how },
     { href: "#categories", label: c.nav.categories || "ক্যাটাগরি" },
-    { href: "#products", label: c.nav.products || "প্রোডাক্ট" },
     { to: "/catalog" as const, label: "ক্যাটালগ" },
     { href: "#faq", label: c.nav.faq || "FAQ" },
   ];

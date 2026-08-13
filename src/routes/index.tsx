@@ -14,8 +14,6 @@ import {
   Megaphone,
   Sparkles,
   Check,
-  Copy,
-  Download,
   ShoppingBag,
   Layers,
   Users,
@@ -35,7 +33,6 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 
-import { bdt } from "@/lib/finance-report";
 import { CountUp } from "@/components/count-up";
 import { PublicHeader, Brand } from "@/components/public-header";
 
@@ -69,7 +66,7 @@ type FaqItem = { q: string; a: string };
 type HeroImage = { path: string; url: string; bytes: number } | null;
 type StatItem = { value: string; label: string };
 type LandingContent = {
-  nav: { features: string; how: string; categories?: string; products?: string; signIn: string; cta: string; faq?: string };
+  nav: { features: string; how: string; categories?: string; signIn: string; cta: string; faq?: string };
   hero: {
     badge: string; titleStart: string; titleHighlight: string; subtitle: string;
     ctaPrimary: string; ctaSecondary: string; badges: string[];
@@ -86,7 +83,7 @@ type LandingContent = {
 
 
 const FALLBACK: LandingContent = {
-  nav: { features: "ফিচার", how: "কীভাবে কাজ করে", categories: "ক্যাটাগরি", products: "প্রোডাক্ট", faq: "FAQ", signIn: "সাইন ইন", cta: "শুরু করুন" },
+  nav: { features: "ফিচার", how: "কীভাবে কাজ করে", categories: "ক্যাটাগরি", faq: "FAQ", signIn: "সাইন ইন", cta: "শুরু করুন" },
   hero: {
     badge: "বাংলাদেশের রিসেলার প্ল্যাটফর্ম",
     titleStart: "নিজের অনলাইন স্টোর চালু করুন",
@@ -495,77 +492,6 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
         </section>
       )}
 
-      {/* ── Featured products ───────────────────────────── */}
-      {stats?.products?.length > 0 && (
-        <section id="products" className="py-10 sm:py-14">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6">
-            <div className="mx-auto max-w-2xl text-center">
-              <h2 className="text-xl font-extrabold sm:text-3xl">ফিচার্ড প্রোডাক্ট</h2>
-              <p className="mt-2 text-sm text-muted-foreground">মাস্টার ক্যাটালগের জনপ্রিয় প্রোডাক্ট — প্রফিট সহ দেখুন</p>
-            </div>
-            <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-6">
-              {stats.products.slice(0, 6).map((p: any) => (
-                <div key={p.id} className="group surface-card surface-card-hover flex flex-col overflow-hidden">
-                  <div className="relative aspect-square overflow-hidden bg-muted">
-                    {p.main_image ? (
-                      <img src={p.main_image} alt={p.name} loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                    ) : (
-                      <div className="grid h-full w-full place-items-center text-xs text-muted-foreground">No image</div>
-                    )}
-                    <div className="absolute right-1.5 top-1.5 flex gap-1.5 opacity-0 transition-opacity group-hover:opacity-100">
-                      <button
-                        onClick={() => copy(p.name)}
-                        className="rounded-lg border border-border bg-card/95 p-1.5 shadow-sm backdrop-blur hover:text-primary"
-                        title="Copy Title"
-                      >
-                        <Copy className="h-3.5 w-3.5" />
-                      </button>
-                      {p.main_image && (
-                        <a
-                          href={p.main_image}
-                          download
-                          className="rounded-lg border border-border bg-card/95 p-1.5 shadow-sm backdrop-blur hover:text-primary"
-                          title="Download Image"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <Download className="h-3.5 w-3.5" />
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex flex-1 flex-col p-3">
-                    <Link to="/catalog/$slug" params={{ slug: p.slug }} className="line-clamp-2 text-xs font-bold leading-tight hover:text-primary sm:text-sm">
-                      {p.name}
-                    </Link>
-                    <div className="mt-auto space-y-1 pt-3">
-                      <div className="flex items-baseline justify-between gap-1">
-                        <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Resell</span>
-                        <span className="text-sm font-black text-primary">{bdt(p.price)}</span>
-                      </div>
-                      <div className="flex items-baseline justify-between gap-1">
-                        <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Profit</span>
-                        <span className="text-xs font-bold text-success">+{bdt(p.price - p.base_price)}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-10 flex justify-center">
-              <Link
-                to="/catalog"
-                search={{}}
-                className="btn-brand btn-live group relative inline-flex items-center gap-2 rounded-full px-7 py-3 text-sm font-bold"
-              >
-                <Layers className="relative h-4 w-4" />
-                <span className="relative">সম্পূর্ণ ক্যাটালগ দেখুন</span>
-                <ArrowRight className="relative h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </Link>
-            </div>
-          </div>
-        </section>
-      )}
 
 
       {/* ── FAQ ─────────────────────────────────────────── */}
