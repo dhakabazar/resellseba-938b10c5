@@ -93,8 +93,8 @@ export function PublicHeader({
   const navLinks: Array<{ href?: string; to?: "/catalog"; label?: string }> = [
     { href: "#features", label: c.nav.features },
     { href: "#about", label: c.nav.how },
-    { href: "#categories", label: "ক্যাটাগরি" },
-    { href: "#products", label: "প্রোডাক্ট" },
+    { href: "#categories", label: c.nav.categories || "ক্যাটাগরি" },
+    { href: "#products", label: c.nav.products || "প্রোডাক্ট" },
     { to: "/catalog" as const, label: "ক্যাটালগ" },
     { href: "#faq", label: c.nav.faq || "FAQ" },
   ];
