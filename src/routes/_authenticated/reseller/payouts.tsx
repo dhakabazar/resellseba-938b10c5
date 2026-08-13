@@ -354,3 +354,18 @@ function statusStyle(s: string) {
     : "bg-warning/20 text-warning-foreground";
 }
 const inp = "w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring";
+
+function MiniStat({ label, value, tone }: { label: string; value: number; tone?: "good" | "bad" }) {
+  return (
+    <div className="rounded-md border bg-muted/30 p-3">
+      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</div>
+      <div
+        className={
+          "text-sm font-bold " + (tone === "bad" ? "text-destructive" : tone === "good" ? "text-success" : "")
+        }
+      >
+        ৳{Number(value ?? 0).toLocaleString()}
+      </div>
+    </div>
+  );
+}
