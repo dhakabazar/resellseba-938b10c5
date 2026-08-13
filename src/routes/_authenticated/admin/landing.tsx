@@ -222,7 +222,7 @@ function LandingEditor() {
         </div>
       </Section>
 
-      <Section title="8. FAQ  —  (7: Category ও প্রোডাক্ট সেকশন অটো দেখায়)">
+      <Section title="7. FAQ  —  (Category ও প্রোডাক্ট সেকশন অটো দেখায়)">
         <F label="Title"><I value={c.faq?.title ?? ""} onChange={(v) => update((d) => { d.faq = { ...(d.faq ?? { title: "", subtitle: "", items: [] }), title: v }; })} /></F>
         <F label="Subtitle"><T value={c.faq?.subtitle ?? ""} onChange={(v) => update((d) => { d.faq = { ...(d.faq ?? { title: "", subtitle: "", items: [] }), subtitle: v }; })} /></F>
         <div className="space-y-3">
@@ -242,14 +242,14 @@ function LandingEditor() {
         </div>
       </Section>
 
-      <Section title="9. Call to action">
+      <Section title="8. Call to action">
         <F label="Badge"><I value={c.cta.badge} onChange={(v) => update((d) => { d.cta.badge = v; })} /></F>
         <F label="Title"><I value={c.cta.title} onChange={(v) => update((d) => { d.cta.title = v; })} /></F>
         <F label="Subtitle"><T value={c.cta.subtitle} onChange={(v) => update((d) => { d.cta.subtitle = v; })} /></F>
         <F label="Button label"><I value={c.cta.button} onChange={(v) => update((d) => { d.cta.button = v; })} /></F>
       </Section>
 
-      <Section title="10. Footer">
+      <Section title="9. Footer">
         <F label="Tagline"><I value={c.footer.tagline} onChange={(v) => update((d) => { d.footer.tagline = v; })} /></F>
       </Section>
 
