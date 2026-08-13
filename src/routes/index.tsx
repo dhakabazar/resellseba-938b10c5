@@ -252,58 +252,7 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
   return (
     <div className="min-h-screen overflow-x-hidden bg-background text-foreground">
       {/* ── Nav ─────────────────────────────────────────── */}
-      <header className="sticky top-0 z-50 border-b border-border/60 bg-background/85 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4 sm:h-18 sm:px-6">
-          <Link to="/" className="flex min-w-0 items-center" aria-label={siteName}>
-            <Brand siteName={siteName} logoUrl={logoUrl} />
-          </Link>
-
-          <nav className="hidden items-center gap-7 text-base font-semibold text-muted-foreground lg:flex">
-            {navLinks.map((l) => (
-              <a key={l.href} href={l.href} className="transition-colors hover:text-primary">{l.label}</a>
-            ))}
-            <Link to="/catalog" search={{}} className="font-bold text-primary hover:opacity-80">Catalog</Link>
-          </nav>
-
-          <div className="flex shrink-0 items-center gap-2">
-            <Link to="/login" className="hidden rounded-lg border border-border px-4 py-2 text-sm font-semibold hover:border-primary/50 hover:text-primary sm:inline-flex">
-              {c.nav.signIn}
-            </Link>
-            <Link to="/login" search={{ mode: "signup" }} className="btn-brand inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-bold">
-              {c.nav.cta} <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-            <button
-              type="button"
-              onClick={() => setMenu((v) => !v)}
-              aria-label="Menu"
-              className="grid h-10 w-10 place-items-center rounded-lg border border-border lg:hidden"
-            >
-              {menu ? <X className="h-4.5 w-4.5" /> : <Menu className="h-4.5 w-4.5" />}
-            </button>
-          </div>
-        </div>
-
-        {menu && (
-          <nav className="border-t border-border/60 bg-background px-4 py-3 text-base lg:hidden">
-            {[...navLinks].map((l) => (
-              <a
-                key={l.href}
-                href={l.href}
-                onClick={() => setMenu(false)}
-                className="block rounded-lg px-3 py-2.5 font-semibold text-muted-foreground hover:bg-muted hover:text-foreground"
-              >
-                {l.label}
-              </a>
-            ))}
-            <Link to="/catalog" search={{}} onClick={() => setMenu(false)} className="block rounded-lg px-3 py-2.5 font-bold text-primary hover:bg-primary/10">
-              Master Catalog
-            </Link>
-            <Link to="/login" onClick={() => setMenu(false)} className="block rounded-lg px-3 py-2.5 font-semibold text-muted-foreground hover:bg-muted hover:text-foreground">
-              {c.nav.signIn}
-            </Link>
-          </nav>
-        )}
-      </header>
+      <PublicHeader siteName={siteName} logoUrl={logoUrl} content={c} />
 
       {/* ── Hero ────────────────────────────────────────── */}
       <section className="relative isolate overflow-hidden">
