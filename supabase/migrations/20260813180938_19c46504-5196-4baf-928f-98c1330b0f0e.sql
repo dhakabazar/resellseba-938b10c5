@@ -1,0 +1,1 @@
+update public.global_settings set landing_content = jsonb_set(jsonb_set(coalesce(landing_content, '{}'::jsonb), '{features,title}', '"যেসব সুবিধা পাবেন"'::jsonb), '{features,subtitle}', '"প্রোডাক্ট থেকে পেমেন্ট — সবকিছু এক প্যানেলে"'::jsonb) where id = 1;
