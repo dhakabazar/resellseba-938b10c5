@@ -30,14 +30,21 @@ function publish(next: AuthState) {
 }
 
 async function loadAccess(userId: string): Promise<{ roles: Role[]; permissions: string[] }> {
-  const [rolesRes, permsRes] = await Promise.all([
-    supabase.from("user_roles").select("role").eq("user_id", userId),
-    supabase.rpc("my_permissions"),
-  ]);
+  console.log("[Auth] Loading access for user:", userId);
+  try {
+    const [rolesRes, permsRes] = await Promise.all([
+      supabase.from("user_roles").select("role").eq("user_id", userId),
+      supabase.rpc("my_permissions"),
+    ]);
 
-  const roles = rolesRes.error ? [] : (rolesRes.data ?? []).map((row: any) => row.role as Role);
-  const permissions = permsRes.error ? [] : ((permsRes.data as string[] | null) ?? []);
-  return { roles, permissions };
+    const roles = rolesRes.error ? [] : (rolesRes.data ?? []).map((row: any) => row.role as Role);
+    const permissions = permsRes.error ? [] : ((permsRes.data as string[] | null) ?? []);
+    console.log("[Auth] Loaded roles:", roles, "permissions:", permissions.length);
+    return { roles, permissions };
+  } catch (err) {
+    console.error("[Auth] Error loading access:", err);
+    return { roles: [], permissions: [] };
+  }
 }
 
 function applySession(session: Session | null) {
@@ -66,10 +73,15 @@ function applySession(session: Session | null) {
 
   const version = ++authVersion;
 
+  console.log("[Auth] Identity change, setting loading=true. Version:", version);
   publish({ session, user: session.user, roles: [], permissions: [], loading: true });
 
   void loadAccess(session.user.id).then(({ roles, permissions }) => {
-    if (version !== authVersion) return;
+    if (version !== authVersion) {
+      console.log("[Auth] Access load finished but version mismatch. Current:", authVersion, "Finished:", version);
+      return;
+    }
+    console.log("[Auth] Access load finished, setting loading=false. Roles:", roles);
     publish({ session, user: session.user, roles, permissions, loading: false });
   });
 }
