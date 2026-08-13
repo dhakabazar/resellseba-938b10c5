@@ -288,16 +288,25 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
           </div>
 
           <div className="relative animate-scale-in-slow animation-delay-300">
-            <div className="surface-card overflow-hidden p-2 shadow-[var(--shadow-elegant)] animate-float">
+            {/* soft ambient glow behind the banner so any image blends in */}
+            <div className="pointer-events-none absolute -inset-6 -z-10 rounded-[2rem] bg-[image:var(--gradient-brand)] opacity-20 blur-2xl" />
+            <div className="animate-float relative overflow-hidden rounded-2xl shadow-[var(--shadow-elegant)]">
               {banner ? (
-                <img src={banner} alt={siteName} className="aspect-[4/3] w-full rounded-xl object-cover" />
+                <>
+                  <img src={banner} alt={siteName} className="aspect-[4/3] w-full object-cover" />
+                  {/* gentle vignette + tint keeps bright, dark or busy images looking consistent */}
+                  <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-background/35 via-transparent to-background/10" />
+                </>
               ) : (
-                <div className="grid aspect-[4/3] w-full place-items-center rounded-xl bg-[image:var(--gradient-brand)] text-primary-foreground">
+                <div className="grid aspect-[4/3] w-full place-items-center bg-[image:var(--gradient-brand)] text-primary-foreground">
                   <Boxes className="h-16 w-16 opacity-80" />
                 </div>
               )}
+              {/* hairline inner ring instead of a hard border */}
+              <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-inset ring-foreground/10" />
             </div>
           </div>
+
         </div>
       </section>
 
