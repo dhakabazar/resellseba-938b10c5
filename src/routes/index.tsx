@@ -31,7 +31,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "'''Do not make any visual modifications. The phrases I write are commands to understand what I want, not to be written down. Understand their content well, then execute what is required.'''\n                                            \n                                            hi",
+          "Bangladesh er first-class reseller platform. Product listing, courier, payment, marketing — ekta panel-e sob.",
       },
       { property: "og:title", content: "Reseller Platform — Nijer online store, zero investment" },
       { property: "og:description", content: "Bangladesh er first-class reseller platform. Product listing, courier, payment, marketing — ekta panel-e sob." },
