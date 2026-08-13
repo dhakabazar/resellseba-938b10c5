@@ -625,7 +625,7 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
               search={{}}
               className="inline-flex items-center gap-2 rounded-xl border border-primary-foreground/30 px-7 py-3.5 text-sm font-bold text-primary-foreground hover:bg-primary-foreground/10 sm:text-base"
             >
-              <Layers className="h-4 w-4" /> Catalog
+              <Layers className="h-4 w-4" /> প্রোডাক্টস
             </Link>
           </div>
         </div>
@@ -652,7 +652,7 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
             <ul className="mt-3 space-y-2 text-sm">
               <li><Link to="/login" search={{ mode: "signup" }} className="text-muted-foreground hover:text-primary">{c.nav.cta}</Link></li>
               <li><Link to="/login" className="text-muted-foreground hover:text-primary">{c.nav.signIn}</Link></li>
-              <li><Link to="/catalog" search={{}} className="text-muted-foreground hover:text-primary">Master Catalog</Link></li>
+              <li><Link to="/catalog" search={{}} className="text-muted-foreground hover:text-primary">প্রোডাক্টস</Link></li>
             </ul>
           </div>
         </div>
