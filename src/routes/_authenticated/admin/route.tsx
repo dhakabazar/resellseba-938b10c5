@@ -87,13 +87,13 @@ const NAV: NavEntry[] = [
     items: [
       { label: "Marketing", to: "/admin/marketing", icon: <Megaphone className="h-4 w-4" /> },
       { label: "Notifications", to: "/admin/notifications", icon: <Bell className="h-4 w-4" /> },
-      { label: "Landing page", to: "/admin/landing", icon: <FileText className="h-4 w-4" /> },
     ],
   },
   {
     label: "System",
     icon: <Cog className="h-4 w-4" />,
     items: [
+      { label: "Landing page", to: "/admin/landing", icon: <FileText className="h-4 w-4" /> },
       { label: "Couriers", to: "/admin/couriers", icon: <Truck className="h-4 w-4" /> },
       { label: "Payment methods", to: "/admin/payments", icon: <Wallet className="h-4 w-4" /> },
 
