@@ -151,7 +151,7 @@ function AdminLayout() {
   const pathname = useLocation({ select: (location) => location.pathname });
   const isSuperAdmin = roles.includes("super_admin");
   const isStaff = roles.includes("staff");
-  const canEnter = isSuperAdmin || (isStaff && permissions.length > 0);
+  const canEnter = isSuperAdmin || isStaff;
   const routePermission = Object.entries(ROUTE_PERMISSIONS)
     .sort(([a], [b]) => b.length - a.length)
     .find(([route]) => pathname === route || pathname.startsWith(`${route}/`))?.[1];
