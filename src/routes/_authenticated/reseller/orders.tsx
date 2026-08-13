@@ -448,6 +448,8 @@ function OrdersPage() {
         }
       />
 
+      <DepositNotice status={deposit} compact />
+
       {/* Merged search: mode select inside the box */}
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <div className="w-full sm:w-auto sm:min-w-[18rem] sm:flex-1">
