@@ -25,7 +25,7 @@ import {
   ClipboardList,
   Send,
   PackageCheck,
-  PiggyBank,
+  Coins,
   BanknoteArrowDown,
   type LucideIcon,
 } from "lucide-react";
