@@ -28,8 +28,16 @@ import {
   Coins,
   BanknoteArrowDown,
   type LucideIcon,
+  HelpCircle,
 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+
 import { bdt } from "@/lib/finance-report";
 
 export const Route = createFileRoute("/")({
