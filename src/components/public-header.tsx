@@ -147,7 +147,7 @@ export function PublicHeader({
       </div>
 
       {menu && (
-        <nav className="border-t border-border/60 bg-background px-4 py-3 text-base lg:hidden">
+        <nav className="border-t border-border/60 bg-background px-4 py-3 text-sm lg:hidden">
           {navLinks.map((l) =>
             l.to ? (
               <Link
