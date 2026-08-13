@@ -710,7 +710,8 @@ function EditModal({
 type DepositRow = {
   id: string;
   amount: number;
-  kind: string;
+  method: string | null;
+  reference: string | null;
   note: string | null;
   created_at: string;
 };
@@ -729,7 +730,8 @@ function DepositModal({
   const [frozen, setFrozen] = useState(String(reseller.frozen_amount ?? 0));
   const [rows, setRows] = useState<DepositRow[]>([]);
   const [amount, setAmount] = useState("");
-  const [kind, setKind] = useState("deposit");
+  const [method, setMethod] = useState("bkash");
+  const [reference, setReference] = useState("");
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -744,7 +746,7 @@ function DepositModal({
     setLoading(true);
     const { data, error } = await supabase
       .from("reseller_deposits")
-      .select("id,amount,kind,note,created_at")
+      .select("id,amount,method,reference,note,created_at")
       .eq("reseller_id", reseller.id)
       .order("created_at", { ascending: false });
     if (error) toast.error(error.message);
@@ -780,13 +782,15 @@ function DepositModal({
     const { error } = await supabase.from("reseller_deposits").insert({
       reseller_id: reseller.id,
       amount: amt,
-      kind,
+      method: method || null,
+      reference: reference || null,
       note: note || null,
     });
     setBusy(false);
     if (error) return toast.error(error.message);
     setAmount("");
     setNote("");
+    setReference("");
     toast.success("লেজার এন্ট্রি যোগ হয়েছে");
     loadRows();
   }
@@ -873,18 +877,25 @@ function DepositModal({
 
           <form onSubmit={addEntry} className="space-y-3 rounded-md border p-3">
             <div className="text-xs font-semibold">নতুন এন্ট্রি</div>
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-2">
               <div>
-                <label className="mb-1 block text-xs font-medium">অ্যামাউন্ট (৳)</label>
+                <label className="mb-1 block text-xs font-medium">অ্যামাউন্ট (৳) — ফেরত হলে − দিন</label>
                 <input value={amount} onChange={(e) => setAmount(e.target.value)} type="number" className={cls} />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium">ধরন</label>
-                <select value={kind} onChange={(e) => setKind(e.target.value)} className={cls}>
-                  <option value="deposit">Deposit</option>
+                <label className="mb-1 block text-xs font-medium">মেথড</label>
+                <select value={method} onChange={(e) => setMethod(e.target.value)} className={cls}>
+                  <option value="bkash">bKash</option>
+                  <option value="nagad">Nagad</option>
+                  <option value="rocket">Rocket</option>
+                  <option value="bank">Bank</option>
+                  <option value="cash">Cash</option>
                   <option value="adjustment">Adjustment</option>
-                  <option value="refund">Refund</option>
                 </select>
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium">রেফারেন্স / TrxID</label>
+                <input value={reference} onChange={(e) => setReference(e.target.value)} className={cls} />
               </div>
               <div>
                 <label className="mb-1 block text-xs font-medium">নোট</label>
@@ -907,7 +918,8 @@ function DepositModal({
                 <tr>
                   <th className="p-2">Date</th>
                   <th>Amount</th>
-                  <th>Kind</th>
+                  <th>Method</th>
+                  <th>Reference</th>
                   <th>Note</th>
                 </tr>
               </thead>
@@ -916,13 +928,14 @@ function DepositModal({
                   <tr key={r.id} className="border-t">
                     <td className="p-2">{new Date(r.created_at).toLocaleDateString()}</td>
                     <td className="font-medium">৳{Number(r.amount).toLocaleString()}</td>
-                    <td className="capitalize">{r.kind}</td>
+                    <td className="capitalize">{r.method ?? "—"}</td>
+                    <td className="text-muted-foreground">{r.reference ?? "—"}</td>
                     <td className="text-muted-foreground">{r.note ?? "—"}</td>
                   </tr>
                 ))}
                 {!loading && rows.length === 0 && (
                   <tr>
-                    <td colSpan={4} className="p-6 text-center text-muted-foreground">
+                    <td colSpan={5} className="p-6 text-center text-muted-foreground">
                       কোনো ডিপোজিট এন্ট্রি নেই।
                     </td>
                   </tr>
