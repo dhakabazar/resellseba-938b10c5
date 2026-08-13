@@ -8,7 +8,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 });
 
 function DashboardRouter() {
-  const { roles, loading, user } = useAuth();
+  const { roles, permissions, loading, user } = useAuth();
   const nav = useNavigate();
   const done = useRef(false);
 
