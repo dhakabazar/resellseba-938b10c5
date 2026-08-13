@@ -31,6 +31,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { NewOrderModal } from "@/components/NewOrderModal";
 import { toast } from "sonner";
 import { useDepositStatus } from "@/lib/deposit";
+import { DEFAULT_DEPOSIT_TEXTS, fillText, useDepositSettings } from "@/lib/deposit-settings";
 import { bdt } from "@/lib/finance-report";
 import { DepositNotice } from "@/components/deposit-notice";
 import { useServerFn } from "@tanstack/react-start";
@@ -162,6 +163,7 @@ function OrdersPage() {
   const [page, setPage] = useState(1);
   const [statusModal, setStatusModal] = useState<{ open: boolean; orderId: string; currentStatus: string; isBulk?: boolean } | null>(null);
   const { status: deposit } = useDepositStatus(resellerId);
+  const { texts: depositTexts } = useDepositSettings();
   const [confirmModal, setConfirmModal] = useState<{
     open: boolean;
     title: string;
@@ -1017,6 +1019,7 @@ function OrdersPage() {
           allProducts={allProducts}
           depositBlocked={deposit.blocked}
           depositDue={deposit.due}
+          depositBlockText={depositTexts.orderBlockToast}
         />
       )}
 
@@ -1052,7 +1055,7 @@ function OrdersPage() {
                     disabled={loading}
                     onClick={async () => {
                       if (s === "confirmed" && deposit.blocked) {
-                        toast.error(`সিকিউরিটি ডিপোজিট বাকি — ${bdt(deposit.due)}। ডিপোজিট জমা না দিলে অর্ডার কনফার্ম করা যাবে না।`);
+                        toast.error(fillText(depositTexts.orderBlockToast, { due: deposit.due, required: deposit.requiredAmount, balance: deposit.balance, frozen: deposit.frozenAmount }));
                         return;
                       }
                       if (statusModal.isBulk) {
@@ -1140,6 +1143,7 @@ function OrderDrawer({
   allProducts,
   depositBlocked,
   depositDue,
+  depositBlockText,
 }: { 
   orderId: string; 
   onClose: () => void; 
@@ -1147,6 +1151,7 @@ function OrderDrawer({
   allProducts: any[];
   depositBlocked?: boolean;
   depositDue?: number;
+  depositBlockText?: string;
 }) {
   const fetchDetails = useServerFn(getOrderDetails);
   const recheckStatus = useServerFn(recheckCourierStatus);
@@ -1183,7 +1188,7 @@ function OrderDrawer({
 
   async function setStatus(next: "confirmed" | "cancelled") {
     if (next === "confirmed" && depositBlocked) {
-      toast.error(`সিকিউরিটি ডিপোজিট বাকি — ${bdt(depositDue ?? 0)}। ডিপোজিট জমা না দিলে অর্ডার কনফার্ম করা যাবে না।`);
+      toast.error(fillText(depositBlockText ?? DEFAULT_DEPOSIT_TEXTS.orderBlockToast, { due: depositDue ?? 0 }));
       return;
     }
     setBusy(true);

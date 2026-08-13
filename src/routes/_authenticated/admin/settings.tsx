@@ -25,9 +25,6 @@ function SettingsPage() {
   const [favicon, setFavicon] = useState<UploadedImage[]>([]);
   const [og, setOg] = useState<UploadedImage[]>([]);
   const [labelSize, setLabelSize] = useState("3x4");
-  const [depositOn, setDepositOn] = useState(false);
-  const [depositAmount, setDepositAmount] = useState("0");
-  const [frozenAmount, setFrozenAmount] = useState("0");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
 
@@ -45,9 +42,6 @@ function SettingsPage() {
         setEmail(data.contact_email ?? "");
         setFlagshipCode((data as any).flagship_reseller_code ?? "");
         setLabelSize((data as any).label_size || "3x4");
-        setDepositOn(Boolean((data as any).deposit_trigger_default_on));
-        setDepositAmount(String((data as any).deposit_default_amount ?? 0));
-        setFrozenAmount(String((data as any).deposit_default_frozen ?? 0));
         if (data.logo_url) setLogo([{ path: "", url: data.logo_url, bytes: 0 }]);
         if ((data as any).favicon_url) setFavicon([{ path: "", url: (data as any).favicon_url, bytes: 0 }]);
         if (data.og_image_url) setOg([{ path: "", url: data.og_image_url, bytes: 0 }]);
@@ -76,9 +70,6 @@ function SettingsPage() {
       og_image_url: og[0]?.url ?? null,
       flagship_reseller_code: flagshipCode || null,
       label_size: labelSize,
-      deposit_trigger_default_on: depositOn,
-      deposit_default_amount: Number(depositAmount) || 0,
-      deposit_default_frozen: Number(frozenAmount) || 0,
     } as any);
     setBusy(false);
     if (error) toast.error(error.message);
@@ -166,49 +157,6 @@ function SettingsPage() {
             </Field>
           </div>
         </div>
-
-        <div className="surface-card space-y-3 p-6 lg:col-span-2">
-          <h3 className="text-sm font-semibold">Security deposit defaults</h3>
-          <p className="text-xs text-muted-foreground">
-            নতুন reseller signup করলে এই ডিফল্ট ভ্যালুগুলো বসবে — পরে প্রতিটি reseller-এর Edit থেকে আলাদা করে বদলানো যাবে।
-            ট্রিগার অন থাকলে reseller নির্দিষ্ট অ্যামাউন্ট ডিপোজিট না করা পর্যন্ত অর্ডার Confirmed করতে পারবে না।
-          </p>
-          <label className="flex cursor-pointer items-start gap-3 rounded-md border bg-muted/30 p-3">
-            <input
-              type="checkbox"
-              checked={depositOn}
-              onChange={(e) => setDepositOn(e.target.checked)}
-              className="mt-0.5 h-4 w-4"
-            />
-            <span className="text-xs">
-              <span className="block font-medium">ডিপোজিট ট্রিগার ডিফল্ট অন</span>
-              <span className="text-muted-foreground">অফ রাখলে নতুন reseller-দের ডিপোজিট ছাড়াই কাজ চলবে।</span>
-            </span>
-          </label>
-          <div className="grid gap-3 md:grid-cols-2">
-            <Field label="ডিফল্ট ডিপোজিট অ্যামাউন্ট (৳)">
-              <input
-                type="number"
-                min={0}
-                step="1"
-                value={depositAmount}
-                onChange={(e) => setDepositAmount(e.target.value)}
-                className={inp}
-              />
-            </Field>
-            <Field label="ডিফল্ট ফ্রিজ অ্যামাউন্ট (৳) — উইথড্র করা যাবে না">
-              <input
-                type="number"
-                min={0}
-                step="1"
-                value={frozenAmount}
-                onChange={(e) => setFrozenAmount(e.target.value)}
-                className={inp}
-              />
-            </Field>
-          </div>
-        </div>
-
 
         <div className="surface-card space-y-3 p-6 lg:col-span-2">
           <h3 className="text-sm font-semibold">Contact</h3>

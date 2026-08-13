@@ -7,6 +7,7 @@ import { Loader2, Wallet, TrendingUp, Clock, CheckCircle2, Pencil, Save } from "
 import { toast } from "sonner";
 import { useDepositStatus } from "@/lib/deposit";
 import { DepositNotice } from "@/components/deposit-notice";
+import { fillText, useDepositSettings } from "@/lib/deposit-settings";
 
 export const Route = createFileRoute("/_authenticated/reseller/payouts")({
   component: PayoutsPage,
@@ -43,6 +44,7 @@ function PayoutsPage() {
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState(false);
   const { status: deposit } = useDepositStatus(rid);
+  const { texts: depositTexts } = useDepositSettings();
 
   useEffect(() => { if (user) load(); }, [user]);
 
@@ -129,7 +131,7 @@ function PayoutsPage() {
 
       {(deposit.required || deposit.frozenAmount > 0 || deposit.rows.length > 0) && (
         <div className="surface-card mb-6 p-5">
-          <div className="mb-3 text-sm font-semibold">সিকিউরিটি ডিপোজিট</div>
+          <div className="mb-3 text-sm font-semibold">{depositTexts.sectionTitle}</div>
           <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
             <MiniStat label="জমা (Paid)" value={deposit.balance} />
             <MiniStat label="বাকি (Due)" value={deposit.due} tone={deposit.due > 0 ? "bad" : "good"} />
@@ -138,14 +140,8 @@ function PayoutsPage() {
           </div>
 
           <ul className="mb-3 space-y-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-[11px] leading-relaxed text-amber-700 dark:text-amber-300">
-            <li>
-              • ডিপোজিট নিজে থেকে অ্যাড করা যায় না — bKash/Nagad/Bank-এ পাঠিয়ে <b>admin কে TrxID সহ জানান</b>, admin ভেরিফাই
-              করে লেজারে যোগ করবেন।
-            </li>
-            <li>
-              • ডিপোজিট বা ফ্রিজ করা অ্যামাউন্ট উইথড্র করতে চাইলে <b>আগে admin কে জানাতে হবে</b> — এই অ্যামাউন্ট ফেরত নিলে
-              আপনার reseller অ্যাকাউন্ট <b>বন্ধ</b> হয়ে যাবে এবং নতুন অর্ডার নেওয়া যাবে না।
-            </li>
+            <li>• {depositTexts.howToDeposit}</li>
+            <li>• {depositTexts.withdrawWarning}</li>
           </ul>
 
           {deposit.rows.length > 0 && (
@@ -299,7 +295,7 @@ function PayoutsPage() {
           <input value={amount} onChange={(e) => setAmount(e.target.value)} type="number" min={1} max={sum.available} className={inp} required />
           {deposit.frozenAmount > 0 && (
             <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
-              ৳{deposit.frozenAmount.toLocaleString()} ফ্রিজ করা আছে — এই অ্যামাউন্ট উইথড্র করা যাবে না।
+              {fillText(depositTexts.payoutFrozenHint, { frozen: deposit.frozenAmount })}
             </p>
           )}
           <p className="mt-1 text-xs text-muted-foreground">
