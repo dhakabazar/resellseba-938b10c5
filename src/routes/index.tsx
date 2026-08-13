@@ -246,26 +246,26 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
       {/* ── Hero ────────────────────────────────────────── */}
       <section className="relative isolate overflow-hidden">
         <div className="pointer-events-none absolute inset-0 -z-10 bg-[image:var(--gradient-hero)]" />
-        <div className="pointer-events-none absolute -top-40 -left-32 -z-10 h-96 w-96 rounded-full bg-primary/25 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-40 -right-24 -z-10 h-96 w-96 rounded-full bg-accent/25 blur-3xl" />
+        <div className="pointer-events-none absolute -top-40 -left-32 -z-10 h-96 w-96 rounded-full bg-primary/25 blur-3xl animate-blob-drift" />
+        <div className="pointer-events-none absolute -bottom-40 -right-24 -z-10 h-96 w-96 rounded-full bg-accent/25 blur-3xl animate-blob-drift-slow" />
 
         <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 pt-12 pb-14 sm:px-6 sm:pt-20 sm:pb-20 lg:grid-cols-[1.05fr_.95fr] lg:gap-14">
           <div className="text-center lg:text-left">
-            <div className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-3.5 py-1.5 text-[11px] font-semibold text-primary sm:text-xs">
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-3.5 py-1.5 text-[11px] font-semibold text-primary sm:text-xs animate-fade-in-up animation-delay-100">
               <Sparkles className="h-3.5 w-3.5 shrink-0" />
               <span className="truncate">{c.hero.badge}</span>
             </div>
 
-            <h1 className="mt-5 text-balance text-[30px] font-black leading-[1.22] tracking-tight sm:text-5xl sm:leading-[1.12] lg:text-[56px]">
+            <h1 className="mt-5 text-balance text-[30px] font-black leading-[1.22] tracking-tight sm:text-5xl sm:leading-[1.12] lg:text-[56px] animate-fade-in-up animation-delay-200">
               {c.hero.titleStart}{" "}
               <span className="bg-[image:var(--gradient-brand)] bg-clip-text text-transparent">{c.hero.titleHighlight}</span>
             </h1>
 
-            <p className="mx-auto mt-5 max-w-xl text-pretty text-[15px] leading-relaxed text-muted-foreground sm:text-base lg:mx-0 lg:text-lg">
+            <p className="mx-auto mt-5 max-w-xl text-pretty text-[15px] leading-relaxed text-muted-foreground sm:text-base lg:mx-0 lg:text-lg animate-fade-in-up animation-delay-300">
               {c.hero.subtitle}
             </p>
 
-            <div className="mt-7 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-center lg:justify-start">
+            <div className="mt-7 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-center lg:justify-start animate-fade-in-up animation-delay-400">
               <Link
                 to="/login"
                 search={{ mode: "signup" }}
@@ -282,7 +282,7 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
             </div>
 
             {c.hero.badges.length > 0 && (
-              <div className="mt-7 flex flex-wrap items-center justify-center gap-2 text-[11px] font-semibold sm:text-xs lg:justify-start">
+              <div className="mt-7 flex flex-wrap items-center justify-center gap-2 text-[11px] font-semibold sm:text-xs lg:justify-start animate-fade-in-up animation-delay-500">
                 {c.hero.badges.map((b) => (
                   <span key={b} className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 px-3 py-1.5">
                     <Check className="h-3.5 w-3.5 shrink-0 text-primary" /> {b}
@@ -292,8 +292,8 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
             )}
           </div>
 
-          <div className="relative">
-            <div className="surface-card overflow-hidden p-2 shadow-[var(--shadow-elegant)]">
+          <div className="relative animate-scale-in-slow animation-delay-300">
+            <div className="surface-card overflow-hidden p-2 shadow-[var(--shadow-elegant)] animate-float">
               {banner ? (
                 <img src={banner} alt={siteName} className="aspect-[4/3] w-full rounded-xl object-cover" />
               ) : (
