@@ -35,6 +35,28 @@ export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminLayout,
 });
 
+/** Which permission unlocks each admin route. Super admin always sees everything. */
+const ROUTE_PERMISSIONS: Record<string, string[]> = {
+  "/admin": ["dashboard.view"],
+  "/admin/products": ["products.view", "products.manage"],
+  "/admin/brands": ["brands.manage"],
+  "/admin/categories": ["categories.manage"],
+  "/admin/orders": ["orders.view", "orders.edit", "orders.create", "orders.delete"],
+  "/admin/financials": ["finance.view"],
+  "/admin/business-report": ["reports.view"],
+  "/admin/payouts": ["payouts.manage"],
+  "/admin/commissions": ["commissions.manage"],
+  "/admin/resellers": ["resellers.manage"],
+  "/admin/marketing": ["marketing.manage"],
+  "/admin/notifications": ["notifications.manage"],
+  "/admin/landing": ["landing.manage"],
+  "/admin/couriers": ["couriers.manage"],
+  "/admin/payments": ["payments.manage"],
+  "/admin/staff": ["staff.manage"],
+  "/admin/audit": ["audit.view"],
+  "/admin/settings": ["settings.manage"],
+};
+
 const NAV: NavEntry[] = [
   { label: "Dashboard", to: "/admin", icon: <LayoutDashboard className="h-4 w-4" />, end: true },
   {
@@ -84,9 +106,34 @@ const NAV: NavEntry[] = [
   },
 ];
 
+function allowed(to: string | undefined, permissions: string[], isSuperAdmin: boolean) {
+  if (isSuperAdmin) return true;
+  if (!to) return true;
+  const needed = ROUTE_PERMISSIONS[to];
+  if (!needed) return true;
+  return needed.some((p) => permissions.includes(p));
+}
+
+function filterNav(nav: NavEntry[], permissions: string[], isSuperAdmin: boolean): NavEntry[] {
+  if (isSuperAdmin) return nav;
+  const out: NavEntry[] = [];
+  for (const entry of nav) {
+    if (entry.items) {
+      const items = entry.items.filter((i) => allowed(i.to, permissions, isSuperAdmin));
+      if (items.length > 0) out.push({ ...entry, items });
+      continue;
+    }
+    if (allowed(entry.to, permissions, isSuperAdmin)) out.push(entry);
+  }
+  return out;
+}
+
 function AdminLayout() {
-  const { user, roles, loading } = useAuth();
+  const { user, roles, permissions, loading } = useAuth();
   const nav = useNavigate();
+  const isSuperAdmin = roles.includes("super_admin");
+  const isStaff = roles.includes("staff");
+  const canEnter = isSuperAdmin || (isStaff && permissions.length > 0);
   const [brand, setBrand] = useState<{ name: string; logoUrl: string | null; primary: string | null }>({
     name: "Admin",
     logoUrl: null,
@@ -95,8 +142,8 @@ function AdminLayout() {
 
   useEffect(() => {
     if (loading) return;
-    if (!roles.includes("super_admin")) nav({ to: "/dashboard", replace: true });
-  }, [loading, roles, nav]);
+    if (!canEnter) nav({ to: "/dashboard", replace: true });
+  }, [loading, canEnter, nav]);
 
   useEffect(() => {
     supabase
@@ -116,7 +163,7 @@ function AdminLayout() {
 
   useBrandingTheme(brand.primary);
 
-  if (loading || !user || !roles.includes("super_admin")) {
+  if (loading || !user || !canEnter) {
     return (
       <div className="grid min-h-screen place-items-center">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -126,11 +173,11 @@ function AdminLayout() {
 
   return (
     <AppShell
-      title="Super Admin"
-      brand={{ name: brand.name, sub: "Admin panel", logoUrl: brand.logoUrl }}
-      nav={NAV}
+      title={isSuperAdmin ? "Super Admin" : "Staff Panel"}
+      brand={{ name: brand.name, sub: isSuperAdmin ? "Admin panel" : "Staff panel", logoUrl: brand.logoUrl }}
+      nav={filterNav(NAV, permissions, isSuperAdmin)}
       user={{
-        name: user.user_metadata?.full_name ?? "Admin",
+        name: user.user_metadata?.full_name ?? (isSuperAdmin ? "Admin" : "Staff"),
         email: user.email ?? "",
       }}
     >
