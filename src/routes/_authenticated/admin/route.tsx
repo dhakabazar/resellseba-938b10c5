@@ -150,16 +150,25 @@ function AdminLayout() {
 
   useEffect(() => {
     if (loading) return;
+    
+    console.log(`[AdminLayout] Guard check: canEnter=${canEnter}, canViewRoute=${canViewRoute}, roles=${roles}`);
+
     if (!canEnter || !canViewRoute) {
       if (roles.includes("reseller") || roles.includes("leader")) {
+        console.log("[AdminLayout] Redirecting to /reseller");
         nav({ to: "/reseller", replace: true });
       } else if (isStaff && permissions.length === 0) {
+        console.log("[AdminLayout] Redirecting to /onboarding (staff with no perms)");
         nav({ to: "/onboarding", replace: true });
       } else if (pathname !== "/admin") {
+        console.log("[AdminLayout] Redirecting to /admin (root)");
         nav({ to: "/admin", replace: true });
-      } else {
+      } else if (roles.length > 0) {
+        // Fallback for when they have a role but not an admin one
+        console.log("[AdminLayout] Redirecting to /dashboard fallback");
         nav({ to: "/dashboard", replace: true });
       }
+      // If roles.length === 0, they might be in the middle of a fetch
     }
   }, [loading, canEnter, canViewRoute, roles, permissions, pathname, nav]);
 
