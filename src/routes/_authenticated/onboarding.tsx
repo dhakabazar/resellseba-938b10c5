@@ -29,6 +29,14 @@ function Onboarding() {
   const [payoutRouting, setPayoutRouting] = useState("");
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<"none" | "pending" | "active" | "suspended" | "rejected">("none");
+  const [storePrefix, setStorePrefix] = useState("/s/");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setStorePrefix(`${window.location.host}/s/`);
+    }
+  }, []);
+
 
   useEffect(() => {
     if (!user) return;
