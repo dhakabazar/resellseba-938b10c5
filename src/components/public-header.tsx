@@ -87,14 +87,19 @@ export function PublicHeader({
   const siteName = siteNameProp ?? loadedBrand.siteName;
   const logoUrl = logoUrlProp ?? loadedBrand.logoUrl;
   const c = content ?? loadedContent ?? FALLBACK;
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const isCatalog = pathname === "/catalog" || pathname.startsWith("/catalog/");
 
-  const navLinks: Array<{ href?: string; to?: "/catalog"; label?: string }> = [
-    { href: "#features", label: c.nav.features },
-    { href: "#about", label: c.nav.how },
-    { href: "#categories", label: c.nav.categories || "ক্যাটাগরি" },
-    { to: "/catalog" as const, label: "ক্যাটালগ" },
-    { href: "#faq", label: c.nav.faq || "FAQ" },
-  ];
+  const navLinks: Array<{ href?: string; to?: "/" | "/catalog"; label?: string; icon?: React.ReactNode }> = isCatalog
+    ? [{ to: "/", label: "হোমে ফিরুন", icon: <Home className="h-4 w-4" /> }]
+    : [
+        { href: "#features", label: c.nav.features },
+        { href: "#about", label: c.nav.how },
+        { href: "#categories", label: c.nav.categories || "ক্যাটাগরি" },
+        { to: "/catalog" as const, label: "ক্যাটালগ" },
+        { href: "#faq", label: c.nav.faq || "FAQ" },
+      ];
+
 
 
   return (
