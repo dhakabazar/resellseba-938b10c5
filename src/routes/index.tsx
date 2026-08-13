@@ -28,8 +28,16 @@ import {
   Coins,
   BanknoteArrowDown,
   type LucideIcon,
+  HelpCircle,
 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+
 import { bdt } from "@/lib/finance-report";
 
 export const Route = createFileRoute("/")({
@@ -58,10 +66,11 @@ const ICON_MAP: Record<string, LucideIcon> = {
 type Feature = { icon: string; title: string; desc: string };
 type FlowStep = { icon: string; title: string; desc: string };
 type Step = { title: string; desc: string };
+type FaqItem = { q: string; a: string };
 type HeroImage = { path: string; url: string; bytes: number } | null;
 type StatItem = { value: string; label: string };
 type LandingContent = {
-  nav: { features: string; how: string; pricing: string; signIn: string; cta: string };
+  nav: { features: string; how: string; pricing: string; signIn: string; cta: string; faq?: string };
   hero: {
     badge: string; titleStart: string; titleHighlight: string; subtitle: string;
     ctaPrimary: string; ctaSecondary: string; badges: string[];
@@ -71,12 +80,14 @@ type LandingContent = {
   about?: { badge: string; title: string; body: string; points: string[]; flow?: FlowStep[] };
   features: { title: string; subtitle: string; items: Feature[] };
   how: { title: string; subtitle: string; steps: Step[] };
+  faq?: { title: string; subtitle: string; items: FaqItem[] };
   cta: { badge: string; title: string; subtitle: string; button: string };
   footer: { tagline: string };
 };
 
+
 const FALLBACK: LandingContent = {
-  nav: { features: "ফিচার", how: "কীভাবে কাজ করে", pricing: "প্রাইসিং", signIn: "সাইন ইন", cta: "শুরু করুন" },
+  nav: { features: "ফিচার", how: "কীভাবে কাজ করে", pricing: "প্রাইসিং", faq: "FAQ", signIn: "সাইন ইন", cta: "শুরু করুন" },
   hero: {
     badge: "বাংলাদেশের রিসেলার প্ল্যাটফর্ম",
     titleStart: "নিজের অনলাইন স্টোর চালু করুন",
@@ -117,6 +128,18 @@ const FALLBACK: LandingContent = {
     ],
   },
   how: { title: "কীভাবে শুরু করবেন", subtitle: "", steps: [] },
+  faq: {
+    title: "সাধারণ প্রশ্ন",
+    subtitle: "রিসেলারদের মনে আসা কিছু প্রশ্ন ও উত্তর",
+    items: [
+      { q: "কীভাবে রিসেলার হতে পারব?", a: "সাইনআপ করে স্টোর সেটআপ করুন, প্রোডাক্ট লিস্ট করুন, আর কাস্টমারের অর্ডার প্যানেলে নিন। অ্যাডমিন অ্যাপ্রুভের পর সম্পূর্ণ অ্যাক্সেস পাবেন।" },
+      { q: "কত টাকা দিয়ে শুরু করতে হয়?", a: "কোনো সেটআপ ফি বা মাসিক ফি নেই। প্রোডাক্ট কিনে স্টক রাখতে হয় না — অর্ডার পেলে অ্যাডমিন প্যাকিং ও ডেলিভারি করে।" },
+      { q: "প্রোডাক্টের দাম কে ঠিক করে?", a: "অ্যাডমিন বেস কস্ট ও ডেলিভারি চার্জ দিয়ে দেয়। রিসেলার সেই কস্টের উপর নিজের মার্জিন/প্রফিট বসিয়ে বিক্রয় মূল্য ঠিক করেন।" },
+      { q: "ডেলিভারি ও কুরিয়ার কে করবে?", a: "Steadfast, Pathao, CarryBee — যেকোনো সক্রিয় কুরিয়ারে অ্যাডমিন বুকিং করে। আপনাকে শুধু ট্র্যাকিং আইডি কাস্টমারকে শেয়ার করতে হবে।" },
+      { q: "প্রফিট কীভাবে পাব?", a: "প্রতিটি ডেলিভারি সম্পন্ন অর্ডার থেকে আপনার প্যানেলে প্রফিট জমা হবে। উইথড্র রিকোয়েস্ট দিলে bKash/Nagad/ব্যাংকে পেমেন্ট করা হয়।" },
+      { q: "কাস্টমার কি আমার স্টোরের বাইরে কিছু দেখতে পাবে?", a: "না। কাস্টমার শুধু আপনার ব্র্যান্ডেড স্টোর, আপনার লিস্টিং ও আপনার দেওয়া তথ্যই দেখবে। অ্যাডমিন বা প্ল্যাটফর্মের কোনো তথ্য লিক হয় না।" },
+    ],
+  },
   cta: { badge: "", title: "শুরু করুন", subtitle: "", button: "সাইনআপ" },
   footer: { tagline: "" },
 };
@@ -219,6 +242,7 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
     { href: "#about", label: "কীভাবে কাজ করি" },
     { href: "#features", label: c.nav.features },
     { href: "#how", label: c.nav.how },
+    { href: "#faq", label: c.nav.faq || "FAQ" },
     { href: "#pricing", label: c.nav.pricing },
   ];
 
@@ -546,6 +570,35 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
         </div>
       </section>
 
+      {/* ── FAQ ─────────────────────────────────────────── */}
+      {c.faq && c.faq.items.length > 0 && (
+        <section id="faq" className="border-t border-border/60 bg-muted/30">
+          <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
+            <div className="mx-auto max-w-2xl text-center">
+              {c.faq.title && <h2 className="text-xl font-extrabold sm:text-3xl">{c.faq.title}</h2>}
+              {c.faq.subtitle && <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{c.faq.subtitle}</p>}
+            </div>
+            <div className="mt-8">
+              <Accordion type="single" collapsible className="w-full">
+                {c.faq.items.map((item, i) => (
+                  <AccordionItem key={i} value={`item-${i}`}>
+                    <AccordionTrigger className="text-sm font-semibold sm:text-base">
+                      <span className="flex items-center gap-2 text-left">
+                        <HelpCircle className="h-4 w-4 shrink-0 text-primary" />
+                        {item.q}
+                      </span>
+                    </AccordionTrigger>
+                    <AccordionContent className="text-sm leading-relaxed text-muted-foreground">
+                      {item.a}
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* ── CTA ─────────────────────────────────────────── */}
       <section id="pricing" className="px-4 pb-16 sm:px-6 sm:pb-24">
         <div className="relative mx-auto max-w-6xl overflow-hidden rounded-3xl bg-[image:var(--gradient-brand)] px-6 py-12 text-center sm:px-12 sm:py-16">
@@ -586,6 +639,7 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
               <li><a href="#about" className="text-muted-foreground hover:text-primary">কীভাবে কাজ করি</a></li>
               <li><a href="#features" className="text-muted-foreground hover:text-primary">{c.nav.features}</a></li>
               <li><a href="#how" className="text-muted-foreground hover:text-primary">{c.nav.how}</a></li>
+              <li><a href="#faq" className="text-muted-foreground hover:text-primary">{c.nav.faq || "FAQ"}</a></li>
             </ul>
           </div>
           <div>

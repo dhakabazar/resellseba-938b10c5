@@ -13,9 +13,10 @@ export const Route = createFileRoute("/_authenticated/admin/landing")({
 type Feature = { icon: string; title: string; desc: string };
 type Step = { title: string; desc: string };
 type FlowStep = { icon: string; title: string; desc: string };
+type FaqItem = { q: string; a: string };
 type StatItem = { value: string; label: string };
 type LandingContent = {
-  nav: { features: string; how: string; pricing: string; signIn: string; cta: string };
+  nav: { features: string; how: string; pricing: string; signIn: string; cta: string; faq?: string };
   hero: {
     badge: string;
     titleStart: string;
@@ -30,6 +31,7 @@ type LandingContent = {
   about?: { badge: string; title: string; body: string; points: string[]; flow?: FlowStep[] };
   features: { title: string; subtitle: string; items: Feature[] };
   how: { title: string; subtitle: string; steps: Step[] };
+  faq?: { title: string; subtitle: string; items: FaqItem[] };
   cta: { badge: string; title: string; subtitle: string; button: string };
   footer: { tagline: string };
 };
@@ -77,6 +79,7 @@ function LandingEditor() {
           <F label="Features"><I value={c.nav.features} onChange={(v) => update((d) => { d.nav.features = v; })} /></F>
           <F label="How it works"><I value={c.nav.how} onChange={(v) => update((d) => { d.nav.how = v; })} /></F>
           <F label="Pricing"><I value={c.nav.pricing} onChange={(v) => update((d) => { d.nav.pricing = v; })} /></F>
+          <F label="FAQ"><I value={c.nav.faq ?? ""} onChange={(v) => update((d) => { d.nav.faq = v; })} /></F>
           <F label="Sign in"><I value={c.nav.signIn} onChange={(v) => update((d) => { d.nav.signIn = v; })} /></F>
           <F label="CTA button"><I value={c.nav.cta} onChange={(v) => update((d) => { d.nav.cta = v; })} /></F>
         </Grid>
@@ -213,6 +216,26 @@ function LandingEditor() {
           ))}
           <button type="button" onClick={() => update((d) => { d.how.steps.push({ title: "নতুন স্টেপ", desc: "বর্ণনা" }); })} className="inline-flex items-center gap-1 rounded-md border px-3 py-1.5 text-xs hover:bg-muted">
             <Plus className="h-3.5 w-3.5" /> Step add
+          </button>
+        </div>
+      </Section>
+
+      <Section title="FAQ">
+        <F label="Title"><I value={c.faq?.title ?? ""} onChange={(v) => update((d) => { d.faq = { ...(d.faq ?? { title: "", subtitle: "", items: [] }), title: v }; })} /></F>
+        <F label="Subtitle"><T value={c.faq?.subtitle ?? ""} onChange={(v) => update((d) => { d.faq = { ...(d.faq ?? { title: "", subtitle: "", items: [] }), subtitle: v }; })} /></F>
+        <div className="space-y-3">
+          {(c.faq?.items ?? []).map((item, i) => (
+            <div key={i} className="rounded-lg border p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-muted-foreground">FAQ #{i + 1}</span>
+                <button type="button" onClick={() => update((d) => { d.faq!.items.splice(i, 1); })} className="text-destructive hover:opacity-70"><Trash2 className="h-3.5 w-3.5" /></button>
+              </div>
+              <F label="Question"><I value={item.q} onChange={(v) => update((d) => { d.faq!.items[i].q = v; })} /></F>
+              <F label="Answer"><T value={item.a} onChange={(v) => update((d) => { d.faq!.items[i].a = v; })} /></F>
+            </div>
+          ))}
+          <button type="button" onClick={() => update((d) => { d.faq = { ...(d.faq ?? { title: "", subtitle: "", items: [] }), items: [...(d.faq?.items ?? []), { q: "", a: "" }] }; })} className="inline-flex items-center gap-1 rounded-md border px-3 py-1.5 text-xs hover:bg-muted">
+            <Plus className="h-3.5 w-3.5" /> FAQ add
           </button>
         </div>
       </Section>
