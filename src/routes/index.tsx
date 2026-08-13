@@ -302,17 +302,6 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
                 </div>
               )}
             </div>
-            {statItems[0] && (
-              <div className="surface-card absolute -bottom-5 left-4 flex items-center gap-2.5 px-4 py-3 sm:left-8">
-                <span className="grid h-9 w-9 place-items-center rounded-lg bg-primary/10 text-primary">
-                  <ShoppingBag className="h-4.5 w-4.5" />
-                </span>
-                <span>
-                  <span className="block text-base font-black leading-none">{statItems[0].value}</span>
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{statItems[0].label}</span>
-                </span>
-              </div>
-            )}
           </div>
         </div>
       </section>
