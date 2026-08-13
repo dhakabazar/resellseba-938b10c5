@@ -356,16 +356,9 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
 
       {/* ── About ───────────────────────────────────────── */}
       {(c.about?.title || c.about?.body) && (
-        <section id="about" className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
+        <section id="about" className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
           <div className="grid items-center gap-10 lg:grid-cols-2">
             <div>
-              {c.about.badge && (
-                <div className="inline-flex items-center gap-1.5 rounded-full border border-accent/30 bg-accent/10 px-3 py-1 text-[11px] font-bold text-accent-foreground">
-                  <Star className="h-3 w-3" /> {c.about.badge}
-                </div>
-              )}
-              <h2 className="mt-4 text-balance text-3xl font-black tracking-tight sm:text-4xl">{c.about.title}</h2>
-              <p className="mt-4 text-pretty text-sm leading-relaxed text-muted-foreground sm:text-base">{c.about.body}</p>
               {(c.about.points?.length ?? 0) > 0 && (
                 <ul className="mt-6 grid gap-3 sm:grid-cols-2">
                   {c.about.points.map((p) => (
