@@ -26,8 +26,6 @@ function DashboardRouter() {
       done.current = true;
       nav({ to: "/reseller", replace: true });
     } else if (isStaff && permissions.length === 0) {
-      // Staff but no permissions yet - wait or go to onboarding? 
-      // Usually staff are managed by admin, but if they are stuck, onboarding is a safe fallback.
       done.current = true;
       nav({ to: "/onboarding", replace: true });
     } else {
