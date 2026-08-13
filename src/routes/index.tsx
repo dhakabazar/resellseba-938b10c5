@@ -94,7 +94,21 @@ const FALLBACK: LandingContent = {
       "সেল, প্রফিট, কমিশন ও ডিউ পেমেন্ট রিপোর্ট",
     ],
   },
-  features: { title: "ফিচার", subtitle: "", items: [] },
+  features: {
+    title: "যেসব সুবিধা পাবেন",
+    subtitle: "প্রোডাক্ট থেকে পেমেন্ট — সবকিছু এক প্যানেলে",
+    items: [
+      { icon: "Boxes", title: "হাজারো প্রোডাক্ট, এক ক্লিকে লিস্ট", desc: "ভেরিফাইড ক্যাটালগ, HD ছবি, SEO কন্টেন্ট — স্টক কিনতে হবে না।" },
+      { icon: "Wallet", title: "নিজের প্রফিট নিজে ঠিক করুন", desc: "কস্ট দেখেই মার্জিন বসান, পুরো প্রফিট আপনার।" },
+      { icon: "Truck", title: "কুরিয়ার বুকিং আমরা করি", desc: "Steadfast, Pathao, CarryBee — প্যাকেজিং থেকে ট্র্যাকিং পর্যন্ত।" },
+      { icon: "Globe", title: "নিজের ব্র্যান্ডেড স্টোর", desc: "কাস্টম ডোমেইন, লোগো, কালার, থিম — কাস্টমার শুধু আপনাকে দেখবে।" },
+      { icon: "Wallet", title: "পেমেন্ট সবচেয়ে সহজ", desc: "bKash, Nagad, Rocket, SSLCommerz, EPS — COD + অনলাইন।" },
+      { icon: "Megaphone", title: "Ads ট্র্যাকিং অটো", desc: "Facebook Pixel/CAPI + TikTok Events API — কোন অ্যাডে কত সেল।" },
+      { icon: "BarChart3", title: "লাইভ প্রফিট রিপোর্ট", desc: "সেল, রেভিনিউ, ডিউ, রিটার্ন — সব রিয়েল-টাইমে।" },
+      { icon: "ShieldCheck", title: "ডেটা সম্পূর্ণ প্রাইভেট", desc: "প্রতিটি রিসেলারের অর্ডার ও কাস্টমার ডেটা আলাদা।" },
+      { icon: "Sparkles", title: "টিম ও কমিশন সিস্টেম", desc: "স্টাফ পারমিশন, লিডার রিসেলার — ইনকাম বাড়ান।" },
+    ],
+  },
   how: { title: "কীভাবে শুরু করবেন", subtitle: "", steps: [] },
   cta: { badge: "", title: "শুরু করুন", subtitle: "", button: "সাইনআপ" },
   footer: { tagline: "" },
@@ -377,13 +391,11 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
                 const Icon = ICON_MAP[f.icon] ?? Sparkles;
                 return (
                   <div key={i} className={`surface-card p-5 ${i % 2 ? "sm:translate-y-6" : ""}`}>
-                    <div className="flex items-center gap-2.5">
-                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[image:var(--gradient-brand)] text-primary-foreground">
-                        <Icon className="h-4.5 w-4.5" />
-                      </span>
-                      <h3 className="min-w-0 flex-1 truncate text-sm font-bold">{f.title}</h3>
-                    </div>
-                    <p className="mt-2 line-clamp-3 text-xs leading-relaxed text-muted-foreground">{f.desc}</p>
+                    <span className="grid h-9 w-9 place-items-center rounded-xl bg-[image:var(--gradient-brand)] text-primary-foreground">
+                      <Icon className="h-4 w-4" />
+                    </span>
+                    <h3 className="mt-3 text-sm font-bold leading-tight">{f.title}</h3>
+                    <p className="mt-1.5 line-clamp-3 text-xs leading-relaxed text-muted-foreground">{f.desc}</p>
                   </div>
                 );
               })}
@@ -501,24 +513,22 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
             <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[11px] font-bold text-primary">
               <Sparkles className="h-3 w-3" /> Features
             </div>
-            <h2 className="mt-4 text-balance text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">{c.features.title}</h2>
+            <h2 className="mt-4 text-balance text-2xl font-black tracking-tight sm:text-3xl">{c.features.title}</h2>
             {c.features.subtitle && (
-              <p className="mt-4 text-pretty text-sm leading-relaxed text-muted-foreground sm:text-base">{c.features.subtitle}</p>
+              <p className="mt-3 text-pretty text-xs leading-relaxed text-muted-foreground sm:text-sm">{c.features.subtitle}</p>
             )}
           </div>
-          <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {c.features.items.map((f, i) => {
               const Icon = ICON_MAP[f.icon] ?? Sparkles;
               return (
-                <div key={i} className="surface-card surface-card-hover group relative overflow-hidden p-6">
-                  <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-primary/20 opacity-0 blur-2xl transition-opacity group-hover:opacity-100" />
-                  <div className="relative flex items-center gap-3">
-                    <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[image:var(--gradient-brand)] text-primary-foreground">
-                      <Icon className="h-5 w-5" />
-                    </span>
-                    <h3 className="min-w-0 flex-1 truncate text-base font-bold sm:text-lg">{f.title}</h3>
-                  </div>
-                  <p className="relative mt-3 text-sm leading-relaxed text-muted-foreground">{f.desc}</p>
+                <div key={i} className="surface-card surface-card-hover group relative overflow-hidden p-5">
+                  <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-primary/20 opacity-0 blur-2xl transition-opacity group-hover:opacity-100" />
+                  <span className="relative grid h-9 w-9 place-items-center rounded-xl bg-[image:var(--gradient-brand)] text-primary-foreground">
+                    <Icon className="h-4 w-4" />
+                  </span>
+                  <h3 className="relative mt-3 text-sm font-bold leading-tight">{f.title}</h3>
+                  <p className="relative mt-1.5 text-xs leading-relaxed text-muted-foreground">{f.desc}</p>
                 </div>
               );
             })}
