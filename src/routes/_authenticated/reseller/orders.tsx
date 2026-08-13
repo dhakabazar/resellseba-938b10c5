@@ -31,6 +31,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { NewOrderModal } from "@/components/NewOrderModal";
 import { toast } from "sonner";
 import { useDepositStatus } from "@/lib/deposit";
+import { bdt } from "@/lib/finance-report";
 import { DepositNotice } from "@/components/deposit-notice";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
