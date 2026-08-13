@@ -16,7 +16,7 @@ export const Route = createFileRoute("/_authenticated/onboarding")({
 });
 
 function Onboarding() {
-  const { user, roles, loading } = useAuth();
+  const { user, roles, permissions, loading } = useAuth();
   const nav = useNavigate();
   const [businessName, setBusinessName] = useState("");
   const [code, setCode] = useState("");
