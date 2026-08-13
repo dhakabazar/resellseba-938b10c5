@@ -69,7 +69,7 @@ type FaqItem = { q: string; a: string };
 type HeroImage = { path: string; url: string; bytes: number } | null;
 type StatItem = { value: string; label: string };
 type LandingContent = {
-  nav: { features: string; how: string; pricing: string; signIn: string; cta: string; faq?: string };
+  nav: { features: string; how: string; categories?: string; products?: string; signIn: string; cta: string; faq?: string };
   hero: {
     badge: string; titleStart: string; titleHighlight: string; subtitle: string;
     ctaPrimary: string; ctaSecondary: string; badges: string[];
@@ -86,7 +86,7 @@ type LandingContent = {
 
 
 const FALLBACK: LandingContent = {
-  nav: { features: "ফিচার", how: "কীভাবে কাজ করে", pricing: "প্রাইসিং", faq: "FAQ", signIn: "সাইন ইন", cta: "শুরু করুন" },
+  nav: { features: "ফিচার", how: "কীভাবে কাজ করে", categories: "ক্যাটাগরি", products: "প্রোডাক্ট", faq: "FAQ", signIn: "সাইন ইন", cta: "শুরু করুন" },
   hero: {
     badge: "বাংলাদেশের রিসেলার প্ল্যাটফর্ম",
     titleStart: "নিজের অনলাইন স্টোর চালু করুন",
@@ -457,7 +457,7 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
 
       {/* ── Categories ──────────────────────────────────── */}
       {stats?.categories?.length > 0 && (
-        <section className="border-y border-border/60 bg-muted/30 py-10 sm:py-14">
+        <section id="categories" className="border-y border-border/60 bg-muted/30 py-10 sm:py-14">
           <div className="mx-auto max-w-7xl px-4 sm:px-6">
             <div className="mx-auto max-w-2xl text-center">
               <h2 className="text-xl font-extrabold sm:text-3xl">ক্যাটাগরি</h2>
@@ -497,7 +497,7 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
 
       {/* ── Featured products ───────────────────────────── */}
       {stats?.products?.length > 0 && (
-        <section className="py-10 sm:py-14">
+        <section id="products" className="py-10 sm:py-14">
           <div className="mx-auto max-w-7xl px-4 sm:px-6">
             <div className="mx-auto max-w-2xl text-center">
               <h2 className="text-xl font-extrabold sm:text-3xl">ফিচার্ড প্রোডাক্ট</h2>
