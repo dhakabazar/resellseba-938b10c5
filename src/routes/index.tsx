@@ -520,22 +520,9 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
 
       {/* ── CTA ─────────────────────────────────────────── */}
       <section id="pricing" className="px-4 pb-16 sm:px-6 sm:pb-24">
-        <div className="relative mx-auto max-w-6xl overflow-hidden rounded-3xl bg-[image:var(--gradient-brand)] px-6 py-16 text-center sm:px-12 sm:py-20">
+        <div className="relative mx-auto max-w-6xl overflow-hidden rounded-3xl bg-[image:var(--gradient-brand)] px-6 py-12 text-center sm:px-12 sm:py-16">
           <div className="pointer-events-none absolute -top-24 left-1/2 h-72 w-[36rem] -translate-x-1/2 rounded-full bg-primary-foreground/10 blur-3xl" />
-          {c.cta.badge && (
-            <div className="relative mx-auto inline-flex items-center gap-2 rounded-full border border-primary-foreground/25 bg-primary-foreground/10 px-4 py-1.5 text-[11px] font-bold text-primary-foreground sm:text-xs">
-              <Sparkles className="h-3 w-3" /> {c.cta.badge}
-            </div>
-          )}
-          <h2 className="relative mt-5 text-balance text-3xl font-black tracking-tight text-primary-foreground sm:text-4xl lg:text-5xl">
-            {c.cta.title}
-          </h2>
-          {c.cta.subtitle && (
-            <p className="relative mx-auto mt-5 max-w-xl text-pretty text-sm leading-relaxed text-primary-foreground/85 sm:text-base">
-              {c.cta.subtitle}
-            </p>
-          )}
-          <div className="relative mt-8 flex flex-wrap justify-center gap-3">
+          <div className="relative flex flex-wrap justify-center gap-3">
             <Link
               to="/login"
               search={{ mode: "signup" }}
