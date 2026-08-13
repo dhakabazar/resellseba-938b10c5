@@ -127,6 +127,56 @@ function PayoutsPage() {
 
       <DepositNotice status={deposit} />
 
+      {(deposit.required || deposit.frozenAmount > 0 || deposit.rows.length > 0) && (
+        <div className="surface-card mb-6 p-5">
+          <div className="mb-3 text-sm font-semibold">সিকিউরিটি ডিপোজিট</div>
+          <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <MiniStat label="জমা (Paid)" value={deposit.balance} />
+            <MiniStat label="বাকি (Due)" value={deposit.due} tone={deposit.due > 0 ? "bad" : "good"} />
+            <MiniStat label="প্রয়োজনীয়" value={deposit.requiredAmount} />
+            <MiniStat label="ফ্রিজ" value={deposit.frozenAmount} />
+          </div>
+
+          <ul className="mb-3 space-y-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-[11px] leading-relaxed text-amber-700 dark:text-amber-300">
+            <li>
+              • ডিপোজিট নিজে থেকে অ্যাড করা যায় না — bKash/Nagad/Bank-এ পাঠিয়ে <b>admin কে TrxID সহ জানান</b>, admin ভেরিফাই
+              করে লেজারে যোগ করবেন।
+            </li>
+            <li>
+              • ডিপোজিট বা ফ্রিজ করা অ্যামাউন্ট উইথড্র করতে চাইলে <b>আগে admin কে জানাতে হবে</b> — এই অ্যামাউন্ট ফেরত নিলে
+              আপনার reseller অ্যাকাউন্ট <b>বন্ধ</b> হয়ে যাবে এবং নতুন অর্ডার নেওয়া যাবে না।
+            </li>
+          </ul>
+
+          {deposit.rows.length > 0 && (
+            <div className="overflow-hidden rounded-md border">
+              <table className="w-full text-xs">
+                <thead className="bg-muted/40 text-left uppercase text-muted-foreground">
+                  <tr>
+                    <th className="p-2">তারিখ</th>
+                    <th>অ্যামাউন্ট</th>
+                    <th>মেথড</th>
+                    <th>রেফারেন্স</th>
+                    <th>নোট</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {deposit.rows.map((r) => (
+                    <tr key={r.id} className="border-t">
+                      <td className="p-2">{new Date(r.created_at).toLocaleDateString()}</td>
+                      <td className="font-medium">৳{Number(r.amount).toLocaleString()}</td>
+                      <td className="capitalize">{r.method ?? "—"}</td>
+                      <td className="text-muted-foreground">{r.reference ?? "—"}</td>
+                      <td className="text-muted-foreground">{r.note ?? "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="mb-6 grid gap-4 md:grid-cols-4">
         <StatCard label="Delivered profit" value={`৳${sum.delivered_profit.toLocaleString()}`} icon={<TrendingUp className="h-4 w-4" />} />
         <StatCard label="Available" value={`৳${sum.available.toLocaleString()}`} hint="Ready to request" icon={<Wallet className="h-4 w-4" />} />
@@ -304,3 +354,18 @@ function statusStyle(s: string) {
     : "bg-warning/20 text-warning-foreground";
 }
 const inp = "w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring";
+
+function MiniStat({ label, value, tone }: { label: string; value: number; tone?: "good" | "bad" }) {
+  return (
+    <div className="rounded-md border bg-muted/30 p-3">
+      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</div>
+      <div
+        className={
+          "text-sm font-bold " + (tone === "bad" ? "text-destructive" : tone === "good" ? "text-success" : "")
+        }
+      >
+        ৳{Number(value ?? 0).toLocaleString()}
+      </div>
+    </div>
+  );
+}

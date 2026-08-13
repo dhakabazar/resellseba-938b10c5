@@ -25,6 +25,7 @@ import {
   Plus,
 } from "lucide-react";
 import { toast } from "sonner";
+import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
 import { useServerFn } from "@tanstack/react-start";
 import { confirmUserEmail, listResellerEmailStatus, deleteAuthUser } from "@/lib/admin-users.functions";
 import {
@@ -436,13 +437,26 @@ function ResellersPage() {
                   </DropdownMenu>
                 </div>
 
-                <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+                <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8">
                   <Metric label="Orders" value={orderCounts[r.id] ?? 0} plain />
                   <Metric label="Delivered profit" value={s?.delivered_profit} accent />
                   <Metric label="Available" value={s?.available} />
                   <Metric label="Paid out" value={s?.paid_out} />
                   <Metric label="Payout pending" value={s?.pending_payout} muted />
-                  <Metric label="Deposit balance" value={s?.deposit_balance} />
+                  <Metric label="Deposit paid" value={s?.deposit_balance} />
+                  <Metric
+                    label="Deposit due"
+                    value={
+                      r.deposit_required
+                        ? Math.max(Number(r.deposit_required_amount ?? 0) - (s?.deposit_balance ?? 0), 0)
+                        : 0
+                    }
+                    muted={
+                      !r.deposit_required ||
+                      Math.max(Number(r.deposit_required_amount ?? 0) - (s?.deposit_balance ?? 0), 0) === 0
+                    }
+                  />
+                  <Metric label="Frozen" value={Number(r.frozen_amount ?? 0)} muted />
                 </div>
               </div>
             );
@@ -735,6 +749,7 @@ function DepositModal({
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [deleteRow, setDeleteRow] = useState<DepositRow | null>(null);
 
   const balance = rows.reduce((n, r) => n + Number(r.amount), 0);
   const due = required ? Math.max(Number(requiredAmount || 0) - balance, 0) : 0;
@@ -921,6 +936,7 @@ function DepositModal({
                   <th>Method</th>
                   <th>Reference</th>
                   <th>Note</th>
+                  <th className="p-2 text-right">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -931,11 +947,21 @@ function DepositModal({
                     <td className="capitalize">{r.method ?? "—"}</td>
                     <td className="text-muted-foreground">{r.reference ?? "—"}</td>
                     <td className="text-muted-foreground">{r.note ?? "—"}</td>
+                    <td className="p-2 text-right">
+                      <button
+                        type="button"
+                        onClick={() => setDeleteRow(r)}
+                        className="rounded-md p-1 text-destructive hover:bg-destructive/10"
+                        aria-label="Delete entry"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </td>
                   </tr>
                 ))}
                 {!loading && rows.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="p-6 text-center text-muted-foreground">
+                    <td colSpan={6} className="p-6 text-center text-muted-foreground">
                       কোনো ডিপোজিট এন্ট্রি নেই।
                     </td>
                   </tr>
@@ -943,6 +969,30 @@ function DepositModal({
               </tbody>
             </table>
           </div>
+
+          {deleteRow && (
+            <ConfirmModal
+              isOpen
+              variant="danger"
+              title="ডিপোজিট এন্ট্রি ডিলিট?"
+              description={`৳${Number(deleteRow.amount).toLocaleString()} (${deleteRow.method ?? "—"}) এন্ট্রিটি ডিলিট হলে reseller-এর ডিপোজিট ব্যালান্স কমে যাবে এবং ডিপোজিট বাকি থাকলে order confirm ব্লক হয়ে যাবে।`}
+              confirmText="ডিলিট করুন"
+              cancelText="বাতিল"
+              onClose={() => setDeleteRow(null)}
+              onConfirm={async () => {
+                const row = deleteRow;
+                setDeleteRow(null);
+                if (!row) return;
+                const { error } = await supabase.from("reseller_deposits").delete().eq("id", row.id);
+                if (error) {
+                  toast.error(error.message);
+                  return;
+                }
+                toast.success("এন্ট্রি ডিলিট হয়েছে");
+                loadRows();
+              }}
+            />
+          )}
         </div>
       </div>
     </div>
