@@ -325,6 +325,34 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
         </section>
       )}
 
+
+      {/* ── Features ────────────────────────────────────── */}
+      <section id="features" className="border-t border-border/60 bg-muted/30">
+        <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
+          <div className="mx-auto max-w-2xl text-center">
+            {c.features.title && <h2 className="text-xl font-extrabold sm:text-3xl">{c.features.title}</h2>}
+            {c.features.subtitle && <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{c.features.subtitle}</p>}
+          </div>
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {c.features.items.map((f, i) => {
+              const Icon = ICON_MAP[f.icon] ?? Sparkles;
+              return (
+                <div key={i} className="surface-card surface-card-hover group relative flex flex-col overflow-hidden p-4">
+                  <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-primary/20 opacity-0 blur-2xl transition-opacity group-hover:opacity-100" />
+                  <div className="relative flex items-start gap-2.5">
+                    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground">
+                      <Icon className="h-3.5 w-3.5" />
+                    </span>
+                    <h3 className="flex-1 pt-0.5 text-[13px] font-bold leading-tight">{f.title}</h3>
+                  </div>
+                  <p className="relative mt-2 text-xs leading-relaxed text-muted-foreground">{f.desc}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
       {/* ── How we work (flow) ──────────────────────────── */}
       {((c.about?.flow?.length ?? 0) > 0 || c.about?.title || c.about?.body) && (
         <section id="about" className="relative overflow-hidden py-14 sm:py-20">
@@ -396,6 +424,27 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
           </div>
         </section>
       )}
+
+      {/* ── How it works ────────────────────────────────── */}
+      <section id="how" className="relative overflow-hidden border-t border-border/60">
+        <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
+          <div className="mx-auto max-w-2xl text-center">
+            {c.how.title && <h2 className="text-xl font-extrabold sm:text-3xl">{c.how.title}</h2>}
+            {c.how.subtitle && <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{c.how.subtitle}</p>}
+          </div>
+          <div className="relative mt-10 grid gap-6 md:grid-cols-3">
+            {c.how.steps.map((s, i) => (
+              <div key={i} className="surface-card surface-card-hover relative p-6 pt-8">
+                <div className="absolute -top-5 left-6 grid h-11 w-11 place-items-center rounded-xl bg-[image:var(--gradient-brand)] text-base font-black text-primary-foreground ring-4 ring-background">
+                  {String(i + 1).padStart(2, "0")}
+                </div>
+                <h3 className="text-base font-bold sm:text-lg">{s.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{s.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* ── Categories ──────────────────────────────────── */}
       {stats?.categories?.length > 0 && (
@@ -510,54 +559,6 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
         </section>
       )}
 
-
-      {/* ── Features ────────────────────────────────────── */}
-      <section id="features" className="border-t border-border/60 bg-muted/30">
-        <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
-          <div className="mx-auto max-w-2xl text-center">
-            {c.features.title && <h2 className="text-xl font-extrabold sm:text-3xl">{c.features.title}</h2>}
-            {c.features.subtitle && <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{c.features.subtitle}</p>}
-          </div>
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {c.features.items.map((f, i) => {
-              const Icon = ICON_MAP[f.icon] ?? Sparkles;
-              return (
-                <div key={i} className="surface-card surface-card-hover group relative flex flex-col overflow-hidden p-4">
-                  <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-primary/20 opacity-0 blur-2xl transition-opacity group-hover:opacity-100" />
-                  <div className="relative flex items-start gap-2.5">
-                    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground">
-                      <Icon className="h-3.5 w-3.5" />
-                    </span>
-                    <h3 className="flex-1 pt-0.5 text-[13px] font-bold leading-tight">{f.title}</h3>
-                  </div>
-                  <p className="relative mt-2 text-xs leading-relaxed text-muted-foreground">{f.desc}</p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ── How it works ────────────────────────────────── */}
-      <section id="how" className="relative overflow-hidden border-t border-border/60">
-        <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
-          <div className="mx-auto max-w-2xl text-center">
-            {c.how.title && <h2 className="text-xl font-extrabold sm:text-3xl">{c.how.title}</h2>}
-            {c.how.subtitle && <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{c.how.subtitle}</p>}
-          </div>
-          <div className="relative mt-10 grid gap-6 md:grid-cols-3">
-            {c.how.steps.map((s, i) => (
-              <div key={i} className="surface-card surface-card-hover relative p-6 pt-8">
-                <div className="absolute -top-5 left-6 grid h-11 w-11 place-items-center rounded-xl bg-[image:var(--gradient-brand)] text-base font-black text-primary-foreground ring-4 ring-background">
-                  {String(i + 1).padStart(2, "0")}
-                </div>
-                <h3 className="text-base font-bold sm:text-lg">{s.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{s.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* ── FAQ ─────────────────────────────────────────── */}
       {c.faq && c.faq.items.length > 0 && (
