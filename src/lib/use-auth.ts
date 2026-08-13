@@ -68,10 +68,15 @@ function applySession(session: Session | null) {
 
   publish({ session, user: session.user, roles: [], permissions: [], loading: true });
 
-  void loadAccess(session.user.id).then(({ roles, permissions }) => {
-    if (version !== authVersion) return;
-    publish({ session, user: session.user, roles, permissions, loading: false });
-  });
+  void loadAccess(session.user.id)
+    .then(({ roles, permissions }) => {
+      if (version !== authVersion) return;
+      publish({ session, user: session.user, roles, permissions, loading: false });
+    })
+    .catch((err) => {
+      if (version !== authVersion) return;
+      publish({ session, user: session.user, roles: [], permissions: [], loading: false });
+    });
 }
 
 function initAuth() {
