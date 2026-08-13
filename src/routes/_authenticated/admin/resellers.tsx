@@ -18,6 +18,11 @@ import {
   Copy,
   MailCheck,
   MailX,
+  ShieldCheck,
+  AlertTriangle,
+  Lock,
+  Wallet,
+  Plus,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
@@ -52,6 +57,9 @@ type Reseller = {
   payout_bank_name: string | null;
   payout_branch: string | null;
   payout_routing: string | null;
+  deposit_required: boolean;
+  deposit_required_amount: number;
+  frozen_amount: number;
 };
 
 type Summary = {
@@ -59,6 +67,8 @@ type Summary = {
   pending_payout: number;
   paid_out: number;
   available: number;
+  deposit_balance: number;
+  frozen_amount: number;
 };
 
 export const Route = createFileRoute("/_authenticated/admin/resellers")({
@@ -98,6 +108,7 @@ function ResellersPage() {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(20);
   const [editing, setEditing] = useState<Reseller | null>(null);
+  const [depositFor, setDepositFor] = useState<Reseller | null>(null);
 
   async function load() {
     setLoading(true);
@@ -105,7 +116,7 @@ function ResellersPage() {
       supabase
         .from("resellers")
         .select(
-          "id,user_id,business_name,code,contact_phone,address,status,commission_rate,leader_id,notes,approved_at,created_at,payout_method,payout_account_name,payout_account_number,payout_bank_name,payout_branch,payout_routing",
+          "id,user_id,business_name,code,contact_phone,address,status,commission_rate,leader_id,notes,approved_at,created_at,payout_method,payout_account_name,payout_account_number,payout_bank_name,payout_branch,payout_routing,deposit_required,deposit_required_amount,frozen_amount",
         )
         .order("created_at", { ascending: false }),
       supabase.rpc("admin_reseller_metrics"),
@@ -120,6 +131,8 @@ function ResellersPage() {
       pending_payout: number;
       paid_out: number;
       available: number;
+      deposit_balance: number;
+      frozen_amount: number;
     }>;
     setSummaries(
       Object.fromEntries(
@@ -130,6 +143,8 @@ function ResellersPage() {
             pending_payout: Number(m.pending_payout ?? 0),
             paid_out: Number(m.paid_out ?? 0),
             available: Number(m.available ?? 0),
+            deposit_balance: Number(m.deposit_balance ?? 0),
+            frozen_amount: Number(m.frozen_amount ?? 0),
           } as Summary,
         ]),
       ),
@@ -323,6 +338,23 @@ function ResellersPage() {
                           <MailX className="h-3 w-3" /> Email unverified
                         </span>
                       )}
+                      {r.deposit_required && Number(r.deposit_required_amount) > 0 && (
+                        (s?.deposit_balance ?? 0) >= Number(r.deposit_required_amount) ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-2 py-0.5 text-[10px] font-medium text-success">
+                            <ShieldCheck className="h-3 w-3" /> Deposit ok
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-destructive/15 px-2 py-0.5 text-[10px] font-medium text-destructive">
+                            <AlertTriangle className="h-3 w-3" /> Deposit due ৳
+                            {(Number(r.deposit_required_amount) - (s?.deposit_balance ?? 0)).toLocaleString()}
+                          </span>
+                        )
+                      )}
+                      {Number(r.frozen_amount) > 0 && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                          <Lock className="h-3 w-3" /> Frozen ৳{Number(r.frozen_amount).toLocaleString()}
+                        </span>
+                      )}
                     </div>
                     <div className="mt-0.5 break-words text-xs text-muted-foreground">
                       {em?.email ? <span>{em.email} · </span> : null}
@@ -382,6 +414,9 @@ function ResellersPage() {
                       <DropdownMenuItem onClick={() => setEditing(r)}>
                         <Pencil className="mr-2 h-4 w-4" /> Edit details
                       </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setDepositFor(r)}>
+                        <Wallet className="mr-2 h-4 w-4" /> Deposit & freeze
+                      </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => copyStoreLink(r)}>
                         <Copy className="mr-2 h-4 w-4" /> Copy store link
                       </DropdownMenuItem>
@@ -401,12 +436,13 @@ function ResellersPage() {
                   </DropdownMenu>
                 </div>
 
-                <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+                <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
                   <Metric label="Orders" value={orderCounts[r.id] ?? 0} plain />
                   <Metric label="Delivered profit" value={s?.delivered_profit} accent />
                   <Metric label="Available" value={s?.available} />
                   <Metric label="Paid out" value={s?.paid_out} />
                   <Metric label="Payout pending" value={s?.pending_payout} muted />
+                  <Metric label="Deposit balance" value={s?.deposit_balance} />
                 </div>
               </div>
             );
@@ -425,6 +461,17 @@ function ResellersPage() {
           onClose={() => setEditing(null)}
           onSaved={() => {
             setEditing(null);
+            load();
+          }}
+        />
+      )}
+
+      {depositFor && (
+        <DepositModal
+          reseller={depositFor}
+          onClose={() => setDepositFor(null)}
+          onSaved={() => {
+            setDepositFor(null);
             load();
           }}
         />
@@ -656,6 +703,248 @@ function EditModal({
         </div>
 
       </form>
+    </div>
+  );
+}
+
+type DepositRow = {
+  id: string;
+  amount: number;
+  method: string | null;
+  reference: string | null;
+  note: string | null;
+  created_at: string;
+};
+
+function DepositModal({
+  reseller,
+  onClose,
+  onSaved,
+}: {
+  reseller: Reseller;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [required, setRequired] = useState(Boolean(reseller.deposit_required));
+  const [requiredAmount, setRequiredAmount] = useState(String(reseller.deposit_required_amount ?? 0));
+  const [frozen, setFrozen] = useState(String(reseller.frozen_amount ?? 0));
+  const [rows, setRows] = useState<DepositRow[]>([]);
+  const [amount, setAmount] = useState("");
+  const [method, setMethod] = useState("bkash");
+  const [reference, setReference] = useState("");
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  const balance = rows.reduce((n, r) => n + Number(r.amount), 0);
+  const due = required ? Math.max(Number(requiredAmount || 0) - balance, 0) : 0;
+
+  const cls =
+    "w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring";
+
+  async function loadRows() {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("reseller_deposits")
+      .select("id,amount,method,reference,note,created_at")
+      .eq("reseller_id", reseller.id)
+      .order("created_at", { ascending: false });
+    if (error) toast.error(error.message);
+    setRows((data ?? []) as DepositRow[]);
+    setLoading(false);
+  }
+
+  useEffect(() => {
+    loadRows();
+  }, [reseller.id]);
+
+  async function saveRules() {
+    setBusy(true);
+    const { error } = await supabase
+      .from("resellers")
+      .update({
+        deposit_required: required,
+        deposit_required_amount: Number(requiredAmount) || 0,
+        frozen_amount: Number(frozen) || 0,
+      })
+      .eq("id", reseller.id);
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("ডিপোজিট সেটিং সেভ হয়েছে");
+    onSaved();
+  }
+
+  async function addEntry(e: React.FormEvent) {
+    e.preventDefault();
+    const amt = Number(amount);
+    if (!amt) return toast.error("অ্যামাউন্ট দিন (adjustment হলে − ব্যবহার করুন)");
+    setBusy(true);
+    const { error } = await supabase.from("reseller_deposits").insert({
+      reseller_id: reseller.id,
+      amount: amt,
+      method: method || null,
+      reference: reference || null,
+      note: note || null,
+    });
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    setAmount("");
+    setNote("");
+    setReference("");
+    toast.success("লেজার এন্ট্রি যোগ হয়েছে");
+    loadRows();
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-3" onClick={onClose}>
+      <div
+        className="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-xl border bg-background shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between border-b px-4 py-3 sm:px-6">
+          <div className="min-w-0">
+            <div className="truncate text-sm font-semibold">Deposit & freeze — {reseller.business_name}</div>
+            <p className="text-[11px] text-muted-foreground">
+              ডিপোজিট বাকি থাকলে reseller অর্ডার Confirmed করতে পারবে না। ফ্রিজ অ্যামাউন্ট উইথড্র করা যাবে না।
+            </p>
+          </div>
+          <button onClick={onClose} className="rounded-md p-1 hover:bg-muted" aria-label="Close">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4 sm:px-6">
+          <div className="grid gap-2 sm:grid-cols-3">
+            <div className="rounded-md border bg-muted/30 p-3">
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Balance</div>
+              <div className="text-base font-bold">৳{balance.toLocaleString()}</div>
+            </div>
+            <div className="rounded-md border bg-muted/30 p-3">
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Due</div>
+              <div className={"text-base font-bold " + (due > 0 ? "text-destructive" : "text-success")}>
+                ৳{due.toLocaleString()}
+              </div>
+            </div>
+            <div className="rounded-md border bg-muted/30 p-3">
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Frozen</div>
+              <div className="text-base font-bold">৳{(Number(frozen) || 0).toLocaleString()}</div>
+            </div>
+          </div>
+
+          <div className="space-y-3 rounded-md border p-3">
+            <label className="flex cursor-pointer items-center gap-2 text-xs font-medium">
+              <input
+                type="checkbox"
+                checked={required}
+                onChange={(e) => setRequired(e.target.checked)}
+                className="h-4 w-4"
+              />
+              ডিপোজিট ট্রিগার চালু
+            </label>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-xs font-medium">প্রয়োজনীয় ডিপোজিট (৳)</label>
+                <input
+                  type="number"
+                  min={0}
+                  value={requiredAmount}
+                  onChange={(e) => setRequiredAmount(e.target.value)}
+                  className={cls}
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium">ফ্রিজ অ্যামাউন্ট (৳)</label>
+                <input
+                  type="number"
+                  min={0}
+                  value={frozen}
+                  onChange={(e) => setFrozen(e.target.value)}
+                  className={cls}
+                />
+              </div>
+            </div>
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={saveRules}
+                disabled={busy}
+                className="btn-brand rounded-md px-4 py-1.5 text-xs font-medium disabled:opacity-50"
+              >
+                সেটিং সেভ
+              </button>
+            </div>
+          </div>
+
+          <form onSubmit={addEntry} className="space-y-3 rounded-md border p-3">
+            <div className="text-xs font-semibold">নতুন এন্ট্রি</div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-xs font-medium">অ্যামাউন্ট (৳) — ফেরত হলে − দিন</label>
+                <input value={amount} onChange={(e) => setAmount(e.target.value)} type="number" className={cls} />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium">মেথড</label>
+                <select value={method} onChange={(e) => setMethod(e.target.value)} className={cls}>
+                  <option value="bkash">bKash</option>
+                  <option value="nagad">Nagad</option>
+                  <option value="rocket">Rocket</option>
+                  <option value="bank">Bank</option>
+                  <option value="cash">Cash</option>
+                  <option value="adjustment">Adjustment</option>
+                </select>
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium">রেফারেন্স / TrxID</label>
+                <input value={reference} onChange={(e) => setReference(e.target.value)} className={cls} />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium">নোট</label>
+                <input value={note} onChange={(e) => setNote(e.target.value)} className={cls} />
+              </div>
+            </div>
+            <div className="flex justify-end">
+              <button
+                disabled={busy}
+                className="inline-flex items-center gap-1.5 rounded-md border px-4 py-1.5 text-xs font-medium hover:bg-muted disabled:opacity-50"
+              >
+                <Plus className="h-3.5 w-3.5" /> যোগ করুন
+              </button>
+            </div>
+          </form>
+
+          <div className="overflow-hidden rounded-md border">
+            <table className="w-full text-xs">
+              <thead className="bg-muted/40 text-left uppercase text-muted-foreground">
+                <tr>
+                  <th className="p-2">Date</th>
+                  <th>Amount</th>
+                  <th>Method</th>
+                  <th>Reference</th>
+                  <th>Note</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r) => (
+                  <tr key={r.id} className="border-t">
+                    <td className="p-2">{new Date(r.created_at).toLocaleDateString()}</td>
+                    <td className="font-medium">৳{Number(r.amount).toLocaleString()}</td>
+                    <td className="capitalize">{r.method ?? "—"}</td>
+                    <td className="text-muted-foreground">{r.reference ?? "—"}</td>
+                    <td className="text-muted-foreground">{r.note ?? "—"}</td>
+                  </tr>
+                ))}
+                {!loading && rows.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="p-6 text-center text-muted-foreground">
+                      কোনো ডিপোজিট এন্ট্রি নেই।
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

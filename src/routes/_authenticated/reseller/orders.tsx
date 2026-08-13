@@ -30,6 +30,9 @@ import {
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { NewOrderModal } from "@/components/NewOrderModal";
 import { toast } from "sonner";
+import { useDepositStatus } from "@/lib/deposit";
+import { bdt } from "@/lib/finance-report";
+import { DepositNotice } from "@/components/deposit-notice";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getOrderDetails, recheckCourierStatus } from "@/lib/order-details.functions";
@@ -158,6 +161,7 @@ function OrdersPage() {
   const [expandedOrders, setExpandedOrders] = useState<string[]>([]);
   const [page, setPage] = useState(1);
   const [statusModal, setStatusModal] = useState<{ open: boolean; orderId: string; currentStatus: string; isBulk?: boolean } | null>(null);
+  const { status: deposit } = useDepositStatus(resellerId);
   const [confirmModal, setConfirmModal] = useState<{
     open: boolean;
     title: string;
@@ -443,6 +447,8 @@ function OrdersPage() {
           </div>
         }
       />
+
+      <DepositNotice status={deposit} compact />
 
       {/* Merged search: mode select inside the box */}
       <div className="mb-3 flex flex-wrap items-center gap-2">
@@ -1009,6 +1015,8 @@ function OrdersPage() {
             load();
           }}
           allProducts={allProducts}
+          depositBlocked={deposit.blocked}
+          depositDue={deposit.due}
         />
       )}
 
@@ -1043,6 +1051,10 @@ function OrdersPage() {
                     key={s}
                     disabled={loading}
                     onClick={async () => {
+                      if (s === "confirmed" && deposit.blocked) {
+                        toast.error(`সিকিউরিটি ডিপোজিট বাকি — ${bdt(deposit.due)}। ডিপোজিট জমা না দিলে অর্ডার কনফার্ম করা যাবে না।`);
+                        return;
+                      }
                       if (statusModal.isBulk) {
                         await bulkUpdateStatus(s);
                         setStatusModal(null);
@@ -1125,12 +1137,16 @@ function OrderDrawer({
   orderId, 
   onClose,
   onChanged,
-  allProducts 
+  allProducts,
+  depositBlocked,
+  depositDue,
 }: { 
   orderId: string; 
   onClose: () => void; 
   onChanged: () => void;
   allProducts: any[];
+  depositBlocked?: boolean;
+  depositDue?: number;
 }) {
   const fetchDetails = useServerFn(getOrderDetails);
   const recheckStatus = useServerFn(recheckCourierStatus);
@@ -1166,6 +1182,10 @@ function OrderDrawer({
   });
 
   async function setStatus(next: "confirmed" | "cancelled") {
+    if (next === "confirmed" && depositBlocked) {
+      toast.error(`সিকিউরিটি ডিপোজিট বাকি — ${bdt(depositDue ?? 0)}। ডিপোজিট জমা না দিলে অর্ডার কনফার্ম করা যাবে না।`);
+      return;
+    }
     setBusy(true);
     const patch: Record<string, unknown> =
       next === "confirmed"

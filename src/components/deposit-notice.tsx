@@ -1,0 +1,77 @@
+import { Link } from "@tanstack/react-router";
+import { AlertTriangle, Lock, ShieldCheck, Wallet } from "lucide-react";
+import { bdt } from "@/lib/finance-report";
+import type { DepositStatus } from "@/lib/deposit";
+
+/** Reseller-side banner: shows the pending security deposit, or a calm "all clear" line. */
+export function DepositNotice({ status, compact }: { status: DepositStatus; compact?: boolean }) {
+  if (!status.required && status.frozenAmount <= 0) return null;
+
+  if (status.blocked)
+    return (
+      <div className="mb-6 flex flex-col gap-3 rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex gap-3">
+          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
+          <div className="min-w-0 text-sm">
+            <div className="font-bold text-amber-700 dark:text-amber-300">
+              সিকিউরিটি ডিপোজিট বাকি — {bdt(status.due)}
+            </div>
+            <p className="mt-0.5 text-xs text-amber-700/80 dark:text-amber-200/80">
+              ডেলিভারি ফেইল হলে ডেলিভারি চার্জ কাভার করার জন্য {bdt(status.requiredAmount)} ডিপোজিট রাখতে হয়।
+              ডিপোজিট না করা পর্যন্ত অর্ডার <b>Confirmed</b> করা যাবে না। জমা আছে {bdt(status.balance)}।
+            </p>
+          </div>
+        </div>
+        {!compact && (
+          <Link
+            to="/reseller/payouts"
+            className="shrink-0 rounded-lg border border-amber-600/40 bg-background px-3 py-2 text-center text-xs font-bold text-amber-700 hover:bg-amber-500/10 dark:text-amber-300"
+          >
+            ডিপোজিট তথ্য দেখুন
+          </Link>
+        )}
+      </div>
+    );
+
+  return (
+    <div className="mb-6 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-xl border bg-muted/30 px-4 py-3 text-xs">
+      {status.required && (
+        <span className="inline-flex items-center gap-1.5 font-medium text-success">
+          <ShieldCheck className="h-3.5 w-3.5" /> ডিপোজিট সম্পন্ন · {bdt(status.balance)}
+        </span>
+      )}
+      {status.frozenAmount > 0 && (
+        <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+          <Lock className="h-3.5 w-3.5" /> {bdt(status.frozenAmount)} ফ্রিজ করা — এই অ্যামাউন্ট উইথড্র করা যাবে না
+        </span>
+      )}
+    </div>
+  );
+}
+
+/** Small inline chips for cards/tables. */
+export function DepositChips({ status }: { status: DepositStatus }) {
+  return (
+    <div className="flex flex-wrap items-center gap-1.5 text-[10px] font-medium">
+      {status.required ? (
+        status.blocked ? (
+          <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-amber-700 dark:text-amber-400">
+            <AlertTriangle className="h-3 w-3" /> ডিপোজিট বাকি {bdt(status.due)}
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-2 py-0.5 text-success">
+            <ShieldCheck className="h-3 w-3" /> ডিপোজিট ঠিক আছে
+          </span>
+        )
+      ) : null}
+      <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-primary">
+        <Wallet className="h-3 w-3" /> ব্যালান্স {bdt(status.balance)}
+      </span>
+      {status.frozenAmount > 0 && (
+        <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-muted-foreground">
+          <Lock className="h-3 w-3" /> ফ্রিজ {bdt(status.frozenAmount)}
+        </span>
+      )}
+    </div>
+  );
+}

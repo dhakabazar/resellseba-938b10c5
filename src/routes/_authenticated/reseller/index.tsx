@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useDepositStatus } from "@/lib/deposit";
+import { DepositNotice } from "@/components/deposit-notice";
 import { useAuth } from "@/lib/use-auth";
 import { PageHeader, StatCard } from "@/components/ui-kit";
 import { DateRangeBar, DEFAULT_DATE_RANGE, resolveRange, type DateRangeState } from "@/components/date-range-filter";
@@ -45,6 +47,7 @@ function ResellerDashboard() {
   const [payouts, setPayouts] = useState<PayoutRow[]>([]);
   const [commissions, setCommissions] = useState<CommissionRow[]>([]);
   const [lifetime, setLifetime] = useState({ delivered: 0, pendingPayout: 0, paidOut: 0, available: 0 });
+  const { status: deposit } = useDepositStatus(rid);
 
   const uid = user?.id;
 
@@ -190,6 +193,8 @@ function ResellerDashboard() {
           </div>
         }
       />
+
+      <DepositNotice status={deposit} />
 
       <section className="mb-6">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">

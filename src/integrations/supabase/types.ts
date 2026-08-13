@@ -246,6 +246,9 @@ export type Database = {
           accent_color: string | null
           contact_email: string | null
           contact_phone: string | null
+          deposit_default_amount: number
+          deposit_default_frozen: number
+          deposit_trigger_default_on: boolean
           favicon_url: string | null
           flagship_reseller_code: string | null
           id: number
@@ -264,6 +267,9 @@ export type Database = {
           accent_color?: string | null
           contact_email?: string | null
           contact_phone?: string | null
+          deposit_default_amount?: number
+          deposit_default_frozen?: number
+          deposit_trigger_default_on?: boolean
           favicon_url?: string | null
           flagship_reseller_code?: string | null
           id?: number
@@ -282,6 +288,9 @@ export type Database = {
           accent_color?: string | null
           contact_email?: string | null
           contact_phone?: string | null
+          deposit_default_amount?: number
+          deposit_default_frozen?: number
+          deposit_trigger_default_on?: boolean
           favicon_url?: string | null
           flagship_reseller_code?: string | null
           id?: number
@@ -1051,6 +1060,54 @@ export type Database = {
         }
         Relationships: []
       }
+      reseller_deposits: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          id: string
+          method: string | null
+          note: string | null
+          reference: string | null
+          reseller_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          method?: string | null
+          note?: string | null
+          reference?: string | null
+          reseller_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          method?: string | null
+          note?: string | null
+          reference?: string | null
+          reseller_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reseller_deposits_reseller_id_fkey"
+            columns: ["reseller_id"]
+            isOneToOne: false
+            referencedRelation: "public_stores"
+            referencedColumns: ["reseller_id"]
+          },
+          {
+            foreignKeyName: "reseller_deposits_reseller_id_fkey"
+            columns: ["reseller_id"]
+            isOneToOne: false
+            referencedRelation: "resellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reseller_domains: {
         Row: {
           cloudflare_hostname_id: string | null
@@ -1272,6 +1329,9 @@ export type Database = {
           commission_rate: number
           contact_phone: string | null
           created_at: string
+          deposit_required: boolean
+          deposit_required_amount: number
+          frozen_amount: number
           id: string
           leader_id: string | null
           nid_number: string | null
@@ -1296,6 +1356,9 @@ export type Database = {
           commission_rate?: number
           contact_phone?: string | null
           created_at?: string
+          deposit_required?: boolean
+          deposit_required_amount?: number
+          frozen_amount?: number
           id?: string
           leader_id?: string | null
           nid_number?: string | null
@@ -1320,6 +1383,9 @@ export type Database = {
           commission_rate?: number
           contact_phone?: string | null
           created_at?: string
+          deposit_required?: boolean
+          deposit_required_amount?: number
+          frozen_amount?: number
           id?: string
           leader_id?: string | null
           nid_number?: string | null
@@ -1628,6 +1694,8 @@ export type Database = {
         Returns: {
           available: number
           delivered_profit: number
+          deposit_balance: number
+          frozen_amount: number
           orders: number
           paid_out: number
           pending_payout: number
@@ -1677,6 +1745,10 @@ export type Database = {
       }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
       my_permissions: { Args: never; Returns: string[] }
+      reseller_deposit_balance: {
+        Args: { _reseller_id: string }
+        Returns: number
+      }
       reseller_profit_summary: {
         Args: { _reseller_id: string }
         Returns: {

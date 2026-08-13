@@ -5,6 +5,8 @@ import { useAuth } from "@/lib/use-auth";
 import { PageHeader, StatCard } from "@/components/ui-kit";
 import { Loader2, Wallet, TrendingUp, Clock, CheckCircle2, Pencil, Save } from "lucide-react";
 import { toast } from "sonner";
+import { useDepositStatus } from "@/lib/deposit";
+import { DepositNotice } from "@/components/deposit-notice";
 
 export const Route = createFileRoute("/_authenticated/reseller/payouts")({
   component: PayoutsPage,
@@ -40,6 +42,7 @@ function PayoutsPage() {
   const [amount, setAmount] = useState("");
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState(false);
+  const { status: deposit } = useDepositStatus(rid);
 
   useEffect(() => { if (user) load(); }, [user]);
 
@@ -121,6 +124,8 @@ function PayoutsPage() {
   return (
     <div>
       <PageHeader title="Payouts" description="Profit from delivered orders accumulates here. Request a withdrawal to your saved account." />
+
+      <DepositNotice status={deposit} />
 
       <div className="mb-6 grid gap-4 md:grid-cols-4">
         <StatCard label="Delivered profit" value={`৳${sum.delivered_profit.toLocaleString()}`} icon={<TrendingUp className="h-4 w-4" />} />
@@ -242,6 +247,11 @@ function PayoutsPage() {
         <div>
           <label className="mb-1 block text-xs font-medium">Amount (৳)</label>
           <input value={amount} onChange={(e) => setAmount(e.target.value)} type="number" min={1} max={sum.available} className={inp} required />
+          {deposit.frozenAmount > 0 && (
+            <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
+              ৳{deposit.frozenAmount.toLocaleString()} ফ্রিজ করা আছে — এই অ্যামাউন্ট উইথড্র করা যাবে না।
+            </p>
+          )}
           <p className="mt-1 text-xs text-muted-foreground">
             {profile.payout_method
               ? <>Payout <span className="capitalize font-medium">{profile.payout_method}</span> · {profile.payout_account_number}</>
