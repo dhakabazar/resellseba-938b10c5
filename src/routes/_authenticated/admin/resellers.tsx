@@ -706,3 +706,232 @@ function EditModal({
     </div>
   );
 }
+
+type DepositRow = {
+  id: string;
+  amount: number;
+  kind: string;
+  note: string | null;
+  created_at: string;
+};
+
+function DepositModal({
+  reseller,
+  onClose,
+  onSaved,
+}: {
+  reseller: Reseller;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [required, setRequired] = useState(Boolean(reseller.deposit_required));
+  const [requiredAmount, setRequiredAmount] = useState(String(reseller.deposit_required_amount ?? 0));
+  const [frozen, setFrozen] = useState(String(reseller.frozen_amount ?? 0));
+  const [rows, setRows] = useState<DepositRow[]>([]);
+  const [amount, setAmount] = useState("");
+  const [kind, setKind] = useState("deposit");
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  const balance = rows.reduce((n, r) => n + Number(r.amount), 0);
+  const due = required ? Math.max(Number(requiredAmount || 0) - balance, 0) : 0;
+
+  const cls =
+    "w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring";
+
+  async function loadRows() {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("reseller_deposits")
+      .select("id,amount,kind,note,created_at")
+      .eq("reseller_id", reseller.id)
+      .order("created_at", { ascending: false });
+    if (error) toast.error(error.message);
+    setRows((data ?? []) as DepositRow[]);
+    setLoading(false);
+  }
+
+  useEffect(() => {
+    loadRows();
+  }, [reseller.id]);
+
+  async function saveRules() {
+    setBusy(true);
+    const { error } = await supabase
+      .from("resellers")
+      .update({
+        deposit_required: required,
+        deposit_required_amount: Number(requiredAmount) || 0,
+        frozen_amount: Number(frozen) || 0,
+      })
+      .eq("id", reseller.id);
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("ডিপোজিট সেটিং সেভ হয়েছে");
+    onSaved();
+  }
+
+  async function addEntry(e: React.FormEvent) {
+    e.preventDefault();
+    const amt = Number(amount);
+    if (!amt) return toast.error("অ্যামাউন্ট দিন (adjustment হলে − ব্যবহার করুন)");
+    setBusy(true);
+    const { error } = await supabase.from("reseller_deposits").insert({
+      reseller_id: reseller.id,
+      amount: amt,
+      kind,
+      note: note || null,
+    });
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    setAmount("");
+    setNote("");
+    toast.success("লেজার এন্ট্রি যোগ হয়েছে");
+    loadRows();
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-3" onClick={onClose}>
+      <div
+        className="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-xl border bg-background shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between border-b px-4 py-3 sm:px-6">
+          <div className="min-w-0">
+            <div className="truncate text-sm font-semibold">Deposit & freeze — {reseller.business_name}</div>
+            <p className="text-[11px] text-muted-foreground">
+              ডিপোজিট বাকি থাকলে reseller অর্ডার Confirmed করতে পারবে না। ফ্রিজ অ্যামাউন্ট উইথড্র করা যাবে না।
+            </p>
+          </div>
+          <button onClick={onClose} className="rounded-md p-1 hover:bg-muted" aria-label="Close">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4 sm:px-6">
+          <div className="grid gap-2 sm:grid-cols-3">
+            <div className="rounded-md border bg-muted/30 p-3">
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Balance</div>
+              <div className="text-base font-bold">৳{balance.toLocaleString()}</div>
+            </div>
+            <div className="rounded-md border bg-muted/30 p-3">
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Due</div>
+              <div className={"text-base font-bold " + (due > 0 ? "text-destructive" : "text-success")}>
+                ৳{due.toLocaleString()}
+              </div>
+            </div>
+            <div className="rounded-md border bg-muted/30 p-3">
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Frozen</div>
+              <div className="text-base font-bold">৳{(Number(frozen) || 0).toLocaleString()}</div>
+            </div>
+          </div>
+
+          <div className="space-y-3 rounded-md border p-3">
+            <label className="flex cursor-pointer items-center gap-2 text-xs font-medium">
+              <input
+                type="checkbox"
+                checked={required}
+                onChange={(e) => setRequired(e.target.checked)}
+                className="h-4 w-4"
+              />
+              ডিপোজিট ট্রিগার চালু
+            </label>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-xs font-medium">প্রয়োজনীয় ডিপোজিট (৳)</label>
+                <input
+                  type="number"
+                  min={0}
+                  value={requiredAmount}
+                  onChange={(e) => setRequiredAmount(e.target.value)}
+                  className={cls}
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium">ফ্রিজ অ্যামাউন্ট (৳)</label>
+                <input
+                  type="number"
+                  min={0}
+                  value={frozen}
+                  onChange={(e) => setFrozen(e.target.value)}
+                  className={cls}
+                />
+              </div>
+            </div>
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={saveRules}
+                disabled={busy}
+                className="btn-brand rounded-md px-4 py-1.5 text-xs font-medium disabled:opacity-50"
+              >
+                সেটিং সেভ
+              </button>
+            </div>
+          </div>
+
+          <form onSubmit={addEntry} className="space-y-3 rounded-md border p-3">
+            <div className="text-xs font-semibold">নতুন এন্ট্রি</div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div>
+                <label className="mb-1 block text-xs font-medium">অ্যামাউন্ট (৳)</label>
+                <input value={amount} onChange={(e) => setAmount(e.target.value)} type="number" className={cls} />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium">ধরন</label>
+                <select value={kind} onChange={(e) => setKind(e.target.value)} className={cls}>
+                  <option value="deposit">Deposit</option>
+                  <option value="adjustment">Adjustment</option>
+                  <option value="refund">Refund</option>
+                </select>
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium">নোট</label>
+                <input value={note} onChange={(e) => setNote(e.target.value)} className={cls} />
+              </div>
+            </div>
+            <div className="flex justify-end">
+              <button
+                disabled={busy}
+                className="inline-flex items-center gap-1.5 rounded-md border px-4 py-1.5 text-xs font-medium hover:bg-muted disabled:opacity-50"
+              >
+                <Plus className="h-3.5 w-3.5" /> যোগ করুন
+              </button>
+            </div>
+          </form>
+
+          <div className="overflow-hidden rounded-md border">
+            <table className="w-full text-xs">
+              <thead className="bg-muted/40 text-left uppercase text-muted-foreground">
+                <tr>
+                  <th className="p-2">Date</th>
+                  <th>Amount</th>
+                  <th>Kind</th>
+                  <th>Note</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r) => (
+                  <tr key={r.id} className="border-t">
+                    <td className="p-2">{new Date(r.created_at).toLocaleDateString()}</td>
+                    <td className="font-medium">৳{Number(r.amount).toLocaleString()}</td>
+                    <td className="capitalize">{r.kind}</td>
+                    <td className="text-muted-foreground">{r.note ?? "—"}</td>
+                  </tr>
+                ))}
+                {!loading && rows.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="p-6 text-center text-muted-foreground">
+                      কোনো ডিপোজিট এন্ট্রি নেই।
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
