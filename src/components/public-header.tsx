@@ -89,12 +89,13 @@ export function PublicHeader({
   const c = content ?? loadedContent ?? FALLBACK;
 
   const navLinks = [
-    { href: "#about", label: "কীভাবে কাজ করি" },
     { href: "#features", label: c.nav.features },
     { href: "#how", label: c.nav.how },
-    { href: "#faq", label: c.nav.faq || "FAQ" },
     { href: "#pricing", label: c.nav.pricing },
+    { to: "/catalog" as const, label: "প্রোডাক্টস" },
+    { href: "#faq", label: c.nav.faq || "FAQ" },
   ];
+
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/60 bg-background/85 backdrop-blur-xl">
