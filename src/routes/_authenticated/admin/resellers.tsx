@@ -436,13 +436,26 @@ function ResellersPage() {
                   </DropdownMenu>
                 </div>
 
-                <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+                <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8">
                   <Metric label="Orders" value={orderCounts[r.id] ?? 0} plain />
                   <Metric label="Delivered profit" value={s?.delivered_profit} accent />
                   <Metric label="Available" value={s?.available} />
                   <Metric label="Paid out" value={s?.paid_out} />
                   <Metric label="Payout pending" value={s?.pending_payout} muted />
-                  <Metric label="Deposit balance" value={s?.deposit_balance} />
+                  <Metric label="Deposit paid" value={s?.deposit_balance} />
+                  <Metric
+                    label="Deposit due"
+                    value={
+                      r.deposit_required
+                        ? Math.max(Number(r.deposit_required_amount ?? 0) - (s?.deposit_balance ?? 0), 0)
+                        : 0
+                    }
+                    muted={
+                      !r.deposit_required ||
+                      Math.max(Number(r.deposit_required_amount ?? 0) - (s?.deposit_balance ?? 0), 0) === 0
+                    }
+                  />
+                  <Metric label="Frozen" value={Number(r.frozen_amount ?? 0)} muted />
                 </div>
               </div>
             );
