@@ -3,8 +3,11 @@ import { mapCourierStatus, normalizeCourierStatus } from "@/lib/courier-status";
 export type Cfg = Record<string, string>;
 
 export async function assertAdmin(supabase: any, userId: string) {
-  const { data: isAdmin } = await supabase.rpc("is_super_admin", { _user_id: userId });
-  if (!isAdmin) throw new Response("Forbidden", { status: 403 });
+  const { data, error } = await supabase.rpc("has_any_permission", {
+    _user_id: userId,
+    _permissions: ["couriers.manage", "orders.edit"],
+  });
+  if (error || !data) throw new Response("Forbidden", { status: 403 });
 }
 
 export async function getCourierConfig(supabase: any, provider: string): Promise<Cfg> {

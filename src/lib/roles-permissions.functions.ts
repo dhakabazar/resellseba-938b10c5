@@ -1,12 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { assertAdmin } from "@/lib/admin-users.server";
+import { assertPermission } from "@/lib/admin-users.server";
 
 export const getRoles = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertPermission(context.supabase, context.userId, "staff.manage");
     const { data, error } = await context.supabase
       .from("roles")
       .select(`
@@ -22,7 +22,7 @@ export const getRoles = createServerFn({ method: "GET" })
 export const getPermissions = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertPermission(context.supabase, context.userId, "staff.manage");
     const { data, error } = await context.supabase.from("permissions").select("*");
     if (error) throw new Response(error.message, { status: 400 });
     return data;
@@ -39,7 +39,7 @@ export const saveRole = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => saveRoleInput.parse(d))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertPermission(context.supabase, context.userId, "staff.manage");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     let roleId = data.id;
@@ -76,7 +76,7 @@ export const deleteRole = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertPermission(context.supabase, context.userId, "staff.manage");
     const { error } = await context.supabase.from("roles").delete().eq("id", data.id).eq("is_system", false);
     if (error) throw new Response(error.message, { status: 400 });
     return { ok: true };

@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { assertAdmin } from "@/lib/admin-users.server";
+import { assertPermission } from "@/lib/admin-users.server";
 
 const createUserInput = z.object({
   email: z.string().email(),
@@ -15,7 +15,7 @@ export const createAdminUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => createUserInput.parse(d))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertPermission(context.supabase, context.userId, "staff.manage");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     // 1. Create the auth user
@@ -68,7 +68,7 @@ export const updateAdminUserPassword = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => updatePasswordInput.parse(d))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertPermission(context.supabase, context.userId, "staff.manage");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const { error } = await supabaseAdmin.auth.admin.updateUserById(data.userId, {
@@ -89,7 +89,7 @@ export const updateAdminUserRole = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => updateRoleInput.parse(d))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertPermission(context.supabase, context.userId, "staff.manage");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     // Delete existing roles first to maintain the simple 1-role per user model requested

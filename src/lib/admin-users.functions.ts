@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { assertAdmin } from "@/lib/admin-users.server";
+import { assertAnyPermission, assertPermission } from "@/lib/admin-users.server";
 
 const input = z.object({ userId: z.string().uuid() });
 
@@ -9,7 +9,7 @@ export const confirmUserEmail = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => input.parse(d))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertPermission(context.supabase, context.userId, "resellers.manage");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: got, error: getErr } = await supabaseAdmin.auth.admin.getUserById(data.userId);
     if (getErr || !got?.user) throw new Response("User not found", { status: 404 });
@@ -28,7 +28,7 @@ export type EmailStatus = {
 export const listResellerEmailStatus = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<EmailStatus[]> => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertPermission(context.supabase, context.userId, "resellers.manage");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const users: any[] = [];
     for (let page = 1; page <= 10; page++) {
@@ -48,7 +48,7 @@ export const deleteAuthUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => input.parse(d))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertAnyPermission(context.supabase, context.userId, ["staff.manage", "resellers.manage"]);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
     if (error) throw new Response(error.message, { status: 400 });
@@ -70,7 +70,7 @@ export type StaffUser = {
 export const listStaffUsers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<StaffUser[]> => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertPermission(context.supabase, context.userId, "staff.manage");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const { data: roleRows, error: roleErr } = await supabaseAdmin
