@@ -216,7 +216,7 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
   const statItems = customStats.length ? customStats : autoStats;
 
   const navLinks = [
-    { href: "#about", label: "আমাদের সম্পর্কে" },
+    { href: "#about", label: "কীভাবে কাজ করি" },
     { href: "#features", label: c.nav.features },
     { href: "#how", label: c.nav.how },
     { href: "#pricing", label: c.nav.pricing },
@@ -568,7 +568,7 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
           <div>
             <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">প্ল্যাটফর্ম</h4>
             <ul className="mt-3 space-y-2 text-sm">
-              <li><a href="#about" className="text-muted-foreground hover:text-primary">আমাদের সম্পর্কে</a></li>
+              <li><a href="#about" className="text-muted-foreground hover:text-primary">কীভাবে কাজ করি</a></li>
               <li><a href="#features" className="text-muted-foreground hover:text-primary">{c.nav.features}</a></li>
               <li><a href="#how" className="text-muted-foreground hover:text-primary">{c.nav.how}</a></li>
             </ul>
