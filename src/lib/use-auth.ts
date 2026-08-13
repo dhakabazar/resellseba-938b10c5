@@ -30,14 +30,27 @@ function publish(next: AuthState) {
 }
 
 async function loadAccess(userId: string): Promise<{ roles: Role[]; permissions: string[] }> {
-  const [rolesRes, permsRes] = await Promise.all([
-    supabase.from("user_roles").select("role").eq("user_id", userId),
-    supabase.rpc("my_permissions"),
-  ]);
+  try {
+    const [rolesRes, permsRes] = await Promise.all([
+      supabase.from("user_roles").select("role").eq("user_id", userId),
+      supabase.rpc("my_permissions"),
+    ]);
 
-  const roles = rolesRes.error ? [] : (rolesRes.data ?? []).map((row: any) => row.role as Role);
-  const permissions = permsRes.error ? [] : ((permsRes.data as string[] | null) ?? []);
-  return { roles, permissions };
+    if (rolesRes.error) {
+      console.error("Error loading roles:", rolesRes.error);
+    }
+    if (permsRes.error) {
+      console.error("Error loading permissions:", permsRes.error);
+    }
+
+    const roles = rolesRes.error ? [] : (rolesRes.data ?? []).map((row: any) => row.role as Role);
+    const permissions = permsRes.error ? [] : ((permsRes.data as string[] | null) ?? []);
+    
+    return { roles, permissions };
+  } catch (err) {
+    console.error("Failed to load access data:", err);
+    return { roles: [], permissions: [] };
+  }
 }
 
 function applySession(session: Session | null) {

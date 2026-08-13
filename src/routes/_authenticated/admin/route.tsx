@@ -149,26 +149,30 @@ function AdminLayout() {
   });
 
   useEffect(() => {
-    if (loading) return;
+    if (loading || !user) return;
     
-    // Guard check: canEnter includes super_admin or staff with perms.
-    // canViewRoute handles the specific sub-path permission.
+    // Safety: if the state says they can't enter, we must redirect.
+    // If they ARE staff but have NO permissions, they might be newly created staff.
     if (!canEnter || !canViewRoute) {
+      console.log("Access denied to", pathname, { roles, permissions, canEnter, canViewRoute });
+      
       if (roles.includes("reseller") || roles.includes("leader")) {
         nav({ to: "/reseller", replace: true });
       } else if (isStaff && permissions.length === 0) {
+        // Staff members with no permissions are sent back to dashboard or onboarding
         nav({ to: "/onboarding", replace: true });
-      } else if (pathname === "/admin") {
-        // If we are at the root admin route and still don't have access,
-        // it means either the user is a reseller (handled above) or a staff with no dashboard perms.
-        nav({ to: "/dashboard", replace: true });
-      } else {
-        // If they have access to /admin but not this specific sub-route,
-        // send them to the main admin dashboard instead of looping to /dashboard.
-        nav({ to: "/admin", replace: true });
+      } else if (pathname.startsWith("/admin")) {
+        // If they are in the admin tree but can't see the specific route, 
+        // try to send them to the main admin dashboard.
+        // If they can't even see /admin, the outer check will eventually send them to /dashboard.
+        if (pathname !== "/admin") {
+          nav({ to: "/admin", replace: true });
+        } else {
+          nav({ to: "/dashboard", replace: true });
+        }
       }
     }
-  }, [loading, canEnter, canViewRoute, roles, permissions, pathname, nav]);
+  }, [loading, user, canEnter, canViewRoute, roles, permissions, pathname, nav, isStaff]);
 
   useEffect(() => {
     supabase
