@@ -88,7 +88,7 @@ export function PublicHeader({
   const logoUrl = logoUrlProp ?? loadedBrand.logoUrl;
   const c = content ?? loadedContent ?? FALLBACK;
 
-  const navLinks = [
+  const navLinks: Array<{ href?: string; to?: "/catalog"; label?: string }> = [
     { href: "#features", label: c.nav.features },
     { href: "#how", label: c.nav.how },
     { href: "#pricing", label: c.nav.pricing },
