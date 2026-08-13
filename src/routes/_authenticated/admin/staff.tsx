@@ -380,12 +380,12 @@ function StaffPage() {
       </Dialog>
 
       <ConfirmModal
-        open={isDeleteModalOpen}
-        onOpenChange={setIsDeleteModalOpen}
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
         title="Delete this user?"
         description={`${selectedUser?.full_name || selectedUser?.email || "This user"} will lose access immediately. This cannot be undone.`}
-        confirmLabel="Delete user"
-        tone="danger"
+        confirmText="Delete user"
+        variant="danger"
         onConfirm={handleDelete}
       />
     </div>
@@ -609,12 +609,12 @@ function RolesPage() {
       </Dialog>
 
       <ConfirmModal
-        open={!!deleteTarget}
-        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
         title="Delete this role?"
         description={`Users assigned to "${deleteTarget?.name ?? ""}" will lose their permissions.`}
-        confirmLabel="Delete role"
-        tone="danger"
+        confirmText="Delete role"
+        variant="danger"
         onConfirm={async () => {
           try {
             await deleteRoleMutation({ data: { id: deleteTarget.id } });
