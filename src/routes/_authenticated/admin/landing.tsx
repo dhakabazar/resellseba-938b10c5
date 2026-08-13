@@ -74,7 +74,7 @@ function LandingEditor() {
         description="Edit the text shown on your main domain"
       />
 
-      <Section title="Navigation">
+      <Section title="1. Navigation (header menu)">
         <Grid>
           <F label="Features"><I value={c.nav.features} onChange={(v) => update((d) => { d.nav.features = v; })} /></F>
           <F label="How it works"><I value={c.nav.how} onChange={(v) => update((d) => { d.nav.how = v; })} /></F>
@@ -85,7 +85,7 @@ function LandingEditor() {
         </Grid>
       </Section>
 
-      <Section title="Hero section">
+      <Section title="2. Hero section">
         <F label="Top badge"><I value={c.hero.badge} onChange={(v) => update((d) => { d.hero.badge = v; })} /></F>
         <Grid>
           <F label="Title (start)"><I value={c.hero.titleStart} onChange={(v) => update((d) => { d.hero.titleStart = v; })} /></F>
@@ -111,7 +111,7 @@ function LandingEditor() {
         </F>
       </Section>
 
-      <Section title="Stats band (khali rakhle auto count dekhabe)">
+      <Section title="3. Stats band (khali rakhle auto count dekhabe)">
         <div className="space-y-3">
           {(c.stats?.items ?? []).map((s, i) => (
             <div key={i} className="rounded-lg border p-3 space-y-2">
@@ -133,7 +133,34 @@ function LandingEditor() {
         </div>
       </Section>
 
-      <Section title="আমরা কীভাবে কাজ করি (flow section)">
+      <Section title="4. Features section">
+        <F label="Title"><I value={c.features.title} onChange={(v) => update((d) => { d.features.title = v; })} /></F>
+        <F label="Subtitle"><T value={c.features.subtitle} onChange={(v) => update((d) => { d.features.subtitle = v; })} /></F>
+        <div className="space-y-3">
+          {c.features.items.map((f, i) => (
+            <div key={i} className="rounded-lg border p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-muted-foreground">Feature #{i + 1}</span>
+                <button type="button" onClick={() => update((d) => { d.features.items.splice(i, 1); })} className="text-destructive hover:opacity-70"><Trash2 className="h-3.5 w-3.5" /></button>
+              </div>
+              <Grid>
+                <F label="Icon">
+                  <select value={f.icon} onChange={(e) => update((d) => { d.features.items[i].icon = e.target.value; })} className={inp}>
+                    {ICONS.map(ic => <option key={ic} value={ic}>{ic}</option>)}
+                  </select>
+                </F>
+                <F label="Title"><I value={f.title} onChange={(v) => update((d) => { d.features.items[i].title = v; })} /></F>
+              </Grid>
+              <F label="Description"><T value={f.desc} onChange={(v) => update((d) => { d.features.items[i].desc = v; })} /></F>
+            </div>
+          ))}
+          <button type="button" onClick={() => update((d) => { d.features.items.push({ icon: "Sparkles", title: "নতুন ফিচার", desc: "বর্ণনা" }); })} className="inline-flex items-center gap-1 rounded-md border px-3 py-1.5 text-xs hover:bg-muted">
+            <Plus className="h-3.5 w-3.5" /> Feature add
+          </button>
+        </div>
+      </Section>
+
+      <Section title="5. আমরা কীভাবে কাজ করি (flow section)">
         <Grid>
           <F label="Badge"><I value={c.about?.badge ?? ""} onChange={(v) => update((d) => { d.about = { ...(d.about ?? { badge: "", title: "", body: "", points: [] }), badge: v }; })} /></F>
           <F label="Title"><I value={c.about?.title ?? ""} onChange={(v) => update((d) => { d.about = { ...(d.about ?? { badge: "", title: "", body: "", points: [] }), title: v }; })} /></F>
@@ -173,34 +200,8 @@ function LandingEditor() {
         </div>
       </Section>
 
-      <Section title="Features section">
-        <F label="Title"><I value={c.features.title} onChange={(v) => update((d) => { d.features.title = v; })} /></F>
-        <F label="Subtitle"><T value={c.features.subtitle} onChange={(v) => update((d) => { d.features.subtitle = v; })} /></F>
-        <div className="space-y-3">
-          {c.features.items.map((f, i) => (
-            <div key={i} className="rounded-lg border p-3 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-muted-foreground">Feature #{i + 1}</span>
-                <button type="button" onClick={() => update((d) => { d.features.items.splice(i, 1); })} className="text-destructive hover:opacity-70"><Trash2 className="h-3.5 w-3.5" /></button>
-              </div>
-              <Grid>
-                <F label="Icon">
-                  <select value={f.icon} onChange={(e) => update((d) => { d.features.items[i].icon = e.target.value; })} className={inp}>
-                    {ICONS.map(ic => <option key={ic} value={ic}>{ic}</option>)}
-                  </select>
-                </F>
-                <F label="Title"><I value={f.title} onChange={(v) => update((d) => { d.features.items[i].title = v; })} /></F>
-              </Grid>
-              <F label="Description"><T value={f.desc} onChange={(v) => update((d) => { d.features.items[i].desc = v; })} /></F>
-            </div>
-          ))}
-          <button type="button" onClick={() => update((d) => { d.features.items.push({ icon: "Sparkles", title: "নতুন ফিচার", desc: "বর্ণনা" }); })} className="inline-flex items-center gap-1 rounded-md border px-3 py-1.5 text-xs hover:bg-muted">
-            <Plus className="h-3.5 w-3.5" /> Feature add
-          </button>
-        </div>
-      </Section>
 
-      <Section title="How it works">
+      <Section title="6. How it works (steps)">
         <F label="Title"><I value={c.how.title} onChange={(v) => update((d) => { d.how.title = v; })} /></F>
         <F label="Subtitle"><I value={c.how.subtitle} onChange={(v) => update((d) => { d.how.subtitle = v; })} /></F>
         <div className="space-y-3">
@@ -220,7 +221,7 @@ function LandingEditor() {
         </div>
       </Section>
 
-      <Section title="FAQ">
+      <Section title="8. FAQ  —  (7: Category ও প্রোডাক্ট সেকশন অটো দেখায়)">
         <F label="Title"><I value={c.faq?.title ?? ""} onChange={(v) => update((d) => { d.faq = { ...(d.faq ?? { title: "", subtitle: "", items: [] }), title: v }; })} /></F>
         <F label="Subtitle"><T value={c.faq?.subtitle ?? ""} onChange={(v) => update((d) => { d.faq = { ...(d.faq ?? { title: "", subtitle: "", items: [] }), subtitle: v }; })} /></F>
         <div className="space-y-3">
@@ -240,14 +241,14 @@ function LandingEditor() {
         </div>
       </Section>
 
-      <Section title="Call to action">
+      <Section title="9. Call to action">
         <F label="Badge"><I value={c.cta.badge} onChange={(v) => update((d) => { d.cta.badge = v; })} /></F>
         <F label="Title"><I value={c.cta.title} onChange={(v) => update((d) => { d.cta.title = v; })} /></F>
         <F label="Subtitle"><T value={c.cta.subtitle} onChange={(v) => update((d) => { d.cta.subtitle = v; })} /></F>
         <F label="Button label"><I value={c.cta.button} onChange={(v) => update((d) => { d.cta.button = v; })} /></F>
       </Section>
 
-      <Section title="Footer">
+      <Section title="10. Footer">
         <F label="Tagline"><I value={c.footer.tagline} onChange={(v) => update((d) => { d.footer.tagline = v; })} /></F>
       </Section>
 
