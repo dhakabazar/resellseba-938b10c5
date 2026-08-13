@@ -12,6 +12,7 @@ export const Route = createFileRoute("/_authenticated/admin/landing")({
 
 type Feature = { icon: string; title: string; desc: string };
 type Step = { title: string; desc: string };
+type StatItem = { value: string; label: string };
 type LandingContent = {
   nav: { features: string; how: string; pricing: string; signIn: string; cta: string };
   hero: {
