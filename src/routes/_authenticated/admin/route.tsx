@@ -149,22 +149,17 @@ function AdminLayout() {
   });
 
   useEffect(() => {
+    console.log("AdminLayout: State", { loading, userId: user?.id, canEnter, canViewRoute, roles, permissions, pathname });
     if (loading || !user) return;
     
-    // Safety: if the state says they can't enter, we must redirect.
-    // If they ARE staff but have NO permissions, they might be newly created staff.
     if (!canEnter || !canViewRoute) {
-      console.log("Access denied to", pathname, { roles, permissions, canEnter, canViewRoute });
+      console.warn("Access denied to", pathname, { roles, permissions, canEnter, canViewRoute });
       
       if (roles.includes("reseller") || roles.includes("leader")) {
         nav({ to: "/reseller", replace: true });
       } else if (isStaff && permissions.length === 0) {
-        // Staff members with no permissions are sent back to dashboard or onboarding
         nav({ to: "/onboarding", replace: true });
       } else if (pathname.startsWith("/admin")) {
-        // If they are in the admin tree but can't see the specific route, 
-        // try to send them to the main admin dashboard.
-        // If they can't even see /admin, the outer check will eventually send them to /dashboard.
         if (pathname !== "/admin") {
           nav({ to: "/admin", replace: true });
         } else {
