@@ -37,6 +37,7 @@ import {
 
 import { bdt } from "@/lib/finance-report";
 import { CountUp } from "@/components/count-up";
+import { PublicHeader } from "@/components/public-header";
 
 export const Route = createFileRoute("/")({
   head: () => ({
