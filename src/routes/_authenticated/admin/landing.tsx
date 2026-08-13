@@ -13,9 +13,10 @@ export const Route = createFileRoute("/_authenticated/admin/landing")({
 type Feature = { icon: string; title: string; desc: string };
 type Step = { title: string; desc: string };
 type FlowStep = { icon: string; title: string; desc: string };
+type FaqItem = { q: string; a: string };
 type StatItem = { value: string; label: string };
 type LandingContent = {
-  nav: { features: string; how: string; pricing: string; signIn: string; cta: string };
+  nav: { features: string; how: string; pricing: string; signIn: string; cta: string; faq?: string };
   hero: {
     badge: string;
     titleStart: string;
@@ -30,6 +31,7 @@ type LandingContent = {
   about?: { badge: string; title: string; body: string; points: string[]; flow?: FlowStep[] };
   features: { title: string; subtitle: string; items: Feature[] };
   how: { title: string; subtitle: string; steps: Step[] };
+  faq?: { title: string; subtitle: string; items: FaqItem[] };
   cta: { badge: string; title: string; subtitle: string; button: string };
   footer: { tagline: string };
 };
