@@ -16,7 +16,7 @@ type FlowStep = { icon: string; title: string; desc: string };
 type FaqItem = { q: string; a: string };
 type StatItem = { value: string; label: string };
 type LandingContent = {
-  nav: { features: string; how: string; pricing: string; signIn: string; cta: string; faq?: string };
+  nav: { features: string; how: string; categories: string; products: string; signIn: string; cta: string; faq?: string };
   hero: {
     badge: string;
     titleStart: string;
