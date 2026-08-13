@@ -21,8 +21,7 @@ export const Route = createFileRoute("/privacy")({
   component: PrivacyPage,
 });
 
-const DEFAULT_POLICY = `<h1>Privacy Policy</h1>
-<p>Your privacy is important to us. This policy explains how we collect, use, store, and protect your information when you use our reseller platform.</p>
+const DEFAULT_POLICY = `<p>Your privacy is important to us. This policy explains how we collect, use, store, and protect your information when you use our reseller platform.</p>
 
 <h2>Information We Collect</h2>
 <ul>
@@ -65,10 +64,9 @@ const DEFAULT_POLICY = `<h1>Privacy Policy</h1>
 <p class="font-semibold">Last updated: Today</p>`;
 
 function PrivacyPage() {
-  const [policy, setPolicy] = useState<string>("");
+  const [policy, setPolicy] = useState<string>(DEFAULT_POLICY);
   const [siteName, setSiteName] = useState("Reseller");
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
@@ -80,9 +78,8 @@ function PrivacyPage() {
       if (data) {
         setSiteName(data.site_name ?? "Reseller");
         setLogoUrl((data as any).logo_url ?? null);
-        setPolicy((data as any).privacy_policy ?? DEFAULT_POLICY);
+        if ((data as any).privacy_policy) setPolicy((data as any).privacy_policy);
       }
-      setLoading(false);
     })();
   }, []);
 
@@ -98,28 +95,22 @@ function PrivacyPage() {
           <ArrowLeft className="h-4 w-4" /> হোমে ফিরুন
         </Link>
 
-        {loading ? (
-          <div className="grid place-items-center py-20">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <article className="mt-8">
+          <div className="mb-8">
+            <span className="rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-[11px] font-semibold text-primary">
+              Legal
+            </span>
+            <h1 className="mt-3 text-2xl font-extrabold sm:text-4xl">Privacy Policy</h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              How {siteName} collects, uses, and protects your data.
+            </p>
           </div>
-        ) : (
-          <article className="mt-8">
-            <div className="mb-8">
-              <span className="rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-[11px] font-semibold text-primary">
-                Legal
-              </span>
-              <h1 className="mt-3 text-2xl font-extrabold sm:text-4xl">Privacy Policy</h1>
-              <p className="mt-2 text-sm text-muted-foreground">
-                How {siteName} collects, uses, and protects your data.
-              </p>
-            </div>
 
-            <div
-              className="prose prose-sm max-w-none text-foreground/90 [&_h1]:text-2xl [&_h1]:font-extrabold [&_h2]:mt-8 [&_h2]:text-lg [&_h2]:font-bold [&_h2]:text-foreground [&_ul]:list-disc [&_ul]:pl-5 [&_li]:mt-1.5 [&_p]:mt-3 [&_p]:leading-relaxed"
-              dangerouslySetInnerHTML={{ __html: policy || DEFAULT_POLICY }}
-            />
-          </article>
-        )}
+          <div
+            className="prose prose-sm max-w-none text-foreground/90 [&_h2]:mt-8 [&_h2]:text-lg [&_h2]:font-bold [&_h2]:text-foreground [&_ul]:list-disc [&_ul]:pl-5 [&_li]:mt-1.5 [&_p]:mt-3 [&_p]:leading-relaxed"
+            dangerouslySetInnerHTML={{ __html: policy || DEFAULT_POLICY }}
+          />
+        </article>
       </main>
 
       <footer className="border-t border-border/60 bg-card">
