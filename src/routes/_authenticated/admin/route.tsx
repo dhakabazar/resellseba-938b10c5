@@ -149,11 +149,10 @@ function AdminLayout() {
   });
 
   useEffect(() => {
-    console.log("AdminLayout: State", { loading, userId: user?.id, canEnter, canViewRoute, roles, permissions, pathname });
     if (loading || !user) return;
     
     if (!canEnter || !canViewRoute) {
-      console.warn("Access denied to", pathname, { roles, permissions, canEnter, canViewRoute });
+      console.log("Access denied to", pathname, { roles, permissions, canEnter, canViewRoute });
       
       if (roles.includes("reseller") || roles.includes("leader")) {
         nav({ to: "/reseller", replace: true });
