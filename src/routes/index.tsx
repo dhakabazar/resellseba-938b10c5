@@ -66,10 +66,11 @@ const ICON_MAP: Record<string, LucideIcon> = {
 type Feature = { icon: string; title: string; desc: string };
 type FlowStep = { icon: string; title: string; desc: string };
 type Step = { title: string; desc: string };
+type FaqItem = { q: string; a: string };
 type HeroImage = { path: string; url: string; bytes: number } | null;
 type StatItem = { value: string; label: string };
 type LandingContent = {
-  nav: { features: string; how: string; pricing: string; signIn: string; cta: string };
+  nav: { features: string; how: string; pricing: string; signIn: string; cta: string; faq?: string };
   hero: {
     badge: string; titleStart: string; titleHighlight: string; subtitle: string;
     ctaPrimary: string; ctaSecondary: string; badges: string[];
@@ -79,9 +80,11 @@ type LandingContent = {
   about?: { badge: string; title: string; body: string; points: string[]; flow?: FlowStep[] };
   features: { title: string; subtitle: string; items: Feature[] };
   how: { title: string; subtitle: string; steps: Step[] };
+  faq?: { title: string; subtitle: string; items: FaqItem[] };
   cta: { badge: string; title: string; subtitle: string; button: string };
   footer: { tagline: string };
 };
+
 
 const FALLBACK: LandingContent = {
   nav: { features: "ফিচার", how: "কীভাবে কাজ করে", pricing: "প্রাইসিং", signIn: "সাইন ইন", cta: "শুরু করুন" },
