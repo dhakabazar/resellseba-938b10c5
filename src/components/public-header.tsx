@@ -90,9 +90,10 @@ export function PublicHeader({
 
   const navLinks: Array<{ href?: string; to?: "/catalog"; label?: string }> = [
     { href: "#features", label: c.nav.features },
-    { href: "#how", label: c.nav.how },
-    { href: "#pricing", label: c.nav.pricing },
-    { to: "/catalog" as const, label: "প্রোডাক্টস" },
+    { href: "#about", label: c.nav.how },
+    { href: "#categories", label: "ক্যাটাগরি" },
+    { href: "#products", label: "প্রোডাক্ট" },
+    { to: "/catalog" as const, label: "ক্যাটালগ" },
     { href: "#faq", label: c.nav.faq || "FAQ" },
   ];
 
@@ -104,19 +105,20 @@ export function PublicHeader({
           <Brand siteName={siteName} logoUrl={logoUrl} />
         </Link>
 
-        <nav className="hidden items-center gap-7 text-base font-semibold text-muted-foreground lg:flex">
+        <nav className="hidden items-center gap-5 text-[13px] font-semibold text-muted-foreground lg:flex">
           {navLinks.map((l) =>
             l.to ? (
               <Link key={l.to} to={l.to} search={{}} className="font-bold text-primary hover:opacity-80">
                 {l.label}
               </Link>
             ) : (
-              <a key={l.href} href={l.href} className="transition-colors hover:text-primary">
+              <a key={l.href} href={l.href} className="whitespace-nowrap transition-colors hover:text-primary">
                 {l.label}
               </a>
             ),
           )}
         </nav>
+
 
 
         <div className="flex shrink-0 items-center gap-2">
