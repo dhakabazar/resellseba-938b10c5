@@ -242,6 +242,7 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
     { href: "#about", label: "কীভাবে কাজ করি" },
     { href: "#features", label: c.nav.features },
     { href: "#how", label: c.nav.how },
+    { href: "#faq", label: c.nav.faq || "FAQ" },
     { href: "#pricing", label: c.nav.pricing },
   ];
 
