@@ -469,27 +469,36 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
       {/* ── Categories ──────────────────────────────────── */}
       {stats?.categories?.length > 0 && (
         <section className="border-y border-border/60 bg-muted/30 py-10 sm:py-14">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6">
             <div className="mx-auto max-w-2xl text-center">
               <h2 className="text-xl font-extrabold sm:text-3xl">ক্যাটাগরি</h2>
               <p className="mt-2 text-sm text-muted-foreground">আপনার নিশ অনুযায়ী ক্যাটাগরি বেছে নিয়ে প্রোডাক্ট লিস্ট করুন</p>
             </div>
-            <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-6">
+            <div className="mt-8 grid grid-cols-5 gap-2 sm:grid-cols-6 sm:gap-3 md:grid-cols-8 lg:grid-cols-10">
               {stats.categories.map((cat: any) => (
                 <Link
                   key={cat.id}
                   to="/catalog"
                   search={{ category: cat.slug }}
-                  className="group relative block aspect-square overflow-hidden rounded-2xl border border-border/60 bg-card transition-all hover:-translate-y-1 hover:border-primary/40 hover:shadow-[var(--shadow-elegant)]"
+                  className="group flex flex-col items-center gap-2 rounded-2xl border border-border/60 bg-card p-2 text-center transition-all hover:-translate-y-1 hover:border-primary/40 hover:shadow-[var(--shadow-elegant)]"
                 >
-                  {cat.image_url ? (
-                    <img src={cat.image_url} alt={cat.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />
-                  ) : (
-                    <div className="grid h-full w-full place-items-center bg-primary/5 text-2xl font-black text-primary">{cat.name.charAt(0)}</div>
-                  )}
-                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-foreground/85 to-transparent p-3 pt-8">
-                    <span className="block truncate text-xs font-bold text-background">{cat.name}</span>
+                  <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-primary/5">
+                    {cat.image_url ? (
+                      <img
+                        src={cat.image_url}
+                        alt={cat.name}
+                        loading="lazy"
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
+                    ) : (
+                      <div className="grid h-full w-full place-items-center text-lg font-black text-primary">
+                        {cat.name.charAt(0)}
+                      </div>
+                    )}
                   </div>
+                  <span className="line-clamp-2 min-w-0 text-[11px] font-bold leading-tight group-hover:text-primary sm:text-xs">
+                    {cat.name}
+                  </span>
                 </Link>
               ))}
             </div>
@@ -500,21 +509,21 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
       {/* ── Featured products ───────────────────────────── */}
       {stats?.products?.length > 0 && (
         <section className="py-10 sm:py-14">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6">
             <div className="mx-auto max-w-2xl text-center">
               <h2 className="text-xl font-extrabold sm:text-3xl">ফিচার্ড প্রোডাক্ট</h2>
               <p className="mt-2 text-sm text-muted-foreground">মাস্টার ক্যাটালগের জনপ্রিয় প্রোডাক্ট — প্রফিট সহ দেখুন</p>
             </div>
-            <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              {stats.products.map((p: any) => (
+            <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-6">
+              {stats.products.slice(0, 6).map((p: any) => (
                 <div key={p.id} className="group surface-card surface-card-hover flex flex-col overflow-hidden">
                   <div className="relative aspect-square overflow-hidden bg-muted">
                     {p.main_image ? (
-                      <img src={p.main_image} alt={p.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                      <img src={p.main_image} alt={p.name} loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
                     ) : (
                       <div className="grid h-full w-full place-items-center text-xs text-muted-foreground">No image</div>
                     )}
-                    <div className="absolute right-2 top-2 flex gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+                    <div className="absolute right-1.5 top-1.5 flex gap-1.5 opacity-0 transition-opacity group-hover:opacity-100">
                       <button
                         onClick={() => copy(p.name)}
                         className="rounded-lg border border-border bg-card/95 p-1.5 shadow-sm backdrop-blur hover:text-primary"
@@ -535,27 +544,41 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
                       )}
                     </div>
                   </div>
-                  <div className="flex flex-1 flex-col p-4">
-                    <Link to="/catalog/$slug" params={{ slug: p.slug }} className="line-clamp-2 text-sm font-bold leading-tight hover:text-primary">
+                  <div className="flex flex-1 flex-col p-3">
+                    <Link to="/catalog/$slug" params={{ slug: p.slug }} className="line-clamp-2 text-xs font-bold leading-tight hover:text-primary sm:text-sm">
                       {p.name}
                     </Link>
-                    <div className="mt-auto flex items-center justify-between pt-3">
-                      <div>
-                        <span className="block text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Resell For</span>
-                        <span className="text-base font-black text-primary">{bdt(p.price)}</span>
+                    <div className="mt-auto space-y-1 pt-3">
+                      <div className="flex items-baseline justify-between gap-1">
+                        <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Resell</span>
+                        <span className="text-sm font-black text-primary">{bdt(p.price)}</span>
                       </div>
-                      <div className="text-right">
-                        <span className="block text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Your Profit</span>
-                        <span className="block text-sm font-bold text-success">+{bdt(p.price - p.base_price)}</span>
+                      <div className="flex items-baseline justify-between gap-1">
+                        <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Profit</span>
+                        <span className="text-xs font-bold text-success">+{bdt(p.price - p.base_price)}</span>
                       </div>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
+
+            <div className="mt-10 flex justify-center">
+              <Link
+                to="/catalog"
+                search={{}}
+                className="btn-brand group relative inline-flex items-center gap-2 overflow-hidden rounded-full px-7 py-3 text-sm font-bold shadow-[var(--shadow-elegant)] transition-transform hover:scale-[1.03] active:scale-95"
+              >
+                <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+                <Layers className="relative h-4 w-4" />
+                <span className="relative">সম্পূর্ণ ক্যাটালগ দেখুন</span>
+                <ArrowRight className="relative h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </Link>
+            </div>
           </div>
         </section>
       )}
+
 
       {/* ── Features ────────────────────────────────────── */}
       <section id="features" className="border-t border-border/60 bg-muted/30">
