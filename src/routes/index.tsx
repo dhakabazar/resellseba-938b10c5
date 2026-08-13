@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/accordion";
 
 import { bdt } from "@/lib/finance-report";
+import { CountUp } from "@/components/count-up";
 
 export const Route = createFileRoute("/")({
   head: () => ({
