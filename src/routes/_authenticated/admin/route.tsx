@@ -1,4 +1,4 @@
-import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -132,9 +132,16 @@ function filterNav(nav: NavEntry[], permissions: string[], isSuperAdmin: boolean
 function AdminLayout() {
   const { user, roles, permissions, loading } = useAuth();
   const nav = useNavigate();
+  const pathname = useLocation({ select: (location) => location.pathname });
   const isSuperAdmin = roles.includes("super_admin");
   const isStaff = roles.includes("staff");
   const canEnter = isSuperAdmin || (isStaff && permissions.length > 0);
+  const routePermission = Object.entries(ROUTE_PERMISSIONS)
+    .sort(([a], [b]) => b.length - a.length)
+    .find(([route]) => pathname === route || pathname.startsWith(`${route}/`))?.[1];
+  const canViewRoute =
+    isSuperAdmin ||
+    (isStaff && routePermission != null && routePermission.some((permission) => permissions.includes(permission)));
   const [brand, setBrand] = useState<{ name: string; logoUrl: string | null; primary: string | null }>({
     name: "Admin",
     logoUrl: null,
@@ -143,8 +150,8 @@ function AdminLayout() {
 
   useEffect(() => {
     if (loading) return;
-    if (!canEnter) nav({ to: "/dashboard", replace: true });
-  }, [loading, canEnter, nav]);
+    if (!canEnter || !canViewRoute) nav({ to: "/dashboard", replace: true });
+  }, [loading, canEnter, canViewRoute, nav]);
 
   useEffect(() => {
     supabase
@@ -164,7 +171,7 @@ function AdminLayout() {
 
   useBrandingTheme(brand.primary);
 
-  if (loading || !user || !canEnter) {
+  if (loading || !user || !canEnter || !canViewRoute) {
     return (
       <div className="grid min-h-screen place-items-center">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
