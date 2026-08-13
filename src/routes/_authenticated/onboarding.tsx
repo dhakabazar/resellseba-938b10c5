@@ -219,7 +219,7 @@ function ContactButton({ variant }: { variant: "whatsapp" | "email" }) {
               <label className="mb-1 block text-xs font-medium">Store code</label>
               <div className="flex items-center rounded-md border bg-background focus-within:ring-2 focus-within:ring-ring">
                 <span className="border-r bg-muted px-3 py-2 text-xs text-muted-foreground">
-                  resellhub.com/s/
+                  {storePrefix}
                 </span>
                 <input
                   required
