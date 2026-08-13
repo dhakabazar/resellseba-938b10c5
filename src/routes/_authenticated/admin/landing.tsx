@@ -25,6 +25,8 @@ type LandingContent = {
     badges: string[];
     bannerImage?: UploadedImage | null;
   };
+  stats?: { items: StatItem[] };
+  about?: { badge: string; title: string; body: string; points: string[] };
   features: { title: string; subtitle: string; items: Feature[] };
   how: { title: string; subtitle: string; steps: Step[] };
   cta: { badge: string; title: string; subtitle: string; button: string };
