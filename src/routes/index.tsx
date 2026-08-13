@@ -369,18 +369,20 @@ function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string
       {/* ── Stats band ──────────────────────────────────── */}
       {statItems.length > 0 && (
         <section className="border-y border-border/60 bg-card">
-          <div className="mx-auto grid max-w-6xl grid-cols-2 gap-6 px-4 py-10 sm:px-6 md:grid-cols-4 md:py-12">
+          <div className="mx-auto grid max-w-6xl grid-cols-2 gap-8 px-4 py-10 sm:px-6 md:grid-cols-4 md:py-12">
             {statItems.slice(0, 4).map((s, i) => {
               const Icon = statIcons[i] ?? Sparkles;
               return (
-                <div key={i} className="text-center">
-                  <span className="mx-auto mb-3 grid h-11 w-11 place-items-center rounded-xl bg-primary/10 text-primary">
-                    <Icon className="h-5 w-5" />
-                  </span>
-                  <div className="text-2xl font-black sm:text-3xl">
+                <div key={i} className="flex flex-col items-center text-center">
+                  <div className="flex items-center gap-2">
+                    <span className="grid h-9 w-9 place-items-center rounded-lg bg-primary/10 text-primary">
+                      <Icon className="h-4.5 w-4.5" />
+                    </span>
+                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground sm:text-sm">{s.label}</span>
+                  </div>
+                  <div className="mt-2 text-2xl font-black sm:text-3xl">
                     <CountUp value={s.value ?? ""} />
                   </div>
-                  <div className="mt-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground sm:text-xs">{s.label}</div>
                 </div>
               );
             })}
