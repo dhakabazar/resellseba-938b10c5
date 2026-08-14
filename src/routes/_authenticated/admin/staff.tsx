@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
-import { Shield, UserPlus, Key, Trash2, MoreHorizontal, Loader2, Mail, Plus, Check } from "lucide-react";
+import { Shield, UserPlus, Key, Trash2, MoreHorizontal, Loader2, Mail, Plus, Check, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/lib/use-auth";
