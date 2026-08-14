@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
-import { Shield, UserPlus, Key, Trash2, MoreHorizontal, Loader2, Mail, Plus, Check } from "lucide-react";
+import { Shield, UserPlus, Key, Trash2, MoreHorizontal, Loader2, Mail, Plus, Check, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/lib/use-auth";
@@ -64,6 +64,8 @@ function StaffPage() {
   const [newPassword, setNewPassword] = useState("");
   const [newRole, setNewRole] = useState("");
   const [formData, setFormData] = useState({ email: "", password: "", fullName: "", role: "" });
+  const [showAddPassword, setShowAddPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const createUserMutation = useServerFn(createAdminUser);
@@ -277,14 +279,26 @@ function StaffPage() {
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  placeholder="••••••••"
-                  required
-                />
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showAddPassword ? "text" : "password"}
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    placeholder="••••••••"
+                    className="pr-10"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowAddPassword((v) => !v)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                    aria-label={showAddPassword ? "Hide password" : "Show password"}
+                    tabIndex={-1}
+                  >
+                    {showAddPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="role">Role</Label>
@@ -327,15 +341,27 @@ function StaffPage() {
             </DialogHeader>
             <div className="grid gap-2 py-4">
               <Label htmlFor="newPassword">New Password</Label>
-              <Input
-                id="newPassword"
-                type="password"
-                minLength={6}
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-              />
+              <div className="relative">
+                <Input
+                  id="newPassword"
+                  type={showNewPassword ? "text" : "password"}
+                  minLength={6}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="pr-10"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword((v) => !v)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                  aria-label={showNewPassword ? "Hide password" : "Show password"}
+                  tabIndex={-1}
+                >
+                  {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
             <DialogFooter>
               <button type="submit" disabled={isSubmitting} className="btn-brand w-full py-2.5 flex items-center justify-center gap-2">
