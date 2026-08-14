@@ -27,6 +27,7 @@ function AuthPage() {
   const [mode, setMode] = useState<"signin" | "signup">(search.mode ?? "signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [busy, setBusy] = useState(false);
