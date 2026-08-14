@@ -64,6 +64,8 @@ function StaffPage() {
   const [newPassword, setNewPassword] = useState("");
   const [newRole, setNewRole] = useState("");
   const [formData, setFormData] = useState({ email: "", password: "", fullName: "", role: "" });
+  const [showAddPassword, setShowAddPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const createUserMutation = useServerFn(createAdminUser);
