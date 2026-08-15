@@ -1,0 +1,1 @@
+ALTER TABLE public.orders ALTER COLUMN reseller_id DROP NOT NULL;
