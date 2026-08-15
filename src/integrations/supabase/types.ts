@@ -681,7 +681,7 @@ export type Database = {
           order_number: string
           payment_method: Database["public"]["Enums"]["payment_method"]
           payment_status: Database["public"]["Enums"]["payment_status"]
-          reseller_id: string
+          reseller_id: string | null
           reseller_note: string | null
           reseller_profit: number
           sa_cost_total: number
@@ -709,7 +709,7 @@ export type Database = {
           order_number?: string
           payment_method?: Database["public"]["Enums"]["payment_method"]
           payment_status?: Database["public"]["Enums"]["payment_status"]
-          reseller_id: string
+          reseller_id?: string | null
           reseller_note?: string | null
           reseller_profit?: number
           sa_cost_total?: number
@@ -737,7 +737,7 @@ export type Database = {
           order_number?: string
           payment_method?: Database["public"]["Enums"]["payment_method"]
           payment_status?: Database["public"]["Enums"]["payment_status"]
-          reseller_id?: string
+          reseller_id?: string | null
           reseller_note?: string | null
           reseller_profit?: number
           sa_cost_total?: number
