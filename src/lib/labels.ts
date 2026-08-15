@@ -13,7 +13,7 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
 
   if (!orders || orders.length === 0) return;
 
-  const resellerIds = [...new Set(orders.map(o => o.reseller_id))];
+  const resellerIds = [...new Set(orders.map((o) => o.reseller_id).filter((x): x is string => Boolean(x)))];
   const { data: resellers } = await supabase
     .from("resellers")
     .select("id,business_name,reseller_settings(logo_url,store_name)")

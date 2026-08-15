@@ -58,7 +58,7 @@ export const Route = createFileRoute("/api/public/payment/sslcommerz-ipn")({
           .eq("id", order.id);
 
         // fetch reseller code for redirect
-        const { data: rs } = await supabaseAdmin.from("resellers").select("code").eq("id", order.reseller_id).maybeSingle();
+        const { data: rs } = await supabaseAdmin.from("resellers").select("code").eq("id", order.reseller_id ?? "").maybeSingle();
         const origin = new URL(request.url).origin;
         return Response.redirect(`${origin}/s/${rs?.code ?? ""}/thanks?n=${encodeURIComponent(tranId)}`, 303);
       },
@@ -74,7 +74,7 @@ export const Route = createFileRoute("/api/public/payment/sslcommerz-ipn")({
             .eq("order_number", tranId)
             .maybeSingle();
           if (order) {
-            const { data: rs } = await supabaseAdmin.from("resellers").select("code").eq("id", order.reseller_id).maybeSingle();
+            const { data: rs } = await supabaseAdmin.from("resellers").select("code").eq("id", order.reseller_id ?? "").maybeSingle();
             return Response.redirect(`${url.origin}/s/${rs?.code ?? ""}/thanks?n=${encodeURIComponent(tranId)}`, 303);
           }
         }

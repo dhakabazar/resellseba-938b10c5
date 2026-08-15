@@ -16,13 +16,13 @@ export async function loadOrder(orderNumber: string) {
   return { order, supabaseAdmin };
 }
 
-export async function loadConfig(supabaseAdmin: any, method: string, resellerId: string) {
+export async function loadConfig(supabaseAdmin: any, method: string, resellerId: string | null) {
   // reseller override first, then global
   const { data } = await supabaseAdmin
     .from("payment_configs")
     .select("config, mode, is_active, reseller_id")
     .eq("method", method)
-    .or(`reseller_id.eq.${resellerId},reseller_id.is.null`);
+    .or(resellerId ? `reseller_id.eq.${resellerId},reseller_id.is.null` : `reseller_id.is.null`);
   const rows = (data ?? []).filter((r: any) => r.is_active);
   const cfg =
     rows.find((r: any) => r.reseller_id === resellerId) ??
