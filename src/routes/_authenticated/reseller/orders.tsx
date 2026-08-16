@@ -1058,6 +1058,20 @@ function OrdersPage() {
         />
       )}
 
+      {editId && (
+        <OrderEditModal
+          orderId={editId}
+          allProducts={allProducts}
+          onClose={() => setEditId(null)}
+          onSaved={() => {
+            setEditId(null);
+            load();
+          }}
+        />
+      )}
+
+
+
       {statusModal && statusModal.open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
           <div className="w-full max-w-sm overflow-hidden rounded-xl bg-background shadow-2xl ring-1 ring-black/5 animate-in fade-in zoom-in duration-200 sm:max-w-md">
