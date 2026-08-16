@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Pagination, usePaginated, type FilterOption } from "@/components/data-list";
 import {
   OrderFilterBar,
@@ -25,12 +25,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { NewOrderModal } from "@/components/NewOrderModal";
+import { OrderEditModal } from "@/components/OrderEditModal";
+import { OrderItemsStrip, type StripItem } from "@/components/order-items-strip";
 
 import { ShipmentBookingModal } from "@/components/ShipmentBookingModal";
 import { toast } from "sonner";
 import { CourierTimeline, type CourierEvent } from "@/components/CourierTimeline";
 import { bookSteadfast } from "@/lib/couriers.functions";
 import { OrderTabs } from "@/components/OrderTabs";
+import { Pencil } from "lucide-react";
 import { PickListModal } from "@/components/pick-list-modal";
 import { OrderSearch, type OrderSearchMode } from "@/components/order-search";
 import { printShippingLabels } from "@/lib/labels";
@@ -61,7 +64,15 @@ type OrderRow = {
   resellers: { business_name: string; code: string; contact_phone: string | null } | null;
 };
 
-type OrderItemLite = { order_id: string; product_id: string | null; product_name: string; quantity: number };
+type OrderItemLite = {
+  order_id: string;
+  product_id: string | null;
+  product_name: string;
+  product_image: string | null;
+  quantity: number;
+  reseller_price: number | null;
+  line_total: number | null;
+};
 
 export const Route = createFileRoute("/_authenticated/admin/orders")({
   component: AdminOrdersPage,
@@ -86,6 +97,7 @@ function AdminOrdersPage() {
   const [pickOpen, setPickOpen] = useState(false);
   const [marked, setMarked] = useState<string[]>([]);
   const [page, setPage] = useState(1);
+  const [editId, setEditId] = useState<string | null>(null);
   const [statusModal, setStatusModal] = useState<{ open: boolean; orderId: string; currentStatus: string; isBulk?: boolean } | null>(null);
   const [bookingModal, setBookingModal] = useState<{ open: boolean; orderIds: string[] }>({ open: false, orderIds: [] });
   
@@ -127,15 +139,15 @@ function AdminOrdersPage() {
       q,
       supabase.from("orders").select("status"),
       supabase.from("resellers").select("id,business_name,code,contact_phone").order("business_name"),
-      supabase.from("products").select("id,name,og_image_url").eq("is_active", true),
+      supabase.from("products").select("id,name,slug,og_image_url,suggested_price,reseller_price,packaging_cost,delivery_mode,delivery_flat,delivery_inside,delivery_outside").eq("is_active", true),
     ]);
     const rows = (data ?? []) as OrderRow[];
     setOrders(rows);
     setAllOrders(allStats ?? []);
     if (rows.length > 0) {
       const [{ data: its }, { data: s }] = await Promise.all([
-        supabase.from("order_items").select("order_id,product_id,product_name,quantity").in("order_id", rows.map((r) => r.id)),
-        supabase.from("shipments").select("order_id,provider,consignment_id").in("order_id", rows.map(r => r.id)),
+        supabase.from("order_items").select("order_id,product_id,product_name,product_image,quantity,reseller_price,line_total").in("order_id", rows.map((r) => r.id)),
+        supabase.from("shipments").select("id,order_id,provider,tracking_id,consignment_id").in("order_id", rows.map(r => r.id)),
       ]);
       setOrderItems((its ?? []) as OrderItemLite[]);
       setShipments(s ?? []);
@@ -206,6 +218,24 @@ function AdminOrdersPage() {
     }
     return m;
   }, [orderItems]);
+
+  const stripItems = useCallback(
+    (orderId: string): StripItem[] =>
+      (itemsByOrder.get(orderId) ?? []).map((it, idx) => {
+        const p = allProducts.find((x) => x.id === it.product_id);
+        return {
+          id: `${orderId}-${idx}`,
+          product_id: it.product_id,
+          product_name: it.product_name,
+          quantity: it.quantity,
+          unit_price: it.reseller_price,
+          line_total: it.line_total,
+          image: it.product_image ?? p?.og_image_url ?? null,
+          slug: p?.slug ?? null,
+        };
+      }),
+    [itemsByOrder, allProducts],
+  );
 
   const filtered = useMemo(() => {
     const base = applyOrderFilters(orders, { ...filters, q: "" });
@@ -391,6 +421,9 @@ function AdminOrdersPage() {
                           <DropdownMenuItem onClick={() => setSelected(o)}>
                             <Eye className="mr-2 h-4 w-4" /> View Details
                           </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setEditId(o.id)}>
+                            <Pencil className="mr-2 h-4 w-4" /> Edit Order
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => setStatusModal({ open: true, orderId: o.id, currentStatus: o.status })}>
                             <Settings2 className="mr-2 h-4 w-4" /> Change Status
                           </DropdownMenuItem>
@@ -420,26 +453,14 @@ function AdminOrdersPage() {
                      </DropdownMenu>
                   </div>
                 </div>
+                <OrderItemsStrip items={stripItems(o.id)} />
                 {expandedOrders.includes(o.id) && (
                   <div className="bg-muted/30 px-12 py-6">
                     <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
                       <div>
                         <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">Order Items</h4>
-                        <div className="space-y-3">
-                          {itemsByOrder.get(o.id)?.map((it, idx) => {
-                            const p = allProducts.find(x => x.id === it.product_id);
-                            return (
-                              <div key={idx} className="flex items-center gap-3 rounded-lg border bg-background p-2">
-                                {p?.og_image_url && (
-                                  <img src={p.og_image_url} className="h-10 w-10 rounded object-cover" />
-                                )}
-                                <div className="min-w-0 flex-1">
-                                  <div className="truncate text-sm font-medium">{it.product_name}</div>
-                                  <div className="text-xs text-muted-foreground">Quantity: {it.quantity}</div>
-                                </div>
-                              </div>
-                            );
-                          })}
+                        <div className="overflow-hidden rounded-lg border bg-background">
+                          <OrderItemsStrip items={stripItems(o.id)} limit={2} className="border-t-0 bg-transparent" />
                         </div>
                       </div>
                       <div>
@@ -580,6 +601,33 @@ function AdminOrdersPage() {
             load();
           }}
         />
+
+        {open && (
+          <NewOrderModal
+            listings={[]}
+            allProducts={allProducts}
+            resellers={resellers}
+            isAdmin
+            onClose={() => setOpen(false)}
+            onCreated={() => {
+              setOpen(false);
+              load();
+            }}
+          />
+        )}
+
+        {editId && (
+          <OrderEditModal
+            orderId={editId}
+            allProducts={allProducts}
+            isAdmin
+            onClose={() => setEditId(null)}
+            onSaved={() => {
+              setEditId(null);
+              load();
+            }}
+          />
+        )}
 
         {selected && (
           <OrderDrawer
