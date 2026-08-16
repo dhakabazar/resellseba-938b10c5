@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { productDeliveryCharge, deliveryLabel } from "@/lib/delivery";
 import { addressError, nameError, normalizePhone, phoneError, sanitizeName } from "@/lib/checkout-validate";
@@ -29,6 +29,9 @@ import {
 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { NewOrderModal } from "@/components/NewOrderModal";
+import { OrderEditModal } from "@/components/OrderEditModal";
+import { OrderItemsStrip, type StripItem } from "@/components/order-items-strip";
+import { Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { useDepositStatus } from "@/lib/deposit";
 import { DEFAULT_DEPOSIT_TEXTS, fillText, useDepositSettings } from "@/lib/deposit-settings";
@@ -111,7 +114,15 @@ export const Route = createFileRoute("/_authenticated/reseller/orders")({
 const ORDER_COLUMNS =
   "id,order_number,customer_name,customer_phone,address_line,city,area,subtotal,shipping_cost,discount,total,reseller_profit,payment_method,status,payment_status,forwarded_to_admin,notes,reseller_note,created_at";
 
-type OrderItemLite = { order_id: string; product_id: string | null; product_name: string; quantity: number };
+type OrderItemLite = {
+  order_id: string;
+  product_id: string | null;
+  product_name: string;
+  product_image: string | null;
+  quantity: number;
+  reseller_price: number | null;
+  line_total: number | null;
+};
 
 function exportCsv(rows: OrderRow[]) {
   const head = ["Order", "Date", "Customer", "Phone", "Area", "Address", "Status", "Total", "Profit"];
@@ -161,6 +172,7 @@ function OrdersPage() {
   const [marked, setMarked] = useState<string[]>([]);
   const [expandedOrders, setExpandedOrders] = useState<string[]>([]);
   const [page, setPage] = useState(1);
+  const [editId, setEditId] = useState<string | null>(null);
   const [statusModal, setStatusModal] = useState<{ open: boolean; orderId: string; currentStatus: string; isBulk?: boolean } | null>(null);
   const { status: deposit } = useDepositStatus(resellerId);
   const { texts: depositTexts } = useDepositSettings();
@@ -201,7 +213,7 @@ function OrdersPage() {
         .eq("is_active", true),
       supabase
         .from("products")
-        .select("id,name,reseller_price,packaging_cost,delivery_inside,delivery_outside,delivery_mode,delivery_flat,og_image_url,suggested_price")
+        .select("id,name,slug,reseller_price,packaging_cost,delivery_inside,delivery_outside,delivery_mode,delivery_flat,og_image_url,suggested_price")
         .eq("is_active", true)
         .order("created_at", { ascending: false }),
     ]);
@@ -214,7 +226,7 @@ function OrdersPage() {
       const [{ data: its }, { data: s }, { data: ev }] = await Promise.all([
         supabase
           .from("order_items")
-          .select("order_id,product_id,product_name,quantity")
+          .select("order_id,product_id,product_name,product_image,quantity,reseller_price,line_total")
           .in("order_id", rows.map((x) => x.id)),
         supabase
           .from("shipments")
@@ -248,6 +260,24 @@ function OrdersPage() {
     }
     return m;
   }, [orderItems]);
+
+  const stripItems = useCallback(
+    (orderId: string): StripItem[] =>
+      (itemsByOrder.get(orderId) ?? []).map((it, idx) => {
+        const p = allProducts.find((x) => x.id === it.product_id);
+        return {
+          id: `${orderId}-${idx}`,
+          product_id: it.product_id,
+          product_name: it.product_name,
+          quantity: it.quantity,
+          unit_price: it.reseller_price,
+          line_total: it.line_total,
+          image: it.product_image ?? p?.og_image_url ?? null,
+          slug: p?.slug ?? null,
+        };
+      }),
+    [itemsByOrder, allProducts],
+  );
 
   const tabStatuses = ORDER_TABS.find((t) => t.key === tab)?.statuses ?? [];
   const inTab =
@@ -659,6 +689,11 @@ function OrdersPage() {
                           <Eye className="mr-2 h-4 w-4" /> View Details
                         </DropdownMenuItem>
 
+                        {o.status === "pending" && (
+                          <DropdownMenuItem onClick={() => setEditId(o.id)}>
+                            <Pencil className="mr-2 h-4 w-4" /> Edit Order
+                          </DropdownMenuItem>
+                        )}
                         {(() => {
                           const isBooked = shipments.some(s => s.order_id === o.id && (s.consignment_id || s.tracking_id));
                           if (!isBooked) {
@@ -681,7 +716,7 @@ function OrdersPage() {
                             <FileText className="mr-2 h-4 w-4" /> View Invoice
                           </Link>
                         </DropdownMenuItem>
-                        {!o.forwarded_to_admin && (o.status === "pending" || o.status === "confirmed") && !shipments.some(s => s.order_id === o.id && (s.consignment_id || s.tracking_id)) && (
+                        {o.status === "pending" && !shipments.some(s => s.order_id === o.id && (s.consignment_id || s.tracking_id)) && (
                           <>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem 
@@ -911,6 +946,8 @@ function OrdersPage() {
                   <div className="flex justify-end">{actions}</div>
                 </div>
 
+                <OrderItemsStrip items={stripItems(o.id)} />
+
                 {/* Collapsible content section */}
                 {expandedOrders.includes(o.id) && (
                   <div className="border-t bg-muted/20 px-4 py-4 animate-in slide-in-from-top-2 duration-200">
@@ -920,24 +957,8 @@ function OrdersPage() {
                         <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
                           <PackageCheck className="h-3.5 w-3.5" /> Ordered Products ({items.length})
                         </h4>
-                        <div className="space-y-2">
-                          {items.map((it, idx) => (
-                            <div key={idx} className="flex items-center justify-between rounded-lg border bg-background p-3 shadow-sm">
-                              <div className="flex items-center gap-3">
-                                <div className="h-10 w-10 shrink-0 overflow-hidden rounded-md border bg-muted flex items-center justify-center">
-                                  {allProducts.find(p => p.id === it.product_id)?.og_image_url ? (
-                                    <img src={allProducts.find(p => p.id === it.product_id).og_image_url} alt="" className="h-full w-full object-cover" />
-                                  ) : (
-                                    <ShoppingCart className="h-5 w-5 text-muted-foreground/40" />
-                                  )}
-                                </div>
-                                <div className="min-w-0">
-                                  <div className="truncate text-sm font-semibold">{it.product_name}</div>
-                                  <div className="text-xs text-muted-foreground font-medium">Qty: {it.quantity}</div>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
+                        <div className="overflow-hidden rounded-lg border bg-background">
+                          <OrderItemsStrip items={stripItems(o.id)} limit={2} className="border-t-0 bg-transparent" />
                         </div>
                       </div>
 
