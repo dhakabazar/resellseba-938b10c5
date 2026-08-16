@@ -147,7 +147,7 @@ function AdminOrdersPage() {
     if (rows.length > 0) {
       const [{ data: its }, { data: s }] = await Promise.all([
         supabase.from("order_items").select("order_id,product_id,product_name,product_image,quantity,reseller_price,line_total").in("order_id", rows.map((r) => r.id)),
-        supabase.from("shipments").select("order_id,provider,consignment_id").in("order_id", rows.map(r => r.id)),
+        supabase.from("shipments").select("id,order_id,provider,tracking_id,consignment_id").in("order_id", rows.map(r => r.id)),
       ]);
       setOrderItems((its ?? []) as OrderItemLite[]);
       setShipments(s ?? []);
