@@ -1755,11 +1755,26 @@ export type Database = {
         Args: { _reseller_id: string }
         Returns: number
       }
+      reseller_ledger: {
+        Args: { _limit?: number; _reseller_id: string }
+        Returns: {
+          amount: number
+          at: string
+          direction: string
+          kind: string
+          label: string
+          reference: string
+          running: number
+          status: string
+        }[]
+      }
       reseller_profit_summary: {
         Args: { _reseller_id: string }
         Returns: {
           available: number
           delivered_profit: number
+          deposit_balance: number
+          frozen_amount: number
           paid_out: number
           pending_payout: number
         }[]
