@@ -193,24 +193,69 @@ function AdminDashboard() {
         </div>
 
         <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-4">
-          <div className="surface-card p-4 text-center">
-            <div className="text-2xl font-black text-primary">{counts.products}</div>
-            <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">Products</div>
-          </div>
-          <div className="surface-card p-4 text-center">
-            <div className="text-2xl font-black text-primary">{counts.resellers}</div>
-            <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">Resellers</div>
-          </div>
-          <div className="surface-card p-4 text-center">
-            <div className="text-2xl font-black text-primary">{counts.brands}</div>
-            <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">Brands</div>
-          </div>
-          <div className="surface-card p-4 text-center border-orange-500/20 bg-orange-500/5">
-            <div className="text-2xl font-black text-orange-500">{counts.pendingResellers}</div>
-            <div className="text-[10px] font-bold uppercase tracking-widest text-orange-500/60">Applicants</div>
-          </div>
+          <MiniCard to="/admin/products" label="Products" value={catalog.products} />
+          <MiniCard to="/admin/resellers" label="Resellers" value={counts.resellers} />
+          <MiniCard to="/admin/brands" label="Brands" value={counts.brands} />
+          <MiniCard
+            to="/admin/resellers"
+            label="Applicants"
+            value={counts.pendingResellers}
+            tone="amber"
+          />
         </div>
       </section>
+
+      <section className="mb-8">
+        <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-muted-foreground/80">
+          Product report
+        </h3>
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
+          <MiniCard to="/admin/products" label="Total" value={catalog.products} />
+          <MiniCard to="/admin/products" search={{ status: "active" }} label="Active" value={catalog.active} tone="emerald" />
+          <MiniCard to="/admin/products" search={{ status: "hidden" }} label="Inactive" value={catalog.inactive} tone="rose" />
+          <MiniCard to="/admin/products" search={{ status: "featured" }} label="Featured" value={catalog.featured} tone="violet" />
+          <MiniCard to="/admin/products" search={{ stock: "low" }} label="Low stock (≤5)" value={catalog.low} tone="amber" />
+          <MiniCard to="/admin/products" search={{ stock: "out" }} label="Out of stock" value={catalog.out} tone="rose" />
+        </div>
+        <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4">
+          <MiniCard to="/admin/categories" label="Categories" value={catalog.categories} />
+          <MiniCard to="/admin/categories" label="Active categories" value={catalog.activeCategories} tone="emerald" />
+          <MiniCard to="/admin/brands" label="Brands" value={counts.brands} />
+          <MiniCard to="/admin/brands" label="Active brands" value={catalog.activeBrands} tone="emerald" />
+        </div>
+      </section>
+
+      <section className="mb-8">
+        <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-muted-foreground/80">
+          Order status (lifetime)
+        </h3>
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
+          {ORDER_TABS.map((t) => {
+            const b = orderReport.byStatusTab[t.key];
+            const bucket = t.key === "all" ? orderReport.all : b;
+            return (
+              <MiniCard
+                key={t.key}
+                to="/admin/orders"
+                search={{ tab: t.key }}
+                label={t.label}
+                value={bucket?.orders ?? 0}
+                hint={bdt(bucket?.customerTotal ?? 0)}
+                tone={
+                  t.key === "delivered"
+                    ? "emerald"
+                    : t.key === "returned" || t.key === "cancelled"
+                      ? "rose"
+                      : t.key === "pending_return"
+                        ? "amber"
+                        : undefined
+                }
+              />
+            );
+          })}
+        </div>
+      </section>
+
 
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
