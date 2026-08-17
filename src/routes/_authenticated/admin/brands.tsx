@@ -2,9 +2,20 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
-import { Plus, Loader2, Trash2 } from "lucide-react";
+import { Plus, Loader2, Trash2, Pencil, X } from "lucide-react";
 import { toast } from "sonner";
 import { ImageUploader, type UploadedImage } from "@/components/ImageUploader";
+
+type EditBrand = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  logo_url: string | null;
+  sort_order: number;
+  meta_title: string | null;
+  meta_description: string | null;
+};
 
 type Brand = {
   id: string;
@@ -32,6 +43,42 @@ function BrandsPage() {
   const [logo, setLogo] = useState<UploadedImage[]>([]);
   const [busy, setBusy] = useState(false);
   const [search, setSearch] = useState("");
+  const [edit, setEdit] = useState<EditBrand | null>(null);
+  const [editLogo, setEditLogo] = useState<UploadedImage[]>([]);
+
+  async function openEdit(b: Brand) {
+    const { data, error } = await supabase
+      .from("brands")
+      .select("id,name,slug,description,logo_url,sort_order,meta_title,meta_description")
+      .eq("id", b.id)
+      .maybeSingle();
+    if (error || !data) return toast.error(error?.message ?? "Brand not found");
+    setEdit(data as EditBrand);
+    setEditLogo(data.logo_url ? [{ url: data.logo_url } as UploadedImage] : []);
+  }
+
+  async function saveEdit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!edit) return;
+    setBusy(true);
+    const { error } = await supabase
+      .from("brands")
+      .update({
+        name: edit.name,
+        slug: slugify(edit.slug || edit.name),
+        description: edit.description || null,
+        logo_url: editLogo[0]?.url ?? null,
+        sort_order: Number(edit.sort_order ?? 0),
+        meta_title: edit.meta_title || null,
+        meta_description: edit.meta_description || null,
+      })
+      .eq("id", edit.id);
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Brand updated");
+    setEdit(null);
+    load();
+  }
 
   async function load() {
     setLoading(true);
@@ -191,6 +238,13 @@ function BrandsPage() {
                 {b.is_active ? "Active" : "Hidden"}
               </button>
               <button
+                onClick={() => openEdit(b)}
+                title="Edit brand"
+                className="rounded-md p-2 text-muted-foreground hover:bg-muted hover:text-foreground"
+              >
+                <Pencil className="h-4 w-4" />
+              </button>
+              <button
                 onClick={() => remove(b)}
                 className="rounded-md p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
               >
@@ -200,6 +254,65 @@ function BrandsPage() {
           ))}
         </div>
       )}
+
+      {edit && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4" onClick={() => setEdit(null)}>
+          <form
+            onSubmit={saveEdit}
+            onClick={(e) => e.stopPropagation()}
+            className="max-h-[90vh] w-full max-w-lg space-y-3 overflow-y-auto rounded-xl border bg-card p-5 shadow-xl"
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold">Edit brand</h3>
+              <button type="button" onClick={() => setEdit(null)} className="rounded-md p-1 hover:bg-muted">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Name">
+                <input required value={edit.name} onChange={(e) => setEdit({ ...edit, name: e.target.value })} className={inp} />
+              </Field>
+              <Field label="Slug">
+                <input value={edit.slug} onChange={(e) => setEdit({ ...edit, slug: e.target.value })} className={inp} />
+              </Field>
+            </div>
+            <Field label="Description">
+              <textarea rows={2} value={edit.description ?? ""} onChange={(e) => setEdit({ ...edit, description: e.target.value })} className={inp} />
+            </Field>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Meta title (SEO)">
+                <input value={edit.meta_title ?? ""} onChange={(e) => setEdit({ ...edit, meta_title: e.target.value })} className={inp} />
+              </Field>
+              <Field label="Sort order">
+                <input type="number" value={edit.sort_order ?? 0} onChange={(e) => setEdit({ ...edit, sort_order: Number(e.target.value) })} className={inp} />
+              </Field>
+            </div>
+            <Field label="Meta description (SEO)">
+              <textarea rows={2} value={edit.meta_description ?? ""} onChange={(e) => setEdit({ ...edit, meta_description: e.target.value })} className={inp} />
+            </Field>
+            <Field label="Logo">
+              <ImageUploader bucket="branding" folder="brands" value={editLogo} onChange={setEditLogo} />
+            </Field>
+            <div className="flex justify-end gap-2 pt-1">
+              <button type="button" onClick={() => setEdit(null)} className="rounded-md border px-4 py-2 text-sm">Cancel</button>
+              <button disabled={busy} className="btn-brand inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium disabled:opacity-50">
+                {busy && <Loader2 className="h-4 w-4 animate-spin" />} Save changes
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+    </div>
+  );
+}
+
+const inp = "w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring";
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label className="mb-1 block text-xs font-medium">{label}</label>
+      {children}
     </div>
   );
 }
