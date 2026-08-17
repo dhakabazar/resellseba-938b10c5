@@ -292,24 +292,42 @@ function PayoutsPage() {
       <form onSubmit={request} className="surface-card mb-6 grid gap-3 p-5 md:grid-cols-[1fr_auto]">
         <div>
           <label className="mb-1 block text-xs font-medium">Amount (৳)</label>
-          <input value={amount} onChange={(e) => setAmount(e.target.value)} type="number" min={1} max={sum.available} className={inp} required />
+          <input
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            type="number"
+            min={1}
+            max={sum.available > 0 ? sum.available : undefined}
+            className={inp}
+            required
+          />
+          <p className="mt-1 text-xs text-muted-foreground">
+            উইথড্র করা যাবে সর্বোচ্চ <span className="font-semibold text-foreground">৳{sum.available.toLocaleString()}</span>
+            {sum.pending_payout > 0 && <> · অনুরোধে আছে ৳{sum.pending_payout.toLocaleString()}</>}
+          </p>
           {deposit.frozenAmount > 0 && (
             <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
               {fillText(depositTexts.payoutFrozenHint, { frozen: deposit.frozenAmount })}
             </p>
           )}
-          <p className="mt-1 text-xs text-muted-foreground">
-            {profile.payout_method
-              ? <>Payout <span className="capitalize font-medium">{profile.payout_method}</span> · {profile.payout_account_number}</>
-              : <span className="text-destructive">Save payout information above first</span>}
-          </p>
+          {blockReason ? (
+            <p className="mt-1 text-xs font-medium text-destructive">{blockReason}</p>
+          ) : (
+            <p className="mt-1 text-xs text-muted-foreground">
+              Payout <span className="capitalize font-medium">{profile.payout_method}</span> · {profile.payout_account_number}
+            </p>
+          )}
         </div>
         <div className="flex items-end">
-          <button disabled={busy || sum.available <= 0 || !profile.payout_method} className="btn-brand w-full rounded-md px-4 py-2 text-sm font-medium disabled:opacity-50">
-            Request payout
+          <button
+            disabled={busy}
+            className="btn-brand w-full rounded-md px-4 py-2 text-sm font-medium disabled:opacity-50"
+          >
+            {busy ? "Sending…" : "Request payout"}
           </button>
         </div>
       </form>
+
 
       <div className="surface-card overflow-hidden">
         <table className="w-full text-sm">
