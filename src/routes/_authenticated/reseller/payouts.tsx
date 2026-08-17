@@ -98,14 +98,26 @@ function PayoutsPage() {
     load();
   }
 
+  const blockReason = !profile.payout_method
+    ? "প্রথমে উপরে পেমেন্ট (পেআউট) ইনফরমেশন সেভ করুন।"
+    : deposit.blocked
+      ? "সিকিউরিটি ডিপোজিট বাকি থাকলে উইথড্র রিকোয়েস্ট দেওয়া যাবে না।"
+      : sum.available <= 0
+        ? sum.delivered_profit <= 0
+          ? "এখনও কোনো ডেলিভার্ড অর্ডার নেই — ডেলিভারি হলে প্রফিট এখানে জমা হবে।"
+          : "উইথড্র করার মতো ব্যালান্স নেই (আগের রিকোয়েস্ট/ফ্রিজ বাদ দিয়ে ০)।"
+        : null;
+
   async function request(e: React.FormEvent) {
     e.preventDefault();
     if (!rid) return;
-    if (!profile.payout_method) return toast.error("Save a payout method first");
+    if (blockReason) return toast.error(blockReason);
     const amt = Number(amount);
-    if (!amt || amt <= 0) return toast.error("Invalid amount");
-    if (amt > sum.available) return toast.error("Amount exceeds available balance");
+    if (!amt || amt <= 0) return toast.error("সঠিক অ্যামাউন্ট লিখুন");
+    if (amt > sum.available)
+      return toast.error(`সর্বোচ্চ ৳${sum.available.toLocaleString()} উইথড্র করা যাবে`);
     setBusy(true);
+
     const enumMethod = (profile.payout_method === "bank" ? "other" : profile.payout_method) as
       | "bkash" | "nagad" | "rocket" | "other";
     const ref = profile.payout_method === "bank"
