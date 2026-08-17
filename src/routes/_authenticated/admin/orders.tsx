@@ -75,17 +75,22 @@ type OrderItemLite = {
 };
 
 export const Route = createFileRoute("/_authenticated/admin/orders")({
+  validateSearch: (s: Record<string, unknown>): { tab?: OrderTabKey } => ({
+    tab: ORDER_TABS.some((t) => t.key === s.tab) ? (s.tab as OrderTabKey) : undefined,
+  }),
   component: AdminOrdersPage,
 });
 
 function AdminOrdersPage() {
+  const { tab: tabParam } = Route.useSearch();
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [allOrders, setAllOrders] = useState<{ status: string }[]>([]);
   const [orderItems, setOrderItems] = useState<OrderItemLite[]>([]);
   const [shipments, setShipments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
-  const [tab, setTab] = useState<OrderTabKey>("confirmed");
+  const [tab, setTab] = useState<OrderTabKey>(tabParam ?? "confirmed");
+
   const [selected, setSelected] = useState<OrderRow | null>(null);
   const [open, setOpen] = useState(false);
   const [allProducts, setAllProducts] = useState<any[]>([]);
