@@ -1,9 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, StatCard } from "@/components/ui-kit";
 import { DateRangeBar, DEFAULT_DATE_RANGE, resolveRange, type DateRangeState } from "@/components/date-range-filter";
-import { bdt } from "@/lib/finance-report";
+import { bdt, buildFinanceReport, type FinanceReport, type ReportOrder } from "@/lib/finance-report";
+import { ORDER_TABS } from "@/lib/courier-status";
 import { Package, Users, ShoppingCart, Tag, TrendingUp, Wallet, Loader2, RefreshCw, Award, Clock } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -38,6 +39,11 @@ function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [counts, setCounts] = useState({ products: 0, resellers: 0, pendingResellers: 0, brands: 0 });
   const [rows, setRows] = useState<OrderRow[]>([]);
+  const [catalog, setCatalog] = useState({
+    products: 0, active: 0, inactive: 0, featured: 0, low: 0, out: 0,
+    categories: 0, activeCategories: 0, activeBrands: 0,
+  });
+  const [orderReport, setOrderReport] = useState<FinanceReport>(() => buildFinanceReport([], []));
   const [lifetime, setLifetime] = useState({
     orders: 0,
     revenue: 0,
@@ -336,5 +342,36 @@ function AdminDashboard() {
         </div>
       </div>
     </div>
+  );
+}
+
+const TONES: Record<string, string> = {
+  emerald: "border-emerald-500/25 bg-emerald-500/5 text-emerald-600 dark:text-emerald-400",
+  rose: "border-rose-500/25 bg-rose-500/5 text-rose-600 dark:text-rose-400",
+  amber: "border-amber-500/25 bg-amber-500/5 text-amber-600 dark:text-amber-400",
+  violet: "border-violet-500/25 bg-violet-500/5 text-violet-600 dark:text-violet-400",
+};
+
+/** Small clickable report tile — always links to the page (with filter) it reports on. */
+function MiniCard({
+  to, search, label, value, hint, tone,
+}: {
+  to: string;
+  search?: Record<string, string>;
+  label: string;
+  value: number | string;
+  hint?: string;
+  tone?: "emerald" | "rose" | "amber" | "violet";
+}) {
+  return (
+    <Link
+      to={to}
+      search={search as never}
+      className={`surface-card p-4 text-center transition hover:-translate-y-0.5 hover:border-primary/50 ${tone ? TONES[tone] : ""}`}
+    >
+      <div className={`text-2xl font-black ${tone ? "" : "text-primary"}`}>{value}</div>
+      <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">{label}</div>
+      {hint && <div className="mt-0.5 text-[11px] font-semibold text-muted-foreground">{hint}</div>}
+    </Link>
   );
 }
