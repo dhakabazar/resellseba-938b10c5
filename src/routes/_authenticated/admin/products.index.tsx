@@ -23,6 +23,7 @@ type Row = {
   suggested_price: number;
   stock: number;
   is_active: boolean;
+  is_featured: boolean;
   og_image_url: string | null;
   brand_id: string | null;
   category_id: string | null;
@@ -65,7 +66,7 @@ function ProductsPage() {
     const [{ data: p }, { data: b }, { data: c }] = await Promise.all([
       supabase
         .from("products")
-        .select("id,product_code,name,buying_price,reseller_price,suggested_price,stock,is_active,og_image_url,brand_id,category_id")
+        .select("id,product_code,name,buying_price,reseller_price,suggested_price,stock,is_active,is_featured,og_image_url,brand_id,category_id")
         .order("created_at", { ascending: false }),
       supabase.from("brands").select("id,name").order("name"),
       supabase.from("categories").select("id,name").order("name"),
@@ -140,6 +141,7 @@ function ProductsPage() {
       if (category && i.category_id !== category) return false;
       if (status === "active" && !i.is_active) return false;
       if (status === "hidden" && i.is_active) return false;
+      if (status === "featured" && !i.is_featured) return false;
       if (stockFilter === "out" && i.stock > 0) return false;
       if (stockFilter === "low" && (i.stock === 0 || i.stock > 5)) return false;
       if (stockFilter === "in" && i.stock <= 0) return false;
@@ -173,6 +175,7 @@ function ProductsPage() {
       options: [
         { value: "active", label: "Active" },
         { value: "hidden", label: "Hidden" },
+        { value: "featured", label: "Featured" },
       ],
     },
     {
