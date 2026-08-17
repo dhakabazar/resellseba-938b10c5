@@ -67,6 +67,7 @@ function baseGroups(): ContentGroup[] {
       title: "Hero section",
       description: "First screen customers see — the strongest conversion spot.",
       fields: [
+        on("hero_show", "Show hero banner", true),
         t("hero_badge", "Small badge above headline", "Cash on delivery all over Bangladesh"),
         t("hero_headline", "Headline", "Shop smart at {store}"),
         area("hero_sub", "Sub headline", "Handpicked products, honest prices and delivery to your door. Pay only when you receive."),

@@ -2,8 +2,21 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
-import { Plus, Loader2, Trash2, ChevronRight } from "lucide-react";
+import { Plus, Loader2, Trash2, ChevronRight, Pencil, X } from "lucide-react";
 import { toast } from "sonner";
+import { ImageUploader, type UploadedImage } from "@/components/ImageUploader";
+
+type EditCat = {
+  id: string;
+  name: string;
+  slug: string;
+  parent_id: string | null;
+  description: string | null;
+  image_url: string | null;
+  sort_order: number;
+  meta_title: string | null;
+  meta_description: string | null;
+};
 
 type Cat = {
   id: string;
@@ -28,6 +41,43 @@ function CatsPage() {
   const [busy, setBusy] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState("");
+  const [edit, setEdit] = useState<EditCat | null>(null);
+  const [editImage, setEditImage] = useState<UploadedImage[]>([]);
+
+  async function openEdit(c: Cat) {
+    const { data, error } = await supabase
+      .from("categories")
+      .select("id,name,slug,parent_id,description,image_url,sort_order,meta_title,meta_description")
+      .eq("id", c.id)
+      .maybeSingle();
+    if (error || !data) return toast.error(error?.message ?? "Category not found");
+    setEdit(data as EditCat);
+    setEditImage(data.image_url ? [{ url: data.image_url } as UploadedImage] : []);
+  }
+
+  async function saveEdit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!edit) return;
+    setBusy(true);
+    const { error } = await supabase
+      .from("categories")
+      .update({
+        name: edit.name,
+        slug: slugify(edit.slug || edit.name),
+        parent_id: edit.parent_id || null,
+        description: edit.description || null,
+        image_url: editImage[0]?.url ?? null,
+        sort_order: Number(edit.sort_order ?? 0),
+        meta_title: edit.meta_title || null,
+        meta_description: edit.meta_description || null,
+      })
+      .eq("id", edit.id);
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Category updated");
+    setEdit(null);
+    load();
+  }
 
   async function load() {
     setLoading(true);
@@ -169,6 +219,7 @@ function CatsPage() {
               <div key={p.id}>
                 <CategoryRow
                   cat={p}
+                  onEdit={() => openEdit(p)}
                   onToggleActive={() => toggle(p)}
                   onDelete={() => remove(p)}
                   onToggleExpand={kids.length ? () => toggleExpand(p.id) : undefined}
@@ -182,6 +233,7 @@ function CatsPage() {
                         key={c.id}
                         cat={c}
                         indent
+                        onEdit={() => openEdit(c)}
                         onToggleActive={() => toggle(c)}
                         onDelete={() => remove(c)}
                       />
@@ -194,15 +246,74 @@ function CatsPage() {
           })()}
         </div>
       )}
+
+      {edit && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4" onClick={() => setEdit(null)}>
+          <form
+            onSubmit={saveEdit}
+            onClick={(e) => e.stopPropagation()}
+            className="max-h-[90vh] w-full max-w-lg space-y-3 overflow-y-auto rounded-xl border bg-card p-5 shadow-xl"
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold">Edit category</h3>
+              <button type="button" onClick={() => setEdit(null)} className="rounded-md p-1 hover:bg-muted">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Name">
+                <input required value={edit.name} onChange={(e) => setEdit({ ...edit, name: e.target.value })} className={inp} />
+              </Field>
+              <Field label="Slug">
+                <input value={edit.slug} onChange={(e) => setEdit({ ...edit, slug: e.target.value })} className={inp} />
+              </Field>
+              <Field label="Parent">
+                <select
+                  value={edit.parent_id ?? ""}
+                  onChange={(e) => setEdit({ ...edit, parent_id: e.target.value || null })}
+                  className={inp}
+                >
+                  <option value="">— Top level —</option>
+                  {parents.filter((p) => p.id !== edit.id).map((p) => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Sort order">
+                <input type="number" value={edit.sort_order ?? 0} onChange={(e) => setEdit({ ...edit, sort_order: Number(e.target.value) })} className={inp} />
+              </Field>
+            </div>
+            <Field label="Description">
+              <textarea rows={2} value={edit.description ?? ""} onChange={(e) => setEdit({ ...edit, description: e.target.value })} className={inp} />
+            </Field>
+            <Field label="Meta title (SEO)">
+              <input value={edit.meta_title ?? ""} onChange={(e) => setEdit({ ...edit, meta_title: e.target.value })} className={inp} />
+            </Field>
+            <Field label="Meta description (SEO)">
+              <textarea rows={2} value={edit.meta_description ?? ""} onChange={(e) => setEdit({ ...edit, meta_description: e.target.value })} className={inp} />
+            </Field>
+            <Field label="Image">
+              <ImageUploader bucket="branding" folder="categories" value={editImage} onChange={setEditImage} />
+            </Field>
+            <div className="flex justify-end gap-2 pt-1">
+              <button type="button" onClick={() => setEdit(null)} className="rounded-md border px-4 py-2 text-sm">Cancel</button>
+              <button disabled={busy} className="btn-brand inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium disabled:opacity-50">
+                {busy && <Loader2 className="h-4 w-4 animate-spin" />} Save changes
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 }
 
 function CategoryRow({
-  cat, indent, onToggleActive, onDelete, onToggleExpand, expanded, childCount,
+  cat, indent, onToggleActive, onDelete, onEdit, onToggleExpand, expanded, childCount,
 }: {
   cat: Cat;
   indent?: boolean;
+  onEdit: () => void;
   onToggleActive: () => void;
   onDelete: () => void;
   onToggleExpand?: () => void;
@@ -246,11 +357,29 @@ function CategoryRow({
         {cat.is_active ? "Active" : "Hidden"}
       </button>
       <button
+        onClick={onEdit}
+        title="Edit category"
+        className="rounded-md p-2 text-muted-foreground hover:bg-muted hover:text-foreground"
+      >
+        <Pencil className="h-4 w-4" />
+      </button>
+      <button
         onClick={onDelete}
         className="rounded-md p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
       >
         <Trash2 className="h-4 w-4" />
       </button>
+    </div>
+  );
+}
+
+const inp = "w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring";
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label className="mb-1 block text-xs font-medium">{label}</label>
+      {children}
     </div>
   );
 }

@@ -35,6 +35,7 @@ export function Hero() {
   const media = useHeroMedia();
   const firstSlug = listings[0]?.product?.slug;
   const wa = whatsappHref(settings?.whatsapp);
+  if (!content.flag("hero_show")) return null;
 
   const badge = content.text("hero_badge");
   const headline = content.text("hero_headline");

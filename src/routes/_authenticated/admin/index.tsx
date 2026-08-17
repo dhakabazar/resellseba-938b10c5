@@ -1,9 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, StatCard } from "@/components/ui-kit";
 import { DateRangeBar, DEFAULT_DATE_RANGE, resolveRange, type DateRangeState } from "@/components/date-range-filter";
-import { bdt } from "@/lib/finance-report";
+import { bdt, buildFinanceReport, type FinanceReport, type ReportOrder } from "@/lib/finance-report";
+import { ORDER_TABS } from "@/lib/courier-status";
 import { Package, Users, ShoppingCart, Tag, TrendingUp, Wallet, Loader2, RefreshCw, Award, Clock } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -38,6 +39,11 @@ function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [counts, setCounts] = useState({ products: 0, resellers: 0, pendingResellers: 0, brands: 0 });
   const [rows, setRows] = useState<OrderRow[]>([]);
+  const [catalog, setCatalog] = useState({
+    products: 0, active: 0, inactive: 0, featured: 0, low: 0, out: 0,
+    categories: 0, activeCategories: 0, activeBrands: 0,
+  });
+  const [orderReport, setOrderReport] = useState<FinanceReport>(() => buildFinanceReport([], []));
   const [lifetime, setLifetime] = useState({
     orders: 0,
     revenue: 0,
@@ -76,19 +82,41 @@ function AdminDashboard() {
   }, []);
 
   const loadLifetime = useCallback(async () => {
-    const [allOrders, delivered, payoutsRes] = await Promise.all([
-      supabase.from("orders").select("*", { count: "exact", head: true }),
+    const [allOrders, delivered, payoutsRes, prods, cats, brandRows] = await Promise.all([
+      supabase
+        .from("orders")
+        .select("id,order_number,reseller_id,status,created_at,subtotal,shipping_cost,discount,total,sa_cost_total,reseller_profit")
+        .limit(20000),
       supabase
         .from("orders")
         .select("total,reseller_profit,sa_cost_total")
         .eq("status", "delivered")
         .limit(20000),
       supabase.from("payouts").select("amount,status").limit(20000),
+      supabase.from("products").select("is_active,is_featured,stock").limit(20000),
+      supabase.from("categories").select("is_active").limit(5000),
+      supabase.from("brands").select("is_active").limit(5000),
     ]);
     const d = (delivered.data ?? []) as { total: number | string; reseller_profit: number | string; sa_cost_total: number | string }[];
     const pay = (payoutsRes.data ?? []) as { amount: number | string; status: string }[];
+    const all = (allOrders.data ?? []) as ReportOrder[];
+    setOrderReport(buildFinanceReport(all, []));
+    const p = (prods.data ?? []) as { is_active: boolean; is_featured: boolean; stock: number }[];
+    const c = (cats.data ?? []) as { is_active: boolean }[];
+    const b = (brandRows.data ?? []) as { is_active: boolean }[];
+    setCatalog({
+      products: p.length,
+      active: p.filter((x) => x.is_active).length,
+      inactive: p.filter((x) => !x.is_active).length,
+      featured: p.filter((x) => x.is_featured).length,
+      low: p.filter((x) => Number(x.stock) > 0 && Number(x.stock) <= 5).length,
+      out: p.filter((x) => Number(x.stock) <= 0).length,
+      categories: c.length,
+      activeCategories: c.filter((x) => x.is_active).length,
+      activeBrands: b.filter((x) => x.is_active).length,
+    });
     setLifetime({
-      orders: allOrders.count ?? 0,
+      orders: all.length,
       deliveredOrders: d.length,
       revenue: d.reduce((s, o) => s + Number(o.total), 0),
       profit: d.reduce((s, o) => s + Number(o.reseller_profit), 0),
@@ -99,6 +127,7 @@ function AdminDashboard() {
         .reduce((s, x) => s + Number(x.amount), 0),
     });
   }, []);
+
 
   useEffect(() => {
     void loadLifetime();
@@ -193,24 +222,69 @@ function AdminDashboard() {
         </div>
 
         <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-4">
-          <div className="surface-card p-4 text-center">
-            <div className="text-2xl font-black text-primary">{counts.products}</div>
-            <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">Products</div>
-          </div>
-          <div className="surface-card p-4 text-center">
-            <div className="text-2xl font-black text-primary">{counts.resellers}</div>
-            <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">Resellers</div>
-          </div>
-          <div className="surface-card p-4 text-center">
-            <div className="text-2xl font-black text-primary">{counts.brands}</div>
-            <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">Brands</div>
-          </div>
-          <div className="surface-card p-4 text-center border-orange-500/20 bg-orange-500/5">
-            <div className="text-2xl font-black text-orange-500">{counts.pendingResellers}</div>
-            <div className="text-[10px] font-bold uppercase tracking-widest text-orange-500/60">Applicants</div>
-          </div>
+          <MiniCard to="/admin/products" label="Products" value={catalog.products} />
+          <MiniCard to="/admin/resellers" label="Resellers" value={counts.resellers} />
+          <MiniCard to="/admin/brands" label="Brands" value={counts.brands} />
+          <MiniCard
+            to="/admin/resellers"
+            label="Applicants"
+            value={counts.pendingResellers}
+            tone="amber"
+          />
         </div>
       </section>
+
+      <section className="mb-8">
+        <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-muted-foreground/80">
+          Product report
+        </h3>
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
+          <MiniCard to="/admin/products" label="Total" value={catalog.products} />
+          <MiniCard to="/admin/products" search={{ status: "active" }} label="Active" value={catalog.active} tone="emerald" />
+          <MiniCard to="/admin/products" search={{ status: "hidden" }} label="Inactive" value={catalog.inactive} tone="rose" />
+          <MiniCard to="/admin/products" search={{ status: "featured" }} label="Featured" value={catalog.featured} tone="violet" />
+          <MiniCard to="/admin/products" search={{ stock: "low" }} label="Low stock (≤5)" value={catalog.low} tone="amber" />
+          <MiniCard to="/admin/products" search={{ stock: "out" }} label="Out of stock" value={catalog.out} tone="rose" />
+        </div>
+        <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4">
+          <MiniCard to="/admin/categories" label="Categories" value={catalog.categories} />
+          <MiniCard to="/admin/categories" label="Active categories" value={catalog.activeCategories} tone="emerald" />
+          <MiniCard to="/admin/brands" label="Brands" value={counts.brands} />
+          <MiniCard to="/admin/brands" label="Active brands" value={catalog.activeBrands} tone="emerald" />
+        </div>
+      </section>
+
+      <section className="mb-8">
+        <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-muted-foreground/80">
+          Order status (lifetime)
+        </h3>
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
+          {ORDER_TABS.map((t) => {
+            const b = orderReport.byStatusTab[t.key];
+            const bucket = t.key === "all" ? orderReport.all : b;
+            return (
+              <MiniCard
+                key={t.key}
+                to="/admin/orders"
+                search={{ tab: t.key }}
+                label={t.label}
+                value={bucket?.orders ?? 0}
+                hint={bdt(bucket?.customerTotal ?? 0)}
+                tone={
+                  t.key === "delivered"
+                    ? "emerald"
+                    : t.key === "returned" || t.key === "cancelled"
+                      ? "rose"
+                      : t.key === "pending_return"
+                        ? "amber"
+                        : undefined
+                }
+              />
+            );
+          })}
+        </div>
+      </section>
+
 
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -268,5 +342,36 @@ function AdminDashboard() {
         </div>
       </div>
     </div>
+  );
+}
+
+const TONES: Record<string, string> = {
+  emerald: "border-emerald-500/25 bg-emerald-500/5 text-emerald-600 dark:text-emerald-400",
+  rose: "border-rose-500/25 bg-rose-500/5 text-rose-600 dark:text-rose-400",
+  amber: "border-amber-500/25 bg-amber-500/5 text-amber-600 dark:text-amber-400",
+  violet: "border-violet-500/25 bg-violet-500/5 text-violet-600 dark:text-violet-400",
+};
+
+/** Small clickable report tile — always links to the page (with filter) it reports on. */
+function MiniCard({
+  to, search, label, value, hint, tone,
+}: {
+  to: string;
+  search?: Record<string, string>;
+  label: string;
+  value: number | string;
+  hint?: string;
+  tone?: "emerald" | "rose" | "amber" | "violet";
+}) {
+  return (
+    <Link
+      to={to}
+      search={search as never}
+      className={`surface-card p-4 text-center transition hover:-translate-y-0.5 hover:border-primary/50 ${tone ? TONES[tone] : ""}`}
+    >
+      <div className={`text-2xl font-black ${tone ? "" : "text-primary"}`}>{value}</div>
+      <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">{label}</div>
+      {hint && <div className="mt-0.5 text-[11px] font-semibold text-muted-foreground">{hint}</div>}
+    </Link>
   );
 }

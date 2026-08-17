@@ -1764,6 +1764,7 @@ export type Database = {
           pending_payout: number
         }[]
       }
+      seed_reseller_store: { Args: { _reseller_id: string }; Returns: number }
     }
     Enums: {
       app_role: "super_admin" | "reseller" | "leader" | "staff"

@@ -98,14 +98,26 @@ function PayoutsPage() {
     load();
   }
 
+  const blockReason = !profile.payout_method
+    ? "প্রথমে উপরে পেমেন্ট (পেআউট) ইনফরমেশন সেভ করুন।"
+    : deposit.blocked
+      ? "সিকিউরিটি ডিপোজিট বাকি থাকলে উইথড্র রিকোয়েস্ট দেওয়া যাবে না।"
+      : sum.available <= 0
+        ? sum.delivered_profit <= 0
+          ? "এখনও কোনো ডেলিভার্ড অর্ডার নেই — ডেলিভারি হলে প্রফিট এখানে জমা হবে।"
+          : "উইথড্র করার মতো ব্যালান্স নেই (আগের রিকোয়েস্ট/ফ্রিজ বাদ দিয়ে ০)।"
+        : null;
+
   async function request(e: React.FormEvent) {
     e.preventDefault();
     if (!rid) return;
-    if (!profile.payout_method) return toast.error("Save a payout method first");
+    if (blockReason) return toast.error(blockReason);
     const amt = Number(amount);
-    if (!amt || amt <= 0) return toast.error("Invalid amount");
-    if (amt > sum.available) return toast.error("Amount exceeds available balance");
+    if (!amt || amt <= 0) return toast.error("সঠিক অ্যামাউন্ট লিখুন");
+    if (amt > sum.available)
+      return toast.error(`সর্বোচ্চ ৳${sum.available.toLocaleString()} উইথড্র করা যাবে`);
     setBusy(true);
+
     const enumMethod = (profile.payout_method === "bank" ? "other" : profile.payout_method) as
       | "bkash" | "nagad" | "rocket" | "other";
     const ref = profile.payout_method === "bank"
@@ -292,24 +304,42 @@ function PayoutsPage() {
       <form onSubmit={request} className="surface-card mb-6 grid gap-3 p-5 md:grid-cols-[1fr_auto]">
         <div>
           <label className="mb-1 block text-xs font-medium">Amount (৳)</label>
-          <input value={amount} onChange={(e) => setAmount(e.target.value)} type="number" min={1} max={sum.available} className={inp} required />
+          <input
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            type="number"
+            min={1}
+            max={sum.available > 0 ? sum.available : undefined}
+            className={inp}
+            required
+          />
+          <p className="mt-1 text-xs text-muted-foreground">
+            উইথড্র করা যাবে সর্বোচ্চ <span className="font-semibold text-foreground">৳{sum.available.toLocaleString()}</span>
+            {sum.pending_payout > 0 && <> · অনুরোধে আছে ৳{sum.pending_payout.toLocaleString()}</>}
+          </p>
           {deposit.frozenAmount > 0 && (
             <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
               {fillText(depositTexts.payoutFrozenHint, { frozen: deposit.frozenAmount })}
             </p>
           )}
-          <p className="mt-1 text-xs text-muted-foreground">
-            {profile.payout_method
-              ? <>Payout <span className="capitalize font-medium">{profile.payout_method}</span> · {profile.payout_account_number}</>
-              : <span className="text-destructive">Save payout information above first</span>}
-          </p>
+          {blockReason ? (
+            <p className="mt-1 text-xs font-medium text-destructive">{blockReason}</p>
+          ) : (
+            <p className="mt-1 text-xs text-muted-foreground">
+              Payout <span className="capitalize font-medium">{profile.payout_method}</span> · {profile.payout_account_number}
+            </p>
+          )}
         </div>
         <div className="flex items-end">
-          <button disabled={busy || sum.available <= 0 || !profile.payout_method} className="btn-brand w-full rounded-md px-4 py-2 text-sm font-medium disabled:opacity-50">
-            Request payout
+          <button
+            disabled={busy}
+            className="btn-brand w-full rounded-md px-4 py-2 text-sm font-medium disabled:opacity-50"
+          >
+            {busy ? "Sending…" : "Request payout"}
           </button>
         </div>
       </form>
+
 
       <div className="surface-card overflow-hidden">
         <table className="w-full text-sm">

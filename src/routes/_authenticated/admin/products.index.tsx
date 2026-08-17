@@ -23,6 +23,7 @@ type Row = {
   suggested_price: number;
   stock: number;
   is_active: boolean;
+  is_featured: boolean;
   og_image_url: string | null;
   brand_id: string | null;
   category_id: string | null;
@@ -30,12 +31,21 @@ type Row = {
 
 type Opt = { id: string; name: string };
 
+type ProductSearch = { status?: string; stock?: string; category?: string; brand?: string };
+
 export const Route = createFileRoute("/_authenticated/admin/products/")({
+  validateSearch: (s: Record<string, unknown>): ProductSearch => ({
+    status: typeof s.status === "string" ? s.status : undefined,
+    stock: typeof s.stock === "string" ? s.stock : undefined,
+    category: typeof s.category === "string" ? s.category : undefined,
+    brand: typeof s.brand === "string" ? s.brand : undefined,
+  }),
   component: ProductsPage,
 });
 
 function ProductsPage() {
   const nav = useNavigate();
+  const search = Route.useSearch();
   const [items, setItems] = useState<Row[]>([]);
   const [brands, setBrands] = useState<Opt[]>([]);
   const [categories, setCategories] = useState<Opt[]>([]);
@@ -43,10 +53,11 @@ function ProductsPage() {
   const [detailId, setDetailId] = useState<string | null>(null);
 
   const [q, setQ] = useState("");
-  const [brand, setBrand] = useState("");
-  const [category, setCategory] = useState("");
-  const [status, setStatus] = useState("");
-  const [stockFilter, setStockFilter] = useState("");
+  const [brand, setBrand] = useState(search.brand ?? "");
+  const [category, setCategory] = useState(search.category ?? "");
+  const [status, setStatus] = useState(search.status ?? "");
+  const [stockFilter, setStockFilter] = useState(search.stock ?? "");
+
   const [perPage, setPerPage] = useState(20);
   const [page, setPage] = useState(1);
 
@@ -55,7 +66,7 @@ function ProductsPage() {
     const [{ data: p }, { data: b }, { data: c }] = await Promise.all([
       supabase
         .from("products")
-        .select("id,product_code,name,buying_price,reseller_price,suggested_price,stock,is_active,og_image_url,brand_id,category_id")
+        .select("id,product_code,name,buying_price,reseller_price,suggested_price,stock,is_active,is_featured,og_image_url,brand_id,category_id")
         .order("created_at", { ascending: false }),
       supabase.from("brands").select("id,name").order("name"),
       supabase.from("categories").select("id,name").order("name"),
@@ -130,6 +141,7 @@ function ProductsPage() {
       if (category && i.category_id !== category) return false;
       if (status === "active" && !i.is_active) return false;
       if (status === "hidden" && i.is_active) return false;
+      if (status === "featured" && !i.is_featured) return false;
       if (stockFilter === "out" && i.stock > 0) return false;
       if (stockFilter === "low" && (i.stock === 0 || i.stock > 5)) return false;
       if (stockFilter === "in" && i.stock <= 0) return false;
@@ -163,6 +175,7 @@ function ProductsPage() {
       options: [
         { value: "active", label: "Active" },
         { value: "hidden", label: "Hidden" },
+        { value: "featured", label: "Featured" },
       ],
     },
     {
