@@ -37,7 +37,8 @@ function PayoutsPage() {
   const { user } = useAuth();
   const [rid, setRid] = useState<string | null>(null);
   const [profile, setProfile] = useState<Profile>(emptyProfile);
-  const [sum, setSum] = useState({ delivered_profit: 0, pending_payout: 0, paid_out: 0, available: 0 });
+  const [sum, setSum] = useState({ delivered_profit: 0, pending_payout: 0, paid_out: 0, available: 0, deposit_balance: 0, frozen_amount: 0 });
+  const [ledger, setLedger] = useState<LedgerRow[]>([]);
   const [rows, setRows] = useState<Payout[]>([]);
   const [loading, setLoading] = useState(true);
   const [amount, setAmount] = useState("");
