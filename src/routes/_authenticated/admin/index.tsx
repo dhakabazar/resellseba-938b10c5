@@ -76,19 +76,41 @@ function AdminDashboard() {
   }, []);
 
   const loadLifetime = useCallback(async () => {
-    const [allOrders, delivered, payoutsRes] = await Promise.all([
-      supabase.from("orders").select("*", { count: "exact", head: true }),
+    const [allOrders, delivered, payoutsRes, prods, cats, brandRows] = await Promise.all([
+      supabase
+        .from("orders")
+        .select("id,order_number,reseller_id,status,created_at,subtotal,shipping_cost,discount,total,sa_cost_total,reseller_profit")
+        .limit(20000),
       supabase
         .from("orders")
         .select("total,reseller_profit,sa_cost_total")
         .eq("status", "delivered")
         .limit(20000),
       supabase.from("payouts").select("amount,status").limit(20000),
+      supabase.from("products").select("is_active,is_featured,stock").limit(20000),
+      supabase.from("categories").select("is_active").limit(5000),
+      supabase.from("brands").select("is_active").limit(5000),
     ]);
     const d = (delivered.data ?? []) as { total: number | string; reseller_profit: number | string; sa_cost_total: number | string }[];
     const pay = (payoutsRes.data ?? []) as { amount: number | string; status: string }[];
+    const all = (allOrders.data ?? []) as ReportOrder[];
+    setOrderReport(buildFinanceReport(all, []));
+    const p = (prods.data ?? []) as { is_active: boolean; is_featured: boolean; stock: number }[];
+    const c = (cats.data ?? []) as { is_active: boolean }[];
+    const b = (brandRows.data ?? []) as { is_active: boolean }[];
+    setCatalog({
+      products: p.length,
+      active: p.filter((x) => x.is_active).length,
+      inactive: p.filter((x) => !x.is_active).length,
+      featured: p.filter((x) => x.is_featured).length,
+      low: p.filter((x) => Number(x.stock) > 0 && Number(x.stock) <= 5).length,
+      out: p.filter((x) => Number(x.stock) <= 0).length,
+      categories: c.length,
+      activeCategories: c.filter((x) => x.is_active).length,
+      activeBrands: b.filter((x) => x.is_active).length,
+    });
     setLifetime({
-      orders: allOrders.count ?? 0,
+      orders: all.length,
       deliveredOrders: d.length,
       revenue: d.reduce((s, o) => s + Number(o.total), 0),
       profit: d.reduce((s, o) => s + Number(o.reseller_profit), 0),
@@ -99,6 +121,7 @@ function AdminDashboard() {
         .reduce((s, x) => s + Number(x.amount), 0),
     });
   }, []);
+
 
   useEffect(() => {
     void loadLifetime();
