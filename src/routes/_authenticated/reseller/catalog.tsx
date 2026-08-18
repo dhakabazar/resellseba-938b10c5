@@ -447,7 +447,7 @@ function CatalogPage() {
       <ConfirmModal
         isOpen={confirmDelist}
         onClose={() => setConfirmDelist(false)}
-        onConfirm={bulkDelist}
+        onConfirm={async () => { await bulkDelist(); }}
         isLoading={bulkBusy}
         variant="danger"
         title="Delist products"
