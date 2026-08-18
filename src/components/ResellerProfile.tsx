@@ -1,4 +1,5 @@
-import { Copy, ExternalLink, Phone, Mail, MapPin, IdCard, Lock, ShieldCheck, AlertTriangle } from "lucide-react";
+import { Copy, ExternalLink, Phone, Mail, MapPin, IdCard, Lock, ShieldCheck, AlertTriangle, ArrowUpRight } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 
 export type ResellerProfileData = {
@@ -74,10 +75,25 @@ function IconBtn({ onClick, children, title }: { onClick: () => void; children: 
   );
 }
 
-function Stat({ label, value, tone }: { label: string; value: string; tone?: "success" | "muted" }) {
-  return (
-    <div className="rounded-lg border bg-muted/30 px-3 py-2">
-      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</div>
+function Stat({
+  label,
+  value,
+  tone,
+  to,
+  search,
+}: {
+  label: string;
+  value: string;
+  tone?: "success" | "muted";
+  to?: string;
+  search?: Record<string, string>;
+}) {
+  const body = (
+    <>
+      <div className="flex items-center justify-between gap-1">
+        <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</div>
+        {to && <ArrowUpRight className="h-3 w-3 shrink-0 text-muted-foreground opacity-0 transition group-hover:opacity-100" />}
+      </div>
       <div
         className={
           "text-sm font-semibold tabular-nums " +
@@ -86,19 +102,38 @@ function Stat({ label, value, tone }: { label: string; value: string; tone?: "su
       >
         {value}
       </div>
-    </div>
+    </>
   );
+  if (to) {
+    return (
+      <Link
+        to={to}
+        search={search as never}
+        className="group rounded-lg border bg-muted/30 px-3 py-2 transition hover:border-primary/50 hover:bg-primary/5"
+      >
+        {body}
+      </Link>
+    );
+  }
+  return <div className="rounded-lg border bg-muted/30 px-3 py-2">{body}</div>;
 }
 
 export function ResellerProfile({
   reseller: r,
   summary: s,
   orders,
+  admin = false,
 }: {
   reseller: ResellerProfileData;
   summary?: ResellerProfileSummary;
   orders?: number;
+  /** Admin view: finance cards deep-link into filtered admin lists for this reseller. */
+  admin?: boolean;
 }) {
+  const ordersLink = (tab?: string) =>
+    admin ? { to: "/admin/orders", search: { reseller: r.id, ...(tab ? { tab } : {}) } } : {};
+  const payoutsLink = (status?: string) =>
+    admin ? { to: "/admin/payouts", search: { reseller: r.id, ...(status ? { status } : {}) } } : {};
   const storeUrl = typeof window !== "undefined" ? `${window.location.origin}/s/${r.code}` : `/s/${r.code}`;
   const depositDue = r.deposit_required
     ? Math.max(Number(r.deposit_required_amount ?? 0) - (s?.deposit_balance ?? 0), 0)
@@ -159,14 +194,14 @@ export function ResellerProfile({
       <div className="surface-card p-4">
         <h3 className="mb-3 text-sm font-semibold">Finance snapshot</h3>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
-          <Stat label="Orders" value={orders == null ? "—" : orders.toLocaleString()} />
-          <Stat label="Delivered profit" value={money(s?.delivered_profit)} tone="success" />
-          <Stat label="Withdrawable" value={money(s?.available)} />
-          <Stat label="Paid out" value={money(s?.paid_out)} />
-          <Stat label="Payout pending" value={money(s?.pending_payout)} tone="muted" />
-          <Stat label="Deposit paid" value={money(s?.deposit_balance)} />
-          <Stat label="Deposit due" value={money(depositDue)} tone={depositDue > 0 ? undefined : "muted"} />
-          <Stat label="Frozen" value={money(Number(r.frozen_amount ?? 0))} tone="muted" />
+          <Stat label="Orders" value={orders == null ? "—" : orders.toLocaleString()} {...ordersLink("all")} />
+          <Stat label="Delivered profit" value={money(s?.delivered_profit)} tone="success" {...ordersLink("delivered")} />
+          <Stat label="Withdrawable" value={money(s?.available)} {...payoutsLink()} />
+          <Stat label="Paid out" value={money(s?.paid_out)} {...payoutsLink("paid")} />
+          <Stat label="Payout pending" value={money(s?.pending_payout)} tone="muted" {...payoutsLink("pending")} />
+          <Stat label="Deposit paid" value={money(s?.deposit_balance)} {...payoutsLink()} />
+          <Stat label="Deposit due" value={money(depositDue)} tone={depositDue > 0 ? undefined : "muted"} {...payoutsLink()} />
+          <Stat label="Frozen" value={money(Number(r.frozen_amount ?? 0))} tone="muted" {...payoutsLink()} />
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
           {r.deposit_required &&

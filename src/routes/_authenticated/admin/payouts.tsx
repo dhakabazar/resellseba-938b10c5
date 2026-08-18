@@ -1,11 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/ui-kit";
-import { Loader2, Check, X, Wallet, Copy, Phone, Landmark } from "lucide-react";
+import { Loader2, Check, X, Wallet, Copy, Phone, Landmark, ChevronDown, Search } from "lucide-react";
+import { DataToolbar, Pagination, usePaginated } from "@/components/data-list";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/admin/payouts")({
+  validateSearch: (s: Record<string, unknown>): { reseller?: string; status?: string } => ({
+    reseller: typeof s.reseller === "string" && s.reseller ? s.reseller : undefined,
+    status: typeof s.status === "string" && s.status ? s.status : undefined,
+  }),
   component: AdminPayouts,
 });
 
@@ -21,7 +26,7 @@ type Reseller = {
 };
 
 type Row = {
-  id: string; amount: number; status: string; method: string | null; reference: string | null;
+  id: string; reseller_id: string; amount: number; status: string; method: string | null; reference: string | null;
   notes: string | null; created_at: string; paid_at: string | null;
   reseller: Reseller | null;
 };
@@ -74,14 +79,98 @@ function PayoutAccount({ r, fallback }: { r: Reseller | null; fallback: string |
   );
 }
 
+function ResellerPicker({
+  options,
+  value,
+  onChange,
+}: {
+  options: { id: string; label: string }[];
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [q, setQ] = useState("");
+  const boxRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function onDoc(e: MouseEvent) {
+      if (boxRef.current && !boxRef.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, []);
+
+  const filtered = useMemo(() => {
+    const t = q.trim().toLowerCase();
+    return t ? options.filter((o) => o.label.toLowerCase().includes(t)) : options;
+  }, [options, q]);
+
+  const selected = options.find((o) => o.id === value);
+
+  return (
+    <div ref={boxRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex h-10 w-full min-w-[200px] items-center justify-between gap-2 rounded-md border bg-background px-3 text-sm"
+        title="Filter by reseller"
+      >
+        <span className="truncate">{selected ? selected.label : "All resellers"}</span>
+        <ChevronDown className="h-4 w-4 shrink-0 opacity-60" />
+      </button>
+      {open && (
+        <div className="absolute right-0 z-30 mt-1 w-[min(320px,80vw)] rounded-md border bg-popover p-2 shadow-lg">
+          <div className="mb-2 flex items-center gap-2 rounded-md border px-2">
+            <Search className="h-3.5 w-3.5 opacity-60" />
+            <input
+              autoFocus
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search reseller…"
+              className="h-8 w-full bg-transparent text-sm outline-none"
+            />
+          </div>
+          <div className="max-h-64 overflow-y-auto">
+            <button
+              type="button"
+              onClick={() => { onChange(""); setOpen(false); }}
+              className={"w-full rounded px-2 py-1.5 text-left text-sm hover:bg-muted " + (!value ? "bg-muted font-medium" : "")}
+            >
+              All resellers
+            </button>
+            {filtered.map((o) => (
+              <button
+                key={o.id}
+                type="button"
+                onClick={() => { onChange(o.id); setOpen(false); }}
+                className={"w-full truncate rounded px-2 py-1.5 text-left text-sm hover:bg-muted " + (value === o.id ? "bg-muted font-medium" : "")}
+              >
+                {o.label}
+              </button>
+            ))}
+            {filtered.length === 0 && <p className="px-2 py-2 text-xs text-muted-foreground">No reseller found.</p>}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function StatusPill({ s }: { s: string }) {
   return <span className={"rounded-full px-2 py-0.5 text-[10px] capitalize " + statusStyle(s)}>{s}</span>;
 }
 
 function AdminPayouts() {
+  const sp = Route.useSearch();
   const [allRows, setAllRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<Filter>("pending");
+  const [filter, setFilter] = useState<Filter>(
+    (FILTERS as readonly string[]).includes(sp.status ?? "") ? (sp.status as Filter) : "pending",
+  );
+  const [resellerFilter, setResellerFilter] = useState(sp.reseller ?? "");
+  const [query, setQuery] = useState("");
+  const [perPage, setPerPage] = useState(20);
+  const [page, setPage] = useState(1);
   const [action, setAction] = useState<{ row: Row; status: "approved" | "paid" | "rejected" } | null>(null);
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
@@ -101,12 +190,35 @@ function AdminPayouts() {
     setLoading(false);
   }
 
+  const resellerOptions = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const r of allRows) {
+      if (r.reseller_id && r.reseller) m.set(r.reseller_id, `${r.reseller.business_name} (${r.reseller.code})`);
+    }
+    return [...m].map(([id, label]) => ({ id, label })).sort((a, b) => a.label.localeCompare(b.label));
+  }, [allRows]);
+
+  const scoped = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return allRows.filter((r) => {
+      if (resellerFilter && r.reseller_id !== resellerFilter) return false;
+      if (!q) return true;
+      return [r.reseller?.business_name, r.reseller?.code, r.reference, r.method, String(r.amount)]
+        .join(" ")
+        .toLowerCase()
+        .includes(q);
+    });
+  }, [allRows, resellerFilter, query]);
+
   const counts = FILTERS.reduce((acc, f) => {
-    acc[f] = f === "all" ? allRows.length : allRows.filter((r) => r.status === f).length;
+    acc[f] = f === "all" ? scoped.length : scoped.filter((r) => r.status === f).length;
     return acc;
   }, {} as Record<Filter, number>);
 
-  const rows = filter === "all" ? allRows : allRows.filter((r) => r.status === filter);
+  const filteredRows = filter === "all" ? scoped : scoped.filter((r) => r.status === filter);
+  const rows = usePaginated(filteredRows, page, perPage);
+
+  useEffect(() => { setPage(1); }, [filter, resellerFilter, query, perPage]);
 
   async function submitAction() {
     if (!action) return;
@@ -134,6 +246,15 @@ function AdminPayouts() {
     <div>
       <PageHeader title="Payout Management" description="Review withdrawal requests, check payout accounts and process payments." />
 
+      <DataToolbar
+        search={query}
+        onSearch={setQuery}
+        searchPlaceholder="Search reseller, account, reference…"
+        perPage={perPage}
+        onPerPage={setPerPage}
+        right={<ResellerPicker options={resellerOptions} value={resellerFilter} onChange={setResellerFilter} />}
+      />
+
       <div className="mb-4 flex flex-wrap gap-2">
         {FILTERS.map((f) => (
           <button key={f} onClick={() => setFilter(f)}
@@ -148,7 +269,7 @@ function AdminPayouts() {
 
       {loading ? (
         <div className="grid place-items-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
-      ) : rows.length === 0 ? (
+      ) : filteredRows.length === 0 ? (
         <div className="surface-card p-12 text-center">
           <Wallet className="mx-auto h-8 w-8 text-muted-foreground" />
           <p className="mt-2 text-sm text-muted-foreground">No {filter} payouts.</p>
@@ -213,6 +334,7 @@ function AdminPayouts() {
               </tbody>
             </table>
           </div>
+          <Pagination page={page} perPage={perPage} total={filteredRows.length} onPage={setPage} />
         </>
       )}
 
