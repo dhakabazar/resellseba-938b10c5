@@ -635,8 +635,8 @@ function OrdersPage() {
         />
       ) : (
         <>
-        <div className="surface-card overflow-hidden">
-          <div className="hidden grid-cols-[30px_minmax(60px,0.7fr)_minmax(100px,1fr)_minmax(100px,1.2fr)_60px_80px_100px_60px] gap-2 border-b bg-muted/40 px-4 py-3 text-xs font-medium text-muted-foreground md:grid">
+        <div className="space-y-3">
+          <div className="hidden grid-cols-[30px_minmax(60px,0.7fr)_minmax(100px,1fr)_minmax(100px,1.2fr)_60px_80px_100px_60px] gap-2 rounded-lg border bg-muted/40 px-4 py-2.5 text-xs font-medium text-muted-foreground md:grid">
             <div className="flex items-center justify-center">
               <input
                 type="checkbox"
