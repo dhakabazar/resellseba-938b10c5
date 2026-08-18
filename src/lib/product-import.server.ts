@@ -311,7 +311,11 @@ export async function scrapeProduct(rawUrl: string): Promise<ImportedProduct> {
     meta(html, "og:title", "twitter:title") ??
     toPlainText(html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? "", 200);
 
-  if (!name) throw new Error("Could not read a product name from that link.");
+  if (!name)
+    throw new Error(
+      `${sourceLabel(url.hostname)} theke product data pawa gelo na — page ta login/bot-protected hote pare. Onno link try korun ba manually add korun.`,
+    );
+
 
   const ldDesc = typeof product?.description === "string" ? toPlainText(product.description) : "";
   const metaDesc = toPlainText(meta(html, "og:description", "description", "twitter:description") ?? "");
