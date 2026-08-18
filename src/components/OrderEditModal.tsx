@@ -102,16 +102,21 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
     const subtotal = items.reduce((s, it) => s + it.reseller_price * it.quantity, 0);
     const saCost = items.reduce((s, it) => s + it.sa_price * it.quantity, 0);
     const shipping = shippingMode === "auto" ? autoShipping : Number(shippingManual || 0);
-    const disc = Number(discount || 0);
     return {
       subtotal,
       saCost,
       shipping,
-      discount: disc,
-      total: subtotal + shipping - disc,
-      profit: subtotal - saCost - disc,
+      total: subtotal + shipping,
+      profit: subtotal - saCost,
     };
-  }, [items, shippingMode, shippingManual, autoShipping, discount]);
+  }, [items, shippingMode, shippingManual, autoShipping]);
+
+  /** Minimum sell price per line = SA base cost of that item. */
+  function minFor(it: EditItem) {
+    const p = allProducts.find((x) => x.id === it.product_id);
+    const fromProduct = p ? Number(p.reseller_price ?? 0) + Number(p.packaging_cost ?? 0) : 0;
+    return Math.max(fromProduct, Number(it.sa_price ?? 0));
+  }
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
