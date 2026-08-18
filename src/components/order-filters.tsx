@@ -192,6 +192,7 @@ export function OrderFilterBar({
   total,
   shown,
   right,
+  showPerPage = false,
 }: {
   value: OrderFilterState;
   onChange: (next: OrderFilterState) => void;
@@ -200,6 +201,8 @@ export function OrderFilterBar({
   total: number;
   shown: number;
   right?: React.ReactNode;
+  /** Show the per-page selector inline (report pages that have no separate one). */
+  showPerPage?: boolean;
 }) {
   const set = (patch: Partial<OrderFilterState>) => onChange({ ...value, ...patch });
   const dirty = useMemo(
