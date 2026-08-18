@@ -5,6 +5,7 @@ import { getCatalog } from "@/lib/catalog.functions";
 import { CopyBtn, useCatalogBrand } from "@/components/catalog/shell";
 import { ImagePickerButton } from "@/components/catalog/image-picker";
 import { useResellerTools } from "@/components/store/reseller-tools";
+import { ProductCodeChip } from "@/components/product-code";
 import { bdt } from "@/lib/finance-report";
 import { Boxes, Layers, Loader2, Search, Sparkles, Tag } from "lucide-react";
 
