@@ -342,13 +342,15 @@ function ResellersPage() {
       ) : filtered.length === 0 ? (
         <EmptyState title="Nothing here" description="No resellers match this filter." />
       ) : (
-        <div className="surface-card divide-y">
+        <div className="space-y-3">
           {usePaginated(filtered, page, perPage).map((r) => {
             const s = summaries[r.id];
             const em = emailStatus[r.user_id];
             const emailVerified = !!em?.verified;
+            const phone = (r.contact_phone ?? "").trim();
+            const waPhone = phone.replace(/[^0-9]/g, "").replace(/^0/, "880");
             return (
-              <div key={r.id} className="p-4">
+              <div key={r.id} className="surface-card p-4 shadow-sm transition hover:shadow-md">
                 <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold uppercase text-primary">
                     {r.business_name.slice(0, 2)}
