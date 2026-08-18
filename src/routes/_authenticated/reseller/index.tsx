@@ -200,6 +200,7 @@ function ResellerDashboard() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
           <StatCard
             label="Total Profit"
+            to="/reseller/earnings"
               tone="primary"
             value={bdt(lifetime.delivered + commissionLifetime)}
             icon={<TrendingUp className="h-4 w-4" />}
@@ -207,6 +208,7 @@ function ResellerDashboard() {
           />
           <StatCard
             label="Available Balance"
+            to="/reseller/payouts"
               tone="emerald"
             value={bdt(lifetime.available)}
             icon={<Wallet className="h-4 w-4" />}
@@ -214,6 +216,7 @@ function ResellerDashboard() {
           />
           <StatCard
             label="Total Paid"
+            to="/reseller/payouts"
               tone="sky"
             value={bdt(lifetime.paidOut)}
             icon={<CheckCircle2 className="h-4 w-4" />}
@@ -221,6 +224,7 @@ function ResellerDashboard() {
           />
           <StatCard
             label="Outstanding"
+            to="/reseller/earnings"
               tone="amber"
             value={bdt(Math.max(lifetime.delivered + commissionLifetime - lifetime.paidOut, 0))}
             icon={<Clock className="h-4 w-4" />}
@@ -228,6 +232,7 @@ function ResellerDashboard() {
           />
           <StatCard
             label="Live Products"
+            to="/reseller/listings"
               tone="violet"
             value={listings.active}
             icon={<ShoppingBag className="h-4 w-4" />}
@@ -249,24 +254,28 @@ function ResellerDashboard() {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <StatCard
               label="Orders"
+              to="/reseller/orders" search={{ tab: "all" }}
               tone="sky"
               value={report.all.orders}
               icon={<ClipboardList className="h-4 w-4" />}
             />
             <StatCard
               label="Earned profit"
+              to="/reseller/orders" search={{ tab: "delivered" }}
               tone="emerald"
               value={bdt(report.realized.profit)}
               icon={<CheckCircle2 className="h-4 w-4" />}
             />
             <StatCard
               label="Pending profit"
+              to="/reseller/orders" search={{ tab: "confirmed" }}
               tone="amber"
               value={bdt(report.pipeline.profit)}
               icon={<Clock className="h-4 w-4" />}
             />
             <StatCard
               label="Paid out (range)"
+              to="/reseller/payouts"
               tone="primary"
               value={bdt(paidInRange)}
               icon={<Wallet className="h-4 w-4" />}
@@ -276,24 +285,28 @@ function ResellerDashboard() {
           <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <StatCard
               label="On the way (courier)"
+              to="/reseller/orders" search={{ tab: "courier" }}
               tone="sky"
               value={bdt(report.byStatusTab.courier?.customerTotal ?? 0)}
               icon={<Truck className="h-4 w-4" />}
             />
             <StatCard
               label="Return risk"
+              to="/reseller/orders" search={{ tab: "pending_return" }}
               tone="amber"
               value={bdt(report.risk.profit)}
               icon={<AlertTriangle className="h-4 w-4" />}
             />
             <StatCard
               label="Lost (return + cancel)"
+              to="/reseller/orders" search={{ tab: "returned" }}
               tone="rose"
               value={bdt(report.lost.profit)}
               icon={<AlertTriangle className="h-4 w-4" />}
             />
             <StatCard
               label="Delivery rate"
+              to="/reseller/orders" search={{ tab: "delivered" }}
               tone="emerald"
               value={`${report.deliveryRate.toFixed(1)}%`}
               icon={<Award className="h-4 w-4" />}
@@ -304,6 +317,7 @@ function ResellerDashboard() {
             <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               <StatCard
                 label="Team commission (range)"
+                to="/reseller/commissions"
               tone="violet"
                 value={bdt(commissionInRange)}
                 icon={<Award className="h-4 w-4" />}
