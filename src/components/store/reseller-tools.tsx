@@ -148,9 +148,9 @@ export function ImageDownloadTools({
       <button
         type="button"
         onClick={one}
-        title="Download image"
-        aria-label="Download image"
-        className="grid h-9 w-9 place-items-center rounded-full border border-[var(--st-border)] bg-[var(--st-surface)]/90 text-[var(--st-fg)] shadow-sm backdrop-blur transition hover:text-[var(--st-primary)]"
+        title="Download this image"
+        aria-label="Download this image"
+        className="grid h-9 w-9 place-items-center rounded-full border-2 border-foreground/80 bg-destructive text-destructive-foreground shadow-lg transition hover:brightness-110 active:scale-95"
       >
         {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
       </button>
