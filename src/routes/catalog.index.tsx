@@ -186,37 +186,44 @@ function CatalogIndex() {
                       ) : (
                         <div className="grid h-full w-full place-items-center text-xs text-muted-foreground">No image</div>
                       )}
-                      <span className="absolute left-2 top-2 rounded-full bg-background/85 px-2 py-1 text-[10px] font-bold backdrop-blur">
-                        #{p.code}
-                      </span>
                     </Link>
                     <div className="flex flex-1 flex-col p-4">
-                      <Link to="/catalog/$slug" params={{ slug: p.slug }} className="line-clamp-2 text-sm font-bold leading-tight hover:text-primary">
-                        {p.name}
-                      </Link>
-                      <div className="mt-3 flex items-end justify-between">
-                        <div>
-                          <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Sale price</div>
-                          <div className="text-base font-black text-primary">{bdt(p.price)}</div>
-                        </div>
+                      <div className="flex items-center justify-between gap-2">
+                        <ProductCodeChip code={p.code} />
                         <Link
                           to="/catalog/$slug"
                           params={{ slug: p.slug }}
-                          className="rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold hover:border-primary/50 hover:text-primary"
+                          className="rounded-lg border px-2.5 py-1 text-[11px] font-semibold hover:border-primary/50 hover:text-primary"
                         >
                           Details
                         </Link>
                       </div>
-                      {showPrices && (
-                        <div className="mt-3 grid grid-cols-2 gap-2 rounded-xl border bg-muted/40 p-2.5 text-[11px]">
+                      <Link
+                        to="/catalog/$slug"
+                        params={{ slug: p.slug }}
+                        className="mt-2 line-clamp-2 text-sm font-bold leading-tight hover:text-primary"
+                      >
+                        {p.name}
+                      </Link>
+                      {showPrices ? (
+                        <div className="mt-3 grid grid-cols-3 gap-2 rounded-xl border bg-muted/40 p-2.5 text-[11px]">
                           <div>
-                            <div className="font-bold uppercase tracking-wide text-muted-foreground">Admin price</div>
+                            <div className="font-bold uppercase tracking-wide text-muted-foreground">Admin</div>
                             <div className="text-sm font-bold">{bdt(p.resellerPrice)}</div>
+                          </div>
+                          <div>
+                            <div className="font-bold uppercase tracking-wide text-muted-foreground">Sale</div>
+                            <div className="text-sm font-black text-primary">{bdt(p.price)}</div>
                           </div>
                           <div>
                             <div className="font-bold uppercase tracking-wide text-muted-foreground">Profit</div>
                             <div className="text-sm font-bold text-emerald-600">{bdt(Math.max(0, p.price - p.resellerPrice))}</div>
                           </div>
+                        </div>
+                      ) : (
+                        <div className="mt-3">
+                          <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Sale price</div>
+                          <div className="text-base font-black text-primary">{bdt(p.price)}</div>
                         </div>
                       )}
                       <div className="mt-3 flex flex-wrap gap-1.5 border-t pt-3">
@@ -225,6 +232,7 @@ function CatalogIndex() {
                         <ImagePickerButton images={p.images ?? (p.image ? [p.image] : [])} baseName={p.name} />
                       </div>
                     </div>
+
                   </div>
                 ))}
               </div>
