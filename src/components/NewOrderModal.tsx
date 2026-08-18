@@ -158,6 +158,9 @@ export function NewOrderModal({
     if (picked.length === 0) return toast.error("Select at least one product.");
     const firstError = errors.name || errors.phone || errors.address;
     if (firstError) return toast.error(firstError);
+    const low = picked.find((x) => x.sellPrice < x.minPrice);
+    if (low)
+      return toast.error(`${low.p.name}: সর্বনিম্ন বিক্রয় মূল্য ৳${low.minPrice} — এর নিচে অর্ডার করা যাবে না`);
     setBusy(true);
     try {
       const { data: order, error } = await supabase
