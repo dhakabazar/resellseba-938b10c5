@@ -24,6 +24,7 @@ export function DataToolbar({
   onPerPage,
   perPageOptions = [10, 20, 50, 100],
   right,
+  inline = false,
 }: {
   search: string;
   onSearch: (v: string) => void;
@@ -33,51 +34,81 @@ export function DataToolbar({
   onPerPage: (n: number) => void;
   perPageOptions?: number[];
   right?: ReactNode;
+  inline?: boolean;
 }) {
+  const searchInput = (
+    <input
+      value={search}
+      onChange={(e) => onSearch(e.target.value)}
+      placeholder={searchPlaceholder}
+      className="w-full min-w-0 rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+    />
+  );
+
+  const perPageSelect = (
+    <select
+      value={perPage}
+      onChange={(e) => onPerPage(Number(e.target.value))}
+      className="shrink-0 rounded-md border bg-background px-2 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+      title="Per page"
+    >
+      {perPageOptions.map((n) => (
+        <option key={n} value={n}>
+          {n} / page
+        </option>
+      ))}
+      <option value={-1}>All</option>
+    </select>
+  );
+
+  const filterSelects = filters.map((f) => (
+    <select
+      key={f.key}
+      value={f.value}
+      onChange={(e) => f.onChange(e.target.value)}
+      className="min-w-[120px] rounded-md border bg-background px-2 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+      title={f.label}
+    >
+      <option value="">{f.label}: All</option>
+      {f.options.map((o) => (
+        <option key={o.value} value={o.value}>
+          {o.label}
+        </option>
+      ))}
+    </select>
+  ));
+
+  if (inline) {
+    return (
+      <div className="mb-4">
+        <div className="flex flex-col gap-2 md:grid md:grid-cols-[40%_1fr] md:items-center">
+          {searchInput}
+          <div className="flex flex-wrap items-center gap-2 md:justify-end">
+            {filterSelects.map((s) => (
+              <div key={s.key} className="min-w-[120px] flex-1">
+                {s}
+              </div>
+            ))}
+            {perPageSelect}
+            {right}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mb-4 space-y-2">
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
-        <input
-          value={search}
-          onChange={(e) => onSearch(e.target.value)}
-          placeholder={searchPlaceholder}
-          className="w-full min-w-0 rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-        />
+        {searchInput}
         <div className="flex shrink-0 items-center gap-2">
-          <select
-            value={perPage}
-            onChange={(e) => onPerPage(Number(e.target.value))}
-            className="rounded-md border bg-background px-2 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-            title="Per page"
-          >
-            {perPageOptions.map((n) => (
-              <option key={n} value={n}>
-                {n} / page
-              </option>
-            ))}
-            <option value={-1}>All</option>
-          </select>
+          {perPageSelect}
           {right}
         </div>
       </div>
       {filters.length > 0 && (
         <div className="flex flex-wrap items-center gap-2">
-          {filters.map((f) => (
-            <select
-              key={f.key}
-              value={f.value}
-              onChange={(e) => f.onChange(e.target.value)}
-              className="rounded-md border bg-background px-2 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-              title={f.label}
-            >
-              <option value="">{f.label}: All</option>
-              {f.options.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          ))}
+          {filterSelects}
         </div>
       )}
     </div>
