@@ -380,6 +380,53 @@ function PayoutsPage() {
           </tbody>
         </table>
       </div>
+
+      <div className="surface-card mt-6 p-5">
+        <div className="mb-1 text-sm font-semibold">টাকার টাইমলাইন (Ledger)</div>
+        <p className="mb-4 text-xs text-muted-foreground">কীভাবে টাকা জমা হচ্ছে (ডিপোজিট + ডেলিভার্ড প্রফিট) আর কীভাবে উইথড্র হচ্ছে — সব এক জায়গায়।</p>
+        {ledger.length === 0 ? (
+          <div className="rounded-lg border border-dashed p-6 text-center text-xs text-muted-foreground">এখনো কোনো লেনদেন নেই।</div>
+        ) : (
+          <ol className="relative space-y-3 border-l pl-5">
+            {ledger.map((e, i) => {
+              const inflow = e.direction === "in";
+              const voided = e.direction === "void";
+              return (
+                <li key={i} className="relative">
+                  <span
+                    className={
+                      "absolute -left-[26px] top-1.5 h-3 w-3 rounded-full ring-4 ring-background " +
+                      (voided ? "bg-muted-foreground/40" : inflow ? "bg-success" : "bg-destructive")
+                    }
+                  />
+                  <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border bg-muted/20 px-3 py-2">
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-medium">{e.label}</div>
+                      <div className="text-[11px] text-muted-foreground">
+                        {new Date(e.at).toLocaleString()} · {e.reference || "—"} ·{" "}
+                        <span className="capitalize">{e.status}</span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div
+                        className={
+                          "text-sm font-bold tabular-nums " +
+                          (voided ? "text-muted-foreground line-through" : inflow ? "text-success" : "text-destructive")
+                        }
+                      >
+                        {inflow ? "+" : "−"}৳{Number(e.amount).toLocaleString()}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground tabular-nums">
+                        ব্যালান্স ৳{Number(e.running).toLocaleString()}
+                      </div>
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
+        )}
+      </div>
     </div>
   );
 }
