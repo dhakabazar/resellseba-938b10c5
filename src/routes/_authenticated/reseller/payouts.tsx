@@ -428,8 +428,10 @@ function PayoutsPage() {
               );
             })}
           </ol>
+          <LedgerTotals ledger={ledger} frozen={sum.frozen_amount} available={sum.available} className="mt-4" />
+          </>
         )}
-      </div>
+
     </div>
   );
 }
