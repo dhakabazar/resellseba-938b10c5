@@ -194,15 +194,19 @@ function harvestExtras(html: string): { images: string[]; price: number | null }
   const priceRe =
     /\\?"(?:salePrice|sale_price|pdt_price|priceText|priceValue|discountedPrice|offerPrice|current_price|minPrice|formattedPrice|priceAmount|price)\\?"\s*:\s*\\?"?\s*([^"}\\]{1,32})/gi;
   let pm: RegExpExecArray | null;
+  // Shopify-style embedded JSON stores money in cents.
+  const cents = /Shopify\.currency|"price_min"\s*:\s*\d|"presentment_prices"/i.test(html);
   while ((pm = priceRe.exec(html))) {
     const candidate = num(pm[1]);
     if (candidate) {
-      price = candidate;
+      const isBare = /^\s*\d+\s*$/.test(pm[1]!);
+      price = cents && isBare && candidate >= 1000 && candidate % 100 === 0 ? candidate / 100 : candidate;
       break;
     }
   }
   return { images, price };
 }
+
 
 
 /** Decodes JSON-string escapes (Daraz/AliExpress embed description as escaped HTML). */
