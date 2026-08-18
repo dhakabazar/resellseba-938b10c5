@@ -243,18 +243,28 @@ function AdminDashboard() {
           />
         </div>
 
-        <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-4">
-          <MiniCard to="/admin/products" label="Products" value={catalog.products} />
-          <MiniCard to="/admin/resellers" label="Resellers" value={counts.resellers} />
-          <MiniCard to="/admin/brands" label="Brands" value={counts.brands} />
-          <MiniCard
-            to="/admin/resellers"
-            label="Applicants"
-            value={counts.pendingResellers}
-            tone="amber"
-          />
+      </section>
+
+      <section className="mb-8">
+        <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-muted-foreground/80">
+          Reseller report
+        </h3>
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
+          <MiniCard to="/admin/resellers" search={{ status: "all" }} label="Total resellers" value={resellerReport.total} />
+          <MiniCard to="/admin/resellers" search={{ status: "active" }} label="Active" value={resellerReport.active} tone="emerald" />
+          <MiniCard to="/admin/resellers" search={{ status: "pending" }} label="Applicants" value={resellerReport.pending} tone="amber" />
+          <MiniCard to="/admin/resellers" search={{ status: "suspended" }} label="Deactivated" value={resellerReport.suspended} tone="rose" />
+          <MiniCard to="/admin/resellers" search={{ status: "rejected" }} label="Rejected" value={resellerReport.rejected} tone="rose" />
+          <MiniCard to="/admin/resellers" search={{ status: "email_unverified" }} label="Email unverified" value="—" tone="amber" />
+        </div>
+        <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4">
+          <MiniCard to="/admin/resellers" search={{ status: "active" }} label="Selling resellers" value={resellerReport.withStore} hint="With at least 1 order" tone="violet" />
+          <MiniCard to="/admin/deposits" label="Deposit balance" value={bdt(resellerReport.depositBalance)} />
+          <MiniCard to="/admin/deposits" label="Frozen" value={bdt(resellerReport.frozen)} tone="amber" />
+          <MiniCard to="/admin/payouts" label="Withdrawable" value={bdt(resellerReport.withdrawable)} tone="emerald" />
         </div>
       </section>
+
 
       <section className="mb-8">
         <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-muted-foreground/80">
