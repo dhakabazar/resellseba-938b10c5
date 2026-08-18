@@ -1348,6 +1348,82 @@ export type Database = {
           },
         ]
       }
+      reseller_menu_items: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          kind: string
+          label: string
+          layout: string
+          open_new_tab: boolean
+          parent_id: string | null
+          ref_slug: string | null
+          reseller_id: string
+          sort_order: number
+          updated_at: string
+          url: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          kind?: string
+          label: string
+          layout?: string
+          open_new_tab?: boolean
+          parent_id?: string | null
+          ref_slug?: string | null
+          reseller_id: string
+          sort_order?: number
+          updated_at?: string
+          url?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          kind?: string
+          label?: string
+          layout?: string
+          open_new_tab?: boolean
+          parent_id?: string | null
+          ref_slug?: string | null
+          reseller_id?: string
+          sort_order?: number
+          updated_at?: string
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reseller_menu_items_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "reseller_menu_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reseller_menu_items_reseller_id_fkey"
+            columns: ["reseller_id"]
+            isOneToOne: false
+            referencedRelation: "public_stores"
+            referencedColumns: ["reseller_id"]
+          },
+          {
+            foreignKeyName: "reseller_menu_items_reseller_id_fkey"
+            columns: ["reseller_id"]
+            isOneToOne: false
+            referencedRelation: "resellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reseller_settings: {
         Row: {
           about_text: string | null
