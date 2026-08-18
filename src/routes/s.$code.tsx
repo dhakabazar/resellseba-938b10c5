@@ -28,11 +28,14 @@ function StoreLayout() {
   const { code } = Route.useParams();
   /** `?theme=` / `?palette=` let the reseller panel preview any combination. */
   const searchStr = useRouterState({ select: (s) => s.location.searchStr });
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   const params = new URLSearchParams(searchStr);
   const previewTheme = params.get("theme");
   const previewPalette = params.get("palette");
   const { state, store, Provider } = useStoreLoader(code, previewTheme, previewPalette);
 
+  /** Panel previews (?theme / ?palette) are not counted as customer visits. */
+  useStoreVisitLog(code, pathname.replace(`/s/${code}`, "") || "/", Boolean(previewTheme || previewPalette));
 
   useEffect(() => {
     if (store?.resellerId) loadTrackingForReseller(store.resellerId).catch(() => {});
