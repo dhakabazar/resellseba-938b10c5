@@ -149,7 +149,9 @@ function BulkScanModal({ onClose }: { onClose: () => void }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const controlsRef = useRef<{ stop: () => void } | null>(null);
   const seenRef = useRef<Map<string, number>>(new Map());
+  const doneRef = useRef<Map<string, string>>(new Map());
   const busyRef = useRef(false);
+
 
   const counts = useMemo(
     () => ({
