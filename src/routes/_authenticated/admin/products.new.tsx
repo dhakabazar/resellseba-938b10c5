@@ -9,6 +9,9 @@ import { RichTextEditor } from "@/components/RichTextEditor";
 import { uniqueProductSlug } from "@/lib/slug";
 import { Hint } from "@/components/Hint";
 import { AdminProductCalc } from "@/components/price-breakdown";
+import { ProductImportModal } from "@/components/ProductImportModal";
+import { takeImportDraft } from "@/lib/product-import";
+import { CloudDownload } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/products/new")({
   component: NewProduct,
@@ -37,6 +40,27 @@ function NewProduct() {
   const [brands, setBrands] = useState<{ id: string; name: string }[]>([]);
   const [cats, setCats] = useState<{ id: string; name: string }[]>([]);
   const [busy, setBusy] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+  const [source, setSource] = useState<{ label: string; url: string } | null>(null);
+
+  /** Prefill from an "Import from URL" draft (edit-before-save mode). */
+  useEffect(() => {
+    const d = takeImportDraft();
+    if (!d) return;
+    setName(d.name);
+    if (d.sku) setSku(d.sku);
+    if (d.description) setDescription(d.description);
+    if (d.price) {
+      setBuying(String(d.price));
+      setResellerPrice(String(d.price));
+      setSuggested(String(d.price));
+    }
+    if (d.images.length) setImages(d.images);
+    if (d.metaTitle) setMetaTitle(d.metaTitle);
+    if (d.metaDescription) setMetaDesc(d.metaDescription);
+    setSource({ label: d.source, url: d.url });
+    toast.message(`${d.source} theke data prefilled — check kore save korun.`);
+  }, []);
 
   useEffect(() => {
     supabase.from("brands").select("id,name").order("name").then(({ data }) => setBrands(data ?? []));
@@ -131,7 +155,30 @@ function NewProduct() {
 
   return (
     <div>
-      <PageHeader title="New product" description="Resellers will create listings from this product." />
+      <PageHeader
+        title="New product"
+        description="Resellers will create listings from this product."
+        actions={
+          <button
+            type="button"
+            onClick={() => setImportOpen(true)}
+            className="inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted"
+          >
+            <CloudDownload className="h-4 w-4" /> Import from URL
+          </button>
+        }
+      />
+      <ProductImportModal open={importOpen} onClose={() => setImportOpen(false)} />
+      {source && (
+        <div className="mb-3 flex flex-wrap items-center gap-2 rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-xs">
+          <CloudDownload className="h-3.5 w-3.5 text-primary" />
+          Imported from <b>{source.label}</b>
+          <a href={source.url} target="_blank" rel="noreferrer" className="underline">
+            view source
+          </a>
+          <span className="text-muted-foreground">— prices are source values, adjust before saving.</span>
+        </div>
+      )}
       <form onSubmit={save} className="space-y-4">
         <div className="surface-card p-6">
           <h3 className="mb-4 text-sm font-semibold">Basics</h3>
