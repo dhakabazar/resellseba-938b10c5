@@ -180,7 +180,7 @@ export async function applyCourierUpdate(
   
   // Courier-collected money (partial delivery = less than the order total).
   // Stored on the order so every profit/loss calculation uses what was really received.
-  if (order && !isLocked && args.codAmount != null && mapped.order === "delivered") {
+  if (order && !isLocked && args.codAmount != null && (mapped.order === "delivered" || mapped.order === "partial")) {
     await db.from("orders").update({ received_amount: args.codAmount }).eq("id", orderId);
   }
 

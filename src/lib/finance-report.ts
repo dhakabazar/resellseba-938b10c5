@@ -43,6 +43,11 @@ export type ProfitOrder = {
 };
 
 /** Failed delivery — parcel came back, so only delivery + packaging is burned. */
+/** Delivered or partially delivered — money is realized with received-amount math. */
+export function isRealizedStatus(status?: string | null) {
+  return status === "delivered" || status === "partial";
+}
+
 export function isFailedOrder(o: ProfitOrder) {
   return o.status === "returned" || o.status === "cancelled";
 }
@@ -65,6 +70,7 @@ export function orderReceived(o: ProfitOrder) {
 
 /** Partial delivery = courier collected less than the order value. */
 export function isPartialOrder(o: ProfitOrder) {
+  if (o.status === "partial") return true;
   return !isFailedOrder(o) && o.received_amount != null && o.received_amount !== "" && n(o.received_amount) < n(o.total);
 }
 
@@ -139,7 +145,7 @@ export function statusTab(status: string): OrderTabKey {
   return "all";
 }
 
-export const REALIZED_STATUSES = ["delivered"];
+export const REALIZED_STATUSES = ["delivered", "partial"];
 export const LOST_STATUSES = ["returned", "cancelled"];
 export const RISK_STATUSES = ["pending_return"];
 /** Money still moving — not yet earned, not yet lost. */
@@ -277,7 +283,7 @@ export function buildFinanceReport(
     if (isFailedOrder(order)) {
       p.lostQty += it.quantity;
       p.deliveredProfit += orderProfit(order) * share; // negative loss share
-    } else if (st === "delivered") {
+    } else if (isRealizedStatus(st)) {
       p.deliveredQty += it.quantity;
       p.deliveredProfit += n(it.profit) - orderShortfall(order) * share;
     }
