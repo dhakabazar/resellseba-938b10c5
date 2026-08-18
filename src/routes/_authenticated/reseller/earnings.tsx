@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/use-auth";
 import { PageHeader, StatCard } from "@/components/ui-kit";
@@ -19,7 +19,8 @@ import {
 } from "@/components/report-blocks";
 import { buildFinanceReport, bdt, toCsv, downloadCsv, type ReportItem, type ReportOrder } from "@/lib/finance-report";
 import { orderStatusLabel, orderStatusTone } from "@/lib/courier-status";
-import { Loader2, Wallet, TrendingUp, Clock, CheckCircle2, AlertTriangle, Truck, Download, Award } from "lucide-react";
+import { OrderItemsStrip, type StripItem } from "@/components/order-items-strip";
+import { Loader2, Wallet, TrendingUp, Clock, CheckCircle2, AlertTriangle, Truck, Download, Award, Package } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/reseller/earnings")({
   component: EarningsPage,
@@ -39,6 +40,7 @@ type Row = ReportOrder & {
   order_items: {
     product_id: string | null;
     product_name: string;
+    product_image: string | null;
     quantity: number;
     sa_price: number;
     reseller_price: number;
@@ -56,6 +58,7 @@ function EarningsPage() {
   const [rows, setRows] = useState<Row[]>([]);
   const [payouts, setPayouts] = useState<Payout[]>([]);
   const [commissions, setCommissions] = useState<Commission[]>([]);
+  const [productMeta, setProductMeta] = useState<Record<string, { slug: string; image: string | null; packaging: number }>>({});
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState({ delivered_profit: 0, pending_payout: 0, paid_out: 0, available: 0 });
   const [filters, setFilters] = useState<OrderFilterState>(DEFAULT_ORDER_FILTERS);
@@ -72,7 +75,7 @@ function EarningsPage() {
         supabase
           .from("orders")
           .select(
-            "id,order_number,reseller_id,status,created_at,customer_name,customer_phone,address_line,subtotal,shipping_cost,discount,total,sa_cost_total,reseller_profit,order_items(product_id,product_name,quantity,sa_price,reseller_price,profit,line_total)",
+            "id,order_number,reseller_id,status,created_at,customer_name,customer_phone,address_line,subtotal,shipping_cost,discount,total,sa_cost_total,reseller_profit,order_items(product_id,product_name,product_image,quantity,sa_price,reseller_price,profit,line_total)",
           )
           .eq("reseller_id", r.id)
           .order("created_at", { ascending: false }),
@@ -88,7 +91,20 @@ function EarningsPage() {
           .eq("leader_id", r.id)
           .order("created_at", { ascending: false }),
       ]);
-      setRows((ordersRes.data ?? []) as unknown as Row[]);
+      const orderRows = (ordersRes.data ?? []) as unknown as Row[];
+      setRows(orderRows);
+      const ids = [...new Set(orderRows.flatMap((o) => (o.order_items ?? []).map((i) => i.product_id).filter(Boolean)))] as string[];
+      if (ids.length) {
+        const { data: prods } = await supabase
+          .from("products")
+          .select("id,slug,og_image_url,packaging_cost")
+          .in("id", ids);
+        const map: Record<string, { slug: string; image: string | null; packaging: number }> = {};
+        for (const p of prods ?? []) {
+          map[p.id] = { slug: p.slug, image: p.og_image_url ?? null, packaging: Number(p.packaging_cost ?? 0) };
+        }
+        setProductMeta(map);
+      }
       const s = Array.isArray(summaryRes.data) ? summaryRes.data[0] : summaryRes.data;
       if (s) {
         setSummary({
@@ -121,6 +137,33 @@ function EarningsPage() {
       ),
     [scoped],
   );
+  const packaging = useMemo(() => {
+    const of = (o: Row) =>
+      (o.order_items ?? []).reduce(
+        (sum, i) => sum + (i.product_id ? (productMeta[i.product_id]?.packaging ?? 0) : 0) * Number(i.quantity),
+        0,
+      );
+    let all = 0, delivered = 0;
+    for (const o of scoped) {
+      const v = of(o);
+      all += v;
+      if (o.status === "delivered") delivered += v;
+    }
+    return { all, delivered };
+  }, [scoped, productMeta]);
+
+  const stripItems = (o: Row): StripItem[] =>
+    (o.order_items ?? []).map((i, idx) => ({
+      id: `${o.id}-${idx}`,
+      product_id: i.product_id,
+      product_name: i.product_name,
+      quantity: Number(i.quantity),
+      unit_price: Number(i.reseller_price),
+      line_total: Number(i.line_total),
+      image: i.product_image ?? (i.product_id ? productMeta[i.product_id]?.image ?? null : null),
+      slug: i.product_id ? productMeta[i.product_id]?.slug ?? null : null,
+    }));
+
   const report = useMemo(() => buildFinanceReport(scoped, items, { trend: gran }), [scoped, items, gran]);
 
   const commissionTotals = useMemo(() => {
@@ -212,8 +255,15 @@ function EarningsPage() {
         <StatCard
           label="Admin cost (delivered)"
           value={bdt(report.realized.adminCost)}
-          hint="Product + packaging paid to admin"
+          hint={`Product ${bdt(report.realized.adminCost - packaging.delivered)} + packaging ${bdt(packaging.delivered)}`}
           icon={<Wallet className="h-4 w-4" />}
+        />
+        <StatCard
+          label="Packaging cost (delivered)"
+          value={bdt(packaging.delivered)}
+          hint={`All orders ${bdt(packaging.all)} — already included in admin cost`}
+          icon={<Package className="h-4 w-4" />}
+          tone="violet"
         />
         <StatCard
           label="Delivery charge collected"
@@ -235,6 +285,37 @@ function EarningsPage() {
       <>
       <ReportCard title="Order status wise report" hint="Grouped by the tabs on the Orders page.">
         <StatusReportTable report={report} />
+      </ReportCard>
+
+      <ReportCard
+        title="Cost breakdown"
+        hint="Admin cost split into product price and packaging. Profit calculation is unchanged — packaging is already inside admin cost."
+      >
+        <table className="w-full min-w-[520px] text-sm">
+          <thead className="bg-muted/20 text-left text-[11px] uppercase text-muted-foreground">
+            <tr>
+              <th className="p-3">Scope</th>
+              <th className="p-3 text-right">Product cost</th>
+              <th className="p-3 text-right">Packaging cost</th>
+              <th className="p-3 text-right">Admin cost total</th>
+              <th className="p-3 text-right">Profit</th>
+            </tr>
+          </thead>
+          <tbody>
+            {[
+              { label: "Delivered", cost: report.realized.adminCost, pkg: packaging.delivered, profit: report.realized.profit },
+              { label: "All filtered orders", cost: report.all.adminCost, pkg: packaging.all, profit: report.all.profit },
+            ].map((r) => (
+              <tr key={r.label} className="border-t">
+                <td className="p-3 font-medium">{r.label}</td>
+                <td className="p-3 text-right tabular-nums">{bdt(r.cost - r.pkg)}</td>
+                <td className="p-3 text-right tabular-nums text-violet-500">{bdt(r.pkg)}</td>
+                <td className="p-3 text-right tabular-nums text-muted-foreground">{bdt(r.cost)}</td>
+                <td className="p-3 text-right font-semibold tabular-nums">{bdt(r.profit)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </ReportCard>
 
       <ReportCard title="Raw status split">
@@ -291,19 +372,12 @@ function EarningsPage() {
           </thead>
           <tbody>
             {scoped.slice(0, 100).map((o) => (
-              <tr key={o.id} className="border-t align-top">
+              <Fragment key={o.id}>
+              <tr className="border-t-2 align-top">
                 <td className="p-3">
                   <div className="font-mono text-xs font-medium">{o.order_number}</div>
                   <div className="text-[11px] text-muted-foreground">
                     {new Date(o.created_at).toLocaleDateString()} · {o.customer_name}
-                  </div>
-                  <div className="mt-1 space-y-0.5">
-                    {(o.order_items ?? []).map((i, idx) => (
-                      <div key={idx} className="text-[11px] text-muted-foreground">
-                        {i.product_name} × {i.quantity} — cost {bdt(Number(i.sa_price))} / sell {bdt(Number(i.reseller_price))} ={" "}
-                        <span className="text-success">{bdt(Number(i.profit))}</span>
-                      </div>
-                    ))}
                   </div>
                 </td>
                 <td className="p-3">
@@ -319,6 +393,12 @@ function EarningsPage() {
                   {bdt(Number(o.reseller_profit))}
                 </td>
               </tr>
+              <tr>
+                <td colSpan={7} className="p-0">
+                  <OrderItemsStrip items={stripItems(o)} />
+                </td>
+              </tr>
+              </Fragment>
             ))}
             {scoped.length === 0 && (
               <tr>
