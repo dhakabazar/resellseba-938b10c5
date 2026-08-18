@@ -369,6 +369,7 @@ function FinancialsPage() {
         resellerOptions={resellers.map((r) => ({ value: r.id, label: `${r.business_name} (${r.code})` }))}
         total={orders.length}
         shown={scoped.length}
+        showPerPage
       />
 
       <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">

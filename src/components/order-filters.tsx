@@ -159,14 +159,16 @@ function Select({
   value,
   onChange,
   children,
+  className = "",
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   children: React.ReactNode;
+  className?: string;
 }) {
   return (
-    <label className="flex min-w-0 flex-col gap-1">
+    <label className={"flex min-w-0 flex-col gap-1 " + className}>
       <span className="text-[11px] font-medium text-muted-foreground">{label}</span>
       <select
         value={value}
@@ -190,6 +192,7 @@ export function OrderFilterBar({
   total,
   shown,
   right,
+  showPerPage = false,
 }: {
   value: OrderFilterState;
   onChange: (next: OrderFilterState) => void;
@@ -198,6 +201,8 @@ export function OrderFilterBar({
   total: number;
   shown: number;
   right?: React.ReactNode;
+  /** Show the per-page selector inline (report pages that have no separate one). */
+  showPerPage?: boolean;
 }) {
   const set = (patch: Partial<OrderFilterState>) => onChange({ ...value, ...patch });
   const dirty = useMemo(
@@ -211,8 +216,8 @@ export function OrderFilterBar({
 
   return (
     <div className="surface-card mb-4 space-y-3 p-3 sm:p-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="relative min-w-[200px] flex-1">
+      <div className="flex flex-col gap-2 lg:flex-row lg:items-end">
+        <div className="relative min-w-0 flex-1 lg:pb-[1px]">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
             value={value.q}
@@ -230,45 +235,72 @@ export function OrderFilterBar({
             </button>
           )}
         </div>
-        {right}
-      </div>
 
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
-        {resellerOptions && (
-          <Select label="Reseller" value={value.reseller} onChange={(v) => set({ reseller: v })}>
-            <option value="">All resellers</option>
-            {resellerOptions.map((r) => (
-              <option key={r.value} value={r.value}>
-                {r.label}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:flex lg:shrink-0 lg:items-end">
+          {resellerOptions && (
+            <Select
+              label="Reseller"
+              value={value.reseller}
+              onChange={(v) => set({ reseller: v })}
+              className="lg:w-[190px]"
+            >
+              <option value="">All resellers</option>
+              {resellerOptions.map((r) => (
+                <option key={r.value} value={r.value}>
+                  {r.label}
+                </option>
+              ))}
+            </Select>
+          )}
+          <Select
+            label="Date"
+            value={value.datePreset}
+            className="lg:w-[150px]"
+            onChange={(v) =>
+              set(
+                v === "custom"
+                  ? { datePreset: "custom" }
+                  : { datePreset: v as DatePreset, from: "", to: "" },
+              )
+            }
+          >
+            {DATE_PRESET_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
               </option>
             ))}
           </Select>
-        )}
-        <Select
-          label="Date"
-          value={value.datePreset}
-          onChange={(v) =>
-            set(
-              v === "custom"
-                ? { datePreset: "custom" }
-                : { datePreset: v as DatePreset, from: "", to: "" },
-            )
-          }
-        >
-          {DATE_PRESET_OPTIONS.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </Select>
-        <Select label="Sort" value={value.sort} onChange={(v) => set({ sort: v as OrderFilterState["sort"] })}>
-          {SORT_OPTIONS.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </Select>
+          <Select
+            label="Sort"
+            value={value.sort}
+            className="lg:w-[170px]"
+            onChange={(v) => set({ sort: v as OrderFilterState["sort"] })}
+          >
+            {SORT_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </Select>
+          {showPerPage && (
+            <Select
+              label="Per page"
+              value={String(value.perPage)}
+              className="lg:w-[92px]"
+              onChange={(v) => set({ perPage: Number(v) })}
+            >
+              {[10, 20, 50, 100].map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+              <option value={-1}>All</option>
+            </Select>
+          )}
+        </div>
+        {right}
       </div>
+
 
       {value.datePreset === "custom" && (
         <div className="grid grid-cols-2 gap-2 rounded-md border border-dashed p-2 sm:max-w-md">
