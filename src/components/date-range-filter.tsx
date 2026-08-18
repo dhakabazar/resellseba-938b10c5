@@ -131,7 +131,10 @@ export function DateRangeBar({
               </option>
             ))}
           </select>
+          {/* Resolved range shown under the dropdown. */}
+          <span className="text-xs font-semibold text-muted-foreground">{rangeLabel(value)}</span>
         </label>
+
 
         {value.preset === "custom" && (
           <>
