@@ -100,6 +100,8 @@ function AdminDashboard() {
       supabase.from("products").select("is_active,is_featured,stock").limit(20000),
       supabase.from("categories").select("is_active").limit(5000),
       supabase.from("brands").select("is_active").limit(5000),
+      supabase.from("resellers").select("id,status").limit(20000),
+      supabase.rpc("admin_reseller_metrics"),
     ]);
     const d = (delivered.data ?? []) as { total: number | string; reseller_profit: number | string; sa_cost_total: number | string }[];
     const pay = (payoutsRes.data ?? []) as { amount: number | string; status: string }[];
