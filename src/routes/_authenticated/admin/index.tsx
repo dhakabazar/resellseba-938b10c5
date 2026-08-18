@@ -237,7 +237,7 @@ function AdminDashboard() {
             to="/admin/commissions"
             value={bdt(lifetime.profit)}
             icon={<Award className="h-4 w-4" />}
-            hint="Total commissions earned"
+            hint="Total minus delivery, product & packaging cost"
           />
           <StatCard
             label="Pending Payouts"
