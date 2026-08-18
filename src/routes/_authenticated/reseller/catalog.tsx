@@ -201,7 +201,6 @@ function CatalogPage() {
     if (!resellerId) return;
     const ids = Array.from(picked).filter((id) => listed.has(id));
     if (!ids.length) return toast.error("Selected products not listed");
-    if (!confirm(`Remove ${ids.length} listing from your store?`)) return;
     setBulkBusy(true);
     const { error } = await supabase
       .from("reseller_listings")
@@ -214,8 +213,10 @@ function CatalogPage() {
     ids.forEach((id) => next.delete(id));
     setListed(next);
     setPicked(new Set());
+    setConfirmDelist(false);
     toast.success(`${ids.length} listing removed`);
   }
+
 
   if (loading)
     return (
