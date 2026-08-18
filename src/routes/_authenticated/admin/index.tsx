@@ -44,6 +44,10 @@ function AdminDashboard() {
     categories: 0, activeCategories: 0, activeBrands: 0,
   });
   const [orderReport, setOrderReport] = useState<FinanceReport>(() => buildFinanceReport([], []));
+  const [resellerReport, setResellerReport] = useState({
+    total: 0, active: 0, pending: 0, suspended: 0, rejected: 0,
+    withStore: 0, depositBalance: 0, frozen: 0, withdrawable: 0,
+  });
   const [lifetime, setLifetime] = useState({
     orders: 0,
     revenue: 0,
@@ -82,7 +86,7 @@ function AdminDashboard() {
   }, []);
 
   const loadLifetime = useCallback(async () => {
-    const [allOrders, delivered, payoutsRes, prods, cats, brandRows] = await Promise.all([
+    const [allOrders, delivered, payoutsRes, prods, cats, brandRows, resellerRows, metricsRes] = await Promise.all([
       supabase
         .from("orders")
         .select("id,order_number,reseller_id,status,created_at,subtotal,shipping_cost,discount,total,sa_cost_total,reseller_profit")
@@ -96,6 +100,8 @@ function AdminDashboard() {
       supabase.from("products").select("is_active,is_featured,stock").limit(20000),
       supabase.from("categories").select("is_active").limit(5000),
       supabase.from("brands").select("is_active").limit(5000),
+      supabase.from("resellers").select("id,status").limit(20000),
+      supabase.rpc("admin_reseller_metrics"),
     ]);
     const d = (delivered.data ?? []) as { total: number | string; reseller_profit: number | string; sa_cost_total: number | string }[];
     const pay = (payoutsRes.data ?? []) as { amount: number | string; status: string }[];
@@ -114,6 +120,22 @@ function AdminDashboard() {
       categories: c.length,
       activeCategories: c.filter((x) => x.is_active).length,
       activeBrands: b.filter((x) => x.is_active).length,
+    });
+
+    const rs = (resellerRows.data ?? []) as { id: string; status: string }[];
+    const metrics = (metricsRes.data ?? []) as Array<{
+      reseller_id: string; orders: number; deposit_balance: number; frozen_amount: number; available: number;
+    }>;
+    setResellerReport({
+      total: rs.length,
+      active: rs.filter((x) => x.status === "active").length,
+      pending: rs.filter((x) => x.status === "pending").length,
+      suspended: rs.filter((x) => x.status === "suspended").length,
+      rejected: rs.filter((x) => x.status === "rejected").length,
+      withStore: metrics.filter((m) => Number(m.orders ?? 0) > 0).length,
+      depositBalance: metrics.reduce((s, m) => s + Number(m.deposit_balance ?? 0), 0),
+      frozen: metrics.reduce((s, m) => s + Number(m.frozen_amount ?? 0), 0),
+      withdrawable: metrics.reduce((s, m) => s + Number(m.available ?? 0), 0),
     });
     setLifetime({
       orders: all.length,
@@ -221,18 +243,27 @@ function AdminDashboard() {
           />
         </div>
 
-        <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-4">
-          <MiniCard to="/admin/products" label="Products" value={catalog.products} />
-          <MiniCard to="/admin/resellers" label="Resellers" value={counts.resellers} />
-          <MiniCard to="/admin/brands" label="Brands" value={counts.brands} />
-          <MiniCard
-            to="/admin/resellers"
-            label="Applicants"
-            value={counts.pendingResellers}
-            tone="amber"
-          />
+      </section>
+
+      <section className="mb-8">
+        <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-muted-foreground/80">
+          Reseller report
+        </h3>
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
+          <MiniCard to="/admin/resellers" search={{ status: "all" }} label="Total resellers" value={resellerReport.total} />
+          <MiniCard to="/admin/resellers" search={{ status: "active" }} label="Active" value={resellerReport.active} tone="emerald" />
+          <MiniCard to="/admin/resellers" search={{ status: "pending" }} label="Applicants" value={resellerReport.pending} tone="amber" />
+          <MiniCard to="/admin/resellers" search={{ status: "suspended" }} label="Deactivated" value={resellerReport.suspended} tone="rose" />
+          <MiniCard to="/admin/resellers" search={{ status: "rejected" }} label="Rejected" value={resellerReport.rejected} tone="rose" />
+        </div>
+        <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4">
+          <MiniCard to="/admin/resellers" search={{ status: "active" }} label="Selling resellers" value={resellerReport.withStore} hint="With at least 1 order" tone="violet" />
+          <MiniCard to="/admin/deposits" label="Deposit balance" value={bdt(resellerReport.depositBalance)} />
+          <MiniCard to="/admin/deposits" label="Frozen" value={bdt(resellerReport.frozen)} tone="amber" />
+          <MiniCard to="/admin/payouts" label="Withdrawable" value={bdt(resellerReport.withdrawable)} tone="emerald" />
         </div>
       </section>
+
 
       <section className="mb-8">
         <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-muted-foreground/80">

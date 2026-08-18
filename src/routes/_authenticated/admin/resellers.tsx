@@ -72,17 +72,22 @@ type Summary = {
   frozen_amount: number;
 };
 
+type ResellerSearch = { status?: string };
+
 export const Route = createFileRoute("/_authenticated/admin/resellers")({
+  validateSearch: (s: Record<string, unknown>): ResellerSearch => ({
+    status: typeof s.status === "string" ? s.status : undefined,
+  }),
   component: ResellersPage,
 });
 
 const FILTERS = [
+  "all",
   "pending",
   "active",
   "suspended",
   "rejected",
   "email_unverified",
-  "all",
 ] as const;
 type Filter = (typeof FILTERS)[number];
 
@@ -99,12 +104,15 @@ function ResellersPage() {
   const confirmEmailFn = useServerFn(confirmUserEmail);
   const listEmailStatusFn = useServerFn(listResellerEmailStatus);
   const deleteAuthUserFn = useServerFn(deleteAuthUser);
+  const searchParams = Route.useSearch();
   const [items, setItems] = useState<Reseller[]>([]);
   const [emailStatus, setEmailStatus] = useState<Record<string, { email: string | null; verified: boolean }>>({});
   const [summaries, setSummaries] = useState<Record<string, Summary>>({});
   const [orderCounts, setOrderCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<Filter>("all");
+  const [filter, setFilter] = useState<Filter>(
+    (FILTERS as readonly string[]).includes(searchParams.status ?? "") ? (searchParams.status as Filter) : "all",
+  );
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(20);
@@ -170,6 +178,14 @@ function ResellersPage() {
     load();
     loadEmailStatus();
   }, []);
+
+  useEffect(() => {
+    const s = searchParams.status;
+    if (s && (FILTERS as readonly string[]).includes(s)) {
+      setFilter(s as Filter);
+      setPage(1);
+    }
+  }, [searchParams.status]);
 
   const filtered = useMemo(() => {
     let out = items;
@@ -278,6 +294,28 @@ function ResellersPage() {
         description="Monitor and manage all storefront applications, email verifications, and partner status."
       />
 
+      <div className="mb-3 flex flex-wrap gap-2">
+        {FILTERS.map((f) => (
+          <button
+            key={f}
+            type="button"
+            onClick={() => {
+              setFilter(f);
+              setPage(1);
+            }}
+            className={
+              "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors " +
+              (filter === f ? "border-transparent bg-primary text-primary-foreground" : "hover:bg-muted")
+            }
+          >
+            {FILTER_LABELS[f]}
+            <span className={"tabular-nums " + (filter === f ? "opacity-80" : "text-muted-foreground")}>
+              {counts[f]}
+            </span>
+          </button>
+        ))}
+      </div>
+
       <DataToolbar
         search={query}
         onSearch={(v) => {
@@ -285,21 +323,6 @@ function ResellersPage() {
           setPage(1);
         }}
         searchPlaceholder="Search name, code, phone, email…"
-        filters={[
-          {
-            key: "status",
-            label: "Status",
-            value: filter === "all" ? "" : filter,
-            onChange: (v) => {
-              setFilter((v || "all") as Filter);
-              setPage(1);
-            },
-            options: FILTERS.filter((f) => f !== "all").map((f) => ({
-              value: f,
-              label: `${FILTER_LABELS[f]} (${counts[f]})`,
-            })),
-          },
-        ]}
         perPage={perPage}
         onPerPage={(n) => {
           setPerPage(n);
