@@ -269,7 +269,7 @@ function AdminPayouts() {
 
       {loading ? (
         <div className="grid place-items-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
-      ) : rows.length === 0 ? (
+      ) : filteredRows.length === 0 ? (
         <div className="surface-card p-12 text-center">
           <Wallet className="mx-auto h-8 w-8 text-muted-foreground" />
           <p className="mt-2 text-sm text-muted-foreground">No {filter} payouts.</p>
