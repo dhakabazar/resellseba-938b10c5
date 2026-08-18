@@ -35,7 +35,7 @@ import { Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { useDepositStatus } from "@/lib/deposit";
 import { DEFAULT_DEPOSIT_TEXTS, fillText, useDepositSettings } from "@/lib/deposit-settings";
-import { bdt } from "@/lib/finance-report";
+import { bdt, orderProfit } from "@/lib/finance-report";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getOrderDetails, recheckCourierStatus } from "@/lib/order-details.functions";
@@ -95,6 +95,7 @@ type OrderRow = {
   discount: number;
   total: number;
   reseller_profit: number;
+  sa_cost_total: number;
   payment_method: string;
   status: string;
   payment_status: string;
@@ -114,7 +115,7 @@ export const Route = createFileRoute("/_authenticated/reseller/orders")({
 });
 
 const ORDER_COLUMNS =
-  "id,order_number,customer_name,customer_phone,address_line,city,area,subtotal,shipping_cost,discount,total,reseller_profit,payment_method,status,payment_status,forwarded_to_admin,notes,reseller_note,created_at";
+  "id,order_number,customer_name,customer_phone,address_line,city,area,subtotal,shipping_cost,discount,total,sa_cost_total,reseller_profit,payment_method,status,payment_status,forwarded_to_admin,notes,reseller_note,created_at";
 
 type OrderItemLite = {
   order_id: string;
@@ -140,7 +141,7 @@ function exportCsv(rows: OrderRow[]) {
           `"${(o.address_line ?? "").replace(/"/g, '""')}"`,
           o.status,
           Number(o.total).toFixed(0),
-          Number(o.reseller_profit).toFixed(0),
+          orderProfit(o).toFixed(0),
         ].join(","),
       ),
     )
@@ -336,7 +337,7 @@ function OrdersPage() {
           count: a.count + 1,
           total: a.total + (Number(o.total) || 0),
           shipping: a.shipping + (Number(o.shipping_cost) || 0),
-          profit: a.profit + (Number(o.reseller_profit) || 0),
+          profit: a.profit + orderProfit(o),
         }),
         { count: 0, total: 0, shipping: 0, profit: 0 },
       ),
@@ -842,7 +843,7 @@ function OrdersPage() {
                           Delivery ৳{Number(o.shipping_cost).toFixed(0)}
                         </span>
                         <span className="font-medium text-success">
-                          Profit ৳{Number(o.reseller_profit).toFixed(0)}
+                          Profit ৳{orderProfit(o).toFixed(0)}
                         </span>
                         <span className="rounded border px-1.5 py-0.5 uppercase text-muted-foreground">
                           {o.payment_method}
@@ -931,7 +932,7 @@ function OrdersPage() {
 
                   <div className="min-w-0 font-semibold whitespace-nowrap">৳{Number(o.total).toFixed(0)}</div>
                   <div className="min-w-0 text-[11px] font-medium text-success whitespace-nowrap">
-                    ৳{Number(o.reseller_profit).toFixed(0)}
+                    ৳{orderProfit(o).toFixed(0)}
                   </div>
                   <div className="min-w-0">
                     <span
@@ -1007,7 +1008,7 @@ function OrdersPage() {
                            </div>
                            <div className="flex justify-between py-1 font-bold text-success mt-1 pt-1 border-t">
                              <span>Your Profit</span>
-                             <span>৳{Number(o.reseller_profit).toFixed(0)}</span>
+                             <span>৳{orderProfit(o).toFixed(0)}</span>
                            </div>
                         </div>
                       </div>
@@ -1280,7 +1281,7 @@ function OrderDrawer({
   const subtotal = Number(order.subtotal || 0);
   const shipping = Number(order.shipping_cost || 0);
   const discount = Number(order.discount || 0);
-  const profit = Number(order.reseller_profit || 0);
+  const profit = orderProfit(order);
   const total = Number(order.total || 0);
   
   // Reseller can only confirm/cancel if pending and not forwarded

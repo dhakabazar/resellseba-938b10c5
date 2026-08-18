@@ -270,11 +270,11 @@ function FinancialsPage() {
         a.gross += Number(o.subtotal);
         a.adminCost += Number(o.sa_cost_total);
         a.delivery += Number(o.shipping_cost);
-        a.deliveredProfit += Number(o.reseller_profit);
+        a.deliveredProfit += orderProfit(o);
       } else if (o.status === "returned" || o.status === "cancelled") {
         a.returned += 1;
       } else {
-        a.pipelineProfit += Number(o.reseller_profit);
+        a.pipelineProfit += orderProfit(o);
       }
     }
     for (const p of payouts) {
@@ -319,7 +319,7 @@ function FinancialsPage() {
           Number(o.shipping_cost),
           Number(o.total),
           Number(o.sa_cost_total),
-          Number(o.reseller_profit),
+          orderProfit(o),
         ]),
       ),
     );
@@ -602,7 +602,7 @@ function FinancialsPage() {
                   { l: "Admin cost", v: bdt(Number(o.sa_cost_total)), muted: true },
                   {
                     l: "Reseller profit",
-                    v: bdt(Number(o.reseller_profit)),
+                    v: bdt(orderProfit(o)),
                     cls: "font-semibold " + (o.status === "delivered" ? "text-success" : ""),
                   },
                 ].map((c) => (

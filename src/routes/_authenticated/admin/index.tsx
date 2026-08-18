@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, StatCard } from "@/components/ui-kit";
 import { DateRangeBar, DEFAULT_DATE_RANGE, resolveRange, type DateRangeState } from "@/components/date-range-filter";
-import { bdt, buildFinanceReport, type FinanceReport, type ReportOrder } from "@/lib/finance-report";
+import { bdt, buildFinanceReport, orderProfit, PROFIT_FORMULA_HINT, type FinanceReport, type ReportOrder } from "@/lib/finance-report";
 import { ORDER_TABS } from "@/lib/courier-status";
 import { Package, Users, ShoppingCart, Tag, TrendingUp, Wallet, Loader2, RefreshCw, Award, Clock } from "lucide-react";
 import {
@@ -141,7 +141,7 @@ function AdminDashboard() {
       orders: all.length,
       deliveredOrders: d.length,
       revenue: d.reduce((s, o) => s + Number(o.total), 0),
-      profit: d.reduce((s, o) => s + Number(o.reseller_profit), 0),
+      profit: d.reduce((s, o) => s + orderProfit(o), 0),
       saCost: d.reduce((s, o) => s + Number(o.sa_cost_total), 0),
       payoutPaid: pay.filter((x) => x.status === "paid").reduce((s, x) => s + Number(x.amount), 0),
       payoutDue: pay
@@ -175,12 +175,12 @@ function AdminDashboard() {
       const d = dayMap.get(key) ?? { day: key.slice(5), orders: 0, revenue: 0, profit: 0 };
       d.orders += 1;
       d.revenue += Number(o.total);
-      d.profit += Number(o.reseller_profit);
+      d.profit += orderProfit(o);
       dayMap.set(key, d);
       if (o.status === "delivered") {
         deliveredOrders += 1;
         revenue += Number(o.total);
-        profit += Number(o.reseller_profit);
+        profit += orderProfit(o);
         saCost += Number(o.sa_cost_total);
       }
       const name = o.resellers?.business_name ?? "—";
