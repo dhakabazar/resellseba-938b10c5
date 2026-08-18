@@ -144,13 +144,19 @@ function EarningsPage() {
         0,
       );
     let all = 0, delivered = 0;
+    const byTab: Record<string, number> = {};
+    const byOrder: Record<string, number> = {};
     for (const o of scoped) {
       const v = of(o);
       all += v;
+      byOrder[o.id] = v;
+      const t = statusTab(o.status);
+      byTab[t] = (byTab[t] ?? 0) + v;
       if (o.status === "delivered") delivered += v;
     }
-    return { all, delivered };
+    return { all, delivered, byTab, byOrder };
   }, [scoped, productMeta]);
+
 
   const stripItems = (o: Row): StripItem[] =>
     (o.order_items ?? []).map((i, idx) => ({
