@@ -32,6 +32,7 @@ import {
   Target,
 } from "lucide-react";
 import { AppShell, type NavEntry } from "@/components/AppShell";
+import { BulkScanButton } from "@/components/BulkScanModal";
 import { useAuth } from "@/lib/use-auth";
 import { useBrandingTheme } from "@/lib/branding";
 import { Loader2 } from "lucide-react";
