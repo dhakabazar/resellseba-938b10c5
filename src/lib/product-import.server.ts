@@ -192,7 +192,7 @@ function harvestExtras(html: string): { images: string[]; price: number | null }
   // and may appear inside escaped JSON (\"price\":\"...\").
   let price: number | null = null;
   const priceRe =
-    /\\?"(?:salePrice|priceValue|discountedPrice|minPrice|formattedPrice|priceAmount|price)\\?"\s*:\s*\\?"?\s*([^",}\\]{1,32})/gi;
+    /\\?"(?:salePrice|sale_price|pdt_price|priceText|priceValue|discountedPrice|offerPrice|current_price|minPrice|formattedPrice|priceAmount|price)\\?"\s*:\s*\\?"?\s*([^"}\\]{1,32})/gi;
   let pm: RegExpExecArray | null;
   while ((pm = priceRe.exec(html))) {
     const candidate = num(pm[1]);
