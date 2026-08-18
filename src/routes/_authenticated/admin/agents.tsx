@@ -223,13 +223,15 @@ function AgentsPage() {
       )}
 
       <ConfirmModal
-        open={!!removing}
+        isOpen={!!removing}
         title="Remove this agent?"
         description={`${removing?.display_name ?? ""} will be unassigned from every reseller. The staff account itself is not deleted.`}
-        confirmLabel="Remove agent"
-        tone="danger"
-        onCancel={() => setRemoving(null)}
-        onConfirm={() => removing && remove(removing)}
+        confirmText="Remove agent"
+        variant="danger"
+        onClose={() => setRemoving(null)}
+        onConfirm={async () => {
+          if (removing) await remove(removing);
+        }}
       />
     </div>
   );
