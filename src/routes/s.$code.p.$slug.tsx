@@ -6,6 +6,7 @@ import { trackAddToCart, trackViewContent } from "@/lib/tracking";
 import { addToCart } from "@/lib/store-cart";
 import { deliveryLabel } from "@/lib/delivery";
 import { useStore } from "@/components/store/store-context";
+import { ProductCodeChip } from "@/components/product-code";
 import {
   CopyButton,
   ImageDownloadTools,
