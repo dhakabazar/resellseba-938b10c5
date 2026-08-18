@@ -343,7 +343,7 @@ function ProductsPage() {
                           </div>
                           <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[10px] text-muted-foreground">
                             <span className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 font-medium">
-                              ID: {p.product_code}
+                              ID #{p.product_code}
                             </span>
                             {p.brand_id && brands.find((b) => b.id === p.brand_id) && (
                               <span className="inline-flex items-center rounded bg-muted px-1.5 py-0.5">
@@ -512,7 +512,7 @@ function ProductDetailModal({
                 </div>
                 <div className="mt-2 flex flex-wrap gap-2">
                   <span className="rounded bg-muted px-2 py-0.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    Code: {p.product_code}
+                    ID #{p.product_code}
                   </span>
                   {brandName && <span className="rounded bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">{brandName}</span>}
                   {categoryName && <span className="rounded bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">{categoryName}</span>}

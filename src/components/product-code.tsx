@@ -40,7 +40,7 @@ export function ProductCodeChip({
       title="Copy product ID"
       className={`inline-flex items-center gap-1 rounded-md border border-border/70 bg-muted/60 font-bold tabular-nums tracking-wide text-muted-foreground transition hover:border-primary/50 hover:text-primary ${pad} ${className}`}
     >
-      <span>#{code}</span>
+      <span>ID #{code}</span>
       {done ? <Check className="h-3 w-3 text-emerald-600" /> : <Copy className="h-3 w-3 opacity-70" />}
     </button>
   );
@@ -48,7 +48,8 @@ export function ProductCodeChip({
 
 /** Case-insensitive match helper: name/extra fields + product code. */
 export function matchesProductQuery(term: string, code?: string | null, ...fields: (string | null | undefined)[]) {
-  const t = term.trim().toLowerCase();
+  // Users may type/paste the visible label ("ID #123") — search on the bare code.
+  const t = term.trim().toLowerCase().replace(/^id\s*/, "").replace(/^#/, "").trim();
   if (!t) return true;
   if (code && String(code).toLowerCase().includes(t)) return true;
   return fields.some((f) => (f ?? "").toLowerCase().includes(t));
