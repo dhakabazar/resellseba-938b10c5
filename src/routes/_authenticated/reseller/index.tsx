@@ -13,6 +13,7 @@ import {
   TrendReportTable,
 } from "@/components/report-blocks";
 import { buildFinanceReport, bdt, type ReportItem, type ReportOrder } from "@/lib/finance-report";
+import { NewOrderModal } from "@/components/NewOrderModal";
 import {
   ShoppingBag,
   TrendingUp,
@@ -24,10 +25,28 @@ import {
   AlertTriangle,
   Truck,
   Award,
-  RefreshCw,
   Package,
+  Plus,
 } from "lucide-react";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from "recharts";
+
+type Listing = {
+  id: string;
+  selling_price: number;
+  products: {
+    id: string;
+    name: string;
+    product_code: string;
+    reseller_price: number;
+    packaging_cost: number;
+    delivery_inside: number;
+    delivery_outside: number;
+    delivery_mode: string | null;
+    delivery_flat: number | null;
+    og_image_url: string | null;
+  } | null;
+};
+
 
 export const Route = createFileRoute("/_authenticated/reseller/")({
   component: ResellerDashboard,
@@ -41,7 +60,10 @@ function ResellerDashboard() {
   const [range, setRange] = useState<DateRangeState>(DEFAULT_DATE_RANGE);
   const [loading, setLoading] = useState(true);
   const [rid, setRid] = useState<string | null>(null);
-  const [listings, setListings] = useState({ total: 0, active: 0 });
+  const [listings, setListings] = useState<Listing[]>([]);
+  const [allProducts, setAllProducts] = useState<any[]>([]);
+  const [orderOpen, setOrderOpen] = useState(false);
+  const [listingsReport, setListingsReport] = useState({ total: 0, active: 0 });
   const [orders, setOrders] = useState<ReportOrder[]>([]);
   const [items, setItems] = useState<ReportItem[]>([]);
   const [payouts, setPayouts] = useState<PayoutRow[]>([]);
@@ -76,7 +98,16 @@ function ResellerDashboard() {
       if (fromTs != null) oq = oq.gte("created_at", new Date(fromTs).toISOString());
       if (toTs != null) oq = oq.lte("created_at", new Date(toTs).toISOString());
 
-      const [ordersRes, listAll, listActive, payoutRes, commRes, summaryRes] = await Promise.all([
+      const [
+        ordersRes,
+        listAll,
+        listActive,
+        payoutRes,
+        commRes,
+        summaryRes,
+        listingsRes,
+        productsRes,
+      ] = await Promise.all([
         oq.order("created_at", { ascending: false }).limit(5000),
         supabase.from("reseller_listings").select("*", { count: "exact", head: true }).eq("reseller_id", reseller.id),
         supabase
@@ -87,13 +118,29 @@ function ResellerDashboard() {
         supabase.from("payouts").select("amount,status,created_at").eq("reseller_id", reseller.id),
         supabase.from("leader_commissions").select("amount,status,created_at").eq("leader_id", reseller.id),
         supabase.rpc("reseller_profit_summary", { _reseller_id: reseller.id }),
+        supabase
+          .from("reseller_listings")
+          .select(
+            "id,selling_price,products(id,name,product_code,reseller_price,packaging_cost,delivery_inside,delivery_outside,delivery_mode,delivery_flat,og_image_url)",
+          )
+          .eq("reseller_id", reseller.id)
+          .eq("is_active", true),
+        supabase
+          .from("products")
+          .select(
+            "id,name,slug,product_code,reseller_price,packaging_cost,delivery_inside,delivery_outside,delivery_mode,delivery_flat,og_image_url,suggested_price",
+          )
+          .eq("is_active", true)
+          .order("created_at", { ascending: false }),
       ]);
 
       const os = (ordersRes.data ?? []) as ReportOrder[];
       setOrders(os);
-      setListings({ total: listAll.count ?? 0, active: listActive.count ?? 0 });
+      setListingsReport({ total: listAll.count ?? 0, active: listActive.count ?? 0 });
       setPayouts((payoutRes.data ?? []) as PayoutRow[]);
       setCommissions((commRes.data ?? []) as CommissionRow[]);
+      setListings((listingsRes.data ?? []) as Listing[]);
+      setAllProducts((productsRes.data ?? []) as any[]);
 
       const s = (Array.isArray(summaryRes.data) ? summaryRes.data[0] : summaryRes.data) as
         | { delivered_profit?: number; pending_payout?: number; paid_out?: number; available?: number }
@@ -123,6 +170,7 @@ function ResellerDashboard() {
     },
     [uid],
   );
+
 
   useEffect(() => {
     void load(range);
@@ -184,6 +232,12 @@ function ResellerDashboard() {
         description="Track your earnings, orders, and business growth."
         actions={
           <div className="flex flex-wrap items-center gap-3">
+            <button
+              onClick={() => setOrderOpen(true)}
+              className="btn-brand inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold shadow-elegant transition-all hover:opacity-90 active:scale-95"
+            >
+              <Plus className="h-4 w-4" /> Add order
+            </button>
             <Link
               to="/reseller/earnings"
               className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground shadow-elegant transition-all hover:opacity-90 active:scale-95"
@@ -192,6 +246,7 @@ function ResellerDashboard() {
             </Link>
           </div>
         }
+
       />
 
       <DepositNotice status={deposit} place="dashboard" />
@@ -234,7 +289,7 @@ function ResellerDashboard() {
             label="Live Products"
             to="/reseller/listings"
               tone="violet"
-            value={listings.active}
+            value={listingsReport.active}
             icon={<ShoppingBag className="h-4 w-4" />}
             hint="Active listings"
           />
@@ -383,6 +438,20 @@ function ResellerDashboard() {
           {!rid && <p className="text-sm text-muted-foreground">Reseller profile pawa jaini.</p>}
         </>
       )}
+
+      {orderOpen && rid && (
+        <NewOrderModal
+          listings={listings}
+          allProducts={allProducts}
+          resellerId={rid}
+          onClose={() => setOrderOpen(false)}
+          onCreated={() => {
+            setOrderOpen(false);
+            void load(range);
+          }}
+        />
+      )}
     </div>
   );
 }
+
