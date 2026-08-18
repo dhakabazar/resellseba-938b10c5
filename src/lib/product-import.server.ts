@@ -188,13 +188,22 @@ function harvestExtras(html: string): { images: string[]; price: number | null }
   let m: RegExpExecArray | null;
   while ((m = imgRe.exec(html)) && images.length < 30) images.push(m[1]!);
 
+  // Values may be plain numbers or currency-prefixed strings ("৳ 275.00", "BDT 1,250"),
+  // and may appear inside escaped JSON (\"price\":\"...\").
   let price: number | null = null;
   const priceRe =
-    /"(?:salePrice|price|priceValue|minPrice|formattedPrice|priceAmount)"\s*:\s*"?([\d.,]+)"?/i;
-  const pm = html.match(priceRe);
-  if (pm) price = num(pm[1]);
+    /\\?"(?:salePrice|priceValue|discountedPrice|minPrice|formattedPrice|priceAmount|price)\\?"\s*:\s*\\?"?\s*([^",}\\]{1,32})/gi;
+  let pm: RegExpExecArray | null;
+  while ((pm = priceRe.exec(html))) {
+    const candidate = num(pm[1]);
+    if (candidate) {
+      price = candidate;
+      break;
+    }
+  }
   return { images, price };
 }
+
 
 /** Decodes JSON-string escapes (Daraz/AliExpress embed description as escaped HTML). */
 function decodeJsonString(s: string): string {
