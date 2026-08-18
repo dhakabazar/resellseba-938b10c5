@@ -78,12 +78,150 @@ function CartButton() {
   );
 }
 
-function CategoryNav({ variant }: { variant: "row" | "stack" }) {
-  const { code, categories, theme } = useStore();
-  if (!categories.length) return null;
+/** Renders one menu row as a router link / external anchor / plain span. */
+function MenuLabel({
+  node,
+  className,
+  onClick,
+  children,
+}: {
+  node: MenuNode;
+  className?: string;
+  onClick?: () => void;
+  children?: React.ReactNode;
+}) {
+  const { code } = useStore();
+  const target = menuTarget(node, code);
+  const body = children ?? node.label;
+  if (target.kind === "route")
+    return (
+      <Link to={target.to} params={target.params} className={className} onClick={onClick}>
+        {body}
+      </Link>
+    );
+  if (target.kind === "route-slug")
+    return (
+      <Link to={target.to} params={target.params} className={className} onClick={onClick}>
+        {body}
+      </Link>
+    );
+  if (target.kind === "external")
+    return (
+      <a
+        href={target.href}
+        target={node.open_new_tab ? "_blank" : undefined}
+        rel={node.open_new_tab ? "noreferrer" : undefined}
+        className={className}
+        onClick={onClick}
+      >
+        {body}
+      </a>
+    );
+  return <span className={className}>{body}</span>;
+}
+
+function MenuPanel({ node }: { node: MenuNode }) {
+  const mega = node.layout === "mega";
+  return (
+    <div
+      className={cx(
+        "invisible absolute left-0 top-full z-50 translate-y-1 opacity-0 transition-all duration-150",
+        "group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 focus-within:visible focus-within:opacity-100",
+      )}
+    >
+      <div
+        className={cx(
+          "mt-1 rounded-[var(--st-radius-sm)] border bg-[var(--st-surface)] p-3 shadow-xl",
+          borderc,
+          mega ? "grid w-[min(92vw,760px)] grid-cols-2 gap-4 md:grid-cols-3" : "w-56",
+        )}
+      >
+        {node.children.map((child) => (
+          <div key={child.id} className={mega ? "min-w-0" : ""}>
+            <MenuLabel
+              node={child}
+              className={cx(
+                "flex items-center gap-2 rounded-[var(--st-radius-sm)] px-2 py-1.5 text-sm font-medium hover:bg-[var(--st-bg-alt)] hover:text-[var(--st-primary)]",
+              )}
+            >
+              {mega && child.image_url && (
+                <img
+                  src={child.image_url}
+                  alt={child.label}
+                  className="h-10 w-10 shrink-0 rounded-[var(--st-radius-sm)] object-cover"
+                />
+              )}
+              <span className="min-w-0">
+                <span className="block truncate">{child.label}</span>
+                {mega && child.description && (
+                  <span className={cx("block truncate text-[11px]", muted)}>{child.description}</span>
+                )}
+              </span>
+            </MenuLabel>
+            {child.children.length > 0 && (
+              <div className={cx("mt-1 flex flex-col gap-0.5", mega ? "pl-2" : "pl-4")}>
+                {child.children.map((leaf) => (
+                  <MenuLabel
+                    key={leaf.id}
+                    node={leaf}
+                    className={cx("truncate rounded px-2 py-1 text-[12px] hover:text-[var(--st-primary)]", muted)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function StoreNav({ variant }: { variant: "row" | "stack" }) {
+  const { code, categories, menu, theme } = useStore();
+  const [openId, setOpenId] = useState<string | null>(null);
+
+  /** No custom menu yet -> keep the automatic category list. */
+  const items: MenuNode[] = menu.length
+    ? menu
+    : [
+        {
+          id: "__all",
+          label: "All products",
+          kind: "all_products" as const,
+          parent_id: null,
+          ref_slug: null,
+          url: null,
+          image_url: null,
+          description: null,
+          open_new_tab: false,
+          layout: "dropdown" as const,
+          sort_order: 0,
+          is_active: true,
+          children: [],
+        },
+        ...categories.map((c, i) => ({
+          id: c.id,
+          label: c.name,
+          kind: "category" as const,
+          parent_id: null,
+          ref_slug: c.slug,
+          url: null,
+          image_url: c.image_url,
+          description: null,
+          open_new_tab: false,
+          layout: "dropdown" as const,
+          sort_order: i + 1,
+          is_active: true,
+          children: [] as MenuNode[],
+        })),
+      ];
+
+  if (!items.length) return null;
+  void code;
+
   const style = theme.layout.nav;
   const base = cx(
-    "whitespace-nowrap text-sm transition-colors",
+    "text-sm transition-colors",
     theme.layout.uppercaseNav && "text-xs uppercase tracking-[0.14em]",
   );
   const shape =
@@ -94,30 +232,69 @@ function CategoryNav({ variant }: { variant: "row" | "stack" }) {
         : style === "tabs"
           ? "border-b-2 border-transparent px-1 py-2.5 hover:border-[var(--st-primary)] hover:text-[var(--st-primary)]"
           : "hover:text-[var(--st-primary)]";
+
+  if (variant === "stack") {
+    return (
+      <nav className="flex flex-col gap-1">
+        {items.map((node) => (
+          <div key={node.id}>
+            <div className="flex items-center gap-1">
+              <MenuLabel node={node} className={cx(base, "flex-1 py-2")} />
+              {node.children.length > 0 && (
+                <button
+                  type="button"
+                  aria-label={`Toggle ${node.label}`}
+                  onClick={() => setOpenId((v) => (v === node.id ? null : node.id))}
+                  className="rounded p-1.5 hover:bg-[var(--st-bg-alt)]"
+                >
+                  <ChevronDown
+                    className={cx("h-4 w-4 transition-transform", openId === node.id && "rotate-180")}
+                  />
+                </button>
+              )}
+            </div>
+            {openId === node.id && (
+              <div className={cx("ml-3 border-l pl-3", borderc)}>
+                {node.children.map((child) => (
+                  <div key={child.id}>
+                    <MenuLabel node={child} className={cx("block py-1.5 text-sm", muted)}>
+                      <span className="flex items-center gap-2">
+                        {child.image_url && (
+                          <img src={child.image_url} alt={child.label} className="h-7 w-7 rounded object-cover" />
+                        )}
+                        {child.label}
+                      </span>
+                    </MenuLabel>
+                    {child.children.map((leaf) => (
+                      <MenuLabel key={leaf.id} node={leaf} className={cx("block py-1 pl-4 text-[12px]", muted)} />
+                    ))}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+      </nav>
+    );
+  }
+
   return (
-    <nav
-      className={cx(
-        variant === "row"
-          ? "flex flex-wrap items-center gap-x-4 gap-y-2 py-2"
-          : "flex flex-col gap-1",
-      )}
-    >
-      <Link to="/s/$code" params={{ code }} className={cx(base, shape)}>
-        All products
-      </Link>
-      {categories.map((c) => (
-        <Link
-          key={c.id}
-          to="/s/$code/c/$slug"
-          params={{ code, slug: c.slug }}
-          className={cx(base, shape)}
-        >
-          {c.name}
-        </Link>
+    <nav className="relative flex flex-wrap items-center gap-x-4 gap-y-2 py-2">
+      {items.map((node) => (
+        <div key={node.id} className="group relative">
+          <MenuLabel node={node} className={cx(base, shape, "inline-flex items-center gap-1")}>
+            <span className="whitespace-nowrap">{node.label}</span>
+            {node.children.length > 0 && <ChevronDown className="h-3.5 w-3.5 opacity-70" />}
+          </MenuLabel>
+          {node.children.length > 0 && <MenuPanel node={node} />}
+        </div>
       ))}
     </nav>
   );
 }
+
+const CategoryNav = StoreNav;
+
 
 export function StoreHeader() {
   const { settings, theme } = useStore();
