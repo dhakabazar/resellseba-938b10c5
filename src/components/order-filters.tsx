@@ -203,6 +203,8 @@ export function OrderFilterBar({
   right?: React.ReactNode;
   /** Show the per-page selector inline (report pages that have no separate one). */
   showPerPage?: boolean;
+  /** Report layout: search takes 40%, filters take 60% and are more compact. */
+  variant?: "default" | "report";
 }) {
   const set = (patch: Partial<OrderFilterState>) => onChange({ ...value, ...patch });
   const dirty = useMemo(
