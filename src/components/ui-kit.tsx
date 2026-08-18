@@ -71,6 +71,7 @@ export function StatCard({
   return (
     <Wrapper
       {...wrapperProps}
+      title={hint}
       className={cn(
         "group relative block rounded-xl border bg-card px-4 py-3 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg",
         t.ring,
@@ -88,22 +89,15 @@ export function StatCard({
           t.glow,
         )}
       />
-      <div className="relative flex items-center justify-between gap-2">
-        <span className="truncate text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground/70">
+      <div className="relative flex items-start justify-between gap-2">
+        <span className="text-[10px] font-black uppercase leading-snug tracking-[0.14em] text-muted-foreground/70">
           {label}
         </span>
-        <span className="flex shrink-0 items-center gap-1.5">
-          {trend && (
-            <span className={cn("text-[10px] font-bold", trend.positive ? "text-emerald-500" : "text-rose-500")}>
-              {trend.positive ? "↑" : "↓"} {trend.value}
-            </span>
-          )}
-          {hint && (
-            <Hint side="bottom" className={t.text}>
-              {hint}
-            </Hint>
-          )}
-        </span>
+        {trend && (
+          <span className={cn("shrink-0 text-[10px] font-bold", trend.positive ? "text-emerald-500" : "text-rose-500")}>
+            {trend.positive ? "↑" : "↓"} {trend.value}
+          </span>
+        )}
       </div>
       <div className={cn("relative mt-1 truncate text-xl font-black leading-tight tracking-tight sm:text-2xl", t.text)}>
         {value}
