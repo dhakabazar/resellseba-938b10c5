@@ -14,8 +14,74 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_payouts: {
+        Row: {
+          admin_note: string | null
+          agent_id: string
+          amount: number
+          approved_at: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          kind: string
+          method: string | null
+          note: string | null
+          paid_at: string | null
+          period_from: string | null
+          period_to: string | null
+          reference: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          admin_note?: string | null
+          agent_id: string
+          amount: number
+          approved_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind?: string
+          method?: string | null
+          note?: string | null
+          paid_at?: string | null
+          period_from?: string | null
+          period_to?: string | null
+          reference?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_note?: string | null
+          agent_id?: string
+          amount?: number
+          approved_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind?: string
+          method?: string | null
+          note?: string | null
+          paid_at?: string | null
+          period_from?: string | null
+          period_to?: string | null
+          reference?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_payouts_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agents: {
         Row: {
+          commission_rate: number
           created_at: string
           display_name: string
           email: string | null
@@ -29,6 +95,7 @@ export type Database = {
           whatsapp: string | null
         }
         Insert: {
+          commission_rate?: number
           created_at?: string
           display_name: string
           email?: string | null
@@ -42,6 +109,7 @@ export type Database = {
           whatsapp?: string | null
         }
         Update: {
+          commission_rate?: number
           created_at?: string
           display_name?: string
           email?: string | null

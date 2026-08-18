@@ -151,16 +151,24 @@ function AgentsPage() {
                 </span>
               </div>
 
-              <div className="mt-4 grid grid-cols-2 gap-2">
+              <div className="mt-4 grid grid-cols-3 gap-2">
                 <div className="rounded-lg border bg-muted/40 p-2.5">
                   <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Sale target</div>
                   <div className="text-sm font-black text-primary">{bdt(Number(a.sale_target))}</div>
+                </div>
+                <div
+                  className="rounded-lg border bg-muted/40 p-2.5"
+                  title="Commission = this % × settled net profit of the assigned resellers' delivered orders."
+                >
+                  <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Commission</div>
+                  <div className="text-sm font-black">{Number(a.commission_rate ?? 0)}%</div>
                 </div>
                 <div className="rounded-lg border bg-muted/40 p-2.5">
                   <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Resellers</div>
                   <div className="text-sm font-black">{counts[a.id] ?? 0}</div>
                 </div>
               </div>
+
 
               {a.notes && <p className="mt-3 line-clamp-2 text-xs text-muted-foreground">{a.notes}</p>}
 
@@ -256,6 +264,8 @@ function AgentModal({
   const [whatsapp, setWhatsapp] = useState(agent?.whatsapp ?? "");
   const [email, setEmail] = useState(agent?.email ?? "");
   const [target, setTarget] = useState(String(agent?.sale_target ?? 0));
+  const [rate, setRate] = useState(String(agent?.commission_rate ?? 0));
+
   const [active, setActive] = useState(agent?.is_active ?? true);
   const [notes, setNotes] = useState(agent?.notes ?? "");
   const [busy, setBusy] = useState(false);
@@ -282,6 +292,8 @@ function AgentModal({
       whatsapp: whatsapp.trim() || null,
       email: email.trim() || null,
       sale_target: Number(target) || 0,
+      commission_rate: Number(rate) || 0,
+
       is_active: active,
       notes: notes.trim() || null,
     };
@@ -336,7 +348,24 @@ function AgentModal({
               <label className="mb-1 block text-xs font-medium">Sale target (৳)</label>
               <input type="number" min={0} value={target} onChange={(e) => setTarget(e.target.value)} className={cls} />
             </div>
+            <div className="sm:col-span-2">
+              <label className="mb-1 block text-xs font-medium">Commission rate (%)</label>
+              <input
+                type="number"
+                min={0}
+                max={100}
+                step="0.01"
+                value={rate}
+                onChange={(e) => setRate(e.target.value)}
+                className={cls}
+              />
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Commission = this % × settled net profit of the assigned resellers' orders (final delivered amount −
+                delivery charge − product cost − packaging cost). Returned / cancelled orders reduce the base.
+              </p>
+            </div>
             <div>
+
               <label className="mb-1 block text-xs font-medium">Phone</label>
               <input value={phone} onChange={(e) => setPhone(e.target.value)} className={cls} />
             </div>

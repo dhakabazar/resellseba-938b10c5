@@ -9,6 +9,7 @@ import {
   bdt,
   waNumber,
   AGENT_SALES_HINT,
+  AGENT_COMMISSION_HINT,
   type Agent,
   type AgentOrder,
   type AgentPerformance,
@@ -24,7 +25,9 @@ import {
   Phone,
   MessageCircle,
   Copy,
+  Wallet,
 } from "lucide-react";
+
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/admin/agent-report")({
@@ -198,7 +201,7 @@ function AgentReportPage() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
                     <Mini label="Orders" value={String(p.orders)} />
                     <Mini label="Delivered" value={String(p.delivered)} />
                     <Mini label="Failed / returned" value={String(p.failed)} />
@@ -208,15 +211,30 @@ function AgentReportPage() {
                       tone={p.profit >= 0 ? "text-emerald-600" : "text-destructive"}
                       hint="Received amount − delivery charge − product cost − packaging cost. Failed orders subtract delivery and packaging as loss."
                     />
+                    <Mini
+                      label={`Commission (${p.rate}%)`}
+                      value={bdt(p.commission)}
+                      tone="text-primary"
+                      hint={AGENT_COMMISSION_HINT}
+                    />
                   </div>
 
-                  <button
-                    onClick={() => setOpen(expanded ? null : p.agentId)}
-                    className="inline-flex items-center justify-center gap-1.5 self-start rounded-md border px-3 py-2 text-xs font-semibold hover:bg-muted"
-                  >
-                    <ChevronDown className={"h-3.5 w-3.5 transition " + (expanded ? "rotate-180" : "")} />
-                    {expanded ? "Hide resellers" : "Reseller performance"}
-                  </button>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => setOpen(expanded ? null : p.agentId)}
+                      className="inline-flex items-center justify-center gap-1.5 rounded-md border px-3 py-2 text-xs font-semibold hover:bg-muted"
+                    >
+                      <ChevronDown className={"h-3.5 w-3.5 transition " + (expanded ? "rotate-180" : "")} />
+                      {expanded ? "Hide resellers" : "Reseller performance"}
+                    </button>
+                    <Link
+                      to="/admin/agent-payouts"
+                      className="inline-flex items-center justify-center gap-1.5 rounded-md border px-3 py-2 text-xs font-semibold hover:bg-muted"
+                    >
+                      <Wallet className="h-3.5 w-3.5" /> Commission & payout history
+                    </Link>
+                  </div>
+
                 </div>
 
                 {expanded && (
