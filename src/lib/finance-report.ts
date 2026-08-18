@@ -72,7 +72,7 @@ function addOrder(b: MoneyBucket, o: ReportOrder) {
   b.delivery += n(o.shipping_cost);
   b.customerTotal += n(o.total);
   b.adminCost += n(o.sa_cost_total);
-  b.profit += n(o.reseller_profit);
+  b.profit += orderProfit(o);
 }
 
 /** status -> order tab key (same buckets as the order list tabs). */
