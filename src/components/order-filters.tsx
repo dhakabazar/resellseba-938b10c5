@@ -193,6 +193,7 @@ export function OrderFilterBar({
   shown,
   right,
   showPerPage = false,
+  variant = "default",
 }: {
   value: OrderFilterState;
   onChange: (next: OrderFilterState) => void;
