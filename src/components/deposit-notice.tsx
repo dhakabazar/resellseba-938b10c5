@@ -5,9 +5,20 @@ import type { DepositStatus } from "@/lib/deposit";
 import { fillText, useDepositSettings } from "@/lib/deposit-settings";
 
 /** Reseller-side banner: shows the pending security deposit, or a calm "all clear" line. */
-export function DepositNotice({ status, compact }: { status: DepositStatus; compact?: boolean }) {
+export function DepositNotice({
+  status,
+  compact,
+  place = "payouts",
+}: {
+  status: DepositStatus;
+  compact?: boolean;
+  /** dashboard = only the "deposit due" warning; payouts = full info (done + frozen). */
+  place?: "dashboard" | "payouts";
+}) {
   const { texts } = useDepositSettings();
   if (!status.required && status.frozenAmount <= 0) return null;
+  // Dashboard only nudges when a deposit is actually due; everything else lives in Payouts.
+  if (place === "dashboard" && !status.blocked) return null;
 
   const vars = {
     due: status.due,

@@ -36,7 +36,6 @@ import { toast } from "sonner";
 import { useDepositStatus } from "@/lib/deposit";
 import { DEFAULT_DEPOSIT_TEXTS, fillText, useDepositSettings } from "@/lib/deposit-settings";
 import { bdt } from "@/lib/finance-report";
-import { DepositNotice } from "@/components/deposit-notice";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getOrderDetails, recheckCourierStatus } from "@/lib/order-details.functions";
@@ -480,7 +479,6 @@ function OrdersPage() {
         }
       />
 
-      <DepositNotice status={deposit} compact />
 
       {/* Merged search: mode select inside the box */}
       <div className="mb-3 flex flex-wrap items-center gap-2">
