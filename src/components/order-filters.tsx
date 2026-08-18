@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { Search, X, SlidersHorizontal, CalendarDays } from "lucide-react";
 import { FilterOption } from "@/components/data-list";
+import { SearchableSelect } from "@/components/searchable-select";
 
 export type DatePreset =
   | "today"
@@ -243,20 +244,17 @@ export function OrderFilterBar({
 
         <div className={`grid grid-cols-2 gap-2 sm:grid-cols-3 lg:flex lg:shrink-0 lg:items-end ${isReport ? "lg:w-[60%]" : ""}`}>
           {resellerOptions && (
-            <Select
+            <SearchableSelect
               label="Reseller"
+              options={resellerOptions.map((r) => ({ value: r.value, label: r.label }))}
               value={value.reseller}
               onChange={(v) => set({ reseller: v })}
-              className={isReport ? "lg:w-[150px]" : "lg:w-[190px]"}
-            >
-              <option value="">All resellers</option>
-              {resellerOptions.map((r) => (
-                <option key={r.value} value={r.value}>
-                  {r.label}
-                </option>
-              ))}
-            </Select>
+              placeholder="All resellers"
+              searchPlaceholder="Search reseller…"
+              className={isReport ? "lg:w-[170px]" : "lg:w-[190px]"}
+            />
           )}
+
           <Select
             label="Date"
             value={value.datePreset}
