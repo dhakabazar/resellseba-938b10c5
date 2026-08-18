@@ -71,7 +71,15 @@ async function fetchText(url: string): Promise<string> {
         "accept-language": "en-US,en;q=0.9,bn;q=0.8",
       },
     });
-    if (!res.ok) throw new Error(`Source responded ${res.status}. The page may be blocked or removed.`);
+    if (!res.ok) {
+      if ([401, 403, 405, 429, 503].includes(res.status))
+        throw new Error(
+          `${sourceLabel(new URL(url).hostname)} automated read block korche (${res.status}). Kichukkhon pore try korun ba manually add korun.`,
+        );
+      if (res.status === 404) throw new Error("Link ta pawa jacche na (404). Product page URL ta abar copy korun.");
+      throw new Error(`Source responded ${res.status}. The page may be blocked or removed.`);
+    }
+
     const buf = await res.arrayBuffer();
     if (buf.byteLength > MAX_HTML_BYTES) throw new Error("Page is too large to import.");
     return new TextDecoder("utf-8").decode(buf);
