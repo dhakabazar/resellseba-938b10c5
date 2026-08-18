@@ -40,28 +40,40 @@ export async function importImagesToStorage(
   urls: string[],
   fetchImage: (args: { data: { url: string } }) => Promise<{ base64: string; mime: string }>,
   max = 6,
+  onProgress?: (done: number, total: number) => void,
 ): Promise<UploadedImage[]> {
-  const out: UploadedImage[] = [];
-  for (const url of urls.slice(0, max)) {
-    try {
-      const { base64, mime } = await fetchImage({ data: { url } });
-      const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
-      const file = new File([bytes], "import.bin", { type: mime });
-      const compressed = await validateAndCompress(file, { square: true });
-      const path = `master/${crypto.randomUUID()}.webp`;
-      const { error } = await supabase.storage.from("product-images").upload(path, compressed.blob, {
-        contentType: "image/webp",
-        cacheControl: "31536000",
-        upsert: false,
-      });
-      if (error) throw error;
-      const { data: signed } = await supabase.storage
-        .from("product-images")
-        .createSignedUrl(path, 60 * 60 * 24 * 365 * 5);
-      out.push({ path, url: signed?.signedUrl ?? "", bytes: compressed.bytes });
-    } catch {
-      /* skip unusable image */
-    }
-  }
-  return out;
+  const list = urls.slice(0, max);
+  let done = 0;
+
+  // Run in parallel — each image is an independent network + encode round-trip.
+  const settled = await Promise.all(
+    list.map(async (url): Promise<UploadedImage | null> => {
+      try {
+        const { base64, mime } = await fetchImage({ data: { url } });
+        const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+        const file = new File([bytes], "import.bin", { type: mime });
+        const compressed = await validateAndCompress(file, { square: true });
+        const path = `master/${crypto.randomUUID()}.webp`;
+        const { error } = await supabase.storage.from("product-images").upload(path, compressed.blob, {
+          contentType: "image/webp",
+          cacheControl: "31536000",
+          upsert: false,
+        });
+        if (error) throw error;
+        const { data: signed } = await supabase.storage
+          .from("product-images")
+          .createSignedUrl(path, 60 * 60 * 24 * 365 * 5);
+        return { path, url: signed?.signedUrl ?? "", bytes: compressed.bytes };
+      } catch {
+        return null; /* skip unusable image */
+      } finally {
+        done += 1;
+        onProgress?.(done, list.length);
+      }
+    }),
+  );
+
+  // Keep source order so the first marketplace image stays primary.
+  return settled.filter((im): im is UploadedImage => !!im);
 }
+
