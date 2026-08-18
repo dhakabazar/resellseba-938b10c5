@@ -58,7 +58,7 @@ export function SearchableSelect({
   const selected = options.find((o) => o.value === value);
 
   const trigger = (
-    <div ref={boxRef} className={`relative min-w-0 ${className ?? "w-full"}`}>
+    <div ref={boxRef} className="relative min-w-0 w-full">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -126,11 +126,11 @@ export function SearchableSelect({
     </div>
   );
 
-  if (!label) return trigger;
-
   return (
     <div className={`min-w-0 ${className ?? "w-full"}`}>
-      <span className="mb-1 block text-[11px] font-medium text-muted-foreground">{label}</span>
+      {label && (
+        <span className="mb-1 block text-[11px] font-medium text-muted-foreground">{label}</span>
+      )}
       {trigger}
     </div>
   );
