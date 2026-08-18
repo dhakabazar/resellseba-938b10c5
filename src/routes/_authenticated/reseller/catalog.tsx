@@ -357,20 +357,15 @@ function CatalogPage() {
                     Suggested ৳{p.suggested_price} · Stock {p.stock}
                   </div>
                   {isListed ? (
-                    <div className="mt-3 flex gap-2">
-                      <span className="inline-flex flex-1 items-center justify-center gap-1 rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm">
-                        <Check className="h-3 w-3" /> Listed
-                      </span>
-                      <button
-                        type="button"
-                        disabled={busy}
-                        onClick={() => delistOne(p)}
-                        title="Remove from my store"
-                        className="inline-flex items-center justify-center gap-1 rounded-md border-2 border-destructive/70 bg-destructive/10 px-3 py-1.5 text-xs font-semibold text-destructive transition hover:bg-destructive hover:text-destructive-foreground disabled:opacity-50"
-                      >
-                        <Trash2 className="h-3 w-3" /> Delist
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => delistOne(p)}
+                      title="Remove from my store"
+                      className="mt-3 inline-flex w-full items-center justify-center gap-1 rounded-md bg-destructive px-3 py-1.5 text-xs font-semibold text-destructive-foreground shadow-sm transition hover:brightness-110 disabled:opacity-50"
+                    >
+                      <Trash2 className="h-3 w-3" /> Delist
+                    </button>
                   ) : (
                     <button
                       onClick={() => openList(p)}
@@ -379,6 +374,7 @@ function CatalogPage() {
                       <Plus className="h-3 w-3" /> List in my store
                     </button>
                   )}
+
 
                 </div>
               </div>
