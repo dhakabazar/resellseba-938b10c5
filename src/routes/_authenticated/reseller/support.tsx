@@ -2,7 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/ui-kit";
-import { Phone, MessageCircle, Mail, Copy, Loader2, Headphones } from "lucide-react";
+import { Phone, MessageCircle, Mail, Copy, Loader2, Headphones, UserCheck } from "lucide-react";
+import type { Agent } from "@/lib/agents";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/reseller/support")({
@@ -46,6 +47,7 @@ function waNumber(phone: string) {
 
 function SupportPage() {
   const [s, setS] = useState<Settings | null>(null);
+  const [agent, setAgent] = useState<Agent | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -56,6 +58,26 @@ function SupportPage() {
         .eq("id", 1)
         .maybeSingle();
       setS((data ?? null) as Settings | null);
+
+      // My agent: the follow-up contact assigned to this reseller (if any).
+      const { data: rid } = await supabase.rpc("current_reseller_id");
+      if (rid) {
+        const { data: row } = await supabase
+          .from("resellers")
+          .select("agent_id")
+          .eq("id", rid as string)
+          .maybeSingle();
+        const agentId = (row as any)?.agent_id as string | null | undefined;
+        if (agentId) {
+          const { data: a } = await supabase
+            .from("agents")
+            .select("*")
+            .eq("id", agentId)
+            .eq("is_active", true)
+            .maybeSingle();
+          setAgent((a ?? null) as Agent | null);
+        }
+      }
       setLoading(false);
     })();
   }, []);
@@ -130,6 +152,68 @@ function SupportPage() {
         title="Support & Contact"
         description={`${brand} টিমের সাথে যেকোনো প্রয়োজনে সরাসরি যোগাযোগ করুন`}
       />
+
+      {agent && (
+        <div className="surface-card overflow-hidden shadow-sm">
+          <div className="flex items-center gap-2 border-b bg-primary/5 px-4 py-3 sm:px-5">
+            <UserCheck className="h-4 w-4 text-primary" />
+            <h2 className="text-sm font-bold">My agent</h2>
+          </div>
+          <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-primary/10 text-sm font-bold uppercase text-primary">
+                {agent.display_name.slice(0, 2)}
+              </div>
+              <div className="min-w-0">
+                <div className="truncate font-bold">{agent.display_name}</div>
+                <p className="text-xs text-muted-foreground">
+                  Your dedicated business follow-up person. Contact for growth, product or order guidance.
+                </p>
+                <div className="mt-1 flex flex-wrap gap-3 text-xs">
+                  {agent.phone && <span className="font-mono">{agent.phone}</span>}
+                  {agent.email && <span className="break-all font-mono">{agent.email}</span>}
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {agent.phone && (
+                <>
+                  <a
+                    href={`tel:${digits(agent.phone)}`}
+                    className="inline-flex items-center gap-1.5 rounded-md border px-3 py-2 text-xs font-semibold hover:bg-muted"
+                  >
+                    <Phone className="h-3.5 w-3.5" /> Call
+                  </a>
+                  <a
+                    href={`https://wa.me/${waNumber(agent.whatsapp || agent.phone)}?text=${waText}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded-md border px-3 py-2 text-xs font-semibold text-emerald-600 hover:bg-muted"
+                  >
+                    <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => copy(agent.phone!, "Agent number")}
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md border hover:bg-muted"
+                    aria-label="Copy agent number"
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                  </button>
+                </>
+              )}
+              {agent.email && (
+                <a
+                  href={`mailto:${agent.email}`}
+                  className="inline-flex items-center gap-1.5 rounded-md border px-3 py-2 text-xs font-semibold hover:bg-muted"
+                >
+                  <Mail className="h-3.5 w-3.5" /> Email
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {cards.length === 0 ? (
         <div className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">

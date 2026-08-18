@@ -27,6 +27,8 @@ import {
   LineChart,
   PieChart,
   Percent,
+  UserCheck,
+  Target,
 } from "lucide-react";
 import { AppShell, type NavEntry } from "@/components/AppShell";
 import { useAuth } from "@/lib/use-auth";
@@ -49,6 +51,8 @@ const ROUTE_PERMISSIONS: Record<string, string[]> = {
   "/admin/payouts": ["payouts.manage"],
   "/admin/commissions": ["commissions.manage"],
   "/admin/resellers": ["resellers.manage"],
+  "/admin/agents": ["agents.manage"],
+  "/admin/agent-report": ["agents.view", "agents.manage"],
   "/admin/visitors": ["reports.view", "dashboard.view", "resellers.manage"],
   "/admin/marketing": ["marketing.manage"],
   "/admin/notifications": ["notifications.manage"],
@@ -86,6 +90,14 @@ const NAV: NavEntry[] = [
     ],
   },
   { label: "Resellers", to: "/admin/resellers", icon: <Users className="h-4 w-4" /> },
+  {
+    label: "Agents",
+    icon: <UserCheck className="h-4 w-4" />,
+    items: [
+      { label: "Commission Agents", to: "/admin/agents", icon: <UserCheck className="h-4 w-4" /> },
+      { label: "Agent report", to: "/admin/agent-report", icon: <Target className="h-4 w-4" /> },
+    ],
+  },
   { label: "Store visitors", to: "/admin/visitors", icon: <Activity className="h-4 w-4" /> },
   {
     label: "Growth",

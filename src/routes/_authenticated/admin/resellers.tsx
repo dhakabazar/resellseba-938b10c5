@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
 import { DataToolbar, Pagination, usePaginated } from "@/components/data-list";
+import { SearchableSelect } from "@/components/searchable-select";
 import {
   Check,
   X,
@@ -58,6 +59,7 @@ type Reseller = {
   status: Status;
   commission_rate: number;
   leader_id: string | null;
+  agent_id: string | null;
   notes: string | null;
   approved_at: string | null;
   created_at: string;
@@ -128,6 +130,8 @@ function ResellersPage() {
   const [editing, setEditing] = useState<Reseller | null>(null);
   const [depositFor, setDepositFor] = useState<Reseller | null>(null);
   const [profileFor, setProfileFor] = useState<Reseller | null>(null);
+  const [agents, setAgents] = useState<Array<{ id: string; display_name: string }>>([]);
+  const [agentFilter, setAgentFilter] = useState("");
 
   async function load() {
     setLoading(true);
@@ -135,13 +139,16 @@ function ResellersPage() {
       supabase
         .from("resellers")
         .select(
-          "id,user_id,business_name,code,contact_phone,address,nid_number,status,commission_rate,leader_id,notes,approved_at,created_at,payout_method,payout_account_name,payout_account_number,payout_bank_name,payout_branch,payout_routing,deposit_required,deposit_required_amount,frozen_amount",
+          "id,user_id,business_name,code,contact_phone,address,nid_number,status,commission_rate,leader_id,agent_id,notes,approved_at,created_at,payout_method,payout_account_name,payout_account_number,payout_bank_name,payout_branch,payout_routing,deposit_required,deposit_required_amount,frozen_amount",
         )
         .order("created_at", { ascending: false }),
       supabase.rpc("admin_reseller_metrics"),
     ]);
 
     setItems((listRes.data ?? []) as Reseller[]);
+
+    const { data: agentRows } = await supabase.from("agents").select("id,display_name").order("display_name");
+    setAgents((agentRows ?? []) as Array<{ id: string; display_name: string }>);
 
     const metrics = (metricsRes.data ?? []) as Array<{
       reseller_id: string;
@@ -202,6 +209,7 @@ function ResellersPage() {
     if (filter === "email_unverified")
       out = out.filter((r) => !emailStatus[r.user_id]?.verified);
     else if (filter !== "all") out = out.filter((r) => r.status === filter);
+    if (agentFilter) out = out.filter((r) => (agentFilter === "none" ? !r.agent_id : r.agent_id === agentFilter));
     const q = query.trim().toLowerCase();
     if (q)
       out = out.filter(
@@ -212,7 +220,7 @@ function ResellersPage() {
           (emailStatus[r.user_id]?.email ?? "").toLowerCase().includes(q),
       );
     return out;
-  }, [items, filter, query, emailStatus]);
+  }, [items, filter, query, emailStatus, agentFilter]);
 
   const counts = useMemo(() => {
     return {
@@ -324,6 +332,22 @@ function ResellersPage() {
             </span>
           </button>
         ))}
+      </div>
+
+      <div className="mb-3 w-full sm:max-w-xs">
+        <SearchableSelect
+          value={agentFilter}
+          onChange={(v) => {
+            setAgentFilter(v);
+            setPage(1);
+          }}
+          placeholder="All agents"
+          options={[
+            { value: "", label: "All agents" },
+            { value: "none", label: "No agent assigned" },
+            ...agents.map((a) => ({ value: a.id, label: a.display_name })),
+          ]}
+        />
       </div>
 
       <DataToolbar
@@ -552,6 +576,7 @@ function ResellersPage() {
       {editing && (
         <EditModal
           reseller={editing}
+          agents={agents}
           others={items.filter((i) => i.id !== editing.id && i.status === "active")}
           onClose={() => setEditing(null)}
           onSaved={() => {
@@ -637,11 +662,13 @@ function StatusBadge({ status }: { status: Status }) {
 
 function EditModal({
   reseller,
+  agents,
   others,
   onClose,
   onSaved,
 }: {
   reseller: Reseller;
+  agents: Array<{ id: string; display_name: string }>;
   others: Reseller[];
   onClose: () => void;
   onSaved: () => void;
@@ -652,6 +679,7 @@ function EditModal({
   const [address, setAddress] = useState(reseller.address ?? "");
   const [commission, setCommission] = useState(String(reseller.commission_rate));
   const [leaderId, setLeaderId] = useState(reseller.leader_id ?? "");
+  const [agentId, setAgentId] = useState(reseller.agent_id ?? "");
   const [notes, setNotes] = useState(reseller.notes ?? "");
   const [payoutMethod, setPayoutMethod] = useState<string>(reseller.payout_method ?? "");
   const [payoutAccountName, setPayoutAccountName] = useState(reseller.payout_account_name ?? "");
@@ -674,6 +702,7 @@ function EditModal({
         address: address || null,
         commission_rate: Number(commission),
         leader_id: leaderId || null,
+        agent_id: agentId || null,
         notes: notes || null,
         payout_method: payoutMethod || null,
         payout_account_name: payoutAccountName || null,
@@ -747,6 +776,20 @@ function EditModal({
               ))}
             </select>
           </div>
+        </div>
+        <div>
+          <label className="mb-1 block text-xs font-medium">Commission agent (optional)</label>
+          <select value={agentId} onChange={(e) => setAgentId(e.target.value)} className={cls}>
+            <option value="">— None —</option>
+            {agents.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.display_name}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            The agent follows up with this reseller and sees their orders in the agent report.
+          </p>
         </div>
         <div>
           <label className="mb-1 block text-xs font-medium">Address</label>

@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      agents: {
+        Row: {
+          created_at: string
+          display_name: string
+          email: string | null
+          id: string
+          is_active: boolean
+          notes: string | null
+          phone: string | null
+          sale_target: number
+          updated_at: string
+          user_id: string
+          whatsapp: string | null
+        }
+        Insert: {
+          created_at?: string
+          display_name: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          phone?: string | null
+          sale_target?: number
+          updated_at?: string
+          user_id: string
+          whatsapp?: string | null
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          phone?: string | null
+          sale_target?: number
+          updated_at?: string
+          user_id?: string
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
       audit_log: {
         Row: {
           action: string
@@ -1334,6 +1376,7 @@ export type Database = {
       resellers: {
         Row: {
           address: string | null
+          agent_id: string | null
           approved_at: string | null
           approved_by: string | null
           business_name: string
@@ -1361,6 +1404,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          agent_id?: string | null
           approved_at?: string | null
           approved_by?: string | null
           business_name: string
@@ -1388,6 +1432,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          agent_id?: string | null
           approved_at?: string | null
           approved_by?: string | null
           business_name?: string
@@ -1414,6 +1459,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "resellers_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "resellers_leader_id_fkey"
             columns: ["leader_id"]
@@ -1782,6 +1834,7 @@ export type Database = {
           order_number: string
         }[]
       }
+      current_agent_id: { Args: never; Returns: string }
       current_reseller_id: { Args: never; Returns: string }
       generate_product_code: { Args: never; Returns: string }
       generate_reseller_code: { Args: { _seed: string }; Returns: string }
