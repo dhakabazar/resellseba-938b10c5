@@ -1558,6 +1558,51 @@ export type Database = {
           },
         ]
       }
+      store_visits: {
+        Row: {
+          created_at: string
+          device: string
+          id: string
+          path: string
+          referrer: string | null
+          reseller_id: string
+          session_key: string
+        }
+        Insert: {
+          created_at?: string
+          device?: string
+          id?: string
+          path?: string
+          referrer?: string | null
+          reseller_id: string
+          session_key: string
+        }
+        Update: {
+          created_at?: string
+          device?: string
+          id?: string
+          path?: string
+          referrer?: string | null
+          reseller_id?: string
+          session_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_visits_reseller_id_fkey"
+            columns: ["reseller_id"]
+            isOneToOne: false
+            referencedRelation: "public_stores"
+            referencedColumns: ["reseller_id"]
+          },
+          {
+            foreignKeyName: "store_visits_reseller_id_fkey"
+            columns: ["reseller_id"]
+            isOneToOne: false
+            referencedRelation: "resellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -1756,7 +1801,18 @@ export type Database = {
         Returns: boolean
       }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      log_store_visit: {
+        Args: {
+          _code: string
+          _device: string
+          _path: string
+          _referrer: string
+          _session_key: string
+        }
+        Returns: undefined
+      }
       my_permissions: { Args: never; Returns: string[] }
+      purge_store_visits: { Args: never; Returns: number }
       recalc_order_packaging: {
         Args: { _order_id: string }
         Returns: undefined
@@ -1790,6 +1846,50 @@ export type Database = {
         }[]
       }
       seed_reseller_store: { Args: { _reseller_id: string }; Returns: number }
+      store_visit_access: { Args: { _reseller_id: string }; Returns: boolean }
+      store_visit_daily: {
+        Args: { _from: string; _reseller_id: string; _to: string }
+        Returns: {
+          day: string
+          visitors: number
+          visits: number
+        }[]
+      }
+      store_visit_leaderboard: {
+        Args: { _from: string; _limit?: number; _to: string }
+        Returns: {
+          business_name: string
+          code: string
+          last_at: string
+          live: number
+          reseller_id: string
+          visitors: number
+          visits: number
+        }[]
+      }
+      store_visit_pages: {
+        Args: {
+          _from: string
+          _limit?: number
+          _reseller_id: string
+          _to: string
+        }
+        Returns: {
+          path: string
+          visitors: number
+          visits: number
+        }[]
+      }
+      store_visit_summary: {
+        Args: { _from: string; _reseller_id: string; _to: string }
+        Returns: {
+          last_at: string
+          live: number
+          today_visits: number
+          visitors: number
+          visits: number
+        }[]
+      }
     }
     Enums: {
       app_role: "super_admin" | "reseller" | "leader" | "staff"
