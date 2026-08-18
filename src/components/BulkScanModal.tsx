@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { ScanLine, X, Camera, CameraOff, CheckCircle2, XCircle, Volume2, VolumeX, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -109,6 +110,8 @@ export function BulkScanButton({
   className?: string;
 }) {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
   return (
     <>
       <button
@@ -123,14 +126,17 @@ export function BulkScanButton({
         <ScanLine className="h-4 w-4" />
         {compact ? <span className="hidden sm:inline">Bulk scan</span> : <span>Bulk scan</span>}
       </button>
-      {open && (
-        <BulkScanModal
-          onClose={() => {
-            setOpen(false);
-            onDone?.();
-          }}
-        />
-      )}
+      {open && mounted
+        ? createPortal(
+            <BulkScanModal
+              onClose={() => {
+                setOpen(false);
+                onDone?.();
+              }}
+            />,
+            document.body,
+          )
+        : null}
     </>
   );
 }
@@ -260,6 +266,16 @@ function BulkScanModal({ onClose }: { onClose: () => void }) {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
+
+  // lock page scroll while the modal is open
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, []);
+
 
   // camera scanning
   useEffect(() => {
