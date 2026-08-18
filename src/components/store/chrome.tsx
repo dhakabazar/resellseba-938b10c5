@@ -295,21 +295,37 @@ function StoreNav({ variant }: { variant: "row" | "stack" }) {
               <div className={cx("ml-3 border-l pl-3", borderc)}>
                 {node.children.map((child) => (
                   <div key={child.id}>
-                    <MenuLabel node={child} className={cx("block py-1.5 text-sm", muted)}>
-                      <span className="flex items-center gap-2">
-                        {child.image_url && (
-                          <img src={child.image_url} alt={child.label} className="h-7 w-7 rounded object-cover" />
-                        )}
-                        {child.label}
-                      </span>
-                    </MenuLabel>
-                    {child.children.map((leaf) => (
-                      <MenuLabel key={leaf.id} node={leaf} className={cx("block py-1 pl-4 text-[12px]", muted)} />
-                    ))}
+                    <div className="flex items-center gap-1">
+                      <MenuLabel node={child} className={cx("block flex-1 py-1.5 text-sm", muted)}>
+                        <span className="flex items-center gap-2">
+                          {child.image_url && (
+                            <img src={child.image_url} alt={child.label} className="h-7 w-7 rounded object-cover" />
+                          )}
+                          {child.label}
+                        </span>
+                      </MenuLabel>
+                      {child.children.length > 0 && (
+                        <button
+                          type="button"
+                          aria-label={`Toggle ${child.label}`}
+                          onClick={() => setOpenChildId((v) => (v === child.id ? null : child.id))}
+                          className="rounded p-1.5 hover:bg-[var(--st-bg-alt)]"
+                        >
+                          <ChevronDown
+                            className={cx("h-3.5 w-3.5 transition-transform", openChildId === child.id && "rotate-180")}
+                          />
+                        </button>
+                      )}
+                    </div>
+                    {openChildId === child.id &&
+                      child.children.map((leaf) => (
+                        <MenuLabel key={leaf.id} node={leaf} className={cx("block py-1 pl-4 text-[12px]", muted)} />
+                      ))}
                   </div>
                 ))}
               </div>
             )}
+
           </div>
         ))}
       </nav>
