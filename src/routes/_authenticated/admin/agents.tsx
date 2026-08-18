@@ -264,6 +264,8 @@ function AgentModal({
   const [whatsapp, setWhatsapp] = useState(agent?.whatsapp ?? "");
   const [email, setEmail] = useState(agent?.email ?? "");
   const [target, setTarget] = useState(String(agent?.sale_target ?? 0));
+  const [rate, setRate] = useState(String(agent?.commission_rate ?? 0));
+
   const [active, setActive] = useState(agent?.is_active ?? true);
   const [notes, setNotes] = useState(agent?.notes ?? "");
   const [busy, setBusy] = useState(false);
