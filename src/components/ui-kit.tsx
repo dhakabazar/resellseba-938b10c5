@@ -1,6 +1,5 @@
 import type { ElementType, ReactNode } from "react";
 import { cn } from "@/lib/utils";
-import { Hint } from "@/components/Hint";
 import { Link } from "@tanstack/react-router";
 
 export function PageHeader({
