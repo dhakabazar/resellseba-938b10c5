@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
-import { Plus, Loader2, Pencil, Trash2, Eye, EyeOff, Check, X, CheckSquare, Square, Copy, Download } from "lucide-react";
+import { Plus, Loader2, Pencil, Trash2, Eye, EyeOff, Check, X, CheckSquare, Square, Copy, Download, CloudDownload } from "lucide-react";
 import { toast } from "sonner";
 import {
   DataToolbar,
@@ -13,6 +13,7 @@ import {
 } from "@/components/data-list";
 import { DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { CopyButton, ImageDownloadTools, stripHtml } from "@/components/store/reseller-tools";
+import { ProductImportModal } from "@/components/ProductImportModal";
 
 type Row = {
   id: string;
@@ -51,6 +52,7 @@ function ProductsPage() {
   const [categories, setCategories] = useState<Opt[]>([]);
   const [loading, setLoading] = useState(true);
   const [detailId, setDetailId] = useState<string | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
 
   const [q, setQ] = useState("");
   const [brand, setBrand] = useState(search.brand ?? "");
@@ -197,14 +199,25 @@ function ProductsPage() {
         title="Products"
         description="Master catalog resellers create listings from."
         actions={
+          <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setImportOpen(true)}
+            className="inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted"
+          >
+            <CloudDownload className="h-4 w-4" /> Import from URL
+          </button>
           <Link
             to="/admin/products/new"
             className="btn-brand inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium"
           >
             <Plus className="h-4 w-4" /> New product
           </Link>
+          </div>
         }
       />
+
+      <ProductImportModal open={importOpen} onClose={() => setImportOpen(false)} onSaved={() => load()} />
 
       <DataToolbar
         search={q}
