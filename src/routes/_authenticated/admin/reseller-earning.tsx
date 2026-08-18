@@ -681,13 +681,7 @@ function FinancialsPage() {
         hint="How money comes in (deposit + delivered profit) and how it goes out (withdrawals)."
       >
         <div className="p-4">
-          {filters.reseller ? (
-            <LedgerTimeline ledger={scopedLedger} frozen={ledgerSum.frozen} available={ledgerSum.available} />
-          ) : (
-            <div className="rounded-lg border border-dashed p-6 text-center text-xs text-muted-foreground">
-              Select a reseller in the filter bar above to see that reseller's money timeline.
-            </div>
-          )}
+          <LedgerTimeline ledger={scopedLedger} frozen={ledgerSum.frozen} available={ledgerSum.available} />
         </div>
       </ReportCard>
       )}
