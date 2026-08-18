@@ -46,7 +46,7 @@ export function DepositNotice({
             to="/reseller/payouts"
             className="shrink-0 rounded-lg border border-amber-600/40 bg-background px-3 py-2 text-center text-xs font-bold text-amber-700 hover:bg-amber-500/10 dark:text-amber-300"
           >
-            ডিপোজিট তথ্য দেখুন
+            View deposit info
           </Link>
         )}
       </div>
@@ -75,20 +75,20 @@ export function DepositChips({ status }: { status: DepositStatus }) {
       {status.required ? (
         status.blocked ? (
           <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-amber-700 dark:text-amber-400">
-            <AlertTriangle className="h-3 w-3" /> ডিপোজিট বাকি {bdt(status.due)}
+            <AlertTriangle className="h-3 w-3" /> Deposit due {bdt(status.due)}
           </span>
         ) : (
           <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-2 py-0.5 text-success">
-            <ShieldCheck className="h-3 w-3" /> ডিপোজিট ঠিক আছে
+            <ShieldCheck className="h-3 w-3" /> Deposit OK
           </span>
         )
       ) : null}
       <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-primary">
-        <Wallet className="h-3 w-3" /> ব্যালান্স {bdt(status.balance)}
+        <Wallet className="h-3 w-3" /> Balance {bdt(status.balance)}
       </span>
       {status.frozenAmount > 0 && (
         <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-muted-foreground">
-          <Lock className="h-3 w-3" /> ফ্রিজ {bdt(status.frozenAmount)}
+          <Lock className="h-3 w-3" /> Frozen {bdt(status.frozenAmount)}
         </span>
       )}
     </div>
