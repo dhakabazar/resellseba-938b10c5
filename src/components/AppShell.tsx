@@ -102,7 +102,7 @@ export function AppShell({
           </button>
         )}
       </div>
-      <nav className={cn("flex-1 overflow-y-auto", collapsed ? "p-2" : "p-3")}>
+      <nav className={cn("flex-1 overflow-y-auto no-scrollbar", collapsed ? "p-2" : "p-3")}>
         {nav.map((entry, idx) => {
           if (!isGroup(entry)) {
             return <LeafLink key={entry.to} item={entry} collapsed={collapsed} />;
