@@ -16,7 +16,7 @@ import {
   Award,
   Shield,
   ShieldCheck,
-  ScrollText,
+  Eraser,
 
   Bell,
   FileText,
@@ -62,7 +62,7 @@ const ROUTE_PERMISSIONS: Record<string, string[]> = {
   "/admin/couriers": ["couriers.manage"],
   "/admin/payments": ["payments.manage"],
   "/admin/staff": ["staff.manage"],
-  "/admin/audit": ["audit.view"],
+  "/admin/maintenance": ["settings.manage"],
   "/admin/deposits": ["settings.manage", "resellers.manage", "finance.view"],
   "/admin/settings": ["settings.manage"],
   "/admin/privacy": ["settings.manage"],
@@ -120,7 +120,7 @@ const NAV: NavEntry[] = [
       { label: "Payment methods", to: "/admin/payments", icon: <Wallet className="h-4 w-4" /> },
 
       { label: "Staff & Permissions", to: "/admin/staff", icon: <Users className="h-4 w-4" /> },
-      { label: "Audit log", to: "/admin/audit", icon: <ScrollText className="h-4 w-4" /> },
+      { label: "Cache & cleanup", to: "/admin/maintenance", icon: <Eraser className="h-4 w-4" /> },
 
       { label: "Security deposit", to: "/admin/deposits", icon: <ShieldCheck className="h-4 w-4" /> },
       { label: "Privacy policy", to: "/admin/privacy", icon: <Shield className="h-4 w-4" /> },
