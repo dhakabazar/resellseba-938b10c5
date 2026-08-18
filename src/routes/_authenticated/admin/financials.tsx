@@ -30,7 +30,6 @@ import { OrderItemsStrip, type StripItem } from "@/components/order-items-strip"
 import { LedgerTimeline, type LedgerRow } from "@/components/ledger-timeline";
 import { orderStatusLabel, orderStatusTone } from "@/lib/courier-status";
 import { Loader2, Wallet, TrendingUp, Award, PiggyBank, Truck, Download, AlertTriangle, Clock, Package } from "lucide-react";
-import { Fragment } from "react";
 
 export const Route = createFileRoute("/_authenticated/admin/financials")({
   component: FinancialsPage,
