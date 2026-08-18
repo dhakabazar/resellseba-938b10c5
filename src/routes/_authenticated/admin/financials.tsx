@@ -448,13 +448,13 @@ function FinancialsPage() {
         hint="Admin cost split into product price and packaging. Profit calculation is unchanged — packaging is already inside admin cost."
       >
         <table className="w-full min-w-[520px] text-sm">
-          <thead className="bg-muted/20 text-left text-[11px] uppercase text-muted-foreground">
+          <thead className="bg-muted/20 text-center text-[11px] uppercase text-muted-foreground">
             <tr>
-              <th className="p-3">Scope</th>
-              <th className="p-3 text-right">Product cost</th>
-              <th className="p-3 text-right">Packaging cost</th>
-              <th className="p-3 text-right">Admin cost total</th>
-              <th className="p-3 text-right">Reseller profit</th>
+              <th className="px-2 py-2 text-center">Scope</th>
+              <th className="px-2 py-2 text-center">Product cost</th>
+              <th className="px-2 py-2 text-center">Packaging cost</th>
+              <th className="px-2 py-2 text-center">Admin cost total</th>
+              <th className="px-2 py-2 text-center">Reseller profit</th>
             </tr>
           </thead>
           <tbody>
@@ -463,11 +463,11 @@ function FinancialsPage() {
               { label: "All filtered orders", cost: report.all.adminCost, pkg: packaging.all, profit: report.all.profit },
             ].map((r) => (
               <tr key={r.label} className="border-t">
-                <td className="p-3 font-medium">{r.label}</td>
-                <td className="p-3 text-right tabular-nums">{bdt(r.cost - r.pkg)}</td>
-                <td className="p-3 text-right tabular-nums text-violet-500">{bdt(r.pkg)}</td>
-                <td className="p-3 text-right tabular-nums text-muted-foreground">{bdt(r.cost)}</td>
-                <td className="p-3 text-right font-semibold tabular-nums">{bdt(r.profit)}</td>
+                <td className="px-2 py-2 text-center font-medium">{r.label}</td>
+                <td className="px-2 py-2 text-center tabular-nums">{bdt(r.cost - r.pkg)}</td>
+                <td className="px-2 py-2 text-center tabular-nums text-violet-500">{bdt(r.pkg)}</td>
+                <td className="px-2 py-2 text-center tabular-nums text-muted-foreground">{bdt(r.cost)}</td>
+                <td className="px-2 py-2 text-center font-semibold tabular-nums">{bdt(r.profit)}</td>
               </tr>
             ))}
           </tbody>
@@ -497,43 +497,43 @@ function FinancialsPage() {
         }
       >
         <table className="w-full min-w-[1050px] text-sm">
-          <thead className="bg-muted/20 text-left text-[11px] uppercase text-muted-foreground">
+          <thead className="bg-muted/20 text-center text-[11px] uppercase text-muted-foreground">
             <tr>
-              <th className="p-3">Reseller</th>
-              <th className="p-3 text-right">Orders</th>
-              <th className="p-3 text-right">Gross sell</th>
-              <th className="p-3 text-right">Admin cost</th>
-              <th className="p-3 text-right">Delivery</th>
-              <th className="p-3 text-right">Delivered profit</th>
-              <th className="p-3 text-right">Pipeline</th>
-              <th className="p-3 text-right">Paid</th>
-              <th className="p-3 text-right">Pending</th>
-              <th className="p-3 text-right">Due</th>
-              <th className="p-3 text-right">Leader due</th>
+              <th className="px-2 py-2 text-center">Reseller</th>
+              <th className="px-2 py-2 text-center">Orders</th>
+              <th className="px-2 py-2 text-center">Gross sell</th>
+              <th className="px-2 py-2 text-center">Admin cost</th>
+              <th className="px-2 py-2 text-center">Delivery</th>
+              <th className="px-2 py-2 text-center">Delivered profit</th>
+              <th className="px-2 py-2 text-center">Pipeline</th>
+              <th className="px-2 py-2 text-center">Paid</th>
+              <th className="px-2 py-2 text-center">Pending</th>
+              <th className="px-2 py-2 text-center">Due</th>
+              <th className="px-2 py-2 text-center">Leader due</th>
             </tr>
           </thead>
           <tbody>
             {perReseller.map((a) => (
               <tr key={a.reseller.id} className="border-t">
-                <td className="p-3">
+                <td className="px-2 py-2 text-center">
                   <div className="font-medium">{a.reseller.business_name}</div>
                   <div className="text-[11px] text-muted-foreground">
                     /{a.reseller.code} · leader rate {a.reseller.commission_rate}%
                   </div>
                 </td>
-                <td className="p-3 text-right text-muted-foreground">
+                <td className="px-2 py-2 text-center text-muted-foreground">
                   {a.delivered}/{a.orders}
                   <div className="text-[10px]">ret/can {a.returned}</div>
                 </td>
-                <td className="p-3 text-right">{bdt(a.gross)}</td>
-                <td className="p-3 text-right text-muted-foreground">{bdt(a.adminCost)}</td>
-                <td className="p-3 text-right text-muted-foreground">{bdt(a.delivery)}</td>
-                <td className="p-3 text-right font-semibold text-success">{bdt(a.deliveredProfit)}</td>
-                <td className="p-3 text-right text-muted-foreground">{bdt(a.pipelineProfit)}</td>
-                <td className="p-3 text-right">{bdt(a.paid)}</td>
-                <td className="p-3 text-right">{bdt(a.pending)}</td>
-                <td className="p-3 text-right font-medium">{bdt(a.available)}</td>
-                <td className="p-3 text-right">
+                <td className="px-2 py-2 text-center">{bdt(a.gross)}</td>
+                <td className="px-2 py-2 text-center text-muted-foreground">{bdt(a.adminCost)}</td>
+                <td className="px-2 py-2 text-center text-muted-foreground">{bdt(a.delivery)}</td>
+                <td className="px-2 py-2 text-center font-semibold text-success">{bdt(a.deliveredProfit)}</td>
+                <td className="px-2 py-2 text-center text-muted-foreground">{bdt(a.pipelineProfit)}</td>
+                <td className="px-2 py-2 text-center">{bdt(a.paid)}</td>
+                <td className="px-2 py-2 text-center">{bdt(a.pending)}</td>
+                <td className="px-2 py-2 text-center font-medium">{bdt(a.available)}</td>
+                <td className="px-2 py-2 text-center">
                   {a.leaderDue || a.leaderPaid ? (
                     <div>
                       <div className="font-medium">{bdt(a.leaderDue)}</div>
@@ -547,7 +547,7 @@ function FinancialsPage() {
             ))}
             {perReseller.length === 0 && (
               <tr>
-                <td colSpan={11} className="p-8 text-center text-muted-foreground">
+                <td colSpan={11} className="px-2 py-8 text-center text-muted-foreground">
                   No resellers found.
                 </td>
               </tr>
@@ -631,32 +631,32 @@ function FinancialsPage() {
       <>
       <ReportCard title="Payout ledger" hint="Withdrawal requests and payment history (lifetime).">
         <table className="w-full min-w-[720px] text-sm">
-          <thead className="bg-muted/20 text-left text-[11px] uppercase text-muted-foreground">
+          <thead className="bg-muted/20 text-center text-[11px] uppercase text-muted-foreground">
             <tr>
-              <th className="p-3">Requested</th>
-              <th className="p-3">Reseller</th>
-              <th className="p-3 text-right">Amount</th>
-              <th className="p-3">Status</th>
-              <th className="p-3">Method</th>
-              <th className="p-3">Paid at</th>
-              <th className="p-3">Note</th>
+              <th className="px-2 py-2 text-center">Requested</th>
+              <th className="px-2 py-2 text-center">Reseller</th>
+              <th className="px-2 py-2 text-center">Amount</th>
+              <th className="px-2 py-2 text-center">Status</th>
+              <th className="px-2 py-2 text-center">Method</th>
+              <th className="px-2 py-2 text-center">Paid at</th>
+              <th className="px-2 py-2 text-center">Note</th>
             </tr>
           </thead>
           <tbody>
             {scopedPayouts.map((p) => (
               <tr key={p.id} className="border-t">
-                <td className="p-3">{new Date(p.requested_at).toLocaleDateString()}</td>
-                <td className="p-3 text-xs">{p.resellers?.business_name ?? "—"}</td>
-                <td className="p-3 text-right font-medium">{bdt(Number(p.amount))}</td>
-                <td className="p-3 capitalize">{p.status}</td>
-                <td className="p-3 uppercase text-muted-foreground">{p.method ?? "—"}</td>
-                <td className="p-3 text-muted-foreground">{p.paid_at ? new Date(p.paid_at).toLocaleDateString() : "—"}</td>
-                <td className="p-3 max-w-[220px] text-xs text-muted-foreground">{p.notes || p.reference || "—"}</td>
+                <td className="px-2 py-2 text-center">{new Date(p.requested_at).toLocaleDateString()}</td>
+                <td className="px-2 py-2 text-center text-xs">{p.resellers?.business_name ?? "—"}</td>
+                <td className="px-2 py-2 text-center font-medium">{bdt(Number(p.amount))}</td>
+                <td className="px-2 py-2 text-center capitalize">{p.status}</td>
+                <td className="px-2 py-2 text-center uppercase text-muted-foreground">{p.method ?? "—"}</td>
+                <td className="px-2 py-2 text-center text-muted-foreground">{p.paid_at ? new Date(p.paid_at).toLocaleDateString() : "—"}</td>
+                <td className="px-2 py-2 text-center max-w-[220px] text-xs text-muted-foreground">{p.notes || p.reference || "—"}</td>
               </tr>
             ))}
             {scopedPayouts.length === 0 && (
               <tr>
-                <td colSpan={7} className="p-8 text-center text-muted-foreground">
+                <td colSpan={7} className="px-2 py-8 text-center text-muted-foreground">
                   No payout requests.
                 </td>
               </tr>
@@ -685,26 +685,26 @@ function FinancialsPage() {
       {tab === "courier" && (
       <ReportCard title="Courier wise report" hint="Booking count, courier charge and COD delivery charge.">
         <table className="w-full min-w-[520px] text-sm">
-          <thead className="bg-muted/20 text-left text-[11px] uppercase text-muted-foreground">
+          <thead className="bg-muted/20 text-center text-[11px] uppercase text-muted-foreground">
             <tr>
-              <th className="p-3">Courier</th>
-              <th className="p-3 text-right">Shipments</th>
-              <th className="p-3 text-right">Booking cost</th>
-              <th className="p-3 text-right">Courier delivery charge</th>
+              <th className="px-2 py-2 text-center">Courier</th>
+              <th className="px-2 py-2 text-center">Shipments</th>
+              <th className="px-2 py-2 text-center">Booking cost</th>
+              <th className="px-2 py-2 text-center">Courier delivery charge</th>
             </tr>
           </thead>
           <tbody>
             {courierStats.rows.map((r) => (
               <tr key={r.provider} className="border-t">
-                <td className="p-3 font-medium capitalize">{r.provider}</td>
-                <td className="p-3 text-right">{r.shipments}</td>
-                <td className="p-3 text-right">{bdt(r.cost)}</td>
-                <td className="p-3 text-right text-muted-foreground">{bdt(r.charge)}</td>
+                <td className="px-2 py-2 text-center font-medium capitalize">{r.provider}</td>
+                <td className="px-2 py-2 text-center">{r.shipments}</td>
+                <td className="px-2 py-2 text-center">{bdt(r.cost)}</td>
+                <td className="px-2 py-2 text-center text-muted-foreground">{bdt(r.charge)}</td>
               </tr>
             ))}
             {courierStats.rows.length === 0 && (
               <tr>
-                <td colSpan={4} className="p-8 text-center text-muted-foreground">
+                <td colSpan={4} className="px-2 py-8 text-center text-muted-foreground">
                   No shipments in this range.
                 </td>
               </tr>
