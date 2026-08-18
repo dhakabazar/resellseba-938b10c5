@@ -1,6 +1,7 @@
 import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
+  Activity,
   LayoutDashboard,
   ShoppingBag,
   ClipboardList,
@@ -63,6 +64,7 @@ const NAV: NavEntry[] = [
       { label: "General settings", to: "/reseller/settings", icon: <Store className="h-4 w-4" /> },
       { label: "Theme", to: "/reseller/theme", icon: <Palette className="h-4 w-4" /> },
       { label: "Domain", to: "/reseller/domain", icon: <Globe className="h-4 w-4" /> },
+      { label: "Visitors", to: "/reseller/visitors", icon: <Activity className="h-4 w-4" /> },
     ],
   },
   { label: "My profile", to: "/reseller/profile", icon: <UserCircle className="h-4 w-4" /> },
