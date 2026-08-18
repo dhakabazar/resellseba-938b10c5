@@ -432,8 +432,8 @@ function OrdersPage() {
     if (!order) return;
 
     const isBooked = shipments.some(s => s.order_id === id && (s.consignment_id || s.tracking_id));
-    if (!["pending", "confirmed"].includes(order.status) || isBooked) {
-      toast.error("You can only delete Pending or Confirmed orders that are not booked.");
+    if (order.status !== "pending" || isBooked) {
+      toast.error("You can only delete Pending orders that are not booked.");
       return;
     }
 
