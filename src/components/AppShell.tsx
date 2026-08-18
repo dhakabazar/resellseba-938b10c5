@@ -214,7 +214,7 @@ export function AppShell({
           {renderSidebar(false)}
         </aside>
 
-        <main className={cn("flex-1 transition-[margin] duration-200", desktopCollapsed ? "md:ml-16" : "md:ml-64")}>
+        <main className={cn("min-w-0 max-w-full flex-1 overflow-x-hidden transition-[margin] duration-200", desktopCollapsed ? "md:ml-16" : "md:ml-64")}>
           <header className="sticky top-0 z-30 flex h-16 items-center gap-2 border-b bg-background/80 px-4 backdrop-blur md:px-6">
             <div className="flex flex-1 items-center gap-2 overflow-hidden">
               <button
