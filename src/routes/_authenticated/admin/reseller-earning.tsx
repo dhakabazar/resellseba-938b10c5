@@ -86,7 +86,10 @@ function FinancialsPage() {
   const [payouts, setPayouts] = useState<Payout[]>([]);
   const [commissions, setCommissions] = useState<Commission[]>([]);
   const [shipments, setShipments] = useState<Shipment[]>([]);
-  const [filters, setFilters] = useState<OrderFilterState>(DEFAULT_ORDER_FILTERS);
+  const [filters, setFilters] = useState<OrderFilterState>({
+    ...DEFAULT_ORDER_FILTERS,
+    reseller: resellerParam ?? "",
+  });
   const [gran, setGran] = useState<"day" | "month">("day");
   const [resellerQ, setResellerQ] = useState("");
   const [tab, setTab] = useState<AdminReportTab>("overview");
