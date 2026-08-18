@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Globe, Loader2, RefreshCw, Save, ShieldCheck, Trash2, Plug, CheckCircle2, AlertCircle } from "lucide-react";
 import { PageHeader } from "@/components/ui-kit";
-import ConfirmModal from "@/components/ConfirmModal";
+import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
 import {
   getCloudflareConfig,
   saveCloudflareConfig,
@@ -287,12 +287,13 @@ function DomainsAdmin() {
       </div>
 
       <ConfirmModal
-        open={!!confirm}
+        isOpen={!!confirm}
         title="Disconnect domain?"
         description="The hostname will be removed from Cloudflare and the store will stop serving on it."
         detail={confirm?.hostname}
-        confirmLabel="Disconnect"
-        onCancel={() => setConfirm(null)}
+        confirmText="Disconnect"
+        isLoading={busy === confirm?.id}
+        onClose={() => setConfirm(null)}
         onConfirm={onDelete}
       />
     </div>
