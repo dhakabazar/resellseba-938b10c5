@@ -335,6 +335,12 @@ function AdminOrdersPage() {
               <Truck className="h-3.5 w-3.5" /> {activeProviderLabel ? `Book ${activeProviderLabel}` : "Book Courier"}
             </button>
             <button
+              onClick={bulkDeleteOrders}
+              className="inline-flex h-9 items-center gap-2 rounded-md border border-destructive/40 bg-background px-3 text-xs font-medium text-destructive hover:bg-destructive/10"
+            >
+              <Trash2 className="h-3.5 w-3.5" /> Delete
+            </button>
+            <button
               onClick={() => setMarked([])}
               className="ml-auto text-xs text-muted-foreground hover:text-foreground"
             >
