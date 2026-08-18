@@ -756,8 +756,12 @@ function OrderDrawer({
   const subtotal = Number(order.subtotal || 0);
   const shipping = Number(order.shipping_cost || 0);
   const saCost = Number(order.sa_cost_total || 0);
-  const profit = Number(order.total || 0) - Number(order.shipping_cost || 0) - saCost;
-  const adminProfit = saCost > 0 ? (subtotal - saCost) : 0; // Simplified logic: Admin profit is what's left after SA cost? Actually saCost is what reseller pays admin.
+  const received = orderReceived(order);
+  const shortfall = orderShortfall(order);
+  const failed = isFailedOrder(order);
+  const packaging = orderPackaging(order);
+  const profit = orderProfit(order);
+  const adminProfit = saCost > 0 ? subtotal - saCost : 0;
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
@@ -829,14 +833,26 @@ function OrderDrawer({
                   <span className="text-[10px] font-medium text-muted-foreground uppercase">Revenue</span>
                   <p className="text-xl font-bold">৳{subtotal.toLocaleString()}</p>
                   <p className="text-[10px] text-muted-foreground">Excluding delivery</p>
+                  <p className="text-[10px] font-medium">
+                    Received <span className="tabular-nums">৳{received.toLocaleString()}</span>
+                    {shortfall > 0 && (
+                      <span className="ml-1 text-destructive">(−৳{shortfall.toLocaleString()} not received)</span>
+                    )}
+                  </p>
                 </div>
                 <div className="space-y-1">
                   <span className="text-[10px] font-medium text-amber-600 uppercase flex items-center gap-1">
                     <Wallet className="h-3 w-3" />
-                    Reseller Profit
+                    {profit < 0 ? "Reseller Loss" : "Reseller Profit"}
                   </span>
-                  <p className="text-xl font-bold text-amber-600">৳{profit.toLocaleString()}</p>
-                  <p className="text-[10px] text-muted-foreground">Net earnings</p>
+                  <p className={"text-xl font-bold " + (profit < 0 ? "text-destructive" : "text-amber-600")}>
+                    ৳{profit.toLocaleString()}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {failed
+                      ? `Failed delivery — delivery ৳${shipping.toLocaleString()} + packaging ৳${packaging.toLocaleString()} loss`
+                      : "Received − delivery − product − packaging"}
+                  </p>
                 </div>
                 <div className="space-y-1">
                   <span className="text-[10px] font-medium text-green-600 uppercase flex items-center gap-1">
@@ -856,6 +872,16 @@ function OrderDrawer({
                 <div className="flex justify-between text-xs">
                   <span className="text-muted-foreground">Shipping Cost</span>
                   <span className="font-medium">৳{shipping.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">Packaging Cost (inside SA cost)</span>
+                  <span className="font-medium">৳{packaging.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">Received from courier</span>
+                  <span className={"font-medium " + (shortfall > 0 ? "text-destructive" : "")}>
+                    ৳{received.toLocaleString()}
+                  </span>
                 </div>
                 <div className="flex justify-between border-t pt-2 text-sm font-bold">
                   <span>Grand Total</span>
