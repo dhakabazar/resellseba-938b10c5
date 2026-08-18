@@ -252,6 +252,48 @@ export type Database = {
           },
         ]
       }
+      cloudflare_config: {
+        Row: {
+          a_record_ip: string | null
+          account_id: string | null
+          api_token: string | null
+          auto_worker_domain: boolean
+          cname_target: string | null
+          id: number
+          is_active: boolean
+          updated_at: string
+          worker_name: string | null
+          zone_id: string | null
+          zone_name: string | null
+        }
+        Insert: {
+          a_record_ip?: string | null
+          account_id?: string | null
+          api_token?: string | null
+          auto_worker_domain?: boolean
+          cname_target?: string | null
+          id?: number
+          is_active?: boolean
+          updated_at?: string
+          worker_name?: string | null
+          zone_id?: string | null
+          zone_name?: string | null
+        }
+        Update: {
+          a_record_ip?: string | null
+          account_id?: string | null
+          api_token?: string | null
+          auto_worker_domain?: boolean
+          cname_target?: string | null
+          id?: number
+          is_active?: boolean
+          updated_at?: string
+          worker_name?: string | null
+          zone_id?: string | null
+          zone_name?: string | null
+        }
+        Relationships: []
+      }
       courier_configs: {
         Row: {
           config: Json
@@ -1234,32 +1276,53 @@ export type Database = {
         Row: {
           cloudflare_hostname_id: string | null
           created_at: string
+          dns_target: string | null
           hostname: string
           id: string
           is_primary: boolean
+          last_checked_at: string | null
+          last_error: string | null
+          ownership_status: string | null
           reseller_id: string
           ssl_status: string
+          verification_txt_name: string | null
+          verification_txt_value: string | null
           verified_at: string | null
+          worker_domain_id: string | null
         }
         Insert: {
           cloudflare_hostname_id?: string | null
           created_at?: string
+          dns_target?: string | null
           hostname: string
           id?: string
           is_primary?: boolean
+          last_checked_at?: string | null
+          last_error?: string | null
+          ownership_status?: string | null
           reseller_id: string
           ssl_status?: string
+          verification_txt_name?: string | null
+          verification_txt_value?: string | null
           verified_at?: string | null
+          worker_domain_id?: string | null
         }
         Update: {
           cloudflare_hostname_id?: string | null
           created_at?: string
+          dns_target?: string | null
           hostname?: string
           id?: string
           is_primary?: boolean
+          last_checked_at?: string | null
+          last_error?: string | null
+          ownership_status?: string | null
           reseller_id?: string
           ssl_status?: string
+          verification_txt_name?: string | null
+          verification_txt_value?: string | null
           verified_at?: string | null
+          worker_domain_id?: string | null
         }
         Relationships: [
           {
