@@ -35,43 +35,51 @@ export function DataToolbar({
   right?: ReactNode;
 }) {
   return (
-    <div className="mb-4 flex flex-wrap items-center gap-2">
-      <input
-        value={search}
-        onChange={(e) => onSearch(e.target.value)}
-        placeholder={searchPlaceholder}
-        className="min-w-[200px] flex-1 rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring sm:max-w-xs"
-      />
-      {filters.map((f) => (
-        <select
-          key={f.key}
-          value={f.value}
-          onChange={(e) => f.onChange(e.target.value)}
-          className="rounded-md border bg-background px-2 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-          title={f.label}
-        >
-          <option value="">{f.label}: All</option>
-          {f.options.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
+    <div className="mb-4 space-y-2">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
+        <input
+          value={search}
+          onChange={(e) => onSearch(e.target.value)}
+          placeholder={searchPlaceholder}
+          className="w-full min-w-0 rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+        />
+        <div className="flex shrink-0 items-center gap-2">
+          <select
+            value={perPage}
+            onChange={(e) => onPerPage(Number(e.target.value))}
+            className="rounded-md border bg-background px-2 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+            title="Per page"
+          >
+            {perPageOptions.map((n) => (
+              <option key={n} value={n}>
+                {n} / page
+              </option>
+            ))}
+            <option value={-1}>All</option>
+          </select>
+          {right}
+        </div>
+      </div>
+      {filters.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          {filters.map((f) => (
+            <select
+              key={f.key}
+              value={f.value}
+              onChange={(e) => f.onChange(e.target.value)}
+              className="rounded-md border bg-background px-2 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+              title={f.label}
+            >
+              <option value="">{f.label}: All</option>
+              {f.options.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
           ))}
-        </select>
-      ))}
-      <select
-        value={perPage}
-        onChange={(e) => onPerPage(Number(e.target.value))}
-        className="rounded-md border bg-background px-2 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-        title="Per page"
-      >
-        {perPageOptions.map((n) => (
-          <option key={n} value={n}>
-            {n} / page
-          </option>
-        ))}
-        <option value={-1}>All</option>
-      </select>
-      {right && <div className="ml-auto">{right}</div>}
+        </div>
+      )}
     </div>
   );
 }
