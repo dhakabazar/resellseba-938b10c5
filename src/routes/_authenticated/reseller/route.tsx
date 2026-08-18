@@ -18,6 +18,8 @@ import {
   TrendingUp,
   Headphones,
   UserCircle,
+  ListTree,
+
 
 } from "lucide-react";
 import { AppShell, type NavEntry } from "@/components/AppShell";
