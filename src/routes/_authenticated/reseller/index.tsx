@@ -232,6 +232,12 @@ function ResellerDashboard() {
         description="Track your earnings, orders, and business growth."
         actions={
           <div className="flex flex-wrap items-center gap-3">
+            <button
+              onClick={() => setOrderOpen(true)}
+              className="btn-brand inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold shadow-elegant transition-all hover:opacity-90 active:scale-95"
+            >
+              <Plus className="h-4 w-4" /> Add order
+            </button>
             <Link
               to="/reseller/earnings"
               className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground shadow-elegant transition-all hover:opacity-90 active:scale-95"
@@ -240,6 +246,7 @@ function ResellerDashboard() {
             </Link>
           </div>
         }
+
       />
 
       <DepositNotice status={deposit} place="dashboard" />
