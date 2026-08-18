@@ -54,6 +54,7 @@ function CatalogIndex() {
   const fetchCatalog = useServerFn(getCatalog);
   const [data, setData] = useState<{ categories: Cat[]; brands: { id: string; name: string; slug: string }[]; products: Prod[] } | null>(null);
   const [term, setTerm] = useState(q ?? "");
+  const showPrices = useResellerTools();
 
   useEffect(() => {
     fetchCatalog().then((d) => setData(d as never));
