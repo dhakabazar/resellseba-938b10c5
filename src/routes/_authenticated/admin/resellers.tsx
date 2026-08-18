@@ -808,14 +808,14 @@ function DepositModal({
       .eq("id", reseller.id);
     setBusy(false);
     if (error) return toast.error(error.message);
-    toast.success("ডিপোজিট সেটিং সেভ হয়েছে");
+    toast.success("Deposit settings saved");
     onSaved();
   }
 
   async function addEntry(e: React.FormEvent) {
     e.preventDefault();
     const amt = Number(amount);
-    if (!amt) return toast.error("অ্যামাউন্ট দিন (adjustment হলে − ব্যবহার করুন)");
+    if (!amt) return toast.error("Enter amount (use − for adjustment)");
     setBusy(true);
     const { error } = await supabase.from("reseller_deposits").insert({
       reseller_id: reseller.id,
@@ -829,7 +829,7 @@ function DepositModal({
     setAmount("");
     setNote("");
     setReference("");
-    toast.success("লেজার এন্ট্রি যোগ হয়েছে");
+    toast.success("Ledger entry added");
     loadRows();
   }
 
@@ -843,7 +843,7 @@ function DepositModal({
           <div className="min-w-0">
             <div className="truncate text-sm font-semibold">Deposit & freeze — {reseller.business_name}</div>
             <p className="text-[11px] text-muted-foreground">
-              ডিপোজিট বাকি থাকলে reseller অর্ডার Confirmed করতে পারবে না। ফ্রিজ অ্যামাউন্ট উইথড্র করা যাবে না।
+              If a deposit is due the reseller cannot confirm orders. Frozen amount cannot be withdrawn.
             </p>
           </div>
           <button onClick={onClose} className="rounded-md p-1 hover:bg-muted" aria-label="Close">
@@ -877,11 +877,11 @@ function DepositModal({
                 onChange={(e) => setRequired(e.target.checked)}
                 className="h-4 w-4"
               />
-              ডিপোজিট ট্রিগার চালু
+              Enable deposit trigger
             </label>
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
-                <label className="mb-1 block text-xs font-medium">প্রয়োজনীয় ডিপোজিট (৳)</label>
+                <label className="mb-1 block text-xs font-medium">Required deposit (৳)</label>
                 <input
                   type="number"
                   min={0}
@@ -891,7 +891,7 @@ function DepositModal({
                 />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium">ফ্রিজ অ্যামাউন্ট (৳)</label>
+                <label className="mb-1 block text-xs font-medium">Freeze amount (৳)</label>
                 <input
                   type="number"
                   min={0}
@@ -908,20 +908,20 @@ function DepositModal({
                 disabled={busy}
                 className="btn-brand rounded-md px-4 py-1.5 text-xs font-medium disabled:opacity-50"
               >
-                সেটিং সেভ
+                Save settings
               </button>
             </div>
           </div>
 
           <form onSubmit={addEntry} className="space-y-3 rounded-md border p-3">
-            <div className="text-xs font-semibold">নতুন এন্ট্রি</div>
+            <div className="text-xs font-semibold">New entry</div>
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
-                <label className="mb-1 block text-xs font-medium">অ্যামাউন্ট (৳) — ফেরত হলে − দিন</label>
+                <label className="mb-1 block text-xs font-medium">Amount (৳) — use − for refund</label>
                 <input value={amount} onChange={(e) => setAmount(e.target.value)} type="number" className={cls} />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium">মেথড</label>
+                <label className="mb-1 block text-xs font-medium">Method</label>
                 <select value={method} onChange={(e) => setMethod(e.target.value)} className={cls}>
                   <option value="bkash">bKash</option>
                   <option value="nagad">Nagad</option>
@@ -932,11 +932,11 @@ function DepositModal({
                 </select>
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium">রেফারেন্স / TrxID</label>
+                <label className="mb-1 block text-xs font-medium">Reference / TrxID</label>
                 <input value={reference} onChange={(e) => setReference(e.target.value)} className={cls} />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium">নোট</label>
+                <label className="mb-1 block text-xs font-medium">Note</label>
                 <input value={note} onChange={(e) => setNote(e.target.value)} className={cls} />
               </div>
             </div>
@@ -945,7 +945,7 @@ function DepositModal({
                 disabled={busy}
                 className="inline-flex items-center gap-1.5 rounded-md border px-4 py-1.5 text-xs font-medium hover:bg-muted disabled:opacity-50"
               >
-                <Plus className="h-3.5 w-3.5" /> যোগ করুন
+                <Plus className="h-3.5 w-3.5" /> Add entry
               </button>
             </div>
           </form>
@@ -985,7 +985,7 @@ function DepositModal({
                 {!loading && rows.length === 0 && (
                   <tr>
                     <td colSpan={6} className="p-6 text-center text-muted-foreground">
-                      কোনো ডিপোজিট এন্ট্রি নেই।
+                      No deposit entries yet.
                     </td>
                   </tr>
                 )}
@@ -997,10 +997,10 @@ function DepositModal({
             <ConfirmModal
               isOpen
               variant="danger"
-              title="ডিপোজিট এন্ট্রি ডিলিট?"
-              description={`৳${Number(deleteRow.amount).toLocaleString()} (${deleteRow.method ?? "—"}) এন্ট্রিটি ডিলিট হলে reseller-এর ডিপোজিট ব্যালান্স কমে যাবে এবং ডিপোজিট বাকি থাকলে order confirm ব্লক হয়ে যাবে।`}
-              confirmText="ডিলিট করুন"
-              cancelText="বাতিল"
+              title="Delete deposit entry?"
+              description={`Deleting the ৳${Number(deleteRow.amount).toLocaleString()} (${deleteRow.method ?? "—"}) entry will reduce the reseller's deposit balance and block order confirmation if a deposit becomes due.`}
+              confirmText="Delete"
+              cancelText="Cancel"
               onClose={() => setDeleteRow(null)}
               onConfirm={async () => {
                 const row = deleteRow;
