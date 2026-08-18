@@ -195,7 +195,7 @@ function CatalogIndex() {
                       </Link>
                       <div className="mt-3 flex items-end justify-between">
                         <div>
-                          <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Resell price</div>
+                          <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Sale price</div>
                           <div className="text-base font-black text-primary">{bdt(p.price)}</div>
                         </div>
                         <Link
@@ -206,10 +206,22 @@ function CatalogIndex() {
                           Details
                         </Link>
                       </div>
+                      {showPrices && (
+                        <div className="mt-3 grid grid-cols-2 gap-2 rounded-xl border bg-muted/40 p-2.5 text-[11px]">
+                          <div>
+                            <div className="font-bold uppercase tracking-wide text-muted-foreground">Admin price</div>
+                            <div className="text-sm font-bold">{bdt(p.resellerPrice)}</div>
+                          </div>
+                          <div>
+                            <div className="font-bold uppercase tracking-wide text-muted-foreground">Profit</div>
+                            <div className="text-sm font-bold text-emerald-600">{bdt(Math.max(0, p.price - p.resellerPrice))}</div>
+                          </div>
+                        </div>
+                      )}
                       <div className="mt-3 flex flex-wrap gap-1.5 border-t pt-3">
                         <CopyBtn text={p.name} title="Title" label="Title copied" />
                         <CopyBtn text={`${p.name}\n\n${p.short}\n\nPrice: ${bdt(p.price)}`} title="Details" label="Details copied" />
-                        {p.image && <DownloadBtn url={p.image} />}
+                        <ImagePickerButton images={p.images ?? (p.image ? [p.image] : [])} baseName={p.name} />
                       </div>
                     </div>
                   </div>
