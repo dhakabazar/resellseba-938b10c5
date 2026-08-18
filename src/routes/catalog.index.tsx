@@ -2,7 +2,9 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { getCatalog } from "@/lib/catalog.functions";
-import { CopyBtn, DownloadBtn, useCatalogBrand } from "@/components/catalog/shell";
+import { CopyBtn, useCatalogBrand } from "@/components/catalog/shell";
+import { ImagePickerButton } from "@/components/catalog/image-picker";
+import { useResellerTools } from "@/components/store/reseller-tools";
 import { bdt } from "@/lib/finance-report";
 import { Boxes, Layers, Loader2, Search, Sparkles, Tag } from "lucide-react";
 
@@ -38,9 +40,11 @@ type Prod = {
   code: string;
   short: string;
   price: number;
+  resellerPrice: number;
   categoryId: string | null;
   brandId: string | null;
   image: string | null;
+  images: string[];
 };
 
 function CatalogIndex() {
@@ -50,6 +54,7 @@ function CatalogIndex() {
   const fetchCatalog = useServerFn(getCatalog);
   const [data, setData] = useState<{ categories: Cat[]; brands: { id: string; name: string; slug: string }[]; products: Prod[] } | null>(null);
   const [term, setTerm] = useState(q ?? "");
+  const showPrices = useResellerTools();
 
   useEffect(() => {
     fetchCatalog().then((d) => setData(d as never));
@@ -191,7 +196,7 @@ function CatalogIndex() {
                       </Link>
                       <div className="mt-3 flex items-end justify-between">
                         <div>
-                          <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Resell price</div>
+                          <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Sale price</div>
                           <div className="text-base font-black text-primary">{bdt(p.price)}</div>
                         </div>
                         <Link
@@ -202,10 +207,22 @@ function CatalogIndex() {
                           Details
                         </Link>
                       </div>
+                      {showPrices && (
+                        <div className="mt-3 grid grid-cols-2 gap-2 rounded-xl border bg-muted/40 p-2.5 text-[11px]">
+                          <div>
+                            <div className="font-bold uppercase tracking-wide text-muted-foreground">Admin price</div>
+                            <div className="text-sm font-bold">{bdt(p.resellerPrice)}</div>
+                          </div>
+                          <div>
+                            <div className="font-bold uppercase tracking-wide text-muted-foreground">Profit</div>
+                            <div className="text-sm font-bold text-emerald-600">{bdt(Math.max(0, p.price - p.resellerPrice))}</div>
+                          </div>
+                        </div>
+                      )}
                       <div className="mt-3 flex flex-wrap gap-1.5 border-t pt-3">
                         <CopyBtn text={p.name} title="Title" label="Title copied" />
                         <CopyBtn text={`${p.name}\n\n${p.short}\n\nPrice: ${bdt(p.price)}`} title="Details" label="Details copied" />
-                        {p.image && <DownloadBtn url={p.image} />}
+                        <ImagePickerButton images={p.images ?? (p.image ? [p.image] : [])} baseName={p.name} />
                       </div>
                     </div>
                   </div>

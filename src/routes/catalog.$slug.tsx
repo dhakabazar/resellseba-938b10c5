@@ -2,7 +2,9 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { getCatalogProduct } from "@/lib/catalog.functions";
-import { CopyBtn, DownloadBtn } from "@/components/catalog/shell";
+import { CopyBtn } from "@/components/catalog/shell";
+import { ImagePickerButton } from "@/components/catalog/image-picker";
+import { useResellerTools } from "@/components/store/reseller-tools";
 import { bdt } from "@/lib/finance-report";
 import { ArrowLeft, Loader2, Truck } from "lucide-react";
 
@@ -28,6 +30,7 @@ function CatalogDetails() {
   const [state, setState] = useState<"loading" | "done">("loading");
   const [p, setP] = useState<P>(null);
   const [idx, setIdx] = useState(0);
+  const showPrices = useResellerTools();
 
   useEffect(() => {
     setState("loading");
@@ -101,9 +104,7 @@ function CatalogDetails() {
           <div className="mt-4 flex flex-wrap gap-2">
             <CopyBtn text={p.name} title="Title" label="Title copied" />
             <CopyBtn text={detailText} title="Details" label="Details copied" />
-            {p.images.map((u) => (
-              <DownloadBtn key={u} url={u} />
-            ))}
+            <ImagePickerButton images={p.images} baseName={p.name} />
           </div>
         </div>
 
@@ -122,9 +123,21 @@ function CatalogDetails() {
 
           <div className="surface-card mt-6 flex flex-wrap items-end gap-6 p-5">
             <div>
-              <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Suggested resell price</div>
+              <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Sale price (suggested)</div>
               <div className="text-3xl font-black text-primary">{bdt(p.price)}</div>
             </div>
+            {showPrices && (
+              <>
+                <div>
+                  <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Admin price</div>
+                  <div className="text-xl font-black">{bdt(p.resellerPrice)}</div>
+                </div>
+                <div>
+                  <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Your profit</div>
+                  <div className="text-xl font-black text-emerald-600">{bdt(Math.max(0, p.price - p.resellerPrice))}</div>
+                </div>
+              </>
+            )}
             {p.weight ? (
               <div>
                 <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Weight</div>
