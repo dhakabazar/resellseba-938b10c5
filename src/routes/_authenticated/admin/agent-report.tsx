@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState, StatCard } from "@/components/ui-kit";
-import { DateRangeBar, type RangeValue } from "@/components/date-range-filter";
+import { DateRangeBar, DEFAULT_DATE_RANGE, inRange, type DateRangeState } from "@/components/date-range-filter";
 import { SearchableSelect } from "@/components/searchable-select";
 import {
   buildAgentPerformance,
@@ -41,7 +41,7 @@ type ResellerLite = {
 };
 
 function AgentReportPage() {
-  const [range, setRange] = useState<RangeValue>({ preset: "30d" });
+  const [range, setRange] = useState<DateRangeState>(DEFAULT_DATE_RANGE);
   const [agentId, setAgentId] = useState("");
   const [agents, setAgents] = useState<Agent[]>([]);
   const [resellers, setResellers] = useState<ResellerLite[]>([]);
@@ -51,16 +51,14 @@ function AgentReportPage() {
 
   async function load() {
     setLoading(true);
-    let q = supabase
-      .from("orders")
-      .select("id,reseller_id,status,created_at,total,shipping_cost,sa_cost_total,received_amount,packaging_total");
-    if (range.from) q = q.gte("created_at", range.from);
-    if (range.to) q = q.lte("created_at", range.to);
-
     const [a, r, o] = await Promise.all([
       supabase.from("agents").select("*").order("display_name"),
       supabase.from("resellers").select("id,business_name,code,status,contact_phone,agent_id"),
-      q.limit(5000),
+      supabase
+        .from("orders")
+        .select("id,reseller_id,status,created_at,total,shipping_cost,sa_cost_total,received_amount,packaging_total")
+        .order("created_at", { ascending: false })
+        .limit(5000),
     ]);
     if (o.error) toast.error(o.error.message);
     setAgents((a.data ?? []) as Agent[]);
@@ -71,7 +69,9 @@ function AgentReportPage() {
 
   useEffect(() => {
     load();
-  }, [range.from, range.to]);
+  }, []);
+
+  const scoped = useMemo(() => orders.filter((o) => inRange(o.created_at, range)), [orders, range]);
 
   const perf: AgentPerformance[] = useMemo(() => {
     const rows = agents
@@ -80,11 +80,11 @@ function AgentReportPage() {
         buildAgentPerformance(
           a,
           resellers.filter((r) => r.agent_id === a.id),
-          orders,
+          scoped,
         ),
       );
     return rows.sort((x, y) => y.sales - x.sales);
-  }, [agents, resellers, orders, agentId]);
+  }, [agents, resellers, scoped, agentId]);
 
   const totals = useMemo(
     () =>
@@ -134,17 +134,17 @@ function AgentReportPage() {
       </div>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-        <StatCard title="Agents" value={String(perf.length)} icon={<Users className="h-4 w-4" />} />
-        <StatCard title="Assigned resellers" value={String(totals.resellers)} icon={<Users className="h-4 w-4" />} />
-        <StatCard title="Orders" value={String(totals.orders)} icon={<ShoppingCart className="h-4 w-4" />} />
+        <StatCard label="Agents" value={String(perf.length)} icon={<Users className="h-4 w-4" />} />
+        <StatCard label="Assigned resellers" value={String(totals.resellers)} icon={<Users className="h-4 w-4" />} />
+        <StatCard label="Orders" value={String(totals.orders)} icon={<ShoppingCart className="h-4 w-4" />} />
         <StatCard
-          title="Sales received"
+          label="Sales received"
           value={bdt(totals.sales)}
           icon={<TrendingUp className="h-4 w-4" />}
           hint={AGENT_SALES_HINT}
         />
         <StatCard
-          title="Target"
+          label="Target"
           value={bdt(totals.target)}
           icon={<Target className="h-4 w-4" />}
           hint="Combined sale target set for the agents in view. Achievement is measured against sales received in the selected period."
