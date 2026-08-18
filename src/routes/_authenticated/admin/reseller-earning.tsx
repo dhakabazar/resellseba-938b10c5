@@ -435,6 +435,10 @@ function FinancialsPage() {
 
       <ReportTabs tabs={ADMIN_TABS} active={tab} onChange={setTab} />
 
+      <p className="mb-6 rounded-lg border border-dashed bg-muted/30 px-4 py-2.5 text-[11px] font-medium leading-relaxed text-muted-foreground">
+        {PROFIT_FORMULA_HINT}
+      </p>
+
       {tab === "overview" && (
       <>
       <ReportCard

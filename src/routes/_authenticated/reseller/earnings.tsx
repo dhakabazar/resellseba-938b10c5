@@ -287,6 +287,10 @@ function EarningsPage() {
 
       <ReportTabs tabs={tabs} active={tab} onChange={setTab} />
 
+      <p className="mb-6 rounded-lg border border-dashed bg-muted/30 px-4 py-2.5 text-[11px] font-medium leading-relaxed text-muted-foreground">
+        {PROFIT_FORMULA_HINT}
+      </p>
+
       {tab === "overview" && (
       <>
       <ReportCard title="Order status wise report" hint="Grouped by the tabs on the Orders page. Product cost and packaging cost are shown separately.">
