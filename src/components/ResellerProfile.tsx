@@ -196,7 +196,7 @@ export function ResellerProfile({
         <h3 className="mb-3 text-sm font-semibold">Finance snapshot</h3>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
           <Stat label="Orders" value={orders == null ? "—" : orders.toLocaleString()} {...ordersLink("all")} />
-          <Stat label="Delivered profit" value={money(s?.delivered_profit)} tone="success" {...ordersLink("delivered")} />
+          <Stat label="Delivered profit" value={money(s?.delivered_profit)} tone="success" {...earningLink()} />
           <Stat label="Withdrawable" value={money(s?.available)} {...payoutsLink()} />
           <Stat label="Paid out" value={money(s?.paid_out)} {...payoutsLink("paid")} />
           <Stat label="Payout pending" value={money(s?.pending_payout)} tone="muted" {...payoutsLink("pending")} />
