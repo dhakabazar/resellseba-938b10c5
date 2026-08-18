@@ -72,17 +72,22 @@ type Summary = {
   frozen_amount: number;
 };
 
+type ResellerSearch = { status?: string };
+
 export const Route = createFileRoute("/_authenticated/admin/resellers")({
+  validateSearch: (s: Record<string, unknown>): ResellerSearch => ({
+    status: typeof s.status === "string" ? s.status : undefined,
+  }),
   component: ResellersPage,
 });
 
 const FILTERS = [
+  "all",
   "pending",
   "active",
   "suspended",
   "rejected",
   "email_unverified",
-  "all",
 ] as const;
 type Filter = (typeof FILTERS)[number];
 
