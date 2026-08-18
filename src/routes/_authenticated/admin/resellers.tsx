@@ -1011,7 +1011,7 @@ function DepositModal({
                   toast.error(error.message);
                   return;
                 }
-                toast.success("এন্ট্রি ডিলিট হয়েছে");
+                toast.success("Entry deleted");
                 loadRows();
               }}
             />
