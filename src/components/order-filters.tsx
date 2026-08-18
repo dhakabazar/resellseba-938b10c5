@@ -159,14 +159,16 @@ function Select({
   value,
   onChange,
   children,
+  className = "",
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   children: React.ReactNode;
+  className?: string;
 }) {
   return (
-    <label className="flex min-w-0 flex-col gap-1">
+    <label className={"flex min-w-0 flex-col gap-1 " + className}>
       <span className="text-[11px] font-medium text-muted-foreground">{label}</span>
       <select
         value={value}
