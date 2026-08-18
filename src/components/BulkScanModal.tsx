@@ -219,10 +219,17 @@ function BulkScanModal({ onClose }: { onClose: () => void }) {
     [mode, push, sound],
   );
 
-  // keep the hidden/visible input focused for hardware scanners
+  // keep the scan box focused for hardware scanners, but never steal focus
+  // away from other controls (mode dropdown, buttons) the user is using.
   useEffect(() => {
     const t = setInterval(() => {
-      if (document.activeElement !== inputRef.current) inputRef.current?.focus();
+      const el = document.activeElement as HTMLElement | null;
+      if (el === inputRef.current) return;
+      const tag = el?.tagName;
+      const interactive =
+        tag === "SELECT" || tag === "BUTTON" || tag === "INPUT" || tag === "TEXTAREA" || tag === "OPTION";
+      if (interactive) return;
+      inputRef.current?.focus();
     }, 1200);
     inputRef.current?.focus();
     return () => clearInterval(t);
