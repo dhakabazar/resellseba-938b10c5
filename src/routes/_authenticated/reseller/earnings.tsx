@@ -202,7 +202,7 @@ function EarningsPage() {
     { key: "products", label: "Product wise" },
     { key: "trend", label: "Trend" },
     { key: "orders", label: "Order wise" },
-    { key: "payouts", label: "Payout ledger" },
+    { key: "payouts", label: "Money timeline" },
     ...(commissions.length ? [{ key: "commission" as const, label: "Team commission" }] : []),
     { key: "how", label: "How it works" },
   ];

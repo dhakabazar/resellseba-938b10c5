@@ -70,7 +70,7 @@ const ADMIN_TABS: { key: AdminReportTab; label: string }[] = [
   { key: "orders", label: "Order wise" },
   { key: "courier", label: "Courier wise" },
   { key: "trend", label: "Trend" },
-  { key: "payouts", label: "Payout & timeline" },
+  { key: "payouts", label: "Money timeline" },
   { key: "how", label: "How it's calculated" },
 ];
 
