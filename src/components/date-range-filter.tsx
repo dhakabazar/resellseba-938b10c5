@@ -105,7 +105,6 @@ export function DateRangeBar({
           </>
         )}
 
-        <span className="text-[11px] font-semibold text-muted-foreground">{rangeLabel(value)}</span>
         {right}
       </div>
     );
