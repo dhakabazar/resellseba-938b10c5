@@ -118,7 +118,7 @@ function EarningsPage() {
           frozen: Number((s as { frozen_amount?: number }).frozen_amount ?? 0),
         });
       }
-      setLedger(((ledgerRes.data ?? []) as unknown as LedgerRow[]) ?? []);
+      setLedger((ledgerRes.data ?? []) as unknown as LedgerRow[]);
       setPayouts((payoutRes.data ?? []) as Payout[]);
       setCommissions((comRes.data ?? []) as Commission[]);
       setLoading(false);
