@@ -269,6 +269,7 @@ function AdminLayout() {
   return (
     <AppShell
       title={isSuperAdmin ? "Super Admin" : "Staff Panel"}
+      headerRight={<BulkScanButton compact />}
       brand={{ name: brand.name, sub: isSuperAdmin ? "Admin panel" : "Staff panel", logoUrl: brand.logoUrl }}
       nav={filterNav(NAV, permissions, isSuperAdmin)}
       user={{
