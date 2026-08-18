@@ -10,6 +10,7 @@ import { Hint } from "@/components/Hint";
 import { ResellerProductCalc } from "@/components/price-breakdown";
 import { DataToolbar, Pagination, usePaginated, type FilterDef } from "@/components/data-list";
 import { CopyButton, ImageDownloadTools, stripHtml } from "@/components/store/reseller-tools";
+import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
 
 type P = {
   id: string;
@@ -46,6 +47,7 @@ function CatalogPage() {
   const [busy, setBusy] = useState(false);
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
+  const [confirmDelist, setConfirmDelist] = useState(false);
 
   const [q, setQ] = useState("");
   const [brand, setBrand] = useState("");
@@ -201,7 +203,6 @@ function CatalogPage() {
     if (!resellerId) return;
     const ids = Array.from(picked).filter((id) => listed.has(id));
     if (!ids.length) return toast.error("Selected products not listed");
-    if (!confirm(`Remove ${ids.length} listing from your store?`)) return;
     setBulkBusy(true);
     const { error } = await supabase
       .from("reseller_listings")
@@ -214,8 +215,10 @@ function CatalogPage() {
     ids.forEach((id) => next.delete(id));
     setListed(next);
     setPicked(new Set());
+    setConfirmDelist(false);
     toast.success(`${ids.length} listing removed`);
   }
+
 
   if (loading)
     return (
@@ -273,7 +276,7 @@ function CatalogPage() {
               </button>
               <button
                 disabled={bulkBusy}
-                onClick={bulkDelist}
+                onClick={() => setConfirmDelist(true)}
                 className="inline-flex items-center gap-1 rounded-md border border-destructive/50 px-3 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/10 disabled:opacity-50"
               >
                 <Trash2 className="h-3.5 w-3.5" /> Delist
@@ -357,20 +360,15 @@ function CatalogPage() {
                     Suggested ৳{p.suggested_price} · Stock {p.stock}
                   </div>
                   {isListed ? (
-                    <div className="mt-3 flex gap-2">
-                      <span className="inline-flex flex-1 items-center justify-center gap-1 rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm">
-                        <Check className="h-3 w-3" /> Listed
-                      </span>
-                      <button
-                        type="button"
-                        disabled={busy}
-                        onClick={() => delistOne(p)}
-                        title="Remove from my store"
-                        className="inline-flex items-center justify-center gap-1 rounded-md border-2 border-destructive/70 bg-destructive/10 px-3 py-1.5 text-xs font-semibold text-destructive transition hover:bg-destructive hover:text-destructive-foreground disabled:opacity-50"
-                      >
-                        <Trash2 className="h-3 w-3" /> Delist
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => delistOne(p)}
+                      title="Remove from my store"
+                      className="mt-3 inline-flex w-full items-center justify-center gap-1 rounded-md bg-destructive px-3 py-1.5 text-xs font-semibold text-destructive-foreground shadow-sm transition hover:brightness-110 disabled:opacity-50"
+                    >
+                      <Trash2 className="h-3 w-3" /> Delist
+                    </button>
                   ) : (
                     <button
                       onClick={() => openList(p)}
@@ -379,6 +377,7 @@ function CatalogPage() {
                       <Plus className="h-3 w-3" /> List in my store
                     </button>
                   )}
+
 
                 </div>
               </div>
@@ -390,9 +389,12 @@ function CatalogPage() {
       )}
 
       {selected && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4" onClick={() => setSelected(null)}>
-          <div className="w-full max-w-md surface-card p-6" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-semibold">List "{selected.name}"</h3>
+        <div className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto bg-black/40 p-0 sm:items-center sm:p-4" onClick={() => setSelected(null)}>
+          <div
+            className="w-full max-w-md surface-card max-h-[92dvh] overflow-y-auto rounded-b-none rounded-t-2xl p-4 sm:rounded-2xl sm:p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="pr-6 text-base font-semibold sm:text-lg break-words">List "{selected.name}"</h3>
             <div className="mt-4">
               <label className="mb-1 flex items-center gap-1 text-xs font-medium">
                 Your selling price (minimum ৳{minSell})
@@ -424,7 +426,7 @@ function CatalogPage() {
               </p>
             </div>
 
-            <div className="mt-6 flex gap-2">
+            <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row">
               <button
                 onClick={addListing}
                 disabled={busy}
@@ -434,7 +436,7 @@ function CatalogPage() {
               </button>
               <button
                 onClick={() => setSelected(null)}
-                className="rounded-md border px-4 py-2 text-sm"
+                className="rounded-md border px-4 py-2 text-sm sm:w-auto"
               >
                 Cancel
               </button>
@@ -442,6 +444,16 @@ function CatalogPage() {
           </div>
         </div>
       )}
+      <ConfirmModal
+        isOpen={confirmDelist}
+        onClose={() => setConfirmDelist(false)}
+        onConfirm={async () => { await bulkDelist(); }}
+        isLoading={bulkBusy}
+        variant="danger"
+        title="Delist products"
+        description={`Remove ${Array.from(picked).filter((id) => listed.has(id)).length} listing(s) from your store? Customers will no longer see them.`}
+        confirmText="Delist"
+      />
       {detailId && (
         <ProductDetailModal id={detailId} onClose={() => setDetailId(null)} brands={brands} categories={categories} />
       )}
