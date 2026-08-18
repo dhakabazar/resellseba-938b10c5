@@ -641,43 +641,6 @@ function FinancialsPage() {
       )}
 
       {tab === "payouts" && (
-      <>
-      <ReportCard title="Payout ledger" hint="Withdrawal requests and payment history (lifetime).">
-        <table className="w-full min-w-[720px] text-sm">
-          <thead className="bg-muted/20 text-center text-[11px] uppercase text-muted-foreground">
-            <tr>
-              <th className="px-2 py-2 text-center">Requested</th>
-              <th className="px-2 py-2 text-center">Reseller</th>
-              <th className="px-2 py-2 text-center">Amount</th>
-              <th className="px-2 py-2 text-center">Status</th>
-              <th className="px-2 py-2 text-center">Method</th>
-              <th className="px-2 py-2 text-center">Paid at</th>
-              <th className="px-2 py-2 text-center">Note</th>
-            </tr>
-          </thead>
-          <tbody>
-            {scopedPayouts.map((p) => (
-              <tr key={p.id} className="border-t">
-                <td className="px-2 py-2 text-center">{new Date(p.requested_at).toLocaleDateString()}</td>
-                <td className="px-2 py-2 text-center text-xs">{p.resellers?.business_name ?? "—"}</td>
-                <td className="px-2 py-2 text-center font-medium">{bdt(Number(p.amount))}</td>
-                <td className="px-2 py-2 text-center capitalize">{p.status}</td>
-                <td className="px-2 py-2 text-center uppercase text-muted-foreground">{p.method ?? "—"}</td>
-                <td className="px-2 py-2 text-center text-muted-foreground">{p.paid_at ? new Date(p.paid_at).toLocaleDateString() : "—"}</td>
-                <td className="px-2 py-2 text-center max-w-[220px] text-xs text-muted-foreground">{p.notes || p.reference || "—"}</td>
-              </tr>
-            ))}
-            {scopedPayouts.length === 0 && (
-              <tr>
-                <td colSpan={7} className="px-2 py-8 text-center text-muted-foreground">
-                  No payout requests.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </ReportCard>
-
       <ReportCard
         title="Money timeline (Ledger)"
         hint="How money comes in (deposit + delivered profit) and how it goes out (withdrawals)."
@@ -692,7 +655,6 @@ function FinancialsPage() {
           )}
         </div>
       </ReportCard>
-      </>
       )}
 
       {tab === "courier" && (
