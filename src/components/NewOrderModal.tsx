@@ -67,17 +67,30 @@ export function NewOrderModal({
   }, [listings, allProducts, query]);
 
   const picked = useMemo(() => {
-    return lines.map(line => {
+    return lines.map((line, index) => {
       if (line.listing_id) {
         const l = listings.find(x => x.id === line.listing_id);
-        if (l?.products) return { line, p: l.products, sellPrice: l.selling_price, listingId: l.id };
+        if (l?.products) {
+          const min = minSellPrice(l.products);
+          return { line, index, p: l.products, sellPrice: Number(line.price ?? l.selling_price), minPrice: min, listingId: l.id };
+        }
       }
       if (line.product_id) {
         const p = allProducts.find(x => x.id === line.product_id);
-        if (p) return { line, p, sellPrice: line.price || p.suggested_price || (p.reseller_price + p.packaging_cost), listingId: null };
+        if (p) {
+          const min = minSellPrice(p);
+          return {
+            line,
+            index,
+            p,
+            sellPrice: Number(line.price ?? p.suggested_price ?? min),
+            minPrice: min,
+            listingId: null,
+          };
+        }
       }
       return null;
-    }).filter(Boolean) as { line: Line; p: any; sellPrice: number; listingId: string | null }[];
+    }).filter(Boolean) as { line: Line; index: number; p: any; sellPrice: number; minPrice: number; listingId: string | null }[];
   }, [lines, listings, allProducts]);
 
   const totals = useMemo(() => {
