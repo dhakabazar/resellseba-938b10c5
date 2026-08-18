@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/use-auth";
 import { PageHeader, StatCard } from "@/components/ui-kit";
@@ -372,8 +372,8 @@ function EarningsPage() {
           </thead>
           <tbody>
             {scoped.slice(0, 100).map((o) => (
-              <>
-              <tr key={o.id} className="border-t-2 align-top">
+              <Fragment key={o.id}>
+              <tr className="border-t-2 align-top">
                 <td className="p-3">
                   <div className="font-mono text-xs font-medium">{o.order_number}</div>
                   <div className="text-[11px] text-muted-foreground">
@@ -393,12 +393,12 @@ function EarningsPage() {
                   {bdt(Number(o.reseller_profit))}
                 </td>
               </tr>
-              <tr key={o.id + "-items"}>
+              <tr>
                 <td colSpan={7} className="p-0">
                   <OrderItemsStrip items={stripItems(o)} />
                 </td>
               </tr>
-              </>
+              </Fragment>
             ))}
             {scoped.length === 0 && (
               <tr>
