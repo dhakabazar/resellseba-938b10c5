@@ -84,7 +84,7 @@ export function StatusReportTable({
   );
   const split = showAdminCost && !!packagingByTab;
   return (
-    <table className={"w-full text-sm " + (split ? "min-w-[880px]" : "min-w-[760px]")}>
+    <table className={"w-full text-sm " + (split ? "min-w-[820px]" : "min-w-[760px]")}>
       <thead className="bg-muted/20 text-left">
         <tr>
           <th className={th}>Status</th>
@@ -93,7 +93,7 @@ export function StatusReportTable({
           <th className={`${th} text-right`}>Delivery</th>
           {split && <th className={`${th} text-right`}>Product cost</th>}
           {split && <th className={`${th} text-right`}>Packaging cost</th>}
-          {showAdminCost && <th className={`${th} text-right`}>{split ? "Product+pkg total" : "Product+pkg cost"}</th>}
+          {showAdminCost && !split && <th className={`${th} text-right`}>Total cost</th>}
           <th className={`${th} text-right`}>Profit</th>
         </tr>
       </thead>
@@ -112,7 +112,7 @@ export function StatusReportTable({
               <td className="p-3 text-right text-muted-foreground">{bdt(r.b.delivery)}</td>
               {split && <td className="p-3 text-right tabular-nums">{bdt(r.b.adminCost - pkg)}</td>}
               {split && <td className="p-3 text-right tabular-nums text-violet-500">{bdt(pkg)}</td>}
-              {showAdminCost && <td className="p-3 text-right text-muted-foreground">{bdt(r.b.adminCost)}</td>}
+              {showAdminCost && !split && <td className="p-3 text-right text-muted-foreground">{bdt(r.b.adminCost)}</td>}
               <td className="p-3 text-right font-medium">{bdt(r.b.profit)}</td>
             </tr>
           );
@@ -126,7 +126,7 @@ export function StatusReportTable({
           <td className="p-3 text-right">{bdt(report.all.delivery)}</td>
           {split && <td className="p-3 text-right tabular-nums">{bdt(report.all.adminCost - packagingAll)}</td>}
           {split && <td className="p-3 text-right tabular-nums text-violet-500">{bdt(packagingAll)}</td>}
-          {showAdminCost && <td className="p-3 text-right">{bdt(report.all.adminCost)}</td>}
+          {showAdminCost && !split && <td className="p-3 text-right">{bdt(report.all.adminCost)}</td>}
           <td className="p-3 text-right">{bdt(report.all.profit)}</td>
         </tr>
       </tfoot>
@@ -238,7 +238,7 @@ export function RawStatusList({ report, showAdminCost = true }: { report: Financ
           <th className={`${th} text-right`}>Sell value</th>
           <th className={`${th} text-right`}>Delivery</th>
           <th className={`${th} text-right`}>Customer total</th>
-          {showAdminCost && <th className={`${th} text-right`}>Product+pkg cost</th>}
+          {showAdminCost && <th className={`${th} text-right`}>Total cost</th>}
           <th className={`${th} text-right`}>Profit</th>
           <th className={`${th} text-right`}>Avg / order</th>
         </tr>
@@ -277,7 +277,7 @@ export function RawStatusList({ report, showAdminCost = true }: { report: Financ
           <td className="p-3 text-right">{bdt(report.all.gross)}</td>
           <td className="p-3 text-right">{bdt(report.all.delivery)}</td>
           <td className="p-3 text-right">{bdt(report.all.customerTotal)}</td>
-          {showAdminCost && <td className="p-3 text-right">{bdt(report.all.adminCost)}</td>}
+          {showAdminCost && !split && <td className="p-3 text-right">{bdt(report.all.adminCost)}</td>}
           <td className="p-3 text-right">{bdt(report.all.profit)}</td>
           <td className="p-3 text-right">{bdt(report.avgOrderValue)}</td>
         </tr>
