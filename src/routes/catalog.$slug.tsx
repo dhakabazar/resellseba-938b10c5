@@ -30,6 +30,7 @@ function CatalogDetails() {
   const [state, setState] = useState<"loading" | "done">("loading");
   const [p, setP] = useState<P>(null);
   const [idx, setIdx] = useState(0);
+  const showPrices = useResellerTools();
 
   useEffect(() => {
     setState("loading");
