@@ -86,7 +86,7 @@ function AdminDashboard() {
   }, []);
 
   const loadLifetime = useCallback(async () => {
-    const [allOrders, delivered, payoutsRes, prods, cats, brandRows] = await Promise.all([
+    const [allOrders, delivered, payoutsRes, prods, cats, brandRows, resellerRows, metricsRes] = await Promise.all([
       supabase
         .from("orders")
         .select("id,order_number,reseller_id,status,created_at,subtotal,shipping_cost,discount,total,sa_cost_total,reseller_profit")
