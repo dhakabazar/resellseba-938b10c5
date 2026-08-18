@@ -44,7 +44,7 @@ export function useStoreVisitLog(code: string | undefined, path: string, skip?: 
         .rpc("log_store_visit", {
           _code: code,
           _path: path,
-          _referrer: document.referrer || null,
+          _referrer: document.referrer || "",
           _session_key: sk,
           _device: deviceKind(),
         })
