@@ -40,9 +40,11 @@ type Prod = {
   code: string;
   short: string;
   price: number;
+  resellerPrice: number;
   categoryId: string | null;
   brandId: string | null;
   image: string | null;
+  images: string[];
 };
 
 function CatalogIndex() {
