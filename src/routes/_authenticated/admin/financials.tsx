@@ -24,14 +24,18 @@ import {
   type ReportItem,
   type ReportOrder,
 } from "@/lib/finance-report";
-import { Loader2, Wallet, TrendingUp, Award, PiggyBank, Truck, Download, AlertTriangle, Clock } from "lucide-react";
+import { OrderItemsStrip, type StripItem } from "@/components/order-items-strip";
+import { LedgerTimeline, type LedgerRow } from "@/components/ledger-timeline";
+import { orderStatusLabel, orderStatusTone } from "@/lib/courier-status";
+import { Loader2, Wallet, TrendingUp, Award, PiggyBank, Truck, Download, AlertTriangle, Clock, Package } from "lucide-react";
+import { Fragment } from "react";
 
 export const Route = createFileRoute("/_authenticated/admin/financials")({
   component: FinancialsPage,
   head: () => ({
     meta: [
-      { title: "Financial report — Admin" },
-      { name: "description", content: "Full financial report by reseller, status and product." },
+      { title: "Reseller Earning — Admin" },
+      { name: "description", content: "Reseller earning report by reseller, status, product, order and payout." },
     ],
   }),
 });
@@ -43,17 +47,24 @@ type OrderRow = ReportOrder & {
   resellers?: { business_name: string; code: string } | null;
 };
 type Reseller = { id: string; business_name: string; code: string; leader_id: string | null; commission_rate: number };
-type Payout = { reseller_id: string; amount: number; status: string };
+type Payout = {
+  id: string; reseller_id: string; amount: number; status: string; method: string | null;
+  reference: string | null; notes: string | null; requested_at: string; paid_at: string | null;
+  resellers?: { business_name: string; code: string } | null;
+};
 type Commission = { leader_id: string; reseller_id: string; amount: number; status: string; created_at: string };
 type Shipment = { order_id: string; provider: string; cost: number | null; delivery_charge: number | null };
 
-type AdminReportTab = "overview" | "resellers" | "products" | "courier" | "trend" | "how";
+type AdminReportTab =
+  | "overview" | "resellers" | "products" | "orders" | "courier" | "trend" | "payouts" | "how";
 const ADMIN_TABS: { key: AdminReportTab; label: string }[] = [
   { key: "overview", label: "Overview" },
   { key: "resellers", label: "Per-reseller" },
   { key: "products", label: "Product wise" },
+  { key: "orders", label: "Order wise" },
   { key: "courier", label: "Courier wise" },
   { key: "trend", label: "Trend" },
+  { key: "payouts", label: "Payout & timeline" },
   { key: "how", label: "How it's calculated" },
 ];
 
@@ -69,6 +80,9 @@ function FinancialsPage() {
   const [gran, setGran] = useState<"day" | "month">("day");
   const [resellerQ, setResellerQ] = useState("");
   const [tab, setTab] = useState<AdminReportTab>("overview");
+  const [productMeta, setProductMeta] = useState<Record<string, { slug: string; image: string | null; packaging: number }>>({});
+  const [ledger, setLedger] = useState<LedgerRow[]>([]);
+  const [ledgerSum, setLedgerSum] = useState({ frozen: 0, available: 0 });
 
   useEffect(() => {
     (async () => {
@@ -80,9 +94,9 @@ function FinancialsPage() {
             "id,order_number,reseller_id,status,created_at,customer_name,customer_phone,address_line,subtotal,shipping_cost,discount,total,sa_cost_total,reseller_profit,resellers(business_name,code)",
           )
           .order("created_at", { ascending: false }),
-        supabase.from("order_items").select("order_id,product_id,product_name,quantity,sa_price,reseller_price,line_total,profit"),
+        supabase.from("order_items").select("order_id,product_id,product_name,product_image,quantity,sa_price,reseller_price,line_total,profit"),
         supabase.from("resellers").select("id,business_name,code,leader_id,commission_rate"),
-        supabase.from("payouts").select("reseller_id,amount,status"),
+        supabase.from("payouts").select("id,reseller_id,amount,status,method,reference,notes,requested_at,paid_at,resellers(business_name,code)"),
         supabase.from("leader_commissions").select("leader_id,reseller_id,amount,status,created_at"),
         supabase.from("shipments").select("order_id,provider,cost,delivery_charge"),
       ]);
@@ -92,6 +106,12 @@ function FinancialsPage() {
       setPayouts((p.data ?? []) as Payout[]);
       setCommissions((c.data ?? []) as Commission[]);
       setShipments((s.data ?? []) as Shipment[]);
+      const { data: prods } = await supabase.from("products").select("id,slug,og_image_url,packaging_cost");
+      const map: Record<string, { slug: string; image: string | null; packaging: number }> = {};
+      for (const pr of prods ?? []) {
+        map[pr.id] = { slug: pr.slug, image: pr.og_image_url ?? null, packaging: Number(pr.packaging_cost ?? 0) };
+      }
+      setProductMeta(map);
       setLoading(false);
     })();
   }, []);
@@ -101,6 +121,71 @@ function FinancialsPage() {
   const scopedIds = useMemo(() => new Set(scoped.map((o) => o.id)), [scoped]);
   const scopedItems = useMemo(() => items.filter((i) => scopedIds.has(i.order_id)), [items, scopedIds]);
   const report = useMemo(() => buildFinanceReport(scoped, scopedItems, { trend: gran }), [scoped, scopedItems, gran]);
+
+  /** Money timeline is per reseller — load it when a single reseller is selected. */
+  useEffect(() => {
+    if (!filters.reseller) {
+      setLedger([]);
+      setLedgerSum({ frozen: 0, available: 0 });
+      return;
+    }
+    (async () => {
+      const [lg, sm] = await Promise.all([
+        supabase.rpc("reseller_ledger", { _reseller_id: filters.reseller, _limit: 200 } as never),
+        supabase.rpc("reseller_profit_summary", { _reseller_id: filters.reseller } as never),
+      ]);
+      setLedger(
+        ((lg.data ?? []) as unknown as LedgerRow[]).map((x) => ({
+          ...x,
+          amount: Number(x.amount),
+          running: Number(x.running),
+        })),
+      );
+      const row = (Array.isArray(sm.data) ? sm.data[0] : sm.data) as
+        | { frozen_amount?: number; available?: number }
+        | null;
+      setLedgerSum({ frozen: Number(row?.frozen_amount ?? 0), available: Number(row?.available ?? 0) });
+    })();
+  }, [filters.reseller]);
+
+  /** Packaging cost shown separately — it is already inside admin cost (sa_cost_total). */
+  const itemsByOrder = useMemo(() => {
+    const m = new Map<string, ReportItem[]>();
+    for (const i of scopedItems) {
+      const list = m.get(i.order_id) ?? [];
+      list.push(i);
+      m.set(i.order_id, list);
+    }
+    return m;
+  }, [scopedItems]);
+
+  const packaging = useMemo(() => {
+    const of = (id: string) =>
+      (itemsByOrder.get(id) ?? []).reduce(
+        (sum, i) => sum + (i.product_id ? (productMeta[i.product_id]?.packaging ?? 0) : 0) * Number(i.quantity),
+        0,
+      );
+    let all = 0, delivered = 0;
+    for (const o of scoped) {
+      const v = of(o.id);
+      all += v;
+      if (o.status === "delivered") delivered += v;
+    }
+    return { all, delivered };
+  }, [scoped, itemsByOrder, productMeta]);
+
+  const stripItems = (orderId: string): StripItem[] =>
+    (itemsByOrder.get(orderId) ?? []).map((i, idx) => ({
+      id: `${orderId}-${idx}`,
+      product_id: i.product_id,
+      product_name: i.product_name,
+      quantity: Number(i.quantity),
+      unit_price: Number(i.reseller_price),
+      line_total: Number(i.line_total),
+      image: (i as ReportItem & { product_image?: string | null }).product_image ??
+        (i.product_id ? productMeta[i.product_id]?.image ?? null : null),
+      slug: i.product_id ? productMeta[i.product_id]?.slug ?? null : null,
+    }));
 
   /** Payouts / commissions are ledger-wide (lifetime) — filter only by reseller. */
   const ledgerResellerIds = useMemo(
@@ -210,6 +295,30 @@ function FinancialsPage() {
   const totalAvailable = perReseller.reduce((t, a) => t + a.available, 0);
   const courierCost = courierStats.rows.reduce((t, r) => t + r.cost, 0);
 
+  const scopedPayouts = useMemo(
+    () => (filters.reseller ? payouts.filter((p) => p.reseller_id === filters.reseller) : payouts),
+    [payouts, filters.reseller],
+  );
+
+  const exportOrders = () =>
+    downloadCsv(
+      "report-orders.csv",
+      toCsv(
+        ["Order", "Date", "Reseller", "Status", "Sell value", "Delivery", "Customer total", "Admin cost", "Reseller profit"],
+        scoped.map((o) => [
+          o.order_number,
+          new Date(o.created_at).toLocaleDateString(),
+          o.resellers?.business_name ?? "",
+          o.status,
+          Number(o.subtotal),
+          Number(o.shipping_cost),
+          Number(o.total),
+          Number(o.sa_cost_total),
+          Number(o.reseller_profit),
+        ]),
+      ),
+    );
+
   const exportStatus = () =>
     downloadCsv(
       "report-status.csv",
@@ -247,7 +356,7 @@ function FinancialsPage() {
 
   return (
     <div>
-      <PageHeader title="Financial report" />
+      <PageHeader title="Reseller Earning" description="Reseller wise earning, cost, payout and money timeline — same report the reseller sees." />
 
       <OrderFilterBar
         value={filters}
@@ -267,8 +376,15 @@ function FinancialsPage() {
         <StatCard
           label="Admin revenue (product+pkg)"
           value={bdt(report.realized.adminCost)}
-          hint="Reseller price + packaging on delivered orders"
+          hint={`Product ${bdt(report.realized.adminCost - packaging.delivered)} + packaging ${bdt(packaging.delivered)}`}
           icon={<PiggyBank className="h-4 w-4" />}
+        />
+        <StatCard
+          label="Packaging cost (delivered)"
+          value={bdt(packaging.delivered)}
+          hint={`All orders ${bdt(packaging.all)} — already included in admin cost`}
+          icon={<Package className="h-4 w-4" />}
+          tone="violet"
         />
         <StatCard
           label="Reseller profit (delivered)"
@@ -318,6 +434,37 @@ function FinancialsPage() {
         right={<CsvBtn onClick={exportStatus} />}
       >
         <StatusReportTable report={report} />
+      </ReportCard>
+
+      <ReportCard
+        title="Cost breakdown"
+        hint="Admin cost split into product price and packaging. Profit calculation is unchanged — packaging is already inside admin cost."
+      >
+        <table className="w-full min-w-[520px] text-sm">
+          <thead className="bg-muted/20 text-left text-[11px] uppercase text-muted-foreground">
+            <tr>
+              <th className="p-3">Scope</th>
+              <th className="p-3 text-right">Product cost</th>
+              <th className="p-3 text-right">Packaging cost</th>
+              <th className="p-3 text-right">Admin cost total</th>
+              <th className="p-3 text-right">Reseller profit</th>
+            </tr>
+          </thead>
+          <tbody>
+            {[
+              { label: "Delivered", cost: report.realized.adminCost, pkg: packaging.delivered, profit: report.realized.profit },
+              { label: "All filtered orders", cost: report.all.adminCost, pkg: packaging.all, profit: report.all.profit },
+            ].map((r) => (
+              <tr key={r.label} className="border-t">
+                <td className="p-3 font-medium">{r.label}</td>
+                <td className="p-3 text-right tabular-nums">{bdt(r.cost - r.pkg)}</td>
+                <td className="p-3 text-right tabular-nums text-violet-500">{bdt(r.pkg)}</td>
+                <td className="p-3 text-right tabular-nums text-muted-foreground">{bdt(r.cost)}</td>
+                <td className="p-3 text-right font-semibold tabular-nums">{bdt(r.profit)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </ReportCard>
 
       <ReportCard title="Raw status split" hint="Each database status shown separately.">
@@ -411,6 +558,131 @@ function FinancialsPage() {
       >
         <ProductReportTable products={report.products} />
       </ReportCard>
+      )}
+
+      {tab === "orders" && (
+      <ReportCard
+        title="Order wise profit"
+        hint="Cost, delivery and profit for each order, with the products inside it."
+        right={<CsvBtn onClick={exportOrders} />}
+      >
+        <table className="w-full min-w-[880px] text-sm">
+          <thead className="bg-muted/20 text-left text-[11px] uppercase text-muted-foreground">
+            <tr>
+              <th className="p-3">Order</th>
+              <th className="p-3">Reseller</th>
+              <th className="p-3">Status</th>
+              <th className="p-3 text-right">Sell value</th>
+              <th className="p-3 text-right">Delivery</th>
+              <th className="p-3 text-right">Customer total</th>
+              <th className="p-3 text-right">Admin cost</th>
+              <th className="p-3 text-right">Reseller profit</th>
+            </tr>
+          </thead>
+          <tbody>
+            {scoped.slice(0, 100).map((o) => (
+              <Fragment key={o.id}>
+                <tr className="border-t-2 align-top">
+                  <td className="p-3">
+                    <div className="font-mono text-xs font-medium">{o.order_number}</div>
+                    <div className="text-[11px] text-muted-foreground">
+                      {new Date(o.created_at).toLocaleDateString()} · {o.customer_name}
+                    </div>
+                  </td>
+                  <td className="p-3 text-xs">
+                    <div className="font-medium">{o.resellers?.business_name ?? "—"}</div>
+                    <div className="text-[11px] text-muted-foreground">{o.resellers?.code ? `/${o.resellers.code}` : ""}</div>
+                  </td>
+                  <td className="p-3">
+                    <span className={"rounded-full px-2 py-0.5 text-[11px] " + orderStatusTone(o.status)}>
+                      {orderStatusLabel(o.status)}
+                    </span>
+                  </td>
+                  <td className="p-3 text-right">{bdt(Number(o.subtotal))}</td>
+                  <td className="p-3 text-right text-muted-foreground">{bdt(Number(o.shipping_cost))}</td>
+                  <td className="p-3 text-right">{bdt(Number(o.total))}</td>
+                  <td className="p-3 text-right text-muted-foreground">{bdt(Number(o.sa_cost_total))}</td>
+                  <td className={"p-3 text-right font-semibold " + (o.status === "delivered" ? "text-success" : "")}>
+                    {bdt(Number(o.reseller_profit))}
+                  </td>
+                </tr>
+                <tr>
+                  <td colSpan={8} className="p-0">
+                    <OrderItemsStrip items={stripItems(o.id)} />
+                  </td>
+                </tr>
+              </Fragment>
+            ))}
+            {scoped.length === 0 && (
+              <tr>
+                <td colSpan={8} className="p-8 text-center text-muted-foreground">
+                  No orders match this filter.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+        {scoped.length > 100 && (
+          <div className="border-t p-3 text-center text-[11px] text-muted-foreground">
+            Showing first 100 — export CSV for the rest.
+          </div>
+        )}
+      </ReportCard>
+      )}
+
+      {tab === "payouts" && (
+      <>
+      <ReportCard title="Payout ledger" hint="Withdrawal requests and payment history (lifetime).">
+        <table className="w-full min-w-[720px] text-sm">
+          <thead className="bg-muted/20 text-left text-[11px] uppercase text-muted-foreground">
+            <tr>
+              <th className="p-3">Requested</th>
+              <th className="p-3">Reseller</th>
+              <th className="p-3 text-right">Amount</th>
+              <th className="p-3">Status</th>
+              <th className="p-3">Method</th>
+              <th className="p-3">Paid at</th>
+              <th className="p-3">Note</th>
+            </tr>
+          </thead>
+          <tbody>
+            {scopedPayouts.map((p) => (
+              <tr key={p.id} className="border-t">
+                <td className="p-3">{new Date(p.requested_at).toLocaleDateString()}</td>
+                <td className="p-3 text-xs">{p.resellers?.business_name ?? "—"}</td>
+                <td className="p-3 text-right font-medium">{bdt(Number(p.amount))}</td>
+                <td className="p-3 capitalize">{p.status}</td>
+                <td className="p-3 uppercase text-muted-foreground">{p.method ?? "—"}</td>
+                <td className="p-3 text-muted-foreground">{p.paid_at ? new Date(p.paid_at).toLocaleDateString() : "—"}</td>
+                <td className="p-3 max-w-[220px] text-xs text-muted-foreground">{p.notes || p.reference || "—"}</td>
+              </tr>
+            ))}
+            {scopedPayouts.length === 0 && (
+              <tr>
+                <td colSpan={7} className="p-8 text-center text-muted-foreground">
+                  No payout requests.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </ReportCard>
+
+      <ReportCard
+        title="Money timeline (Ledger)"
+        hint="How money comes in (deposit + delivered profit) and how it goes out (withdrawals)."
+      >
+        <div className="p-4">
+          {filters.reseller ? (
+            <LedgerTimeline ledger={ledger} frozen={ledgerSum.frozen} available={ledgerSum.available} />
+          ) : (
+            <div className="rounded-lg border border-dashed p-6 text-center text-xs text-muted-foreground">
+              Select a reseller in the filter bar above to see that reseller's money timeline.
+            </div>
+          )}
+        </div>
+      </ReportCard>
+      </>
       )}
 
       {tab === "courier" && (
