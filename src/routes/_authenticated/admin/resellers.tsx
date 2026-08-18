@@ -1138,7 +1138,7 @@ function ProfileModal({
           </button>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto bg-muted/20 px-4 py-4 sm:px-6">
-          <ResellerProfile reseller={data} summary={summary} orders={orders} />
+          <ResellerProfile reseller={data} summary={summary} orders={orders} admin />
         </div>
       </div>
     </div>

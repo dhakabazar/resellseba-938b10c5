@@ -75,14 +75,15 @@ type OrderItemLite = {
 };
 
 export const Route = createFileRoute("/_authenticated/admin/orders")({
-  validateSearch: (s: Record<string, unknown>): { tab?: OrderTabKey } => ({
+  validateSearch: (s: Record<string, unknown>): { tab?: OrderTabKey; reseller?: string } => ({
     tab: ORDER_TABS.some((t) => t.key === s.tab) ? (s.tab as OrderTabKey) : undefined,
+    reseller: typeof s.reseller === "string" && s.reseller ? s.reseller : undefined,
   }),
   component: AdminOrdersPage,
 });
 
 function AdminOrdersPage() {
-  const { tab: tabParam } = Route.useSearch();
+  const { tab: tabParam, reseller: resellerParam } = Route.useSearch();
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [allOrders, setAllOrders] = useState<{ status: string }[]>([]);
   const [orderItems, setOrderItems] = useState<OrderItemLite[]>([]);
@@ -95,7 +96,7 @@ function AdminOrdersPage() {
   const [open, setOpen] = useState(false);
   const [allProducts, setAllProducts] = useState<any[]>([]);
   const [resellers, setResellers] = useState<any[]>([]);
-  const [filters, setFilters] = useState<OrderFilterState>(DEFAULT_ORDER_FILTERS);
+  const [filters, setFilters] = useState<OrderFilterState>({ ...DEFAULT_ORDER_FILTERS, reseller: resellerParam ?? "" });
   const [searchMode, setSearchMode] = useState<OrderSearchMode>("order");
   const [expandedOrders, setExpandedOrders] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
