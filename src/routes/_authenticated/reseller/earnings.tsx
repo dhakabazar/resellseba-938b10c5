@@ -299,13 +299,13 @@ function EarningsPage() {
         hint="Admin cost split into product price and packaging. Profit calculation is unchanged — packaging is already inside admin cost."
       >
         <table className="w-full min-w-[520px] text-sm">
-          <thead className="bg-muted/20 text-left text-[11px] uppercase text-muted-foreground">
+          <thead className="bg-muted/20 text-center text-[11px] uppercase text-muted-foreground">
             <tr>
-              <th className="p-3">Scope</th>
-              <th className="p-3 text-right">Product cost</th>
-              <th className="p-3 text-right">Packaging cost</th>
-              <th className="p-3 text-right">Admin cost total</th>
-              <th className="p-3 text-right">Profit</th>
+              <th className="px-2 py-2 text-center">Scope</th>
+              <th className="px-2 py-2 text-center">Product cost</th>
+              <th className="px-2 py-2 text-center">Packaging cost</th>
+              <th className="px-2 py-2 text-center">Admin cost total</th>
+              <th className="px-2 py-2 text-center">Profit</th>
             </tr>
           </thead>
           <tbody>
@@ -314,11 +314,11 @@ function EarningsPage() {
               { label: "All filtered orders", cost: report.all.adminCost, pkg: packaging.all, profit: report.all.profit },
             ].map((r) => (
               <tr key={r.label} className="border-t">
-                <td className="p-3 font-medium">{r.label}</td>
-                <td className="p-3 text-right tabular-nums">{bdt(r.cost - r.pkg)}</td>
-                <td className="p-3 text-right tabular-nums text-violet-500">{bdt(r.pkg)}</td>
-                <td className="p-3 text-right tabular-nums text-muted-foreground">{bdt(r.cost)}</td>
-                <td className="p-3 text-right font-semibold tabular-nums">{bdt(r.profit)}</td>
+                <td className="px-2 py-2 text-center font-medium">{r.label}</td>
+                <td className="px-2 py-2 text-center tabular-nums">{bdt(r.cost - r.pkg)}</td>
+                <td className="px-2 py-2 text-center tabular-nums text-violet-500">{bdt(r.pkg)}</td>
+                <td className="px-2 py-2 text-center tabular-nums text-muted-foreground">{bdt(r.cost)}</td>
+                <td className="px-2 py-2 text-center font-semibold tabular-nums">{bdt(r.profit)}</td>
               </tr>
             ))}
           </tbody>
@@ -416,30 +416,30 @@ function EarningsPage() {
       {tab === "payouts" && (
       <ReportCard title="Payout ledger" hint="Withdrawal requests and payment history.">
         <table className="w-full min-w-[520px] text-sm">
-          <thead className="bg-muted/20 text-left text-[11px] uppercase text-muted-foreground">
+          <thead className="bg-muted/20 text-center text-[11px] uppercase text-muted-foreground">
             <tr>
-              <th className="p-3">Requested</th>
-              <th className="p-3 text-right">Amount</th>
-              <th className="p-3">Status</th>
-              <th className="p-3">Method</th>
-              <th className="p-3">Paid at</th>
+              <th className="px-2 py-2 text-center">Requested</th>
+              <th className="px-2 py-2 text-center">Amount</th>
+              <th className="px-2 py-2 text-center">Status</th>
+              <th className="px-2 py-2 text-center">Method</th>
+              <th className="px-2 py-2 text-center">Paid at</th>
             </tr>
           </thead>
           <tbody>
             {payouts.map((p) => (
               <tr key={p.id} className="border-t">
-                <td className="p-3">{new Date(p.requested_at).toLocaleDateString()}</td>
-                <td className="p-3 text-right font-medium">{bdt(Number(p.amount))}</td>
-                <td className="p-3 capitalize">{p.status}</td>
-                <td className="p-3 uppercase text-muted-foreground">{p.method ?? "—"}</td>
-                <td className="p-3 text-muted-foreground">
+                <td className="px-2 py-2 text-center">{new Date(p.requested_at).toLocaleDateString()}</td>
+                <td className="px-2 py-2 text-center font-medium">{bdt(Number(p.amount))}</td>
+                <td className="px-2 py-2 text-center capitalize">{p.status}</td>
+                <td className="px-2 py-2 text-center uppercase text-muted-foreground">{p.method ?? "—"}</td>
+                <td className="px-2 py-2 text-center text-muted-foreground">
                   {p.paid_at ? new Date(p.paid_at).toLocaleDateString() : "—"}
                 </td>
               </tr>
             ))}
             {payouts.length === 0 && (
               <tr>
-                <td colSpan={5} className="p-8 text-center text-muted-foreground">
+                <td colSpan={5} className="px-2 py-8 text-center text-muted-foreground">
                   No payout requests yet.
                 </td>
               </tr>
@@ -452,23 +452,23 @@ function EarningsPage() {
       {tab === "commission" && commissions.length > 0 && (
         <ReportCard title="Team commission ledger" hint="Commission from your team's delivered orders.">
           <table className="w-full min-w-[520px] text-sm">
-            <thead className="bg-muted/20 text-left text-[11px] uppercase text-muted-foreground">
+            <thead className="bg-muted/20 text-center text-[11px] uppercase text-muted-foreground">
               <tr>
-                <th className="p-3">Date</th>
-                <th className="p-3 text-right">Base profit</th>
-                <th className="p-3 text-right">Rate</th>
-                <th className="p-3 text-right">Commission</th>
-                <th className="p-3">Status</th>
+                <th className="px-2 py-2 text-center">Date</th>
+                <th className="px-2 py-2 text-center">Base profit</th>
+                <th className="px-2 py-2 text-center">Rate</th>
+                <th className="px-2 py-2 text-center">Commission</th>
+                <th className="px-2 py-2 text-center">Status</th>
               </tr>
             </thead>
             <tbody>
               {commissions.map((c) => (
                 <tr key={c.id} className="border-t">
-                  <td className="p-3">{new Date(c.created_at).toLocaleDateString()}</td>
-                  <td className="p-3 text-right text-muted-foreground">{bdt(Number(c.base_profit))}</td>
-                  <td className="p-3 text-right">{Number(c.rate)}%</td>
-                  <td className="p-3 text-right font-medium">{bdt(Number(c.amount))}</td>
-                  <td className="p-3 capitalize">{c.status}</td>
+                  <td className="px-2 py-2 text-center">{new Date(c.created_at).toLocaleDateString()}</td>
+                  <td className="px-2 py-2 text-center text-muted-foreground">{bdt(Number(c.base_profit))}</td>
+                  <td className="px-2 py-2 text-center">{Number(c.rate)}%</td>
+                  <td className="px-2 py-2 text-center font-medium">{bdt(Number(c.amount))}</td>
+                  <td className="px-2 py-2 text-center capitalize">{c.status}</td>
                 </tr>
               ))}
             </tbody>
