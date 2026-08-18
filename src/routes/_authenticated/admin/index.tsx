@@ -44,6 +44,10 @@ function AdminDashboard() {
     categories: 0, activeCategories: 0, activeBrands: 0,
   });
   const [orderReport, setOrderReport] = useState<FinanceReport>(() => buildFinanceReport([], []));
+  const [resellerReport, setResellerReport] = useState({
+    total: 0, active: 0, pending: 0, suspended: 0, rejected: 0,
+    withStore: 0, depositBalance: 0, frozen: 0, withdrawable: 0,
+  });
   const [lifetime, setLifetime] = useState({
     orders: 0,
     revenue: 0,
