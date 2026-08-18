@@ -122,11 +122,18 @@ export function ResellerProfile({
   reseller: r,
   summary: s,
   orders,
+  admin = false,
 }: {
   reseller: ResellerProfileData;
   summary?: ResellerProfileSummary;
   orders?: number;
+  /** Admin view: finance cards deep-link into filtered admin lists for this reseller. */
+  admin?: boolean;
 }) {
+  const ordersLink = (tab?: string) =>
+    admin ? { to: "/admin/orders", search: { reseller: r.id, ...(tab ? { tab } : {}) } } : {};
+  const payoutsLink = (status?: string) =>
+    admin ? { to: "/admin/payouts", search: { reseller: r.id, ...(status ? { status } : {}) } } : {};
   const storeUrl = typeof window !== "undefined" ? `${window.location.origin}/s/${r.code}` : `/s/${r.code}`;
   const depositDue = r.deposit_required
     ? Math.max(Number(r.deposit_required_amount ?? 0) - (s?.deposit_balance ?? 0), 0)
