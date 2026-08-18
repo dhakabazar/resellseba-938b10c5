@@ -154,6 +154,19 @@ function FinancialsPage() {
     })();
   }, [filters.reseller]);
 
+  /** Timeline follows the date filter bar (reseller filter is applied while loading). */
+  const scopedLedger = useMemo(() => {
+    const { fromTs, toTs } = resolveDateRange(filters);
+    if (fromTs === null && toTs === null) return ledger;
+    return ledger.filter((e) => {
+      const t = new Date(e.at).getTime();
+      if (fromTs !== null && t < fromTs) return false;
+      if (toTs !== null && t > toTs) return false;
+      return true;
+    });
+  }, [ledger, filters]);
+
+
   /** Packaging cost shown separately — it is already inside admin cost (sa_cost_total). */
   const itemsByOrder = useMemo(() => {
     const m = new Map<string, ReportItem[]>();
