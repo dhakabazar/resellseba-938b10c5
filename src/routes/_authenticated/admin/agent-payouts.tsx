@@ -127,14 +127,15 @@ function AgentPayoutsPage() {
     [view],
   );
 
-  async function setStatus(p: AgentPayout, status: string, extra: Record<string, unknown> = {}) {
+  async function setStatus(p: AgentPayout, status: string, extra: { admin_note?: string } = {}) {
     const patch: Record<string, unknown> = { status, ...extra };
     if (status === "approved") patch.approved_at = new Date().toISOString();
     if (status === "paid") {
       patch.paid_at = new Date().toISOString();
       patch.approved_at = p.approved_at ?? new Date().toISOString();
     }
-    const { error } = await supabase.from("agent_payouts").update(patch).eq("id", p.id);
+    const { error } = await supabase.from("agent_payouts").update(patch as never).eq("id", p.id);
+
     if (error) return toast.error(error.message);
     toast.success(`Payment ${status}`);
     load();
