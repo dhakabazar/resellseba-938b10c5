@@ -128,31 +128,66 @@ function FinancialsPage() {
   const scopedItems = useMemo(() => items.filter((i) => scopedIds.has(i.order_id)), [items, scopedIds]);
   const report = useMemo(() => buildFinanceReport(scoped, scopedItems, { trend: gran }), [scoped, scopedItems, gran]);
 
-  /** Money timeline is per reseller — load it when a single reseller is selected. */
+  /**
+   * Money timeline follows the reseller filter: one reseller = that ledger,
+   * "All resellers" = every reseller's ledger merged by time.
+   */
   useEffect(() => {
-    if (!filters.reseller) {
+    const ids = filters.reseller ? [filters.reseller] : resellers.map((r) => r.id);
+    if (ids.length === 0) {
       setLedger([]);
       setLedgerSum({ frozen: 0, available: 0 });
       return;
     }
+    let cancelled = false;
     (async () => {
-      const [lg, sm] = await Promise.all([
-        supabase.rpc("reseller_ledger", { _reseller_id: filters.reseller, _limit: 200 } as never),
-        supabase.rpc("reseller_profit_summary", { _reseller_id: filters.reseller } as never),
-      ]);
-      setLedger(
-        ((lg.data ?? []) as unknown as LedgerRow[]).map((x) => ({
-          ...x,
-          amount: Number(x.amount),
-          running: Number(x.running),
-        })),
+      const nameOf = new Map(resellers.map((r) => [r.id, r.business_name] as const));
+      const perLimit = ids.length > 1 ? 100 : 300;
+      const results = await Promise.all(
+        ids.map((id) => supabase.rpc("reseller_ledger", { _reseller_id: id, _limit: perLimit } as never)),
       );
-      const row = (Array.isArray(sm.data) ? sm.data[0] : sm.data) as
-        | { frozen_amount?: number; available?: number }
-        | null;
-      setLedgerSum({ frozen: Number(row?.frozen_amount ?? 0), available: Number(row?.available ?? 0) });
+      const rows: LedgerRow[] = [];
+      results.forEach((res, idx) => {
+        const rid = ids[idx]!;
+        for (const x of (res.data ?? []) as unknown as LedgerRow[]) {
+          rows.push({
+            ...x,
+            amount: Number(x.amount),
+            running: Number(x.running),
+            reference:
+              ids.length > 1
+                ? `${nameOf.get(rid) ?? "Reseller"} · ${x.reference ?? "—"}`
+                : x.reference,
+          });
+        }
+      });
+      rows.sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
+      if (cancelled) return;
+      setLedger(rows);
+
+      if (filters.reseller) {
+        const sm = await supabase.rpc("reseller_profit_summary", { _reseller_id: filters.reseller } as never);
+        const row = (Array.isArray(sm.data) ? sm.data[0] : sm.data) as
+          | { frozen_amount?: number; available?: number }
+          | null;
+        if (!cancelled) {
+          setLedgerSum({ frozen: Number(row?.frozen_amount ?? 0), available: Number(row?.available ?? 0) });
+        }
+        return;
+      }
+      const mt = await supabase.rpc("admin_reseller_metrics" as never);
+      const list = (mt.data ?? []) as unknown as Array<{ frozen_amount?: number; available?: number }>;
+      let frozen = 0, available = 0;
+      for (const m of list) {
+        frozen += Number(m.frozen_amount ?? 0);
+        available += Number(m.available ?? 0);
+      }
+      if (!cancelled) setLedgerSum({ frozen, available });
     })();
-  }, [filters.reseller]);
+    return () => {
+      cancelled = true;
+    };
+  }, [filters.reseller, resellers]);
 
   /** Timeline follows the date filter bar (reseller filter is applied while loading). */
   const scopedLedger = useMemo(() => {
