@@ -88,13 +88,13 @@ export function StatusReportTable({
       <thead className="bg-muted/20 text-center">
         <tr>
           <th className={th}>Status</th>
-          <th className={`${th} text-right`}>Orders</th>
-          <th className={`${th} text-right`}>Sell value</th>
-          <th className={`${th} text-right`}>Delivery</th>
-          {split && <th className={`${th} text-right`}>Product cost</th>}
-          {split && <th className={`${th} text-right`}>Packaging cost</th>}
-          {showAdminCost && !split && <th className={`${th} text-right`}>Total cost</th>}
-          <th className={`${th} text-right`}>Profit</th>
+          <th className={th}>Orders</th>
+          <th className={th}>Sell value</th>
+          <th className={th}>Delivery</th>
+          {split && <th className={th}>Product cost</th>}
+          {split && <th className={th}>Packaging cost</th>}
+          {showAdminCost && !split && <th className={th}>Total cost</th>}
+          <th className={th}>Profit</th>
         </tr>
       </thead>
       <tbody>
@@ -156,13 +156,13 @@ export function ProductReportTable({
       <thead className="bg-muted/20 text-center">
         <tr>
           <th className={th}>Product</th>
-          <th className={`${th} text-right`}>Orders</th>
-          <th className={`${th} text-right`}>Qty</th>
-          <th className={`${th} text-right`}>Delivered qty</th>
-          <th className={`${th} text-right`}>Sell value</th>
-          {showCost && <th className={`${th} text-right`}>Cost</th>}
-          <th className={`${th} text-right`}>Profit</th>
-          <th className={`${th} text-right`}>Delivered profit</th>
+          <th className={th}>Orders</th>
+          <th className={th}>Qty</th>
+          <th className={th}>Delivered qty</th>
+          <th className={th}>Sell value</th>
+          {showCost && <th className={th}>Cost</th>}
+          <th className={th}>Profit</th>
+          <th className={th}>Delivered profit</th>
         </tr>
       </thead>
       <tbody>
@@ -198,10 +198,10 @@ export function TrendReportTable({ trend, limit = 30 }: { trend: TrendPoint[]; l
       <thead className="bg-muted/20 text-center">
         <tr>
           <th className={th}>Period</th>
-          <th className={`${th} text-right`}>Orders</th>
-          <th className={`${th} text-right`}>Sell value</th>
-          <th className={`${th} text-right`}>Profit</th>
-          <th className={`${th} text-right`}>Delivered profit</th>
+          <th className={th}>Orders</th>
+          <th className={th}>Sell value</th>
+          <th className={th}>Profit</th>
+          <th className={th}>Delivered profit</th>
         </tr>
       </thead>
       <tbody>
@@ -234,13 +234,13 @@ export function RawStatusList({ report, showAdminCost = true }: { report: Financ
       <thead className="bg-muted/20 text-center">
         <tr>
           <th className={th}>Status</th>
-          <th className={`${th} text-right`}>Orders</th>
-          <th className={`${th} text-right`}>Sell value</th>
-          <th className={`${th} text-right`}>Delivery</th>
-          <th className={`${th} text-right`}>Customer total</th>
-          {showAdminCost && <th className={`${th} text-right`}>Total cost</th>}
-          <th className={`${th} text-right`}>Profit</th>
-          <th className={`${th} text-right`}>Avg / order</th>
+          <th className={th}>Orders</th>
+          <th className={th}>Sell value</th>
+          <th className={th}>Delivery</th>
+          <th className={th}>Customer total</th>
+          {showAdminCost && <th className={th}>Total cost</th>}
+          <th className={th}>Profit</th>
+          <th className={th}>Avg / order</th>
         </tr>
       </thead>
       <tbody>
