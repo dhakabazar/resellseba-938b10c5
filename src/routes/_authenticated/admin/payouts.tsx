@@ -2,7 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/ui-kit";
-import { Loader2, Check, X, Wallet, Copy, Phone, Landmark, ChevronDown, Search } from "lucide-react";
+import { Loader2, Check, X, Wallet, Copy, Phone, Landmark, ChevronDown, Search, Trash2 } from "lucide-react";
+import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
+import { useAuth } from "@/lib/use-auth";
 import { DataToolbar, Pagination, usePaginated } from "@/components/data-list";
 import { toast } from "sonner";
 
@@ -174,6 +176,10 @@ function AdminPayouts() {
   const [action, setAction] = useState<{ row: Row; status: "approved" | "paid" | "rejected" } | null>(null);
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
+  const { roles } = useAuth();
+  const isSuperAdmin = roles.includes("super_admin");
+  const [toDelete, setToDelete] = useState<Row | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => { load(); }, []);
 
@@ -234,6 +240,17 @@ function AdminPayouts() {
     toast.success(`Marked ${status}`);
     setAction(null);
     setNote("");
+    load();
+  }
+
+  async function confirmDelete() {
+    if (!toDelete) return;
+    setDeleting(true);
+    const { error } = await supabase.from("payouts").delete().eq("id", toDelete.id);
+    setDeleting(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Payout deleted");
+    setToDelete(null);
     load();
   }
 
@@ -338,6 +355,21 @@ function AdminPayouts() {
         </>
       )}
 
+      <ConfirmModal
+        isOpen={!!toDelete}
+        onClose={() => !deleting && setToDelete(null)}
+        onConfirm={confirmDelete}
+        isLoading={deleting}
+        variant="danger"
+        title="Delete this payout?"
+        description={
+          toDelete
+            ? `${toDelete.reseller?.business_name ?? "Reseller"} · BDT ${Number(toDelete.amount).toLocaleString()} (${toDelete.status}). This permanently removes the record from payout history and the reseller timeline, and the amount becomes withdrawable again. This cannot be undone.`
+            : ""
+        }
+        confirmText="Delete payout"
+      />
+
       {action && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4" onClick={() => !busy && setAction(null)}>
           <div className="w-full max-w-md rounded-xl border bg-card p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
@@ -391,6 +423,15 @@ function AdminPayouts() {
           <span className="text-[11px] text-muted-foreground">
             {r.paid_at ? `Paid ${new Date(r.paid_at).toLocaleDateString()}` : "Closed"}
           </span>
+        )}
+        {isSuperAdmin && (
+          <button
+            onClick={() => setToDelete(r)}
+            title="Delete payout (super admin only)"
+            className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs text-destructive hover:bg-destructive/10"
+          >
+            <Trash2 className="h-3 w-3" /> Delete
+          </button>
         )}
       </div>
     );
