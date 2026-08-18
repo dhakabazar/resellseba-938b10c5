@@ -738,7 +738,7 @@ function OrdersPage() {
             return (
               <div
                 key={o.id}
-                className={`border-b-[6px] border-muted/70 last:border-b-0 transition-colors hover:bg-muted/10 ${isMarked ? "bg-primary/5" : ""}`}
+                className={`overflow-hidden rounded-xl border bg-card shadow-sm transition-all hover:border-primary/40 hover:shadow-md ${isMarked ? "border-primary ring-1 ring-primary/30" : ""}`}
               >
                 {/* Mobile card */}
 
