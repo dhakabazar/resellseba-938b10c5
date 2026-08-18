@@ -25,6 +25,11 @@ import {
   Plus,
   UserCircle,
   IdCard,
+  Eye,
+  Phone,
+  PhoneCall,
+  MessageCircle,
+
 } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
@@ -342,13 +347,15 @@ function ResellersPage() {
       ) : filtered.length === 0 ? (
         <EmptyState title="Nothing here" description="No resellers match this filter." />
       ) : (
-        <div className="surface-card divide-y">
+        <div className="space-y-3">
           {usePaginated(filtered, page, perPage).map((r) => {
             const s = summaries[r.id];
             const em = emailStatus[r.user_id];
             const emailVerified = !!em?.verified;
+            const phone = (r.contact_phone ?? "").trim();
+            const waPhone = phone.replace(/[^0-9]/g, "").replace(/^0/, "880");
             return (
-              <div key={r.id} className="p-4">
+              <div key={r.id} className="surface-card p-4 shadow-sm transition hover:shadow-md">
                 <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold uppercase text-primary">
                     {r.business_name.slice(0, 2)}
@@ -385,7 +392,7 @@ function ResellersPage() {
                         </span>
                       )}
                     </div>
-                    <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                    <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                       <span className="inline-flex items-center gap-1 rounded-md border border-primary/30 bg-primary/5 px-2 py-0.5">
                         <IdCard className="h-3 w-3 text-primary" />
                         <span className="text-[10px] uppercase tracking-wide text-muted-foreground">ID</span>
@@ -402,37 +409,53 @@ function ResellersPage() {
                           <Copy className="h-3 w-3" />
                         </button>
                       </span>
-                      <button
-                        type="button"
-                        onClick={() => setProfileFor(r)}
-                        className="inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[11px] font-medium transition hover:bg-muted"
-                      >
-                        <UserCircle className="h-3 w-3" /> Profile
-                      </button>
-                    </div>
-                    <div className="mt-0.5 break-words text-xs text-muted-foreground">
-                      {em?.email ? <span>{em.email} · </span> : null}
-                      {r.contact_phone ?? "no phone"} · Commission {r.commission_rate}%
-                      {r.leader_id ? " · Leader linked" : ""}
-                    </div>
-                    <div className="mt-0.5 break-words text-xs text-muted-foreground">
-                      Payout:{" "}
-                      {r.payout_method ? (
-                        <span>
-                          <span className="font-medium capitalize text-foreground">{r.payout_method}</span>
-                          {" · "}
-                          {r.payout_account_number ?? "—"}
-                          {r.payout_account_name ? ` · ${r.payout_account_name}` : ""}
-                          {r.payout_method === "bank" && r.payout_bank_name ? ` · ${r.payout_bank_name}` : ""}
+                      {phone ? (
+                        <span className="inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5">
+                          <Phone className="h-3 w-3 text-muted-foreground" />
+                          <span className="font-mono text-[11px] font-medium">{phone}</span>
+                          <button
+                            type="button"
+                            title="Copy phone"
+                            onClick={() => {
+                              navigator.clipboard.writeText(phone);
+                              toast.success("Phone copied");
+                            }}
+                            className="text-muted-foreground transition hover:text-foreground"
+                          >
+                            <Copy className="h-3 w-3" />
+                          </button>
+                          <a href={`tel:${phone}`} title="Call" className="text-muted-foreground transition hover:text-primary">
+                            <PhoneCall className="h-3 w-3" />
+                          </a>
+                          <a
+                            href={`https://wa.me/${waPhone}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            title="WhatsApp"
+                            className="text-muted-foreground transition hover:text-success"
+                          >
+                            <MessageCircle className="h-3 w-3" />
+                          </a>
                         </span>
                       ) : (
-                        <span className="text-destructive">not set</span>
+                        <span className="rounded-md border px-2 py-0.5 text-[11px] text-muted-foreground">
+                          no phone
+                        </span>
                       )}
                     </div>
                   </div>
 
-                  <DropdownMenu>
-                    <DropdownMenuTrigger className="grid h-8 w-8 shrink-0 place-items-center rounded-md border hover:bg-muted">
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    <button
+                      type="button"
+                      title="View profile"
+                      onClick={() => setProfileFor(r)}
+                      className="grid h-8 w-8 place-items-center rounded-md border transition hover:bg-muted"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger className="grid h-8 w-8 shrink-0 place-items-center rounded-md border hover:bg-muted">
                       <MoreHorizontal className="h-4 w-4" />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-56">
@@ -490,8 +513,10 @@ function ResellersPage() {
                         <Trash2 className="mr-2 h-4 w-4" /> Delete reseller
                       </DropdownMenuItem>
                     </DropdownMenuContent>
-                  </DropdownMenu>
+                    </DropdownMenu>
+                  </div>
                 </div>
+
 
                 <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8">
                   <Metric label="Orders" value={orderCounts[r.id] ?? 0} plain />
