@@ -1,4 +1,5 @@
 import { orderProfit, orderReceived, type ProfitOrder } from "@/lib/finance-report";
+import type { LedgerRow } from "@/components/ledger-timeline";
 
 export type Agent = {
   id: string;
@@ -8,6 +9,7 @@ export type Agent = {
   email: string | null;
   whatsapp: string | null;
   sale_target: number;
+  commission_rate: number;
   is_active: boolean;
   notes: string | null;
   created_at: string;
@@ -17,6 +19,23 @@ export type AgentOrder = ProfitOrder & {
   id: string;
   reseller_id: string | null;
   created_at: string;
+};
+
+export type AgentPayout = {
+  id: string;
+  agent_id: string;
+  amount: number | string;
+  kind: string; // payment | advance
+  status: string; // pending | approved | paid | rejected
+  method: string | null;
+  reference: string | null;
+  note: string | null;
+  admin_note: string | null;
+  period_from: string | null;
+  period_to: string | null;
+  created_at: string;
+  approved_at: string | null;
+  paid_at: string | null;
 };
 
 export type AgentResellerRow = {
@@ -48,10 +67,25 @@ export type AgentPerformance = {
   target: number;
   achievedPct: number;
   gap: number;
+  /** Commission percentage configured for this agent. */
+  rate: number;
+  /** Net profit of settled (delivered / partial / failed) orders — the commission base. */
+  commissionBase: number;
+  /** rate % of the commission base. */
+  commission: number;
 };
 
 export const AGENT_SALES_HINT =
   "Sales = money actually received for the orders of this agent's resellers in the selected period. Profit uses the same formula as every report: received amount − delivery charge − product cost − packaging cost.";
+
+export const AGENT_COMMISSION_HINT =
+  "Commission = agent rate % × settled net profit of the assigned resellers' orders. Net profit uses the same formula everywhere: final delivered (received) amount − delivery charge − product cost − packaging cost. Returned / cancelled orders reduce the base, so commission is always paid on real delivered money.";
+
+/** rate % of the settled net profit. */
+export function agentCommission(base: number, rate: number | string) {
+  return (base * (Number(rate ?? 0) || 0)) / 100;
+}
+
 
 /** Aggregate reseller-level and agent-level performance from raw orders. */
 export function buildAgentPerformance(
