@@ -161,7 +161,7 @@ export function DateRangeBar({
           </>
         )}
 
-        <span className="pb-2 text-xs font-semibold text-muted-foreground">{rangeLabel(value)}</span>
+        
         <div className="ml-auto flex items-center gap-2 pb-1">{right}</div>
       </div>
 
