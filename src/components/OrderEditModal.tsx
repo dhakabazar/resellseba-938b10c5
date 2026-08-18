@@ -41,7 +41,6 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [paymentStatus, setPaymentStatus] = useState("unpaid");
   const [note, setNote] = useState("");
-  const [discount, setDiscount] = useState(0);
   const [shippingMode, setShippingMode] = useState<"auto" | "manual">("auto");
   const [shippingManual, setShippingManual] = useState(0);
   const [query, setQuery] = useState("");
@@ -67,7 +66,6 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
       setPaymentMethod(o.payment_method ?? "cod");
       setPaymentStatus(o.payment_status ?? "unpaid");
       setNote((isAdmin ? o.admin_note : o.reseller_note) ?? "");
-      setDiscount(Number(o.discount ?? 0));
       setShippingManual(Number(o.shipping_cost ?? 0));
       setShippingMode("manual");
       setItems(
@@ -168,7 +166,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
           ...(isAdmin ? { admin_note: note || null } : { reseller_note: note || null }),
           subtotal: totals.subtotal,
           shipping_cost: totals.shipping,
-          discount: totals.discount,
+          discount: 0,
           total: totals.total,
           sa_cost_total: totals.saCost,
           reseller_profit: totals.profit,
@@ -443,9 +441,9 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
               {/* Charges */}
               <section className="space-y-3">
                 <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80">
-                  Delivery & discount
+                  Delivery charge
                 </h3>
-                <div className="grid gap-3 sm:grid-cols-3">
+                <div className="grid gap-3 sm:grid-cols-2">
                   <label className="space-y-1">
                     <span className="text-[10px] font-semibold text-muted-foreground">Delivery charge mode</span>
                     <select className={inp} value={shippingMode} onChange={(e) => setShippingMode(e.target.value as any)}>
@@ -462,20 +460,11 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                       onChange={(e) => setShippingManual(Number(e.target.value) || 0)}
                     />
                   </label>
-                  <label className="space-y-1">
-                    <span className="text-[10px] font-semibold text-muted-foreground">Discount</span>
-                    <input
-                      className={inp}
-                      value={discount}
-                      onChange={(e) => setDiscount(Number(e.target.value) || 0)}
-                    />
-                  </label>
                 </div>
 
                 <div className="rounded-xl border bg-muted/20 p-4 text-xs">
                   <Row label="Subtotal" value={totals.subtotal} />
                   <Row label="Delivery" value={totals.shipping} />
-                  <Row label="Discount" value={-totals.discount} />
                   <div className="mt-2 flex justify-between border-t pt-2 text-sm font-bold text-primary">
                     <span>Grand total</span>
                     <span>৳{totals.total.toFixed(0)}</span>
