@@ -150,6 +150,9 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
     if (items.length === 0) return toast.error("Order needs at least one product.");
     const first = errors.name || errors.phone || errors.address;
     if (first) return toast.error(first);
+    const low = items.find((it) => it.reseller_price < minFor(it));
+    if (low)
+      return toast.error(`${low.product_name}: সর্বনিম্ন বিক্রয় মূল্য ৳${minFor(low)} — এর নিচে সেভ করা যাবে না`);
     setBusy(true);
     try {
       const { error: oe } = await supabase
