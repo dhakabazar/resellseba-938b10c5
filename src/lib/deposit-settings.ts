@@ -16,18 +16,18 @@ export type DepositTexts = {
 };
 
 export const DEFAULT_DEPOSIT_TEXTS: DepositTexts = {
-  sectionTitle: "সিকিউরিটি ডিপোজিট",
-  dueTitle: "সিকিউরিটি ডিপোজিট বাকি — {due}",
+  sectionTitle: "Security Deposit",
+  dueTitle: "Security deposit due — {due}",
   dueBody:
-    "ডেলিভারি ফেইল হলে ডেলিভারি চার্জ কাভার করার জন্য {required} ডিপোজিট রাখতে হয়। ডিপোজিট না করা পর্যন্ত অর্ডার Confirmed করা যাবে না। জমা আছে {balance}।",
-  okText: "ডিপোজিট সম্পন্ন · {balance}",
-  frozenText: "{frozen} ফ্রিজ করা — এই অ্যামাউন্ট উইথড্র করা যাবে না",
+    "A {required} security deposit is required to cover delivery charges if a delivery fails. Orders cannot be confirmed until the deposit is paid. Current balance: {balance}.",
+  okText: "Deposit paid · {balance}",
+  frozenText: "{frozen} frozen — this amount cannot be withdrawn",
   howToDeposit:
-    "ডিপোজিট নিজে থেকে অ্যাড করা যায় না — bKash/Nagad/Bank-এ পাঠিয়ে admin কে TrxID সহ জানান, admin ভেরিফাই করে লেজারে যোগ করবেন।",
+    "You cannot add the deposit yourself — send it via bKash/Nagad/Bank and share the TrxID with admin. Admin will verify and add it to your ledger.",
   withdrawWarning:
-    "ডিপোজিট বা ফ্রিজ করা অ্যামাউন্ট উইথড্র করতে চাইলে আগে admin কে জানাতে হবে — এই অ্যামাউন্ট ফেরত নিলে আপনার reseller অ্যাকাউন্ট বন্ধ হয়ে যাবে এবং নতুন অর্ডার নেওয়া যাবে না।",
-  orderBlockToast: "সিকিউরিটি ডিপোজিট বাকি — {due}। ডিপোজিট জমা না দিলে অর্ডার কনফার্ম করা যাবে না।",
-  payoutFrozenHint: "{frozen} ফ্রিজ করা আছে — এই অ্যামাউন্ট উইথড্র করা যাবে না।",
+    "To withdraw your deposit or frozen amount you must contact admin first — taking this money back will close your reseller account and stop new orders.",
+  orderBlockToast: "Security deposit due — {due}. Orders cannot be confirmed until the deposit is paid.",
+  payoutFrozenHint: "{frozen} is frozen — this amount cannot be withdrawn.",
 };
 
 export type DepositDefaults = {

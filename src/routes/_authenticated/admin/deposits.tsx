@@ -26,15 +26,15 @@ export const Route = createFileRoute("/_authenticated/admin/deposits")({
 });
 
 const FIELDS: { key: keyof DepositTexts; label: string; help: string; long?: boolean }[] = [
-  { key: "sectionTitle", label: "সেকশন টাইটেল (reseller panel)", help: "কোনো ভ্যারিয়েবল নেই" },
-  { key: "dueTitle", label: "ডিপোজিট বাকি — নোটিশ টাইটেল", help: "{due}" },
-  { key: "dueBody", label: "ডিপোজিট বাকি — নোটিশ বিবরণ", help: "{required} {balance} {due}", long: true },
-  { key: "okText", label: "ডিপোজিট সম্পন্ন — টেক্সট", help: "{balance}" },
-  { key: "frozenText", label: "ফ্রিজ অ্যামাউন্ট — টেক্সট", help: "{frozen}" },
-  { key: "howToDeposit", label: "কীভাবে ডিপোজিট করবে — হিন্ট", help: "কোনো ভ্যারিয়েবল নেই", long: true },
-  { key: "withdrawWarning", label: "ডিপোজিট/ফ্রিজ উইথড্র ওয়ার্নিং", help: "কোনো ভ্যারিয়েবল নেই", long: true },
-  { key: "orderBlockToast", label: "অর্ডার কনফার্ম ব্লক — টোস্ট", help: "{due}" },
-  { key: "payoutFrozenHint", label: "Payout ফর্ম — ফ্রিজ হিন্ট", help: "{frozen}" },
+  { key: "sectionTitle", label: "Section title (reseller panel)", help: "No variable" },
+  { key: "dueTitle", label: "Deposit due — notice title", help: "{due}" },
+  { key: "dueBody", label: "Deposit due — notice body", help: "{required} {balance} {due}", long: true },
+  { key: "okText", label: "Deposit paid — text", help: "{balance}" },
+  { key: "frozenText", label: "Frozen amount — text", help: "{frozen}" },
+  { key: "howToDeposit", label: "How to deposit — hint", help: "No variable", long: true },
+  { key: "withdrawWarning", label: "Deposit/frozen withdraw warning", help: "No variable", long: true },
+  { key: "orderBlockToast", label: "Order confirm block — toast", help: "{due}" },
+  { key: "payoutFrozenHint", label: "Payout form — frozen hint", help: "{frozen}" },
 ];
 
 function DepositSettingsPage() {
@@ -77,7 +77,7 @@ function DepositSettingsPage() {
       .eq("id", 1);
     setBusy(false);
     if (error) return toast.error(error.message);
-    toast.success("ডিপোজিট সেটিং সেভ হয়েছে");
+    toast.success("Deposit settings saved");
   }
 
   if (loading)
@@ -98,7 +98,7 @@ function DepositSettingsPage() {
     <div>
       <PageHeader
         title="Security deposit"
-        description="ডিপোজিট ট্রিগার, ডিফল্ট অ্যামাউন্ট আর reseller-কে দেখানো সব হিন্ট/নোটিফিকেশন টেক্সট এখান থেকেই কনফিগার হবে।"
+        description="Configure the deposit trigger, default amounts, and all reseller-facing hints and notification texts from here."
         actions={
           <button
             onClick={save}
@@ -112,10 +112,9 @@ function DepositSettingsPage() {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="surface-card space-y-3 p-6">
-          <h3 className="text-sm font-semibold">ডিফল্ট রুল (নতুন reseller)</h3>
+          <h3 className="text-sm font-semibold">Default rule (new reseller)</h3>
           <p className="text-xs text-muted-foreground">
-            নতুন reseller signup করলে এই ভ্যালুগুলো বসবে — পরে প্রতিটি reseller-এর “Deposit &amp; freeze” মডাল থেকে আলাদা করে
-            বদলানো যাবে।
+            New resellers will get these values on signup — you can override each reseller later from their “Deposit &amp; freeze” modal.
           </p>
           <label className="flex cursor-pointer items-start gap-3 rounded-md border bg-muted/30 p-3">
             <input
@@ -125,17 +124,17 @@ function DepositSettingsPage() {
               className="mt-0.5 h-4 w-4"
             />
             <span className="text-xs">
-              <span className="block font-medium">ডিপোজিট ট্রিগার ডিফল্ট অন</span>
-              <span className="text-muted-foreground">অফ রাখলে নতুন reseller-রা ডিপোজিট ছাড়াই কাজ করবে।</span>
+              <span className="block font-medium">Enable deposit trigger by default</span>
+              <span className="text-muted-foreground">If off, new resellers can work without a deposit.</span>
             </span>
           </label>
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <label className="mb-1 block text-xs font-medium">ডিফল্ট ডিপোজিট অ্যামাউন্ট (৳)</label>
+              <label className="mb-1 block text-xs font-medium">Default deposit amount (৳)</label>
               <input type="number" min={0} value={amount} onChange={(e) => setAmount(e.target.value)} className={inp} />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium">ডিফল্ট ফ্রিজ অ্যামাউন্ট (৳)</label>
+              <label className="mb-1 block text-xs font-medium">Default freeze amount (৳)</label>
               <input type="number" min={0} value={frozen} onChange={(e) => setFrozen(e.target.value)} className={inp} />
             </div>
           </div>
@@ -143,7 +142,7 @@ function DepositSettingsPage() {
 
         <div className="surface-card space-y-3 p-6">
           <h3 className="flex items-center gap-2 text-sm font-semibold">
-            <ShieldCheck className="h-4 w-4 text-primary" /> লাইভ প্রিভিউ
+            <ShieldCheck className="h-4 w-4 text-primary" /> Live preview
           </h3>
           <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-xs">
             <div className="font-bold text-amber-700 dark:text-amber-300">{fillText(texts.dueTitle, preview)}</div>
@@ -162,10 +161,10 @@ function DepositSettingsPage() {
         <div className="surface-card space-y-4 p-6 lg:col-span-2">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
-              <h3 className="text-sm font-semibold">Reseller-facing টেক্সট (ডাইনামিক)</h3>
+              <h3 className="text-sm font-semibold">Reseller-facing text (dynamic)</h3>
               <p className="text-xs text-muted-foreground">
-                <code>{"{due}"}</code>, <code>{"{required}"}</code>, <code>{"{balance}"}</code>,{" "}
-                <code>{"{frozen}"}</code> লিখলে অটোমেটিক টাকার অ্যামাউন্ট বসে যাবে।
+                Use <code>{"{due}"}</code>, <code>{"{required}"}</code>, <code>{"{balance}"}</code>,{" "}
+                <code>{"{frozen}"}</code> and the matching amount will be inserted automatically.
               </p>
             </div>
             <button
@@ -173,7 +172,7 @@ function DepositSettingsPage() {
               onClick={() => setTexts(DEFAULT_DEPOSIT_TEXTS)}
               className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs hover:bg-muted"
             >
-              <RotateCcw className="h-3.5 w-3.5" /> ডিফল্টে ফিরুন
+              <RotateCcw className="h-3.5 w-3.5" /> Reset to default
             </button>
           </div>
 
