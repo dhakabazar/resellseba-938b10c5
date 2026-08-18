@@ -7,6 +7,11 @@ import { toast } from "sonner";
 
 type Line = { listing_id?: string; product_id?: string; qty: number; name?: string; price?: number; cost?: number; image?: string; delivery?: any };
 
+/** Minimum allowed selling price = SA base cost (product cost + packaging). */
+function minSellPrice(p: any) {
+  return Number(p?.reseller_price ?? 0) + Number(p?.packaging_cost ?? 0);
+}
+
 interface NewOrderModalProps {
   listings: any[];
   allProducts: any[];
