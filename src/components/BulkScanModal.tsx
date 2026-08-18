@@ -149,7 +149,9 @@ function BulkScanModal({ onClose }: { onClose: () => void }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const controlsRef = useRef<{ stop: () => void } | null>(null);
   const seenRef = useRef<Map<string, number>>(new Map());
+  const doneRef = useRef<Map<string, string>>(new Map());
   const busyRef = useRef(false);
+
 
   const counts = useMemo(
     () => ({
@@ -169,7 +171,7 @@ function BulkScanModal({ onClose }: { onClose: () => void }) {
       if (!code || busyRef.current) return;
       const nowTs = Date.now();
       const seenAt = seenRef.current.get(code);
-      if (seenAt && nowTs - seenAt < 2500) return;
+      if (seenAt && nowTs - seenAt < 900) return;
       seenRef.current.set(code, nowTs);
 
       busyRef.current = true;
@@ -182,8 +184,21 @@ function BulkScanModal({ onClose }: { onClose: () => void }) {
           push({ code, ok: false, message: "Order not found" });
           return;
         }
+        // one order = one scan, no matter which code (order no / tracking / consignment) was used
+        const already = doneRef.current.get(order.id);
+        if (already) {
+          if (sound) beepError();
+          setLast({
+            ok: false,
+            text: `Duplicate scan · ${order.order_number}`,
+            sub: `Already scanned (${already})`,
+          });
+          push({ code: order.order_number, ok: false, message: `Duplicate — already scanned (${already})` });
+          return;
+        }
         const step = nextStatus(mode, order.status as string);
         if ("error" in step) {
+
           if (sound) beepError();
           setLast({ ok: false, text: step.error, sub: order.order_number });
           push({ code: order.order_number, ok: false, message: step.error });
@@ -204,7 +219,9 @@ function BulkScanModal({ onClose }: { onClose: () => void }) {
           status: step.to as any,
           note: "Bulk scan handover",
         });
+        doneRef.current.set(order.id, orderStatusLabel(step.to));
         if (sound) beepSuccess();
+
         setLast({
           ok: true,
           text: `${order.order_number} → ${orderStatusLabel(step.to)}`,
