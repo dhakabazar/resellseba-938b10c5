@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { ElementType, ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { Hint } from "@/components/Hint";
 import { Link } from "@tanstack/react-router";
@@ -66,7 +66,7 @@ export function StatCard({
   search?: Record<string, string>;
 }) {
   const t = TONES[tone];
-  const Wrapper: React.ElementType = to ? Link : "div";
+  const Wrapper: ElementType = to ? Link : "div";
   const wrapperProps = to ? ({ to, search } as Record<string, unknown>) : {};
   return (
     <Wrapper
