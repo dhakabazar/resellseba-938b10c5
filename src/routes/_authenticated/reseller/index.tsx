@@ -194,7 +194,7 @@ function ResellerDashboard() {
         }
       />
 
-      <DepositNotice status={deposit} />
+      <DepositNotice status={deposit} place="dashboard" />
 
       <section className="mb-6">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
