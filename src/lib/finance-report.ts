@@ -28,6 +28,25 @@ export type ReportItem = {
 
 const n = (v: number | string | null | undefined) => Number(v ?? 0) || 0;
 
+/**
+ * Single source of truth for order profit.
+ * Profit = customer total − delivery charge − (product cost + packaging cost).
+ * Derived from the order total so a changed delivery charge or product price
+ * always stays correct, instead of trusting a stale stored value.
+ */
+export function orderProfit(o: {
+  total: number | string;
+  shipping_cost: number | string;
+  sa_cost_total: number | string;
+}) {
+  return n(o.total) - n(o.shipping_cost) - n(o.sa_cost_total);
+}
+
+/** Reusable hint shown on every profit report/card so the math is transparent. */
+export const PROFIT_FORMULA_HINT =
+  "Profit = customer total − delivery charge − product cost − packaging cost. Always derived from the order total, so delivery or price changes stay accurate.";
+
+
 /** Money bucket used across all report tables. */
 export type MoneyBucket = {
   orders: number;
