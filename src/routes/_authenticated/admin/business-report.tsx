@@ -14,7 +14,7 @@ import {
   Loader2,
   Download,
   Wallet,
-  PiggyBank,
+  Package,
   Truck,
   Boxes,
   Percent,
