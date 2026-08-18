@@ -184,8 +184,21 @@ function BulkScanModal({ onClose }: { onClose: () => void }) {
           push({ code, ok: false, message: "Order not found" });
           return;
         }
+        // one order = one scan, no matter which code (order no / tracking / consignment) was used
+        const already = doneRef.current.get(order.id);
+        if (already) {
+          if (sound) beepError();
+          setLast({
+            ok: false,
+            text: `Duplicate scan · ${order.order_number}`,
+            sub: `Already scanned (${already})`,
+          });
+          push({ code: order.order_number, ok: false, message: `Duplicate — already scanned (${already})` });
+          return;
+        }
         const step = nextStatus(mode, order.status as string);
         if ("error" in step) {
+
           if (sound) beepError();
           setLast({ ok: false, text: step.error, sub: order.order_number });
           push({ code: order.order_number, ok: false, message: step.error });
