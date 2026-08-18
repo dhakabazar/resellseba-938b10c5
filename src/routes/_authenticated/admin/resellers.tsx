@@ -104,12 +104,15 @@ function ResellersPage() {
   const confirmEmailFn = useServerFn(confirmUserEmail);
   const listEmailStatusFn = useServerFn(listResellerEmailStatus);
   const deleteAuthUserFn = useServerFn(deleteAuthUser);
+  const searchParams = Route.useSearch();
   const [items, setItems] = useState<Reseller[]>([]);
   const [emailStatus, setEmailStatus] = useState<Record<string, { email: string | null; verified: boolean }>>({});
   const [summaries, setSummaries] = useState<Record<string, Summary>>({});
   const [orderCounts, setOrderCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<Filter>("all");
+  const [filter, setFilter] = useState<Filter>(
+    (FILTERS as readonly string[]).includes(searchParams.status ?? "") ? (searchParams.status as Filter) : "all",
+  );
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(20);
