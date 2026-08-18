@@ -48,7 +48,10 @@ function AdminVisitorsPage() {
     )("purge_store_visits");
     setPurging(false);
     setConfirm(false);
-    if (error) return toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     toast.success(`${Number(data ?? 0)} old visit records deleted`);
     void reload();
   }
