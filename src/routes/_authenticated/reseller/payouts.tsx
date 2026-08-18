@@ -9,6 +9,7 @@ import { useDepositStatus } from "@/lib/deposit";
 import { DepositNotice } from "@/components/deposit-notice";
 import { fillText, useDepositSettings } from "@/lib/deposit-settings";
 import { LedgerTimeline, type LedgerRow } from "@/components/ledger-timeline";
+import { ReportCard } from "@/components/report-blocks";
 
 export const Route = createFileRoute("/_authenticated/reseller/payouts")({
   component: PayoutsPage,
