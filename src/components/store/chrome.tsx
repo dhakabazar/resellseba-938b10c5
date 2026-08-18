@@ -133,13 +133,13 @@ function MenuPanel({ node }: { node: MenuNode }) {
     >
       <div
         className={cx(
-          "mt-1 rounded-[var(--st-radius-sm)] border bg-[var(--st-surface)] p-3 shadow-xl",
+          "mt-1 rounded-[var(--st-radius-sm)] border bg-[var(--st-surface)] p-2 shadow-xl",
           borderc,
-          mega ? "grid w-[min(92vw,760px)] grid-cols-2 gap-4 md:grid-cols-3" : "w-56",
+          mega ? "grid w-[min(92vw,760px)] grid-cols-2 gap-4 p-3 md:grid-cols-3" : "w-60",
         )}
       >
         {node.children.map((child) => (
-          <div key={child.id} className={mega ? "min-w-0" : ""}>
+          <div key={child.id} className={mega ? "min-w-0" : "group/sub relative min-w-0"}>
             <MenuLabel
               node={child}
               className={cx(
@@ -153,24 +153,59 @@ function MenuPanel({ node }: { node: MenuNode }) {
                   className="h-10 w-10 shrink-0 rounded-[var(--st-radius-sm)] object-cover"
                 />
               )}
-              <span className="min-w-0">
+              {!mega && child.image_url && (
+                <img src={child.image_url} alt={child.label} className="h-7 w-7 shrink-0 rounded object-cover" />
+              )}
+              <span className="min-w-0 flex-1">
                 <span className="block truncate">{child.label}</span>
                 {mega && child.description && (
                   <span className={cx("block truncate text-[11px]", muted)}>{child.description}</span>
                 )}
               </span>
+              {!mega && child.children.length > 0 && (
+                <ChevronDown className="h-3.5 w-3.5 shrink-0 -rotate-90 opacity-70" />
+              )}
             </MenuLabel>
-            {child.children.length > 0 && (
-              <div className={cx("mt-1 flex flex-col gap-0.5", mega ? "pl-2" : "pl-4")}>
-                {child.children.map((leaf) => (
-                  <MenuLabel
-                    key={leaf.id}
-                    node={leaf}
-                    className={cx("truncate rounded px-2 py-1 text-[12px] hover:text-[var(--st-primary)]", muted)}
-                  />
-                ))}
-              </div>
-            )}
+
+            {child.children.length > 0 &&
+              (mega ? (
+                <div className="mt-1 flex flex-col gap-0.5 pl-2">
+                  {child.children.map((leaf) => (
+                    <MenuLabel
+                      key={leaf.id}
+                      node={leaf}
+                      className={cx("truncate rounded px-2 py-1 text-[12px] hover:text-[var(--st-primary)]", muted)}
+                    />
+                  ))}
+                </div>
+              ) : (
+                /* Third level opens as a side flyout on hover / focus. */
+                <div
+                  className={cx(
+                    "invisible absolute left-full top-0 z-50 -translate-x-1 pl-1 opacity-0 transition-all duration-150",
+                    "group-hover/sub:visible group-hover/sub:translate-x-0 group-hover/sub:opacity-100",
+                    "focus-within:visible focus-within:opacity-100",
+                  )}
+                >
+                  <div
+                    className={cx(
+                      "flex w-56 flex-col gap-0.5 rounded-[var(--st-radius-sm)] border bg-[var(--st-surface)] p-2 shadow-xl",
+                      borderc,
+                    )}
+                  >
+                    {child.children.map((leaf) => (
+                      <MenuLabel
+                        key={leaf.id}
+                        node={leaf}
+                        className={cx(
+                          "truncate rounded-[var(--st-radius-sm)] px-2 py-1.5 text-[13px] hover:bg-[var(--st-bg-alt)] hover:text-[var(--st-primary)]",
+                          muted,
+                        )}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
           </div>
         ))}
       </div>
@@ -178,9 +213,11 @@ function MenuPanel({ node }: { node: MenuNode }) {
   );
 }
 
+
 function StoreNav({ variant }: { variant: "row" | "stack" }) {
   const { code, categories, menu, theme } = useStore();
   const [openId, setOpenId] = useState<string | null>(null);
+  const [openChildId, setOpenChildId] = useState<string | null>(null);
 
   /** No custom menu yet -> keep the automatic category list. */
   const items: MenuNode[] = menu.length
@@ -259,21 +296,37 @@ function StoreNav({ variant }: { variant: "row" | "stack" }) {
               <div className={cx("ml-3 border-l pl-3", borderc)}>
                 {node.children.map((child) => (
                   <div key={child.id}>
-                    <MenuLabel node={child} className={cx("block py-1.5 text-sm", muted)}>
-                      <span className="flex items-center gap-2">
-                        {child.image_url && (
-                          <img src={child.image_url} alt={child.label} className="h-7 w-7 rounded object-cover" />
-                        )}
-                        {child.label}
-                      </span>
-                    </MenuLabel>
-                    {child.children.map((leaf) => (
-                      <MenuLabel key={leaf.id} node={leaf} className={cx("block py-1 pl-4 text-[12px]", muted)} />
-                    ))}
+                    <div className="flex items-center gap-1">
+                      <MenuLabel node={child} className={cx("block flex-1 py-1.5 text-sm", muted)}>
+                        <span className="flex items-center gap-2">
+                          {child.image_url && (
+                            <img src={child.image_url} alt={child.label} className="h-7 w-7 rounded object-cover" />
+                          )}
+                          {child.label}
+                        </span>
+                      </MenuLabel>
+                      {child.children.length > 0 && (
+                        <button
+                          type="button"
+                          aria-label={`Toggle ${child.label}`}
+                          onClick={() => setOpenChildId((v) => (v === child.id ? null : child.id))}
+                          className="rounded p-1.5 hover:bg-[var(--st-bg-alt)]"
+                        >
+                          <ChevronDown
+                            className={cx("h-3.5 w-3.5 transition-transform", openChildId === child.id && "rotate-180")}
+                          />
+                        </button>
+                      )}
+                    </div>
+                    {openChildId === child.id &&
+                      child.children.map((leaf) => (
+                        <MenuLabel key={leaf.id} node={leaf} className={cx("block py-1 pl-4 text-[12px]", muted)} />
+                      ))}
                   </div>
                 ))}
               </div>
             )}
+
           </div>
         ))}
       </nav>
