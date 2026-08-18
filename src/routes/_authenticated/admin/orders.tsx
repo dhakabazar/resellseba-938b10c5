@@ -10,6 +10,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
 import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
+import { BulkScanButton } from "@/components/BulkScanModal";
 import { Loader2, X, Download, PackageCheck, ChevronDown, Plus, MoreVertical, Eye, Phone, CheckCircle2, Settings2, Trash2, Copy, ShoppingCart, Printer, Truck, RefreshCw, TrendingUp, DollarSign, Wallet } from "lucide-react";
 import { CourierLogo, courierLabel, COURIER_BRANDS } from "@/components/courier-brand";
 import { useServerFn } from "@tanstack/react-start";
@@ -296,12 +297,15 @@ function AdminOrdersPage() {
             title="Orders" 
             className="flex-row items-center justify-between"
             actions={
-                <button 
-                    onClick={() => setOpen(true)} 
-                    className="btn-brand inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium"
-                >
-                    <Plus className="h-4 w-4" /> New Order
-                </button>
+                <div className="flex items-center gap-2">
+                  <BulkScanButton onDone={() => load()} />
+                  <button
+                      onClick={() => setOpen(true)}
+                      className="btn-brand inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium"
+                  >
+                      <Plus className="h-4 w-4" /> New Order
+                  </button>
+                </div>
             }
         />
         <div className="mb-4 flex flex-wrap items-center gap-2">

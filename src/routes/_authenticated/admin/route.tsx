@@ -32,6 +32,7 @@ import {
   Target,
 } from "lucide-react";
 import { AppShell, type NavEntry } from "@/components/AppShell";
+import { BulkScanButton } from "@/components/BulkScanModal";
 import { useAuth } from "@/lib/use-auth";
 import { useBrandingTheme } from "@/lib/branding";
 import { Loader2 } from "lucide-react";
@@ -269,6 +270,7 @@ function AdminLayout() {
   return (
     <AppShell
       title={isSuperAdmin ? "Super Admin" : "Staff Panel"}
+      headerRight={<BulkScanButton compact />}
       brand={{ name: brand.name, sub: isSuperAdmin ? "Admin panel" : "Staff panel", logoUrl: brand.logoUrl }}
       nav={filterNav(NAV, permissions, isSuperAdmin)}
       user={{
