@@ -438,6 +438,20 @@ function ResellerDashboard() {
           {!rid && <p className="text-sm text-muted-foreground">Reseller profile pawa jaini.</p>}
         </>
       )}
+
+      {orderOpen && rid && (
+        <NewOrderModal
+          listings={listings}
+          allProducts={allProducts}
+          resellerId={rid}
+          onClose={() => setOrderOpen(false)}
+          onCreated={() => {
+            setOrderOpen(false);
+            void load(range);
+          }}
+        />
+      )}
     </div>
   );
 }
+
