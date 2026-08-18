@@ -35,7 +35,7 @@ import { Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { useDepositStatus } from "@/lib/deposit";
 import { DEFAULT_DEPOSIT_TEXTS, fillText, useDepositSettings } from "@/lib/deposit-settings";
-import { bdt, orderProfit, orderReceived, orderShortfall, isFailedOrder } from "@/lib/finance-report";
+import { bdt, orderProfit, orderReceived, orderShortfall } from "@/lib/finance-report";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getOrderDetails, recheckCourierStatus } from "@/lib/order-details.functions";
