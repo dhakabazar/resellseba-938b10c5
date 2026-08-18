@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { PageHeader } from "@/components/ui-kit";
-import { CLEANUP_TARGETS } from "@/lib/maintenance.server-safe";
+import { CLEANUP_TARGETS } from "@/lib/maintenance-targets";
 import { cleanupStats, runCleanup } from "@/lib/maintenance.functions";
 import { Loader2, RefreshCw, Trash2, Eraser, HardDrive } from "lucide-react";
 import { toast } from "sonner";
