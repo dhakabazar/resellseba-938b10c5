@@ -23,6 +23,8 @@ import {
   Lock,
   Wallet,
   Plus,
+  UserCircle,
+  IdCard,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
@@ -36,6 +38,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ResellerProfile, type ResellerProfileData } from "@/components/ResellerProfile";
 
 type Status = "pending" | "active" | "suspended" | "rejected";
 
@@ -46,6 +49,7 @@ type Reseller = {
   code: string;
   contact_phone: string | null;
   address: string | null;
+  nid_number: string | null;
   status: Status;
   commission_rate: number;
   leader_id: string | null;
@@ -118,6 +122,7 @@ function ResellersPage() {
   const [perPage, setPerPage] = useState(20);
   const [editing, setEditing] = useState<Reseller | null>(null);
   const [depositFor, setDepositFor] = useState<Reseller | null>(null);
+  const [profileFor, setProfileFor] = useState<Reseller | null>(null);
 
   async function load() {
     setLoading(true);
@@ -125,7 +130,7 @@ function ResellersPage() {
       supabase
         .from("resellers")
         .select(
-          "id,user_id,business_name,code,contact_phone,address,status,commission_rate,leader_id,notes,approved_at,created_at,payout_method,payout_account_name,payout_account_number,payout_bank_name,payout_branch,payout_routing,deposit_required,deposit_required_amount,frozen_amount",
+          "id,user_id,business_name,code,contact_phone,address,nid_number,status,commission_rate,leader_id,notes,approved_at,created_at,payout_method,payout_account_name,payout_account_number,payout_bank_name,payout_branch,payout_routing,deposit_required,deposit_required_amount,frozen_amount",
         )
         .order("created_at", { ascending: false }),
       supabase.rpc("admin_reseller_metrics"),
@@ -380,9 +385,34 @@ function ResellersPage() {
                         </span>
                       )}
                     </div>
+                    <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                      <span className="inline-flex items-center gap-1 rounded-md border border-primary/30 bg-primary/5 px-2 py-0.5">
+                        <IdCard className="h-3 w-3 text-primary" />
+                        <span className="text-[10px] uppercase tracking-wide text-muted-foreground">ID</span>
+                        <span className="font-mono text-[11px] font-bold tracking-wider text-primary">{r.code}</span>
+                        <button
+                          type="button"
+                          title="Copy reseller ID"
+                          onClick={() => {
+                            navigator.clipboard.writeText(r.code);
+                            toast.success("Reseller ID copied");
+                          }}
+                          className="text-muted-foreground transition hover:text-foreground"
+                        >
+                          <Copy className="h-3 w-3" />
+                        </button>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setProfileFor(r)}
+                        className="inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[11px] font-medium transition hover:bg-muted"
+                      >
+                        <UserCircle className="h-3 w-3" /> Profile
+                      </button>
+                    </div>
                     <div className="mt-0.5 break-words text-xs text-muted-foreground">
                       {em?.email ? <span>{em.email} · </span> : null}
-                      #{r.code} · {r.contact_phone ?? "no phone"} · Commission {r.commission_rate}%
+                      {r.contact_phone ?? "no phone"} · Commission {r.commission_rate}%
                       {r.leader_id ? " · Leader linked" : ""}
                     </div>
                     <div className="mt-0.5 break-words text-xs text-muted-foreground">
@@ -435,6 +465,9 @@ function ResellersPage() {
                         </DropdownMenuItem>
                       )}
                       <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => setProfileFor(r)}>
+                        <UserCircle className="mr-2 h-4 w-4" /> View profile
+                      </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => setEditing(r)}>
                         <Pencil className="mr-2 h-4 w-4" /> Edit details
                       </DropdownMenuItem>
@@ -500,6 +533,24 @@ function ResellersPage() {
             setEditing(null);
             load();
           }}
+        />
+      )}
+
+      {profileFor && (
+        <ProfileModal
+          reseller={profileFor}
+          summary={summaries[profileFor.id] ?? null}
+          orders={orderCounts[profileFor.id]}
+          email={emailStatus[profileFor.user_id]}
+          leaderName={
+            profileFor.leader_id
+              ? (() => {
+                  const l = items.find((i) => i.id === profileFor.leader_id);
+                  return l ? `${l.business_name} (#${l.code})` : "Leader linked";
+                })()
+              : null
+          }
+          onClose={() => setProfileFor(null)}
         />
       )}
 
@@ -1016,6 +1067,53 @@ function DepositModal({
               }}
             />
           )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProfileModal({
+  reseller,
+  summary,
+  orders,
+  email,
+  leaderName,
+  onClose,
+}: {
+  reseller: Reseller;
+  summary: Summary | null;
+  orders?: number;
+  email?: { email: string | null; verified: boolean };
+  leaderName: string | null;
+  onClose: () => void;
+}) {
+  const data: ResellerProfileData = {
+    ...reseller,
+    commission_rate: Number(reseller.commission_rate),
+    deposit_required_amount: Number(reseller.deposit_required_amount),
+    frozen_amount: Number(reseller.frozen_amount),
+    leader_name: leaderName,
+    email: email?.email ?? null,
+    email_verified: email ? email.verified : null,
+  };
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto bg-black/40 p-0 sm:items-center sm:p-4"
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="surface-card flex max-h-[92dvh] w-full max-w-3xl flex-col rounded-b-none sm:max-h-[88dvh] sm:rounded-lg"
+      >
+        <div className="flex items-center justify-between gap-3 border-b px-4 py-3 sm:px-6 sm:py-4">
+          <h3 className="truncate text-base font-semibold">Reseller profile</h3>
+          <button type="button" onClick={onClose} className="shrink-0 rounded-md p-1 hover:bg-muted">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto bg-muted/20 px-4 py-4 sm:px-6">
+          <ResellerProfile reseller={data} summary={summary} orders={orders} />
         </div>
       </div>
     </div>
