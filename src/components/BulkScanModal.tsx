@@ -171,7 +171,7 @@ function BulkScanModal({ onClose }: { onClose: () => void }) {
       if (!code || busyRef.current) return;
       const nowTs = Date.now();
       const seenAt = seenRef.current.get(code);
-      if (seenAt && nowTs - seenAt < 2500) return;
+      if (seenAt && nowTs - seenAt < 900) return;
       seenRef.current.set(code, nowTs);
 
       busyRef.current = true;
