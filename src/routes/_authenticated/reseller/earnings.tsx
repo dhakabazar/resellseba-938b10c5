@@ -202,7 +202,7 @@ function EarningsPage() {
     { key: "products", label: "Product wise" },
     { key: "trend", label: "Trend" },
     { key: "orders", label: "Order wise" },
-    { key: "payouts", label: "Payout ledger" },
+    { key: "payouts", label: "Money timeline" },
     ...(commissions.length ? [{ key: "commission" as const, label: "Team commission" }] : []),
     { key: "how", label: "How it works" },
   ];
@@ -411,41 +411,6 @@ function EarningsPage() {
       )}
 
       {tab === "payouts" && (
-      <>
-      <ReportCard title="Payout ledger" hint="Withdrawal requests and payment history.">
-        <table className="w-full min-w-[520px] text-sm">
-          <thead className="bg-muted/20 text-center text-[11px] uppercase text-muted-foreground">
-            <tr>
-              <th className="px-2 py-2 text-center">Requested</th>
-              <th className="px-2 py-2 text-center">Amount</th>
-              <th className="px-2 py-2 text-center">Status</th>
-              <th className="px-2 py-2 text-center">Method</th>
-              <th className="px-2 py-2 text-center">Paid at</th>
-            </tr>
-          </thead>
-          <tbody>
-            {payouts.map((p) => (
-              <tr key={p.id} className="border-t">
-                <td className="px-2 py-2 text-center">{new Date(p.requested_at).toLocaleDateString()}</td>
-                <td className="px-2 py-2 text-center font-medium">{bdt(Number(p.amount))}</td>
-                <td className="px-2 py-2 text-center capitalize">{p.status}</td>
-                <td className="px-2 py-2 text-center uppercase text-muted-foreground">{p.method ?? "—"}</td>
-                <td className="px-2 py-2 text-center text-muted-foreground">
-                  {p.paid_at ? new Date(p.paid_at).toLocaleDateString() : "—"}
-                </td>
-              </tr>
-            ))}
-            {payouts.length === 0 && (
-              <tr>
-                <td colSpan={5} className="px-2 py-8 text-center text-muted-foreground">
-                  No payout requests yet.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </ReportCard>
-
       <ReportCard
         title="Money timeline (Ledger)"
         hint="How money comes in (deposit + delivered profit) and how it goes out (withdrawals)."
@@ -454,7 +419,6 @@ function EarningsPage() {
           <LedgerTimeline ledger={ledger} frozen={summary.frozen} available={summary.available} />
         </div>
       </ReportCard>
-      </>
       )}
 
       {tab === "commission" && commissions.length > 0 && (
