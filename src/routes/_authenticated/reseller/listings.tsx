@@ -216,6 +216,7 @@ function ListingsPage() {
 function ListingDetailModal({ id, onClose }: { id: string; onClose: () => void }) {
   const [l, setL] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [active, setActive] = useState(0);
 
   useEffect(() => {
     async function load() {
