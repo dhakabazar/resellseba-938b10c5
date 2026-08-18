@@ -1,4 +1,5 @@
-import { Copy, ExternalLink, Phone, Mail, MapPin, IdCard, Lock, ShieldCheck, AlertTriangle } from "lucide-react";
+import { Copy, ExternalLink, Phone, Mail, MapPin, IdCard, Lock, ShieldCheck, AlertTriangle, ArrowUpRight } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 
 export type ResellerProfileData = {
