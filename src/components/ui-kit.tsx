@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { Hint } from "@/components/Hint";
+import { Link } from "@tanstack/react-router";
 
 export function PageHeader({
   title,
@@ -52,6 +53,8 @@ export function StatCard({
   icon,
   trend,
   tone = "primary",
+  to,
+  search,
 }: {
   label: string;
   value: string | number;
@@ -59,12 +62,17 @@ export function StatCard({
   icon?: ReactNode;
   trend?: { value: string; positive: boolean };
   tone?: StatTone;
+  to?: string;
+  search?: Record<string, string>;
 }) {
   const t = TONES[tone];
+  const Wrapper: React.ElementType = to ? Link : "div";
+  const wrapperProps = to ? ({ to, search } as Record<string, unknown>) : {};
   return (
-    <div
+    <Wrapper
+      {...wrapperProps}
       className={cn(
-        "group relative rounded-xl border bg-card px-4 py-3 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg",
+        "group relative block rounded-xl border bg-card px-4 py-3 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg",
         t.ring,
       )}
     >
@@ -100,7 +108,7 @@ export function StatCard({
       <div className={cn("relative mt-1 truncate text-xl font-black leading-tight tracking-tight sm:text-2xl", t.text)}>
         {value}
       </div>
-    </div>
+    </Wrapper>
   );
 }
 
