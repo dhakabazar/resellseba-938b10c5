@@ -204,7 +204,7 @@ function FinancialsPage() {
 
   /** Courier cost vs delivery collected (delivered orders only). */
   const courierStats = useMemo(() => {
-    const deliveredIds = new Set(scoped.filter((o) => o.status === "delivered").map((o) => o.id));
+    const deliveredIds = new Set(scoped.filter((o) => isRealizedStatus(o.status)).map((o) => o.id));
     const map = new Map<string, { provider: string; shipments: number; cost: number; charge: number }>();
     for (const s of shipments) {
       if (!scopedIds.has(s.order_id)) continue;
@@ -251,7 +251,7 @@ function FinancialsPage() {
       const a = base.get(o.reseller_id);
       if (!a) continue;
       a.orders += 1;
-      if (o.status === "delivered") {
+      if (isRealizedStatus(o.status)) {
         a.delivered += 1;
         a.gross += Number(o.subtotal);
         a.adminCost += Number(o.sa_cost_total);
@@ -600,7 +600,7 @@ function FinancialsPage() {
                     v: bdt(orderProfit(o)),
                     cls:
                       "font-semibold " +
-                      (orderProfit(o) < 0 ? "text-destructive" : o.status === "delivered" ? "text-success" : ""),
+                      (orderProfit(o) < 0 ? "text-destructive" : isRealizedStatus(o.status) ? "text-success" : ""),
                   },
                 ].map((c) => (
                   <div key={c.l}>

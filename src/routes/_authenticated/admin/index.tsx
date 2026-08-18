@@ -95,7 +95,7 @@ function AdminDashboard() {
       supabase
         .from("orders")
         .select("total,shipping_cost,reseller_profit,sa_cost_total,received_amount,packaging_total,status")
-        .eq("status", "delivered")
+        .in("status", ["delivered", "partial"])
         .limit(20000),
       supabase.from("payouts").select("amount,status").limit(20000),
       supabase.from("products").select("is_active,is_featured,stock").limit(20000),
@@ -178,7 +178,7 @@ function AdminDashboard() {
       d.revenue += Number(o.total);
       d.profit += orderProfit(o);
       dayMap.set(key, d);
-      if (o.status === "delivered") {
+      if (isRealizedStatus(o.status)) {
         deliveredOrders += 1;
         revenue += Number(o.total);
         profit += orderProfit(o);

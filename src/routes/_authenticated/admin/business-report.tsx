@@ -183,7 +183,7 @@ function BusinessReportPage() {
       row.buyCost += buy;
       row.packCost += pack;
       row.resellerShare += sell - adminRev;
-      if (o.status === "delivered") {
+      if (isRealizedStatus(o.status)) {
         row.deliveredQty += qty;
         row.deliveredRevenue += adminRev;
         row.deliveredCost += buy + pack;
@@ -207,7 +207,7 @@ function BusinessReportPage() {
 
   /** Courier cost and delivery collection on the scoped set. */
   const delivery = useMemo(() => {
-    const deliveredIds = new Set(scoped.filter((o) => o.status === "delivered").map((o) => o.id));
+    const deliveredIds = new Set(scoped.filter((o) => isRealizedStatus(o.status)).map((o) => o.id));
     const failedIds = new Set(
       scoped.filter((o) => o.status === "returned" || o.status === "pending_return").map((o) => o.id),
     );
@@ -256,7 +256,7 @@ function BusinessReportPage() {
       itemsByOrder.set(i.order_id, arr);
     }
     for (const o of scoped) {
-      if (basis === "delivered" && o.status !== "delivered") continue;
+      if (basis === "delivered" && !isRealizedStatus(o.status)) continue;
       const d = new Date(o.created_at);
       const key =
         gran === "month"
@@ -363,7 +363,7 @@ function BusinessReportPage() {
                     (basis === b ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent")
                   }
                 >
-                  {b === "delivered" ? "Delivered only" : "All orders"}
+                  {b === "delivered" ? "Delivered + partial" : "All orders"}
                 </button>
               ))}
             </div>
@@ -386,7 +386,7 @@ function BusinessReportPage() {
         <StatCard
           label="Admin revenue"
           value={bdt(totals.revenue)}
-          hint={basis === "delivered" ? "Delivered orders" : "All scoped orders"}
+          hint={basis === "delivered" ? "Delivered + partial orders" : "All scoped orders"}
           icon={<Wallet className="h-5 w-5" />}
         />
         <StatCard

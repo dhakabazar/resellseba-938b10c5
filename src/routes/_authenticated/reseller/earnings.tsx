@@ -380,7 +380,7 @@ function EarningsPage() {
                     v: bdt(orderProfit(o)),
                     cls:
                       "font-semibold " +
-                      (orderProfit(o) < 0 ? "text-destructive" : o.status === "delivered" ? "text-success" : ""),
+                      (orderProfit(o) < 0 ? "text-destructive" : isRealizedStatus(o.status) ? "text-success" : ""),
                   },
                 ].map((c) => (
                   <div key={c.l}>

@@ -24,7 +24,7 @@ export const getPublicStats = createServerFn({ method: "GET" }).handler(async ()
   const [pCount, cCount, orders] = await Promise.all([
     supabase.from("products").select("id", { count: "exact", head: true }).eq("is_active", true),
     supabase.from("categories").select("id", { count: "exact", head: true }).eq("is_active", true),
-    supabase.from("orders").select("id", { count: "exact", head: true }).eq("status", "delivered"),
+    supabase.from("orders").select("id", { count: "exact", head: true }).in("status", ["delivered", "partial"]),
   ]);
 
   const [{ data: allCategories }, { data: activeProducts }] = await Promise.all([
