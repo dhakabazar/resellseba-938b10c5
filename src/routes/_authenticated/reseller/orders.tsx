@@ -212,12 +212,12 @@ function OrdersPage() {
         .order("created_at", { ascending: false }),
       supabase
         .from("reseller_listings")
-        .select("id,selling_price,products(id,name,reseller_price,packaging_cost,delivery_inside,delivery_outside,delivery_mode,delivery_flat,og_image_url)")
+        .select("id,selling_price,products(id,name,product_code,reseller_price,packaging_cost,delivery_inside,delivery_outside,delivery_mode,delivery_flat,og_image_url)")
         .eq("reseller_id", r.id)
         .eq("is_active", true),
       supabase
         .from("products")
-        .select("id,name,slug,reseller_price,packaging_cost,delivery_inside,delivery_outside,delivery_mode,delivery_flat,og_image_url,suggested_price")
+        .select("id,name,slug,product_code,reseller_price,packaging_cost,delivery_inside,delivery_outside,delivery_mode,delivery_flat,og_image_url,suggested_price")
         .eq("is_active", true)
         .order("created_at", { ascending: false }),
     ]);

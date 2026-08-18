@@ -11,11 +11,13 @@ import { ResellerProductCalc } from "@/components/price-breakdown";
 import { DataToolbar, Pagination, usePaginated, type FilterDef } from "@/components/data-list";
 import { CopyButton, ImageDownloadTools, stripHtml } from "@/components/store/reseller-tools";
 import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
+import { ProductCodeChip } from "@/components/product-code";
 
 type P = {
   id: string;
   name: string;
   slug: string;
+  product_code: string | null;
   reseller_price: number;
   packaging_cost: number;
   delivery_inside: number;
@@ -77,7 +79,7 @@ function CatalogPage() {
         supabase
           .from("products")
           .select(
-            "id,name,slug,reseller_price,packaging_cost,delivery_inside,delivery_outside,delivery_mode,delivery_flat,suggested_price,stock,og_image_url,brand_id,category_id",
+            "id,name,slug,product_code,reseller_price,packaging_cost,delivery_inside,delivery_outside,delivery_mode,delivery_flat,suggested_price,stock,og_image_url,brand_id,category_id",
           )
           .eq("is_active", true)
           .order("created_at", { ascending: false }),
@@ -98,7 +100,12 @@ function CatalogPage() {
       items.filter((i) => {
         if (q) {
           const t = q.toLowerCase();
-          if (!i.name.toLowerCase().includes(t) && !i.slug.includes(t)) return false;
+          if (
+            !i.name.toLowerCase().includes(t) &&
+            !i.slug.includes(t) &&
+            !String(i.product_code ?? "").toLowerCase().includes(t)
+          )
+            return false;
         }
         if (brand && i.brand_id !== brand) return false;
         if (category && i.category_id !== category) return false;
@@ -253,7 +260,7 @@ function CatalogPage() {
       <DataToolbar
         search={q}
         onSearch={setQ}
-        searchPlaceholder="Search products…"
+        searchPlaceholder="Search by name or product ID…"
         filters={filters}
         perPage={perPage}
         onPerPage={setPerPage}
@@ -345,6 +352,9 @@ function CatalogPage() {
                   )}
                 </div>
                 <div className="p-4">
+                  <div className="mb-1.5">
+                    <ProductCodeChip code={p.product_code} />
+                  </div>
                   <div 
                     className="truncate text-sm font-medium cursor-pointer hover:text-primary transition-colors"
                     onClick={() => setDetailId(p.id)}
@@ -542,9 +552,7 @@ function ProductDetailModal({ id, onClose, brands, categories }: { id: string; o
                   <CopyButton value={p.name} />
                 </div>
                 <div className="mt-2 flex flex-wrap gap-2">
-                  <span className="rounded bg-muted px-2 py-0.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    Code: {p.product_code}
-                  </span>
+                  <ProductCodeChip code={p.product_code} size="md" />
                   {brandName && <span className="rounded bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">{brandName}</span>}
                   {categoryName && <span className="rounded bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">{categoryName}</span>}
                 </div>

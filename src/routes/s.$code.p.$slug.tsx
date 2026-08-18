@@ -6,6 +6,7 @@ import { trackAddToCart, trackViewContent } from "@/lib/tracking";
 import { addToCart } from "@/lib/store-cart";
 import { deliveryLabel } from "@/lib/delivery";
 import { useStore } from "@/components/store/store-context";
+import { ProductCodeChip } from "@/components/product-code";
 import {
   CopyButton,
   ImageDownloadTools,
@@ -163,6 +164,9 @@ function ProductPage() {
             {tools && (
               <CopyButton value={title} className="mt-1.5 flex-none opacity-70 group-hover:opacity-100" />
             )}
+          </div>
+          <div className="mt-2">
+            <ProductCodeChip code={p.product_code} />
           </div>
           {(listing.custom_description || p.short_description) && (
             <p className={cx("mt-3 text-sm leading-relaxed", muted)}>

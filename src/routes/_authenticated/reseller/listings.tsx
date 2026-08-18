@@ -9,6 +9,7 @@ import { Loader2, Trash2, Eye, X } from "lucide-react";
 import { toast } from "sonner";
 import { CopyButton, ImageDownloadTools, stripHtml } from "@/components/store/reseller-tools";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { ProductCodeChip } from "@/components/product-code";
 
 type L = {
   id: string;
@@ -17,6 +18,7 @@ type L = {
   products: {
     name: string;
     slug: string;
+    product_code: string | null;
     reseller_price: number;
     packaging_cost: number;
     delivery_inside: number;
@@ -55,7 +57,7 @@ function ListingsPage() {
     const { data } = await supabase
       .from("reseller_listings")
       .select(
-        "id,selling_price,is_active,products(name,slug,reseller_price,packaging_cost,delivery_inside,delivery_outside,delivery_mode,delivery_flat,og_image_url)",
+        "id,selling_price,is_active,products(name,slug,product_code,reseller_price,packaging_cost,delivery_inside,delivery_outside,delivery_mode,delivery_flat,og_image_url)",
       )
       .eq("reseller_id", r.id)
       .order("created_at", { ascending: false });
@@ -76,7 +78,10 @@ function ListingsPage() {
   const filtered = useMemo(() => {
     const term = q.trim().toLowerCase();
     let out = items.filter((l) => {
-      const okQ = !term || (l.products?.name ?? "").toLowerCase().includes(term);
+      const okQ =
+        !term ||
+        (l.products?.name ?? "").toLowerCase().includes(term) ||
+        String(l.products?.product_code ?? "").toLowerCase().includes(term);
       const okS =
         !status || (status === "active" ? l.is_active : !l.is_active);
       return okQ && okS;
@@ -138,7 +143,7 @@ function ListingsPage() {
       <DataToolbar
         search={q}
         onSearch={setQ}
-        searchPlaceholder="Search listings…"
+        searchPlaceholder="Search by name or product ID…"
         filters={filters}
         perPage={perPage}
         onPerPage={setPerPage}
@@ -172,6 +177,9 @@ function ListingsPage() {
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
+                  <div className="mb-1">
+                    <ProductCodeChip code={l.products?.product_code} />
+                  </div>
                   <div 
                     className="truncate font-medium cursor-pointer hover:text-primary transition-colors"
                     onClick={() => setDetailId(l.id)}
@@ -308,9 +316,7 @@ function ListingDetailModal({ id, onClose }: { id: string; onClose: () => void }
                   <CopyButton value={p.name} />
                 </div>
                 <div className="mt-2 flex flex-wrap gap-2">
-                  <span className="rounded bg-muted px-2 py-0.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    Code: {p.product_code}
-                  </span>
+                  <ProductCodeChip code={p.product_code} size="md" />
                   {p.brands?.name && <span className="rounded bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">{p.brands.name}</span>}
                   {p.categories?.name && <span className="rounded bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">{p.categories.name}</span>}
                 </div>

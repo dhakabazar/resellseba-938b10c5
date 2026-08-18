@@ -4,6 +4,7 @@ import { productDeliveryCharge, deliveryLabel, deliveryMode } from "@/lib/delive
 import { addressError, nameError, normalizePhone, phoneError, sanitizeName } from "@/lib/checkout-validate";
 import { Loader2, Plus, Minus, X, Trash2, Search } from "lucide-react";
 import { toast } from "sonner";
+import { ProductCodeChip } from "@/components/product-code";
 
 type Line = { listing_id?: string; product_id?: string; qty: number; name?: string; price?: number; cost?: number; image?: string; delivery?: any };
 
@@ -60,12 +61,16 @@ export function NewOrderModal({
     const q = query.trim().toLowerCase();
     if (!q) return [];
 
+    const hit = (p: any) =>
+      String(p?.name ?? "").toLowerCase().includes(q) ||
+      String(p?.product_code ?? "").toLowerCase().includes(q);
+
     const listingMatches = listings
-      .filter(l => l.products && l.products.name.toLowerCase().includes(q))
+      .filter(l => l.products && hit(l.products))
       .map(l => ({ type: 'listing' as const, data: l }));
-    
+
     const productMatches = allProducts
-      .filter(p => p.name.toLowerCase().includes(q) && !listings.some(l => l.products?.id === p.id))
+      .filter(p => hit(p) && !listings.some(l => l.products?.id === p.id))
       .map(p => ({ type: 'product' as const, data: p }));
 
     return [...listingMatches, ...productMatches].slice(0, 15);
@@ -378,7 +383,7 @@ export function NewOrderModal({
                         <input
                           value={query}
                           onChange={(e) => setQuery(e.target.value)}
-                          placeholder={isAdmin ? "Search product to add..." : "Search catalog to add..."}
+                          placeholder={isAdmin ? "Search product by name or ID..." : "Search catalog by name or ID..."}
                           className="w-full rounded-xl border bg-background px-9 py-2 text-xs focus:ring-2 focus:ring-primary/20 transition-all"
                         />
                       </div>
@@ -414,8 +419,11 @@ export function NewOrderModal({
                                       <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[8px] font-black text-primary uppercase tracking-tighter">Listing</span>
                                     )}
                                   </div>
-                                  <div className="text-[10px] text-muted-foreground mt-0.5">
-                                    ৳{Number(price).toFixed(0)} · Delivery: ৳{dc.toFixed(0)}
+                                  <div className="mt-1 flex flex-wrap items-center gap-2">
+                                    <ProductCodeChip code={p.product_code} />
+                                    <span className="text-[10px] text-muted-foreground">
+                                      ৳{Number(price).toFixed(0)} · Delivery: ৳{dc.toFixed(0)}
+                                    </span>
                                   </div>
                                 </div>
                                 <div className={`shrink-0 rounded-full p-1.5 transition-all ${inCart ? 'bg-primary text-primary-foreground scale-110' : 'bg-accent hover:bg-primary/20 hover:text-primary'}`}>
@@ -450,6 +458,7 @@ export function NewOrderModal({
                             </div>
                             <div className="min-w-0 flex-1">
                               <div className="truncate text-xs font-black text-foreground">{p.name}</div>
+                              <div className="mt-1"><ProductCodeChip code={p.product_code} /></div>
                               <div className="mt-1.5 flex items-center gap-2">
                                 <span className="text-[9px] font-bold uppercase text-muted-foreground">Sell ৳</span>
                                 <input

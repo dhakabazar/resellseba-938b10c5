@@ -41,7 +41,11 @@ function StoreHome() {
   const results = useMemo(() => {
     if (!q) return listings;
     const term = q.toLowerCase();
-    return listings.filter((l) => store.title(l).toLowerCase().includes(term));
+    return listings.filter(
+      (l) =>
+        store.title(l).toLowerCase().includes(term) ||
+        String(l.product?.product_code ?? "").toLowerCase().includes(term),
+    );
   }, [q, listings, store]);
 
   const featured = listings.filter((l) => l.product?.is_featured).slice(0, 8);
