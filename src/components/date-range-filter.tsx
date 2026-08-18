@@ -60,25 +60,30 @@ export function DateRangeBar({
 }) {
   if (compact) {
     return (
-      <div className="flex flex-wrap items-center justify-end gap-2">
-        <label className="inline-flex items-center gap-1.5">
-          <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" />
-          <span className="text-[11px] font-medium text-muted-foreground">{label}</span>
-          <select
-            value={value.preset}
-            onChange={(e) => {
-              const p = e.target.value as DatePreset;
-              onChange(p === "custom" ? { ...value, preset: "custom" } : { preset: p, from: "", to: "" });
-            }}
-            className="h-7 w-44 rounded-md border bg-background px-1.5 text-xs outline-none focus:ring-2 focus:ring-ring"
-          >
-            {DATE_PRESET_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </label>
+      <div className="flex flex-wrap items-start justify-end gap-2">
+        <div className="flex flex-col items-end gap-1">
+          <label className="inline-flex items-center gap-1.5">
+            <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="text-[11px] font-medium text-muted-foreground">{label}</span>
+            <select
+              value={value.preset}
+              onChange={(e) => {
+                const p = e.target.value as DatePreset;
+                onChange(p === "custom" ? { ...value, preset: "custom" } : { preset: p, from: "", to: "" });
+              }}
+              className="h-7 w-44 rounded-md border bg-background px-1.5 text-xs outline-none focus:ring-2 focus:ring-ring"
+            >
+              {DATE_PRESET_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          {/* Resolved range sits under the dropdown, not beside it. */}
+          <span className="text-[11px] font-semibold text-muted-foreground">{rangeLabel(value)}</span>
+        </div>
+
 
         {value.preset === "custom" && (
           <>
@@ -100,7 +105,6 @@ export function DateRangeBar({
           </>
         )}
 
-        <span className="text-[11px] font-semibold text-muted-foreground">{rangeLabel(value)}</span>
         {right}
       </div>
     );
@@ -127,7 +131,10 @@ export function DateRangeBar({
               </option>
             ))}
           </select>
+          {/* Resolved range shown under the dropdown. */}
+          <span className="text-xs font-semibold text-muted-foreground">{rangeLabel(value)}</span>
         </label>
+
 
         {value.preset === "custom" && (
           <>
@@ -154,7 +161,7 @@ export function DateRangeBar({
           </>
         )}
 
-        <span className="pb-2 text-xs font-semibold text-muted-foreground">{rangeLabel(value)}</span>
+        
         <div className="ml-auto flex items-center gap-2 pb-1">{right}</div>
       </div>
 
