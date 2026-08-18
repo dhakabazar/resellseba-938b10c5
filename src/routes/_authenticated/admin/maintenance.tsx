@@ -6,6 +6,7 @@ import { CLEANUP_TARGETS } from "@/lib/maintenance-targets";
 import { cleanupStats, runCleanup } from "@/lib/maintenance.functions";
 import { Loader2, RefreshCw, Trash2, Eraser, HardDrive } from "lucide-react";
 import { toast } from "sonner";
+import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
 
 export const Route = createFileRoute("/_authenticated/admin/maintenance")({
   component: MaintenancePage,
@@ -28,6 +29,7 @@ function MaintenancePage() {
   const [picked, setPicked] = useState<string[]>(CLEANUP_TARGETS.map((t) => t.key));
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -48,8 +50,6 @@ function MaintenancePage() {
     setPicked((p) => (p.includes(key) ? p.filter((k) => k !== key) : [...p, key]));
 
   async function doClean() {
-    if (picked.length === 0) return toast.error("Select at least one item");
-    if (!confirm("Selected data will be permanently deleted. Continue?")) return;
     setBusy(true);
     try {
       const res = await clean({ data: { keys: picked } });
@@ -60,6 +60,7 @@ function MaintenancePage() {
       toast.error(e?.message ?? "Cleanup failed");
     }
     setBusy(false);
+    setConfirmOpen(false);
   }
 
   async function clearBrowserCache() {
@@ -132,12 +133,24 @@ function MaintenancePage() {
       </div>
 
       <button
-        onClick={doClean}
+        onClick={() => (picked.length === 0 ? toast.error("Select at least one item") : setConfirmOpen(true))}
         disabled={busy}
         className="inline-flex items-center gap-2 rounded-md bg-destructive px-4 py-2.5 text-sm font-bold text-destructive-foreground hover:opacity-90 disabled:opacity-60"
       >
         {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />} Clean selected data
       </button>
+
+      <ConfirmModal
+        isOpen={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        onConfirm={doClean}
+        isLoading={busy}
+        variant="danger"
+        title="Clean selected data?"
+        description="This permanently deletes the selected logs and old records. Orders, products, resellers and money records are not affected."
+        detail={`${picked.length} item(s) · ${picked.reduce((s, k) => s + (rows[k] ?? 0), 0).toLocaleString()} row(s)`}
+        confirmText="Clean now"
+      />
     </div>
   );
 }
