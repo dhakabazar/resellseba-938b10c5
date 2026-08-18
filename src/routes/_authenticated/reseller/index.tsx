@@ -13,6 +13,7 @@ import {
   TrendReportTable,
 } from "@/components/report-blocks";
 import { buildFinanceReport, bdt, type ReportItem, type ReportOrder } from "@/lib/finance-report";
+import { NewOrderModal } from "@/components/NewOrderModal";
 import {
   ShoppingBag,
   TrendingUp,
@@ -24,10 +25,28 @@ import {
   AlertTriangle,
   Truck,
   Award,
-  RefreshCw,
   Package,
+  Plus,
 } from "lucide-react";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from "recharts";
+
+type Listing = {
+  id: string;
+  selling_price: number;
+  products: {
+    id: string;
+    name: string;
+    product_code: string;
+    reseller_price: number;
+    packaging_cost: number;
+    delivery_inside: number;
+    delivery_outside: number;
+    delivery_mode: string | null;
+    delivery_flat: number | null;
+    og_image_url: string | null;
+  } | null;
+};
+
 
 export const Route = createFileRoute("/_authenticated/reseller/")({
   component: ResellerDashboard,
