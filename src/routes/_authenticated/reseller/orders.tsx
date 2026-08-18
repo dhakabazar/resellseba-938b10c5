@@ -155,6 +155,7 @@ function exportCsv(rows: OrderRow[]) {
 
 function OrdersPage() {
   const { user } = useAuth();
+  const { tab: tabParam } = Route.useSearch();
   const [resellerId, setResellerId] = useState<string | null>(null);
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [orderItems, setOrderItems] = useState<OrderItemLite[]>([]);
@@ -164,7 +165,7 @@ function OrdersPage() {
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
-  const [tab, setTab] = useState<OrderTabKey>("new");
+  const [tab, setTab] = useState<OrderTabKey>(tabParam ?? "new");
   const [selected, setSelected] = useState<OrderRow | null>(null);
   const [filters, setFilters] = useState<OrderFilterState>(DEFAULT_ORDER_FILTERS);
   const [searchMode, setSearchMode] = useState<OrderSearchMode>("order");
