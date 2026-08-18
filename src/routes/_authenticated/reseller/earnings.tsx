@@ -225,7 +225,7 @@ function EarningsPage() {
     <div>
       <PageHeader title="Earnings & report" />
 
-      <OrderFilterBar value={filters} onChange={setFilters} total={rows.length} shown={scoped.length} showPerPage />
+      <OrderFilterBar value={filters} onChange={setFilters} total={rows.length} shown={scoped.length} showPerPage variant="report" />
 
       <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard

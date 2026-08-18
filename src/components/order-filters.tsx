@@ -193,6 +193,7 @@ export function OrderFilterBar({
   shown,
   right,
   showPerPage = false,
+  variant = "default",
 }: {
   value: OrderFilterState;
   onChange: (next: OrderFilterState) => void;
@@ -203,6 +204,8 @@ export function OrderFilterBar({
   right?: React.ReactNode;
   /** Show the per-page selector inline (report pages that have no separate one). */
   showPerPage?: boolean;
+  /** Report layout: search takes 40%, filters take 60% and are more compact. */
+  variant?: "default" | "report";
 }) {
   const set = (patch: Partial<OrderFilterState>) => onChange({ ...value, ...patch });
   const dirty = useMemo(
@@ -214,10 +217,12 @@ export function OrderFilterBar({
     [value],
   );
 
+  const isReport = variant === "report";
+
   return (
     <div className="surface-card mb-4 space-y-3 p-3 sm:p-4">
       <div className="flex flex-col gap-2 lg:flex-row lg:items-end">
-        <div className="relative min-w-0 flex-1 lg:pb-[1px]">
+        <div className={`relative min-w-0 lg:pb-[1px] ${isReport ? "lg:w-[40%]" : "flex-1"}`}>
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
             value={value.q}
@@ -236,13 +241,13 @@ export function OrderFilterBar({
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:flex lg:shrink-0 lg:items-end">
+        <div className={`grid grid-cols-2 gap-2 sm:grid-cols-3 lg:flex lg:shrink-0 lg:items-end ${isReport ? "lg:w-[60%]" : ""}`}>
           {resellerOptions && (
             <Select
               label="Reseller"
               value={value.reseller}
               onChange={(v) => set({ reseller: v })}
-              className="lg:w-[190px]"
+              className={isReport ? "lg:w-[150px]" : "lg:w-[190px]"}
             >
               <option value="">All resellers</option>
               {resellerOptions.map((r) => (
@@ -255,7 +260,7 @@ export function OrderFilterBar({
           <Select
             label="Date"
             value={value.datePreset}
-            className="lg:w-[150px]"
+            className={isReport ? "lg:w-[120px]" : "lg:w-[150px]"}
             onChange={(v) =>
               set(
                 v === "custom"
@@ -273,7 +278,7 @@ export function OrderFilterBar({
           <Select
             label="Sort"
             value={value.sort}
-            className="lg:w-[170px]"
+            className={isReport ? "lg:w-[140px]" : "lg:w-[170px]"}
             onChange={(v) => set({ sort: v as OrderFilterState["sort"] })}
           >
             {SORT_OPTIONS.map((o) => (
@@ -286,7 +291,7 @@ export function OrderFilterBar({
             <Select
               label="Per page"
               value={String(value.perPage)}
-              className="lg:w-[92px]"
+              className={isReport ? "lg:w-[80px]" : "lg:w-[92px]"}
               onChange={(v) => set({ perPage: Number(v) })}
             >
               {[10, 20, 50, 100].map((n) => (
