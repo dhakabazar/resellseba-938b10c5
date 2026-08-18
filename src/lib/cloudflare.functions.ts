@@ -60,7 +60,7 @@ export const saveCloudflareConfig = createServerFn({ method: "POST" })
     const { loadConfig, maskConfig } = await import("@/lib/cloudflare.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const patch: Record<string, unknown> = {
+    const patch = {
       account_id: data.account_id.trim() || null,
       zone_id: data.zone_id.trim() || null,
       zone_name: data.zone_name.trim().toLowerCase() || null,
@@ -72,9 +72,9 @@ export const saveCloudflareConfig = createServerFn({ method: "POST" })
       updated_at: new Date().toISOString(),
     };
     const token = (data.api_token ?? "").trim();
-    if (token) patch.api_token = token;
+    const payload = token ? { ...patch, api_token: token } : patch;
 
-    const { error } = await supabaseAdmin.from("cloudflare_config").update(patch).eq("id", 1);
+    const { error } = await supabaseAdmin.from("cloudflare_config").update(payload).eq("id", 1);
     if (error) throw new Response(error.message, { status: 400 });
     return maskConfig(await loadConfig(supabaseAdmin));
   });
@@ -111,8 +111,11 @@ export const getDnsGuide = createServerFn({ method: "GET" })
 type Ctx = { supabase: any; userId: string };
 
 async function isAdmin(ctx: Ctx) {
-  const { hasAnyPermission } = await import("@/lib/cloudflare-access.server");
-  return hasAnyPermission(ctx.supabase, ctx.userId, ["settings.manage", "resellers.manage"]);
+  const { data } = await ctx.supabase.rpc("has_any_permission", {
+    _user_id: ctx.userId,
+    _permissions: ["settings.manage", "resellers.manage"],
+  });
+  return !!data;
 }
 
 /** Which reseller the caller may act on. */
