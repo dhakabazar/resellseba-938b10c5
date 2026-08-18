@@ -161,10 +161,10 @@ function DepositSettingsPage() {
         <div className="surface-card space-y-4 p-6 lg:col-span-2">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
-              <h3 className="text-sm font-semibold">Reseller-facing টেক্সট (ডাইনামিক)</h3>
+              <h3 className="text-sm font-semibold">Reseller-facing text (dynamic)</h3>
               <p className="text-xs text-muted-foreground">
-                <code>{"{due}"}</code>, <code>{"{required}"}</code>, <code>{"{balance}"}</code>,{" "}
-                <code>{"{frozen}"}</code> লিখলে অটোমেটিক টাকার অ্যামাউন্ট বসে যাবে।
+                Use <code>{"{due}"}</code>, <code>{"{required}"}</code>, <code>{"{balance}"}</code>,{" "}
+                <code>{"{frozen}"}</code> and the matching amount will be inserted automatically.
               </p>
             </div>
             <button
@@ -172,7 +172,7 @@ function DepositSettingsPage() {
               onClick={() => setTexts(DEFAULT_DEPOSIT_TEXTS)}
               className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs hover:bg-muted"
             >
-              <RotateCcw className="h-3.5 w-3.5" /> ডিফল্টে ফিরুন
+              <RotateCcw className="h-3.5 w-3.5" /> Reset to default
             </button>
           </div>
 
