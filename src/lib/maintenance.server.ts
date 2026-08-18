@@ -1,16 +1,5 @@
 // Server-only cleanup helpers: purge junk rows that don't need to live in the DB.
-export type CleanupTarget = {
-  key: string;
-  label: string;
-  hint: string;
-};
-
-export const CLEANUP_TARGETS: CleanupTarget[] = [
-  { key: "audit_log", label: "Audit / action log", hint: "Every stored audit event — not used anywhere in the app." },
-  { key: "store_visits", label: "Old store visits", hint: "Visit rows older than 30 days (report only keeps 30 days)." },
-  { key: "courier_events", label: "Old courier webhook events", hint: "Courier callback payloads older than 60 days." },
-  { key: "notification_logs", label: "Old notification logs", hint: "SMS / email / WhatsApp send logs older than 60 days." },
-];
+export { CLEANUP_TARGETS, type CleanupTarget } from "./maintenance-targets";
 
 function daysAgo(days: number) {
   return new Date(Date.now() - days * 86400000).toISOString();
