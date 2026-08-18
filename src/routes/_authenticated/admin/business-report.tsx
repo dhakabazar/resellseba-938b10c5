@@ -380,56 +380,64 @@ function BusinessReportPage() {
         resellerOptions={resellers.map((r) => ({ value: r.id, label: `${r.business_name} (${r.code})` }))}
         total={orders.length}
         shown={scoped.length}
+        showPerPage
+        variant="report"
       />
 
-      <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mb-6 grid gap-4 grid-cols-2 lg:grid-cols-4">
         <StatCard
           label="Admin revenue"
           value={bdt(totals.revenue)}
-          hint={basis === "delivered" ? "Delivered + partial orders" : "All scoped orders"}
-          icon={<Wallet className="h-5 w-5" />}
+          hint={`${basis === "delivered" ? "Delivered + partial orders" : "All scoped orders"} · ${totals.qty} qty · customer paid ${bdt(totals.customerSell)}`}
+          icon={<Wallet className="h-4 w-4" />}
         />
         <StatCard
           label="Product + packaging cost"
           value={bdt(totals.cost)}
-          hint={`Buying ${bdt(totals.buy)} · Pack ${bdt(totals.pack)}`}
-          icon={<Boxes className="h-5 w-5" />}
+          hint={`Buying ${bdt(totals.buy)} · Packaging ${bdt(totals.pack)}`}
+          icon={<Boxes className="h-4 w-4" />}
+          tone="violet"
         />
         <StatCard
           label="Gross profit"
           value={bdt(totals.grossProfit)}
-          hint={`${totals.margin.toFixed(1)}% margin`}
-          icon={<PiggyBank className="h-5 w-5" />}
+          hint={`Admin revenue − product & packaging cost · ${totals.margin.toFixed(1)}% margin`}
+          icon={<Package className="h-4 w-4" />}
+          tone="emerald"
         />
         <StatCard
           label="Net business profit"
           value={bdt(totals.net)}
-          hint="Gross + delivery margin − leader commission"
-          icon={<Percent className="h-5 w-5" />}
+          hint={`Gross profit ${bdt(totals.grossProfit)} + delivery margin ${bdt(delivery.margin)} − leader commission ${bdt(totals.commissionDue)}`}
+          icon={<Percent className="h-4 w-4" />}
         />
         <StatCard
           label="Delivery collected"
           value={bdt(delivery.collected)}
-          hint={`Courier cost ${bdt(delivery.courierCost)}`}
-          icon={<Truck className="h-5 w-5" />}
+          hint={`Delivery charge on ${basis === "delivered" ? "delivered + partial" : "all scoped"} orders · courier bill ${bdt(delivery.courierCost)}`}
+          icon={<Truck className="h-4 w-4" />}
+          tone="sky"
         />
         <StatCard
           label="Delivery margin"
           value={bdt(delivery.margin)}
-          hint="Collected − courier bill"
-          icon={<Truck className="h-5 w-5" />}
+          hint={`Collected ${bdt(delivery.collected)} − courier bill ${bdt(delivery.courierCost)}`}
+          icon={<Truck className="h-4 w-4" />}
+          tone="sky"
         />
         <StatCard
           label="Return courier loss"
           value={bdt(delivery.lostCourierCost)}
-          hint="Returned / pending return shipments"
-          icon={<TrendingDown className="h-5 w-5" />}
+          hint="Courier bill on returned / pending-return shipments — never recovered"
+          icon={<TrendingDown className="h-4 w-4" />}
+          tone="rose"
         />
         <StatCard
           label="Leader commission"
           value={bdt(totals.commissionDue)}
-          hint="Lifetime ledger"
-          icon={<Award className="h-5 w-5" />}
+          hint={`Commission on this date range · paid ${bdt(totals.commissionPaid)}`}
+          icon={<Award className="h-4 w-4" />}
+          tone="amber"
         />
       </div>
 
