@@ -77,7 +77,7 @@ function DepositSettingsPage() {
       .eq("id", 1);
     setBusy(false);
     if (error) return toast.error(error.message);
-    toast.success("ডিপোজিট সেটিং সেভ হয়েছে");
+    toast.success("Deposit settings saved");
   }
 
   if (loading)
@@ -98,7 +98,7 @@ function DepositSettingsPage() {
     <div>
       <PageHeader
         title="Security deposit"
-        description="ডিপোজিট ট্রিগার, ডিফল্ট অ্যামাউন্ট আর reseller-কে দেখানো সব হিন্ট/নোটিফিকেশন টেক্সট এখান থেকেই কনফিগার হবে।"
+        description="Configure the deposit trigger, default amounts, and all reseller-facing hints and notification texts from here."
         actions={
           <button
             onClick={save}
@@ -112,10 +112,9 @@ function DepositSettingsPage() {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="surface-card space-y-3 p-6">
-          <h3 className="text-sm font-semibold">ডিফল্ট রুল (নতুন reseller)</h3>
+          <h3 className="text-sm font-semibold">Default rule (new reseller)</h3>
           <p className="text-xs text-muted-foreground">
-            নতুন reseller signup করলে এই ভ্যালুগুলো বসবে — পরে প্রতিটি reseller-এর “Deposit &amp; freeze” মডাল থেকে আলাদা করে
-            বদলানো যাবে।
+            New resellers will get these values on signup — you can override each reseller later from their “Deposit &amp; freeze” modal.
           </p>
           <label className="flex cursor-pointer items-start gap-3 rounded-md border bg-muted/30 p-3">
             <input
@@ -125,17 +124,17 @@ function DepositSettingsPage() {
               className="mt-0.5 h-4 w-4"
             />
             <span className="text-xs">
-              <span className="block font-medium">ডিপোজিট ট্রিগার ডিফল্ট অন</span>
-              <span className="text-muted-foreground">অফ রাখলে নতুন reseller-রা ডিপোজিট ছাড়াই কাজ করবে।</span>
+              <span className="block font-medium">Enable deposit trigger by default</span>
+              <span className="text-muted-foreground">If off, new resellers can work without a deposit.</span>
             </span>
           </label>
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <label className="mb-1 block text-xs font-medium">ডিফল্ট ডিপোজিট অ্যামাউন্ট (৳)</label>
+              <label className="mb-1 block text-xs font-medium">Default deposit amount (৳)</label>
               <input type="number" min={0} value={amount} onChange={(e) => setAmount(e.target.value)} className={inp} />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium">ডিফল্ট ফ্রিজ অ্যামাউন্ট (৳)</label>
+              <label className="mb-1 block text-xs font-medium">Default freeze amount (৳)</label>
               <input type="number" min={0} value={frozen} onChange={(e) => setFrozen(e.target.value)} className={inp} />
             </div>
           </div>
@@ -143,7 +142,7 @@ function DepositSettingsPage() {
 
         <div className="surface-card space-y-3 p-6">
           <h3 className="flex items-center gap-2 text-sm font-semibold">
-            <ShieldCheck className="h-4 w-4 text-primary" /> লাইভ প্রিভিউ
+            <ShieldCheck className="h-4 w-4 text-primary" /> Live preview
           </h3>
           <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-xs">
             <div className="font-bold text-amber-700 dark:text-amber-300">{fillText(texts.dueTitle, preview)}</div>
