@@ -16,6 +16,7 @@ import {
   Rocket,
   TrendingUp,
   Headphones,
+  UserCircle,
 
 } from "lucide-react";
 import { AppShell, type NavEntry } from "@/components/AppShell";
@@ -64,6 +65,7 @@ const NAV: NavEntry[] = [
       { label: "Domain", to: "/reseller/domain", icon: <Globe className="h-4 w-4" /> },
     ],
   },
+  { label: "My profile", to: "/reseller/profile", icon: <UserCircle className="h-4 w-4" /> },
   { label: "Support", to: "/reseller/support", icon: <Headphones className="h-4 w-4" /> },
 ];
 
