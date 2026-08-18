@@ -17,7 +17,7 @@ import {
   TrendReportTable,
   RawStatusList,
 } from "@/components/report-blocks";
-import { buildFinanceReport, bdt, toCsv, downloadCsv, statusTab, orderProfit, PROFIT_FORMULA_HINT, type ReportItem, type ReportOrder } from "@/lib/finance-report";
+import { buildFinanceReport, bdt, toCsv, downloadCsv, orderProfit, PROFIT_FORMULA_HINT, type ReportItem, type ReportOrder } from "@/lib/finance-report";
 import { orderStatusLabel, orderStatusTone } from "@/lib/courier-status";
 import { OrderItemsStrip, type StripItem } from "@/components/order-items-strip";
 import { Loader2, Wallet, TrendingUp, Clock, CheckCircle2, AlertTriangle, Truck, Download, Award, Package } from "lucide-react";
@@ -137,25 +137,6 @@ function EarningsPage() {
       ),
     [scoped],
   );
-  const packaging = useMemo(() => {
-    const of = (o: Row) =>
-      (o.order_items ?? []).reduce(
-        (sum, i) => sum + (i.product_id ? (productMeta[i.product_id]?.packaging ?? 0) : 0) * Number(i.quantity),
-        0,
-      );
-    let all = 0, delivered = 0;
-    const byTab: Record<string, number> = {};
-    const byOrder: Record<string, number> = {};
-    for (const o of scoped) {
-      const v = of(o);
-      all += v;
-      byOrder[o.id] = v;
-      const t = statusTab(o.status);
-      byTab[t] = (byTab[t] ?? 0) + v;
-      if (o.status === "delivered") delivered += v;
-    }
-    return { all, delivered, byTab, byOrder };
-  }, [scoped, productMeta]);
 
 
   const stripItems = (o: Row): StripItem[] =>

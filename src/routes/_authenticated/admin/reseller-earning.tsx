@@ -21,7 +21,6 @@ import {
   bdt,
   toCsv,
   downloadCsv,
-  statusTab,
   orderProfit,
   PROFIT_FORMULA_HINT,
 
@@ -162,23 +161,6 @@ function FinancialsPage() {
     return m;
   }, [scopedItems]);
 
-  const packaging = useMemo(() => {
-    const of = (id: string) =>
-      (itemsByOrder.get(id) ?? []).reduce(
-        (sum, i) => sum + (i.product_id ? (productMeta[i.product_id]?.packaging ?? 0) : 0) * Number(i.quantity),
-        0,
-      );
-    let all = 0, delivered = 0;
-    const byTab: Record<string, number> = {};
-    for (const o of scoped) {
-      const v = of(o.id);
-      all += v;
-      const t = statusTab(o.status);
-      byTab[t] = (byTab[t] ?? 0) + v;
-      if (o.status === "delivered") delivered += v;
-    }
-    return { all, delivered, byTab };
-  }, [scoped, itemsByOrder, productMeta]);
 
 
   const stripItems = (orderId: string): StripItem[] =>
