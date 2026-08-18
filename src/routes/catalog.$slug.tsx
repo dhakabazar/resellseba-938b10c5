@@ -2,7 +2,9 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { getCatalogProduct } from "@/lib/catalog.functions";
-import { CopyBtn, DownloadBtn } from "@/components/catalog/shell";
+import { CopyBtn } from "@/components/catalog/shell";
+import { ImagePickerButton } from "@/components/catalog/image-picker";
+import { useResellerTools } from "@/components/store/reseller-tools";
 import { bdt } from "@/lib/finance-report";
 import { ArrowLeft, Loader2, Truck } from "lucide-react";
 
