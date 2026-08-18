@@ -285,6 +285,7 @@ function assertNotBlocked(html: string, host: string) {
 export async function scrapeProduct(rawUrl: string): Promise<ImportedProduct> {
   const url = assertSafeUrl(rawUrl);
   const html = await fetchText(url.href);
+  assertNotBlocked(html, url.hostname);
 
   const blocks = jsonLdBlocks(html);
   const product =
@@ -304,11 +305,12 @@ export async function scrapeProduct(rawUrl: string): Promise<ImportedProduct> {
 
   if (!name) throw new Error("Could not read a product name from that link.");
 
-  const descHtml =
-    (typeof product?.description === "string" ? product.description : null) ??
-    meta(html, "og:description", "description", "twitter:description") ??
-    "";
-  const description = toPlainText(descHtml);
+  const ldDesc = typeof product?.description === "string" ? toPlainText(product.description) : "";
+  const metaDesc = toPlainText(meta(html, "og:description", "description", "twitter:description") ?? "");
+  const deepDesc = ldDesc.length > 120 ? "" : harvestDescription(html);
+  // Longest meaningful text wins — Daraz keeps the real detail in module JSON.
+  const description = [ldDesc, deepDesc, metaDesc].sort((a, b) => b.length - a.length)[0] ?? "";
+
 
   const price =
     num(offer?.price) ??
