@@ -166,13 +166,17 @@ function FinancialsPage() {
         0,
       );
     let all = 0, delivered = 0;
+    const byTab: Record<string, number> = {};
     for (const o of scoped) {
       const v = of(o.id);
       all += v;
+      const t = statusTab(o.status);
+      byTab[t] = (byTab[t] ?? 0) + v;
       if (o.status === "delivered") delivered += v;
     }
-    return { all, delivered };
+    return { all, delivered, byTab };
   }, [scoped, itemsByOrder, productMeta]);
+
 
   const stripItems = (orderId: string): StripItem[] =>
     (itemsByOrder.get(orderId) ?? []).map((i, idx) => ({
