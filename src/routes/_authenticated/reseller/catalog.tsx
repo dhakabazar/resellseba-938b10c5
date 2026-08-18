@@ -454,6 +454,7 @@ function ProductDetailModal({ id, onClose, brands, categories }: { id: string; o
   const brandName = brands.find(b => b.id === p.brand_id)?.name;
   const categoryName = categories.find(c => c.id === p.category_id)?.name;
   const imageUrls = [p.og_image_url, ...(p.product_images?.map((i: any) => i.url) || [])].filter(Boolean) as string[];
+  const activeUrl = imageUrls[Math.min(active, imageUrls.length - 1)] ?? null;
   const detailsText = stripHtml([p.short_description, p.description].filter(Boolean).join("\n\n"));
 
   return (
@@ -470,23 +471,31 @@ function ProductDetailModal({ id, onClose, brands, categories }: { id: string; o
           <div className="grid gap-8 md:grid-cols-2">
             <div className="space-y-4">
               <div className="relative aspect-square overflow-hidden rounded-xl border bg-muted">
-                {p.og_image_url ? (
-                  <img src={p.og_image_url} className="h-full w-full object-cover" alt="" />
+                {activeUrl ? (
+                  <img src={activeUrl} className="h-full w-full object-cover" alt="" />
                 ) : (
                   <div className="grid h-full w-full place-items-center text-muted-foreground">No image</div>
                 )}
                 <div className="absolute right-3 top-3 flex flex-col gap-2">
-                  <ImageDownloadTools compact images={imageUrls} activeUrl={p.og_image_url} baseName={p.name} />
+                  <ImageDownloadTools compact images={imageUrls} activeUrl={activeUrl} baseName={p.name} />
                 </div>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {p.product_images?.map((img: any, i: number) => (
-                  <div key={i} className="h-16 w-16 overflow-hidden rounded-lg border bg-muted">
-                    <img src={img.url} className="h-full w-full object-cover" alt="" />
-                  </div>
-                ))}
-              </div>
+              {imageUrls.length > 1 && (
+                <div className="flex flex-wrap gap-2">
+                  {imageUrls.map((url, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setActive(i)}
+                      className={`h-16 w-16 overflow-hidden rounded-lg border bg-muted transition ${i === active ? "ring-2 ring-primary border-primary" : "hover:opacity-80"}`}
+                    >
+                      <img src={url} className="h-full w-full object-cover" alt="" />
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
+
 
             <div className="space-y-6">
               <div>
