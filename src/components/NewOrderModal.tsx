@@ -440,18 +440,37 @@ export function NewOrderModal({
                           <p className="text-[10px] opacity-60 mt-1 uppercase tracking-widest">Cart is empty</p>
                         </div>
                       ) : (
-                        picked.map(({ line, p, sellPrice, listingId }, i) => (
-                          <div key={listingId || p.id} className="group relative flex items-center gap-4 p-4 hover:bg-muted/5 transition-colors">
+                        picked.map(({ line, p, sellPrice, minPrice, listingId }, i) => (
+                          <div key={listingId || p.id} className="group relative flex flex-wrap items-center gap-4 p-4 hover:bg-muted/5 transition-colors">
                             <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl border bg-muted shadow-sm">
                               {p.og_image_url && <img src={p.og_image_url} alt="" className="h-full w-full object-cover" />}
                             </div>
                             <div className="min-w-0 flex-1">
                               <div className="truncate text-xs font-black text-foreground">{p.name}</div>
-                              <div className="mt-1 flex items-center gap-2">
-                                <span className="text-[11px] font-bold text-primary">৳{Number(sellPrice).toFixed(0)}</span>
+                              <div className="mt-1.5 flex items-center gap-2">
+                                <span className="text-[9px] font-bold uppercase text-muted-foreground">Sell ৳</span>
+                                <input
+                                  value={sellPrice}
+                                  inputMode="numeric"
+                                  onChange={(e) => {
+                                    const v = Number(e.target.value) || 0;
+                                    setLines((prev) => prev.map((l, idx) => (idx === i ? { ...l, price: v } : l)));
+                                  }}
+                                  onBlur={() => {
+                                    if (sellPrice < minPrice) {
+                                      setLines((prev) => prev.map((l, idx) => (idx === i ? { ...l, price: minPrice } : l)));
+                                      toast.error(`সর্বনিম্ন বিক্রয় মূল্য ৳${minPrice} — এর নিচে দেওয়া যাবে না`);
+                                    }
+                                  }}
+                                  className={`w-20 rounded-lg border bg-background px-2 py-1 text-[11px] font-bold tabular-nums focus:ring-2 focus:ring-primary/20 ${
+                                    sellPrice < minPrice ? "border-destructive text-destructive" : ""
+                                  }`}
+                                />
+                                <span className="text-[9px] text-muted-foreground/70">min ৳{minPrice}</span>
                                 <span className="text-[10px] text-muted-foreground/60">× {line.qty}</span>
                               </div>
                             </div>
+                            
                             
                             <div className="flex items-center gap-4">
                               <div className="flex items-center rounded-xl border bg-muted/30 p-1">
