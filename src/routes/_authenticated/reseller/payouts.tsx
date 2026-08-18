@@ -387,7 +387,10 @@ function PayoutsPage() {
         {ledger.length === 0 ? (
           <div className="rounded-lg border border-dashed p-6 text-center text-xs text-muted-foreground">এখনো কোনো লেনদেন নেই।</div>
         ) : (
-          <ol className="relative space-y-3 border-l pl-5">
+          <>
+          <LedgerTotals ledger={ledger} frozen={sum.frozen_amount} available={sum.available} />
+          <ol className="relative mt-4 space-y-3 border-l pl-5">
+
             {ledger.map((e, i) => {
               const inflow = e.direction === "in";
               const voided = e.direction === "void";
