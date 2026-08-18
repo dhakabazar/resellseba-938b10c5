@@ -219,7 +219,9 @@ function BulkScanModal({ onClose }: { onClose: () => void }) {
           status: step.to as any,
           note: "Bulk scan handover",
         });
+        doneRef.current.set(order.id, orderStatusLabel(step.to));
         if (sound) beepSuccess();
+
         setLast({
           ok: true,
           text: `${order.order_number} → ${orderStatusLabel(step.to)}`,
