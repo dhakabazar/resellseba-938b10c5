@@ -216,10 +216,12 @@ export function OrderFilterBar({
     [value],
   );
 
+  const isReport = variant === "report";
+
   return (
     <div className="surface-card mb-4 space-y-3 p-3 sm:p-4">
       <div className="flex flex-col gap-2 lg:flex-row lg:items-end">
-        <div className="relative min-w-0 flex-1 lg:pb-[1px]">
+        <div className={`relative min-w-0 lg:pb-[1px] ${isReport ? "lg:w-[40%]" : "flex-1"}`}>
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
             value={value.q}
@@ -238,7 +240,7 @@ export function OrderFilterBar({
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:flex lg:shrink-0 lg:items-end">
+        <div className={`grid grid-cols-2 gap-2 sm:grid-cols-3 lg:flex lg:shrink-0 lg:items-end ${isReport ? "lg:w-[60%]" : ""}`}>
           {resellerOptions && (
             <Select
               label="Reseller"
