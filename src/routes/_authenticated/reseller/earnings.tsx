@@ -289,9 +289,10 @@ function EarningsPage() {
 
       {tab === "overview" && (
       <>
-      <ReportCard title="Order status wise report" hint="Grouped by the tabs on the Orders page.">
-        <StatusReportTable report={report} />
+      <ReportCard title="Order status wise report" hint="Grouped by the tabs on the Orders page. Product cost and packaging cost are shown separately.">
+        <StatusReportTable report={report} packagingByTab={packaging.byTab} packagingAll={packaging.all} />
       </ReportCard>
+
 
       <ReportCard
         title="Cost breakdown"
