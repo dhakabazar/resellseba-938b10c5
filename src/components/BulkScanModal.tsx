@@ -124,14 +124,17 @@ export function BulkScanButton({
         <ScanLine className="h-4 w-4" />
         {compact ? <span className="hidden sm:inline">Bulk scan</span> : <span>Bulk scan</span>}
       </button>
-      {open && (
-        <BulkScanModal
-          onClose={() => {
-            setOpen(false);
-            onDone?.();
-          }}
-        />
-      )}
+      {open && mounted
+        ? createPortal(
+            <BulkScanModal
+              onClose={() => {
+                setOpen(false);
+                onDone?.();
+              }}
+            />,
+            document.body,
+          )
+        : null}
     </>
   );
 }
