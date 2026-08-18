@@ -107,6 +107,9 @@ type OrderRow = {
 type Line = { listing_id?: string; product_id?: string; qty: number; name?: string; price?: number; cost?: number; image?: string; delivery?: any };
 
 export const Route = createFileRoute("/_authenticated/reseller/orders")({
+  validateSearch: (s: Record<string, unknown>): { tab?: OrderTabKey } => ({
+    tab: ORDER_TABS.some((t) => t.key === s.tab) ? (s.tab as OrderTabKey) : undefined,
+  }),
   component: OrdersPage,
 });
 
@@ -152,6 +155,7 @@ function exportCsv(rows: OrderRow[]) {
 
 function OrdersPage() {
   const { user } = useAuth();
+  const { tab: tabParam } = Route.useSearch();
   const [resellerId, setResellerId] = useState<string | null>(null);
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [orderItems, setOrderItems] = useState<OrderItemLite[]>([]);
@@ -161,7 +165,7 @@ function OrdersPage() {
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
-  const [tab, setTab] = useState<OrderTabKey>("new");
+  const [tab, setTab] = useState<OrderTabKey>(tabParam ?? "new");
   const [selected, setSelected] = useState<OrderRow | null>(null);
   const [filters, setFilters] = useState<OrderFilterState>(DEFAULT_ORDER_FILTERS);
   const [searchMode, setSearchMode] = useState<OrderSearchMode>("order");
