@@ -289,7 +289,7 @@ function ResellerDashboard() {
             label="Live Products"
             to="/reseller/listings"
               tone="violet"
-            value={listings.active}
+            value={listingsReport.active}
             icon={<ShoppingBag className="h-4 w-4" />}
             hint="Active listings"
           />
