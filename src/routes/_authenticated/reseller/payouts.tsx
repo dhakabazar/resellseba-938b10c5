@@ -14,6 +14,16 @@ export const Route = createFileRoute("/_authenticated/reseller/payouts")({
 });
 
 type Payout = { id: string; amount: number; status: string; method: string | null; notes: string | null; reference: string | null; created_at: string; paid_at: string | null };
+type LedgerRow = {
+  at: string;
+  kind: "deposit" | "profit" | "payout" | string;
+  direction: "in" | "out" | "void" | string;
+  label: string;
+  reference: string | null;
+  status: string;
+  amount: number;
+  running: number;
+};
 type PayoutMethod = "bkash" | "nagad" | "rocket" | "bank";
 type Profile = {
   payout_method: PayoutMethod | null;
@@ -72,9 +82,13 @@ function PayoutsPage() {
     if (row) setSum({
       delivered_profit: Number(row.delivered_profit), pending_payout: Number(row.pending_payout),
       paid_out: Number(row.paid_out), available: Number(row.available),
+      deposit_balance: Number((row as any).deposit_balance ?? 0),
+      frozen_amount: Number((row as any).frozen_amount ?? 0),
     });
     const { data: p } = await supabase.from("payouts").select("*").eq("reseller_id", r.id).order("created_at", { ascending: false });
     setRows((p ?? []) as Payout[]);
+    const { data: lg } = await supabase.rpc("reseller_ledger", { _reseller_id: r.id, _limit: 200 } as any);
+    setLedger(((lg ?? []) as any[]).map((x) => ({ ...x, amount: Number(x.amount), running: Number(x.running) })) as LedgerRow[]);
     setLoading(false);
   }
 
@@ -186,12 +200,17 @@ function PayoutsPage() {
         </div>
       )}
 
-      <div className="mb-6 grid gap-4 md:grid-cols-4">
+      <div className="mb-3 grid gap-4 md:grid-cols-3 xl:grid-cols-6">
         <StatCard label="Delivered profit" value={`৳${sum.delivered_profit.toLocaleString()}`} icon={<TrendingUp className="h-4 w-4" />} />
+        <StatCard label="Deposit balance" value={`৳${sum.deposit_balance.toLocaleString()}`} icon={<Wallet className="h-4 w-4" />} />
+        <StatCard label="Frozen" value={`৳${sum.frozen_amount.toLocaleString()}`} hint="উইথড্র করা যাবে না" icon={<Clock className="h-4 w-4" />} />
         <StatCard label="Available" value={`৳${sum.available.toLocaleString()}`} hint="Ready to request" icon={<Wallet className="h-4 w-4" />} />
         <StatCard label="Pending" value={`৳${sum.pending_payout.toLocaleString()}`} icon={<Clock className="h-4 w-4" />} />
         <StatCard label="Paid out" value={`৳${sum.paid_out.toLocaleString()}`} icon={<CheckCircle2 className="h-4 w-4" />} />
       </div>
+      <p className="mb-6 rounded-lg border bg-muted/30 px-4 py-2 text-[11px] leading-relaxed text-muted-foreground">
+        হিসাব: ডেলিভার্ড প্রফিট (৳{sum.delivered_profit.toLocaleString()}) + ডিপোজিট (৳{sum.deposit_balance.toLocaleString()}) − রিকোয়েস্ট/পেইড (৳{(sum.pending_payout + sum.paid_out).toLocaleString()}) − ফ্রিজ (৳{sum.frozen_amount.toLocaleString()}) = <span className="font-bold text-foreground">৳{sum.available.toLocaleString()}</span> উইথড্র করা যাবে। ফ্রিজ অ্যামাউন্টের বাইরের ডিপোজিটও তোলা যাবে।
+      </p>
 
       <div className="surface-card mb-6 p-5">
         <div className="mb-3 flex items-center justify-between">
@@ -360,6 +379,53 @@ function PayoutsPage() {
             {rows.length === 0 && (<tr><td colSpan={5} className="p-8 text-center text-muted-foreground">No payouts yet.</td></tr>)}
           </tbody>
         </table>
+      </div>
+
+      <div className="surface-card mt-6 p-5">
+        <div className="mb-1 text-sm font-semibold">টাকার টাইমলাইন (Ledger)</div>
+        <p className="mb-4 text-xs text-muted-foreground">কীভাবে টাকা জমা হচ্ছে (ডিপোজিট + ডেলিভার্ড প্রফিট) আর কীভাবে উইথড্র হচ্ছে — সব এক জায়গায়।</p>
+        {ledger.length === 0 ? (
+          <div className="rounded-lg border border-dashed p-6 text-center text-xs text-muted-foreground">এখনো কোনো লেনদেন নেই।</div>
+        ) : (
+          <ol className="relative space-y-3 border-l pl-5">
+            {ledger.map((e, i) => {
+              const inflow = e.direction === "in";
+              const voided = e.direction === "void";
+              return (
+                <li key={i} className="relative">
+                  <span
+                    className={
+                      "absolute -left-[26px] top-1.5 h-3 w-3 rounded-full ring-4 ring-background " +
+                      (voided ? "bg-muted-foreground/40" : inflow ? "bg-success" : "bg-destructive")
+                    }
+                  />
+                  <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border bg-muted/20 px-3 py-2">
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-medium">{e.label}</div>
+                      <div className="text-[11px] text-muted-foreground">
+                        {new Date(e.at).toLocaleString()} · {e.reference || "—"} ·{" "}
+                        <span className="capitalize">{e.status}</span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div
+                        className={
+                          "text-sm font-bold tabular-nums " +
+                          (voided ? "text-muted-foreground line-through" : inflow ? "text-success" : "text-destructive")
+                        }
+                      >
+                        {inflow ? "+" : "−"}৳{Number(e.amount).toLocaleString()}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground tabular-nums">
+                        ব্যালান্স ৳{Number(e.running).toLocaleString()}
+                      </div>
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
+        )}
       </div>
     </div>
   );

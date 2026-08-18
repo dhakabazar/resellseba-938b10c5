@@ -738,7 +738,7 @@ function OrdersPage() {
             return (
               <div
                 key={o.id}
-                className={`border-b last:border-b-0 ${isMarked ? "bg-primary/5" : ""}`}
+                className={`border-b-[6px] border-muted/70 last:border-b-0 transition-colors hover:bg-muted/10 ${isMarked ? "bg-primary/5" : ""}`}
               >
                 {/* Mobile card */}
 
@@ -859,7 +859,7 @@ function OrdersPage() {
                 </div>
 
                 {/* Desktop row */}
-                <div className="hidden grid-cols-[30px_minmax(60px,0.7fr)_minmax(100px,1fr)_minmax(100px,1.2fr)_60px_80px_100px_60px] items-center gap-2 px-4 py-3 text-sm md:grid">
+                <div className="hidden grid-cols-[30px_minmax(60px,0.7fr)_minmax(100px,1fr)_minmax(100px,1.2fr)_60px_80px_100px_60px] items-center gap-2 border-l-4 border-primary/40 bg-muted/25 px-4 py-3 text-sm md:grid">
                   <div className="flex flex-col items-center gap-1.5">
                     <input
                       type="checkbox"
