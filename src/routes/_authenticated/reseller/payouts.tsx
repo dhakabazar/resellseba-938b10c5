@@ -9,6 +9,7 @@ import { useDepositStatus } from "@/lib/deposit";
 import { DepositNotice } from "@/components/deposit-notice";
 import { fillText, useDepositSettings } from "@/lib/deposit-settings";
 import { LedgerTimeline, type LedgerRow } from "@/components/ledger-timeline";
+import { ReportCard } from "@/components/report-blocks";
 
 export const Route = createFileRoute("/_authenticated/reseller/payouts")({
   component: PayoutsPage,
@@ -441,11 +442,14 @@ function PayoutsPage() {
       )}
 
       {tab === "timeline" && (
-        <div className="surface-card p-4 sm:p-5">
-          <div className="mb-1 text-sm font-semibold">Money timeline (Ledger)</div>
-          <p className="mb-4 text-xs text-muted-foreground">How money comes in (deposit + delivered profit) and how it goes out (withdrawals) — all in one place.</p>
-          <LedgerTimeline ledger={ledger} frozen={sum.frozen_amount} available={sum.available} />
-        </div>
+        <ReportCard
+          title="Money timeline (Ledger)"
+          hint="How money comes in (deposit + delivered profit) and how it goes out (withdrawals)."
+        >
+          <div className="p-4">
+            <LedgerTimeline ledger={ledger} frozen={sum.frozen_amount} available={sum.available} />
+          </div>
+        </ReportCard>
       )}
     </div>
   );

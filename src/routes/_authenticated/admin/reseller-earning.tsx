@@ -6,6 +6,7 @@ import {
   OrderFilterBar,
   applyOrderFilters,
   DEFAULT_ORDER_FILTERS,
+  resolveDateRange,
   type OrderFilterState,
 } from "@/components/order-filters";
 import {
@@ -152,6 +153,19 @@ function FinancialsPage() {
       setLedgerSum({ frozen: Number(row?.frozen_amount ?? 0), available: Number(row?.available ?? 0) });
     })();
   }, [filters.reseller]);
+
+  /** Timeline follows the date filter bar (reseller filter is applied while loading). */
+  const scopedLedger = useMemo(() => {
+    const { fromTs, toTs } = resolveDateRange(filters);
+    if (fromTs === null && toTs === null) return ledger;
+    return ledger.filter((e) => {
+      const t = new Date(e.at).getTime();
+      if (fromTs !== null && t < fromTs) return false;
+      if (toTs !== null && t > toTs) return false;
+      return true;
+    });
+  }, [ledger, filters]);
+
 
   /** Packaging cost shown separately — it is already inside admin cost (sa_cost_total). */
   const itemsByOrder = useMemo(() => {
@@ -670,7 +684,7 @@ function FinancialsPage() {
       >
         <div className="p-4">
           {filters.reseller ? (
-            <LedgerTimeline ledger={ledger} frozen={ledgerSum.frozen} available={ledgerSum.available} />
+            <LedgerTimeline ledger={scopedLedger} frozen={ledgerSum.frozen} available={ledgerSum.available} />
           ) : (
             <div className="rounded-lg border border-dashed p-6 text-center text-xs text-muted-foreground">
               Select a reseller in the filter bar above to see that reseller's money timeline.
