@@ -2,7 +2,9 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { getCatalog } from "@/lib/catalog.functions";
-import { CopyBtn, DownloadBtn, useCatalogBrand } from "@/components/catalog/shell";
+import { CopyBtn, useCatalogBrand } from "@/components/catalog/shell";
+import { ImagePickerButton } from "@/components/catalog/image-picker";
+import { useResellerTools } from "@/components/store/reseller-tools";
 import { bdt } from "@/lib/finance-report";
 import { Boxes, Layers, Loader2, Search, Sparkles, Tag } from "lucide-react";
 
