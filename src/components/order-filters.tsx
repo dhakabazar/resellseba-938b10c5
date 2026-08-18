@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { Search, X, SlidersHorizontal, CalendarDays } from "lucide-react";
 import { FilterOption } from "@/components/data-list";
+import { SearchableSelect } from "@/components/searchable-select";
 
 export type DatePreset =
   | "today"
