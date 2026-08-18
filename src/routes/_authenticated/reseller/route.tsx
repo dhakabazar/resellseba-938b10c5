@@ -63,7 +63,9 @@ const NAV: NavEntry[] = [
     items: [
       { label: "General settings", to: "/reseller/settings", icon: <Store className="h-4 w-4" /> },
       { label: "Theme", to: "/reseller/theme", icon: <Palette className="h-4 w-4" /> },
+      { label: "Header menu", to: "/reseller/menus", icon: <ListTree className="h-4 w-4" /> },
       { label: "Domain", to: "/reseller/domain", icon: <Globe className="h-4 w-4" /> },
+
       { label: "Visitors", to: "/reseller/visitors", icon: <Activity className="h-4 w-4" /> },
     ],
   },
