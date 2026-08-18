@@ -277,7 +277,7 @@ export function RawStatusList({ report, showAdminCost = true }: { report: Financ
           <td className="p-3 text-right">{bdt(report.all.gross)}</td>
           <td className="p-3 text-right">{bdt(report.all.delivery)}</td>
           <td className="p-3 text-right">{bdt(report.all.customerTotal)}</td>
-          {showAdminCost && !split && <td className="p-3 text-right">{bdt(report.all.adminCost)}</td>}
+          {showAdminCost && <td className="p-3 text-right">{bdt(report.all.adminCost)}</td>}
           <td className="p-3 text-right">{bdt(report.all.profit)}</td>
           <td className="p-3 text-right">{bdt(report.avgOrderValue)}</td>
         </tr>
