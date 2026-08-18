@@ -28,6 +28,25 @@ export type ReportItem = {
 
 const n = (v: number | string | null | undefined) => Number(v ?? 0) || 0;
 
+/**
+ * Single source of truth for order profit.
+ * Profit = customer total − delivery charge − (product cost + packaging cost).
+ * Derived from the order total so a changed delivery charge or product price
+ * always stays correct, instead of trusting a stale stored value.
+ */
+export function orderProfit(o: {
+  total: number | string;
+  shipping_cost: number | string;
+  sa_cost_total: number | string;
+}) {
+  return n(o.total) - n(o.shipping_cost) - n(o.sa_cost_total);
+}
+
+/** Reusable hint shown on every profit report/card so the math is transparent. */
+export const PROFIT_FORMULA_HINT =
+  "Profit = customer total − delivery charge − product cost − packaging cost. Always derived from the order total, so delivery or price changes stay accurate.";
+
+
 /** Money bucket used across all report tables. */
 export type MoneyBucket = {
   orders: number;
@@ -53,7 +72,7 @@ function addOrder(b: MoneyBucket, o: ReportOrder) {
   b.delivery += n(o.shipping_cost);
   b.customerTotal += n(o.total);
   b.adminCost += n(o.sa_cost_total);
-  b.profit += n(o.reseller_profit);
+  b.profit += orderProfit(o);
 }
 
 /** status -> order tab key (same buckets as the order list tabs). */
@@ -150,8 +169,9 @@ export function buildFinanceReport(
     const tp = trendMap.get(key) ?? { key, orders: 0, gross: 0, profit: 0, deliveredProfit: 0 };
     tp.orders += 1;
     tp.gross += n(o.subtotal);
-    tp.profit += n(o.reseller_profit);
-    if (o.status === "delivered") tp.deliveredProfit += n(o.reseller_profit);
+    tp.profit += orderProfit(o);
+    if (o.status === "delivered") tp.deliveredProfit += orderProfit(o);
+
     trendMap.set(key, tp);
   }
 

@@ -756,7 +756,7 @@ function OrderDrawer({
   const subtotal = Number(order.subtotal || 0);
   const shipping = Number(order.shipping_cost || 0);
   const saCost = Number(order.sa_cost_total || 0);
-  const profit = Number(order.reseller_profit || 0);
+  const profit = Number(order.total || 0) - Number(order.shipping_cost || 0) - saCost;
   const adminProfit = saCost > 0 ? (subtotal - saCost) : 0; // Simplified logic: Admin profit is what's left after SA cost? Actually saCost is what reseller pays admin.
 
   return (

@@ -17,7 +17,7 @@ import {
   TrendReportTable,
   RawStatusList,
 } from "@/components/report-blocks";
-import { buildFinanceReport, bdt, toCsv, downloadCsv, statusTab, type ReportItem, type ReportOrder } from "@/lib/finance-report";
+import { buildFinanceReport, bdt, toCsv, downloadCsv, statusTab, orderProfit, PROFIT_FORMULA_HINT, type ReportItem, type ReportOrder } from "@/lib/finance-report";
 import { orderStatusLabel, orderStatusTone } from "@/lib/courier-status";
 import { OrderItemsStrip, type StripItem } from "@/components/order-items-strip";
 import { Loader2, Wallet, TrendingUp, Clock, CheckCircle2, AlertTriangle, Truck, Download, Award, Package } from "lucide-react";
@@ -191,7 +191,7 @@ function EarningsPage() {
           Number(o.shipping_cost),
           Number(o.total),
           Number(o.sa_cost_total),
-          Number(o.reseller_profit),
+          orderProfit(o),
         ]),
       ),
     );
@@ -286,6 +286,10 @@ function EarningsPage() {
       </div>
 
       <ReportTabs tabs={tabs} active={tab} onChange={setTab} />
+
+      <p className="mb-6 rounded-lg border border-dashed bg-muted/30 px-4 py-2.5 text-[11px] font-medium leading-relaxed text-muted-foreground">
+        {PROFIT_FORMULA_HINT}
+      </p>
 
       {tab === "overview" && (
       <>
@@ -387,7 +391,7 @@ function EarningsPage() {
                   { l: "Admin cost", v: bdt(Number(o.sa_cost_total)), muted: true },
                   {
                     l: "My profit",
-                    v: bdt(Number(o.reseller_profit)),
+                    v: bdt(orderProfit(o)),
                     cls: "font-semibold " + (o.status === "delivered" ? "text-success" : ""),
                   },
                 ].map((c) => (

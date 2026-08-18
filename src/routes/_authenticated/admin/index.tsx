@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, StatCard } from "@/components/ui-kit";
 import { DateRangeBar, DEFAULT_DATE_RANGE, resolveRange, type DateRangeState } from "@/components/date-range-filter";
-import { bdt, buildFinanceReport, type FinanceReport, type ReportOrder } from "@/lib/finance-report";
+import { bdt, buildFinanceReport, orderProfit, PROFIT_FORMULA_HINT, type FinanceReport, type ReportOrder } from "@/lib/finance-report";
 import { ORDER_TABS } from "@/lib/courier-status";
 import { Package, Users, ShoppingCart, Tag, TrendingUp, Wallet, Loader2, RefreshCw, Award, Clock } from "lucide-react";
 import {
@@ -27,6 +27,7 @@ type DailyRow = { day: string; orders: number; revenue: number; profit: number }
 type ResellerRow = { name: string; sales: number };
 type OrderRow = {
   total: number | string;
+  shipping_cost: number | string;
   reseller_profit: number | string;
   sa_cost_total: number | string;
   created_at: string;
@@ -63,7 +64,7 @@ function AdminDashboard() {
     const { fromTs, toTs } = resolveRange(r);
     let oq = supabase
       .from("orders")
-      .select("total,reseller_profit,sa_cost_total,created_at,status,resellers(business_name)");
+      .select("total,shipping_cost,reseller_profit,sa_cost_total,created_at,status,resellers(business_name)");
     if (fromTs != null) oq = oq.gte("created_at", new Date(fromTs).toISOString());
     if (toTs != null) oq = oq.lte("created_at", new Date(toTs).toISOString());
 
@@ -93,7 +94,7 @@ function AdminDashboard() {
         .limit(20000),
       supabase
         .from("orders")
-        .select("total,reseller_profit,sa_cost_total")
+        .select("total,shipping_cost,reseller_profit,sa_cost_total")
         .eq("status", "delivered")
         .limit(20000),
       supabase.from("payouts").select("amount,status").limit(20000),
@@ -103,7 +104,7 @@ function AdminDashboard() {
       supabase.from("resellers").select("id,status").limit(20000),
       supabase.rpc("admin_reseller_metrics"),
     ]);
-    const d = (delivered.data ?? []) as { total: number | string; reseller_profit: number | string; sa_cost_total: number | string }[];
+    const d = (delivered.data ?? []) as { total: number | string; shipping_cost: number | string; reseller_profit: number | string; sa_cost_total: number | string }[];
     const pay = (payoutsRes.data ?? []) as { amount: number | string; status: string }[];
     const all = (allOrders.data ?? []) as ReportOrder[];
     setOrderReport(buildFinanceReport(all, []));
@@ -141,7 +142,7 @@ function AdminDashboard() {
       orders: all.length,
       deliveredOrders: d.length,
       revenue: d.reduce((s, o) => s + Number(o.total), 0),
-      profit: d.reduce((s, o) => s + Number(o.reseller_profit), 0),
+      profit: d.reduce((s, o) => s + orderProfit(o), 0),
       saCost: d.reduce((s, o) => s + Number(o.sa_cost_total), 0),
       payoutPaid: pay.filter((x) => x.status === "paid").reduce((s, x) => s + Number(x.amount), 0),
       payoutDue: pay
@@ -175,12 +176,12 @@ function AdminDashboard() {
       const d = dayMap.get(key) ?? { day: key.slice(5), orders: 0, revenue: 0, profit: 0 };
       d.orders += 1;
       d.revenue += Number(o.total);
-      d.profit += Number(o.reseller_profit);
+      d.profit += orderProfit(o);
       dayMap.set(key, d);
       if (o.status === "delivered") {
         deliveredOrders += 1;
         revenue += Number(o.total);
-        profit += Number(o.reseller_profit);
+        profit += orderProfit(o);
         saCost += Number(o.sa_cost_total);
       }
       const name = o.resellers?.business_name ?? "—";
@@ -236,7 +237,7 @@ function AdminDashboard() {
             to="/admin/commissions"
             value={bdt(lifetime.profit)}
             icon={<Award className="h-4 w-4" />}
-            hint="Total commissions earned"
+            hint="Total minus delivery, product & packaging cost"
           />
           <StatCard
             label="Pending Payouts"

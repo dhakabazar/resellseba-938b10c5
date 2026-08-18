@@ -204,7 +204,7 @@ function ResellerDashboard() {
               tone="primary"
             value={bdt(lifetime.delivered + commissionLifetime)}
             icon={<TrendingUp className="h-4 w-4" />}
-            hint="Lifetime earnings"
+            hint="Total − delivery − product − packaging"
           />
           <StatCard
             label="Available Balance"
