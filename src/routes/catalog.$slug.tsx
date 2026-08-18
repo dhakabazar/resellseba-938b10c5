@@ -122,9 +122,21 @@ function CatalogDetails() {
 
           <div className="surface-card mt-6 flex flex-wrap items-end gap-6 p-5">
             <div>
-              <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Suggested resell price</div>
+              <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Sale price (suggested)</div>
               <div className="text-3xl font-black text-primary">{bdt(p.price)}</div>
             </div>
+            {showPrices && (
+              <>
+                <div>
+                  <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Admin price</div>
+                  <div className="text-xl font-black">{bdt(p.resellerPrice)}</div>
+                </div>
+                <div>
+                  <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Your profit</div>
+                  <div className="text-xl font-black text-emerald-600">{bdt(Math.max(0, p.price - p.resellerPrice))}</div>
+                </div>
+              </>
+            )}
             {p.weight ? (
               <div>
                 <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Weight</div>
