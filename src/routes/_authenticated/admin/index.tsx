@@ -207,7 +207,19 @@ function AdminDashboard() {
         description="Monitor platform performance, resellers, and financial health."
         actions={
           <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
-            <DateRangeBar value={range} onChange={setRange} compact />
+            <DateRangeBar
+              value={range}
+              onChange={setRange}
+              compact
+              right={
+                <button
+                  onClick={() => setOrderOpen(true)}
+                  className="btn-brand inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold shadow-elegant transition-all hover:opacity-90 active:scale-95"
+                >
+                  <Plus className="h-4 w-4" /> Add order
+                </button>
+              }
+            />
           </div>
         }
       />
