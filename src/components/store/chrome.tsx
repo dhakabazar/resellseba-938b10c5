@@ -1,6 +1,8 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { Menu, Phone, Search, ShoppingBag, X } from "lucide-react";
+import { ChevronDown, Menu, Phone, Search, ShoppingBag, X } from "lucide-react";
+import { menuTarget, type MenuNode } from "@/lib/store-menu";
+
 import { useStore } from "./store-context";
 import { borderc, cx, Heading, muted } from "./ui";
 
