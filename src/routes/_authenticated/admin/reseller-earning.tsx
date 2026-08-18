@@ -28,6 +28,7 @@ import {
 
   type ReportItem,
   type ReportOrder,
+  isRealizedStatus,
 } from "@/lib/finance-report";
 import { OrderItemsStrip, type StripItem } from "@/components/order-items-strip";
 import { LedgerTimeline, type LedgerRow } from "@/components/ledger-timeline";

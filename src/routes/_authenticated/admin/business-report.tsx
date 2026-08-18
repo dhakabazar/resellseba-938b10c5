@@ -9,7 +9,7 @@ import {
   type OrderFilterState,
 } from "@/components/order-filters";
 import { ReportCard, ReportTabs } from "@/components/report-blocks";
-import { bdt, toCsv, downloadCsv, type ReportOrder } from "@/lib/finance-report";
+import { bdt, toCsv, downloadCsv, isRealizedStatus, type ReportOrder } from "@/lib/finance-report";
 import {
   Loader2,
   Download,
