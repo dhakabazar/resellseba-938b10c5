@@ -9,7 +9,7 @@
  * - image URLs must be absolute https and are re-encoded client-side before upload
  */
 
-const MAX_HTML_BYTES = 3 * 1024 * 1024;
+const MAX_HTML_BYTES = 6 * 1024 * 1024;
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 const TIMEOUT_MS = 20_000;
 
