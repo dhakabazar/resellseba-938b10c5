@@ -136,17 +136,17 @@ function AdminVisitorsPage() {
         )}
       </div>
 
-      {confirm && (
-        <ConfirmModal
-          title="Delete visit data older than 30 days?"
-          description="All storefront visit records older than 30 days will be permanently deleted. This cannot be undone."
-          confirmLabel="Delete permanently"
-          tone="danger"
-          loading={purging}
-          onConfirm={purge}
-          onCancel={() => setConfirm(false)}
-        />
-      )}
+      <ConfirmModal
+        isOpen={confirm}
+        onClose={() => setConfirm(false)}
+        onConfirm={purge}
+        title="Delete visit data older than 30 days?"
+        description="All storefront visit records older than 30 days will be permanently deleted. This cannot be undone."
+        confirmText="Delete permanently"
+        variant="danger"
+        isLoading={purging}
+      />
+
     </div>
   );
 }
