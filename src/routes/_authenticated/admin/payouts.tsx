@@ -79,29 +79,34 @@ function StatusPill({ s }: { s: string }) {
 }
 
 function AdminPayouts() {
-  const [rows, setRows] = useState<Row[]>([]);
+  const [allRows, setAllRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<Filter>("pending");
   const [action, setAction] = useState<{ row: Row; status: "approved" | "paid" | "rejected" } | null>(null);
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
 
-  useEffect(() => { load(); }, [filter]);
+  useEffect(() => { load(); }, []);
 
   async function load() {
     setLoading(true);
-    let q = supabase
+    const { data, error } = await supabase
       .from("payouts")
       .select(
         "*, reseller:resellers(code, business_name, payout_method, payout_account_name, payout_account_number, payout_bank_name, payout_branch, payout_routing)",
       )
       .order("created_at", { ascending: false });
-    if (filter !== "all") q = q.eq("status", filter);
-    const { data, error } = await q;
     if (error) toast.error(error.message);
-    setRows((data ?? []) as any);
+    setAllRows((data ?? []) as any);
     setLoading(false);
   }
+
+  const counts = FILTERS.reduce((acc, f) => {
+    acc[f] = f === "all" ? allRows.length : allRows.filter((r) => r.status === f).length;
+    return acc;
+  }, {} as Record<Filter, number>);
+
+  const rows = filter === "all" ? allRows : allRows.filter((r) => r.status === filter);
 
   async function submitAction() {
     if (!action) return;
@@ -132,8 +137,11 @@ function AdminPayouts() {
       <div className="mb-4 flex flex-wrap gap-2">
         {FILTERS.map((f) => (
           <button key={f} onClick={() => setFilter(f)}
-            className={"rounded-full border px-3 py-1 text-xs capitalize transition-colors " + (filter === f ? "border-transparent bg-primary text-primary-foreground" : "hover:bg-muted")}>
+            className={"inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs capitalize transition-colors " + (filter === f ? "border-transparent bg-primary text-primary-foreground" : "hover:bg-muted")}>
             {f}
+            <span className={"rounded-full px-1.5 py-0 text-[10px] font-semibold tabular-nums " + (filter === f ? "bg-primary-foreground/20 text-primary-foreground" : "bg-muted text-muted-foreground")}>
+              {counts[f]}
+            </span>
           </button>
         ))}
       </div>
