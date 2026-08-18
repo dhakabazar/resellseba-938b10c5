@@ -213,17 +213,18 @@ function EarningsPage() {
 
       <OrderFilterBar value={filters} onChange={setFilters} total={rows.length} shown={scoped.length} showPerPage variant="report" />
 
-      <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-6 grid gap-4 grid-cols-2 lg:grid-cols-4">
         <StatCard
-          label="Confirmed profit (delivered)"
+          label="Confirmed profit (settled)"
           value={bdt(summary.delivered_profit)}
-          hint="Lifetime, from delivered orders"
+          hint="Lifetime profit from delivered / partial orders, minus failed-delivery loss"
           icon={<CheckCircle2 className="h-4 w-4" />}
+          tone="emerald"
         />
         <StatCard
           label="Available for withdrawal"
           value={bdt(summary.available)}
-          hint={`Paid ${bdt(summary.paid_out)} · Pending ${bdt(summary.pending_payout)}`}
+          hint={`Paid ${bdt(summary.paid_out)} · Pending ${bdt(summary.pending_payout)} · Frozen ${bdt(summary.frozen)}`}
           icon={<Wallet className="h-4 w-4" />}
         />
         <StatCard
@@ -231,43 +232,41 @@ function EarningsPage() {
           value={bdt(report.pipeline.profit)}
           hint={`${report.pipeline.orders} orders not yet delivered`}
           icon={<Clock className="h-4 w-4" />}
+          tone="sky"
         />
         <StatCard
           label="Team commission (leader)"
           value={bdt(commissionTotals.due)}
           hint={commissions.length ? `Due · Paid ${bdt(commissionTotals.paid)}` : "You are not a team leader"}
           icon={<Award className="h-4 w-4" />}
+          tone="amber"
         />
         <StatCard
           label="Delivered sell value"
           value={bdt(report.realized.gross)}
-          hint={`${report.realized.orders} orders · AOV ${bdt(report.avgOrderValue)}`}
+          hint={`${report.realized.orders} delivered/partial orders · AOV ${bdt(report.avgOrderValue)}`}
           icon={<TrendingUp className="h-4 w-4" />}
         />
         <StatCard
-          label="Admin cost (delivered)"
-          value={bdt(report.realized.adminCost)}
-          hint={`Product ${bdt(report.realized.adminCost - report.realized.packaging)} + packaging ${bdt(report.realized.packaging)}`}
-          icon={<Wallet className="h-4 w-4" />}
+          label="Received from courier"
+          value={bdt(report.realized.received)}
+          hint={`Money actually collected · delivery charge collected ${bdt(report.realized.delivery)} · success ${report.deliveryRate.toFixed(1)}%`}
+          icon={<Truck className="h-4 w-4" />}
+          tone="emerald"
         />
         <StatCard
-          label="Packaging cost (delivered)"
-          value={bdt(report.realized.packaging)}
-          hint={`All orders ${bdt(report.all.packaging)} — already included in admin cost`}
+          label="Admin cost (product + packaging)"
+          value={bdt(report.realized.adminCost)}
+          hint={`Product ${bdt(report.realized.adminCost - report.realized.packaging)} + packaging ${bdt(report.realized.packaging)} (all orders packaging ${bdt(report.all.packaging)})`}
           icon={<Package className="h-4 w-4" />}
           tone="violet"
         />
         <StatCard
-          label="Delivery charge collected"
-          value={bdt(report.realized.delivery)}
-          hint={`Delivery success ${report.deliveryRate.toFixed(1)}%`}
-          icon={<Truck className="h-4 w-4" />}
-        />
-        <StatCard
-          label="Return / cancel loss"
-          value={bdt(report.lost.gross + report.risk.gross)}
+          label="Not received / return loss"
+          value={bdt(report.all.shortfall)}
           hint={`Returned+cancelled ${report.lost.orders} · Pending return ${report.risk.orders} · Return rate ${report.returnRate.toFixed(1)}%`}
           icon={<AlertTriangle className="h-4 w-4" />}
+          tone="rose"
         />
       </div>
 
