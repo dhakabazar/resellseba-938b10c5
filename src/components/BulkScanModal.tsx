@@ -319,7 +319,11 @@ function BulkScanModal({ onClose }: { onClose: () => void }) {
               <label className="mb-1 block text-xs font-medium text-muted-foreground">Scan mode</label>
               <select
                 value={mode}
-                onChange={(e) => setMode(e.target.value as ScanMode)}
+                onChange={(e) => {
+                  setMode(e.target.value as ScanMode);
+                  e.currentTarget.blur();
+                  setTimeout(() => inputRef.current?.focus(), 50);
+                }}
                 className="h-10 w-full rounded-md border bg-background px-2 text-sm outline-none focus:ring-1 focus:ring-primary"
               >
                 {MODES.map((m) => (
