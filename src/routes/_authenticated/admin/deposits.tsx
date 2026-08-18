@@ -26,15 +26,15 @@ export const Route = createFileRoute("/_authenticated/admin/deposits")({
 });
 
 const FIELDS: { key: keyof DepositTexts; label: string; help: string; long?: boolean }[] = [
-  { key: "sectionTitle", label: "সেকশন টাইটেল (reseller panel)", help: "কোনো ভ্যারিয়েবল নেই" },
-  { key: "dueTitle", label: "ডিপোজিট বাকি — নোটিশ টাইটেল", help: "{due}" },
-  { key: "dueBody", label: "ডিপোজিট বাকি — নোটিশ বিবরণ", help: "{required} {balance} {due}", long: true },
-  { key: "okText", label: "ডিপোজিট সম্পন্ন — টেক্সট", help: "{balance}" },
-  { key: "frozenText", label: "ফ্রিজ অ্যামাউন্ট — টেক্সট", help: "{frozen}" },
-  { key: "howToDeposit", label: "কীভাবে ডিপোজিট করবে — হিন্ট", help: "কোনো ভ্যারিয়েবল নেই", long: true },
-  { key: "withdrawWarning", label: "ডিপোজিট/ফ্রিজ উইথড্র ওয়ার্নিং", help: "কোনো ভ্যারিয়েবল নেই", long: true },
-  { key: "orderBlockToast", label: "অর্ডার কনফার্ম ব্লক — টোস্ট", help: "{due}" },
-  { key: "payoutFrozenHint", label: "Payout ফর্ম — ফ্রিজ হিন্ট", help: "{frozen}" },
+  { key: "sectionTitle", label: "Section title (reseller panel)", help: "No variable" },
+  { key: "dueTitle", label: "Deposit due — notice title", help: "{due}" },
+  { key: "dueBody", label: "Deposit due — notice body", help: "{required} {balance} {due}", long: true },
+  { key: "okText", label: "Deposit paid — text", help: "{balance}" },
+  { key: "frozenText", label: "Frozen amount — text", help: "{frozen}" },
+  { key: "howToDeposit", label: "How to deposit — hint", help: "No variable", long: true },
+  { key: "withdrawWarning", label: "Deposit/frozen withdraw warning", help: "No variable", long: true },
+  { key: "orderBlockToast", label: "Order confirm block — toast", help: "{due}" },
+  { key: "payoutFrozenHint", label: "Payout form — frozen hint", help: "{frozen}" },
 ];
 
 function DepositSettingsPage() {
