@@ -41,7 +41,6 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [paymentStatus, setPaymentStatus] = useState("unpaid");
   const [note, setNote] = useState("");
-  const [discount, setDiscount] = useState(0);
   const [shippingMode, setShippingMode] = useState<"auto" | "manual">("auto");
   const [shippingManual, setShippingManual] = useState(0);
   const [query, setQuery] = useState("");
@@ -67,7 +66,6 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
       setPaymentMethod(o.payment_method ?? "cod");
       setPaymentStatus(o.payment_status ?? "unpaid");
       setNote((isAdmin ? o.admin_note : o.reseller_note) ?? "");
-      setDiscount(Number(o.discount ?? 0));
       setShippingManual(Number(o.shipping_cost ?? 0));
       setShippingMode("manual");
       setItems(
@@ -102,16 +100,21 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
     const subtotal = items.reduce((s, it) => s + it.reseller_price * it.quantity, 0);
     const saCost = items.reduce((s, it) => s + it.sa_price * it.quantity, 0);
     const shipping = shippingMode === "auto" ? autoShipping : Number(shippingManual || 0);
-    const disc = Number(discount || 0);
     return {
       subtotal,
       saCost,
       shipping,
-      discount: disc,
-      total: subtotal + shipping - disc,
-      profit: subtotal - saCost - disc,
+      total: subtotal + shipping,
+      profit: subtotal - saCost,
     };
-  }, [items, shippingMode, shippingManual, autoShipping, discount]);
+  }, [items, shippingMode, shippingManual, autoShipping]);
+
+  /** Minimum sell price per line = SA base cost of that item. */
+  function minFor(it: EditItem) {
+    const p = allProducts.find((x) => x.id === it.product_id);
+    const fromProduct = p ? Number(p.reseller_price ?? 0) + Number(p.packaging_cost ?? 0) : 0;
+    return Math.max(fromProduct, Number(it.sa_price ?? 0));
+  }
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -147,6 +150,9 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
     if (items.length === 0) return toast.error("Order needs at least one product.");
     const first = errors.name || errors.phone || errors.address;
     if (first) return toast.error(first);
+    const low = items.find((it) => it.reseller_price < minFor(it));
+    if (low)
+      return toast.error(`${low.product_name}: সর্বনিম্ন বিক্রয় মূল্য ৳${minFor(low)} — এর নিচে সেভ করা যাবে না`);
     setBusy(true);
     try {
       const { error: oe } = await supabase
@@ -163,7 +169,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
           ...(isAdmin ? { admin_note: note || null } : { reseller_note: note || null }),
           subtotal: totals.subtotal,
           shipping_cost: totals.shipping,
-          discount: totals.discount,
+          discount: 0,
           total: totals.total,
           sa_cost_total: totals.saCost,
           reseller_profit: totals.profit,
@@ -398,15 +404,25 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                           </div>
                         </label>
                         <label className="space-y-1">
-                          <span className="text-[9px] font-bold uppercase text-muted-foreground">Sell price</span>
+                          <span className="text-[9px] font-bold uppercase text-muted-foreground">
+                            Sell price · min ৳{minFor(it)}
+                          </span>
                           <input
-                            className={inp}
+                            className={`${inp} ${it.reseller_price < minFor(it) ? "border-destructive text-destructive" : ""}`}
                             value={it.reseller_price}
+                            inputMode="numeric"
                             onChange={(e) =>
                               setItems((prev) =>
                                 prev.map((x) => (x === it ? { ...x, reseller_price: Number(e.target.value) || 0 } : x)),
                               )
                             }
+                            onBlur={() => {
+                              const min = minFor(it);
+                              if (it.reseller_price < min) {
+                                setItems((prev) => prev.map((x) => (x === it ? { ...x, reseller_price: min } : x)));
+                                toast.error(`সর্বনিম্ন বিক্রয় মূল্য ৳${min} — এর নিচে দেওয়া যাবে না`);
+                              }
+                            }}
                           />
                         </label>
                         {isAdmin && (
@@ -438,9 +454,9 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
               {/* Charges */}
               <section className="space-y-3">
                 <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80">
-                  Delivery & discount
+                  Delivery charge
                 </h3>
-                <div className="grid gap-3 sm:grid-cols-3">
+                <div className="grid gap-3 sm:grid-cols-2">
                   <label className="space-y-1">
                     <span className="text-[10px] font-semibold text-muted-foreground">Delivery charge mode</span>
                     <select className={inp} value={shippingMode} onChange={(e) => setShippingMode(e.target.value as any)}>
@@ -457,20 +473,11 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                       onChange={(e) => setShippingManual(Number(e.target.value) || 0)}
                     />
                   </label>
-                  <label className="space-y-1">
-                    <span className="text-[10px] font-semibold text-muted-foreground">Discount</span>
-                    <input
-                      className={inp}
-                      value={discount}
-                      onChange={(e) => setDiscount(Number(e.target.value) || 0)}
-                    />
-                  </label>
                 </div>
 
                 <div className="rounded-xl border bg-muted/20 p-4 text-xs">
                   <Row label="Subtotal" value={totals.subtotal} />
                   <Row label="Delivery" value={totals.shipping} />
-                  <Row label="Discount" value={-totals.discount} />
                   <div className="mt-2 flex justify-between border-t pt-2 text-sm font-bold text-primary">
                     <span>Grand total</span>
                     <span>৳{totals.total.toFixed(0)}</span>
