@@ -427,6 +427,7 @@ function CatalogPage() {
 function ProductDetailModal({ id, onClose, brands, categories }: { id: string; onClose: () => void; brands: Opt[]; categories: Opt[] }) {
   const [p, setP] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [active, setActive] = useState(0);
 
   useEffect(() => {
     async function load() {
