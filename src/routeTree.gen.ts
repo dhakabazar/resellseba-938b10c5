@@ -60,6 +60,7 @@ import { Route as AuthenticatedAdminBusinessReportRouteImport } from './routes/_
 import { Route as AuthenticatedAdminBrandsRouteImport } from './routes/_authenticated/admin/brands'
 import { Route as AuthenticatedAdminAuditRouteImport } from './routes/_authenticated/admin/audit'
 import { Route as AuthenticatedAdminAgentsRouteImport } from './routes/_authenticated/admin/agents'
+import { Route as AuthenticatedAdminAgentReportRouteImport } from './routes/_authenticated/admin/agent-report'
 import { Route as AuthenticatedAdminProductsIndexRouteImport } from './routes/_authenticated/admin/products.index'
 import { Route as SCodePSlugRouteImport } from './routes/s.$code.p.$slug'
 import { Route as SCodeCSlugRouteImport } from './routes/s.$code.c.$slug'
@@ -360,6 +361,12 @@ const AuthenticatedAdminAgentsRoute =
     path: '/agents',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
+const AuthenticatedAdminAgentReportRoute =
+  AuthenticatedAdminAgentReportRouteImport.update({
+    id: '/agent-report',
+    path: '/agent-report',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
 const AuthenticatedAdminProductsIndexRoute =
   AuthenticatedAdminProductsIndexRouteImport.update({
     id: '/products/',
@@ -441,6 +448,7 @@ export interface FileRoutesByFullPath {
   '/catalog/$slug': typeof CatalogSlugRoute
   '/s/$code': typeof SCodeRouteWithChildren
   '/catalog/': typeof CatalogIndexRoute
+  '/admin/agent-report': typeof AuthenticatedAdminAgentReportRoute
   '/admin/agents': typeof AuthenticatedAdminAgentsRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/brands': typeof AuthenticatedAdminBrandsRoute
@@ -501,6 +509,7 @@ export interface FileRoutesByTo {
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/catalog/$slug': typeof CatalogSlugRoute
   '/catalog': typeof CatalogIndexRoute
+  '/admin/agent-report': typeof AuthenticatedAdminAgentReportRoute
   '/admin/agents': typeof AuthenticatedAdminAgentsRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/brands': typeof AuthenticatedAdminBrandsRoute
@@ -567,6 +576,7 @@ export interface FileRoutesById {
   '/catalog/$slug': typeof CatalogSlugRoute
   '/s/$code': typeof SCodeRouteWithChildren
   '/catalog/': typeof CatalogIndexRoute
+  '/_authenticated/admin/agent-report': typeof AuthenticatedAdminAgentReportRoute
   '/_authenticated/admin/agents': typeof AuthenticatedAdminAgentsRoute
   '/_authenticated/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/_authenticated/admin/brands': typeof AuthenticatedAdminBrandsRoute
@@ -633,6 +643,7 @@ export interface FileRouteTypes {
     | '/catalog/$slug'
     | '/s/$code'
     | '/catalog/'
+    | '/admin/agent-report'
     | '/admin/agents'
     | '/admin/audit'
     | '/admin/brands'
@@ -693,6 +704,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/catalog/$slug'
     | '/catalog'
+    | '/admin/agent-report'
     | '/admin/agents'
     | '/admin/audit'
     | '/admin/brands'
@@ -758,6 +770,7 @@ export interface FileRouteTypes {
     | '/catalog/$slug'
     | '/s/$code'
     | '/catalog/'
+    | '/_authenticated/admin/agent-report'
     | '/_authenticated/admin/agents'
     | '/_authenticated/admin/audit'
     | '/_authenticated/admin/brands'
@@ -1186,6 +1199,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAgentsRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/_authenticated/admin/agent-report': {
+      id: '/_authenticated/admin/agent-report'
+      path: '/agent-report'
+      fullPath: '/admin/agent-report'
+      preLoaderRoute: typeof AuthenticatedAdminAgentReportRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
     '/_authenticated/admin/products/': {
       id: '/_authenticated/admin/products/'
       path: '/products'
@@ -1274,6 +1294,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAdminRouteRouteChildren {
+  AuthenticatedAdminAgentReportRoute: typeof AuthenticatedAdminAgentReportRoute
   AuthenticatedAdminAgentsRoute: typeof AuthenticatedAdminAgentsRoute
   AuthenticatedAdminAuditRoute: typeof AuthenticatedAdminAuditRoute
   AuthenticatedAdminBrandsRoute: typeof AuthenticatedAdminBrandsRoute
@@ -1302,6 +1323,7 @@ interface AuthenticatedAdminRouteRouteChildren {
 
 const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren =
   {
+    AuthenticatedAdminAgentReportRoute: AuthenticatedAdminAgentReportRoute,
     AuthenticatedAdminAgentsRoute: AuthenticatedAdminAgentsRoute,
     AuthenticatedAdminAuditRoute: AuthenticatedAdminAuditRoute,
     AuthenticatedAdminBrandsRoute: AuthenticatedAdminBrandsRoute,
