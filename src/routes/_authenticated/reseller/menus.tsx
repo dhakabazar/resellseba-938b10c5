@@ -536,12 +536,12 @@ function MenusPage() {
       </div>
 
       <ConfirmModal
-        open={removeId != null}
+        isOpen={removeId != null}
         title="Menu item remove?"
         description="Ei item ar er niche thaka sob sub-menu remove hoye jabe."
-        confirmLabel="Remove"
-        tone="danger"
-        onCancel={() => setRemoveId(null)}
+        confirmText="Remove"
+        variant="danger"
+        onClose={() => setRemoveId(null)}
         onConfirm={() => {
           if (removeId) removeItem(removeId);
           setRemoveId(null);
