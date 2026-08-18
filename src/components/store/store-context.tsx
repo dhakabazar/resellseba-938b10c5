@@ -77,7 +77,10 @@ export type StoreData = {
   content: ContentReader;
   listings: StoreListing[];
   categories: StoreCategory[];
+  /** reseller-built header menu (empty = fall back to categories) */
+  menu: MenuNode[];
   cart: CartLine[];
+
   cartCount: number;
   byListingId: (id: string) => StoreListing | undefined;
   bySlug: (slug: string) => StoreListing | undefined;
