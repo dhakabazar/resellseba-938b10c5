@@ -134,6 +134,7 @@ export function ResellerProfile({
     admin ? { to: "/admin/orders", search: { reseller: r.id, ...(tab ? { tab } : {}) } } : {};
   const payoutsLink = (status?: string) =>
     admin ? { to: "/admin/payouts", search: { reseller: r.id, ...(status ? { status } : {}) } } : {};
+  const earningLink = () => (admin ? { to: "/admin/reseller-earning", search: { reseller: r.id } } : {});
   const storeUrl = typeof window !== "undefined" ? `${window.location.origin}/s/${r.code}` : `/s/${r.code}`;
   const depositDue = r.deposit_required
     ? Math.max(Number(r.deposit_required_amount ?? 0) - (s?.deposit_balance ?? 0), 0)
@@ -195,7 +196,7 @@ export function ResellerProfile({
         <h3 className="mb-3 text-sm font-semibold">Finance snapshot</h3>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
           <Stat label="Orders" value={orders == null ? "—" : orders.toLocaleString()} {...ordersLink("all")} />
-          <Stat label="Delivered profit" value={money(s?.delivered_profit)} tone="success" {...ordersLink("delivered")} />
+          <Stat label="Delivered profit" value={money(s?.delivered_profit)} tone="success" {...earningLink()} />
           <Stat label="Withdrawable" value={money(s?.available)} {...payoutsLink()} />
           <Stat label="Paid out" value={money(s?.paid_out)} {...payoutsLink("paid")} />
           <Stat label="Payout pending" value={money(s?.pending_payout)} tone="muted" {...payoutsLink("pending")} />
