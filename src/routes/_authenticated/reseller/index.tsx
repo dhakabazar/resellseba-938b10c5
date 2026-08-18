@@ -70,7 +70,7 @@ function ResellerDashboard() {
       let oq = supabase
         .from("orders")
         .select(
-          "id,order_number,reseller_id,status,created_at,subtotal,shipping_cost,discount,total,sa_cost_total,reseller_profit",
+          "id,order_number,reseller_id,status,created_at,subtotal,shipping_cost,discount,total,sa_cost_total,reseller_profit,received_amount,packaging_total",
         )
         .eq("reseller_id", reseller.id);
       if (fromTs != null) oq = oq.gte("created_at", new Date(fromTs).toISOString());
