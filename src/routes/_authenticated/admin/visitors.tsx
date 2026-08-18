@@ -64,20 +64,22 @@ function AdminVisitorsPage() {
         description="Live storefront traffic across all resellers. Only the last 30 days is kept."
       />
 
-      <div className="mb-6 flex flex-wrap items-center gap-3">
-        <RangeTabs value={range} onChange={setRange} />
-        <SearchableSelect
-          options={resellers.map((r) => ({ value: r.id, label: `${r.business_name} (${r.code})` }))}
-          value={selected ?? ""}
-          onChange={(v) => setSelected(v || null)}
-          placeholder="All resellers"
-          searchPlaceholder="Search reseller…"
-          className="w-full sm:w-[240px]"
-        />
+      <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-wrap items-center gap-3">
+          <RangeTabs value={range} onChange={setRange} />
+          <SearchableSelect
+            options={resellers.map((r) => ({ value: r.id, label: `${r.business_name} (${r.code})` }))}
+            value={selected ?? ""}
+            onChange={(v) => setSelected(v || null)}
+            placeholder="All resellers"
+            searchPlaceholder="Search reseller…"
+            className="w-full sm:w-[240px]"
+          />
+        </div>
         <button
           type="button"
           onClick={() => setConfirm(true)}
-          className="ml-auto inline-flex items-center gap-2 rounded-xl border border-rose-500/40 px-3 py-2 text-sm font-semibold text-rose-600 hover:bg-rose-500/10"
+          className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-rose-500/40 px-3 py-2 text-sm font-semibold text-rose-600 hover:bg-rose-500/10"
         >
           {purging ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />} Delete data older than
           30 days
