@@ -31,7 +31,7 @@ import { LedgerTimeline, type LedgerRow } from "@/components/ledger-timeline";
 import { orderStatusLabel, orderStatusTone } from "@/lib/courier-status";
 import { Loader2, Wallet, TrendingUp, Award, PiggyBank, Truck, Download, AlertTriangle, Clock, Package } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/admin/financials")({
+export const Route = createFileRoute("/_authenticated/admin/reseller-earning")({
   component: FinancialsPage,
   head: () => ({
     meta: [

@@ -42,6 +42,7 @@ import { Route as AuthenticatedResellerCatalogRouteImport } from './routes/_auth
 import { Route as AuthenticatedAdminStaffRouteImport } from './routes/_authenticated/admin/staff'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin/settings'
 import { Route as AuthenticatedAdminResellersRouteImport } from './routes/_authenticated/admin/resellers'
+import { Route as AuthenticatedAdminResellerEarningRouteImport } from './routes/_authenticated/admin/reseller-earning'
 import { Route as AuthenticatedAdminPrivacyRouteImport } from './routes/_authenticated/admin/privacy'
 import { Route as AuthenticatedAdminPayoutsRouteImport } from './routes/_authenticated/admin/payouts'
 import { Route as AuthenticatedAdminPaymentsRouteImport } from './routes/_authenticated/admin/payments'
@@ -49,7 +50,6 @@ import { Route as AuthenticatedAdminOrdersRouteImport } from './routes/_authenti
 import { Route as AuthenticatedAdminNotificationsRouteImport } from './routes/_authenticated/admin/notifications'
 import { Route as AuthenticatedAdminMarketingRouteImport } from './routes/_authenticated/admin/marketing'
 import { Route as AuthenticatedAdminLandingRouteImport } from './routes/_authenticated/admin/landing'
-import { Route as AuthenticatedAdminFinancialsRouteImport } from './routes/_authenticated/admin/financials'
 import { Route as AuthenticatedAdminDepositsRouteImport } from './routes/_authenticated/admin/deposits'
 import { Route as AuthenticatedAdminCouriersRouteImport } from './routes/_authenticated/admin/couriers'
 import { Route as AuthenticatedAdminCommissionsRouteImport } from './routes/_authenticated/admin/commissions'
@@ -250,6 +250,12 @@ const AuthenticatedAdminResellersRoute =
     path: '/resellers',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
+const AuthenticatedAdminResellerEarningRoute =
+  AuthenticatedAdminResellerEarningRouteImport.update({
+    id: '/reseller-earning',
+    path: '/reseller-earning',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
 const AuthenticatedAdminPrivacyRoute =
   AuthenticatedAdminPrivacyRouteImport.update({
     id: '/privacy',
@@ -290,12 +296,6 @@ const AuthenticatedAdminLandingRoute =
   AuthenticatedAdminLandingRouteImport.update({
     id: '/landing',
     path: '/landing',
-    getParentRoute: () => AuthenticatedAdminRouteRoute,
-  } as any)
-const AuthenticatedAdminFinancialsRoute =
-  AuthenticatedAdminFinancialsRouteImport.update({
-    id: '/financials',
-    path: '/financials',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
 const AuthenticatedAdminDepositsRoute =
@@ -427,7 +427,6 @@ export interface FileRoutesByFullPath {
   '/admin/commissions': typeof AuthenticatedAdminCommissionsRoute
   '/admin/couriers': typeof AuthenticatedAdminCouriersRoute
   '/admin/deposits': typeof AuthenticatedAdminDepositsRoute
-  '/admin/financials': typeof AuthenticatedAdminFinancialsRoute
   '/admin/landing': typeof AuthenticatedAdminLandingRoute
   '/admin/marketing': typeof AuthenticatedAdminMarketingRoute
   '/admin/notifications': typeof AuthenticatedAdminNotificationsRoute
@@ -435,6 +434,7 @@ export interface FileRoutesByFullPath {
   '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
   '/admin/payouts': typeof AuthenticatedAdminPayoutsRoute
   '/admin/privacy': typeof AuthenticatedAdminPrivacyRoute
+  '/admin/reseller-earning': typeof AuthenticatedAdminResellerEarningRoute
   '/admin/resellers': typeof AuthenticatedAdminResellersRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/staff': typeof AuthenticatedAdminStaffRoute
@@ -484,7 +484,6 @@ export interface FileRoutesByTo {
   '/admin/commissions': typeof AuthenticatedAdminCommissionsRoute
   '/admin/couriers': typeof AuthenticatedAdminCouriersRoute
   '/admin/deposits': typeof AuthenticatedAdminDepositsRoute
-  '/admin/financials': typeof AuthenticatedAdminFinancialsRoute
   '/admin/landing': typeof AuthenticatedAdminLandingRoute
   '/admin/marketing': typeof AuthenticatedAdminMarketingRoute
   '/admin/notifications': typeof AuthenticatedAdminNotificationsRoute
@@ -492,6 +491,7 @@ export interface FileRoutesByTo {
   '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
   '/admin/payouts': typeof AuthenticatedAdminPayoutsRoute
   '/admin/privacy': typeof AuthenticatedAdminPrivacyRoute
+  '/admin/reseller-earning': typeof AuthenticatedAdminResellerEarningRoute
   '/admin/resellers': typeof AuthenticatedAdminResellersRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/staff': typeof AuthenticatedAdminStaffRoute
@@ -547,7 +547,6 @@ export interface FileRoutesById {
   '/_authenticated/admin/commissions': typeof AuthenticatedAdminCommissionsRoute
   '/_authenticated/admin/couriers': typeof AuthenticatedAdminCouriersRoute
   '/_authenticated/admin/deposits': typeof AuthenticatedAdminDepositsRoute
-  '/_authenticated/admin/financials': typeof AuthenticatedAdminFinancialsRoute
   '/_authenticated/admin/landing': typeof AuthenticatedAdminLandingRoute
   '/_authenticated/admin/marketing': typeof AuthenticatedAdminMarketingRoute
   '/_authenticated/admin/notifications': typeof AuthenticatedAdminNotificationsRoute
@@ -555,6 +554,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/payments': typeof AuthenticatedAdminPaymentsRoute
   '/_authenticated/admin/payouts': typeof AuthenticatedAdminPayoutsRoute
   '/_authenticated/admin/privacy': typeof AuthenticatedAdminPrivacyRoute
+  '/_authenticated/admin/reseller-earning': typeof AuthenticatedAdminResellerEarningRoute
   '/_authenticated/admin/resellers': typeof AuthenticatedAdminResellersRoute
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/_authenticated/admin/staff': typeof AuthenticatedAdminStaffRoute
@@ -610,7 +610,6 @@ export interface FileRouteTypes {
     | '/admin/commissions'
     | '/admin/couriers'
     | '/admin/deposits'
-    | '/admin/financials'
     | '/admin/landing'
     | '/admin/marketing'
     | '/admin/notifications'
@@ -618,6 +617,7 @@ export interface FileRouteTypes {
     | '/admin/payments'
     | '/admin/payouts'
     | '/admin/privacy'
+    | '/admin/reseller-earning'
     | '/admin/resellers'
     | '/admin/settings'
     | '/admin/staff'
@@ -667,7 +667,6 @@ export interface FileRouteTypes {
     | '/admin/commissions'
     | '/admin/couriers'
     | '/admin/deposits'
-    | '/admin/financials'
     | '/admin/landing'
     | '/admin/marketing'
     | '/admin/notifications'
@@ -675,6 +674,7 @@ export interface FileRouteTypes {
     | '/admin/payments'
     | '/admin/payouts'
     | '/admin/privacy'
+    | '/admin/reseller-earning'
     | '/admin/resellers'
     | '/admin/settings'
     | '/admin/staff'
@@ -729,7 +729,6 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/commissions'
     | '/_authenticated/admin/couriers'
     | '/_authenticated/admin/deposits'
-    | '/_authenticated/admin/financials'
     | '/_authenticated/admin/landing'
     | '/_authenticated/admin/marketing'
     | '/_authenticated/admin/notifications'
@@ -737,6 +736,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/payments'
     | '/_authenticated/admin/payouts'
     | '/_authenticated/admin/privacy'
+    | '/_authenticated/admin/reseller-earning'
     | '/_authenticated/admin/resellers'
     | '/_authenticated/admin/settings'
     | '/_authenticated/admin/staff'
@@ -1021,6 +1021,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminResellersRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/_authenticated/admin/reseller-earning': {
+      id: '/_authenticated/admin/reseller-earning'
+      path: '/reseller-earning'
+      fullPath: '/admin/reseller-earning'
+      preLoaderRoute: typeof AuthenticatedAdminResellerEarningRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
     '/_authenticated/admin/privacy': {
       id: '/_authenticated/admin/privacy'
       path: '/privacy'
@@ -1068,13 +1075,6 @@ declare module '@tanstack/react-router' {
       path: '/landing'
       fullPath: '/admin/landing'
       preLoaderRoute: typeof AuthenticatedAdminLandingRouteImport
-      parentRoute: typeof AuthenticatedAdminRouteRoute
-    }
-    '/_authenticated/admin/financials': {
-      id: '/_authenticated/admin/financials'
-      path: '/financials'
-      fullPath: '/admin/financials'
-      preLoaderRoute: typeof AuthenticatedAdminFinancialsRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
     '/_authenticated/admin/deposits': {
@@ -1221,7 +1221,6 @@ interface AuthenticatedAdminRouteRouteChildren {
   AuthenticatedAdminCommissionsRoute: typeof AuthenticatedAdminCommissionsRoute
   AuthenticatedAdminCouriersRoute: typeof AuthenticatedAdminCouriersRoute
   AuthenticatedAdminDepositsRoute: typeof AuthenticatedAdminDepositsRoute
-  AuthenticatedAdminFinancialsRoute: typeof AuthenticatedAdminFinancialsRoute
   AuthenticatedAdminLandingRoute: typeof AuthenticatedAdminLandingRoute
   AuthenticatedAdminMarketingRoute: typeof AuthenticatedAdminMarketingRoute
   AuthenticatedAdminNotificationsRoute: typeof AuthenticatedAdminNotificationsRoute
@@ -1229,6 +1228,7 @@ interface AuthenticatedAdminRouteRouteChildren {
   AuthenticatedAdminPaymentsRoute: typeof AuthenticatedAdminPaymentsRoute
   AuthenticatedAdminPayoutsRoute: typeof AuthenticatedAdminPayoutsRoute
   AuthenticatedAdminPrivacyRoute: typeof AuthenticatedAdminPrivacyRoute
+  AuthenticatedAdminResellerEarningRoute: typeof AuthenticatedAdminResellerEarningRoute
   AuthenticatedAdminResellersRoute: typeof AuthenticatedAdminResellersRoute
   AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
   AuthenticatedAdminStaffRoute: typeof AuthenticatedAdminStaffRoute
@@ -1248,7 +1248,6 @@ const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren
     AuthenticatedAdminCommissionsRoute: AuthenticatedAdminCommissionsRoute,
     AuthenticatedAdminCouriersRoute: AuthenticatedAdminCouriersRoute,
     AuthenticatedAdminDepositsRoute: AuthenticatedAdminDepositsRoute,
-    AuthenticatedAdminFinancialsRoute: AuthenticatedAdminFinancialsRoute,
     AuthenticatedAdminLandingRoute: AuthenticatedAdminLandingRoute,
     AuthenticatedAdminMarketingRoute: AuthenticatedAdminMarketingRoute,
     AuthenticatedAdminNotificationsRoute: AuthenticatedAdminNotificationsRoute,
@@ -1256,6 +1255,8 @@ const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren
     AuthenticatedAdminPaymentsRoute: AuthenticatedAdminPaymentsRoute,
     AuthenticatedAdminPayoutsRoute: AuthenticatedAdminPayoutsRoute,
     AuthenticatedAdminPrivacyRoute: AuthenticatedAdminPrivacyRoute,
+    AuthenticatedAdminResellerEarningRoute:
+      AuthenticatedAdminResellerEarningRoute,
     AuthenticatedAdminResellersRoute: AuthenticatedAdminResellersRoute,
     AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
     AuthenticatedAdminStaffRoute: AuthenticatedAdminStaffRoute,
