@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/ui-kit";
 import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
 import { RangeTabs, StoreVisitsReport, useLeaderboard } from "@/components/store-visits-report";
 import type { VisitRange } from "@/lib/store-visits";
+import { SearchableSelect } from "@/components/searchable-select";
 
 export const Route = createFileRoute("/_authenticated/admin/visitors")({
   component: AdminVisitorsPage,
@@ -65,18 +66,14 @@ function AdminVisitorsPage() {
 
       <div className="mb-6 flex flex-wrap items-center gap-3">
         <RangeTabs value={range} onChange={setRange} />
-        <select
+        <SearchableSelect
+          options={resellers.map((r) => ({ value: r.id, label: `${r.business_name} (${r.code})` }))}
           value={selected ?? ""}
-          onChange={(e) => setSelected(e.target.value || null)}
-          className="h-10 min-w-[220px] rounded-xl border bg-card px-3 text-sm"
-        >
-          <option value="">All resellers</option>
-          {resellers.map((r) => (
-            <option key={r.id} value={r.id}>
-              {r.business_name} ({r.code})
-            </option>
-          ))}
-        </select>
+          onChange={(v) => setSelected(v || null)}
+          placeholder="All resellers"
+          searchPlaceholder="Search reseller…"
+          className="w-full sm:w-[240px]"
+        />
         <button
           type="button"
           onClick={() => setConfirm(true)}

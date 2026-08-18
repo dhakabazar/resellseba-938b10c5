@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { SearchableSelect } from "@/components/searchable-select";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/ui-kit";
 import { Loader2, Check, X, Wallet, Copy, Phone, Landmark, ChevronDown, Search, Trash2 } from "lucide-react";
@@ -77,83 +78,6 @@ function PayoutAccount({ r, fallback }: { r: Reseller | null; fallback: string |
         {isBank && r.payout_branch ? ` · ${r.payout_branch}` : ""}
         {isBank && r.payout_routing ? ` · Routing ${r.payout_routing}` : ""}
       </div>
-    </div>
-  );
-}
-
-function ResellerPicker({
-  options,
-  value,
-  onChange,
-}: {
-  options: { id: string; label: string }[];
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const [q, setQ] = useState("");
-  const boxRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function onDoc(e: MouseEvent) {
-      if (boxRef.current && !boxRef.current.contains(e.target as Node)) setOpen(false);
-    }
-    document.addEventListener("mousedown", onDoc);
-    return () => document.removeEventListener("mousedown", onDoc);
-  }, []);
-
-  const filtered = useMemo(() => {
-    const t = q.trim().toLowerCase();
-    return t ? options.filter((o) => o.label.toLowerCase().includes(t)) : options;
-  }, [options, q]);
-
-  const selected = options.find((o) => o.id === value);
-
-  return (
-    <div ref={boxRef} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="flex h-10 w-full min-w-[200px] items-center justify-between gap-2 rounded-md border bg-background px-3 text-sm"
-        title="Filter by reseller"
-      >
-        <span className="truncate">{selected ? selected.label : "All resellers"}</span>
-        <ChevronDown className="h-4 w-4 shrink-0 opacity-60" />
-      </button>
-      {open && (
-        <div className="absolute right-0 z-30 mt-1 w-[min(320px,80vw)] rounded-md border bg-popover p-2 shadow-lg">
-          <div className="mb-2 flex items-center gap-2 rounded-md border px-2">
-            <Search className="h-3.5 w-3.5 opacity-60" />
-            <input
-              autoFocus
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Search reseller…"
-              className="h-8 w-full bg-transparent text-sm outline-none"
-            />
-          </div>
-          <div className="max-h-64 overflow-y-auto">
-            <button
-              type="button"
-              onClick={() => { onChange(""); setOpen(false); }}
-              className={"w-full rounded px-2 py-1.5 text-left text-sm hover:bg-muted " + (!value ? "bg-muted font-medium" : "")}
-            >
-              All resellers
-            </button>
-            {filtered.map((o) => (
-              <button
-                key={o.id}
-                type="button"
-                onClick={() => { onChange(o.id); setOpen(false); }}
-                className={"w-full truncate rounded px-2 py-1.5 text-left text-sm hover:bg-muted " + (value === o.id ? "bg-muted font-medium" : "")}
-              >
-                {o.label}
-              </button>
-            ))}
-            {filtered.length === 0 && <p className="px-2 py-2 text-xs text-muted-foreground">No reseller found.</p>}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -269,7 +193,7 @@ function AdminPayouts() {
         searchPlaceholder="Search reseller, account, reference…"
         perPage={perPage}
         onPerPage={setPerPage}
-        right={<ResellerPicker options={resellerOptions} value={resellerFilter} onChange={setResellerFilter} />}
+        right={<SearchableSelect options={resellerOptions.map((o) => ({ value: o.id, label: o.label }))} value={resellerFilter} onChange={setResellerFilter} placeholder="All resellers" searchPlaceholder="Search reseller…" className="w-full sm:w-[240px]" align="end" />}
       />
 
       <div className="mb-4 flex flex-wrap gap-2">
