@@ -89,7 +89,7 @@ export function agentCommission(base: number, rate: number | string) {
 
 /** Aggregate reseller-level and agent-level performance from raw orders. */
 export function buildAgentPerformance(
-  agent: { id: string; sale_target: number | string },
+  agent: { id: string; sale_target: number | string; commission_rate?: number | string | null },
   resellers: Array<{ id: string; business_name: string; code: string; contact_phone: string | null; status: string }>,
   orders: AgentOrder[],
 ): AgentPerformance {
@@ -129,6 +129,8 @@ export function buildAgentPerformance(
   const rows = Array.from(byReseller.values()).sort((a, b) => b.sales - a.sales);
   const target = Number(agent.sale_target ?? 0) || 0;
   const sales = rows.reduce((s, r) => s + r.sales, 0);
+  const rate = Number(agent.commission_rate ?? 0) || 0;
+  const commissionBase = rows.reduce((s, r) => s + r.profit, 0);
 
   return {
     agentId: agent.id,
@@ -140,12 +142,108 @@ export function buildAgentPerformance(
     delivered: rows.reduce((s, r) => s + r.delivered, 0),
     failed: rows.reduce((s, r) => s + r.failed, 0),
     sales,
-    profit: rows.reduce((s, r) => s + r.profit, 0),
+    profit: commissionBase,
     target,
     achievedPct: target > 0 ? Math.round((sales / target) * 100) : 0,
     gap: Math.max(target - sales, 0),
+    rate,
+    commissionBase,
+    commission: agentCommission(commissionBase, rate),
   };
 }
+
+/** Money summary for one agent: earned commission vs what admin already paid. */
+export type AgentSettlement = {
+  earned: number;
+  pending: number; // requested, not approved yet
+  approved: number; // approved, not paid yet
+  paid: number; // money actually handed over (includes advances)
+  advance: number; // paid amount beyond earned commission
+  balance: number; // earned − paid (negative = advance given)
+  payable: number; // balance minus approved-but-unpaid, floored at 0
+};
+
+const num = (v: number | string | null | undefined) => Number(v ?? 0) || 0;
+
+export function buildAgentSettlement(earned: number, payouts: AgentPayout[]): AgentSettlement {
+  const sum = (s: string) => payouts.filter((p) => p.status === s).reduce((t, p) => t + num(p.amount), 0);
+  const paid = sum("paid");
+  const approved = sum("approved");
+  const pending = sum("pending");
+  const balance = earned - paid;
+  return {
+    earned,
+    pending,
+    approved,
+    paid,
+    advance: Math.max(paid - earned, 0),
+    balance,
+    payable: Math.max(balance - approved, 0),
+  };
+}
+
+/** Commission earned per month, from settled orders of the assigned resellers. */
+export function agentCommissionMonths(orders: AgentOrder[], rate: number | string) {
+  const map = new Map<string, { key: string; base: number; commission: number; orders: number }>();
+  for (const o of orders) {
+    if (!["delivered", "partial", "returned", "cancelled"].includes(String(o.status))) continue;
+    const d = new Date(o.created_at);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    const row = map.get(key) ?? { key, base: 0, commission: 0, orders: 0 };
+    row.base += orderProfit(o);
+    row.orders += 1;
+    row.commission = agentCommission(row.base, rate);
+    map.set(key, row);
+  }
+  return Array.from(map.values()).sort((a, b) => (a.key < b.key ? 1 : -1));
+}
+
+const monthLabel = (key: string) =>
+  new Date(`${key}-01T00:00:00`).toLocaleDateString(undefined, { month: "short", year: "numeric" });
+
+/**
+ * Same timeline format as the reseller money ledger:
+ * commission earned = money in, admin payments = money out, rejected = void.
+ */
+export function buildAgentLedger(orders: AgentOrder[], rate: number | string, payouts: AgentPayout[]): LedgerRow[] {
+  const rows: Omit<LedgerRow, "running">[] = [];
+
+  for (const m of agentCommissionMonths(orders, rate)) {
+    if (m.commission === 0) continue;
+    rows.push({
+      at: `${m.key}-28T23:59:00`,
+      kind: "commission",
+      direction: m.commission >= 0 ? "in" : "out",
+      label: `Commission earned · ${monthLabel(m.key)}`,
+      reference: `${m.orders} settled order(s) · net profit ৳${Math.round(m.base).toLocaleString()} × ${Number(rate) || 0}%`,
+      status: "earned",
+      amount: Math.abs(m.commission),
+    });
+  }
+
+  for (const p of payouts) {
+    const advance = p.kind === "advance";
+    rows.push({
+      at: p.paid_at ?? p.approved_at ?? p.created_at,
+      kind: "payout",
+      direction: p.status === "rejected" ? "void" : "out",
+      label: advance ? "Advance payment" : p.status === "paid" ? "Commission paid" : `Payment ${p.status}`,
+      reference: [p.method, p.reference, p.note, p.admin_note].filter(Boolean).join(" · ") || null,
+      status: p.status,
+      amount: num(p.amount),
+    });
+  }
+
+  rows.sort((a, b) => (a.at < b.at ? -1 : 1));
+  let running = 0;
+  const ordered: LedgerRow[] = rows.map((r) => {
+    if (r.direction === "in") running += r.amount;
+    else if (r.direction === "out" && r.status === "paid") running -= r.amount;
+    return { ...r, running };
+  });
+  return ordered.reverse();
+}
+
 
 export function bdt(v: number) {
   return `৳${Math.round(v).toLocaleString()}`;
