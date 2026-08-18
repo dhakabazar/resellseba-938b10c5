@@ -17,7 +17,7 @@ import {
   TrendReportTable,
   RawStatusList,
 } from "@/components/report-blocks";
-import { buildFinanceReport, bdt, toCsv, downloadCsv, type ReportItem, type ReportOrder } from "@/lib/finance-report";
+import { buildFinanceReport, bdt, toCsv, downloadCsv, statusTab, type ReportItem, type ReportOrder } from "@/lib/finance-report";
 import { orderStatusLabel, orderStatusTone } from "@/lib/courier-status";
 import { OrderItemsStrip, type StripItem } from "@/components/order-items-strip";
 import { Loader2, Wallet, TrendingUp, Clock, CheckCircle2, AlertTriangle, Truck, Download, Award, Package } from "lucide-react";
