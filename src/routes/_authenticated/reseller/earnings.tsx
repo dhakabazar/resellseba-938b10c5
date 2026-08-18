@@ -75,7 +75,7 @@ function EarningsPage() {
         supabase
           .from("orders")
           .select(
-            "id,order_number,reseller_id,status,created_at,customer_name,customer_phone,address_line,subtotal,shipping_cost,discount,total,sa_cost_total,reseller_profit,order_items(product_id,product_name,product_image,quantity,sa_price,reseller_price,profit,line_total)",
+            "id,order_number,reseller_id,status,created_at,customer_name,customer_phone,address_line,subtotal,shipping_cost,discount,total,sa_cost_total,reseller_profit,received_amount,packaging_total,order_items(product_id,product_name,product_image,quantity,sa_price,reseller_price,profit,line_total)",
           )
           .eq("reseller_id", r.id)
           .order("created_at", { ascending: false }),
@@ -261,13 +261,13 @@ function EarningsPage() {
         <StatCard
           label="Admin cost (delivered)"
           value={bdt(report.realized.adminCost)}
-          hint={`Product ${bdt(report.realized.adminCost - packaging.delivered)} + packaging ${bdt(packaging.delivered)}`}
+          hint={`Product ${bdt(report.realized.adminCost - report.realized.packaging)} + packaging ${bdt(report.realized.packaging)}`}
           icon={<Wallet className="h-4 w-4" />}
         />
         <StatCard
           label="Packaging cost (delivered)"
-          value={bdt(packaging.delivered)}
-          hint={`All orders ${bdt(packaging.all)} — already included in admin cost`}
+          value={bdt(report.realized.packaging)}
+          hint={`All orders ${bdt(report.all.packaging)} — already included in admin cost`}
           icon={<Package className="h-4 w-4" />}
           tone="violet"
         />
@@ -294,7 +294,7 @@ function EarningsPage() {
       {tab === "overview" && (
       <>
       <ReportCard title="Order status wise report" hint="Grouped by the tabs on the Orders page. Product cost and packaging cost are shown separately.">
-        <StatusReportTable report={report} packagingByTab={packaging.byTab} packagingAll={packaging.all} />
+        <StatusReportTable report={report} />
       </ReportCard>
 
 
@@ -314,8 +314,8 @@ function EarningsPage() {
           </thead>
           <tbody>
             {[
-              { label: "Delivered", cost: report.realized.adminCost, pkg: packaging.delivered, profit: report.realized.profit },
-              { label: "All filtered orders", cost: report.all.adminCost, pkg: packaging.all, profit: report.all.profit },
+              { label: "Delivered", cost: report.realized.adminCost, pkg: report.realized.packaging, profit: report.realized.profit },
+              { label: "All filtered orders", cost: report.all.adminCost, pkg: report.all.packaging, profit: report.all.profit },
             ].map((r) => (
               <tr key={r.label} className="border-t">
                 <td className="px-2 py-2 text-center font-medium">{r.label}</td>
