@@ -103,9 +103,7 @@ function CatalogDetails() {
           <div className="mt-4 flex flex-wrap gap-2">
             <CopyBtn text={p.name} title="Title" label="Title copied" />
             <CopyBtn text={detailText} title="Details" label="Details copied" />
-            {p.images.map((u) => (
-              <DownloadBtn key={u} url={u} />
-            ))}
+            <ImagePickerButton images={p.images} baseName={p.name} />
           </div>
         </div>
 
