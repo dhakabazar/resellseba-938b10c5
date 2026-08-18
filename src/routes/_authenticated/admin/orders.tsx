@@ -212,6 +212,32 @@ function AdminOrdersPage() {
       }
     });
   }
+
+  async function bulkDeleteOrders() {
+    if (marked.length === 0) return;
+    const bookedIds = shipments.filter(s => s.consignment_id || s.tracking_id).map(s => s.order_id);
+    const bookedCount = marked.filter(id => bookedIds.includes(id)).length;
+    setConfirmModal({
+      open: true,
+      title: "Delete Orders",
+      description: bookedCount > 0
+        ? `Warning: ${bookedCount} of ${marked.length} selected orders are already booked with a courier. Deleting them will NOT cancel the parcels in the courier system. Proceed?`
+        : `Delete ${marked.length} selected orders? This action cannot be undone.`,
+      variant: bookedCount > 0 ? "warning" : "danger",
+      onConfirm: async () => {
+        setLoading(true);
+        const { error } = await supabase.from("orders").delete().in("id", marked);
+        if (error) toast.error(error.message);
+        else {
+          toast.success(`${marked.length} orders deleted`);
+          setMarked([]);
+          await load();
+        }
+        setConfirmModal(prev => ({ ...prev, open: false }));
+        setLoading(false);
+      }
+    });
+  }
   useEffect(() => {
     load();
   }, [tab]);
