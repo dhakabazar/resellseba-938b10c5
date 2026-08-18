@@ -67,37 +67,56 @@ export function ReportTabs<K extends string>({
 const th = "p-3 text-[11px] font-medium uppercase tracking-wide text-muted-foreground";
 
 /** Status-tab wise money breakdown — same buckets as the order list tabs. */
-export function StatusReportTable({ report, showAdminCost = true }: { report: FinanceReport; showAdminCost?: boolean }) {
+export function StatusReportTable({
+  report,
+  showAdminCost = true,
+  packagingByTab,
+  packagingAll = 0,
+}: {
+  report: FinanceReport;
+  showAdminCost?: boolean;
+  /** When given, the cost column is split into product cost + packaging cost. */
+  packagingByTab?: Partial<Record<OrderTabKey, number>>;
+  packagingAll?: number;
+}) {
   const rows: { key: OrderTabKey; label: string; b: MoneyBucket }[] = ORDER_TABS.filter((t) => t.key !== "all").map(
     (t) => ({ key: t.key, label: t.label, b: report.byStatusTab[t.key] }),
   );
+  const split = showAdminCost && !!packagingByTab;
   return (
-    <table className="w-full min-w-[760px] text-sm">
+    <table className={"w-full text-sm " + (split ? "min-w-[880px]" : "min-w-[760px]")}>
       <thead className="bg-muted/20 text-left">
         <tr>
           <th className={th}>Status</th>
           <th className={`${th} text-right`}>Orders</th>
           <th className={`${th} text-right`}>Sell value</th>
           <th className={`${th} text-right`}>Delivery</th>
-          {showAdminCost && <th className={`${th} text-right`}>Product+pkg cost</th>}
+          {split && <th className={`${th} text-right`}>Product cost</th>}
+          {split && <th className={`${th} text-right`}>Packaging cost</th>}
+          {showAdminCost && <th className={`${th} text-right`}>{split ? "Product+pkg total" : "Product+pkg cost"}</th>}
           <th className={`${th} text-right`}>Profit</th>
         </tr>
       </thead>
       <tbody>
-        {rows.map((r) => (
-          <tr key={r.key} className="border-t">
-            <td className="p-3">
-              <span className={"rounded-full px-2 py-0.5 text-[11px] capitalize " + orderStatusTone(statusOfTab(r.key))}>
-                {r.label}
-              </span>
-            </td>
-            <td className="p-3 text-right">{r.b.orders}</td>
-            <td className="p-3 text-right">{bdt(r.b.gross)}</td>
-            <td className="p-3 text-right text-muted-foreground">{bdt(r.b.delivery)}</td>
-            {showAdminCost && <td className="p-3 text-right text-muted-foreground">{bdt(r.b.adminCost)}</td>}
-            <td className="p-3 text-right font-medium">{bdt(r.b.profit)}</td>
-          </tr>
-        ))}
+        {rows.map((r) => {
+          const pkg = packagingByTab?.[r.key] ?? 0;
+          return (
+            <tr key={r.key} className="border-t">
+              <td className="p-3">
+                <span className={"rounded-full px-2 py-0.5 text-[11px] capitalize " + orderStatusTone(statusOfTab(r.key))}>
+                  {r.label}
+                </span>
+              </td>
+              <td className="p-3 text-right">{r.b.orders}</td>
+              <td className="p-3 text-right">{bdt(r.b.gross)}</td>
+              <td className="p-3 text-right text-muted-foreground">{bdt(r.b.delivery)}</td>
+              {split && <td className="p-3 text-right tabular-nums">{bdt(r.b.adminCost - pkg)}</td>}
+              {split && <td className="p-3 text-right tabular-nums text-violet-500">{bdt(pkg)}</td>}
+              {showAdminCost && <td className="p-3 text-right text-muted-foreground">{bdt(r.b.adminCost)}</td>}
+              <td className="p-3 text-right font-medium">{bdt(r.b.profit)}</td>
+            </tr>
+          );
+        })}
       </tbody>
       <tfoot className="border-t bg-muted/30 font-medium">
         <tr>
@@ -105,6 +124,8 @@ export function StatusReportTable({ report, showAdminCost = true }: { report: Fi
           <td className="p-3 text-right">{report.all.orders}</td>
           <td className="p-3 text-right">{bdt(report.all.gross)}</td>
           <td className="p-3 text-right">{bdt(report.all.delivery)}</td>
+          {split && <td className="p-3 text-right tabular-nums">{bdt(report.all.adminCost - packagingAll)}</td>}
+          {split && <td className="p-3 text-right tabular-nums text-violet-500">{bdt(packagingAll)}</td>}
           {showAdminCost && <td className="p-3 text-right">{bdt(report.all.adminCost)}</td>}
           <td className="p-3 text-right">{bdt(report.all.profit)}</td>
         </tr>
@@ -112,6 +133,7 @@ export function StatusReportTable({ report, showAdminCost = true }: { report: Fi
     </table>
   );
 }
+
 
 function statusOfTab(key: OrderTabKey) {
   const t = ORDER_TABS.find((x) => x.key === key);

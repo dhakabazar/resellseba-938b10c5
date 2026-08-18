@@ -21,6 +21,8 @@ import {
   bdt,
   toCsv,
   downloadCsv,
+  statusTab,
+
   type ReportItem,
   type ReportOrder,
 } from "@/lib/finance-report";
@@ -28,7 +30,6 @@ import { OrderItemsStrip, type StripItem } from "@/components/order-items-strip"
 import { LedgerTimeline, type LedgerRow } from "@/components/ledger-timeline";
 import { orderStatusLabel, orderStatusTone } from "@/lib/courier-status";
 import { Loader2, Wallet, TrendingUp, Award, PiggyBank, Truck, Download, AlertTriangle, Clock, Package } from "lucide-react";
-import { Fragment } from "react";
 
 export const Route = createFileRoute("/_authenticated/admin/financials")({
   component: FinancialsPage,
@@ -166,13 +167,17 @@ function FinancialsPage() {
         0,
       );
     let all = 0, delivered = 0;
+    const byTab: Record<string, number> = {};
     for (const o of scoped) {
       const v = of(o.id);
       all += v;
+      const t = statusTab(o.status);
+      byTab[t] = (byTab[t] ?? 0) + v;
       if (o.status === "delivered") delivered += v;
     }
-    return { all, delivered };
+    return { all, delivered, byTab };
   }, [scoped, itemsByOrder, productMeta]);
+
 
   const stripItems = (orderId: string): StripItem[] =>
     (itemsByOrder.get(orderId) ?? []).map((i, idx) => ({
@@ -430,10 +435,11 @@ function FinancialsPage() {
       <>
       <ReportCard
         title="Order status wise report"
-        hint="Matches the order list tab buckets."
+        hint="Matches the order list tab buckets. Product cost and packaging cost are shown separately."
         right={<CsvBtn onClick={exportStatus} />}
       >
-        <StatusReportTable report={report} />
+        <StatusReportTable report={report} packagingByTab={packaging.byTab} packagingAll={packaging.all} />
+
       </ReportCard>
 
       <ReportCard
@@ -566,62 +572,52 @@ function FinancialsPage() {
         hint="Cost, delivery and profit for each order, with the products inside it."
         right={<CsvBtn onClick={exportOrders} />}
       >
-        <table className="w-full min-w-[880px] text-sm">
-          <thead className="bg-muted/20 text-left text-[11px] uppercase text-muted-foreground">
-            <tr>
-              <th className="p-3">Order</th>
-              <th className="p-3">Reseller</th>
-              <th className="p-3">Status</th>
-              <th className="p-3 text-right">Sell value</th>
-              <th className="p-3 text-right">Delivery</th>
-              <th className="p-3 text-right">Customer total</th>
-              <th className="p-3 text-right">Admin cost</th>
-              <th className="p-3 text-right">Reseller profit</th>
-            </tr>
-          </thead>
-          <tbody>
-            {scoped.slice(0, 100).map((o) => (
-              <Fragment key={o.id}>
-                <tr className="border-t-2 align-top">
-                  <td className="p-3">
-                    <div className="font-mono text-xs font-medium">{o.order_number}</div>
-                    <div className="text-[11px] text-muted-foreground">
-                      {new Date(o.created_at).toLocaleDateString()} · {o.customer_name}
-                    </div>
-                  </td>
-                  <td className="p-3 text-xs">
-                    <div className="font-medium">{o.resellers?.business_name ?? "—"}</div>
-                    <div className="text-[11px] text-muted-foreground">{o.resellers?.code ? `/${o.resellers.code}` : ""}</div>
-                  </td>
-                  <td className="p-3">
-                    <span className={"rounded-full px-2 py-0.5 text-[11px] " + orderStatusTone(o.status)}>
-                      {orderStatusLabel(o.status)}
-                    </span>
-                  </td>
-                  <td className="p-3 text-right">{bdt(Number(o.subtotal))}</td>
-                  <td className="p-3 text-right text-muted-foreground">{bdt(Number(o.shipping_cost))}</td>
-                  <td className="p-3 text-right">{bdt(Number(o.total))}</td>
-                  <td className="p-3 text-right text-muted-foreground">{bdt(Number(o.sa_cost_total))}</td>
-                  <td className={"p-3 text-right font-semibold " + (o.status === "delivered" ? "text-success" : "")}>
-                    {bdt(Number(o.reseller_profit))}
-                  </td>
-                </tr>
-                <tr>
-                  <td colSpan={8} className="p-0">
-                    <OrderItemsStrip items={stripItems(o.id)} />
-                  </td>
-                </tr>
-              </Fragment>
-            ))}
-            {scoped.length === 0 && (
-              <tr>
-                <td colSpan={8} className="p-8 text-center text-muted-foreground">
-                  No orders match this filter.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+        <div className="space-y-4 bg-muted/10 p-3 md:p-4">
+          {scoped.slice(0, 100).map((o) => (
+            <div key={o.id} className="overflow-hidden rounded-xl border bg-card shadow-sm">
+              <div className="flex flex-wrap items-center gap-3 border-b bg-muted/20 px-4 py-3">
+                <div>
+                  <div className="font-mono text-sm font-semibold">{o.order_number}</div>
+                  <div className="text-[11px] text-muted-foreground">
+                    {new Date(o.created_at).toLocaleDateString()} · {o.customer_name}
+                  </div>
+                </div>
+                <div className="text-xs">
+                  <div className="font-medium">{o.resellers?.business_name ?? "—"}</div>
+                  <div className="text-[11px] text-muted-foreground">
+                    {o.resellers?.code ? `/${o.resellers.code}` : ""}
+                  </div>
+                </div>
+                <span className={"ml-auto rounded-full px-2 py-0.5 text-[11px] " + orderStatusTone(o.status)}>
+                  {orderStatusLabel(o.status)}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2 px-4 py-3 text-sm sm:grid-cols-3 lg:grid-cols-5">
+                {[
+                  { l: "Sell value", v: bdt(Number(o.subtotal)) },
+                  { l: "Delivery", v: bdt(Number(o.shipping_cost)), muted: true },
+                  { l: "Customer total", v: bdt(Number(o.total)) },
+                  { l: "Admin cost", v: bdt(Number(o.sa_cost_total)), muted: true },
+                  {
+                    l: "Reseller profit",
+                    v: bdt(Number(o.reseller_profit)),
+                    cls: "font-semibold " + (o.status === "delivered" ? "text-success" : ""),
+                  },
+                ].map((c) => (
+                  <div key={c.l}>
+                    <div className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">{c.l}</div>
+                    <div className={"tabular-nums " + (c.muted ? "text-muted-foreground " : "") + (c.cls ?? "")}>{c.v}</div>
+                  </div>
+                ))}
+              </div>
+              <OrderItemsStrip items={stripItems(o.id)} />
+            </div>
+          ))}
+          {scoped.length === 0 && (
+            <div className="p-8 text-center text-muted-foreground">No orders match this filter.</div>
+          )}
+        </div>
+
         {scoped.length > 100 && (
           <div className="border-t p-3 text-center text-[11px] text-muted-foreground">
             Showing first 100 — export CSV for the rest.
