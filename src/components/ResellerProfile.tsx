@@ -194,14 +194,14 @@ export function ResellerProfile({
       <div className="surface-card p-4">
         <h3 className="mb-3 text-sm font-semibold">Finance snapshot</h3>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
-          <Stat label="Orders" value={orders == null ? "—" : orders.toLocaleString()} />
-          <Stat label="Delivered profit" value={money(s?.delivered_profit)} tone="success" />
-          <Stat label="Withdrawable" value={money(s?.available)} />
-          <Stat label="Paid out" value={money(s?.paid_out)} />
-          <Stat label="Payout pending" value={money(s?.pending_payout)} tone="muted" />
-          <Stat label="Deposit paid" value={money(s?.deposit_balance)} />
-          <Stat label="Deposit due" value={money(depositDue)} tone={depositDue > 0 ? undefined : "muted"} />
-          <Stat label="Frozen" value={money(Number(r.frozen_amount ?? 0))} tone="muted" />
+          <Stat label="Orders" value={orders == null ? "—" : orders.toLocaleString()} {...ordersLink("all")} />
+          <Stat label="Delivered profit" value={money(s?.delivered_profit)} tone="success" {...ordersLink("delivered")} />
+          <Stat label="Withdrawable" value={money(s?.available)} {...payoutsLink()} />
+          <Stat label="Paid out" value={money(s?.paid_out)} {...payoutsLink("paid")} />
+          <Stat label="Payout pending" value={money(s?.pending_payout)} tone="muted" {...payoutsLink("pending")} />
+          <Stat label="Deposit paid" value={money(s?.deposit_balance)} {...payoutsLink()} />
+          <Stat label="Deposit due" value={money(depositDue)} tone={depositDue > 0 ? undefined : "muted"} {...payoutsLink()} />
+          <Stat label="Frozen" value={money(Number(r.frozen_amount ?? 0))} tone="muted" {...payoutsLink()} />
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
           {r.deposit_required &&
