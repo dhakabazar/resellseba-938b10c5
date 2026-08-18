@@ -16,7 +16,7 @@ import {
   Award,
   Shield,
   ShieldCheck,
-  ScrollText,
+  Eraser,
 
   Bell,
   FileText,
