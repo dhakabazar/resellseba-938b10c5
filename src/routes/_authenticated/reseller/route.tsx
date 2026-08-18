@@ -5,6 +5,7 @@ import {
   LayoutDashboard,
   ShoppingBag,
   ClipboardList,
+  Users,
   Palette,
   Globe,
   Wallet,
@@ -42,6 +43,7 @@ const NAV: NavEntry[] = [
     ],
   },
   { label: "Orders", to: "/reseller/orders", icon: <ClipboardList className="h-4 w-4" /> },
+  { label: "Customers", to: "/reseller/customers", icon: <Users className="h-4 w-4" /> },
 
   {
     label: "Finance",
