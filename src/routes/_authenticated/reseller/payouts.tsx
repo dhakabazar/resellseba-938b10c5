@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/use-auth";
 import { PageHeader, StatCard } from "@/components/ui-kit";
-import { Loader2, Wallet, TrendingUp, Clock, CheckCircle2, Pencil, Save } from "lucide-react";
+import { Loader2, Wallet, TrendingUp, Clock, CheckCircle2, Pencil, Save, ShieldCheck, History, Banknote } from "lucide-react";
 import { toast } from "sonner";
 import { useDepositStatus } from "@/lib/deposit";
 import { DepositNotice } from "@/components/deposit-notice";
@@ -43,6 +43,8 @@ const emptyProfile: Profile = {
   payout_routing: null,
 };
 
+type TabKey = "deposit" | "payout" | "timeline";
+
 function PayoutsPage() {
   const { user } = useAuth();
   const [rid, setRid] = useState<string | null>(null);
@@ -54,6 +56,7 @@ function PayoutsPage() {
   const [amount, setAmount] = useState("");
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [tab, setTab] = useState<TabKey>("payout");
   const { status: deposit } = useDepositStatus(rid);
   const { texts: depositTexts } = useDepositSettings();
 
@@ -114,13 +117,13 @@ function PayoutsPage() {
   }
 
   const blockReason = !profile.payout_method
-    ? "প্রথমে উপরে পেমেন্ট (পেআউট) ইনফরমেশন সেভ করুন।"
+    ? "Save your payout information first."
     : deposit.blocked
-      ? "সিকিউরিটি ডিপোজিট বাকি থাকলে উইথড্র রিকোয়েস্ট দেওয়া যাবে না।"
+      ? "Withdrawal is not allowed while a security deposit is due."
       : sum.available <= 0
         ? sum.delivered_profit <= 0
-          ? "এখনও কোনো ডেলিভার্ড অর্ডার নেই — ডেলিভারি হলে প্রফিট এখানে জমা হবে।"
-          : "উইথড্র করার মতো ব্যালান্স নেই (আগের রিকোয়েস্ট/ফ্রিজ বাদ দিয়ে ০)।"
+          ? "No delivered orders yet — profit will appear here once orders are delivered."
+          : "No withdrawable balance (previous requests / frozen amount deducted)."
         : null;
 
   async function request(e: React.FormEvent) {
@@ -128,9 +131,9 @@ function PayoutsPage() {
     if (!rid) return;
     if (blockReason) return toast.error(blockReason);
     const amt = Number(amount);
-    if (!amt || amt <= 0) return toast.error("সঠিক অ্যামাউন্ট লিখুন");
+    if (!amt || amt <= 0) return toast.error("Enter a valid amount");
     if (amt > sum.available)
-      return toast.error(`সর্বোচ্চ ৳${sum.available.toLocaleString()} উইথড্র করা যাবে`);
+      return toast.error(`Maximum withdrawable amount is ৳${sum.available.toLocaleString()}`);
     setBusy(true);
 
     const enumMethod = (profile.payout_method === "bank" ? "other" : profile.payout_method) as
@@ -150,20 +153,51 @@ function PayoutsPage() {
 
   if (loading) return <div className="grid place-items-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
 
+  const showDepositTab = deposit.required || deposit.frozenAmount > 0 || deposit.rows.length > 0;
+  const tabs: { key: TabKey; label: string; icon: React.ReactNode }[] = [
+    ...(showDepositTab ? [{ key: "deposit" as TabKey, label: "Security deposit", icon: <ShieldCheck className="h-3.5 w-3.5" /> }] : []),
+    { key: "payout", label: "Payout", icon: <Banknote className="h-3.5 w-3.5" /> },
+    { key: "timeline", label: "Timeline", icon: <History className="h-3.5 w-3.5" /> },
+  ];
+
   return (
     <div>
       <PageHeader title="Payouts" description="Profit from delivered orders accumulates here. Request a withdrawal to your saved account." />
 
       <DepositNotice status={deposit} />
 
-      {(deposit.required || deposit.frozenAmount > 0 || deposit.rows.length > 0) && (
-        <div className="surface-card mb-6 p-5">
+      <div className="mb-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
+        <StatCard label="Delivered profit" value={`৳${sum.delivered_profit.toLocaleString()}`} icon={<TrendingUp className="h-4 w-4" />} />
+        <StatCard label="Deposit balance" value={`৳${sum.deposit_balance.toLocaleString()}`} icon={<Wallet className="h-4 w-4" />} />
+        <StatCard label="Frozen" value={`৳${sum.frozen_amount.toLocaleString()}`} hint="Not withdrawable" icon={<Clock className="h-4 w-4" />} />
+        <StatCard label="Available" value={`৳${sum.available.toLocaleString()}`} hint="Ready to request" icon={<Wallet className="h-4 w-4" />} />
+        <StatCard label="Pending" value={`৳${sum.pending_payout.toLocaleString()}`} icon={<Clock className="h-4 w-4" />} />
+        <StatCard label="Paid out" value={`৳${sum.paid_out.toLocaleString()}`} icon={<CheckCircle2 className="h-4 w-4" />} />
+      </div>
+
+      <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
+        {tabs.map((t) => (
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key)}
+            className={
+              "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors " +
+              (tab === t.key ? "border-transparent bg-primary text-primary-foreground" : "hover:bg-muted")
+            }
+          >
+            {t.icon} {t.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "deposit" && showDepositTab && (
+        <div className="surface-card p-4 sm:p-5">
           <div className="mb-3 text-sm font-semibold">{depositTexts.sectionTitle}</div>
           <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-            <MiniStat label="জমা (Paid)" value={deposit.balance} />
-            <MiniStat label="বাকি (Due)" value={deposit.due} tone={deposit.due > 0 ? "bad" : "good"} />
-            <MiniStat label="প্রয়োজনীয়" value={deposit.requiredAmount} />
-            <MiniStat label="ফ্রিজ" value={deposit.frozenAmount} />
+            <MiniStat label="Paid" value={deposit.balance} />
+            <MiniStat label="Due" value={deposit.due} tone={deposit.due > 0 ? "bad" : "good"} />
+            <MiniStat label="Required" value={deposit.requiredAmount} />
+            <MiniStat label="Frozen" value={deposit.frozenAmount} />
           </div>
 
           <ul className="mb-3 space-y-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-[11px] leading-relaxed text-amber-700 dark:text-amber-300">
@@ -171,16 +205,33 @@ function PayoutsPage() {
             <li>• {depositTexts.withdrawWarning}</li>
           </ul>
 
+          {deposit.rows.length === 0 ? (
+            <div className="rounded-lg border border-dashed p-6 text-center text-xs text-muted-foreground">No deposit records yet.</div>
+          ) : (
+            <div className="space-y-2 sm:hidden">
+              {deposit.rows.map((r) => (
+                <div key={r.id} className="rounded-md border p-3 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold tabular-nums">৳{Number(r.amount).toLocaleString()}</span>
+                    <span className="text-muted-foreground">{new Date(r.created_at).toLocaleDateString()}</span>
+                  </div>
+                  <div className="mt-1 capitalize text-muted-foreground">{r.method ?? "—"} · {r.reference ?? "—"}</div>
+                  {r.note && <div className="mt-1 text-muted-foreground">{r.note}</div>}
+                </div>
+              ))}
+            </div>
+          )}
+
           {deposit.rows.length > 0 && (
-            <div className="overflow-hidden rounded-md border">
+            <div className="hidden overflow-hidden rounded-md border sm:block">
               <table className="w-full text-xs">
                 <thead className="bg-muted/40 text-left uppercase text-muted-foreground">
                   <tr>
-                    <th className="p-2">তারিখ</th>
-                    <th>অ্যামাউন্ট</th>
-                    <th>মেথড</th>
-                    <th>রেফারেন্স</th>
-                    <th>নোট</th>
+                    <th className="p-2">Date</th>
+                    <th>Amount</th>
+                    <th>Method</th>
+                    <th>Reference</th>
+                    <th>Note</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -200,238 +251,258 @@ function PayoutsPage() {
         </div>
       )}
 
-      <div className="mb-3 grid gap-4 md:grid-cols-3 xl:grid-cols-6">
-        <StatCard label="Delivered profit" value={`৳${sum.delivered_profit.toLocaleString()}`} icon={<TrendingUp className="h-4 w-4" />} />
-        <StatCard label="Deposit balance" value={`৳${sum.deposit_balance.toLocaleString()}`} icon={<Wallet className="h-4 w-4" />} />
-        <StatCard label="Frozen" value={`৳${sum.frozen_amount.toLocaleString()}`} hint="উইথড্র করা যাবে না" icon={<Clock className="h-4 w-4" />} />
-        <StatCard label="Available" value={`৳${sum.available.toLocaleString()}`} hint="Ready to request" icon={<Wallet className="h-4 w-4" />} />
-        <StatCard label="Pending" value={`৳${sum.pending_payout.toLocaleString()}`} icon={<Clock className="h-4 w-4" />} />
-        <StatCard label="Paid out" value={`৳${sum.paid_out.toLocaleString()}`} icon={<CheckCircle2 className="h-4 w-4" />} />
-      </div>
-      <p className="mb-6 rounded-lg border bg-muted/30 px-4 py-2 text-[11px] leading-relaxed text-muted-foreground">
-        হিসাব: ডেলিভার্ড প্রফিট (৳{sum.delivered_profit.toLocaleString()}) + ডিপোজিট (৳{sum.deposit_balance.toLocaleString()}) − রিকোয়েস্ট/পেইড (৳{(sum.pending_payout + sum.paid_out).toLocaleString()}) − ফ্রিজ (৳{sum.frozen_amount.toLocaleString()}) = <span className="font-bold text-foreground">৳{sum.available.toLocaleString()}</span> উইথড্র করা যাবে। ফ্রিজ অ্যামাউন্টের বাইরের ডিপোজিটও তোলা যাবে।
-      </p>
+      {tab === "payout" && (
+        <>
+          <p className="mb-4 rounded-lg border bg-muted/30 px-4 py-2 text-[11px] leading-relaxed text-muted-foreground">
+            Calculation: delivered profit (৳{sum.delivered_profit.toLocaleString()}) + deposit (৳{sum.deposit_balance.toLocaleString()}) − requested/paid (৳{(sum.pending_payout + sum.paid_out).toLocaleString()}) − frozen (৳{sum.frozen_amount.toLocaleString()}) = <span className="font-bold text-foreground">৳{sum.available.toLocaleString()}</span> withdrawable. Deposit above the frozen amount is also withdrawable.
+          </p>
 
-      <div className="surface-card mb-6 p-5">
-        <div className="mb-3 flex items-center justify-between">
-          <div>
-            <div className="text-sm font-semibold">Payout information</div>
-            <p className="text-xs text-muted-foreground">Admin will send your profit to this account.</p>
+          <div className="surface-card mb-6 p-4 sm:p-5">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <div className="text-sm font-semibold">Payout information</div>
+                <p className="text-xs text-muted-foreground">Admin will send your profit to this account.</p>
+              </div>
+              {!editing && (
+                <button onClick={() => setEditing(true)} className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs hover:bg-muted">
+                  <Pencil className="h-3.5 w-3.5" /> Edit
+                </button>
+              )}
+            </div>
+
+            {!editing ? (
+              profile.payout_method ? (
+                <div className="grid gap-2 text-sm sm:grid-cols-2">
+                  <Info label="Method" value={<span className="capitalize">{profile.payout_method}</span>} />
+                  <Info label="Account name" value={profile.payout_account_name || "—"} />
+                  <Info label={profile.payout_method === "bank" ? "Account number" : "Mobile number"} value={profile.payout_account_number || "—"} />
+                  {profile.payout_method === "bank" && (
+                    <>
+                      <Info label="Bank" value={profile.payout_bank_name || "—"} />
+                      <Info label="Branch" value={profile.payout_branch || "—"} />
+                      <Info label="Routing" value={profile.payout_routing || "—"} />
+                    </>
+                  )}
+                </div>
+              ) : (
+                <div className="text-sm text-muted-foreground">No payout information saved yet.</div>
+              )
+            ) : (
+              <div className="space-y-3">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-1 block text-xs font-medium">Method</label>
+                    <select
+                      value={profile.payout_method ?? "bkash"}
+                      onChange={(e) => setProfile({ ...profile, payout_method: e.target.value as PayoutMethod })}
+                      className={inp}
+                    >
+                      <option value="bkash">bKash</option>
+                      <option value="nagad">Nagad</option>
+                      <option value="rocket">Rocket</option>
+                      <option value="bank">Bank</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium">Account holder name</label>
+                    <input
+                      value={profile.payout_account_name ?? ""}
+                      onChange={(e) => setProfile({ ...profile, payout_account_name: e.target.value })}
+                      className={inp}
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium">
+                      {profile.payout_method === "bank" ? "Account number" : "Mobile number"}
+                    </label>
+                    <input
+                      value={profile.payout_account_number ?? ""}
+                      onChange={(e) => setProfile({ ...profile, payout_account_number: e.target.value })}
+                      className={inp}
+                    />
+                  </div>
+                  {profile.payout_method === "bank" && (
+                    <>
+                      <div>
+                        <label className="mb-1 block text-xs font-medium">Bank name</label>
+                        <input
+                          value={profile.payout_bank_name ?? ""}
+                          onChange={(e) => setProfile({ ...profile, payout_bank_name: e.target.value })}
+                          className={inp}
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs font-medium">Branch</label>
+                        <input
+                          value={profile.payout_branch ?? ""}
+                          onChange={(e) => setProfile({ ...profile, payout_branch: e.target.value })}
+                          className={inp}
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs font-medium">Routing number</label>
+                        <input
+                          value={profile.payout_routing ?? ""}
+                          onChange={(e) => setProfile({ ...profile, payout_routing: e.target.value })}
+                          className={inp}
+                        />
+                      </div>
+                    </>
+                  )}
+                </div>
+                <div className="flex justify-end gap-2">
+                  {profile.payout_method && (
+                    <button onClick={() => { setEditing(false); load(); }} className="rounded-md border px-3 py-1.5 text-xs">Cancel</button>
+                  )}
+                  <button
+                    onClick={saveProfile}
+                    disabled={busy}
+                    className="btn-brand inline-flex items-center gap-1.5 rounded-md px-4 py-1.5 text-xs font-medium disabled:opacity-50"
+                  >
+                    {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />} Save
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
-          {!editing && (
-            <button onClick={() => setEditing(true)} className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs hover:bg-muted">
-              <Pencil className="h-3.5 w-3.5" /> Edit
-            </button>
-          )}
-        </div>
 
-        {!editing ? (
-          profile.payout_method ? (
-            <div className="grid gap-2 text-sm md:grid-cols-2">
-              <Info label="Method" value={<span className="capitalize">{profile.payout_method}</span>} />
-              <Info label="Account name" value={profile.payout_account_name || "—"} />
-              <Info label={profile.payout_method === "bank" ? "Account number" : "Mobile number"} value={profile.payout_account_number || "—"} />
-              {profile.payout_method === "bank" && (
-                <>
-                  <Info label="Bank" value={profile.payout_bank_name || "—"} />
-                  <Info label="Branch" value={profile.payout_branch || "—"} />
-                  <Info label="Routing" value={profile.payout_routing || "—"} />
-                </>
+          <form onSubmit={request} className="surface-card mb-6 grid gap-3 p-4 sm:p-5 md:grid-cols-[1fr_auto]">
+            <div>
+              <label className="mb-1 block text-xs font-medium">Amount (৳)</label>
+              <input
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                type="number"
+                min={1}
+                max={sum.available > 0 ? sum.available : undefined}
+                className={inp}
+                required
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                Maximum withdrawable <span className="font-semibold text-foreground">৳{sum.available.toLocaleString()}</span>
+                {sum.pending_payout > 0 && <> · in request ৳{sum.pending_payout.toLocaleString()}</>}
+              </p>
+              {deposit.frozenAmount > 0 && (
+                <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
+                  {fillText(depositTexts.payoutFrozenHint, { frozen: deposit.frozenAmount })}
+                </p>
+              )}
+              {blockReason ? (
+                <p className="mt-1 text-xs font-medium text-destructive">{blockReason}</p>
+              ) : (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Payout <span className="capitalize font-medium">{profile.payout_method}</span> · {profile.payout_account_number}
+                </p>
               )}
             </div>
-          ) : (
-            <div className="text-sm text-muted-foreground">No payout information saved yet.</div>
-          )
-        ) : (
-          <div className="space-y-3">
-            <div className="grid gap-3 md:grid-cols-2">
-              <div>
-                <label className="mb-1 block text-xs font-medium">Method</label>
-                <select
-                  value={profile.payout_method ?? "bkash"}
-                  onChange={(e) => setProfile({ ...profile, payout_method: e.target.value as PayoutMethod })}
-                  className={inp}
-                >
-                  <option value="bkash">bKash</option>
-                  <option value="nagad">Nagad</option>
-                  <option value="rocket">Rocket</option>
-                  <option value="bank">Bank</option>
-                </select>
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium">Account holder name</label>
-                <input
-                  value={profile.payout_account_name ?? ""}
-                  onChange={(e) => setProfile({ ...profile, payout_account_name: e.target.value })}
-                  className={inp}
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium">
-                  {profile.payout_method === "bank" ? "Account number" : "Mobile number"}
-                </label>
-                <input
-                  value={profile.payout_account_number ?? ""}
-                  onChange={(e) => setProfile({ ...profile, payout_account_number: e.target.value })}
-                  className={inp}
-                />
-              </div>
-              {profile.payout_method === "bank" && (
-                <>
-                  <div>
-                    <label className="mb-1 block text-xs font-medium">Bank name</label>
-                    <input
-                      value={profile.payout_bank_name ?? ""}
-                      onChange={(e) => setProfile({ ...profile, payout_bank_name: e.target.value })}
-                      className={inp}
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-xs font-medium">Branch</label>
-                    <input
-                      value={profile.payout_branch ?? ""}
-                      onChange={(e) => setProfile({ ...profile, payout_branch: e.target.value })}
-                      className={inp}
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-xs font-medium">Routing number</label>
-                    <input
-                      value={profile.payout_routing ?? ""}
-                      onChange={(e) => setProfile({ ...profile, payout_routing: e.target.value })}
-                      className={inp}
-                    />
-                  </div>
-                </>
-              )}
-            </div>
-            <div className="flex justify-end gap-2">
-              {profile.payout_method && (
-                <button onClick={() => { setEditing(false); load(); }} className="rounded-md border px-3 py-1.5 text-xs">Cancel</button>
-              )}
+            <div className="flex items-end">
               <button
-                onClick={saveProfile}
                 disabled={busy}
-                className="btn-brand inline-flex items-center gap-1.5 rounded-md px-4 py-1.5 text-xs font-medium disabled:opacity-50"
+                className="btn-brand w-full rounded-md px-4 py-2 text-sm font-medium disabled:opacity-50"
               >
-                {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />} Save
+                {busy ? "Sending…" : "Request payout"}
               </button>
             </div>
-          </div>
-        )}
-      </div>
+          </form>
 
-      <form onSubmit={request} className="surface-card mb-6 grid gap-3 p-5 md:grid-cols-[1fr_auto]">
-        <div>
-          <label className="mb-1 block text-xs font-medium">Amount (৳)</label>
-          <input
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            type="number"
-            min={1}
-            max={sum.available > 0 ? sum.available : undefined}
-            className={inp}
-            required
-          />
-          <p className="mt-1 text-xs text-muted-foreground">
-            উইথড্র করা যাবে সর্বোচ্চ <span className="font-semibold text-foreground">৳{sum.available.toLocaleString()}</span>
-            {sum.pending_payout > 0 && <> · অনুরোধে আছে ৳{sum.pending_payout.toLocaleString()}</>}
-          </p>
-          {deposit.frozenAmount > 0 && (
-            <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
-              {fillText(depositTexts.payoutFrozenHint, { frozen: deposit.frozenAmount })}
-            </p>
-          )}
-          {blockReason ? (
-            <p className="mt-1 text-xs font-medium text-destructive">{blockReason}</p>
-          ) : (
-            <p className="mt-1 text-xs text-muted-foreground">
-              Payout <span className="capitalize font-medium">{profile.payout_method}</span> · {profile.payout_account_number}
-            </p>
-          )}
-        </div>
-        <div className="flex items-end">
-          <button
-            disabled={busy}
-            className="btn-brand w-full rounded-md px-4 py-2 text-sm font-medium disabled:opacity-50"
-          >
-            {busy ? "Sending…" : "Request payout"}
-          </button>
-        </div>
-      </form>
-
-
-      <div className="surface-card overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-muted/40 text-left text-xs uppercase text-muted-foreground">
-            <tr><th className="p-3">Date</th><th>Amount</th><th>Method</th><th>Status</th><th>Note</th></tr>
-          </thead>
-          <tbody>
-            {rows.map((p) => (
-              <tr key={p.id} className="border-t">
-                <td className="p-3">{new Date(p.created_at).toLocaleDateString()}</td>
-                <td className="font-medium">৳{Number(p.amount).toLocaleString()}</td>
-                <td className="capitalize">{p.method}</td>
-                <td><span className={"rounded-full px-2 py-0.5 text-[10px] " + statusStyle(p.status)}>{p.status}</span></td>
-                <td className="text-muted-foreground">{p.notes ?? p.reference}</td>
-              </tr>
-            ))}
-            {rows.length === 0 && (<tr><td colSpan={5} className="p-8 text-center text-muted-foreground">No payouts yet.</td></tr>)}
-          </tbody>
-        </table>
-      </div>
-
-      <div className="surface-card mt-6 p-5">
-        <div className="mb-1 text-sm font-semibold">টাকার টাইমলাইন (Ledger)</div>
-        <p className="mb-4 text-xs text-muted-foreground">কীভাবে টাকা জমা হচ্ছে (ডিপোজিট + ডেলিভার্ড প্রফিট) আর কীভাবে উইথড্র হচ্ছে — সব এক জায়গায়।</p>
-        {ledger.length === 0 ? (
-          <div className="rounded-lg border border-dashed p-6 text-center text-xs text-muted-foreground">এখনো কোনো লেনদেন নেই।</div>
-        ) : (
-          <>
-          <LedgerTotals ledger={ledger} frozen={sum.frozen_amount} available={sum.available} />
-          <ol className="relative mt-4 space-y-3 border-l pl-5">
-
-            {ledger.map((e, i) => {
-              const inflow = e.direction === "in";
-              const voided = e.direction === "void";
-              return (
-                <li key={i} className="relative">
-                  <span
-                    className={
-                      "absolute -left-[26px] top-1.5 h-3 w-3 rounded-full ring-4 ring-background " +
-                      (voided ? "bg-muted-foreground/40" : inflow ? "bg-success" : "bg-destructive")
-                    }
-                  />
-                  <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border bg-muted/20 px-3 py-2">
-                    <div className="min-w-0">
-                      <div className="truncate text-sm font-medium">{e.label}</div>
-                      <div className="text-[11px] text-muted-foreground">
-                        {new Date(e.at).toLocaleString()} · {e.reference || "—"} ·{" "}
-                        <span className="capitalize">{e.status}</span>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div
-                        className={
-                          "text-sm font-bold tabular-nums " +
-                          (voided ? "text-muted-foreground line-through" : inflow ? "text-success" : "text-destructive")
-                        }
-                      >
-                        {inflow ? "+" : "−"}৳{Number(e.amount).toLocaleString()}
-                      </div>
-                      <div className="text-[10px] text-muted-foreground tabular-nums">
-                        ব্যালান্স ৳{Number(e.running).toLocaleString()}
-                      </div>
-                    </div>
+          {/* Payout history — mobile cards */}
+          <div className="space-y-2 md:hidden">
+            {rows.length === 0 ? (
+              <div className="surface-card p-8 text-center text-sm text-muted-foreground">No payouts yet.</div>
+            ) : rows.map((p) => (
+              <div key={p.id} className="surface-card p-4">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <div className="font-semibold tabular-nums">৳{Number(p.amount).toLocaleString()}</div>
+                    <div className="text-[11px] capitalize text-muted-foreground">{p.method} · {new Date(p.created_at).toLocaleDateString()}</div>
                   </div>
-                </li>
-              );
-            })}
-          </ol>
-          <LedgerTotals ledger={ledger} frozen={sum.frozen_amount} available={sum.available} className="mt-4" />
-          </>
-        )}
-      </div>
+                  <span className={"rounded-full px-2 py-0.5 text-[10px] capitalize " + statusStyle(p.status)}>{p.status}</span>
+                </div>
+                {p.notes && (
+                  <p className="mt-2 rounded-md border border-dashed p-2 text-[11px] text-muted-foreground">
+                    <span className="font-medium text-foreground">Admin note:</span> {p.notes}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className="surface-card hidden overflow-x-auto md:block">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/40 text-left text-xs uppercase text-muted-foreground">
+                <tr><th className="p-3">Date</th><th className="p-3">Amount</th><th className="p-3">Method</th><th className="p-3">Status</th><th className="p-3">Admin note</th></tr>
+              </thead>
+              <tbody>
+                {rows.map((p) => (
+                  <tr key={p.id} className="border-t">
+                    <td className="p-3">{new Date(p.created_at).toLocaleDateString()}</td>
+                    <td className="p-3 font-medium tabular-nums">৳{Number(p.amount).toLocaleString()}</td>
+                    <td className="p-3 capitalize">{p.method}</td>
+                    <td className="p-3"><span className={"rounded-full px-2 py-0.5 text-[10px] capitalize " + statusStyle(p.status)}>{p.status}</span></td>
+                    <td className="p-3 text-xs text-muted-foreground">{p.notes || p.reference || "—"}</td>
+                  </tr>
+                ))}
+                {rows.length === 0 && (<tr><td colSpan={5} className="p-8 text-center text-muted-foreground">No payouts yet.</td></tr>)}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+
+      {tab === "timeline" && (
+        <div className="surface-card p-4 sm:p-5">
+          <div className="mb-1 text-sm font-semibold">Money timeline (Ledger)</div>
+          <p className="mb-4 text-xs text-muted-foreground">How money comes in (deposit + delivered profit) and how it goes out (withdrawals) — all in one place.</p>
+          {ledger.length === 0 ? (
+            <div className="rounded-lg border border-dashed p-6 text-center text-xs text-muted-foreground">No transactions yet.</div>
+          ) : (
+            <>
+              <LedgerTotals ledger={ledger} frozen={sum.frozen_amount} available={sum.available} />
+              <ol className="relative mt-4 space-y-3 border-l pl-5">
+                {ledger.map((e, i) => {
+                  const inflow = e.direction === "in";
+                  const voided = e.direction === "void";
+                  return (
+                    <li key={i} className="relative">
+                      <span
+                        className={
+                          "absolute -left-[26px] top-1.5 h-3 w-3 rounded-full ring-4 ring-background " +
+                          (voided ? "bg-muted-foreground/40" : inflow ? "bg-success" : "bg-destructive")
+                        }
+                      />
+                      <div className="flex flex-wrap items-start justify-between gap-2 rounded-lg border bg-muted/20 px-3 py-2">
+                        <div className="min-w-0">
+                          <div className="truncate text-sm font-medium">{e.label}</div>
+                          <div className="text-[11px] text-muted-foreground">
+                            {new Date(e.at).toLocaleString()} · <span className="capitalize">{e.status}</span>
+                          </div>
+                          {e.reference && e.reference !== "—" && (
+                            <div className="mt-0.5 break-words text-[11px] text-muted-foreground">{e.reference}</div>
+                          )}
+                        </div>
+                        <div className="text-right">
+                          <div
+                            className={
+                              "text-sm font-bold tabular-nums " +
+                              (voided ? "text-muted-foreground line-through" : inflow ? "text-success" : "text-destructive")
+                            }
+                          >
+                            {inflow ? "+" : "−"}৳{Number(e.amount).toLocaleString()}
+                          </div>
+                          <div className="text-[10px] text-muted-foreground tabular-nums">
+                            Balance ৳{Number(e.running).toLocaleString()}
+                          </div>
+                        </div>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ol>
+              <LedgerTotals ledger={ledger} frozen={sum.frozen_amount} available={sum.available} className="mt-4" />
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -452,11 +523,11 @@ function LedgerTotals({
   const balance = inflow - outflow;
   return (
     <div className={"grid grid-cols-2 gap-2 rounded-lg border bg-muted/30 p-3 sm:grid-cols-5 " + className}>
-      <TotalCell label="মোট জমা (In)" value={inflow} tone="good" />
-      <TotalCell label="মোট উইথড্র (Out)" value={outflow} tone="bad" />
-      <TotalCell label="ব্যালান্স" value={balance} />
-      <TotalCell label="ফ্রিজ" value={frozen} />
-      <TotalCell label="উইথড্র করা যাবে" value={available} tone="good" />
+      <TotalCell label="Total in" value={inflow} tone="good" />
+      <TotalCell label="Total out" value={outflow} tone="bad" />
+      <TotalCell label="Balance" value={balance} />
+      <TotalCell label="Frozen" value={frozen} />
+      <TotalCell label="Withdrawable" value={available} tone="good" />
     </div>
   );
 }
@@ -476,7 +547,6 @@ function TotalCell({ label, value, tone }: { label: string; value: number; tone?
     </div>
   );
 }
-
 
 function Info({ label, value }: { label: string; value: React.ReactNode }) {
   return (
