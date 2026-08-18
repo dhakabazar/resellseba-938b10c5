@@ -37,6 +37,9 @@ import { orderStatusLabel, orderStatusTone } from "@/lib/courier-status";
 import { Loader2, Wallet, TrendingUp, Award, Truck, Download, AlertTriangle, Clock, Package } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/reseller-earning")({
+  validateSearch: (s: Record<string, unknown>): { reseller?: string } => ({
+    reseller: typeof s.reseller === "string" && s.reseller ? s.reseller : undefined,
+  }),
   component: FinancialsPage,
   head: () => ({
     meta: [
