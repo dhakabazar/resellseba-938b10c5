@@ -169,8 +169,9 @@ export function buildFinanceReport(
     const tp = trendMap.get(key) ?? { key, orders: 0, gross: 0, profit: 0, deliveredProfit: 0 };
     tp.orders += 1;
     tp.gross += n(o.subtotal);
-    tp.profit += n(o.reseller_profit);
-    if (o.status === "delivered") tp.deliveredProfit += n(o.reseller_profit);
+    tp.profit += orderProfit(o);
+    if (o.status === "delivered") tp.deliveredProfit += orderProfit(o);
+
     trendMap.set(key, tp);
   }
 
