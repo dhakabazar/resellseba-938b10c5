@@ -294,6 +294,28 @@ function ResellersPage() {
         description="Monitor and manage all storefront applications, email verifications, and partner status."
       />
 
+      <div className="mb-3 flex flex-wrap gap-2">
+        {FILTERS.map((f) => (
+          <button
+            key={f}
+            type="button"
+            onClick={() => {
+              setFilter(f);
+              setPage(1);
+            }}
+            className={
+              "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors " +
+              (filter === f ? "border-transparent bg-primary text-primary-foreground" : "hover:bg-muted")
+            }
+          >
+            {FILTER_LABELS[f]}
+            <span className={"tabular-nums " + (filter === f ? "opacity-80" : "text-muted-foreground")}>
+              {counts[f]}
+            </span>
+          </button>
+        ))}
+      </div>
+
       <DataToolbar
         search={query}
         onSearch={(v) => {
@@ -301,21 +323,6 @@ function ResellersPage() {
           setPage(1);
         }}
         searchPlaceholder="Search name, code, phone, email…"
-        filters={[
-          {
-            key: "status",
-            label: "Status",
-            value: filter === "all" ? "" : filter,
-            onChange: (v) => {
-              setFilter((v || "all") as Filter);
-              setPage(1);
-            },
-            options: FILTERS.filter((f) => f !== "all").map((f) => ({
-              value: f,
-              label: `${FILTER_LABELS[f]} (${counts[f]})`,
-            })),
-          },
-        ]}
         perPage={perPage}
         onPerPage={(n) => {
           setPerPage(n);
