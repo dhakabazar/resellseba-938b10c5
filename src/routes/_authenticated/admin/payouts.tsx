@@ -248,7 +248,7 @@ function AdminPayouts() {
     setDeleting(true);
     const { error } = await supabase.from("payouts").delete().eq("id", toDelete.id);
     setDeleting(false);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Payout deleted");
     setToDelete(null);
     load();
