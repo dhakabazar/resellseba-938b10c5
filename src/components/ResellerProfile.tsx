@@ -74,10 +74,25 @@ function IconBtn({ onClick, children, title }: { onClick: () => void; children: 
   );
 }
 
-function Stat({ label, value, tone }: { label: string; value: string; tone?: "success" | "muted" }) {
-  return (
-    <div className="rounded-lg border bg-muted/30 px-3 py-2">
-      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</div>
+function Stat({
+  label,
+  value,
+  tone,
+  to,
+  search,
+}: {
+  label: string;
+  value: string;
+  tone?: "success" | "muted";
+  to?: string;
+  search?: Record<string, string>;
+}) {
+  const body = (
+    <>
+      <div className="flex items-center justify-between gap-1">
+        <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</div>
+        {to && <ArrowUpRight className="h-3 w-3 shrink-0 text-muted-foreground opacity-0 transition group-hover:opacity-100" />}
+      </div>
       <div
         className={
           "text-sm font-semibold tabular-nums " +
@@ -86,8 +101,20 @@ function Stat({ label, value, tone }: { label: string; value: string; tone?: "su
       >
         {value}
       </div>
-    </div>
+    </>
   );
+  if (to) {
+    return (
+      <Link
+        to={to}
+        search={search as never}
+        className="group rounded-lg border bg-muted/30 px-3 py-2 transition hover:border-primary/50 hover:bg-primary/5"
+      >
+        {body}
+      </Link>
+    );
+  }
+  return <div className="rounded-lg border bg-muted/30 px-3 py-2">{body}</div>;
 }
 
 export function ResellerProfile({
