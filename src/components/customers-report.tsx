@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, Search, Phone, MessageCircle, FileSpreadsheet, FileText, Users } from "lucide-react";
+import { Loader2, Search, Phone, MessageCircle, FileSpreadsheet, FileText} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { EmptyState } from "@/components/ui-kit";
 import { toCsv, downloadCsv } from "@/lib/finance-report";
@@ -299,7 +299,6 @@ export function CustomersReport({
         <EmptyState
           title="No customers yet"
           description="Customers appear here automatically once orders start coming in."
-          icon={<Users className="h-6 w-6" />}
         />
       ) : (
         <div className="surface-card overflow-x-auto">
