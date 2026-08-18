@@ -20,6 +20,7 @@ import {
 import { isRealizedStatus, buildFinanceReport, bdt, toCsv, downloadCsv, orderProfit, orderReceived, orderShortfall, PROFIT_FORMULA_HINT, type ReportItem, type ReportOrder } from "@/lib/finance-report";
 import { orderStatusLabel, orderStatusTone } from "@/lib/courier-status";
 import { OrderItemsStrip, type StripItem } from "@/components/order-items-strip";
+import { LedgerTimeline, type LedgerRow } from "@/components/ledger-timeline";
 import { Loader2, Wallet, TrendingUp, Clock, CheckCircle2, AlertTriangle, Truck, Download, Award, Package } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/reseller/earnings")({
@@ -60,7 +61,8 @@ function EarningsPage() {
   const [commissions, setCommissions] = useState<Commission[]>([]);
   const [productMeta, setProductMeta] = useState<Record<string, { slug: string; image: string | null; packaging: number }>>({});
   const [loading, setLoading] = useState(true);
-  const [summary, setSummary] = useState({ delivered_profit: 0, pending_payout: 0, paid_out: 0, available: 0 });
+  const [summary, setSummary] = useState({ delivered_profit: 0, pending_payout: 0, paid_out: 0, available: 0, frozen: 0 });
+  const [ledger, setLedger] = useState<LedgerRow[]>([]);
   const [filters, setFilters] = useState<OrderFilterState>(DEFAULT_ORDER_FILTERS);
   const [gran, setGran] = useState<"day" | "month">("day");
   const [tab, setTab] = useState<ResellerReportTab>("overview");
@@ -71,7 +73,7 @@ function EarningsPage() {
       setLoading(true);
       const { data: r } = await supabase.from("resellers").select("id").eq("user_id", user.id).maybeSingle();
       if (!r) return setLoading(false);
-      const [ordersRes, summaryRes, payoutRes, comRes] = await Promise.all([
+      const [ordersRes, summaryRes, payoutRes, comRes, ledgerRes] = await Promise.all([
         supabase
           .from("orders")
           .select(
@@ -90,6 +92,7 @@ function EarningsPage() {
           .select("id,amount,status,created_at,base_profit,rate,order_id")
           .eq("leader_id", r.id)
           .order("created_at", { ascending: false }),
+        supabase.rpc("reseller_ledger", { _reseller_id: r.id, _limit: 200 } as never),
       ]);
       const orderRows = (ordersRes.data ?? []) as unknown as Row[];
       setRows(orderRows);
@@ -112,8 +115,10 @@ function EarningsPage() {
           pending_payout: Number(s.pending_payout ?? 0),
           paid_out: Number(s.paid_out ?? 0),
           available: Number(s.available ?? 0),
+          frozen: Number((s as { frozen_amount?: number }).frozen_amount ?? 0),
         });
       }
+      setLedger(((ledgerRes.data ?? []) as unknown as LedgerRow[]) ?? []);
       setPayouts((payoutRes.data ?? []) as Payout[]);
       setCommissions((comRes.data ?? []) as Commission[]);
       setLoading(false);
@@ -406,6 +411,7 @@ function EarningsPage() {
       )}
 
       {tab === "payouts" && (
+      <>
       <ReportCard title="Payout ledger" hint="Withdrawal requests and payment history.">
         <table className="w-full min-w-[520px] text-sm">
           <thead className="bg-muted/20 text-center text-[11px] uppercase text-muted-foreground">
@@ -439,6 +445,16 @@ function EarningsPage() {
           </tbody>
         </table>
       </ReportCard>
+
+      <ReportCard
+        title="Money timeline (Ledger)"
+        hint="How money comes in (deposit + delivered profit) and how it goes out (withdrawals)."
+      >
+        <div className="p-4">
+          <LedgerTimeline ledger={ledger} frozen={summary.frozen} available={summary.available} />
+        </div>
+      </ReportCard>
+      </>
       )}
 
       {tab === "commission" && commissions.length > 0 && (
