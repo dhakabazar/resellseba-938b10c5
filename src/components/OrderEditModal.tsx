@@ -43,6 +43,8 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
   const [note, setNote] = useState("");
   const [shippingMode, setShippingMode] = useState<"auto" | "manual">("auto");
   const [shippingManual, setShippingManual] = useState(0);
+  /** Money actually collected by the courier. Empty = full order total received. */
+  const [received, setReceived] = useState<string>("");
   const [query, setQuery] = useState("");
 
   useEffect(() => {
@@ -67,6 +69,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
       setPaymentStatus(o.payment_status ?? "unpaid");
       setNote((isAdmin ? o.admin_note : o.reseller_note) ?? "");
       setShippingManual(Number(o.shipping_cost ?? 0));
+      setReceived(o.received_amount == null ? "" : String(Number(o.received_amount)));
       setShippingMode("manual");
       setItems(
         (its ?? []).map((it: any) => ({
@@ -100,14 +103,19 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
     const subtotal = items.reduce((s, it) => s + it.reseller_price * it.quantity, 0);
     const saCost = items.reduce((s, it) => s + it.sa_price * it.quantity, 0);
     const shipping = shippingMode === "auto" ? autoShipping : Number(shippingManual || 0);
+    const total = subtotal + shipping;
+    const recv = received.trim() === "" ? total : Number(received) || 0;
     return {
       subtotal,
       saCost,
       shipping,
-      total: subtotal + shipping,
-      profit: subtotal - saCost,
+      total,
+      received: recv,
+      shortfall: Math.max(total - recv, 0),
+      // Profit always follows the money really collected.
+      profit: recv - shipping - saCost,
     };
-  }, [items, shippingMode, shippingManual, autoShipping]);
+  }, [items, shippingMode, shippingManual, autoShipping, received]);
 
   /** Minimum sell price per line = SA base cost of that item. */
   function minFor(it: EditItem) {
@@ -173,6 +181,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
           total: totals.total,
           sa_cost_total: totals.saCost,
           reseller_profit: totals.profit,
+          ...(isAdmin ? { received_amount: received.trim() === "" ? null : Number(received) || 0 } : {}),
         })
         .eq("id", orderId);
       if (oe) throw oe;
@@ -475,15 +484,47 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                   </label>
                 </div>
 
+                {isAdmin && (
+                  <label className="mt-3 block">
+                    <span className="text-[10px] font-semibold text-muted-foreground">
+                      Received amount (partial delivery)
+                    </span>
+                    <input
+                      type="number"
+                      className={inp}
+                      placeholder={`Empty = full ৳${totals.total.toFixed(0)} received`}
+                      value={received}
+                      onChange={(e) => setReceived(e.target.value)}
+                    />
+                    <span className="mt-1 block text-[10px] text-muted-foreground">
+                      Courier partial payment dile ekhane collected amount din — profit ei amount theke calculate hobe.
+                    </span>
+                  </label>
+                )}
+
                 <div className="rounded-xl border bg-muted/20 p-4 text-xs">
                   <Row label="Subtotal" value={totals.subtotal} />
                   <Row label="Delivery" value={totals.shipping} />
+                  <Row label="Received" value={totals.received} />
                   <div className="mt-2 flex justify-between border-t pt-2 text-sm font-bold text-primary">
                     <span>Grand total</span>
                     <span>৳{totals.total.toFixed(0)}</span>
                   </div>
-                  <div className="mt-1 flex justify-between text-[11px] font-semibold text-success">
-                    <span>{isAdmin ? "Reseller profit" : "Your profit"}</span>
+                  {totals.shortfall > 0 && (
+                    <div className="mt-1 flex justify-between text-[11px] font-semibold text-destructive">
+                      <span>Not received</span>
+                      <span>−৳{totals.shortfall.toFixed(0)}</span>
+                    </div>
+                  )}
+                  <div
+                    className={
+                      "mt-1 flex justify-between text-[11px] font-semibold " +
+                      (totals.profit < 0 ? "text-destructive" : "text-success")
+                    }
+                  >
+                    <span>
+                      {totals.profit < 0 ? (isAdmin ? "Reseller loss" : "Your loss") : isAdmin ? "Reseller profit" : "Your profit"}
+                    </span>
                     <span>৳{totals.profit.toFixed(0)}</span>
                   </div>
                   {isAdmin && (

@@ -1,5 +1,5 @@
 import { ORDER_TABS, orderStatusLabel, orderStatusTone, type OrderTabKey } from "@/lib/courier-status";
-import { bdt, type FinanceReport, type MoneyBucket, type ProductLine, type TrendPoint } from "@/lib/finance-report";
+import { bdt, PROFIT_FORMULA_HINT, type FinanceReport, type MoneyBucket, type ProductLine, type TrendPoint } from "@/lib/finance-report";
 
 /** Shared money table shell so every report block looks identical. */
 export function ReportCard({
@@ -70,69 +70,92 @@ const th = "px-2 py-2 text-center text-[11px] font-medium uppercase tracking-wid
 export function StatusReportTable({
   report,
   showAdminCost = true,
-  packagingByTab,
-  packagingAll = 0,
 }: {
   report: FinanceReport;
   showAdminCost?: boolean;
-  /** When given, the cost column is split into product cost + packaging cost. */
-  packagingByTab?: Partial<Record<OrderTabKey, number>>;
-  packagingAll?: number;
 }) {
   const rows: { key: OrderTabKey; label: string; b: MoneyBucket }[] = ORDER_TABS.filter((t) => t.key !== "all").map(
     (t) => ({ key: t.key, label: t.label, b: report.byStatusTab[t.key] }),
   );
-  const split = showAdminCost && !!packagingByTab;
   return (
-    <table className={"w-full text-sm " + (split ? "min-w-[820px]" : "min-w-[760px]")}>
+    <table className={"w-full text-sm " + (showAdminCost ? "min-w-[900px]" : "min-w-[780px]")}>
       <thead className="bg-muted/20 text-center">
         <tr>
           <th className={th}>Status</th>
           <th className={th}>Orders</th>
           <th className={th}>Sell value</th>
+          <th className={th} title="Money the courier actually collected">
+            Received
+          </th>
+          <th className={th} title="Order value that was never collected (partial / failed delivery)">
+            Not received
+          </th>
           <th className={th}>Delivery</th>
-          {split && <th className={th}>Product cost</th>}
-          {split && <th className={th}>Packaging cost</th>}
-          {showAdminCost && !split && <th className={th}>Total cost</th>}
-          <th className={th}>Profit</th>
+          {showAdminCost && <th className={th}>Product cost</th>}
+          {showAdminCost && <th className={th}>Packaging cost</th>}
+          <th className={th} title={PROFIT_FORMULA_HINT}>
+            Profit / loss
+          </th>
         </tr>
       </thead>
       <tbody>
-        {rows.map((r) => {
-          const pkg = packagingByTab?.[r.key] ?? 0;
-          return (
-            <tr key={r.key} className="border-t">
-              <td className="px-2 py-2 text-center">
-                <span className={"rounded-full px-2 py-0.5 text-[11px] capitalize " + orderStatusTone(statusOfTab(r.key))}>
-                  {r.label}
+        {rows.map((r) => (
+          <tr key={r.key} className="border-t">
+            <td className="px-2 py-2 text-center">
+              <span className={"rounded-full px-2 py-0.5 text-[11px] capitalize " + orderStatusTone(statusOfTab(r.key))}>
+                {r.label}
+              </span>
+              {r.b.partialOrders > 0 && (
+                <span className="ml-1 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-600">
+                  {r.b.partialOrders} partial
                 </span>
-              </td>
-              <td className="px-2 py-2 text-center">{r.b.orders}</td>
-              <td className="px-2 py-2 text-center">{bdt(r.b.gross)}</td>
-              <td className="px-2 py-2 text-center text-muted-foreground">{bdt(r.b.delivery)}</td>
-              {split && <td className="px-2 py-2 text-center tabular-nums">{bdt(r.b.adminCost - pkg)}</td>}
-              {split && <td className="px-2 py-2 text-center tabular-nums text-violet-500">{bdt(pkg)}</td>}
-              {showAdminCost && !split && <td className="px-2 py-2 text-center text-muted-foreground">{bdt(r.b.adminCost)}</td>}
-              <td className="px-2 py-2 text-center font-medium">{bdt(r.b.profit)}</td>
-            </tr>
-          );
-        })}
+              )}
+            </td>
+            <td className="px-2 py-2 text-center">{r.b.orders}</td>
+            <td className="px-2 py-2 text-center">{bdt(r.b.gross)}</td>
+            <td className="px-2 py-2 text-center tabular-nums">{bdt(r.b.received)}</td>
+            <td className="px-2 py-2 text-center tabular-nums text-destructive">
+              {r.b.shortfall ? `−${bdt(r.b.shortfall)}` : "—"}
+            </td>
+            <td className="px-2 py-2 text-center text-muted-foreground">{bdt(r.b.delivery)}</td>
+            {showAdminCost && (
+              <td className="px-2 py-2 text-center tabular-nums">{bdt(r.b.adminCost - r.b.packaging)}</td>
+            )}
+            {showAdminCost && (
+              <td className="px-2 py-2 text-center tabular-nums text-violet-500">{bdt(r.b.packaging)}</td>
+            )}
+            <td className={"px-2 py-2 text-center font-medium " + toneOf(r.b.profit)}>{bdt(r.b.profit)}</td>
+          </tr>
+        ))}
       </tbody>
       <tfoot className="border-t bg-muted/30 font-medium">
         <tr>
           <td className="px-2 py-2 text-center">Total</td>
           <td className="px-2 py-2 text-center">{report.all.orders}</td>
           <td className="px-2 py-2 text-center">{bdt(report.all.gross)}</td>
+          <td className="px-2 py-2 text-center">{bdt(report.all.received)}</td>
+          <td className="px-2 py-2 text-center text-destructive">
+            {report.all.shortfall ? `−${bdt(report.all.shortfall)}` : "—"}
+          </td>
           <td className="px-2 py-2 text-center">{bdt(report.all.delivery)}</td>
-          {split && <td className="px-2 py-2 text-center tabular-nums">{bdt(report.all.adminCost - packagingAll)}</td>}
-          {split && <td className="px-2 py-2 text-center tabular-nums text-violet-500">{bdt(packagingAll)}</td>}
-          {showAdminCost && !split && <td className="px-2 py-2 text-center">{bdt(report.all.adminCost)}</td>}
-          <td className="px-2 py-2 text-center">{bdt(report.all.profit)}</td>
+          {showAdminCost && (
+            <td className="px-2 py-2 text-center tabular-nums">{bdt(report.all.adminCost - report.all.packaging)}</td>
+          )}
+          {showAdminCost && (
+            <td className="px-2 py-2 text-center tabular-nums text-violet-500">{bdt(report.all.packaging)}</td>
+          )}
+          <td className={"px-2 py-2 text-center " + toneOf(report.all.profit)}>{bdt(report.all.profit)}</td>
         </tr>
       </tfoot>
     </table>
   );
 }
+
+/** Green for profit, red for loss. */
+export function toneOf(v: number) {
+  return v < 0 ? "text-destructive" : v > 0 ? "text-success" : "";
+}
+
 
 
 function statusOfTab(key: OrderTabKey) {
@@ -152,17 +175,20 @@ export function ProductReportTable({
 }) {
   const rows = limit ? products.slice(0, limit) : products;
   return (
-    <table className="w-full min-w-[760px] text-sm">
+    <table className="w-full min-w-[860px] text-sm">
       <thead className="bg-muted/20 text-center">
         <tr>
           <th className={th}>Product</th>
           <th className={th}>Orders</th>
           <th className={th}>Qty</th>
           <th className={th}>Delivered qty</th>
+          <th className={th} title="Quantity in returned / cancelled orders">Lost qty</th>
           <th className={th}>Sell value</th>
           {showCost && <th className={th}>Cost</th>}
           <th className={th}>Profit</th>
-          <th className={th}>Delivered profit</th>
+          <th className={th} title="Delivered profit minus not-received amount and failed-delivery loss share">
+            Settled net
+          </th>
         </tr>
       </thead>
       <tbody>
@@ -172,15 +198,18 @@ export function ProductReportTable({
             <td className="px-2 py-2 text-center text-muted-foreground">{p.orders}</td>
             <td className="px-2 py-2 text-center">{p.qty}</td>
             <td className="px-2 py-2 text-center text-muted-foreground">{p.deliveredQty}</td>
+            <td className="px-2 py-2 text-center text-muted-foreground">{p.lostQty || "—"}</td>
             <td className="px-2 py-2 text-center">{bdt(p.gross)}</td>
             {showCost && <td className="px-2 py-2 text-center text-muted-foreground">{bdt(p.cost)}</td>}
             <td className="px-2 py-2 text-center">{bdt(p.profit)}</td>
-            <td className="px-2 py-2 text-center font-semibold text-success">{bdt(p.deliveredProfit)}</td>
+            <td className={"px-2 py-2 text-center font-semibold " + toneOf(p.deliveredProfit)}>
+              {bdt(p.deliveredProfit)}
+            </td>
           </tr>
         ))}
         {rows.length === 0 && (
           <tr>
-            <td colSpan={8} className="px-2 py-8 text-center text-muted-foreground">
+            <td colSpan={9} className="px-2 py-8 text-center text-muted-foreground">
               No products match this filter.
             </td>
           </tr>
@@ -194,14 +223,15 @@ export function ProductReportTable({
 export function TrendReportTable({ trend, limit = 30 }: { trend: TrendPoint[]; limit?: number }) {
   const rows = trend.slice(0, limit);
   return (
-    <table className="w-full min-w-[560px] text-sm">
+    <table className="w-full min-w-[640px] text-sm">
       <thead className="bg-muted/20 text-center">
         <tr>
           <th className={th}>Period</th>
           <th className={th}>Orders</th>
           <th className={th}>Sell value</th>
+          <th className={th}>Received</th>
           <th className={th}>Profit</th>
-          <th className={th}>Delivered profit</th>
+          <th className={th} title="Delivered/partial profit minus failed-delivery loss">Settled net</th>
         </tr>
       </thead>
       <tbody>
@@ -210,13 +240,16 @@ export function TrendReportTable({ trend, limit = 30 }: { trend: TrendPoint[]; l
             <td className="px-2 py-2 text-center font-mono text-xs">{t.key}</td>
             <td className="px-2 py-2 text-center">{t.orders}</td>
             <td className="px-2 py-2 text-center">{bdt(t.gross)}</td>
-            <td className="px-2 py-2 text-center">{bdt(t.profit)}</td>
-            <td className="px-2 py-2 text-center font-medium text-success">{bdt(t.deliveredProfit)}</td>
+            <td className="px-2 py-2 text-center tabular-nums">{bdt(t.received)}</td>
+            <td className={"px-2 py-2 text-center " + toneOf(t.profit)}>{bdt(t.profit)}</td>
+            <td className={"px-2 py-2 text-center font-medium " + toneOf(t.deliveredProfit)}>
+              {bdt(t.deliveredProfit)}
+            </td>
           </tr>
         ))}
         {rows.length === 0 && (
           <tr>
-            <td colSpan={5} className="px-2 py-8 text-center text-muted-foreground">
+            <td colSpan={6} className="px-2 py-8 text-center text-muted-foreground">
               No data available.
             </td>
           </tr>
@@ -230,7 +263,7 @@ export function TrendReportTable({ trend, limit = 30 }: { trend: TrendPoint[]; l
 export function RawStatusList({ report, showAdminCost = true }: { report: FinanceReport; showAdminCost?: boolean }) {
   const entries = Object.entries(report.byStatus).sort((a, b) => b[1].orders - a[1].orders);
   return (
-    <table className="w-full min-w-[820px] text-sm">
+    <table className="w-full min-w-[960px] text-sm">
       <thead className="bg-muted/20 text-center">
         <tr>
           <th className={th}>Status</th>
@@ -238,6 +271,8 @@ export function RawStatusList({ report, showAdminCost = true }: { report: Financ
           <th className={th}>Sell value</th>
           <th className={th}>Delivery</th>
           <th className={th}>Customer total</th>
+          <th className={th}>Received</th>
+          <th className={th} title="Order value never collected">Not received</th>
           {showAdminCost && <th className={th}>Total cost</th>}
           <th className={th}>Profit</th>
           <th className={th}>Avg / order</th>
@@ -255,8 +290,12 @@ export function RawStatusList({ report, showAdminCost = true }: { report: Financ
             <td className="px-2 py-2 text-center">{bdt(b.gross)}</td>
             <td className="px-2 py-2 text-center text-muted-foreground">{bdt(b.delivery)}</td>
             <td className="px-2 py-2 text-center">{bdt(b.customerTotal)}</td>
+            <td className="px-2 py-2 text-center tabular-nums">{bdt(b.received)}</td>
+            <td className="px-2 py-2 text-center tabular-nums text-destructive">
+              {b.shortfall ? `−${bdt(b.shortfall)}` : "—"}
+            </td>
             {showAdminCost && <td className="px-2 py-2 text-center text-muted-foreground">{bdt(b.adminCost)}</td>}
-            <td className="px-2 py-2 text-center font-medium">{bdt(b.profit)}</td>
+            <td className={"px-2 py-2 text-center font-medium " + toneOf(b.profit)}>{bdt(b.profit)}</td>
             <td className="px-2 py-2 text-center text-muted-foreground">
               {bdt(b.orders ? b.customerTotal / b.orders : 0)}
             </td>
@@ -264,7 +303,7 @@ export function RawStatusList({ report, showAdminCost = true }: { report: Financ
         ))}
         {entries.length === 0 && (
           <tr>
-            <td colSpan={showAdminCost ? 8 : 7} className="px-2 py-8 text-center text-muted-foreground">
+            <td colSpan={showAdminCost ? 10 : 9} className="px-2 py-8 text-center text-muted-foreground">
               No orders yet.
             </td>
           </tr>
@@ -277,8 +316,12 @@ export function RawStatusList({ report, showAdminCost = true }: { report: Financ
           <td className="px-2 py-2 text-center">{bdt(report.all.gross)}</td>
           <td className="px-2 py-2 text-center">{bdt(report.all.delivery)}</td>
           <td className="px-2 py-2 text-center">{bdt(report.all.customerTotal)}</td>
+          <td className="px-2 py-2 text-center">{bdt(report.all.received)}</td>
+          <td className="px-2 py-2 text-center text-destructive">
+            {report.all.shortfall ? `−${bdt(report.all.shortfall)}` : "—"}
+          </td>
           {showAdminCost && <td className="px-2 py-2 text-center">{bdt(report.all.adminCost)}</td>}
-          <td className="px-2 py-2 text-center">{bdt(report.all.profit)}</td>
+          <td className={"px-2 py-2 text-center " + toneOf(report.all.profit)}>{bdt(report.all.profit)}</td>
           <td className="px-2 py-2 text-center">{bdt(report.avgOrderValue)}</td>
         </tr>
       </tfoot>

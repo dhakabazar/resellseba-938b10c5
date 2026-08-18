@@ -64,7 +64,7 @@ function AdminDashboard() {
     const { fromTs, toTs } = resolveRange(r);
     let oq = supabase
       .from("orders")
-      .select("total,shipping_cost,reseller_profit,sa_cost_total,created_at,status,resellers(business_name)");
+      .select("total,shipping_cost,reseller_profit,sa_cost_total,received_amount,packaging_total,created_at,status,resellers(business_name)");
     if (fromTs != null) oq = oq.gte("created_at", new Date(fromTs).toISOString());
     if (toTs != null) oq = oq.lte("created_at", new Date(toTs).toISOString());
 
@@ -90,11 +90,11 @@ function AdminDashboard() {
     const [allOrders, delivered, payoutsRes, prods, cats, brandRows, resellerRows, metricsRes] = await Promise.all([
       supabase
         .from("orders")
-        .select("id,order_number,reseller_id,status,created_at,subtotal,shipping_cost,discount,total,sa_cost_total,reseller_profit")
+        .select("id,order_number,reseller_id,status,created_at,subtotal,shipping_cost,discount,total,sa_cost_total,reseller_profit,received_amount,packaging_total")
         .limit(20000),
       supabase
         .from("orders")
-        .select("total,shipping_cost,reseller_profit,sa_cost_total")
+        .select("total,shipping_cost,reseller_profit,sa_cost_total,received_amount,packaging_total,status")
         .eq("status", "delivered")
         .limit(20000),
       supabase.from("payouts").select("amount,status").limit(20000),
@@ -104,7 +104,7 @@ function AdminDashboard() {
       supabase.from("resellers").select("id,status").limit(20000),
       supabase.rpc("admin_reseller_metrics"),
     ]);
-    const d = (delivered.data ?? []) as { total: number | string; shipping_cost: number | string; reseller_profit: number | string; sa_cost_total: number | string }[];
+    const d = (delivered.data ?? []) as { total: number | string; shipping_cost: number | string; reseller_profit: number | string; sa_cost_total: number | string; received_amount?: number | string | null; packaging_total?: number | string | null; status?: string }[];
     const pay = (payoutsRes.data ?? []) as { amount: number | string; status: string }[];
     const all = (allOrders.data ?? []) as ReportOrder[];
     setOrderReport(buildFinanceReport(all, []));

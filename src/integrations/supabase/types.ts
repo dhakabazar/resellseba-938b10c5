@@ -679,8 +679,10 @@ export type Database = {
           landmark: string | null
           notes: string | null
           order_number: string
+          packaging_total: number
           payment_method: Database["public"]["Enums"]["payment_method"]
           payment_status: Database["public"]["Enums"]["payment_status"]
+          received_amount: number | null
           reseller_id: string | null
           reseller_note: string | null
           reseller_profit: number
@@ -707,8 +709,10 @@ export type Database = {
           landmark?: string | null
           notes?: string | null
           order_number?: string
+          packaging_total?: number
           payment_method?: Database["public"]["Enums"]["payment_method"]
           payment_status?: Database["public"]["Enums"]["payment_status"]
+          received_amount?: number | null
           reseller_id?: string | null
           reseller_note?: string | null
           reseller_profit?: number
@@ -735,8 +739,10 @@ export type Database = {
           landmark?: string | null
           notes?: string | null
           order_number?: string
+          packaging_total?: number
           payment_method?: Database["public"]["Enums"]["payment_method"]
           payment_status?: Database["public"]["Enums"]["payment_status"]
+          received_amount?: number | null
           reseller_id?: string | null
           reseller_note?: string | null
           reseller_profit?: number
@@ -1751,6 +1757,10 @@ export type Database = {
       }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
       my_permissions: { Args: never; Returns: string[] }
+      recalc_order_packaging: {
+        Args: { _order_id: string }
+        Returns: undefined
+      }
       reseller_deposit_balance: {
         Args: { _reseller_id: string }
         Returns: number

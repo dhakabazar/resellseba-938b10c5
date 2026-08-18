@@ -178,6 +178,12 @@ export async function applyCourierUpdate(
   const finalStates = ["returned", "cancelled"];
   const isLocked = order && finalStates.includes(order.status) && !args.bypassFinalLock;
   
+  // Courier-collected money (partial delivery = less than the order total).
+  // Stored on the order so every profit/loss calculation uses what was really received.
+  if (order && !isLocked && args.codAmount != null && mapped.order === "delivered") {
+    await db.from("orders").update({ received_amount: args.codAmount }).eq("id", orderId);
+  }
+
   if (order && order.status !== mapped.order && !isLocked) {
     await db.from("orders").update({ status: mapped.order }).eq("id", orderId);
     await db.from("order_status_history").insert({
@@ -186,6 +192,7 @@ export async function applyCourierUpdate(
       note: `${provider} update (${args.source}): ${statusKey}${args.bypassFinalLock ? " (Admin Override)" : ""}`,
     });
   }
+
 
   return { matched: true as const, orderId, shipmentId: shipment?.id ?? null, mapped };
 }

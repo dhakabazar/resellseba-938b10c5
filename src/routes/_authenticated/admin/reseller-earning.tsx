@@ -21,8 +21,9 @@ import {
   bdt,
   toCsv,
   downloadCsv,
-  statusTab,
   orderProfit,
+  orderReceived,
+  orderShortfall,
   PROFIT_FORMULA_HINT,
 
   type ReportItem,
@@ -94,7 +95,7 @@ function FinancialsPage() {
         supabase
           .from("orders")
           .select(
-            "id,order_number,reseller_id,status,created_at,customer_name,customer_phone,address_line,subtotal,shipping_cost,discount,total,sa_cost_total,reseller_profit,resellers(business_name,code)",
+            "id,order_number,reseller_id,status,created_at,customer_name,customer_phone,address_line,subtotal,shipping_cost,discount,total,sa_cost_total,reseller_profit,received_amount,packaging_total,resellers(business_name,code)",
           )
           .order("created_at", { ascending: false }),
         supabase.from("order_items").select("order_id,product_id,product_name,product_image,quantity,sa_price,reseller_price,line_total,profit"),
@@ -162,23 +163,6 @@ function FinancialsPage() {
     return m;
   }, [scopedItems]);
 
-  const packaging = useMemo(() => {
-    const of = (id: string) =>
-      (itemsByOrder.get(id) ?? []).reduce(
-        (sum, i) => sum + (i.product_id ? (productMeta[i.product_id]?.packaging ?? 0) : 0) * Number(i.quantity),
-        0,
-      );
-    let all = 0, delivered = 0;
-    const byTab: Record<string, number> = {};
-    for (const o of scoped) {
-      const v = of(o.id);
-      all += v;
-      const t = statusTab(o.status);
-      byTab[t] = (byTab[t] ?? 0) + v;
-      if (o.status === "delivered") delivered += v;
-    }
-    return { all, delivered, byTab };
-  }, [scoped, itemsByOrder, productMeta]);
 
 
   const stripItems = (orderId: string): StripItem[] =>
@@ -385,13 +369,13 @@ function FinancialsPage() {
         <StatCard
           label="Admin revenue (product+pkg)"
           value={bdt(report.realized.adminCost)}
-          hint={`Product ${bdt(report.realized.adminCost - packaging.delivered)} + packaging ${bdt(packaging.delivered)}`}
+          hint={`Product ${bdt(report.realized.adminCost - report.realized.packaging)} + packaging ${bdt(report.realized.packaging)}`}
           icon={<PiggyBank className="h-4 w-4" />}
         />
         <StatCard
           label="Packaging cost (delivered)"
-          value={bdt(packaging.delivered)}
-          hint={`All orders ${bdt(packaging.all)} — already included in admin cost`}
+          value={bdt(report.realized.packaging)}
+          hint={`All orders ${bdt(report.all.packaging)} — already included in admin cost`}
           icon={<Package className="h-4 w-4" />}
           tone="violet"
         />
@@ -446,7 +430,7 @@ function FinancialsPage() {
         hint="Matches the order list tab buckets. Product cost and packaging cost are shown separately."
         right={<CsvBtn onClick={exportStatus} />}
       >
-        <StatusReportTable report={report} packagingByTab={packaging.byTab} packagingAll={packaging.all} />
+        <StatusReportTable report={report} />
 
       </ReportCard>
 
@@ -466,8 +450,8 @@ function FinancialsPage() {
           </thead>
           <tbody>
             {[
-              { label: "Delivered", cost: report.realized.adminCost, pkg: packaging.delivered, profit: report.realized.profit },
-              { label: "All filtered orders", cost: report.all.adminCost, pkg: packaging.all, profit: report.all.profit },
+              { label: "Delivered", cost: report.realized.adminCost, pkg: report.realized.packaging, profit: report.realized.profit },
+              { label: "All filtered orders", cost: report.all.adminCost, pkg: report.all.packaging, profit: report.all.profit },
             ].map((r) => (
               <tr key={r.label} className="border-t">
                 <td className="px-2 py-2 text-center font-medium">{r.label}</td>
@@ -600,16 +584,23 @@ function FinancialsPage() {
                   {orderStatusLabel(o.status)}
                 </span>
               </div>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-2 px-4 py-3 text-sm sm:grid-cols-3 lg:grid-cols-5">
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2 px-4 py-3 text-sm sm:grid-cols-3 lg:grid-cols-6">
                 {[
                   { l: "Sell value", v: bdt(Number(o.subtotal)) },
                   { l: "Delivery", v: bdt(Number(o.shipping_cost)), muted: true },
                   { l: "Customer total", v: bdt(Number(o.total)) },
+                  {
+                    l: "Received",
+                    v: bdt(orderReceived(o)),
+                    cls: orderShortfall(o) > 0 ? "text-destructive font-semibold" : "",
+                  },
                   { l: "Admin cost", v: bdt(Number(o.sa_cost_total)), muted: true },
                   {
-                    l: "Reseller profit",
+                    l: orderProfit(o) < 0 ? "Reseller profit".replace("profit", "loss") : "Reseller profit",
                     v: bdt(orderProfit(o)),
-                    cls: "font-semibold " + (o.status === "delivered" ? "text-success" : ""),
+                    cls:
+                      "font-semibold " +
+                      (orderProfit(o) < 0 ? "text-destructive" : o.status === "delivered" ? "text-success" : ""),
                   },
                 ].map((c) => (
                   <div key={c.l}>
