@@ -56,6 +56,7 @@ import { Route as AuthenticatedAdminMaintenanceRouteImport } from './routes/_aut
 import { Route as AuthenticatedAdminLandingRouteImport } from './routes/_authenticated/admin/landing'
 import { Route as AuthenticatedAdminDomainsRouteImport } from './routes/_authenticated/admin/domains'
 import { Route as AuthenticatedAdminDepositsRouteImport } from './routes/_authenticated/admin/deposits'
+import { Route as AuthenticatedAdminCustomersRouteImport } from './routes/_authenticated/admin/customers'
 import { Route as AuthenticatedAdminCouriersRouteImport } from './routes/_authenticated/admin/couriers'
 import { Route as AuthenticatedAdminCommissionsRouteImport } from './routes/_authenticated/admin/commissions'
 import { Route as AuthenticatedAdminCategoriesRouteImport } from './routes/_authenticated/admin/categories'
@@ -341,6 +342,12 @@ const AuthenticatedAdminDepositsRoute =
     path: '/deposits',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
+const AuthenticatedAdminCustomersRoute =
+  AuthenticatedAdminCustomersRouteImport.update({
+    id: '/customers',
+    path: '/customers',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
 const AuthenticatedAdminCouriersRoute =
   AuthenticatedAdminCouriersRouteImport.update({
     id: '/couriers',
@@ -478,6 +485,7 @@ export interface FileRoutesByFullPath {
   '/admin/categories': typeof AuthenticatedAdminCategoriesRoute
   '/admin/commissions': typeof AuthenticatedAdminCommissionsRoute
   '/admin/couriers': typeof AuthenticatedAdminCouriersRoute
+  '/admin/customers': typeof AuthenticatedAdminCustomersRoute
   '/admin/deposits': typeof AuthenticatedAdminDepositsRoute
   '/admin/domains': typeof AuthenticatedAdminDomainsRoute
   '/admin/landing': typeof AuthenticatedAdminLandingRoute
@@ -542,6 +550,7 @@ export interface FileRoutesByTo {
   '/admin/categories': typeof AuthenticatedAdminCategoriesRoute
   '/admin/commissions': typeof AuthenticatedAdminCommissionsRoute
   '/admin/couriers': typeof AuthenticatedAdminCouriersRoute
+  '/admin/customers': typeof AuthenticatedAdminCustomersRoute
   '/admin/deposits': typeof AuthenticatedAdminDepositsRoute
   '/admin/domains': typeof AuthenticatedAdminDomainsRoute
   '/admin/landing': typeof AuthenticatedAdminLandingRoute
@@ -612,6 +621,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/categories': typeof AuthenticatedAdminCategoriesRoute
   '/_authenticated/admin/commissions': typeof AuthenticatedAdminCommissionsRoute
   '/_authenticated/admin/couriers': typeof AuthenticatedAdminCouriersRoute
+  '/_authenticated/admin/customers': typeof AuthenticatedAdminCustomersRoute
   '/_authenticated/admin/deposits': typeof AuthenticatedAdminDepositsRoute
   '/_authenticated/admin/domains': typeof AuthenticatedAdminDomainsRoute
   '/_authenticated/admin/landing': typeof AuthenticatedAdminLandingRoute
@@ -682,6 +692,7 @@ export interface FileRouteTypes {
     | '/admin/categories'
     | '/admin/commissions'
     | '/admin/couriers'
+    | '/admin/customers'
     | '/admin/deposits'
     | '/admin/domains'
     | '/admin/landing'
@@ -746,6 +757,7 @@ export interface FileRouteTypes {
     | '/admin/categories'
     | '/admin/commissions'
     | '/admin/couriers'
+    | '/admin/customers'
     | '/admin/deposits'
     | '/admin/domains'
     | '/admin/landing'
@@ -815,6 +827,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/categories'
     | '/_authenticated/admin/commissions'
     | '/_authenticated/admin/couriers'
+    | '/_authenticated/admin/customers'
     | '/_authenticated/admin/deposits'
     | '/_authenticated/admin/domains'
     | '/_authenticated/admin/landing'
@@ -1211,6 +1224,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminDepositsRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/_authenticated/admin/customers': {
+      id: '/_authenticated/admin/customers'
+      path: '/customers'
+      fullPath: '/admin/customers'
+      preLoaderRoute: typeof AuthenticatedAdminCustomersRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
     '/_authenticated/admin/couriers': {
       id: '/_authenticated/admin/couriers'
       path: '/couriers'
@@ -1363,6 +1383,7 @@ interface AuthenticatedAdminRouteRouteChildren {
   AuthenticatedAdminCategoriesRoute: typeof AuthenticatedAdminCategoriesRoute
   AuthenticatedAdminCommissionsRoute: typeof AuthenticatedAdminCommissionsRoute
   AuthenticatedAdminCouriersRoute: typeof AuthenticatedAdminCouriersRoute
+  AuthenticatedAdminCustomersRoute: typeof AuthenticatedAdminCustomersRoute
   AuthenticatedAdminDepositsRoute: typeof AuthenticatedAdminDepositsRoute
   AuthenticatedAdminDomainsRoute: typeof AuthenticatedAdminDomainsRoute
   AuthenticatedAdminLandingRoute: typeof AuthenticatedAdminLandingRoute
@@ -1395,6 +1416,7 @@ const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren
     AuthenticatedAdminCategoriesRoute: AuthenticatedAdminCategoriesRoute,
     AuthenticatedAdminCommissionsRoute: AuthenticatedAdminCommissionsRoute,
     AuthenticatedAdminCouriersRoute: AuthenticatedAdminCouriersRoute,
+    AuthenticatedAdminCustomersRoute: AuthenticatedAdminCustomersRoute,
     AuthenticatedAdminDepositsRoute: AuthenticatedAdminDepositsRoute,
     AuthenticatedAdminDomainsRoute: AuthenticatedAdminDomainsRoute,
     AuthenticatedAdminLandingRoute: AuthenticatedAdminLandingRoute,
