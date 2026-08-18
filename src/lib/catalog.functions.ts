@@ -39,6 +39,9 @@ export const getCatalog = createServerFn({ method: "GET" }).handler(async () => 
       brandId: row.brand_id as string | null,
       featured: Boolean(row.is_featured),
       image: pickImage(row.product_images),
+      images: [...((row.product_images ?? []) as ImgRow[])]
+        .sort((a, b) => Number(b.is_primary) - Number(a.is_primary) || a.sort_order - b.sort_order)
+        .map((i) => i.url),
     };
   });
 
