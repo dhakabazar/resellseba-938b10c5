@@ -95,7 +95,13 @@ function CategoryNav({ variant }: { variant: "row" | "stack" }) {
           ? "border-b-2 border-transparent px-1 py-2.5 hover:border-[var(--st-primary)] hover:text-[var(--st-primary)]"
           : "hover:text-[var(--st-primary)]";
   return (
-    <nav className={cx(variant === "row" ? "flex items-center gap-4 overflow-x-auto" : "flex flex-col gap-1")}>
+    <nav
+      className={cx(
+        variant === "row"
+          ? "flex flex-wrap items-center gap-x-4 gap-y-2 py-2"
+          : "flex flex-col gap-1",
+      )}
+    >
       <Link to="/s/$code" params={{ code }} className={cx(base, shape)}>
         All products
       </Link>

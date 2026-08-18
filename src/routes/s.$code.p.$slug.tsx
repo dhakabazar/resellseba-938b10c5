@@ -129,9 +129,25 @@ function ProductPage() {
             ) : (
               <div className={cx("grid h-full w-full place-items-center text-xs", muted)}>No image</div>
             )}
+            {tools && (
+              <div className="absolute right-3 top-3 z-10 flex flex-col gap-2">
+                <ImageDownloadTools compact images={imageUrls} activeUrl={active} baseName={title} />
+                <CopyButton
+                  value={title}
+                  className="h-9 w-9 rounded-full bg-[var(--st-surface)]/90 p-0 shadow-sm backdrop-blur"
+                />
+                {detailsText && (
+                  <CopyButton
+                    value={detailsText}
+                    label="details"
+                    className="h-9 w-9 rounded-full bg-[var(--st-surface)]/90 p-0 shadow-sm backdrop-blur"
+                  />
+                )}
+              </div>
+            )}
           </div>
           {images.length > 1 && (
-            <div className="mt-3 flex gap-2 overflow-x-auto">
+            <div className="mt-3 flex flex-wrap gap-2">
               {images.map((im, i) => (
                 <button
                   key={i}
@@ -147,13 +163,6 @@ function ProductPage() {
               ))}
             </div>
           )}
-            {tools && (
-              <div className="absolute right-3 top-3 z-10 flex flex-col gap-2">
-                <ImageDownloadTools compact images={imageUrls} activeUrl={active} baseName={title} />
-                <CopyButton value={title} className="h-9 w-9 p-0 bg-[var(--st-surface)]/90 backdrop-blur rounded-full shadow-sm" />
-                {detailsText && <CopyButton value={detailsText} label="details" className="h-9 w-9 p-0 bg-[var(--st-surface)]/90 backdrop-blur rounded-full shadow-sm" />}
-              </div>
-            )}
         </div>
 
         <div>
