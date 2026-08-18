@@ -257,6 +257,7 @@ function CatalogPage() {
         filters={filters}
         perPage={perPage}
         onPerPage={setPerPage}
+        inline
       />
 
       {filtered.length === 0 ? (
