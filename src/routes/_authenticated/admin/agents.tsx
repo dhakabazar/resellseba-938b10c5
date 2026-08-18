@@ -348,7 +348,24 @@ function AgentModal({
               <label className="mb-1 block text-xs font-medium">Sale target (৳)</label>
               <input type="number" min={0} value={target} onChange={(e) => setTarget(e.target.value)} className={cls} />
             </div>
+            <div className="sm:col-span-2">
+              <label className="mb-1 block text-xs font-medium">Commission rate (%)</label>
+              <input
+                type="number"
+                min={0}
+                max={100}
+                step="0.01"
+                value={rate}
+                onChange={(e) => setRate(e.target.value)}
+                className={cls}
+              />
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Commission = this % × settled net profit of the assigned resellers' orders (final delivered amount −
+                delivery charge − product cost − packaging cost). Returned / cancelled orders reduce the base.
+              </p>
+            </div>
             <div>
+
               <label className="mb-1 block text-xs font-medium">Phone</label>
               <input value={phone} onChange={(e) => setPhone(e.target.value)} className={cls} />
             </div>
