@@ -121,6 +121,22 @@ function AdminDashboard() {
       activeCategories: c.filter((x) => x.is_active).length,
       activeBrands: b.filter((x) => x.is_active).length,
     });
+
+    const rs = (resellerRows.data ?? []) as { id: string; status: string }[];
+    const metrics = (metricsRes.data ?? []) as Array<{
+      reseller_id: string; orders: number; deposit_balance: number; frozen_amount: number; available: number;
+    }>;
+    setResellerReport({
+      total: rs.length,
+      active: rs.filter((x) => x.status === "active").length,
+      pending: rs.filter((x) => x.status === "pending").length,
+      suspended: rs.filter((x) => x.status === "suspended").length,
+      rejected: rs.filter((x) => x.status === "rejected").length,
+      withStore: metrics.filter((m) => Number(m.orders ?? 0) > 0).length,
+      depositBalance: metrics.reduce((s, m) => s + Number(m.deposit_balance ?? 0), 0),
+      frozen: metrics.reduce((s, m) => s + Number(m.frozen_amount ?? 0), 0),
+      withdrawable: metrics.reduce((s, m) => s + Number(m.available ?? 0), 0),
+    });
     setLifetime({
       orders: all.length,
       deliveredOrders: d.length,
