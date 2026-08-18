@@ -315,15 +315,17 @@ export async function scrapeProduct(rawUrl: string): Promise<ImportedProduct> {
   const offer = Array.isArray(offersRaw) ? offersRaw[0] : offersRaw;
   const extras = harvestExtras(html);
 
+  const ldName = typeof product?.name === "string" ? toPlainText(product.name, 200) : null;
+  const ogName = meta(html, "og:title", "twitter:title");
   const name =
-    (typeof product?.name === "string" ? toPlainText(product.name, 200) : null) ??
-    meta(html, "og:title", "twitter:title") ??
-    toPlainText(html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? "", 200);
+    ldName ?? ogName ?? toPlainText(html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? "", 200);
 
-  if (!name)
+  const noProductSignal = !ldName && !ogName;
+  if (!name || (noProductSignal && !extras.price && !extras.images.length))
     throw new Error(
-      `${sourceLabel(url.hostname)} theke product data pawa gelo na — page ta login/bot-protected hote pare. Onno link try korun ba manually add korun.`,
+      `${sourceLabel(url.hostname)} theke product data pawa gelo na — page ta JavaScript-only, login ba bot-protected hote pare. Onno link try korun ba manually add korun.`,
     );
+
 
 
   const ldDesc = typeof product?.description === "string" ? toPlainText(product.description) : "";
