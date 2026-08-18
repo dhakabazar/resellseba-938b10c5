@@ -401,15 +401,25 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                           </div>
                         </label>
                         <label className="space-y-1">
-                          <span className="text-[9px] font-bold uppercase text-muted-foreground">Sell price</span>
+                          <span className="text-[9px] font-bold uppercase text-muted-foreground">
+                            Sell price · min ৳{minFor(it)}
+                          </span>
                           <input
-                            className={inp}
+                            className={`${inp} ${it.reseller_price < minFor(it) ? "border-destructive text-destructive" : ""}`}
                             value={it.reseller_price}
+                            inputMode="numeric"
                             onChange={(e) =>
                               setItems((prev) =>
                                 prev.map((x) => (x === it ? { ...x, reseller_price: Number(e.target.value) || 0 } : x)),
                               )
                             }
+                            onBlur={() => {
+                              const min = minFor(it);
+                              if (it.reseller_price < min) {
+                                setItems((prev) => prev.map((x) => (x === it ? { ...x, reseller_price: min } : x)));
+                                toast.error(`সর্বনিম্ন বিক্রয় মূল্য ৳${min} — এর নিচে দেওয়া যাবে না`);
+                              }
+                            }}
                           />
                         </label>
                         {isAdmin && (
