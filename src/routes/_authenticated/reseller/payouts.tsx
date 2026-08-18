@@ -200,12 +200,17 @@ function PayoutsPage() {
         </div>
       )}
 
-      <div className="mb-6 grid gap-4 md:grid-cols-4">
+      <div className="mb-3 grid gap-4 md:grid-cols-3 xl:grid-cols-6">
         <StatCard label="Delivered profit" value={`৳${sum.delivered_profit.toLocaleString()}`} icon={<TrendingUp className="h-4 w-4" />} />
+        <StatCard label="Deposit balance" value={`৳${sum.deposit_balance.toLocaleString()}`} icon={<Wallet className="h-4 w-4" />} />
+        <StatCard label="Frozen" value={`৳${sum.frozen_amount.toLocaleString()}`} hint="উইথড্র করা যাবে না" icon={<Clock className="h-4 w-4" />} />
         <StatCard label="Available" value={`৳${sum.available.toLocaleString()}`} hint="Ready to request" icon={<Wallet className="h-4 w-4" />} />
         <StatCard label="Pending" value={`৳${sum.pending_payout.toLocaleString()}`} icon={<Clock className="h-4 w-4" />} />
         <StatCard label="Paid out" value={`৳${sum.paid_out.toLocaleString()}`} icon={<CheckCircle2 className="h-4 w-4" />} />
       </div>
+      <p className="mb-6 rounded-lg border bg-muted/30 px-4 py-2 text-[11px] leading-relaxed text-muted-foreground">
+        হিসাব: ডেলিভার্ড প্রফিট (৳{sum.delivered_profit.toLocaleString()}) + ডিপোজিট (৳{sum.deposit_balance.toLocaleString()}) − রিকোয়েস্ট/পেইড (৳{(sum.pending_payout + sum.paid_out).toLocaleString()}) − ফ্রিজ (৳{sum.frozen_amount.toLocaleString()}) = <span className="font-bold text-foreground">৳{sum.available.toLocaleString()}</span> উইথড্র করা যাবে। ফ্রিজ অ্যামাউন্টের বাইরের ডিপোজিটও তোলা যাবে।
+      </p>
 
       <div className="surface-card mb-6 p-5">
         <div className="mb-3 flex items-center justify-between">
