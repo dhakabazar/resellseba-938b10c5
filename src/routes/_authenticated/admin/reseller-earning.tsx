@@ -22,6 +22,8 @@ import {
   toCsv,
   downloadCsv,
   orderProfit,
+  orderReceived,
+  orderShortfall,
   PROFIT_FORMULA_HINT,
 
   type ReportItem,
@@ -582,16 +584,23 @@ function FinancialsPage() {
                   {orderStatusLabel(o.status)}
                 </span>
               </div>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-2 px-4 py-3 text-sm sm:grid-cols-3 lg:grid-cols-5">
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2 px-4 py-3 text-sm sm:grid-cols-3 lg:grid-cols-6">
                 {[
                   { l: "Sell value", v: bdt(Number(o.subtotal)) },
                   { l: "Delivery", v: bdt(Number(o.shipping_cost)), muted: true },
                   { l: "Customer total", v: bdt(Number(o.total)) },
+                  {
+                    l: "Received",
+                    v: bdt(orderReceived(o)),
+                    cls: orderShortfall(o) > 0 ? "text-destructive font-semibold" : "",
+                  },
                   { l: "Admin cost", v: bdt(Number(o.sa_cost_total)), muted: true },
                   {
-                    l: "Reseller profit",
+                    l: orderProfit(o) < 0 ? "Reseller profit".replace("profit", "loss") : "Reseller profit",
                     v: bdt(orderProfit(o)),
-                    cls: "font-semibold " + (o.status === "delivered" ? "text-success" : ""),
+                    cls:
+                      "font-semibold " +
+                      (orderProfit(o) < 0 ? "text-destructive" : o.status === "delivered" ? "text-success" : ""),
                   },
                 ].map((c) => (
                   <div key={c.l}>

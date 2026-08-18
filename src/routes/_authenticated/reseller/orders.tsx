@@ -35,7 +35,7 @@ import { Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { useDepositStatus } from "@/lib/deposit";
 import { DEFAULT_DEPOSIT_TEXTS, fillText, useDepositSettings } from "@/lib/deposit-settings";
-import { bdt, orderProfit } from "@/lib/finance-report";
+import { bdt, orderProfit, orderReceived, orderShortfall, isFailedOrder } from "@/lib/finance-report";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getOrderDetails, recheckCourierStatus } from "@/lib/order-details.functions";
@@ -842,9 +842,14 @@ function OrdersPage() {
                         <span className="text-muted-foreground">
                           Delivery ৳{Number(o.shipping_cost).toFixed(0)}
                         </span>
-                        <span className="font-medium text-success">
-                          Profit ৳{orderProfit(o).toFixed(0)}
+                        <span className={"font-medium " + (orderProfit(o) < 0 ? "text-destructive" : "text-success")}>
+                          {orderProfit(o) < 0 ? "Loss" : "Profit"} ৳{orderProfit(o).toFixed(0)}
                         </span>
+                        {orderShortfall(o) > 0 && (
+                          <span className="font-medium text-destructive">
+                            Not received ৳{orderShortfall(o).toFixed(0)}
+                          </span>
+                        )}
                         <span className="rounded border px-1.5 py-0.5 uppercase text-muted-foreground">
                           {o.payment_method}
                         </span>
@@ -931,7 +936,12 @@ function OrdersPage() {
                   </div>
 
                   <div className="min-w-0 font-semibold whitespace-nowrap">৳{Number(o.total).toFixed(0)}</div>
-                  <div className="min-w-0 text-[11px] font-medium text-success whitespace-nowrap">
+                  <div
+                    className={
+                      "min-w-0 text-[11px] font-medium whitespace-nowrap " +
+                      (orderProfit(o) < 0 ? "text-destructive" : "text-success")
+                    }
+                  >
                     ৳{orderProfit(o).toFixed(0)}
                   </div>
                   <div className="min-w-0">
@@ -1006,8 +1016,19 @@ function OrdersPage() {
                              <span>Grand Total</span>
                              <span>৳{Number(o.total).toFixed(0)}</span>
                            </div>
-                           <div className="flex justify-between py-1 font-bold text-success mt-1 pt-1 border-t">
-                             <span>Your Profit</span>
+                           <div className="flex justify-between py-1 text-[11px] text-muted-foreground">
+                             <span>Received</span>
+                             <span className={orderShortfall(o) > 0 ? "text-destructive font-semibold" : ""}>
+                               ৳{orderReceived(o).toFixed(0)}
+                             </span>
+                           </div>
+                           <div
+                             className={
+                               "flex justify-between py-1 font-bold mt-1 pt-1 border-t " +
+                               (orderProfit(o) < 0 ? "text-destructive" : "text-success")
+                             }
+                           >
+                             <span>{orderProfit(o) < 0 ? "Your Loss" : "Your Profit"}</span>
                              <span>৳{orderProfit(o).toFixed(0)}</span>
                            </div>
                         </div>
