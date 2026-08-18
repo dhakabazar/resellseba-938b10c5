@@ -216,6 +216,8 @@ function AdminDashboard() {
           <StatCard
             label="Total Revenue"
             tone="primary"
+            to="/admin/orders"
+            search={{ tab: "delivered" }}
             value={bdt(lifetime.revenue)}
             icon={<TrendingUp className="h-4 w-4" />}
             hint="Total from delivered orders"
@@ -223,6 +225,7 @@ function AdminDashboard() {
           <StatCard
             label="Platform Earnings"
             tone="emerald"
+            to="/admin/business-report"
             value={bdt(lifetime.saCost)}
             icon={<Wallet className="h-4 w-4" />}
             hint="Admin share after payouts"
@@ -230,6 +233,7 @@ function AdminDashboard() {
           <StatCard
             label="Reseller Profits"
             tone="violet"
+            to="/admin/commissions"
             value={bdt(lifetime.profit)}
             icon={<Award className="h-4 w-4" />}
             hint="Total commissions earned"
@@ -237,6 +241,8 @@ function AdminDashboard() {
           <StatCard
             label="Pending Payouts"
             tone="amber"
+            to="/admin/payouts"
+            search={{ status: "pending" }}
             value={bdt(lifetime.payoutDue)}
             icon={<Clock className="h-4 w-4" />}
             hint="Funds requested by resellers"
