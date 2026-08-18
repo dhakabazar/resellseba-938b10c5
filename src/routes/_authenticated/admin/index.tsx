@@ -242,7 +242,6 @@ function AdminDashboard() {
             label="Pending Payouts"
             tone="amber"
             to="/admin/payouts"
-            search={{ status: "pending" }}
             value={bdt(lifetime.payoutDue)}
             icon={<Clock className="h-4 w-4" />}
             hint="Funds requested by resellers"
