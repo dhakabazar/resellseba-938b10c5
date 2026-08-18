@@ -86,6 +86,14 @@ const NAV: NavEntry[] = [
     ],
   },
   { label: "Resellers", to: "/admin/resellers", icon: <Users className="h-4 w-4" /> },
+  {
+    label: "Agents",
+    icon: <UserCheck className="h-4 w-4" />,
+    items: [
+      { label: "Commission Agents", to: "/admin/agents", icon: <UserCheck className="h-4 w-4" /> },
+      { label: "Agent report", to: "/admin/agent-report", icon: <Target className="h-4 w-4" /> },
+    ],
+  },
   { label: "Store visitors", to: "/admin/visitors", icon: <Activity className="h-4 w-4" /> },
   {
     label: "Growth",
