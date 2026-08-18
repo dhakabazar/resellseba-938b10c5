@@ -151,16 +151,24 @@ function AgentsPage() {
                 </span>
               </div>
 
-              <div className="mt-4 grid grid-cols-2 gap-2">
+              <div className="mt-4 grid grid-cols-3 gap-2">
                 <div className="rounded-lg border bg-muted/40 p-2.5">
                   <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Sale target</div>
                   <div className="text-sm font-black text-primary">{bdt(Number(a.sale_target))}</div>
+                </div>
+                <div
+                  className="rounded-lg border bg-muted/40 p-2.5"
+                  title="Commission = this % × settled net profit of the assigned resellers' delivered orders."
+                >
+                  <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Commission</div>
+                  <div className="text-sm font-black">{Number(a.commission_rate ?? 0)}%</div>
                 </div>
                 <div className="rounded-lg border bg-muted/40 p-2.5">
                   <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Resellers</div>
                   <div className="text-sm font-black">{counts[a.id] ?? 0}</div>
                 </div>
               </div>
+
 
               {a.notes && <p className="mt-3 line-clamp-2 text-xs text-muted-foreground">{a.notes}</p>}
 
