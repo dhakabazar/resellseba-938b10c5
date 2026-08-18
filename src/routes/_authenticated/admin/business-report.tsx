@@ -230,7 +230,20 @@ function BusinessReportPage() {
     const revenue = basis === "delivered" ? pick("deliveredRevenue") : pick("adminRevenue");
     const cost = basis === "delivered" ? pick("deliveredCost") : pick("buyCost") + pick("packCost");
     const grossProfit = revenue - cost;
-    const commissionDue = commissions.reduce((t, c) => t + Number(c.amount), 0);
+    // Keep the commission window in sync with the date filter used everywhere else.
+    const { fromTs, toTs } = resolveDateRange(filters);
+    const inRange = commissions.filter((c) => {
+      const ts = new Date(c.created_at).getTime();
+      if (fromTs !== null && ts < fromTs) return false;
+      if (toTs !== null && ts > toTs) return false;
+      return true;
+    });
+    const commissionDue = inRange
+      .filter((c) => c.status !== "paid")
+      .reduce((t, c) => t + Number(c.amount), 0);
+    const commissionPaid = inRange
+      .filter((c) => c.status === "paid")
+      .reduce((t, c) => t + Number(c.amount), 0);
     return {
       revenue,
       cost,
@@ -241,10 +254,11 @@ function BusinessReportPage() {
       customerSell: pick("customerSell"),
       resellerShare: pick("resellerShare"),
       commissionDue,
-      net: grossProfit + delivery.margin - commissionDue,
+      commissionPaid,
+      net: grossProfit + delivery.margin - (commissionDue + commissionPaid),
       margin: revenue > 0 ? (grossProfit / revenue) * 100 : 0,
     };
-  }, [lines, basis, delivery.margin, commissions]);
+  }, [lines, basis, delivery.margin, commissions, filters]);
 
   /** Trend on admin P&L (order date bucketed). */
   const trend = useMemo(() => {
