@@ -180,17 +180,22 @@ function ListingsPage() {
                   </div>
                   <div className="text-xs text-muted-foreground">
                     Sell ৳{l.selling_price} · Cost ৳{cost} (product + packaging) · Delivery:{" "}
-                    {l.products ? deliveryLabel(l.products) : "—"} ·{" "}
-                    <span className="text-success">Profit ৳{profit}</span>
+                    {l.products ? deliveryLabel(l.products) : "—"}
+                  </div>
+                  <div className="mt-1.5">
+                    <span className="inline-flex items-center rounded-md bg-emerald-600 px-2 py-0.5 text-xs font-bold text-white shadow-sm">
+                      Profit ৳{profit}
+                    </span>
                   </div>
                 </div>
                 <span
-                  className={`rounded-full px-2 py-0.5 text-xs ${
-                    l.is_active ? "bg-success/15 text-success-foreground" : "bg-muted text-muted-foreground"
+                  className={`rounded-full px-2.5 py-1 text-xs font-semibold shadow-sm ${
+                    l.is_active ? "bg-emerald-600 text-white" : "bg-amber-500 text-white"
                   }`}
                 >
                   {l.is_active ? "Live" : "Paused"}
                 </span>
+
                 <ActionMenu>
                   <DropdownMenuItem onSelect={() => setDetailId(l.id)}>
                     <Eye className="mr-2 h-4 w-4" /> View Details
