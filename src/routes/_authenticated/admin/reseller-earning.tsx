@@ -78,6 +78,7 @@ const ADMIN_TABS: { key: AdminReportTab; label: string }[] = [
 ];
 
 function FinancialsPage() {
+  const { reseller: resellerParam } = Route.useSearch();
   const [loading, setLoading] = useState(true);
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [items, setItems] = useState<ReportItem[]>([]);
