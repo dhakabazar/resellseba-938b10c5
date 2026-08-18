@@ -635,8 +635,8 @@ function OrdersPage() {
         />
       ) : (
         <>
-        <div className="surface-card overflow-hidden">
-          <div className="hidden grid-cols-[30px_minmax(60px,0.7fr)_minmax(100px,1fr)_minmax(100px,1.2fr)_60px_80px_100px_60px] gap-2 border-b bg-muted/40 px-4 py-3 text-xs font-medium text-muted-foreground md:grid">
+        <div className="space-y-3">
+          <div className="hidden grid-cols-[30px_minmax(60px,0.7fr)_minmax(100px,1fr)_minmax(100px,1.2fr)_60px_80px_100px_60px] gap-2 rounded-lg border bg-muted/40 px-4 py-2.5 text-xs font-medium text-muted-foreground md:grid">
             <div className="flex items-center justify-center">
               <input
                 type="checkbox"
@@ -738,7 +738,7 @@ function OrdersPage() {
             return (
               <div
                 key={o.id}
-                className={`border-b-[6px] border-muted/70 last:border-b-0 transition-colors hover:bg-muted/10 ${isMarked ? "bg-primary/5" : ""}`}
+                className={`overflow-hidden rounded-xl border bg-card shadow-sm transition-all hover:border-primary/40 hover:shadow-md ${isMarked ? "border-primary ring-1 ring-primary/30" : ""}`}
               >
                 {/* Mobile card */}
 
@@ -859,7 +859,7 @@ function OrdersPage() {
                 </div>
 
                 {/* Desktop row */}
-                <div className="hidden grid-cols-[30px_minmax(60px,0.7fr)_minmax(100px,1fr)_minmax(100px,1.2fr)_60px_80px_100px_60px] items-center gap-2 border-l-4 border-primary/40 bg-muted/25 px-4 py-3 text-sm md:grid">
+                <div className="hidden grid-cols-[30px_minmax(60px,0.7fr)_minmax(100px,1fr)_minmax(100px,1.2fr)_60px_80px_100px_60px] items-center gap-2 border-b bg-muted/30 px-4 py-3 text-sm md:grid">
                   <div className="flex flex-col items-center gap-1.5">
                     <input
                       type="checkbox"

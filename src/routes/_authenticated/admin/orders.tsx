@@ -326,8 +326,8 @@ function AdminOrdersPage() {
         />
         
         {loading ? <div className="py-12 text-center"><Loader2 className="mx-auto h-6 w-6 animate-spin" /></div> : (
-          <div className="surface-card overflow-hidden">
-            <div className="hidden grid-cols-[40px_minmax(70px,0.8fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(120px,1fr)_70px_90px_60px] gap-1 border-b bg-muted/40 px-4 py-3 text-xs font-medium text-muted-foreground md:grid">
+          <div className="space-y-3">
+            <div className="hidden grid-cols-[40px_minmax(70px,0.8fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(120px,1fr)_70px_90px_60px] gap-1 rounded-lg border bg-muted/40 px-4 py-2.5 text-xs font-medium text-muted-foreground md:grid">
                <div className="flex justify-center">
                  <input
                    type="checkbox"
@@ -339,8 +339,11 @@ function AdminOrdersPage() {
                <div>Order</div> <div>Customer</div> <div>Reseller</div> <div>Courier</div> <div>Total</div> <div>Status</div> <div className="text-right">Actions</div>
             </div>
             {paged.map((o) => (
-              <div key={o.id} className="border-b-[6px] border-muted/70 last:border-b-0 transition-colors hover:bg-muted/10">
-                <div className="hidden grid-cols-[40px_minmax(70px,0.8fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(120px,1fr)_70px_90px_60px] items-center gap-1 border-l-4 border-primary/40 bg-muted/25 px-4 py-3 text-sm md:grid">
+              <div
+                key={o.id}
+                className={`overflow-hidden rounded-xl border bg-card shadow-sm transition-all hover:shadow-md hover:border-primary/40 ${marked.includes(o.id) ? "border-primary ring-1 ring-primary/30" : ""}`}
+              >
+                <div className="hidden grid-cols-[40px_minmax(70px,0.8fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(120px,1fr)_70px_90px_60px] items-center gap-1 border-b bg-muted/30 px-4 py-3 text-sm md:grid">
                   <div className="flex flex-col items-center gap-1.5">
                     <input
                       type="checkbox"
