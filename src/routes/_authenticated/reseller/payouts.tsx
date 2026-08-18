@@ -431,10 +431,52 @@ function PayoutsPage() {
           <LedgerTotals ledger={ledger} frozen={sum.frozen_amount} available={sum.available} className="mt-4" />
           </>
         )}
-
+      </div>
     </div>
   );
 }
+
+function LedgerTotals({
+  ledger,
+  frozen,
+  available,
+  className = "",
+}: {
+  ledger: LedgerRow[];
+  frozen: number;
+  available: number;
+  className?: string;
+}) {
+  const inflow = ledger.filter((e) => e.direction === "in").reduce((s, e) => s + Number(e.amount), 0);
+  const outflow = ledger.filter((e) => e.direction === "out").reduce((s, e) => s + Number(e.amount), 0);
+  const balance = inflow - outflow;
+  return (
+    <div className={"grid grid-cols-2 gap-2 rounded-lg border bg-muted/30 p-3 sm:grid-cols-5 " + className}>
+      <TotalCell label="মোট জমা (In)" value={inflow} tone="good" />
+      <TotalCell label="মোট উইথড্র (Out)" value={outflow} tone="bad" />
+      <TotalCell label="ব্যালান্স" value={balance} />
+      <TotalCell label="ফ্রিজ" value={frozen} />
+      <TotalCell label="উইথড্র করা যাবে" value={available} tone="good" />
+    </div>
+  );
+}
+
+function TotalCell({ label, value, tone }: { label: string; value: number; tone?: "good" | "bad" }) {
+  return (
+    <div>
+      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</div>
+      <div
+        className={
+          "text-sm font-bold tabular-nums " +
+          (tone === "good" ? "text-success" : tone === "bad" ? "text-destructive" : "")
+        }
+      >
+        ৳{Number(value || 0).toLocaleString()}
+      </div>
+    </div>
+  );
+}
+
 
 function Info({ label, value }: { label: string; value: React.ReactNode }) {
   return (
