@@ -5,7 +5,8 @@ import { PageHeader, StatCard } from "@/components/ui-kit";
 import { DateRangeBar, DEFAULT_DATE_RANGE, resolveRange, type DateRangeState } from "@/components/date-range-filter";
 import { bdt, buildFinanceReport, isRealizedStatus, orderProfit, PROFIT_FORMULA_HINT, type FinanceReport, type ReportOrder } from "@/lib/finance-report";
 import { ORDER_TABS } from "@/lib/courier-status";
-import { Package, Users, ShoppingCart, Tag, TrendingUp, Wallet, Loader2, RefreshCw, Award, Clock } from "lucide-react";
+import { Package, Users, ShoppingCart, Tag, TrendingUp, Wallet, Loader2, RefreshCw, Award, Clock, Plus } from "lucide-react";
+import { NewOrderModal } from "@/components/NewOrderModal";
 import {
   ResponsiveContainer,
   AreaChart,
@@ -37,6 +38,9 @@ type OrderRow = {
 
 function AdminDashboard() {
   const [range, setRange] = useState<DateRangeState>(DEFAULT_DATE_RANGE);
+  const [orderOpen, setOrderOpen] = useState(false);
+  const [allProducts, setAllProducts] = useState<any[]>([]);
+  const [resellers, setResellers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [counts, setCounts] = useState({ products: 0, resellers: 0, pendingResellers: 0, brands: 0 });
   const [rows, setRows] = useState<OrderRow[]>([]);
@@ -151,6 +155,22 @@ function AdminDashboard() {
     });
   }, []);
 
+
+  useEffect(() => {
+    void (async () => {
+      const [rs, ps] = await Promise.all([
+        supabase.from("resellers").select("id,business_name,code,contact_phone").order("business_name"),
+        supabase
+          .from("products")
+          .select(
+            "id,name,slug,product_code,og_image_url,suggested_price,reseller_price,packaging_cost,delivery_mode,delivery_flat,delivery_inside,delivery_outside",
+          )
+          .eq("is_active", true),
+      ]);
+      setResellers((rs.data ?? []) as any[]);
+      setAllProducts((ps.data ?? []) as any[]);
+    })();
+  }, []);
 
   useEffect(() => {
     void loadLifetime();
@@ -390,6 +410,21 @@ function AdminDashboard() {
           </div>
         </div>
       </div>
+
+      {orderOpen && (
+        <NewOrderModal
+          listings={[]}
+          allProducts={allProducts}
+          resellers={resellers}
+          isAdmin
+          onClose={() => setOrderOpen(false)}
+          onCreated={() => {
+            setOrderOpen(false);
+            void load(range);
+            void loadLifetime();
+          }}
+        />
+      )}
     </div>
   );
 }
