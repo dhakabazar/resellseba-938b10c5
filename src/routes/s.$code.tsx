@@ -2,6 +2,7 @@ import { createFileRoute, Outlet, useRouterState } from "@tanstack/react-router"
 import { useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { loadTrackingForReseller } from "@/lib/tracking";
+import { useStoreVisitLog } from "@/lib/store-visits";
 import { storeThemeStyle } from "@/lib/store-theme";
 import { useStoreLoader } from "@/components/store/store-context";
 import { StoreFooter, StoreHeader } from "@/components/store/chrome";
