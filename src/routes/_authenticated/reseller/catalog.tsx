@@ -181,6 +181,22 @@ function CatalogPage() {
     toast.success(`${ids.length} product listed at suggested price. Edit prices on the Listings page.`);
   }
 
+  async function delistOne(p: P) {
+    if (!resellerId) return;
+    setBusy(true);
+    const { error } = await supabase
+      .from("reseller_listings")
+      .delete()
+      .eq("reseller_id", resellerId)
+      .eq("product_id", p.id);
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    const next = new Set(listed);
+    next.delete(p.id);
+    setListed(next);
+    toast.success(`"${p.name}" removed from your store`);
+  }
+
   async function bulkDelist() {
     if (!resellerId) return;
     const ids = Array.from(picked).filter((id) => listed.has(id));
