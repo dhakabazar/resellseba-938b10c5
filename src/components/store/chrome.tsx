@@ -217,6 +217,7 @@ function MenuPanel({ node }: { node: MenuNode }) {
 function StoreNav({ variant }: { variant: "row" | "stack" }) {
   const { code, categories, menu, theme } = useStore();
   const [openId, setOpenId] = useState<string | null>(null);
+  const [openChildId, setOpenChildId] = useState<string | null>(null);
 
   /** No custom menu yet -> keep the automatic category list. */
   const items: MenuNode[] = menu.length
