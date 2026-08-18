@@ -436,10 +436,11 @@ function FinancialsPage() {
       <>
       <ReportCard
         title="Order status wise report"
-        hint="Matches the order list tab buckets."
+        hint="Matches the order list tab buckets. Product cost and packaging cost are shown separately."
         right={<CsvBtn onClick={exportStatus} />}
       >
-        <StatusReportTable report={report} />
+        <StatusReportTable report={report} packagingByTab={packaging.byTab} packagingAll={packaging.all} />
+
       </ReportCard>
 
       <ReportCard
