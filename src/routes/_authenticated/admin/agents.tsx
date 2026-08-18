@@ -292,6 +292,8 @@ function AgentModal({
       whatsapp: whatsapp.trim() || null,
       email: email.trim() || null,
       sale_target: Number(target) || 0,
+      commission_rate: Number(rate) || 0,
+
       is_active: active,
       notes: notes.trim() || null,
     };
