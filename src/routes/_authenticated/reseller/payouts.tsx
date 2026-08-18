@@ -14,6 +14,16 @@ export const Route = createFileRoute("/_authenticated/reseller/payouts")({
 });
 
 type Payout = { id: string; amount: number; status: string; method: string | null; notes: string | null; reference: string | null; created_at: string; paid_at: string | null };
+type LedgerRow = {
+  at: string;
+  kind: "deposit" | "profit" | "payout" | string;
+  direction: "in" | "out" | "void" | string;
+  label: string;
+  reference: string | null;
+  status: string;
+  amount: number;
+  running: number;
+};
 type PayoutMethod = "bkash" | "nagad" | "rocket" | "bank";
 type Profile = {
   payout_method: PayoutMethod | null;
