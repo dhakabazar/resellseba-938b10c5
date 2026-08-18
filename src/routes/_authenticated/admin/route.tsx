@@ -120,7 +120,7 @@ const NAV: NavEntry[] = [
       { label: "Payment methods", to: "/admin/payments", icon: <Wallet className="h-4 w-4" /> },
 
       { label: "Staff & Permissions", to: "/admin/staff", icon: <Users className="h-4 w-4" /> },
-      { label: "Audit log", to: "/admin/audit", icon: <ScrollText className="h-4 w-4" /> },
+      { label: "Cache & cleanup", to: "/admin/maintenance", icon: <Eraser className="h-4 w-4" /> },
 
       { label: "Security deposit", to: "/admin/deposits", icon: <ShieldCheck className="h-4 w-4" /> },
       { label: "Privacy policy", to: "/admin/privacy", icon: <Shield className="h-4 w-4" /> },
