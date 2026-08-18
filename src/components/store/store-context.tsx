@@ -17,6 +17,7 @@ export type StoreProduct = {
   slug: string;
   short_description: string | null;
   description: string | null;
+  product_code?: string | null;
   stock: number | null;
   category_id: string | null;
   brand_id: string | null;
@@ -126,7 +127,7 @@ export function useStoreLoader(code: string, themeOverride?: string | null, pale
       const { data: rows } = await supabase
         .from("reseller_listings")
         .select(
-          "id, selling_price, custom_title, custom_description, extra_delivery_inside, extra_delivery_outside, created_at, product:products(id,name,slug,short_description,description,stock,category_id,brand_id,is_featured,is_active,delivery_mode,delivery_flat,delivery_inside,delivery_outside, product_images(url,is_primary,sort_order))",
+          "id, selling_price, custom_title, custom_description, extra_delivery_inside, extra_delivery_outside, created_at, product:products(id,name,slug,product_code,short_description,description,stock,category_id,brand_id,is_featured,is_active,delivery_mode,delivery_flat,delivery_inside,delivery_outside, product_images(url,is_primary,sort_order))",
         )
         .eq("reseller_id", rid)
         .eq("is_active", true)

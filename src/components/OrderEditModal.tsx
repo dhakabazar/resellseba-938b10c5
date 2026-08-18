@@ -127,7 +127,13 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return [];
-    return allProducts.filter((p) => String(p.name).toLowerCase().includes(q)).slice(0, 8);
+    return allProducts
+      .filter(
+        (p) =>
+          String(p.name).toLowerCase().includes(q) ||
+          String(p.product_code ?? "").toLowerCase().includes(q),
+      )
+      .slice(0, 8);
   }, [allProducts, query]);
 
   const errors = { name: nameError(name), phone: phoneError(phone), address: addressError(address) };
