@@ -34,8 +34,11 @@ export function ProductImportModal({ open, onClose, onSaved }: { open: boolean; 
       setStep("Reading the product page…");
       const data = await runImport({ data: { url: url.trim() } });
 
-      setStep(`Downloading ${data.images.length} image(s)…`);
-      const images = await importImagesToStorage(data.images, pullImage);
+      setStep(`Downloading ${Math.min(data.images.length, 6)} image(s)…`);
+      const images = await importImagesToStorage(data.images, pullImage, 6, (d, t) =>
+        setStep(`Downloading image ${d}/${t}…`),
+      );
+
 
       if (mode === "edit") {
         saveImportDraft({ ...data, images });
