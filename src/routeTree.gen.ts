@@ -34,6 +34,7 @@ import { Route as AuthenticatedResellerSettingsRouteImport } from './routes/_aut
 import { Route as AuthenticatedResellerProfileRouteImport } from './routes/_authenticated/reseller/profile'
 import { Route as AuthenticatedResellerPayoutsRouteImport } from './routes/_authenticated/reseller/payouts'
 import { Route as AuthenticatedResellerOrdersRouteImport } from './routes/_authenticated/reseller/orders'
+import { Route as AuthenticatedResellerMenusRouteImport } from './routes/_authenticated/reseller/menus'
 import { Route as AuthenticatedResellerMarketingRouteImport } from './routes/_authenticated/reseller/marketing'
 import { Route as AuthenticatedResellerListingsRouteImport } from './routes/_authenticated/reseller/listings'
 import { Route as AuthenticatedResellerEarningsRouteImport } from './routes/_authenticated/reseller/earnings'
@@ -206,6 +207,12 @@ const AuthenticatedResellerOrdersRoute =
   AuthenticatedResellerOrdersRouteImport.update({
     id: '/orders',
     path: '/orders',
+    getParentRoute: () => AuthenticatedResellerRouteRoute,
+  } as any)
+const AuthenticatedResellerMenusRoute =
+  AuthenticatedResellerMenusRouteImport.update({
+    id: '/menus',
+    path: '/menus',
     getParentRoute: () => AuthenticatedResellerRouteRoute,
   } as any)
 const AuthenticatedResellerMarketingRoute =
@@ -484,6 +491,7 @@ export interface FileRoutesByFullPath {
   '/reseller/earnings': typeof AuthenticatedResellerEarningsRoute
   '/reseller/listings': typeof AuthenticatedResellerListingsRoute
   '/reseller/marketing': typeof AuthenticatedResellerMarketingRoute
+  '/reseller/menus': typeof AuthenticatedResellerMenusRoute
   '/reseller/orders': typeof AuthenticatedResellerOrdersRouteWithChildren
   '/reseller/payouts': typeof AuthenticatedResellerPayoutsRoute
   '/reseller/profile': typeof AuthenticatedResellerProfileRoute
@@ -546,6 +554,7 @@ export interface FileRoutesByTo {
   '/reseller/earnings': typeof AuthenticatedResellerEarningsRoute
   '/reseller/listings': typeof AuthenticatedResellerListingsRoute
   '/reseller/marketing': typeof AuthenticatedResellerMarketingRoute
+  '/reseller/menus': typeof AuthenticatedResellerMenusRoute
   '/reseller/orders': typeof AuthenticatedResellerOrdersRouteWithChildren
   '/reseller/payouts': typeof AuthenticatedResellerPayoutsRoute
   '/reseller/profile': typeof AuthenticatedResellerProfileRoute
@@ -614,6 +623,7 @@ export interface FileRoutesById {
   '/_authenticated/reseller/earnings': typeof AuthenticatedResellerEarningsRoute
   '/_authenticated/reseller/listings': typeof AuthenticatedResellerListingsRoute
   '/_authenticated/reseller/marketing': typeof AuthenticatedResellerMarketingRoute
+  '/_authenticated/reseller/menus': typeof AuthenticatedResellerMenusRoute
   '/_authenticated/reseller/orders': typeof AuthenticatedResellerOrdersRouteWithChildren
   '/_authenticated/reseller/payouts': typeof AuthenticatedResellerPayoutsRoute
   '/_authenticated/reseller/profile': typeof AuthenticatedResellerProfileRoute
@@ -682,6 +692,7 @@ export interface FileRouteTypes {
     | '/reseller/earnings'
     | '/reseller/listings'
     | '/reseller/marketing'
+    | '/reseller/menus'
     | '/reseller/orders'
     | '/reseller/payouts'
     | '/reseller/profile'
@@ -744,6 +755,7 @@ export interface FileRouteTypes {
     | '/reseller/earnings'
     | '/reseller/listings'
     | '/reseller/marketing'
+    | '/reseller/menus'
     | '/reseller/orders'
     | '/reseller/payouts'
     | '/reseller/profile'
@@ -811,6 +823,7 @@ export interface FileRouteTypes {
     | '/_authenticated/reseller/earnings'
     | '/_authenticated/reseller/listings'
     | '/_authenticated/reseller/marketing'
+    | '/_authenticated/reseller/menus'
     | '/_authenticated/reseller/orders'
     | '/_authenticated/reseller/payouts'
     | '/_authenticated/reseller/profile'
@@ -1029,6 +1042,13 @@ declare module '@tanstack/react-router' {
       path: '/orders'
       fullPath: '/reseller/orders'
       preLoaderRoute: typeof AuthenticatedResellerOrdersRouteImport
+      parentRoute: typeof AuthenticatedResellerRouteRoute
+    }
+    '/_authenticated/reseller/menus': {
+      id: '/_authenticated/reseller/menus'
+      path: '/menus'
+      fullPath: '/reseller/menus'
+      preLoaderRoute: typeof AuthenticatedResellerMenusRouteImport
       parentRoute: typeof AuthenticatedResellerRouteRoute
     }
     '/_authenticated/reseller/marketing': {
@@ -1403,6 +1423,7 @@ interface AuthenticatedResellerRouteRouteChildren {
   AuthenticatedResellerEarningsRoute: typeof AuthenticatedResellerEarningsRoute
   AuthenticatedResellerListingsRoute: typeof AuthenticatedResellerListingsRoute
   AuthenticatedResellerMarketingRoute: typeof AuthenticatedResellerMarketingRoute
+  AuthenticatedResellerMenusRoute: typeof AuthenticatedResellerMenusRoute
   AuthenticatedResellerOrdersRoute: typeof AuthenticatedResellerOrdersRouteWithChildren
   AuthenticatedResellerPayoutsRoute: typeof AuthenticatedResellerPayoutsRoute
   AuthenticatedResellerProfileRoute: typeof AuthenticatedResellerProfileRoute
@@ -1422,6 +1443,7 @@ const AuthenticatedResellerRouteRouteChildren: AuthenticatedResellerRouteRouteCh
     AuthenticatedResellerEarningsRoute: AuthenticatedResellerEarningsRoute,
     AuthenticatedResellerListingsRoute: AuthenticatedResellerListingsRoute,
     AuthenticatedResellerMarketingRoute: AuthenticatedResellerMarketingRoute,
+    AuthenticatedResellerMenusRoute: AuthenticatedResellerMenusRoute,
     AuthenticatedResellerOrdersRoute:
       AuthenticatedResellerOrdersRouteWithChildren,
     AuthenticatedResellerPayoutsRoute: AuthenticatedResellerPayoutsRoute,

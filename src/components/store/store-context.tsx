@@ -7,6 +7,7 @@ import {
   type ContentReader,
   type ThemeContentValues,
 } from "@/lib/store-content";
+import { buildMenuTree, fetchMenuRows, type MenuNode } from "@/lib/store-menu";
 
 
 export type StoreImage = { url: string; is_primary: boolean | null; sort_order?: number | null };
@@ -77,7 +78,10 @@ export type StoreData = {
   content: ContentReader;
   listings: StoreListing[];
   categories: StoreCategory[];
+  /** reseller-built header menu (empty = fall back to categories) */
+  menu: MenuNode[];
   cart: CartLine[];
+
   cartCount: number;
   byListingId: (id: string) => StoreListing | undefined;
   bySlug: (slug: string) => StoreListing | undefined;
@@ -155,6 +159,9 @@ export function useStoreLoader(code: string, themeOverride?: string | null, pale
         categories = (c ?? []) as StoreCategory[];
       }
 
+      const menuRows = await fetchMenuRows(rid, true);
+      if (!alive) return;
+
       const theme = getStoreTheme(themeOverride || s?.theme);
       ensureThemeFont(theme);
       const storeName = s?.store_name || r.business_name || code;
@@ -174,6 +181,8 @@ export function useStoreLoader(code: string, themeOverride?: string | null, pale
 
         listings,
         categories,
+        menu: buildMenuTree(menuRows),
+
         byListingId: (id) => listings.find((l) => l.id === id),
         bySlug: (slug) => listings.find((l) => l.product?.slug === slug),
         title: (l) => l.custom_title || l.product?.name || "",
