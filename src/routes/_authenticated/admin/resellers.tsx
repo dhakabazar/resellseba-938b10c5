@@ -179,6 +179,14 @@ function ResellersPage() {
     loadEmailStatus();
   }, []);
 
+  useEffect(() => {
+    const s = searchParams.status;
+    if (s && (FILTERS as readonly string[]).includes(s)) {
+      setFilter(s as Filter);
+      setPage(1);
+    }
+  }, [searchParams.status]);
+
   const filtered = useMemo(() => {
     let out = items;
     if (filter === "email_unverified")
