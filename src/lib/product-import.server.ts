@@ -188,6 +188,100 @@ function harvestExtras(html: string): { images: string[]; price: number | null }
   return { images, price };
 }
 
+/** Decodes JSON-string escapes (Daraz/AliExpress embed description as escaped HTML). */
+function decodeJsonString(s: string): string {
+  return s
+    .replace(/\\u([0-9a-fA-F]{4})/g, (_, h: string) => String.fromCharCode(parseInt(h, 16)))
+    .replace(/\\n/g, "\n")
+    .replace(/\\r/g, " ")
+    .replace(/\\t/g, " ")
+    .replace(/\\"/g, '"')
+    .replace(/\\\//g, "/")
+    .replace(/\\\\/g, "\\");
+}
+
+/** Reads one JSON string value starting right after `"key":"` without full parsing. */
+function readJsonStringValue(html: string, key: string): string | null {
+  const marker = new RegExp(`"${key}"\\s*:\\s*"`, "i");
+  let from = 0;
+  for (let guard = 0; guard < 20; guard++) {
+    const rest = html.slice(from);
+    const m = rest.match(marker);
+    if (!m || m.index === undefined) return null;
+    const start = from + m.index + m[0].length;
+    let i = start;
+    while (i < html.length && i - start < 60_000) {
+      const ch = html[i];
+      if (ch === "\\") {
+        i += 2;
+        continue;
+      }
+      if (ch === '"') break;
+      i += 1;
+    }
+    const value = decodeJsonString(html.slice(start, i));
+    const text = toPlainText(value, 6000);
+    if (text.length > 60) return value;
+    from = i + 1;
+  }
+  return null;
+}
+
+/** Grabs the chunk after a container's opening tag — tags are stripped later anyway. */
+function sliceAfter(html: string, re: RegExp, len = 30_000): string | null {
+  const m = html.match(re);
+  if (!m || m.index === undefined) return null;
+  return html.slice(m.index + m[0].length, m.index + m[0].length + len);
+}
+
+/**
+ * Marketplace / WooCommerce description harvesting used when JSON-LD and OG
+ * tags carry nothing useful (Daraz keeps it inside embedded module JSON).
+ */
+export function harvestDescription(html: string): string {
+  // 1) Embedded JSON (Daraz pdp module, AliExpress, Shopify, WooCommerce Store API)
+  for (const key of [
+    "descriptionHtml",
+    "detailDescription",
+    "productDescription",
+    "html",
+    "description",
+    "body_html",
+  ]) {
+    const raw = readJsonStringValue(html, key);
+    const text = raw ? toPlainText(raw) : "";
+    if (text.length > 60) return text;
+  }
+
+  // 2) Known description containers
+  const containers: RegExp[] = [
+    /<div[^>]+id=["']module_product_detail["'][^>]*>/i,
+    /<div[^>]+class=["'][^"']*pdp-product-desc[^"']*["'][^>]*>/i,
+    /<div[^>]+class=["'][^"']*html-content[^"']*["'][^>]*>/i,
+    /<div[^>]+id=["']productDescription["'][^>]*>/i,
+    /<div[^>]+id=["']feature-bullets["'][^>]*>/i,
+    /<div[^>]+class=["'][^"']*woocommerce-Tabs-panel--description[^"']*["'][^>]*>/i,
+    /<div[^>]+class=["'][^"']*woocommerce-product-details__short-description[^"']*["'][^>]*>/i,
+    /<div[^>]+id=["']tab-description["'][^>]*>/i,
+    /<[^>]+itemprop=["']description["'][^>]*>/i,
+  ];
+  for (const re of containers) {
+    const chunk = sliceAfter(html, re);
+    const text = chunk ? toPlainText(chunk) : "";
+    if (text.length > 60) return text;
+  }
+  return "";
+}
+
+/** Anti-bot / captcha interstitials must not be imported as product data. */
+function assertNotBlocked(html: string, host: string) {
+  if (/rgv587_flag|_____tmd_____|x5secdata|captcha-delivery|Enable JavaScript and cookies to continue|Are you a human/i.test(html.slice(0, 4000)))
+    throw new Error(
+      `${sourceLabel(host)} blocked the automated read (bot check). Kichukkhon pore abar try korun, ba onno product link din.`,
+    );
+}
+
+
 export async function scrapeProduct(rawUrl: string): Promise<ImportedProduct> {
   const url = assertSafeUrl(rawUrl);
   const html = await fetchText(url.href);
