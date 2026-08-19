@@ -30,6 +30,7 @@ import {
   Percent,
   UserCheck,
   Target,
+  Receipt,
 } from "lucide-react";
 import { AppShell, type NavEntry } from "@/components/AppShell";
 import { BulkScanButton } from "@/components/BulkScanModal";
