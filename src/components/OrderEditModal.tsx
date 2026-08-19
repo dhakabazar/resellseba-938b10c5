@@ -145,9 +145,10 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
       discount: disc,
       total,
       received: recv,
+      collected,
       advance: adv,
       resellerAdvance,
-      codDue: Math.max(total - adv, 0),
+      codDue,
       shortfall: Math.max(total - recv, 0),
       // Profit always follows the money really collected, minus any advance the reseller already holds.
       profit: recv - deliveryCost - saCost - resellerAdvance,
