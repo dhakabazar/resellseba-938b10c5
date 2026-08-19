@@ -586,13 +586,7 @@ function AdminOrdersPage() {
                 </div>
                 {expandedOrders.includes(o.id) && (
                   <div className="bg-muted/30 px-12 py-6">
-                    <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-                      <div>
-                        <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">Order Items</h4>
-                        <div className="overflow-hidden rounded-lg border bg-background">
-                          <OrderItemsStrip items={stripItems(o.id)} limit={2} className="border-t-0 bg-transparent" />
-                        </div>
-                      </div>
+                    <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
                       <div>
                         <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">Shipping Details</h4>
                         <div className="rounded-lg border bg-background p-4 text-sm shadow-sm">
