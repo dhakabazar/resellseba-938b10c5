@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { getGlobalSettings, clearAppDataCache } from "@/lib/app-data";
 
 /**
  * Advanced system settings — small feature switches an admin can flip without
@@ -46,11 +46,7 @@ export function pendingChannels(
 }
 
 export async function fetchAdvancedSettings(): Promise<AdvancedSettings> {
-  const { data } = await supabase
-    .from("global_settings")
-    .select("advanced_settings")
-    .eq("id", 1)
-    .maybeSingle();
+  const data = await getGlobalSettings();
   return mergeAdvanced((data as any)?.advanced_settings);
 }
 
@@ -80,4 +76,5 @@ export function useAdvancedSettings() {
 
 export function clearAdvancedSettingsCache() {
   cache = null;
+  clearAppDataCache("settings");
 }

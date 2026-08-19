@@ -28,6 +28,7 @@ import { useAuth } from "@/lib/use-auth";
 import { useVerification } from "@/lib/use-verification";
 import { useBrandingTheme } from "@/lib/branding";
 import { supabase } from "@/integrations/supabase/client";
+import { getGlobalSettings, getMyReseller } from "@/lib/app-data";
 
 export const Route = createFileRoute("/_authenticated/reseller")({
   component: ResellerLayout,
@@ -111,19 +112,10 @@ function ResellerLayout() {
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const { data: g } = await supabase
-        .from("global_settings")
-        .select("logo_url, primary_color")
-        .eq("id", 1)
-        .maybeSingle();
+      const [g, r] = await Promise.all([getGlobalSettings(), getMyReseller(user.id)]);
       let logo = g?.logo_url ?? null;
       let color = g?.primary_color ?? null;
 
-      const { data: r } = await supabase
-        .from("resellers")
-        .select("id, business_name, code, status")
-        .eq("user_id", user.id)
-        .maybeSingle();
       if (r) {
         setApproved(r.status === "active");
         setStoreName(r.business_name);
