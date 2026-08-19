@@ -896,7 +896,13 @@ function OrdersPage() {
                       items={stripItems(o.id)}
                       expanded={expandedOrders.includes(o.id)}
                       onZoom={(src) => setZoomImage(src)}
+                      onToggle={() =>
+                        setExpandedOrders((prev) =>
+                          prev.includes(o.id) ? prev.filter((id) => id !== o.id) : [...prev, o.id],
+                        )
+                      }
                     />
+
                   </div>
 
                   <div className="min-w-0 text-xs text-muted-foreground">
