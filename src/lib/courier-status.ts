@@ -296,18 +296,26 @@ export function nextStatuses(current: string, role: "reseller" | "admin"): Order
   }
 }
 
+/** Labels match the ORDER_TABS flow wording everywhere (lists, modals, reports). */
 const STATUS_LABELS: Record<string, string> = {
-  forwarded: "Send to admin",
-  pending_partial: "Pending partial",
-  partial: "Partial delivery",
-  partial_full: "Partial delivery (full item)",
-  partial_item: "Partial delivery (item partial)",
-  partial_delivery: "Partial (delivery charge only)",
-  pending_return: "Pending return",
-  returned: "Return received",
-  damaged: "Damaged / missing",
-  ready_to_ship: "Ready to ship",
-  shipped: "To courier",
+  draft: "New Order",
+  pending: "New Order",
+  forwarded: "Send To admin",
+  confirmed: "Confirmed",
+  packaging: "Packaging",
+  ready_to_ship: "RTS Order",
+  processing: "To Courier",
+  shipped: "To Courier",
+  delivered: "Delivered",
+  pending_partial: "Pending Partial",
+  partial: "Partial (Full item)",
+  partial_full: "Partial (Full item)",
+  partial_item: "Partial (Item)",
+  partial_delivery: "Partial (Delivery Charge)",
+  pending_return: "Pending Return",
+  returned: "Returned",
+  damaged: "Damaged",
+  cancelled: "Cancelled",
 };
 
 export function orderStatusLabel(status: string) {
