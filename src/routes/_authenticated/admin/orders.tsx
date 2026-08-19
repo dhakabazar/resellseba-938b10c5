@@ -125,10 +125,10 @@ function AdminOrdersPage() {
   const [filters, setFilters] = useState<OrderFilterState>({ ...DEFAULT_ORDER_FILTERS, reseller: resellerParam ?? "", q: qParam ?? "" });
 
   useEffect(() => {
-    const next: { tab?: string; reseller?: string } = {};
-    if (tab !== "forwarded") next.tab = tab;
-    if (filters.reseller) next.reseller = filters.reseller;
-    navigate({ search: next, replace: true });
+    navigate({
+      search: (prev) => ({ ...prev, tab, reseller: filters.reseller || undefined }),
+      replace: true,
+    });
   }, [tab, filters.reseller]);
 
   const [searchMode, setSearchMode] = useState<OrderSearchMode>("order");
