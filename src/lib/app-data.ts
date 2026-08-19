@@ -57,22 +57,28 @@ export function getMyReseller(userId?: string | null, force = false): Promise<My
   if (force || (userId && resellerForUser && resellerForUser !== userId)) {
     resellerPromise = null;
   }
-  if (!resellerPromise) {
+  let p = resellerPromise;
+  if (!p) {
     resellerForUser = userId ?? null;
-    resellerPromise = (async () => {
-      let uid = userId ?? null;
-      if (!uid) uid = (await supabase.auth.getUser()).data.user?.id ?? null;
-      if (!uid) return null;
-      resellerForUser = uid;
-      const { data } = await supabase
-        .from("resellers")
-        .select("id, code, business_name, status")
-        .eq("user_id", uid)
-        .maybeSingle();
-      return (data as MyReseller | null) ?? null;
-    })().catch(() => null);
+    p = (async () => {
+      try {
+        let uid = userId ?? null;
+        if (!uid) uid = (await supabase.auth.getUser()).data.user?.id ?? null;
+        if (!uid) return null;
+        resellerForUser = uid;
+        const { data } = await supabase
+          .from("resellers")
+          .select("id, code, business_name, status")
+          .eq("user_id", uid)
+          .maybeSingle();
+        return (data as MyReseller | null) ?? null;
+      } catch {
+        return null;
+      }
+    })();
+    resellerPromise = p;
   }
-  return resellerPromise;
+  return p;
 }
 
 /** Drop caches — call after sign-in/out or after saving settings. */
