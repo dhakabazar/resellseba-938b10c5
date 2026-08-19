@@ -355,12 +355,25 @@ function AdminOrdersPage() {
         {marked.length > 0 && (
           <div className="mb-4 flex flex-wrap items-center gap-2 rounded-md border border-primary/40 bg-primary/5 px-3 py-2">
             <span className="mr-2 text-sm font-medium">{marked.length} marked</span>
-            <button
-              onClick={() => setStatusModal({ open: true, orderId: marked[0], currentStatus: orders.find(x => x.id === marked[0])?.status || "confirmed" })}
-              className="inline-flex h-9 items-center gap-2 rounded-md border bg-background px-3 text-xs font-medium hover:bg-accent"
-            >
-              <Settings2 className="h-3.5 w-3.5" /> Change Status
-            </button>
+            {(() => {
+              const partialMarked = marked.some((id) => isPartialStatus(orders.find((o) => o.id === id)?.status || ""));
+              return (
+                <button
+                  disabled={partialMarked}
+                  title={partialMarked ? "Partial orders must be settled one by one" : undefined}
+                  onClick={() => {
+                    if (partialMarked) {
+                      toast.error("Partial orders can't be changed in bulk — settle each order individually.");
+                      return;
+                    }
+                    setStatusModal({ open: true, orderId: marked[0], currentStatus: orders.find(x => x.id === marked[0])?.status || "confirmed" });
+                  }}
+                  className="inline-flex h-9 items-center gap-2 rounded-md border bg-background px-3 text-xs font-medium hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <Settings2 className="h-3.5 w-3.5" /> Change Status
+                </button>
+              );
+            })()}
             <button
               onClick={() => printShippingLabels(marked)}
               className="inline-flex h-9 items-center gap-2 rounded-md border bg-background px-3 text-xs font-medium hover:bg-accent"
