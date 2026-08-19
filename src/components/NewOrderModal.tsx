@@ -321,7 +321,7 @@ export function NewOrderModal({
             <div className="space-y-6 p-4 sm:p-6 border-b">
               {isAdmin && (
                 <div className="space-y-3">
-                  <label className="text-[13px] font-black uppercase tracking-wide text-foreground/80">Reseller Selection</label>
+                  <label className="text-[13px] font-bold uppercase tracking-wide text-foreground/80">Reseller Selection</label>
                   <div className="rounded-xl border bg-muted/30 p-3 space-y-3">
                     <div className="relative">
                       <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/60" />
@@ -380,7 +380,7 @@ export function NewOrderModal({
 
               <div className="space-y-6">
                 <div className="space-y-3">
-                  <label className="text-[13px] font-black uppercase tracking-wide text-foreground/80">Customer Information</label>
+                  <label className="text-[13px] font-bold uppercase tracking-wide text-foreground/80">Customer Information</label>
                   <div className="grid gap-x-4 gap-y-3 sm:grid-cols-2">
                     <Field label="Customer Full Name">
                       <input
@@ -421,7 +421,7 @@ export function NewOrderModal({
 
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <label className="text-[13px] font-black uppercase tracking-wide text-foreground/80">Order Items</label>
+                    <label className="text-[13px] font-bold uppercase tracking-wide text-foreground/80">Order Items</label>
                     {picked.length > 0 && (
                       <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[9px] font-bold text-primary animate-in zoom-in">
                         {picked.length} {picked.length === 1 ? 'Item' : 'Items'} Selected
@@ -573,7 +573,7 @@ export function NewOrderModal({
                     {/* Delivery Area Picker (Inside Cart Section) */}
                     {totals.showAreaPicker && (
                       <div className="p-4 border-t bg-muted/10 animate-in fade-in slide-in-from-bottom-2">
-                        <label className="mb-2.5 block text-[10px] font-black text-muted-foreground/80 uppercase tracking-widest">Select Delivery Destination</label>
+                        <label className="mb-2.5 block text-[10px] font-bold text-muted-foreground/80 uppercase tracking-widest">Select Delivery Destination</label>
                         <div className="grid grid-cols-2 gap-3">
                           {(
                             [
@@ -801,7 +801,7 @@ function Field({
 }) {
   return (
     <div className={className}>
-      <label className="mb-1.5 block text-[13px] font-bold">{label}</label>
+      <label className="mb-1.5 block text-[13px] font-semibold">{label}</label>
       {children}
     </div>
   );
