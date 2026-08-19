@@ -784,6 +784,8 @@ function AdminOrdersPage() {
           />
         )}
 
+        {zoomImage && <ImageLightbox src={zoomImage} onClose={() => setZoomImage(null)} />}
+
     </div>
   );
 }
