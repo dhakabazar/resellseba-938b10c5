@@ -109,7 +109,7 @@ export const Route = createFileRoute("/_authenticated/admin/orders")({
 
 function AdminOrdersPage() {
   const { tab: tabParam, reseller: resellerParam, q: qParam } = Route.useSearch();
-  const navigate = useNavigate({ from: "/_authenticated/admin/orders" });
+  const navigate = Route.useNavigate();
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [allOrders, setAllOrders] = useState<{ status: string }[]>([]);
   const [orderItems, setOrderItems] = useState<OrderItemLite[]>([]);
