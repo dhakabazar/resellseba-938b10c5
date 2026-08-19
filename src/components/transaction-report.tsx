@@ -502,7 +502,8 @@ export function TransactionReport({
                         {r.order_id ? (
                           <Link
                             to={admin ? "/admin/orders" : "/reseller/orders"}
-                            search={{ q: r.order_number ?? "" } as never}
+                            search={{ q: r.order_number ?? "", tab: "all" } as never}
+
                             className="font-semibold text-primary hover:underline"
                           >
                             #{r.order_number}
