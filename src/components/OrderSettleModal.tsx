@@ -39,16 +39,26 @@ type OrderRow = {
 
 const num = (v: unknown) => Number(v ?? 0) || 0;
 
+/** Partial receive kinds — admin picks one when settling a Pending Partial order. */
+const PARTIAL_KINDS: { key: string; label: string; hint: string }[] = [
+  { key: "partial_full", label: "Partial (Full item)", hint: "Customer kept all items, paid less" },
+  { key: "partial_item", label: "Partial (Item)", hint: "Some items returned" },
+  { key: "partial_delivery", label: "Partial (Delivery Charge)", hint: "All items returned, delivery paid" },
+];
+
 export function OrderSettleModal({
   open,
   orderId,
   targetStatus,
+  allowKindSwitch = false,
   onClose,
   onSaved,
 }: {
   open: boolean;
   orderId: string | null;
   targetStatus: string;
+  /** show the partial-kind picker (used from Pending Partial → status change) */
+  allowKindSwitch?: boolean;
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -61,10 +71,15 @@ export function OrderSettleModal({
   const [delivery, setDelivery] = useState(0);
   const [packaging, setPackaging] = useState(0);
   const [note, setNote] = useState("");
+  const [target, setTarget] = useState(targetStatus);
 
-  const itemPartial = targetStatus === "partial_item";
-  const failed = targetStatus === "returned";
-  const deliveryOnly = targetStatus === "partial_delivery";
+  useEffect(() => {
+    if (open) setTarget(targetStatus);
+  }, [open, targetStatus]);
+
+  const itemPartial = target === "partial_item";
+  const failed = target === "returned";
+  const deliveryOnly = target === "partial_delivery";
 
   useEffect(() => {
     if (!open || !orderId) return;
