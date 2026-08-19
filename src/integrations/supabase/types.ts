@@ -2169,6 +2169,20 @@ export type Database = {
           zone_name: string
         }[]
       }
+      cleanup_counts: {
+        Args: never
+        Returns: {
+          key: string
+          rows: number
+        }[]
+      }
+      cleanup_purge: {
+        Args: { _keys: string[] }
+        Returns: {
+          key: string
+          rows: number
+        }[]
+      }
       create_public_order: {
         Args: {
           _address_line: string
