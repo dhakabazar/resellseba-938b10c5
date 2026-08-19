@@ -723,7 +723,7 @@ function OrdersPage() {
                             <FileText className="mr-2 h-4 w-4" /> View Invoice
                           </Link>
                         </DropdownMenuItem>
-                        {(o.status === "pending" || o.status === "forwarded") && !shipments.some(s => s.order_id === o.id && (s.consignment_id || s.tracking_id)) && (
+                        {resellerCanAct(o.status) && !shipments.some(s => s.order_id === o.id && (s.consignment_id || s.tracking_id)) && (
                           <>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem 
