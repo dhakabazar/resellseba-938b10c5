@@ -35,7 +35,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { NewOrderModal } from "@/components/NewOrderModal";
 import { OrderEditModal } from "@/components/OrderEditModal";
-import { type StripItem, ImageLightbox, OrderProductCell } from "@/components/order-items-strip";
+import { type StripItem, ImageLightbox, OrderItemsList, OrderProductCell } from "@/components/order-items-strip";
 
 import { OrderSettleModal } from "@/components/OrderSettleModal";
 import { ShipmentBookingModal } from "@/components/ShipmentBookingModal";
@@ -414,7 +414,13 @@ function AdminOrdersPage() {
                       {new Date(o.created_at).toLocaleDateString()}
                     </div>
                   </div>
-                  <OrderProductCell items={stripItems(o.id)} expanded={expandedOrders.includes(o.id)} onZoom={setZoomImage} />
+                  <OrderProductCell
+                    items={stripItems(o.id)}
+                    expanded={expandedOrders.includes(o.id)}
+                    onZoom={setZoomImage}
+                    onToggle={() => setExpandedOrders(prev => prev.includes(o.id) ? prev.filter(id => id !== o.id) : [...prev, o.id])}
+                  />
+
                   <div className="min-w-0">
                      <div className="font-medium truncate">{o.customer_name}</div>
                      <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
@@ -514,8 +520,11 @@ function AdminOrdersPage() {
                 </div>
                 {expandedOrders.includes(o.id) && (
                   <div className="bg-muted/30 px-12 py-6">
+                    <OrderItemsList items={stripItems(o.id)} onZoom={setZoomImage} className="mb-6" />
                     <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
                       <div>
+
+
                         <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">Shipping Details</h4>
                         <div className="rounded-lg border bg-background p-4 text-sm shadow-sm">
                           <div className="mb-1 font-semibold">{o.customer_name}</div>

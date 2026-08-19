@@ -30,7 +30,7 @@ import {
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { NewOrderModal } from "@/components/NewOrderModal";
 import { OrderEditModal } from "@/components/OrderEditModal";
-import { type StripItem, ImageLightbox, OrderProductCell } from "@/components/order-items-strip";
+import { type StripItem, ImageLightbox, OrderItemsList, OrderProductCell } from "@/components/order-items-strip";
 import { Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { useDepositStatus } from "@/lib/deposit";
@@ -896,7 +896,13 @@ function OrdersPage() {
                       items={stripItems(o.id)}
                       expanded={expandedOrders.includes(o.id)}
                       onZoom={(src) => setZoomImage(src)}
+                      onToggle={() =>
+                        setExpandedOrders((prev) =>
+                          prev.includes(o.id) ? prev.filter((id) => id !== o.id) : [...prev, o.id],
+                        )
+                      }
                     />
+
                   </div>
 
                   <div className="min-w-0 text-xs text-muted-foreground">
@@ -972,7 +978,9 @@ function OrdersPage() {
                 {/* Collapsible content section */}
                 {expandedOrders.includes(o.id) && (
                   <div className="border-t bg-muted/20 px-4 py-4 animate-in slide-in-from-top-2 duration-200">
+                    <OrderItemsList items={stripItems(o.id)} onZoom={setZoomImage} className="mb-6" />
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
                       {/* Order metadata & shipping details */}
                       <div className="space-y-4">
                         <div>
