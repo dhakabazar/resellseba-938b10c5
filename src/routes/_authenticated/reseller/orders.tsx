@@ -1114,7 +1114,7 @@ function OrdersPage() {
             
             <div className="p-4">
               <div className="grid grid-cols-1 gap-1.5">
-                {['pending', 'forwarded', 'cancelled'].map((s) => (
+                {(nextStatuses(statusModal.currentStatus, "reseller") as string[]).map((s) => (
                   <button
                     key={s}
                     disabled={loading}
