@@ -107,7 +107,7 @@ function PartialSummary({ r }: { r: TxRow }) {
         {gap > 0 && <span className="text-destructive">short {bdt(gap)}</span>}
       </div>
       {advance > 0 && (
-        <div className="mt-1 border-t border-amber-500/20 pt-1 text-[10px] text-muted-foreground">
+        <div className="mt-1 border-t border-amber-500/20 pt-1 text-[9px] text-muted-foreground">
           Courier {bdt(collected)} + advance {bdt(advance)} ({r.advance_by ?? "reseller"})
         </div>
       )}
@@ -451,15 +451,13 @@ export function TransactionReport({
                   <th className="px-3 py-2 text-left">Status</th>
                   <th className="px-3 py-2 text-left">Meta / note</th>
                   <th className="px-3 py-2 text-right">Order value</th>
+                  <th className="px-3 py-2 text-right">Received (incl. advance)</th>
                   <th className="px-3 py-2 text-right">Subtotal</th>
-
                   <th className="px-3 py-2 text-right">Delivery</th>
                   <th className="px-3 py-2 text-right">Packaging</th>
-                  <th className="px-3 py-2 text-right">Received (incl. advance)</th>
                   <th className="px-3 py-2 text-right">Advance</th>
                   <th className="px-3 py-2 text-right">Amount</th>
                   <th className="px-3 py-2 text-right">Balance</th>
-
                 </tr>
               </thead>
               <tbody className="divide-y">
@@ -527,6 +525,20 @@ export function TransactionReport({
                           <span className="text-muted-foreground">—</span>
                         )}
                       </td>
+                      <td className="px-3 py-2 text-right tabular-nums">
+                        {r.order_id ? (
+                          <div className="whitespace-nowrap leading-tight">
+                            <div className="text-[11px] font-bold">{bdt(Number(r.received))}</div>
+                            {Number(r.advance) > 0 && (
+                              <div className="text-[9px] text-muted-foreground">
+                                courier {bdt(Number(r.collected ?? 0))} + advance {bdt(Number(r.advance))}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          "—"
+                        )}
+                      </td>
                       <td className="px-3 py-2 text-right">
                         {r.order_id ? (
                           <StackCell
@@ -537,7 +549,6 @@ export function TransactionReport({
                           <span className="text-muted-foreground">—</span>
                         )}
                       </td>
-
                       <td className="px-3 py-2 text-right">
                         {r.order_id ? (
                           <StackCell
@@ -550,20 +561,6 @@ export function TransactionReport({
                       </td>
                       <td className="px-3 py-2 text-right tabular-nums">
                         {r.order_id ? bdt(Number(r.packaging)) : "—"}
-                      </td>
-                      <td className="px-3 py-2 text-right tabular-nums">
-                        {r.order_id ? (
-                          <div className="whitespace-nowrap leading-tight">
-                            <div className="text-[11px] font-bold">{bdt(Number(r.received))}</div>
-                            {Number(r.advance) > 0 && (
-                              <div className="text-[10px] text-muted-foreground">
-                                courier {bdt(Number(r.collected ?? 0))} + advance {bdt(Number(r.advance))}
-                              </div>
-                            )}
-                          </div>
-                        ) : (
-                          "—"
-                        )}
                       </td>
                       <td className="px-3 py-2 text-right">
                         {r.order_id && Number(r.advance) > 0 ? (
@@ -581,13 +578,7 @@ export function TransactionReport({
                                 {(r.advance_by ?? "reseller") === "admin" ? "received by admin" : "received by reseller"}
                               </span>
                             </div>
-                            <div className="mt-0.5 text-[10px] text-muted-foreground">
-                              {(r.advance_by ?? "reseller") === "admin"
-                                ? "kept by admin · balance unchanged"
-                                : "already with reseller · minus in balance"}
-                            </div>
                           </div>
-
                         ) : (
                           <span className="text-muted-foreground">—</span>
                         )}
