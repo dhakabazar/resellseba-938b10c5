@@ -204,29 +204,6 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
       return toast.error(`${low.product_name}: সর্বনিম্ন বিক্রয় মূল্য ৳${minFor(low)} — এর নিচে সেভ করা যাবে না`);
     setBusy(true);
     try {
-      const { error: oe } = await supabase
-        .from("orders")
-        .update({
-          customer_name: sanitizeName(name).trim(),
-          customer_phone: normalizePhone(phone),
-          address_line: address.trim(),
-          city: city.trim() || null,
-          landmark: landmark.trim() || null,
-          area: area as any,
-          payment_method: paymentMethod as any,
-          ...(isAdmin ? { payment_status: paymentStatus as any } : {}),
-          ...(isAdmin ? { admin_note: note || null } : { reseller_note: note || null }),
-          subtotal: totals.subtotal,
-          shipping_cost: totals.shipping,
-          discount: 0,
-          total: totals.total,
-          sa_cost_total: totals.saCost,
-          reseller_profit: totals.profit,
-          ...(isAdmin ? { received_amount: received.trim() === "" ? null : Number(received) || 0 } : {}),
-        })
-        .eq("id", orderId);
-      if (oe) throw oe;
-
       if (removed.length > 0) {
         const { error } = await supabase.from("order_items").delete().in("id", removed);
         if (error) throw error;
@@ -253,6 +230,37 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
           if (error) throw error;
         }
       }
+
+      // Item writes trigger a packaging recalc from product defaults, so order meta is saved last.
+      const { error: oe } = await supabase
+        .from("orders")
+        .update({
+          customer_name: sanitizeName(name).trim(),
+          customer_phone: normalizePhone(phone),
+          address_line: address.trim(),
+          city: city.trim() || null,
+          landmark: landmark.trim() || null,
+          area: area as any,
+          payment_method: paymentMethod as any,
+          ...(isAdmin ? { payment_status: paymentStatus as any } : {}),
+          ...(isAdmin ? { admin_note: note || null } : { reseller_note: note || null }),
+          subtotal: totals.subtotal,
+          shipping_cost: totals.shipping,
+          discount: totals.discount,
+          total: totals.total,
+          sa_cost_total: totals.saCost,
+          reseller_profit: totals.profit,
+          ...(isAdmin
+            ? {
+                packaging_total: totals.packaging,
+                delivery_cost: totals.deliveryCost,
+                received_amount: received.trim() === "" ? null : Number(received) || 0,
+              }
+            : {}),
+        })
+        .eq("id", orderId);
+      if (oe) throw oe;
+
 
       toast.success("Order updated — status unchanged");
       onSaved();
