@@ -514,7 +514,7 @@ export function NewOrderModal({
                               <div className="truncate text-xs font-black text-foreground">{p.name}</div>
                               <div className="mt-1"><ProductCodeChip code={p.product_code} /></div>
                               <div className="mt-1.5 flex items-center gap-2">
-                                <span className="text-[9px] font-bold uppercase text-muted-foreground">Sell ৳</span>
+                                <span className="text-[9px] font-semibold uppercase text-muted-foreground">Sell ৳</span>
                                 <input
                                   value={sellPrice}
                                   inputMode="numeric"
@@ -693,7 +693,7 @@ export function NewOrderModal({
             <aside className="flex flex-col bg-muted/20 p-4 sm:p-6 h-full border-t">
               <div className="flex-1">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/80">Order Summary</h3>
+                  <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80">Order Summary</h3>
                 </div>
               </div>
 
@@ -745,12 +745,12 @@ export function NewOrderModal({
                   
                   <div className="flex justify-between items-center">
                     <div>
-                      <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 block">Payable Total</span>
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 block">Payable Total</span>
                       <span className="text-2xl font-black text-primary tracking-tight">৳{totals.total.toFixed(0)}</span>
                     </div>
                     {!isAdmin && totals.profit !== 0 && (
                       <div className="text-right">
-                        <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 block">
+                        <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/60 block">
                           {totals.resellerAdvance > 0 ? "Final amount (advance baade)" : "Estimated Profit"}
                         </span>
                         <span
