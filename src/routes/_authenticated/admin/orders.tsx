@@ -55,6 +55,7 @@ import {
   type OrderTabKey,
   nextStatuses,
   SETTLEMENT_STATUSES,
+  isPartialStatus,
 } from "@/lib/courier-status";
 
 type OrderRow = {
@@ -219,6 +220,15 @@ function AdminOrdersPage() {
 
   async function bulkUpdateStatus(newStatus: string) {
     if (marked.length === 0) return;
+    if (isPartialStatus(newStatus)) {
+      toast.error("Partial statuses can't be set in bulk — settle each order individually.");
+      return;
+    }
+    const blocked = marked.filter((id) => isPartialStatus(orders.find((o) => o.id === id)?.status || ""));
+    if (blocked.length > 0) {
+      toast.error(`${blocked.length} selected order(s) are in a partial status — bulk status change is blocked.`);
+      return;
+    }
     setConfirmModal({
       open: true,
       title: "Bulk Status Update",
@@ -315,7 +325,9 @@ function AdminOrdersPage() {
             className="flex-row items-center justify-between"
             actions={
                 <div className="flex items-center gap-2">
-                  <BulkScanButton mode={tab === "pending_return" ? "return" : "handover"} onDone={() => load()} />
+                  {!isPartialStatus(tab) && (
+                    <BulkScanButton mode={tab === "pending_return" ? "return" : "handover"} onDone={() => load()} />
+                  )}
                   <button
                       onClick={() => setOpen(true)}
                       className="btn-brand inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium"
@@ -345,12 +357,25 @@ function AdminOrdersPage() {
         {marked.length > 0 && (
           <div className="mb-4 flex flex-wrap items-center gap-2 rounded-md border border-primary/40 bg-primary/5 px-3 py-2">
             <span className="mr-2 text-sm font-medium">{marked.length} marked</span>
-            <button
-              onClick={() => setStatusModal({ open: true, orderId: marked[0], currentStatus: orders.find(x => x.id === marked[0])?.status || "confirmed" })}
-              className="inline-flex h-9 items-center gap-2 rounded-md border bg-background px-3 text-xs font-medium hover:bg-accent"
-            >
-              <Settings2 className="h-3.5 w-3.5" /> Change Status
-            </button>
+            {(() => {
+              const partialMarked = marked.some((id) => isPartialStatus(orders.find((o) => o.id === id)?.status || ""));
+              return (
+                <button
+                  disabled={partialMarked}
+                  title={partialMarked ? "Partial orders must be settled one by one" : undefined}
+                  onClick={() => {
+                    if (partialMarked) {
+                      toast.error("Partial orders can't be changed in bulk — settle each order individually.");
+                      return;
+                    }
+                    setStatusModal({ open: true, orderId: marked[0], currentStatus: orders.find(x => x.id === marked[0])?.status || "confirmed" });
+                  }}
+                  className="inline-flex h-9 items-center gap-2 rounded-md border bg-background px-3 text-xs font-medium hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <Settings2 className="h-3.5 w-3.5" /> Change Status
+                </button>
+              );
+            })()}
             <button
               onClick={() => printShippingLabels(marked)}
               className="inline-flex h-9 items-center gap-2 rounded-md border bg-background px-3 text-xs font-medium hover:bg-accent"
