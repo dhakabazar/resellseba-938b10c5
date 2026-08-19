@@ -45,7 +45,7 @@ function EarningsPage() {
     <div className="space-y-5">
       <PageHeader
         title="Transaction report"
-        description="Order profit / loss, security deposit and withdraw — sob ek jaygay, running balance soho."
+        description="Your profit, loss, deposit and withdraw ledger."
       />
       {loading ? (
         <div className="flex items-center justify-center py-16">

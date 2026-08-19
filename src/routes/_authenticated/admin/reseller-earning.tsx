@@ -24,7 +24,7 @@ function AdminTransactionReportPage() {
     <div className="space-y-5">
       <PageHeader
         title="Transaction report"
-        description="Sob reseller er order profit / loss, deposit o withdraw — reseller ba date filter kore dekhun."
+        description="All reseller money movements in one ledger."
       />
       <TransactionReport admin />
     </div>
