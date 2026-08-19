@@ -267,6 +267,9 @@ export function NewOrderModal({
           packaging_total: totals.packaging,
           sa_cost_total: totals.saCost,
           delivery_cost: totals.deliveryCost,
+          advance_amount: totals.advance,
+          advance_by: totals.advance > 0 ? advanceBy : null,
+
           discount: totals.discount,
           shipping_cost: totals.shipping,
           subtotal: totals.subtotal,
