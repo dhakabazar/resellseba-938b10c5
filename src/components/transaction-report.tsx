@@ -522,7 +522,17 @@ export function TransactionReport({
                           <span className="text-muted-foreground">—</span>
                         )}
                       </td>
+                      <td
+                        className={
+                          "px-3 py-2 text-right font-bold tabular-nums " +
+                          (voided ? "text-muted-foreground line-through" : inflow ? "text-success" : "text-destructive")
+                        }
+                      >
+                        {inflow ? "+" : "−"}
+                        {bdt(Number(r.amount))}
+                      </td>
                       <td className="px-3 py-2 text-right font-semibold tabular-nums">{bdt(Number(r.running))}</td>
+
                     </tr>
                   );
                 })}
