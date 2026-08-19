@@ -111,33 +111,59 @@ export function NewOrderModal({
 
   const totals = useMemo(() => {
     let subtotal = 0;
-    let saCost = 0;
-    let shipping = 0;
+    let productCost = 0;
+    let packagingDefault = 0;
+    let autoShipping = 0;
     let shipFrom: string | null = null;
     let isUniversalFree = true;
     let isUniversalFlat = true;
 
     for (const { line, p, sellPrice } of picked) {
       subtotal += Number(sellPrice) * line.qty;
-      saCost += (Number(p.reseller_price) + Number(p.packaging_cost)) * line.qty;
-      
+      productCost += Number(p.reseller_price) * line.qty;
+      packagingDefault += Number(p.packaging_cost) * line.qty;
+
       const mode = deliveryMode(p);
       if (mode !== "free") isUniversalFree = false;
       if (mode !== "flat") isUniversalFlat = false;
 
       const dc = productDeliveryCharge(p, area);
-      if (dc > shipping) {
-        shipping = dc;
+      if (dc > autoShipping) {
+        autoShipping = dc;
         shipFrom = p.name;
       }
     }
-    
+
     // Determine if we should show area selection
     // If all items are "free", or all items are "flat" with the same charge, we don't need area picker
     const showAreaPicker = picked.length > 0 && !isUniversalFree && !isUniversalFlat;
 
-    return { subtotal, shipping, total: subtotal + shipping, saCost, profit: subtotal - saCost, shipFrom, showAreaPicker };
-  }, [picked, area]);
+    const shipping = shipOverride.trim() === "" ? autoShipping : Math.max(Number(shipOverride) || 0, 0);
+    const packaging =
+      packagingOverride.trim() === "" ? packagingDefault : Math.max(Number(packagingOverride) || 0, 0);
+    const disc = Math.min(Math.max(Number(discount) || 0, 0), subtotal + shipping);
+    const total = subtotal + shipping - disc;
+    const saCost = productCost + packaging;
+    const deliveryCost =
+      deliveryCostOverride.trim() === "" ? shipping : Math.max(Number(deliveryCostOverride) || 0, 0);
+
+    return {
+      subtotal,
+      autoShipping,
+      shipping,
+      packagingDefault,
+      packaging,
+      productCost,
+      discount: disc,
+      total,
+      saCost,
+      deliveryCost,
+      profit: total - deliveryCost - saCost,
+      shipFrom,
+      showAreaPicker,
+    };
+  }, [picked, area, shipOverride, packagingOverride, discount, deliveryCostOverride]);
+
 
   const errors = {
     name: nameError(name),
