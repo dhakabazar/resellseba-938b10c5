@@ -105,8 +105,8 @@ function PartialSummary({ r }: { r: TxRow }) {
 }
 
 /**
- * Earnings running balance per reseller (oldest → newest).
- * Security deposit is held money, so it does not add to the earnings balance.
+ * Running balance per reseller (oldest → newest): every in adds, every out subtracts,
+ * so the Balance column is always the simple sum of the Amount column above it.
  */
 function withRunningBalance(rows: TxRow[]): TxRow[] {
   const asc = [...rows].sort((a, b) => new Date(a.at).getTime() - new Date(b.at).getTime());
@@ -116,14 +116,14 @@ function withRunningBalance(rows: TxRow[]): TxRow[] {
     const key = r.reseller_id ?? "-";
     let bal = run.get(key) ?? 0;
     const amount = Number(r.amount) || 0;
-    if (r.kind === "profit") bal += amount;
-    else if (r.kind === "loss") bal -= amount;
-    else if (r.kind === "withdraw" && r.direction === "out") bal -= amount;
+    if (r.direction === "in") bal += amount;
+    else if (r.direction === "out") bal -= amount;
     run.set(key, bal);
     balances.set(r, bal);
   }
   return rows.map((r) => ({ ...r, running: balances.get(r) ?? (Number(r.running) || 0) }));
 }
+
 
 
 const KIND_OPTIONS = [
@@ -213,10 +213,8 @@ export function TransactionReport({
       profit = 0,
       loss = 0;
     for (const r of filtered) {
-      if (r.kind === "deposit") {
-        deposit += Number(r.amount);
-        continue; // security deposit is held money, not earnings
-      }
+      if (r.kind === "deposit") deposit += Number(r.amount);
+
       if (r.direction === "in") inflow += Number(r.amount);
       if (r.direction === "out") outflow += Number(r.amount);
       if (r.kind === "withdraw" && r.direction === "out") withdraw += Number(r.amount);
@@ -395,7 +393,6 @@ export function TransactionReport({
                 <tr>
                   <th className="px-3 py-2 text-left">Type</th>
                   {admin && <th className="px-3 py-2 text-left">Reseller</th>}
-                  <th className="px-3 py-2 text-right">Amount</th>
                   <th className="px-3 py-2 text-left">Date</th>
                   <th className="px-3 py-2 text-left">Status</th>
                   <th className="px-3 py-2 text-left">Meta / note</th>
@@ -406,7 +403,9 @@ export function TransactionReport({
                   <th className="px-3 py-2 text-right">Packaging</th>
                   <th className="px-3 py-2 text-right">Received</th>
                   <th className="px-3 py-2 text-right">Advance</th>
+                  <th className="px-3 py-2 text-right">Amount</th>
                   <th className="px-3 py-2 text-right">Balance</th>
+
                 </tr>
               </thead>
               <tbody className="divide-y">
@@ -438,16 +437,8 @@ export function TransactionReport({
                           <div className="text-[10px] text-muted-foreground">{r.reseller_code}</div>
                         </td>
                       )}
-                      <td
-                        className={
-                          "px-3 py-2 text-right font-bold tabular-nums " +
-                          (voided ? "text-muted-foreground line-through" : inflow ? "text-success" : "text-destructive")
-                        }
-                      >
-                        {inflow ? "+" : "−"}
-                        {bdt(Number(r.amount))}
-                      </td>
                       <td className="px-3 py-2">
+
                         <DateCell at={r.at} />
                       </td>
                       <td className="px-3 py-2">
@@ -531,7 +522,17 @@ export function TransactionReport({
                           <span className="text-muted-foreground">—</span>
                         )}
                       </td>
+                      <td
+                        className={
+                          "px-3 py-2 text-right font-bold tabular-nums " +
+                          (voided ? "text-muted-foreground line-through" : inflow ? "text-success" : "text-destructive")
+                        }
+                      >
+                        {inflow ? "+" : "−"}
+                        {bdt(Number(r.amount))}
+                      </td>
                       <td className="px-3 py-2 text-right font-semibold tabular-nums">{bdt(Number(r.running))}</td>
+
                     </tr>
                   );
                 })}
