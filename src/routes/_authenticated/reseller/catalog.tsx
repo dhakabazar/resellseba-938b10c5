@@ -59,6 +59,7 @@ function CatalogPage() {
   const [perPage, setPerPage] = useState(20);
   const [page, setPage] = useState(1);
   const [detailId, setDetailId] = useState<string | null>(null);
+  const { settings: adv } = useAdvancedSettings();
 
   useEffect(() => {
     if (!user) return;
