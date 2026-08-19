@@ -1,4 +1,5 @@
-import { createFileRoute, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
+import {
+  Sliders, createFileRoute, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -68,6 +69,7 @@ const ROUTE_PERMISSIONS: Record<string, string[]> = {
   "/admin/payments": ["payments.manage"],
   "/admin/staff": ["staff.manage"],
   "/admin/maintenance": ["settings.manage"],
+  "/admin/advanced": ["settings.manage"],
   "/admin/domains": ["settings.manage"],
   "/admin/deposits": ["settings.manage", "resellers.manage", "finance.view"],
   "/admin/deposit-transactions": ["finance.view", "resellers.manage", "settings.manage"],
@@ -132,6 +134,7 @@ const NAV: NavEntry[] = [
       { label: "Staff & Permissions", to: "/admin/staff", icon: <Users className="h-4 w-4" /> },
       { label: "Custom domains", to: "/admin/domains", icon: <Globe className="h-4 w-4" /> },
       { label: "Cache & cleanup", to: "/admin/maintenance", icon: <Eraser className="h-4 w-4" /> },
+      { label: "Advanced settings", to: "/admin/advanced", icon: <Sliders className="h-4 w-4" /> },
 
       { label: "Security deposit", to: "/admin/deposits", icon: <ShieldCheck className="h-4 w-4" /> },
       { label: "Privacy policy", to: "/admin/privacy", icon: <Shield className="h-4 w-4" /> },

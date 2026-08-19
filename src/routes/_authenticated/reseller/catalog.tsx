@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAdvancedSettings } from "@/lib/advanced-settings";
 import { deliveryLabel, deliveryMode } from "@/lib/delivery";
 import { useAuth } from "@/lib/use-auth";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
@@ -368,7 +369,7 @@ function CatalogPage() {
                     Delivery: {deliveryLabel(p)} · customer pays
                   </div>
                   <div className="mt-1 text-xs text-muted-foreground">
-                    Suggested ৳{p.suggested_price} · Stock {p.stock}
+                    Suggested ৳{p.suggested_price}{adv.resellerCatalogShowStock ? ` · Stock ${p.stock}` : ""}
                   </div>
                   {isListed ? (
                     <button
