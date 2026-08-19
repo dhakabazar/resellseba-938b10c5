@@ -107,18 +107,18 @@ export function OrderSettleModal({
         setPackaging(num(row.packaging_total));
         setNote(row.settlement_note ?? "");
         setReceived(
-          targetStatus === "returned"
+          target === "returned"
             ? 0
             : row.received_amount != null
               ? num(row.received_amount)
-              : targetStatus === "partial_delivery"
+              : target === "partial_delivery"
                 ? num(row.shipping_cost)
                 : num(row.total),
         );
       }
       setLoading(false);
     })();
-  }, [open, orderId, targetStatus]);
+  }, [open, orderId, target]);
 
   const calc = useMemo(() => {
     const fullProduct = Math.max(num(order?.sa_cost_total) - num(order?.packaging_total), 0);
@@ -150,7 +150,7 @@ export function OrderSettleModal({
     const { error } = await supabase
       .from("orders")
       .update({
-        status: targetStatus as never,
+        status: target as never,
         received_amount: failed ? 0 : received,
         delivery_cost: delivery,
         packaging_total: packaging,
@@ -170,10 +170,10 @@ export function OrderSettleModal({
     }
     await supabase.from("order_status_history").insert({
       order_id: order.id,
-      status: targetStatus as never,
-      note: note ? `Settled: ${note}` : `Settled as ${orderStatusLabel(targetStatus)}`,
+      status: target as never,
+      note: note ? `Settled: ${note}` : `Settled as ${orderStatusLabel(target)}`,
     });
-    toast.success(`Order #${order.order_number} settled — ${orderStatusLabel(targetStatus)}`);
+    toast.success(`Order #${order.order_number} settled — ${orderStatusLabel(target)}`);
     setSaving(false);
     onSaved();
     onClose();
@@ -184,7 +184,7 @@ export function OrderSettleModal({
       <div className="my-8 w-full max-w-2xl overflow-hidden rounded-2xl bg-background shadow-2xl ring-1 ring-black/5">
         <div className="flex items-center justify-between border-b bg-muted/30 px-5 py-4">
           <div>
-            <h3 className="text-sm font-bold">Settle order — {orderStatusLabel(targetStatus)}</h3>
+            <h3 className="text-sm font-bold">Settle order — {orderStatusLabel(target)}</h3>
             <p className="text-[11px] text-muted-foreground">
               {order ? `#${order.order_number} · ${order.customer_name}` : "Loading…"}
             </p>
