@@ -30,15 +30,15 @@ export function MoneyField({
   return (
     <div>
       <div className="mb-1.5 flex items-baseline gap-2">
-        <span className="text-[11px] font-semibold">{label}</span>
-        {hint && <span className="text-[9px] uppercase tracking-wide text-muted-foreground/70">{hint}</span>}
+        <span className="text-[13px] font-bold">{label}</span>
+        {hint && <span className="text-[11px] font-medium text-muted-foreground/70">{hint}</span>}
       </div>
       <div
         className={`flex items-center overflow-hidden rounded-xl border bg-background transition-all focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/15 ${
           invalid ? "border-destructive" : ""
         } ${disabled ? "opacity-70" : ""}`}
       >
-        <span className="grid h-9 w-8 shrink-0 place-items-center border-r bg-muted/40 text-[11px] font-bold text-muted-foreground">
+        <span className="grid h-10 w-9 shrink-0 place-items-center border-r bg-muted/40 text-[13px] font-bold text-muted-foreground">
           ৳
         </span>
         <input
@@ -47,12 +47,13 @@ export function MoneyField({
           value={value}
           placeholder={placeholder}
           onChange={(e) => onChange(e.target.value)}
-          className="h-9 w-full bg-transparent px-3 text-xs font-semibold tabular-nums outline-none placeholder:font-normal placeholder:text-muted-foreground/50"
+          className="h-10 w-full bg-transparent px-3 text-[13px] font-semibold tabular-nums outline-none placeholder:font-normal placeholder:text-muted-foreground/50"
         />
       </div>
     </div>
   );
 }
+
 
 /** Advance receiver toggle (admin vs reseller). */
 export function AdvanceByToggle({
