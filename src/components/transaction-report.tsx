@@ -516,7 +516,7 @@ export function TransactionReport({
             </table>
           </div>
         )}
-        {!loading && !error && filtered.length > 0 && (
+        {!loading && !error && filtered.length > 0 && perPage !== "all" && (
           <div className="border-t px-3 py-2">
             <Pagination page={page} perPage={perPage} total={filtered.length} onPage={setPage} />
           </div>
