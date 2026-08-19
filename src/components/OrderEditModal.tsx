@@ -450,7 +450,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                           </div>
                         </label>
                         <label className="space-y-1">
-                          <span className="text-[11px] font-bold uppercase text-muted-foreground">
+                          <span className="text-[11px] font-semibold uppercase text-muted-foreground">
                             Sell price · min ৳{minFor(it)}
                           </span>
                           <input
@@ -473,7 +473,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                         </label>
                         {isAdmin && (
                           <label className="space-y-1">
-                            <span className="text-[11px] font-bold uppercase text-muted-foreground">Base cost</span>
+                            <span className="text-[11px] font-semibold uppercase text-muted-foreground">Base cost</span>
                             <input
                               className={inp}
                               value={it.sa_price}
@@ -486,7 +486,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                           </label>
                         )}
                         <div className="space-y-1">
-                          <span className="text-[11px] font-bold uppercase text-muted-foreground">Line total</span>
+                          <span className="text-[11px] font-semibold uppercase text-muted-foreground">Line total</span>
                           <div className="px-1 py-1.5 text-xs font-bold tabular-nums">
                             ৳{(it.reseller_price * it.quantity).toFixed(0)}
                           </div>
