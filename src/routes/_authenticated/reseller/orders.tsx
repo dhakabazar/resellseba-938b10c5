@@ -116,9 +116,11 @@ type OrderRow = {
 type Line = { listing_id?: string; product_id?: string; qty: number; name?: string; price?: number; cost?: number; image?: string; delivery?: any };
 
 export const Route = createFileRoute("/_authenticated/reseller/orders")({
-  validateSearch: (s: Record<string, unknown>): { tab?: OrderTabKey } => ({
+  validateSearch: (s: Record<string, unknown>): { tab?: OrderTabKey; q?: string } => ({
     tab: ORDER_TABS.some((t) => t.key === s.tab) ? (s.tab as OrderTabKey) : undefined,
+    q: typeof s.q === "string" && s.q ? s.q : undefined,
   }),
+
   component: OrdersPage,
 });
 
