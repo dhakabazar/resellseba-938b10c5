@@ -155,7 +155,7 @@ export function TransactionReport({
       } as never)
       .then(({ data, error }) => {
         if (error) setError(error.message);
-        setRows(((data ?? []) as TxRow[]).map((r) => ({ ...r })));
+        setRows(withRunningBalance((data ?? []) as TxRow[]));
         setLoading(false);
       });
   }, [admin, reseller, resellerId, range]);
