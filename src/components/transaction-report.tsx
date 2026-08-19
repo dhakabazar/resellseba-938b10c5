@@ -33,9 +33,72 @@ export type TxRow = {
   packaging: number;
   buy_total: number;
   received: number;
+  advance: number;
+  advance_by: string | null;
   amount: number;
   running: number;
 };
+
+/** Date on top, time below. */
+function DateCell({ at }: { at: string }) {
+  const d = new Date(at);
+  return (
+    <div className="whitespace-nowrap leading-tight">
+      <div className="text-[11px] font-semibold">{d.toLocaleDateString()}</div>
+      <div className="text-[10px] text-muted-foreground">
+        {d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+      </div>
+    </div>
+  );
+}
+
+/** Two stacked labelled money values (Buy/Sell, Admin/Reseller). */
+function StackCell({
+  top,
+  bottom,
+}: {
+  top: [string, number];
+  bottom: [string, number];
+}) {
+  return (
+    <div className="whitespace-nowrap text-right leading-tight tabular-nums">
+      <div className="text-[11px]">
+        <span className="text-muted-foreground">{top[0]}-</span>
+        <span className="font-semibold">{bdt(Number(top[1]))}</span>
+      </div>
+      <div className="text-[11px]">
+        <span className="text-muted-foreground">{bottom[0]}-</span>
+        <span className="font-semibold">{bdt(Number(bottom[1]))}</span>
+      </div>
+    </div>
+  );
+}
+
+const PARTIAL_STATUSES = ["partial", "partial_full", "partial_item", "partial_delivery", "damaged"];
+
+/** At-a-glance partial settlement summary: collected vs order value. */
+function PartialSummary({ r }: { r: TxRow }) {
+  const total = Number(r.sell_total) || 0;
+  const received = Number(r.received) || 0;
+  const gap = Math.max(total - received, 0);
+  const pct = total > 0 ? Math.min(100, Math.round((received / total) * 100)) : 0;
+  return (
+    <div className="mt-1 max-w-[240px] rounded-lg border border-amber-500/30 bg-amber-500/5 px-2 py-1.5">
+      <div className="flex items-center justify-between text-[10px] font-semibold">
+        <span className="text-amber-600">Collected {bdt(received)}</span>
+        <span className="text-muted-foreground">of {bdt(total)}</span>
+      </div>
+      <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-amber-500/15">
+        <div className="h-full rounded-full bg-amber-500" style={{ width: `${pct}%` }} />
+      </div>
+      <div className="mt-1 flex items-center justify-between text-[10px]">
+        <span className="font-semibold text-amber-600">{pct}% received</span>
+        {gap > 0 && <span className="text-destructive">short {bdt(gap)}</span>}
+      </div>
+    </div>
+  );
+}
+
 
 const KIND_OPTIONS = [
   { value: "", label: "All transactions" },
