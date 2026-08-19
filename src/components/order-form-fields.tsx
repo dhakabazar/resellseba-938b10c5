@@ -4,7 +4,7 @@ export function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex items-center gap-2">
       <span className="h-4 w-1.5 rounded-full bg-primary" />
-      <span className="text-[13px] font-black uppercase tracking-[0.08em] text-foreground/80">{children}</span>
+      <span className="text-[13px] font-bold uppercase tracking-[0.08em] text-foreground/80">{children}</span>
     </div>
   );
 }
@@ -30,7 +30,7 @@ export function MoneyField({
   return (
     <div>
       <div className="mb-1.5 flex items-baseline gap-2">
-        <span className="text-[13px] font-bold">{label}</span>
+        <span className="text-[13px] font-semibold">{label}</span>
         {hint && <span className="text-[11px] font-medium text-muted-foreground/70">{hint}</span>}
       </div>
       <div
@@ -65,7 +65,7 @@ export function AdvanceByToggle({
 }) {
   return (
     <div>
-      <div className="mb-1.5 text-[13px] font-bold">কে টাকা পেয়েছে?</div>
+      <div className="mb-1.5 text-[13px] font-semibold">Who received the advance?</div>
       <div className="grid grid-cols-2 gap-2">
         {(
           [
