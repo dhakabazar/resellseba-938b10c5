@@ -376,7 +376,7 @@ function AdminOrdersPage() {
         
         {loading ? <div className="py-12 text-center"><Loader2 className="mx-auto h-6 w-6 animate-spin" /></div> : (
           <div className="space-y-3">
-            <div className="hidden grid-cols-[40px_minmax(70px,0.8fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(120px,1fr)_70px_90px_60px] gap-1 rounded-lg border bg-muted/40 px-4 py-2.5 text-xs font-medium text-muted-foreground md:grid">
+            <div className="hidden grid-cols-[40px_minmax(70px,0.7fr)_minmax(140px,1fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(120px,1fr)_70px_90px_60px] gap-1 rounded-lg border bg-muted/40 px-4 py-2.5 text-xs font-medium text-muted-foreground md:grid">
                <div className="flex justify-center">
                  <input
                    type="checkbox"
@@ -385,7 +385,7 @@ function AdminOrdersPage() {
                    onChange={(e) => setMarked(e.target.checked ? paged.map(x => x.id) : [])}
                  />
                </div>
-               <div>Order</div> <div>Customer</div> <div>Reseller</div> <div>Courier</div> <div>Total</div> <div>Status</div> <div className="text-right">Actions</div>
+               <div>Order</div> <div>Products</div> <div>Customer</div> <div>Reseller</div> <div>Courier</div> <div>Total</div> <div>Status</div> <div className="text-right">Actions</div>
             </div>
             {paged.map((o) => (
               <div
