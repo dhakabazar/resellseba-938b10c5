@@ -150,6 +150,9 @@ export function NewOrderModal({
     const saCost = productCost + packaging;
     const deliveryCost =
       deliveryCostOverride.trim() === "" ? shipping : Math.max(Number(deliveryCostOverride) || 0, 0);
+    const adv = Math.min(Math.max(Number(advance) || 0, 0), total);
+    const resellerAdvance = advanceBy === "reseller" ? adv : 0;
+    const grossProfit = total - deliveryCost - saCost;
 
     return {
       subtotal,
@@ -162,11 +165,16 @@ export function NewOrderModal({
       total,
       saCost,
       deliveryCost,
-      profit: total - deliveryCost - saCost,
+      advance: adv,
+      resellerAdvance,
+      codDue: Math.max(total - adv, 0),
+      grossProfit,
+      profit: grossProfit - resellerAdvance,
       shipFrom,
       showAreaPicker,
     };
-  }, [picked, area, shipOverride, packagingOverride, discount, deliveryCostOverride]);
+  }, [picked, area, shipOverride, packagingOverride, discount, deliveryCostOverride, advance, advanceBy]);
+
 
 
   const errors = {
