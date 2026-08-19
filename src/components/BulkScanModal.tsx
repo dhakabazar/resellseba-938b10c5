@@ -368,9 +368,32 @@ function BulkScanModal({ mode: initialMode, onClose }: { mode: ScanMode; onClose
         <div className="grid gap-4 p-4 sm:p-5 md:grid-cols-[1.1fr_1fr]">
           {/* left: controls */}
           <div className="space-y-3">
+            <div>
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">Scan mode</label>
+              <div className="grid grid-cols-2 gap-2">
+                {(["handover", "return"] as ScanMode[]).map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => setMode(m)}
+                    className={cn(
+                      "rounded-md border px-3 py-2 text-left text-xs font-semibold transition-colors",
+                      mode === m
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "bg-background text-muted-foreground hover:bg-muted",
+                    )}
+                  >
+                    <span className="block">{m === "return" ? "Return received" : "Courier handover"}</span>
+                    <span className="block text-[10px] font-normal opacity-80">{MODES[m].hint}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-xs font-medium text-primary">
               {cfg.hint}
             </div>
+
 
             <form
               onSubmit={(e) => {
