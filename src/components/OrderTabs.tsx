@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
-import { ORDER_TABS, type OrderTabKey } from "@/lib/courier-status";
+import { ORDER_TABS, orderTabClasses, type OrderTabKey } from "@/lib/courier-status";
 
 /**
  * Responsive order status tabs.
