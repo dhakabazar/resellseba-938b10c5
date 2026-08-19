@@ -35,7 +35,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { NewOrderModal } from "@/components/NewOrderModal";
 import { OrderEditModal } from "@/components/OrderEditModal";
-import { OrderItemsStrip, type StripItem } from "@/components/order-items-strip";
+import { type StripItem, ImageLightbox, OrderProductCell } from "@/components/order-items-strip";
 
 import { OrderSettleModal } from "@/components/OrderSettleModal";
 import { ShipmentBookingModal } from "@/components/ShipmentBookingModal";
@@ -119,6 +119,7 @@ function AdminOrdersPage() {
   const [statusModal, setStatusModal] = useState<{ open: boolean; orderId: string; currentStatus: string; isBulk?: boolean } | null>(null);
   const [settleModal, setSettleModal] = useState<{ orderId: string; status: string } | null>(null);
   const [bookingModal, setBookingModal] = useState<{ open: boolean; orderIds: string[] }>({ open: false, orderIds: [] });
+  const [zoomImage, setZoomImage] = useState<string | null>(null);
   
   const fetchActive = useServerFn(getActiveCouriers);
   const { data: activeProviders = [] } = useQuery({
@@ -376,7 +377,7 @@ function AdminOrdersPage() {
         
         {loading ? <div className="py-12 text-center"><Loader2 className="mx-auto h-6 w-6 animate-spin" /></div> : (
           <div className="space-y-3">
-            <div className="hidden grid-cols-[40px_minmax(70px,0.8fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(120px,1fr)_70px_90px_60px] gap-1 rounded-lg border bg-muted/40 px-4 py-2.5 text-xs font-medium text-muted-foreground md:grid">
+            <div className="hidden grid-cols-[40px_minmax(70px,0.7fr)_minmax(140px,1fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(120px,1fr)_70px_90px_60px] gap-1 rounded-lg border bg-muted/40 px-4 py-2.5 text-xs font-medium text-muted-foreground md:grid">
                <div className="flex justify-center">
                  <input
                    type="checkbox"
@@ -385,14 +386,14 @@ function AdminOrdersPage() {
                    onChange={(e) => setMarked(e.target.checked ? paged.map(x => x.id) : [])}
                  />
                </div>
-               <div>Order</div> <div>Customer</div> <div>Reseller</div> <div>Courier</div> <div>Total</div> <div>Status</div> <div className="text-right">Actions</div>
+               <div>Order</div> <div>Products</div> <div>Customer</div> <div>Reseller</div> <div>Courier</div> <div>Total</div> <div>Status</div> <div className="text-right">Actions</div>
             </div>
             {paged.map((o) => (
               <div
                 key={o.id}
                 className={`overflow-hidden rounded-xl border bg-card shadow-sm transition-all hover:shadow-md hover:border-primary/40 ${marked.includes(o.id) ? "border-primary ring-1 ring-primary/30" : ""}`}
               >
-                <div className="hidden grid-cols-[40px_minmax(70px,0.8fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(120px,1fr)_70px_90px_60px] items-center gap-1 border-b bg-muted/30 px-4 py-3 text-sm md:grid">
+                <div className="hidden grid-cols-[40px_minmax(70px,0.7fr)_minmax(140px,1fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(120px,1fr)_70px_90px_60px] items-center gap-1 border-b bg-muted/30 px-4 py-3 text-sm md:grid">
                   <div className="flex flex-col items-center gap-1.5">
                     <input
                       type="checkbox"
@@ -413,6 +414,7 @@ function AdminOrdersPage() {
                       {new Date(o.created_at).toLocaleDateString()}
                     </div>
                   </div>
+                  <OrderProductCell items={stripItems(o.id)} expanded={expandedOrders.includes(o.id)} onZoom={setZoomImage} />
                   <div className="min-w-0">
                      <div className="font-medium truncate">{o.customer_name}</div>
                      <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
@@ -510,16 +512,9 @@ function AdminOrdersPage() {
                      </DropdownMenu>
                   </div>
                 </div>
-                <OrderItemsStrip items={stripItems(o.id)} />
                 {expandedOrders.includes(o.id) && (
                   <div className="bg-muted/30 px-12 py-6">
-                    <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-                      <div>
-                        <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">Order Items</h4>
-                        <div className="overflow-hidden rounded-lg border bg-background">
-                          <OrderItemsStrip items={stripItems(o.id)} limit={2} className="border-t-0 bg-transparent" />
-                        </div>
-                      </div>
+                    <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
                       <div>
                         <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">Shipping Details</h4>
                         <div className="rounded-lg border bg-background p-4 text-sm shadow-sm">
@@ -716,6 +711,8 @@ function AdminOrdersPage() {
             allProducts={allProducts}
           />
         )}
+
+        {zoomImage && <ImageLightbox src={zoomImage} onClose={() => setZoomImage(null)} />}
 
     </div>
   );

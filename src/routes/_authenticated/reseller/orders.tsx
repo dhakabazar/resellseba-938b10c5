@@ -30,7 +30,7 @@ import {
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { NewOrderModal } from "@/components/NewOrderModal";
 import { OrderEditModal } from "@/components/OrderEditModal";
-import { OrderItemsStrip, type StripItem } from "@/components/order-items-strip";
+import { type StripItem, ImageLightbox, OrderProductCell } from "@/components/order-items-strip";
 import { Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { useDepositStatus } from "@/lib/deposit";
@@ -175,6 +175,7 @@ function OrdersPage() {
   const [pickScope, setPickScope] = useState<"filtered" | "marked">("filtered");
   const [marked, setMarked] = useState<string[]>([]);
   const [expandedOrders, setExpandedOrders] = useState<string[]>([]);
+  const [zoomImage, setZoomImage] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [editId, setEditId] = useState<string | null>(null);
   const [statusModal, setStatusModal] = useState<{ open: boolean; orderId: string; currentStatus: string; isBulk?: boolean } | null>(null);
@@ -639,7 +640,7 @@ function OrdersPage() {
       ) : (
         <>
         <div className="space-y-3">
-          <div className="hidden grid-cols-[30px_minmax(60px,0.7fr)_minmax(100px,1fr)_minmax(100px,1.2fr)_60px_80px_100px_60px] gap-2 rounded-lg border bg-muted/40 px-4 py-2.5 text-xs font-medium text-muted-foreground md:grid">
+          <div className="hidden grid-cols-[30px_minmax(60px,0.7fr)_minmax(120px,1fr)_minmax(100px,1fr)_minmax(100px,1.2fr)_60px_80px_100px_60px] gap-2 rounded-lg border bg-muted/40 px-4 py-2.5 text-xs font-medium text-muted-foreground md:grid">
             <div className="flex items-center justify-center">
               <input
                 type="checkbox"
@@ -657,6 +658,7 @@ function OrdersPage() {
               />
             </div>
             <div>Order</div>
+            <div>Products</div>
             <div>Customer</div>
             <div>Courier</div>
             <div>Total</div>
@@ -867,7 +869,7 @@ function OrdersPage() {
                 </div>
 
                 {/* Desktop row */}
-                <div className="hidden grid-cols-[30px_minmax(60px,0.7fr)_minmax(100px,1fr)_minmax(100px,1.2fr)_60px_80px_100px_60px] items-center gap-2 border-b bg-muted/30 px-4 py-3 text-sm md:grid">
+                <div className="hidden grid-cols-[30px_minmax(60px,0.7fr)_minmax(120px,1fr)_minmax(100px,1fr)_minmax(100px,1.2fr)_60px_80px_100px_60px] items-center gap-2 border-b bg-muted/30 px-4 py-3 text-sm md:grid">
                   <div className="flex flex-col items-center gap-1.5">
                     <input
                       type="checkbox"
@@ -887,6 +889,14 @@ function OrdersPage() {
                     <div className="text-[11px] text-muted-foreground">
                       {new Date(o.created_at).toLocaleDateString()}
                     </div>
+                  </div>
+
+                  <div className="min-w-0">
+                    <OrderProductCell
+                      items={stripItems(o.id)}
+                      expanded={expandedOrders.includes(o.id)}
+                      onZoom={(src) => setZoomImage(src)}
+                    />
                   </div>
 
                   <div className="min-w-0 text-xs text-muted-foreground">
@@ -959,22 +969,10 @@ function OrdersPage() {
                   <div className="flex justify-end">{actions}</div>
                 </div>
 
-                <OrderItemsStrip items={stripItems(o.id)} />
-
                 {/* Collapsible content section */}
                 {expandedOrders.includes(o.id) && (
                   <div className="border-t bg-muted/20 px-4 py-4 animate-in slide-in-from-top-2 duration-200">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {/* Products list */}
-                      <div>
-                        <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
-                          <PackageCheck className="h-3.5 w-3.5" /> Ordered Products ({items.length})
-                        </h4>
-                        <div className="overflow-hidden rounded-lg border bg-background">
-                          <OrderItemsStrip items={stripItems(o.id)} limit={2} className="border-t-0 bg-transparent" />
-                        </div>
-                      </div>
-
                       {/* Order metadata & shipping details */}
                       <div className="space-y-4">
                         <div>
@@ -1171,6 +1169,8 @@ function OrdersPage() {
         variant={confirmModal.variant}
         isLoading={loading}
       />
+
+      {zoomImage && <ImageLightbox src={zoomImage} onClose={() => setZoomImage(null)} />}
     </div>
 
   );
