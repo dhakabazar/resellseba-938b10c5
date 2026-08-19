@@ -153,7 +153,8 @@ export function orderProfit(o: ProfitOrder) {
 
 /** Reusable hint shown on every profit report/card so the math is transparent. */
 export const PROFIT_FORMULA_HINT =
-  "Profit = received amount − product cost − delivery charge − packaging cost. Any advance already collected counts as received; an advance held by the reseller is deducted from their final amount, while an advance held by admin stays with admin. Partial delivery uses the amount the courier actually collected; for item partial only the items the customer kept are charged. A returned parcel costs the delivery charge + packaging, because the product comes back.";
+  "Profit = received amount − product cost − delivery charge − packaging cost. Any advance already collected counts as received; an advance held by the reseller is deducted from their final amount, while an advance held by admin stays with admin. Partial (full item) uses the amount the courier actually collected against the full cost. Partial (item) charges only the items the customer kept — returned items go back to stock. Partial (delivery charge) means every product came back but the customer still paid the delivery charge, so that collected amount is counted as received and the cost is only delivery charge + packaging — no product cost. A fully returned parcel collects nothing, so it costs delivery charge + packaging, because the product comes back.";
+
 
 
 
