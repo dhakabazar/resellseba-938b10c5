@@ -153,7 +153,7 @@ export function orderProfit(o: ProfitOrder) {
 
 /** Reusable hint shown on every profit report/card so the math is transparent. */
 export const PROFIT_FORMULA_HINT =
-  "Profit = received amount − product cost − delivery charge − packaging cost. Advance receive kora amount collected hisabe dhora hoy; reseller advance nile seta final amount theke bad jai, admin nile ta admin er kachei thake. Partial delivery uses the amount the courier actually collected; item partial hole shudhu je product customer rekheche tar cost dhora hoy. Return received hole delivery charge + packaging cost loss, karon product ferot ase.";
+  "Profit = received amount − product cost − delivery charge − packaging cost. Any advance already collected counts as received; an advance held by the reseller is deducted from their final amount, while an advance held by admin stays with admin. Partial delivery uses the amount the courier actually collected; for item partial only the items the customer kept are charged. A returned parcel costs the delivery charge + packaging, because the product comes back.";
 
 
 

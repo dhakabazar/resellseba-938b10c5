@@ -128,7 +128,7 @@ export function OrderSettleModal({
   const save = async () => {
     if (!order) return;
     if (itemPartial && !items.some((i) => num(i.returned_qty) > 0)) {
-      toast.error("Kon item ferot eseche seta bosan (returned qty)");
+      toast.error("Enter which items were returned (returned qty)");
       return;
     }
     setSaving(true);
@@ -200,7 +200,7 @@ export function OrderSettleModal({
             {itemPartial && (
               <div className="rounded-lg border">
                 <div className="border-b bg-muted/30 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                  Kon item ferot eseche
+                  Which items were returned
                 </div>
                 <div className="divide-y">
                   {items.map((i) => (
@@ -255,7 +255,7 @@ export function OrderSettleModal({
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 rows={2}
-                placeholder="Ki hoyeche short kore likhun — transaction report e dekhabe"
+                placeholder="Write a short note — it will show in the transaction report"
                 className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-xs"
               />
             </div>

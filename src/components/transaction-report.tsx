@@ -76,7 +76,7 @@ function StackCell({
 
 const PARTIAL_STATUSES = ["partial", "partial_full", "partial_item", "partial_delivery", "damaged"];
 
-/** Product ferot chole ase — product cost dhora hoy na. */
+/** Product came back — product cost is not charged. */
 const NO_PRODUCT_COST_STATUSES = ["returned", "pending_return", "cancelled", "partial_delivery"];
 
 
@@ -444,7 +444,7 @@ export function TransactionReport({
                                     : "bg-amber-500/15 text-amber-600")
                                 }
                               >
-                                {(r.advance_by ?? "reseller") === "admin" ? "admin peyeche" : "reseller peyeche"}
+                                {(r.advance_by ?? "reseller") === "admin" ? "received by admin" : "received by reseller"}
                               </span>
                             </div>
                           </div>
