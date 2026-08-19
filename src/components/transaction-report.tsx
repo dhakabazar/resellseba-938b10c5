@@ -237,8 +237,8 @@ export function TransactionReport({
 
   return (
     <div className="space-y-4">
-      <div className="surface-card flex flex-wrap items-end justify-between gap-3 p-4">
-        <div className="flex flex-wrap items-end gap-2">
+      <div className="surface-card p-3 sm:p-4">
+        <div className="flex flex-wrap items-end gap-2 lg:flex-nowrap">
           {admin && (
             <SearchableSelect
               label="Reseller"
@@ -249,7 +249,7 @@ export function TransactionReport({
                 { value: "", label: "All resellers" },
                 ...resellers.map((r) => ({ value: r.id, label: `${r.business_name} · ${r.code}` })),
               ]}
-              className="w-56"
+              className="w-48 shrink-0"
             />
           )}
           <SearchableSelect
@@ -257,32 +257,35 @@ export function TransactionReport({
             value={kind}
             onChange={setKind}
             options={KIND_OPTIONS}
-            className="w-44"
+            className="w-40 shrink-0"
           />
+          <DateRangeBar compact label="" value={range} onChange={setRange} />
           <div className="flex flex-col gap-1">
-            <span className="text-[11px] font-medium text-muted-foreground">Search</span>
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Order no, note, status…"
-              className="h-8 w-52 rounded-md border bg-background px-2 text-xs outline-none focus:ring-2 focus:ring-ring"
-            />
-          </div>
-        </div>
-        <DateRangeBar
-          compact
-          value={range}
-          onChange={setRange}
-          right={
-            <button
-              onClick={exportCsv}
-              className="inline-flex h-7 items-center gap-1.5 rounded-md border px-2.5 text-xs font-semibold hover:bg-accent"
+            <span className="text-[11px] font-medium text-muted-foreground">Per page</span>
+            <select
+              value={perPage}
+              onChange={(e) => {
+                setPerPage(Number(e.target.value));
+                setPage(1);
+              }}
+              className="h-7 rounded-md border bg-background px-1.5 text-xs outline-none focus:ring-2 focus:ring-ring"
             >
-              <Download className="h-3.5 w-3.5" /> CSV
-            </button>
-          }
-        />
+              {[20, 50, 100, 200].map((n) => (
+                <option key={n} value={n}>
+                  {n} / page
+                </option>
+              ))}
+            </select>
+          </div>
+          <button
+            onClick={exportCsv}
+            className="ml-auto inline-flex h-7 shrink-0 items-center gap-1.5 rounded-md border px-2.5 text-xs font-semibold hover:bg-accent"
+          >
+            <Download className="h-3.5 w-3.5" /> CSV
+          </button>
+        </div>
       </div>
+
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard label="Total in" value={bdt(totals.inflow)} icon={<ArrowDownRight className="h-4 w-4" />} />
