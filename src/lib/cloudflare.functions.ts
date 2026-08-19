@@ -31,9 +31,8 @@ export const getCloudflareConfig = createServerFn({ method: "GET" })
   .handler(async ({ context }): Promise<MaskedCfConfig> => {
     const { assertAnyPermission } = await import("@/lib/admin-users.server");
     await assertAnyPermission(context.supabase, context.userId, ["settings.manage"]);
-    const { loadConfig, maskConfig } = await import("@/lib/cloudflare.server");
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    return maskConfig(await loadConfig(supabaseAdmin));
+    const { loadConfigAsCaller, maskConfig } = await import("@/lib/cloudflare.server");
+    return maskConfig(await loadConfigAsCaller(context.supabase));
   });
 
 /** Save credentials. An empty token keeps the stored one. */
@@ -58,7 +57,6 @@ export const saveCloudflareConfig = createServerFn({ method: "POST" })
     const { assertAnyPermission } = await import("@/lib/admin-users.server");
     await assertAnyPermission(context.supabase, context.userId, ["settings.manage"]);
     const { loadConfig, maskConfig } = await import("@/lib/cloudflare.server");
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const patch = {
       account_id: data.account_id.trim() || null,
@@ -74,9 +72,9 @@ export const saveCloudflareConfig = createServerFn({ method: "POST" })
     const token = (data.api_token ?? "").trim();
     const payload = token ? { ...patch, api_token: token } : patch;
 
-    const { error } = await supabaseAdmin.from("cloudflare_config").update(payload).eq("id", 1);
+    const { error } = await db.from("cloudflare_config").update(payload).eq("id", 1);
     if (error) throw new Response(error.message, { status: 400 });
-    return maskConfig(await loadConfig(supabaseAdmin));
+    return maskConfig(await loadConfig(db));
   });
 
 /** Check the stored token / zone / account against Cloudflare. */
@@ -86,8 +84,7 @@ export const testCloudflareConfig = createServerFn({ method: "POST" })
     const { assertAnyPermission } = await import("@/lib/admin-users.server");
     await assertAnyPermission(context.supabase, context.userId, ["settings.manage"]);
     const { loadConfig, requireActiveConfig, verifyToken } = await import("@/lib/cloudflare.server");
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const conf = await loadConfig(supabaseAdmin);
+    const conf = await loadConfig(db);
     if (!conf.api_token) throw new Response("Save an API token first", { status: 400 });
     requireActiveConfig({ ...conf, is_active: true });
     return verifyToken(conf);
@@ -98,8 +95,7 @@ export const getDnsGuide = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async (): Promise<DnsGuide> => {
     const { loadConfig } = await import("@/lib/cloudflare.server");
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const c = await loadConfig(supabaseAdmin);
+    const c = await loadConfig(db);
     return {
       cnameTarget: c.cname_target ?? "",
       aRecordIp: c.a_record_ip ?? "",
@@ -131,8 +127,7 @@ async function resolveReseller(ctx: Ctx, resellerId?: string) {
 }
 
 async function loadDomainForCaller(ctx: Ctx, id: string) {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data: row, error } = await supabaseAdmin.from("reseller_domains").select("*").eq("id", id).maybeSingle();
+  const { data: row, error } = await db.from("reseller_domains").select("*").eq("id", id).maybeSingle();
   if (error) throw new Response(error.message, { status: 400 });
   if (!row) throw new Response("Domain not found", { status: 404 });
   const { data: own } = await ctx.supabase.from("resellers").select("id").eq("user_id", ctx.userId).maybeSingle();
@@ -167,10 +162,9 @@ export const listDomains = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => z.object({ resellerId: z.string().uuid().optional(), all: z.boolean().optional() }).parse(d ?? {}))
   .handler(async ({ data, context }): Promise<DomainRow[]> => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const ctx = { supabase: context.supabase, userId: context.userId };
 
-    let query = supabaseAdmin.from("reseller_domains").select("*").order("created_at");
+    let query = db.from("reseller_domains").select("*").order("created_at");
     if (data.all) {
       if (!(await isAdmin(ctx))) throw new Response("Forbidden", { status: 403 });
     } else {
@@ -181,7 +175,7 @@ export const listDomains = createServerFn({ method: "GET" })
 
     const ids = [...new Set((rows ?? []).map((r: any) => r.reseller_id))];
     const { data: resellers } = ids.length
-      ? await supabaseAdmin.from("resellers").select("id, business_name, code").in("id", ids)
+      ? await db.from("resellers").select("id, business_name, code").in("id", ids)
       : { data: [] as any[] };
     const byId = new Map((resellers ?? []).map((r: any) => [r.id, r]));
     return (rows ?? []).map((r: any) => mapRow(r, byId.get(r.reseller_id)));
@@ -192,20 +186,19 @@ export const connectDomain = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => z.object({ hostname: z.string().max(300), resellerId: z.string().uuid().optional() }).parse(d))
   .handler(async ({ data, context }): Promise<DomainRow> => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const cf = await import("@/lib/cloudflare.server");
     const ctx = { supabase: context.supabase, userId: context.userId };
     const resellerId = await resolveReseller(ctx, data.resellerId);
     const hostname = cf.normalizeHostname(data.hostname);
 
-    const { data: dupe } = await supabaseAdmin
+    const { data: dupe } = await db
       .from("reseller_domains")
       .select("id, reseller_id")
       .eq("hostname", hostname)
       .maybeSingle();
     if (dupe) throw new Response("This domain is already connected", { status: 400 });
 
-    const conf = cf.requireActiveConfig(await cf.loadConfig(supabaseAdmin));
+    const conf = cf.requireActiveConfig(await cf.loadConfig(db));
     const state = await cf.createCustomHostname(conf, hostname);
     let workerDomainId: string | null = null;
     try {
@@ -214,12 +207,12 @@ export const connectDomain = createServerFn({ method: "POST" })
       console.error("worker domain attach failed", err);
     }
 
-    const { count } = await supabaseAdmin
+    const { count } = await db
       .from("reseller_domains")
       .select("id", { count: "exact", head: true })
       .eq("reseller_id", resellerId);
 
-    const { data: row, error } = await supabaseAdmin
+    const { data: row, error } = await db
       .from("reseller_domains")
       .insert({
         reseller_id: resellerId,
@@ -250,10 +243,9 @@ export const refreshDomain = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }): Promise<DomainRow> => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const cf = await import("@/lib/cloudflare.server");
     const row = await loadDomainForCaller({ supabase: context.supabase, userId: context.userId }, data.id);
-    const conf = cf.requireActiveConfig(await cf.loadConfig(supabaseAdmin));
+    const conf = cf.requireActiveConfig(await cf.loadConfig(db));
 
     let state;
     try {
@@ -262,14 +254,14 @@ export const refreshDomain = createServerFn({ method: "POST" })
         : await cf.createCustomHostname(conf, row.hostname);
     } catch (err) {
       const message = err instanceof Response ? await err.clone().text() : String(err);
-      await supabaseAdmin
+      await db
         .from("reseller_domains")
         .update({ last_error: message.slice(0, 500), last_checked_at: new Date().toISOString() })
         .eq("id", row.id);
       throw err;
     }
 
-    const { data: updated, error } = await supabaseAdmin
+    const { data: updated, error } = await db
       .from("reseller_domains")
       .update({
         cloudflare_hostname_id: state.id,
@@ -294,10 +286,9 @@ export const setPrimaryDomain = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }): Promise<{ ok: true }> => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const row = await loadDomainForCaller({ supabase: context.supabase, userId: context.userId }, data.id);
-    await supabaseAdmin.from("reseller_domains").update({ is_primary: false }).eq("reseller_id", row.reseller_id);
-    const { error } = await supabaseAdmin.from("reseller_domains").update({ is_primary: true }).eq("id", row.id);
+    await db.from("reseller_domains").update({ is_primary: false }).eq("reseller_id", row.reseller_id);
+    const { error } = await db.from("reseller_domains").update({ is_primary: true }).eq("id", row.id);
     if (error) throw new Response(error.message, { status: 400 });
     return { ok: true };
   });
@@ -307,25 +298,24 @@ export const disconnectDomain = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }): Promise<{ ok: true }> => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const cf = await import("@/lib/cloudflare.server");
     const row = await loadDomainForCaller({ supabase: context.supabase, userId: context.userId }, data.id);
-    const conf = await cf.loadConfig(supabaseAdmin);
+    const conf = await cf.loadConfig(db);
 
     if (conf.api_token && conf.zone_id && row.cloudflare_hostname_id)
       await cf.deleteCustomHostname(conf, row.cloudflare_hostname_id);
     if (conf.api_token && row.worker_domain_id) await cf.detachWorkerDomain(conf, row.worker_domain_id);
 
-    const { error } = await supabaseAdmin.from("reseller_domains").delete().eq("id", row.id);
+    const { error } = await db.from("reseller_domains").delete().eq("id", row.id);
     if (error) throw new Response(error.message, { status: 400 });
 
     // Keep exactly one primary domain per store.
-    const { data: rest } = await supabaseAdmin
+    const { data: rest } = await db
       .from("reseller_domains")
       .select("id, is_primary")
       .eq("reseller_id", row.reseller_id)
       .order("created_at");
     if ((rest ?? []).length > 0 && !(rest ?? []).some((r: any) => r.is_primary))
-      await supabaseAdmin.from("reseller_domains").update({ is_primary: true }).eq("id", rest![0].id);
+      await db.from("reseller_domains").update({ is_primary: true }).eq("id", rest![0].id);
     return { ok: true };
   });
