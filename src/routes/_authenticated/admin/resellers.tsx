@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
@@ -27,6 +27,8 @@ import {
   UserCircle,
   IdCard,
   Eye,
+  Receipt,
+  PackageSearch,
   Phone,
   PhoneCall,
   MessageCircle,
@@ -471,6 +473,24 @@ function ResellersPage() {
                   </div>
 
                   <div className="flex shrink-0 items-center gap-1.5">
+                    <Link
+                      to="/admin/transactions"
+                      search={{ reseller: r.id } as never}
+                      title="Transaction report"
+                      aria-label={`Transaction report for ${r.business_name}`}
+                      className="grid h-8 w-8 place-items-center rounded-md border transition hover:bg-muted"
+                    >
+                      <Receipt className="h-4 w-4" />
+                    </Link>
+                    <Link
+                      to="/admin/orders"
+                      search={{ reseller: r.id, tab: "all" } as never}
+                      title="Order list"
+                      aria-label={`Orders for ${r.business_name}`}
+                      className="grid h-8 w-8 place-items-center rounded-md border transition hover:bg-muted"
+                    >
+                      <PackageSearch className="h-4 w-4" />
+                    </Link>
                     <button
                       type="button"
                       title="View profile"
