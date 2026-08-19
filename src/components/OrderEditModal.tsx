@@ -605,11 +605,19 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                   {isAdmin && <Row label="Courier cost" value={totals.deliveryCost} />}
                   {totals.advance > 0 && (
                     <>
-                      <Row label={`Advance (${advanceBy})`} value={totals.advance} />
+                      <Row label={`Advance already paid (${advanceBy})`} value={totals.advance} />
                       <Row label="COD to collect" value={totals.codDue} />
+                      <Row label="Courier collected" value={totals.collected} />
                     </>
                   )}
-                  <Row label="Received" value={totals.received} />
+                  <Row label="Received (incl. advance)" value={totals.received} />
+                  {totals.advance > 0 && (
+                    <div className="mt-0.5 text-[10px] text-muted-foreground">
+                      {advanceBy === "reseller"
+                        ? "Advance is already with the reseller, so it is deducted from their final amount."
+                        : "Advance is held by admin — no plus/minus on the reseller balance."}
+                    </div>
+                  )}
 
 
                   <div className="mt-2 flex justify-between border-t pt-2 text-sm font-bold text-primary">
