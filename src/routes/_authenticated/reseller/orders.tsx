@@ -436,8 +436,8 @@ function OrdersPage() {
     if (!order) return;
 
     const isBooked = shipments.some(s => s.order_id === id && (s.consignment_id || s.tracking_id));
-    if (!["pending", "forwarded"].includes(order.status) || isBooked) {
-      toast.error("Admin confirm korar age porjonto order delete kora jabe.");
+    if (!resellerCanAct(order.status) || isBooked) {
+      toast.error("Only New Order, Send To admin or Cancelled orders can be deleted.");
       return;
     }
 
