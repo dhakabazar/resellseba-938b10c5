@@ -65,7 +65,7 @@ export function AdvanceByToggle({
 }) {
   return (
     <div>
-      <div className="mb-1.5 text-[11px] font-semibold">Who received it?</div>
+      <div className="mb-1.5 text-[13px] font-bold">কে টাকা পেয়েছে?</div>
       <div className="grid grid-cols-2 gap-2">
         {(
           [
@@ -77,12 +77,13 @@ export function AdvanceByToggle({
             key={v}
             type="button"
             onClick={() => onChange(v)}
-            className={`rounded-xl border-2 px-3 py-2 text-[11px] font-bold transition-all ${
+            className={`rounded-xl border-2 px-3 py-2.5 text-[13px] font-bold transition-all ${
               value === v
                 ? "border-primary bg-primary text-primary-foreground shadow-sm"
                 : "border-muted bg-background text-muted-foreground hover:border-primary/40"
             }`}
           >
+
             {label}
           </button>
         ))}
