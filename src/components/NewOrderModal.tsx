@@ -388,7 +388,7 @@ export function NewOrderModal({
                         value={name}
                         onChange={(e) => setName(sanitizeName(e.target.value))}
                         placeholder="Enter full name"
-                        className="w-full rounded-lg border px-3 py-1.5 text-xs focus:ring-2 focus:ring-primary/20"
+                        className="w-full rounded-lg border px-3 py-2 text-[13px] focus:ring-2 focus:ring-primary/20"
                       />
                       {name && errors.name && <FieldError text={errors.name} />}
                     </Field>
@@ -399,7 +399,7 @@ export function NewOrderModal({
                         onChange={(e) => setPhone(normalizePhone(e.target.value))}
                         inputMode="numeric"
                         placeholder="01XXXXXXXXX"
-                        className="w-full rounded-lg border px-3 py-1.5 text-xs focus:ring-2 focus:ring-primary/20"
+                        className="w-full rounded-lg border px-3 py-2 text-[13px] focus:ring-2 focus:ring-primary/20"
                       />
                       {phone && errors.phone && <FieldError text={errors.phone} />}
                     </Field>
@@ -411,34 +411,12 @@ export function NewOrderModal({
                         onChange={(e) => setAddress(e.target.value)}
                         rows={1}
                         placeholder="Complete address (Road, Area, City...)"
-                        className="w-full rounded-lg border px-3 py-1.5 text-xs focus:ring-2 focus:ring-primary/20 min-h-[38px]"
+                        className="w-full rounded-lg border px-3 py-2 text-[13px] focus:ring-2 focus:ring-primary/20 min-h-[42px]"
                       />
                       {address && errors.address && <FieldError text={errors.address} />}
                     </Field>
-
-                    <Field label="Payment Method">
-                      <select
-                        value={paymentMethod}
-                        onChange={(e) => setPaymentMethod(e.target.value)}
-                        className="w-full rounded-lg border bg-background px-3 py-1.5 text-xs focus:ring-2 focus:ring-primary/20"
-                      >
-                        <option value="cod">Cash on Delivery</option>
-                        <option value="bkash">bKash</option>
-                        <option value="nagad">Nagad</option>
-                        <option value="rocket">Rocket</option>
-                        <option value="sslcommerz">SSLCommerz</option>
-                      </select>
-                    </Field>
-
-                    <Field label="Order Note (Optional)">
-                      <input 
-                        value={note} 
-                        onChange={(e) => setNote(e.target.value)} 
-                        placeholder="Special instructions..."
-                        className="w-full rounded-lg border px-3 py-1.5 text-xs focus:ring-2 focus:ring-primary/20" 
-                      />
-                    </Field>
                   </div>
+
                 </div>
 
                 <div className="space-y-4">
