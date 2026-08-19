@@ -1265,7 +1265,7 @@ function OrderDrawer({
     onError: (err: any) => toast.error(err.message || "Failed to recheck status"),
   });
 
-  async function setStatus(next: "forwarded" | "cancelled") {
+  async function setStatus(next: "pending" | "forwarded" | "cancelled") {
     if (next === "forwarded" && depositBlocked) {
       toast.error(fillText(depositBlockText ?? DEFAULT_DEPOSIT_TEXTS.orderBlockToast, { due: depositDue ?? 0 }));
       return;
@@ -1274,7 +1274,9 @@ function OrderDrawer({
     const patch: Record<string, unknown> =
       next === "forwarded"
         ? { status: "forwarded", forwarded_to_admin: true, forwarded_at: new Date().toISOString() }
-        : { status: "cancelled" };
+        : next === "pending"
+          ? { status: "pending", forwarded_to_admin: false, forwarded_at: null }
+          : { status: "cancelled" };
     const { error } = await supabase.from("orders").update(patch as any).eq("id", orderId);
     if (error) {
       toast.error(error.message);
@@ -1282,7 +1284,9 @@ function OrderDrawer({
       return;
     }
     await supabase.from("order_status_history").insert({ order_id: orderId, status: next as any });
-    toast.success(next === "forwarded" ? "Order sent to admin" : "Order cancelled");
+    toast.success(
+      next === "forwarded" ? "Order sent to admin" : next === "pending" ? "Order moved to New Order" : "Order cancelled",
+    );
     setBusy(false);
     onChanged();
     refetch();
