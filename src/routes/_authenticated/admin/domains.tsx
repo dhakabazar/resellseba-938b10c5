@@ -308,7 +308,7 @@ function DomainsAdmin() {
         </div>
       </form>
 
-      <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
+      <div className="mb-3 mt-8 flex items-center gap-2 text-sm font-semibold">
         <Globe className="h-4 w-4 text-primary" /> Connected domains ({rows.length})
       </div>
 
