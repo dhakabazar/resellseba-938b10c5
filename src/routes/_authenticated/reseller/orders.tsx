@@ -977,7 +977,7 @@ function OrdersPage() {
                     >
                       {orderStatusLabel(o.status)}
                     </span>
-                    {(o.status === "forwarded" || o.status === "confirmed") && o.forwarded_to_admin && (
+                    {o.status === "forwarded" && o.forwarded_to_admin && (
                       <div className="mt-0.5 text-[9px] text-success font-medium">
                         Sent to admin
                       </div>
