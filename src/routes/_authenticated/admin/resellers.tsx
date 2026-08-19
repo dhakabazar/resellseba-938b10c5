@@ -45,6 +45,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ResellerProfile, type ResellerProfileData } from "@/components/ResellerProfile";
+import { DepositLedger } from "@/components/deposit-ledger";
 
 type Status = "pending" | "active" | "suspended" | "rejected";
 
