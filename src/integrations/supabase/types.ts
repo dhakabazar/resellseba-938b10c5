@@ -2174,6 +2174,12 @@ export type Database = {
         | "cancelled"
         | "ready_to_ship"
         | "pending_return"
+        | "packaging"
+        | "pending_partial"
+        | "partial_full"
+        | "partial_item"
+        | "partial_delivery"
+        | "damaged"
       payment_method:
         | "cod"
         | "bkash"
@@ -2344,6 +2350,12 @@ export const Constants = {
         "cancelled",
         "ready_to_ship",
         "pending_return",
+        "packaging",
+        "pending_partial",
+        "partial_full",
+        "partial_item",
+        "partial_delivery",
+        "damaged",
       ],
       payment_method: [
         "cod",
