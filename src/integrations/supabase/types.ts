@@ -2145,6 +2145,21 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      cf_config_settings: {
+        Args: never
+        Returns: {
+          a_record_ip: string
+          account_id: string
+          auto_worker_domain: boolean
+          cname_target: string
+          has_token: boolean
+          is_active: boolean
+          updated_at: string
+          worker_name: string
+          zone_id: string
+          zone_name: string
+        }[]
+      }
       cf_dns_guide: {
         Args: never
         Returns: {
