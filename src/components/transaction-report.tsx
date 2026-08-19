@@ -308,18 +308,20 @@ export function TransactionReport({
           <div className="p-8 text-center text-xs text-muted-foreground">No transaction in this range.</div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[1000px] text-xs">
+            <table className="w-full min-w-[1120px] text-xs">
               <thead className="bg-muted/40 text-[10px] uppercase tracking-wide text-muted-foreground">
                 <tr>
                   <th className="px-3 py-2 text-left">Type</th>
+                  {admin && <th className="px-3 py-2 text-left">Reseller</th>}
                   <th className="px-3 py-2 text-right">Amount</th>
                   <th className="px-3 py-2 text-left">Date</th>
                   <th className="px-3 py-2 text-left">Status</th>
                   <th className="px-3 py-2 text-left">Meta / note</th>
-                  <th className="px-3 py-2 text-right">Subtotal (buy/sell)</th>
-                  <th className="px-3 py-2 text-right">Delivery (buy/sell)</th>
+                  <th className="px-3 py-2 text-right">Subtotal</th>
+                  <th className="px-3 py-2 text-right">Delivery</th>
                   <th className="px-3 py-2 text-right">Packaging</th>
                   <th className="px-3 py-2 text-right">Received</th>
+                  <th className="px-3 py-2 text-right">Advance</th>
                   <th className="px-3 py-2 text-right">Balance</th>
                 </tr>
               </thead>
@@ -327,8 +329,9 @@ export function TransactionReport({
                 {filtered.map((r, i) => {
                   const inflow = r.direction === "in";
                   const voided = r.direction === "void";
+                  const isPartial = !!r.order_id && PARTIAL_STATUSES.includes(r.status);
                   return (
-                    <tr key={`${r.at}-${i}`} className="hover:bg-muted/20">
+                    <tr key={`${r.at}-${i}`} className="align-top hover:bg-muted/20">
                       <td className="px-3 py-2">
                         <span
                           className={
@@ -344,12 +347,13 @@ export function TransactionReport({
                         >
                           {r.kind}
                         </span>
-                        {admin && (
-                          <div className="mt-1 truncate text-[10px] text-muted-foreground">
-                            {r.reseller_name} · {r.reseller_code}
-                          </div>
-                        )}
                       </td>
+                      {admin && (
+                        <td className="px-3 py-2">
+                          <div className="max-w-[150px] truncate text-[11px] font-semibold">{r.reseller_name}</div>
+                          <div className="text-[10px] text-muted-foreground">{r.reseller_code}</div>
+                        </td>
+                      )}
                       <td
                         className={
                           "px-3 py-2 text-right font-bold tabular-nums " +
@@ -359,15 +363,15 @@ export function TransactionReport({
                         {inflow ? "+" : "−"}
                         {bdt(Number(r.amount))}
                       </td>
-                      <td className="whitespace-nowrap px-3 py-2 text-[11px] text-muted-foreground">
-                        {new Date(r.at).toLocaleString()}
+                      <td className="px-3 py-2">
+                        <DateCell at={r.at} />
                       </td>
                       <td className="px-3 py-2">
                         <span className={`rounded-full px-2 py-0.5 text-[10px] capitalize ${orderStatusTone(r.status)}`}>
                           {orderStatusLabel(r.status)}
                         </span>
                       </td>
-                      <td className="max-w-[260px] px-3 py-2">
+                      <td className="max-w-[280px] px-3 py-2">
                         {r.order_id ? (
                           <Link
                             to={admin ? "/admin/orders" : "/reseller/orders"}
@@ -379,13 +383,27 @@ export function TransactionReport({
                         ) : (
                           <span className="font-semibold">{r.label}</span>
                         )}
-                        {r.note && <div className="mt-0.5 break-words text-[11px] text-muted-foreground">{r.note}</div>}
+                        <div className="mt-0.5 break-words text-[11px] text-muted-foreground">
+                          {r.note || r.label}
+                        </div>
+                        {isPartial && <PartialSummary r={r} />}
                       </td>
-                      <td className="px-3 py-2 text-right tabular-nums">
-                        {r.order_id ? `${bdt(Number(r.buy_product))} / ${bdt(Number(r.sell_subtotal))}` : "—"}
+                      <td className="px-3 py-2 text-right">
+                        {r.order_id ? (
+                          <StackCell top={["Buy", Number(r.buy_product)]} bottom={["Sell", Number(r.sell_subtotal)]} />
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
                       </td>
-                      <td className="px-3 py-2 text-right tabular-nums">
-                        {r.order_id ? `${bdt(Number(r.buy_delivery))} / ${bdt(Number(r.sell_delivery))}` : "—"}
+                      <td className="px-3 py-2 text-right">
+                        {r.order_id ? (
+                          <StackCell
+                            top={["Admin", Number(r.buy_delivery)]}
+                            bottom={["Reseller", Number(r.sell_delivery)]}
+                          />
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
                       </td>
                       <td className="px-3 py-2 text-right tabular-nums">
                         {r.order_id ? bdt(Number(r.packaging)) : "—"}
@@ -393,10 +411,21 @@ export function TransactionReport({
                       <td className="px-3 py-2 text-right tabular-nums">
                         {r.order_id ? bdt(Number(r.received)) : "—"}
                       </td>
+                      <td className="px-3 py-2 text-right">
+                        {r.order_id && Number(r.advance) > 0 ? (
+                          <div className="whitespace-nowrap leading-tight">
+                            <div className="text-[11px] font-semibold tabular-nums">{bdt(Number(r.advance))}</div>
+                            <div className="text-[10px] capitalize text-muted-foreground">{r.advance_by ?? "reseller"}</div>
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </td>
                       <td className="px-3 py-2 text-right font-semibold tabular-nums">{bdt(Number(r.running))}</td>
                     </tr>
                   );
                 })}
+
               </tbody>
             </table>
           </div>
