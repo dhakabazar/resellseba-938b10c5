@@ -108,7 +108,7 @@ function PartialSummary({ r }: { r: TxRow }) {
       </div>
       {advance > 0 && (
         <div className="mt-1 border-t border-amber-500/20 pt-1 text-[9px] text-muted-foreground">
-          Courier {bdt(collected)} + advance {bdt(advance)} ({r.advance_by ?? "reseller"})
+          cou {bdt(collected)} + adv {bdt(advance)} ({r.advance_by ?? "reseller"})
         </div>
       )}
     </div>
@@ -531,7 +531,7 @@ export function TransactionReport({
                             <div className="text-[11px] font-bold">{bdt(Number(r.received))}</div>
                             {Number(r.advance) > 0 && (
                               <div className="text-[9px] text-muted-foreground">
-                                courier {bdt(Number(r.collected ?? 0))} + advance {bdt(Number(r.advance))}
+                                cou {bdt(Number(r.collected ?? 0))} + adv {bdt(Number(r.advance))}
                               </div>
                             )}
                           </div>
@@ -566,17 +566,8 @@ export function TransactionReport({
                         {r.order_id && Number(r.advance) > 0 ? (
                           <div className="whitespace-nowrap leading-tight">
                             <div className="text-[11px] font-semibold tabular-nums">{bdt(Number(r.advance))}</div>
-                            <div className="mt-0.5">
-                              <span
-                                className={
-                                  "rounded-full px-1.5 py-0.5 text-[10px] font-semibold capitalize " +
-                                  ((r.advance_by ?? "reseller") === "admin"
-                                    ? "bg-primary/10 text-primary"
-                                    : "bg-amber-500/15 text-amber-600")
-                                }
-                              >
-                                {(r.advance_by ?? "reseller") === "admin" ? "received by admin" : "received by reseller"}
-                              </span>
+                            <div className="mt-0.5 text-[10px] capitalize text-muted-foreground">
+                              {(r.advance_by ?? "reseller") === "admin" ? "received by admin" : "received by reseller"}
                             </div>
                           </div>
                         ) : (
