@@ -56,25 +56,21 @@ export const saveCloudflareConfig = createServerFn({ method: "POST" })
   .handler(async ({ data, context }): Promise<MaskedCfConfig> => {
     const { assertAnyPermission } = await import("@/lib/admin-users.server");
     await assertAnyPermission(context.supabase, context.userId, ["settings.manage"]);
-    const { loadConfig, maskConfig } = await import("@/lib/cloudflare.server");
+    const { loadConfigAsCaller, maskConfig } = await import("@/lib/cloudflare.server");
 
-    const patch = {
-      account_id: data.account_id.trim() || null,
-      zone_id: data.zone_id.trim() || null,
-      zone_name: data.zone_name.trim().toLowerCase() || null,
-      worker_name: data.worker_name.trim() || null,
-      cname_target: data.cname_target.trim().toLowerCase() || null,
-      a_record_ip: data.a_record_ip.trim() || null,
-      auto_worker_domain: data.auto_worker_domain,
-      is_active: data.is_active,
-      updated_at: new Date().toISOString(),
-    };
-    const token = (data.api_token ?? "").trim();
-    const payload = token ? { ...patch, api_token: token } : patch;
-
-    const { error } = await db.from("cloudflare_config").update(payload).eq("id", 1);
+    const { error } = await context.supabase.rpc("cf_config_save", {
+      _api_token: (data.api_token ?? "").trim(),
+      _account_id: data.account_id.trim(),
+      _zone_id: data.zone_id.trim(),
+      _zone_name: data.zone_name.trim(),
+      _worker_name: data.worker_name.trim(),
+      _cname_target: data.cname_target.trim(),
+      _a_record_ip: data.a_record_ip.trim(),
+      _auto_worker_domain: data.auto_worker_domain,
+      _is_active: data.is_active,
+    });
     if (error) throw new Response(error.message, { status: 400 });
-    return maskConfig(await loadConfig(db));
+    return maskConfig(await loadConfigAsCaller(context.supabase));
   });
 
 /** Check the stored token / zone / account against Cloudflare. */
@@ -83,8 +79,8 @@ export const testCloudflareConfig = createServerFn({ method: "POST" })
   .handler(async ({ context }): Promise<{ token: boolean; zone: string | null; account: string | null }> => {
     const { assertAnyPermission } = await import("@/lib/admin-users.server");
     await assertAnyPermission(context.supabase, context.userId, ["settings.manage"]);
-    const { loadConfig, requireActiveConfig, verifyToken } = await import("@/lib/cloudflare.server");
-    const conf = await loadConfig(db);
+    const { loadConfigAsCaller, requireActiveConfig, verifyToken } = await import("@/lib/cloudflare.server");
+    const conf = await loadConfigAsCaller(context.supabase);
     if (!conf.api_token) throw new Response("Save an API token first", { status: 400 });
     requireActiveConfig({ ...conf, is_active: true });
     return verifyToken(conf);
@@ -93,15 +89,9 @@ export const testCloudflareConfig = createServerFn({ method: "POST" })
 /** Public-safe DNS instructions for the reseller panel. */
 export const getDnsGuide = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async (): Promise<DnsGuide> => {
-    const { loadConfig } = await import("@/lib/cloudflare.server");
-    const c = await loadConfig(db);
-    return {
-      cnameTarget: c.cname_target ?? "",
-      aRecordIp: c.a_record_ip ?? "",
-      zoneName: c.zone_name ?? "",
-      active: !!c.is_active && !!c.api_token && !!c.zone_id,
-    };
+  .handler(async ({ context }): Promise<DnsGuide> => {
+    const { loadDnsGuideAsCaller } = await import("@/lib/cloudflare.server");
+    return loadDnsGuideAsCaller(context.supabase);
   });
 
 type Ctx = { supabase: any; userId: string };
@@ -127,7 +117,7 @@ async function resolveReseller(ctx: Ctx, resellerId?: string) {
 }
 
 async function loadDomainForCaller(ctx: Ctx, id: string) {
-  const { data: row, error } = await db.from("reseller_domains").select("*").eq("id", id).maybeSingle();
+  const { data: row, error } = await ctx.supabase.from("reseller_domains").select("*").eq("id", id).maybeSingle();
   if (error) throw new Response(error.message, { status: 400 });
   if (!row) throw new Response("Domain not found", { status: 404 });
   const { data: own } = await ctx.supabase.from("resellers").select("id").eq("user_id", ctx.userId).maybeSingle();
@@ -163,6 +153,7 @@ export const listDomains = createServerFn({ method: "GET" })
   .inputValidator((d) => z.object({ resellerId: z.string().uuid().optional(), all: z.boolean().optional() }).parse(d ?? {}))
   .handler(async ({ data, context }): Promise<DomainRow[]> => {
     const ctx = { supabase: context.supabase, userId: context.userId };
+    const db = context.supabase;
 
     let query = db.from("reseller_domains").select("*").order("created_at");
     if (data.all) {
@@ -188,6 +179,7 @@ export const connectDomain = createServerFn({ method: "POST" })
   .handler(async ({ data, context }): Promise<DomainRow> => {
     const cf = await import("@/lib/cloudflare.server");
     const ctx = { supabase: context.supabase, userId: context.userId };
+    const db = context.supabase;
     const resellerId = await resolveReseller(ctx, data.resellerId);
     const hostname = cf.normalizeHostname(data.hostname);
 
@@ -198,7 +190,7 @@ export const connectDomain = createServerFn({ method: "POST" })
       .maybeSingle();
     if (dupe) throw new Response("This domain is already connected", { status: 400 });
 
-    const conf = cf.requireActiveConfig(await cf.loadConfig(db));
+    const conf = cf.requireActiveConfig(await cf.loadConfigAsCaller(db));
     const state = await cf.createCustomHostname(conf, hostname);
     let workerDomainId: string | null = null;
     try {
@@ -244,8 +236,9 @@ export const refreshDomain = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }): Promise<DomainRow> => {
     const cf = await import("@/lib/cloudflare.server");
+    const db = context.supabase;
     const row = await loadDomainForCaller({ supabase: context.supabase, userId: context.userId }, data.id);
-    const conf = cf.requireActiveConfig(await cf.loadConfig(db));
+    const conf = cf.requireActiveConfig(await cf.loadConfigAsCaller(db));
 
     let state;
     try {
@@ -286,6 +279,7 @@ export const setPrimaryDomain = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }): Promise<{ ok: true }> => {
+    const db = context.supabase;
     const row = await loadDomainForCaller({ supabase: context.supabase, userId: context.userId }, data.id);
     await db.from("reseller_domains").update({ is_primary: false }).eq("reseller_id", row.reseller_id);
     const { error } = await db.from("reseller_domains").update({ is_primary: true }).eq("id", row.id);
@@ -299,8 +293,9 @@ export const disconnectDomain = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }): Promise<{ ok: true }> => {
     const cf = await import("@/lib/cloudflare.server");
+    const db = context.supabase;
     const row = await loadDomainForCaller({ supabase: context.supabase, userId: context.userId }, data.id);
-    const conf = await cf.loadConfig(db);
+    const conf = await cf.loadConfigAsCaller(db);
 
     if (conf.api_token && conf.zone_id && row.cloudflare_hostname_id)
       await cf.deleteCustomHostname(conf, row.cloudflare_hostname_id);
