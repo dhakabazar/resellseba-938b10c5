@@ -699,73 +699,111 @@ export function NewOrderModal({
 
               {/* Summary Section (Now a Sticky Footer in the Right Column) */}
               <div className="mt-auto space-y-4 rounded-2xl border-2 border-primary/20 bg-background p-5 shadow-xl animate-in fade-in slide-in-from-bottom-4">
-                <div className="space-y-2.5">
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span className="font-medium">Subtotal ({picked.length} {picked.length === 1 ? 'item' : 'items'})</span>
-                    <span className="font-black text-foreground">৳{totals.subtotal.toFixed(0)}</span>
-                  </div>
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-medium">Shipping Charge</span>
-                      {picked.length > 1 && <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-black uppercase">Max Applied</span>}
+                <div className="space-y-3">
+                  {/* Customer bill */}
+                  <div className="space-y-1.5">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60">Customer bill</p>
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span className="font-medium">Subtotal ({picked.length} {picked.length === 1 ? "item" : "items"})</span>
+                      <span className="font-black text-foreground">৳{totals.subtotal.toFixed(0)}</span>
                     </div>
-                    <span className="font-black text-foreground">৳{totals.shipping.toFixed(0)}</span>
-                  </div>
-                  {totals.discount > 0 && (
-                    <div className="flex justify-between text-xs text-destructive">
-                      <span className="font-medium">Discount</span>
-                      <span className="font-black">−৳{totals.discount.toFixed(0)}</span>
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-medium">Shipping charge</span>
+                        {picked.length > 1 && (
+                          <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[9px] font-black uppercase text-primary">Max applied</span>
+                        )}
+                      </div>
+                      <span className="font-black text-foreground">৳{totals.shipping.toFixed(0)}</span>
                     </div>
-                  )}
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span className="font-medium">Packaging cost</span>
-                    <span className="font-black text-foreground">৳{totals.packaging.toFixed(0)}</span>
-                  </div>
-                  {totals.advance > 0 && (
-                    <>
-                      <div className="flex justify-between text-xs">
-                        <span className="font-medium text-muted-foreground">
-                          Advance received
-                          <span className="ml-1.5 rounded bg-primary/10 px-1.5 py-0.5 text-[9px] font-black uppercase text-primary">
-                            {advanceBy}
+                    {totals.discount > 0 && (
+                      <div className="flex justify-between text-xs text-destructive">
+                        <span className="font-medium">Discount</span>
+                        <span className="font-black">−৳{totals.discount.toFixed(0)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between border-t pt-1.5 text-xs">
+                      <span className="font-bold text-foreground">Payable total</span>
+                      <span className="font-black text-primary">৳{totals.total.toFixed(0)}</span>
+                    </div>
+                    {totals.advance > 0 && (
+                      <>
+                        <div className="flex justify-between text-xs">
+                          <span className="font-medium text-muted-foreground">
+                            Advance received
+                            <span className="ml-1.5 rounded bg-primary/10 px-1.5 py-0.5 text-[9px] font-black uppercase text-primary">
+                              {advanceBy}
+                            </span>
                           </span>
-                        </span>
-                        <span className="font-black text-foreground">৳{totals.advance.toFixed(0)}</span>
-                      </div>
-                      <div className="flex justify-between text-xs text-muted-foreground">
-                        <span className="font-medium">COD to collect</span>
-                        <span className="font-black text-foreground">৳{totals.codDue.toFixed(0)}</span>
-                      </div>
-                      <div className="text-[10px] leading-snug text-muted-foreground">
-                        {advanceBy === "reseller"
-                          ? "Advance is already with the reseller, so it is deducted from their final amount."
-                          : "Advance is held by admin — no plus/minus on the reseller balance."}
-                      </div>
-                    </>
-                  )}
-
-
-                  <div className="my-3 border-t-2 border-dashed border-muted" />
-                  
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 block">Payable Total</span>
-                      <span className="text-2xl font-black text-primary tracking-tight">৳{totals.total.toFixed(0)}</span>
-                    </div>
-                    {!isAdmin && totals.profit !== 0 && (
-                      <div className="text-right">
-                        <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/60 block">
-                          {totals.resellerAdvance > 0 ? "Final amount (advance baade)" : "Estimated Profit"}
-                        </span>
-                        <span
-                          className={`text-lg font-black tracking-tight ${totals.profit < 0 ? "text-destructive" : "text-success"}`}
-                        >
-                          ৳{totals.profit.toFixed(0)}
-                        </span>
-                      </div>
+                          <span className="font-black text-foreground">−৳{totals.advance.toFixed(0)}</span>
+                        </div>
+                        <div className="flex justify-between text-xs text-muted-foreground">
+                          <span className="font-medium">COD to collect</span>
+                          <span className="font-black text-foreground">৳{totals.codDue.toFixed(0)}</span>
+                        </div>
+                      </>
                     )}
                   </div>
 
+                  {/* Cost side */}
+                  <div className="space-y-1.5 border-t pt-2.5">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60">
+                      {isAdmin ? "Cost" : "Your cost"}
+                    </p>
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span className="font-medium">Product cost</span>
+                      <span className="font-black text-foreground">৳{totals.productCost.toFixed(0)}</span>
+                    </div>
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span className="font-medium">Delivery charge</span>
+                      <span className="font-black text-foreground">৳{totals.deliveryCost.toFixed(0)}</span>
+                    </div>
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span className="font-medium">Packaging cost</span>
+                      <span className="font-black text-foreground">৳{totals.packaging.toFixed(0)}</span>
+                    </div>
+                    <div className="flex justify-between border-t pt-1.5 text-xs">
+                      <span className="font-bold text-foreground">Total cost</span>
+                      <span className="font-black text-foreground">
+                        ৳{(totals.productCost + totals.deliveryCost + totals.packaging).toFixed(0)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Result */}
+                  <div className="space-y-1.5 border-t-2 border-dashed border-muted pt-2.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-bold text-foreground">
+                        {totals.grossProfit < 0 ? (isAdmin ? "Reseller loss" : "Your loss") : isAdmin ? "Reseller profit" : "Your profit"}
+                      </span>
+                      <span className={`font-black ${totals.grossProfit < 0 ? "text-destructive" : "text-success"}`}>
+                        ৳{totals.grossProfit.toFixed(0)}
+                      </span>
+                    </div>
+                    {totals.resellerAdvance > 0 && (
+                      <>
+                        <div className="flex justify-between text-xs text-muted-foreground">
+                          <span className="font-medium">Advance already in reseller hand</span>
+                          <span className="font-black text-foreground">−৳{totals.resellerAdvance.toFixed(0)}</span>
+                        </div>
+                        <div className="flex items-center justify-between border-t pt-1.5">
+                          <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70">
+                            Final amount to receive
+                          </span>
+                          <span className={`text-lg font-black tracking-tight ${totals.profit < 0 ? "text-destructive" : "text-success"}`}>
+                            ৳{totals.profit.toFixed(0)}
+                          </span>
+                        </div>
+                      </>
+                    )}
+                    {totals.advance > 0 && (
+                      <p className="text-[10px] leading-snug text-muted-foreground">
+                        {advanceBy === "reseller"
+                          ? "Advance is already with the reseller, so it is deducted from the final amount."
+                          : "Advance is held by admin — no plus/minus on the reseller balance."}
+                      </p>
+                    )}
+                  </div>
                 </div>
 
                 <button

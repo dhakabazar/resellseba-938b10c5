@@ -150,7 +150,9 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
       resellerAdvance,
       codDue,
       shortfall: Math.max(total - recv, 0),
-      // Profit always follows the money really collected, minus any advance the reseller already holds.
+      // Profit always follows the money really collected.
+      grossProfit: recv - deliveryCost - saCost,
+      // Final amount for the reseller = profit minus any advance they already hold.
       profit: recv - deliveryCost - saCost - resellerAdvance,
     };
   }, [
@@ -596,56 +598,93 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                   </label>
                 )}
 
-                <div className="rounded-xl border bg-muted/20 p-4 text-xs">
-                  <Row label="Subtotal" value={totals.subtotal} />
-                  <Row label="Delivery" value={totals.shipping} />
-                  {totals.discount > 0 && <Row label="Discount" value={-totals.discount} />}
-                  <Row label="Packaging cost" value={totals.packaging} />
-                  {isAdmin && <Row label="Courier cost" value={totals.deliveryCost} />}
-                  {totals.advance > 0 && (
-                    <>
-                      <Row label={`Advance already paid (${advanceBy})`} value={totals.advance} />
-                      <Row label="COD to collect" value={totals.codDue} />
-                      <Row label="Courier collected" value={totals.collected} />
-                    </>
-                  )}
-                  <Row label="Received (incl. advance)" value={totals.received} />
-                  {totals.advance > 0 && (
-                    <div className="mt-0.5 text-[10px] text-muted-foreground">
-                      {advanceBy === "reseller"
-                        ? "Advance is already with the reseller, so it is deducted from their final amount."
-                        : "Advance is held by admin — no plus/minus on the reseller balance."}
+                <div className="space-y-3 rounded-xl border bg-muted/20 p-4 text-xs">
+                  {/* Customer bill */}
+                  <div>
+                    <p className="mb-1 text-[9px] font-black uppercase tracking-widest text-muted-foreground/60">Customer bill</p>
+                    <Row label="Subtotal" value={totals.subtotal} />
+                    <Row label="Delivery charge" value={totals.shipping} />
+                    {totals.discount > 0 && <Row label="Discount" value={-totals.discount} />}
+                    <div className="mt-1 flex justify-between border-t pt-1 text-[13px] font-bold text-primary">
+                      <span>Payable total</span>
+                      <span>৳{totals.total.toFixed(0)}</span>
                     </div>
-                  )}
-
-
-                  <div className="mt-2 flex justify-between border-t pt-2 text-sm font-bold text-primary">
-                    <span>Grand total</span>
-                    <span>৳{totals.total.toFixed(0)}</span>
                   </div>
-                  {totals.shortfall > 0 && (
-                    <div className="mt-1 flex justify-between text-[11px] font-semibold text-destructive">
-                      <span>Not received</span>
-                      <span>−৳{totals.shortfall.toFixed(0)}</span>
+
+                  {/* Collection */}
+                  <div className="border-t pt-2">
+                    <p className="mb-1 text-[9px] font-black uppercase tracking-widest text-muted-foreground/60">Collection</p>
+                    {totals.advance > 0 && (
+                      <>
+                        <Row label={`Advance already paid (${advanceBy})`} value={totals.advance} />
+                        <Row label="COD to collect" value={totals.codDue} />
+                      </>
+                    )}
+                    <Row label="Courier collected" value={totals.collected} />
+                    <div className="mt-1 flex justify-between border-t pt-1 text-[13px] font-bold text-foreground">
+                      <span>Received (incl. advance)</span>
+                      <span>৳{totals.received.toFixed(0)}</span>
                     </div>
-                  )}
-                  <div
-                    className={
-                      "mt-1 flex justify-between text-[11px] font-semibold " +
-                      (totals.profit < 0 ? "text-destructive" : "text-success")
-                    }
-                  >
-                    <span>
-                      {totals.profit < 0 ? (isAdmin ? "Reseller loss" : "Your loss") : isAdmin ? "Reseller profit" : "Your profit"}
-                    </span>
-                    <span>৳{totals.profit.toFixed(0)}</span>
+                    {totals.shortfall > 0 && (
+                      <div className="mt-1 flex justify-between text-[11px] font-semibold text-destructive">
+                        <span>Not received</span>
+                        <span>−৳{totals.shortfall.toFixed(0)}</span>
+                      </div>
+                    )}
                   </div>
-                  {isAdmin && (
-                    <div className="mt-0.5 flex justify-between text-[11px] text-muted-foreground">
-                      <span>Base cost (SA)</span>
-                      <span>৳{totals.saCost.toFixed(0)}</span>
+
+                  {/* Cost side */}
+                  <div className="border-t pt-2">
+                    <p className="mb-1 text-[9px] font-black uppercase tracking-widest text-muted-foreground/60">
+                      {isAdmin ? "Cost" : "Your cost"}
+                    </p>
+                    <Row label="Product cost" value={totals.productCost} />
+                    <Row label="Delivery charge" value={totals.deliveryCost} />
+                    <Row label="Packaging cost" value={totals.packaging} />
+                    <div className="mt-1 flex justify-between border-t pt-1 text-[13px] font-bold text-foreground">
+                      <span>Total cost</span>
+                      <span>৳{(totals.productCost + totals.deliveryCost + totals.packaging).toFixed(0)}</span>
                     </div>
-                  )}
+                  </div>
+
+                  {/* Result */}
+                  <div className="border-t-2 border-dashed pt-2">
+                    <div
+                      className={
+                        "flex justify-between text-[13px] font-bold " +
+                        (totals.grossProfit < 0 ? "text-destructive" : "text-success")
+                      }
+                    >
+                      <span>
+                        {totals.grossProfit < 0
+                          ? isAdmin
+                            ? "Reseller loss"
+                            : "Your loss"
+                          : isAdmin
+                            ? "Reseller profit"
+                            : "Your profit"}
+                      </span>
+                      <span>৳{totals.grossProfit.toFixed(0)}</span>
+                    </div>
+                    {totals.resellerAdvance > 0 && (
+                      <>
+                        <Row label="Advance already in reseller hand" value={-totals.resellerAdvance} />
+                        <div className="mt-1 flex justify-between border-t pt-1 text-[13px] font-black">
+                          <span>Final amount to receive</span>
+                          <span className={totals.profit < 0 ? "text-destructive" : "text-success"}>
+                            ৳{totals.profit.toFixed(0)}
+                          </span>
+                        </div>
+                      </>
+                    )}
+                    {totals.advance > 0 && (
+                      <p className="mt-1 text-[10px] leading-snug text-muted-foreground">
+                        {advanceBy === "reseller"
+                          ? "Advance is already with the reseller, so it is deducted from the final amount."
+                          : "Advance is held by admin — no plus/minus on the reseller balance."}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </section>
             </div>
