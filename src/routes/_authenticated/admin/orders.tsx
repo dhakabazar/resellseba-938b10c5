@@ -127,7 +127,9 @@ function AdminOrdersPage() {
   const [page, setPage] = useState(1);
   const [editId, setEditId] = useState<string | null>(null);
   const [statusModal, setStatusModal] = useState<{ open: boolean; orderId: string; currentStatus: string; isBulk?: boolean } | null>(null);
-  const [settleModal, setSettleModal] = useState<{ orderId: string; status: string } | null>(null);
+  const [settleModal, setSettleModal] = useState<{ orderId: string; status: string; pickKind?: boolean } | null>(
+    null,
+  );
   const [bookingModal, setBookingModal] = useState<{ open: boolean; orderIds: string[] }>({ open: false, orderIds: [] });
   const [zoomImage, setZoomImage] = useState<string | null>(null);
   
