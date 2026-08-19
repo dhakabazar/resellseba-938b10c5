@@ -17,7 +17,11 @@ export type ReportOrder = {
   received_amount?: number | string | null;
   /** Packaging cost of this order — part of sa_cost_total, tracked separately for loss math. */
   packaging_total?: number | string | null;
+  /** Advance collected before delivery + who holds it. */
+  advance_amount?: number | string | null;
+  advance_by?: string | null;
 };
+
 
 export type ReportItem = {
   order_id: string;
