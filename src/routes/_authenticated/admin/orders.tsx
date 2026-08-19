@@ -119,6 +119,7 @@ function AdminOrdersPage() {
   const [statusModal, setStatusModal] = useState<{ open: boolean; orderId: string; currentStatus: string; isBulk?: boolean } | null>(null);
   const [settleModal, setSettleModal] = useState<{ orderId: string; status: string } | null>(null);
   const [bookingModal, setBookingModal] = useState<{ open: boolean; orderIds: string[] }>({ open: false, orderIds: [] });
+  const [zoomImage, setZoomImage] = useState<string | null>(null);
   
   const fetchActive = useServerFn(getActiveCouriers);
   const { data: activeProviders = [] } = useQuery({
