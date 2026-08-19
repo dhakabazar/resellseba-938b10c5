@@ -211,7 +211,19 @@ function DepositSettingsPage() {
             </button>
           </div>
         </div>
+
+        <div className="surface-card space-y-3 p-6 lg:col-span-2">
+          <div>
+            <h3 className="text-sm font-semibold">Deposit transactions</h3>
+            <p className="text-xs text-muted-foreground">
+              Every reseller deposit, refund and adjustment. Edit or delete an entry — the reseller balance and due
+              amount update instantly.
+            </p>
+          </div>
+          <DepositLedger />
+        </div>
       </div>
+
     </div>
   );
 }
