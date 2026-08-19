@@ -200,6 +200,33 @@ export function OrderSettleModal({
           </div>
         ) : (
           <div className="space-y-4 p-5">
+            {allowKindSwitch && (
+              <div>
+                <label className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  Partial receive type
+                </label>
+                <div className="mt-1 grid gap-2 sm:grid-cols-3">
+                  {PARTIAL_KINDS.map((k) => (
+                    <button
+                      key={k.key}
+                      type="button"
+                      onClick={() => setTarget(k.key)}
+                      className={`rounded-lg border px-3 py-2 text-left transition-colors ${
+                        target === k.key
+                          ? "border-primary bg-primary/5 ring-1 ring-primary/20"
+                          : "hover:bg-accent"
+                      }`}
+                    >
+                      <div className={`text-xs font-semibold ${target === k.key ? "text-primary" : ""}`}>
+                        {k.label}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground">{k.hint}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="grid gap-3 sm:grid-cols-3">
               <Field
                 label={failed ? "Received (return = 0)" : "Received amount"}
