@@ -414,7 +414,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                       </div>
                       <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
                         <label className="space-y-1">
-                          <span className="text-[11px] font-bold uppercase text-muted-foreground">Qty</span>
+                          <span className="text-[11px] font-semibold uppercase text-muted-foreground">Qty</span>
                           <div className="flex items-center gap-1">
                             <button
                               type="button"
