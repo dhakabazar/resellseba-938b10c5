@@ -5,16 +5,16 @@ import { useAuth } from "@/lib/use-auth";
 import { TransactionReport } from "@/components/transaction-report";
 import { Loader2 } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/reseller/earnings")({
-  component: EarningsPage,
+export const Route = createFileRoute("/_authenticated/reseller/transactions")({
+  component: TransactionsPage,
   head: () => ({
     meta: [
-      { title: "Transaction report — Reseller earnings" },
+      { title: "Transaction report — My earnings" },
       {
         name: "description",
         content: "Every order settlement, security deposit and withdraw of your store in one running-balance report.",
       },
-      { property: "og:title", content: "Transaction report — Reseller earnings" },
+      { property: "og:title", content: "Transaction report — My earnings" },
       { property: "og:description", content: "Order profit, loss, deposits and withdrawals with running balance." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -22,7 +22,7 @@ export const Route = createFileRoute("/_authenticated/reseller/earnings")({
   }),
 });
 
-function EarningsPage() {
+function TransactionsPage() {
   const { user } = useAuth();
   const [resellerId, setResellerId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);

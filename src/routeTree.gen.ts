@@ -28,6 +28,7 @@ import { Route as SCodeThanksRouteImport } from './routes/s.$code.thanks'
 import { Route as SCodeCheckoutRouteImport } from './routes/s.$code.checkout'
 import { Route as ApiPublicRobotsRouteImport } from './routes/api/public/robots'
 import { Route as AuthenticatedResellerVisitorsRouteImport } from './routes/_authenticated/reseller/visitors'
+import { Route as AuthenticatedResellerTransactionsRouteImport } from './routes/_authenticated/reseller/transactions'
 import { Route as AuthenticatedResellerThemeRouteImport } from './routes/_authenticated/reseller/theme'
 import { Route as AuthenticatedResellerSupportRouteImport } from './routes/_authenticated/reseller/support'
 import { Route as AuthenticatedResellerSettingsRouteImport } from './routes/_authenticated/reseller/settings'
@@ -37,16 +38,15 @@ import { Route as AuthenticatedResellerOrdersRouteImport } from './routes/_authe
 import { Route as AuthenticatedResellerMenusRouteImport } from './routes/_authenticated/reseller/menus'
 import { Route as AuthenticatedResellerMarketingRouteImport } from './routes/_authenticated/reseller/marketing'
 import { Route as AuthenticatedResellerListingsRouteImport } from './routes/_authenticated/reseller/listings'
-import { Route as AuthenticatedResellerEarningsRouteImport } from './routes/_authenticated/reseller/earnings'
 import { Route as AuthenticatedResellerDomainRouteImport } from './routes/_authenticated/reseller/domain'
 import { Route as AuthenticatedResellerCustomersRouteImport } from './routes/_authenticated/reseller/customers'
 import { Route as AuthenticatedResellerCommissionsRouteImport } from './routes/_authenticated/reseller/commissions'
 import { Route as AuthenticatedResellerCatalogRouteImport } from './routes/_authenticated/reseller/catalog'
 import { Route as AuthenticatedAdminVisitorsRouteImport } from './routes/_authenticated/admin/visitors'
+import { Route as AuthenticatedAdminTransactionsRouteImport } from './routes/_authenticated/admin/transactions'
 import { Route as AuthenticatedAdminStaffRouteImport } from './routes/_authenticated/admin/staff'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin/settings'
 import { Route as AuthenticatedAdminResellersRouteImport } from './routes/_authenticated/admin/resellers'
-import { Route as AuthenticatedAdminResellerEarningRouteImport } from './routes/_authenticated/admin/reseller-earning'
 import { Route as AuthenticatedAdminPrivacyRouteImport } from './routes/_authenticated/admin/privacy'
 import { Route as AuthenticatedAdminPayoutsRouteImport } from './routes/_authenticated/admin/payouts'
 import { Route as AuthenticatedAdminPaymentsRouteImport } from './routes/_authenticated/admin/payments'
@@ -176,6 +176,12 @@ const AuthenticatedResellerVisitorsRoute =
     path: '/visitors',
     getParentRoute: () => AuthenticatedResellerRouteRoute,
   } as any)
+const AuthenticatedResellerTransactionsRoute =
+  AuthenticatedResellerTransactionsRouteImport.update({
+    id: '/transactions',
+    path: '/transactions',
+    getParentRoute: () => AuthenticatedResellerRouteRoute,
+  } as any)
 const AuthenticatedResellerThemeRoute =
   AuthenticatedResellerThemeRouteImport.update({
     id: '/theme',
@@ -230,12 +236,6 @@ const AuthenticatedResellerListingsRoute =
     path: '/listings',
     getParentRoute: () => AuthenticatedResellerRouteRoute,
   } as any)
-const AuthenticatedResellerEarningsRoute =
-  AuthenticatedResellerEarningsRouteImport.update({
-    id: '/earnings',
-    path: '/earnings',
-    getParentRoute: () => AuthenticatedResellerRouteRoute,
-  } as any)
 const AuthenticatedResellerDomainRoute =
   AuthenticatedResellerDomainRouteImport.update({
     id: '/domain',
@@ -266,6 +266,12 @@ const AuthenticatedAdminVisitorsRoute =
     path: '/visitors',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
+const AuthenticatedAdminTransactionsRoute =
+  AuthenticatedAdminTransactionsRouteImport.update({
+    id: '/transactions',
+    path: '/transactions',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
 const AuthenticatedAdminStaffRoute = AuthenticatedAdminStaffRouteImport.update({
   id: '/staff',
   path: '/staff',
@@ -281,12 +287,6 @@ const AuthenticatedAdminResellersRoute =
   AuthenticatedAdminResellersRouteImport.update({
     id: '/resellers',
     path: '/resellers',
-    getParentRoute: () => AuthenticatedAdminRouteRoute,
-  } as any)
-const AuthenticatedAdminResellerEarningRoute =
-  AuthenticatedAdminResellerEarningRouteImport.update({
-    id: '/reseller-earning',
-    path: '/reseller-earning',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
 const AuthenticatedAdminPrivacyRoute =
@@ -503,16 +503,15 @@ export interface FileRoutesByFullPath {
   '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
   '/admin/payouts': typeof AuthenticatedAdminPayoutsRoute
   '/admin/privacy': typeof AuthenticatedAdminPrivacyRoute
-  '/admin/reseller-earning': typeof AuthenticatedAdminResellerEarningRoute
   '/admin/resellers': typeof AuthenticatedAdminResellersRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/staff': typeof AuthenticatedAdminStaffRoute
+  '/admin/transactions': typeof AuthenticatedAdminTransactionsRoute
   '/admin/visitors': typeof AuthenticatedAdminVisitorsRoute
   '/reseller/catalog': typeof AuthenticatedResellerCatalogRoute
   '/reseller/commissions': typeof AuthenticatedResellerCommissionsRoute
   '/reseller/customers': typeof AuthenticatedResellerCustomersRoute
   '/reseller/domain': typeof AuthenticatedResellerDomainRoute
-  '/reseller/earnings': typeof AuthenticatedResellerEarningsRoute
   '/reseller/listings': typeof AuthenticatedResellerListingsRoute
   '/reseller/marketing': typeof AuthenticatedResellerMarketingRoute
   '/reseller/menus': typeof AuthenticatedResellerMenusRoute
@@ -522,6 +521,7 @@ export interface FileRoutesByFullPath {
   '/reseller/settings': typeof AuthenticatedResellerSettingsRoute
   '/reseller/support': typeof AuthenticatedResellerSupportRoute
   '/reseller/theme': typeof AuthenticatedResellerThemeRoute
+  '/reseller/transactions': typeof AuthenticatedResellerTransactionsRoute
   '/reseller/visitors': typeof AuthenticatedResellerVisitorsRoute
   '/api/public/robots': typeof ApiPublicRobotsRoute
   '/s/$code/checkout': typeof SCodeCheckoutRoute
@@ -569,16 +569,15 @@ export interface FileRoutesByTo {
   '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
   '/admin/payouts': typeof AuthenticatedAdminPayoutsRoute
   '/admin/privacy': typeof AuthenticatedAdminPrivacyRoute
-  '/admin/reseller-earning': typeof AuthenticatedAdminResellerEarningRoute
   '/admin/resellers': typeof AuthenticatedAdminResellersRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/staff': typeof AuthenticatedAdminStaffRoute
+  '/admin/transactions': typeof AuthenticatedAdminTransactionsRoute
   '/admin/visitors': typeof AuthenticatedAdminVisitorsRoute
   '/reseller/catalog': typeof AuthenticatedResellerCatalogRoute
   '/reseller/commissions': typeof AuthenticatedResellerCommissionsRoute
   '/reseller/customers': typeof AuthenticatedResellerCustomersRoute
   '/reseller/domain': typeof AuthenticatedResellerDomainRoute
-  '/reseller/earnings': typeof AuthenticatedResellerEarningsRoute
   '/reseller/listings': typeof AuthenticatedResellerListingsRoute
   '/reseller/marketing': typeof AuthenticatedResellerMarketingRoute
   '/reseller/menus': typeof AuthenticatedResellerMenusRoute
@@ -588,6 +587,7 @@ export interface FileRoutesByTo {
   '/reseller/settings': typeof AuthenticatedResellerSettingsRoute
   '/reseller/support': typeof AuthenticatedResellerSupportRoute
   '/reseller/theme': typeof AuthenticatedResellerThemeRoute
+  '/reseller/transactions': typeof AuthenticatedResellerTransactionsRoute
   '/reseller/visitors': typeof AuthenticatedResellerVisitorsRoute
   '/api/public/robots': typeof ApiPublicRobotsRoute
   '/s/$code/checkout': typeof SCodeCheckoutRoute
@@ -641,16 +641,15 @@ export interface FileRoutesById {
   '/_authenticated/admin/payments': typeof AuthenticatedAdminPaymentsRoute
   '/_authenticated/admin/payouts': typeof AuthenticatedAdminPayoutsRoute
   '/_authenticated/admin/privacy': typeof AuthenticatedAdminPrivacyRoute
-  '/_authenticated/admin/reseller-earning': typeof AuthenticatedAdminResellerEarningRoute
   '/_authenticated/admin/resellers': typeof AuthenticatedAdminResellersRoute
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/_authenticated/admin/staff': typeof AuthenticatedAdminStaffRoute
+  '/_authenticated/admin/transactions': typeof AuthenticatedAdminTransactionsRoute
   '/_authenticated/admin/visitors': typeof AuthenticatedAdminVisitorsRoute
   '/_authenticated/reseller/catalog': typeof AuthenticatedResellerCatalogRoute
   '/_authenticated/reseller/commissions': typeof AuthenticatedResellerCommissionsRoute
   '/_authenticated/reseller/customers': typeof AuthenticatedResellerCustomersRoute
   '/_authenticated/reseller/domain': typeof AuthenticatedResellerDomainRoute
-  '/_authenticated/reseller/earnings': typeof AuthenticatedResellerEarningsRoute
   '/_authenticated/reseller/listings': typeof AuthenticatedResellerListingsRoute
   '/_authenticated/reseller/marketing': typeof AuthenticatedResellerMarketingRoute
   '/_authenticated/reseller/menus': typeof AuthenticatedResellerMenusRoute
@@ -660,6 +659,7 @@ export interface FileRoutesById {
   '/_authenticated/reseller/settings': typeof AuthenticatedResellerSettingsRoute
   '/_authenticated/reseller/support': typeof AuthenticatedResellerSupportRoute
   '/_authenticated/reseller/theme': typeof AuthenticatedResellerThemeRoute
+  '/_authenticated/reseller/transactions': typeof AuthenticatedResellerTransactionsRoute
   '/_authenticated/reseller/visitors': typeof AuthenticatedResellerVisitorsRoute
   '/api/public/robots': typeof ApiPublicRobotsRoute
   '/s/$code/checkout': typeof SCodeCheckoutRoute
@@ -713,16 +713,15 @@ export interface FileRouteTypes {
     | '/admin/payments'
     | '/admin/payouts'
     | '/admin/privacy'
-    | '/admin/reseller-earning'
     | '/admin/resellers'
     | '/admin/settings'
     | '/admin/staff'
+    | '/admin/transactions'
     | '/admin/visitors'
     | '/reseller/catalog'
     | '/reseller/commissions'
     | '/reseller/customers'
     | '/reseller/domain'
-    | '/reseller/earnings'
     | '/reseller/listings'
     | '/reseller/marketing'
     | '/reseller/menus'
@@ -732,6 +731,7 @@ export interface FileRouteTypes {
     | '/reseller/settings'
     | '/reseller/support'
     | '/reseller/theme'
+    | '/reseller/transactions'
     | '/reseller/visitors'
     | '/api/public/robots'
     | '/s/$code/checkout'
@@ -779,16 +779,15 @@ export interface FileRouteTypes {
     | '/admin/payments'
     | '/admin/payouts'
     | '/admin/privacy'
-    | '/admin/reseller-earning'
     | '/admin/resellers'
     | '/admin/settings'
     | '/admin/staff'
+    | '/admin/transactions'
     | '/admin/visitors'
     | '/reseller/catalog'
     | '/reseller/commissions'
     | '/reseller/customers'
     | '/reseller/domain'
-    | '/reseller/earnings'
     | '/reseller/listings'
     | '/reseller/marketing'
     | '/reseller/menus'
@@ -798,6 +797,7 @@ export interface FileRouteTypes {
     | '/reseller/settings'
     | '/reseller/support'
     | '/reseller/theme'
+    | '/reseller/transactions'
     | '/reseller/visitors'
     | '/api/public/robots'
     | '/s/$code/checkout'
@@ -850,16 +850,15 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/payments'
     | '/_authenticated/admin/payouts'
     | '/_authenticated/admin/privacy'
-    | '/_authenticated/admin/reseller-earning'
     | '/_authenticated/admin/resellers'
     | '/_authenticated/admin/settings'
     | '/_authenticated/admin/staff'
+    | '/_authenticated/admin/transactions'
     | '/_authenticated/admin/visitors'
     | '/_authenticated/reseller/catalog'
     | '/_authenticated/reseller/commissions'
     | '/_authenticated/reseller/customers'
     | '/_authenticated/reseller/domain'
-    | '/_authenticated/reseller/earnings'
     | '/_authenticated/reseller/listings'
     | '/_authenticated/reseller/marketing'
     | '/_authenticated/reseller/menus'
@@ -869,6 +868,7 @@ export interface FileRouteTypes {
     | '/_authenticated/reseller/settings'
     | '/_authenticated/reseller/support'
     | '/_authenticated/reseller/theme'
+    | '/_authenticated/reseller/transactions'
     | '/_authenticated/reseller/visitors'
     | '/api/public/robots'
     | '/s/$code/checkout'
@@ -1041,6 +1041,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedResellerVisitorsRouteImport
       parentRoute: typeof AuthenticatedResellerRouteRoute
     }
+    '/_authenticated/reseller/transactions': {
+      id: '/_authenticated/reseller/transactions'
+      path: '/transactions'
+      fullPath: '/reseller/transactions'
+      preLoaderRoute: typeof AuthenticatedResellerTransactionsRouteImport
+      parentRoute: typeof AuthenticatedResellerRouteRoute
+    }
     '/_authenticated/reseller/theme': {
       id: '/_authenticated/reseller/theme'
       path: '/theme'
@@ -1104,13 +1111,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedResellerListingsRouteImport
       parentRoute: typeof AuthenticatedResellerRouteRoute
     }
-    '/_authenticated/reseller/earnings': {
-      id: '/_authenticated/reseller/earnings'
-      path: '/earnings'
-      fullPath: '/reseller/earnings'
-      preLoaderRoute: typeof AuthenticatedResellerEarningsRouteImport
-      parentRoute: typeof AuthenticatedResellerRouteRoute
-    }
     '/_authenticated/reseller/domain': {
       id: '/_authenticated/reseller/domain'
       path: '/domain'
@@ -1146,6 +1146,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminVisitorsRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/_authenticated/admin/transactions': {
+      id: '/_authenticated/admin/transactions'
+      path: '/transactions'
+      fullPath: '/admin/transactions'
+      preLoaderRoute: typeof AuthenticatedAdminTransactionsRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
     '/_authenticated/admin/staff': {
       id: '/_authenticated/admin/staff'
       path: '/staff'
@@ -1165,13 +1172,6 @@ declare module '@tanstack/react-router' {
       path: '/resellers'
       fullPath: '/admin/resellers'
       preLoaderRoute: typeof AuthenticatedAdminResellersRouteImport
-      parentRoute: typeof AuthenticatedAdminRouteRoute
-    }
-    '/_authenticated/admin/reseller-earning': {
-      id: '/_authenticated/admin/reseller-earning'
-      path: '/reseller-earning'
-      fullPath: '/admin/reseller-earning'
-      preLoaderRoute: typeof AuthenticatedAdminResellerEarningRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
     '/_authenticated/admin/privacy': {
@@ -1414,10 +1414,10 @@ interface AuthenticatedAdminRouteRouteChildren {
   AuthenticatedAdminPaymentsRoute: typeof AuthenticatedAdminPaymentsRoute
   AuthenticatedAdminPayoutsRoute: typeof AuthenticatedAdminPayoutsRoute
   AuthenticatedAdminPrivacyRoute: typeof AuthenticatedAdminPrivacyRoute
-  AuthenticatedAdminResellerEarningRoute: typeof AuthenticatedAdminResellerEarningRoute
   AuthenticatedAdminResellersRoute: typeof AuthenticatedAdminResellersRoute
   AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
   AuthenticatedAdminStaffRoute: typeof AuthenticatedAdminStaffRoute
+  AuthenticatedAdminTransactionsRoute: typeof AuthenticatedAdminTransactionsRoute
   AuthenticatedAdminVisitorsRoute: typeof AuthenticatedAdminVisitorsRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
   AuthenticatedAdminProductsNewRoute: typeof AuthenticatedAdminProductsNewRoute
@@ -1447,11 +1447,10 @@ const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren
     AuthenticatedAdminPaymentsRoute: AuthenticatedAdminPaymentsRoute,
     AuthenticatedAdminPayoutsRoute: AuthenticatedAdminPayoutsRoute,
     AuthenticatedAdminPrivacyRoute: AuthenticatedAdminPrivacyRoute,
-    AuthenticatedAdminResellerEarningRoute:
-      AuthenticatedAdminResellerEarningRoute,
     AuthenticatedAdminResellersRoute: AuthenticatedAdminResellersRoute,
     AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
     AuthenticatedAdminStaffRoute: AuthenticatedAdminStaffRoute,
+    AuthenticatedAdminTransactionsRoute: AuthenticatedAdminTransactionsRoute,
     AuthenticatedAdminVisitorsRoute: AuthenticatedAdminVisitorsRoute,
     AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
     AuthenticatedAdminProductsNewRoute: AuthenticatedAdminProductsNewRoute,
@@ -1485,7 +1484,6 @@ interface AuthenticatedResellerRouteRouteChildren {
   AuthenticatedResellerCommissionsRoute: typeof AuthenticatedResellerCommissionsRoute
   AuthenticatedResellerCustomersRoute: typeof AuthenticatedResellerCustomersRoute
   AuthenticatedResellerDomainRoute: typeof AuthenticatedResellerDomainRoute
-  AuthenticatedResellerEarningsRoute: typeof AuthenticatedResellerEarningsRoute
   AuthenticatedResellerListingsRoute: typeof AuthenticatedResellerListingsRoute
   AuthenticatedResellerMarketingRoute: typeof AuthenticatedResellerMarketingRoute
   AuthenticatedResellerMenusRoute: typeof AuthenticatedResellerMenusRoute
@@ -1495,6 +1493,7 @@ interface AuthenticatedResellerRouteRouteChildren {
   AuthenticatedResellerSettingsRoute: typeof AuthenticatedResellerSettingsRoute
   AuthenticatedResellerSupportRoute: typeof AuthenticatedResellerSupportRoute
   AuthenticatedResellerThemeRoute: typeof AuthenticatedResellerThemeRoute
+  AuthenticatedResellerTransactionsRoute: typeof AuthenticatedResellerTransactionsRoute
   AuthenticatedResellerVisitorsRoute: typeof AuthenticatedResellerVisitorsRoute
   AuthenticatedResellerIndexRoute: typeof AuthenticatedResellerIndexRoute
 }
@@ -1506,7 +1505,6 @@ const AuthenticatedResellerRouteRouteChildren: AuthenticatedResellerRouteRouteCh
       AuthenticatedResellerCommissionsRoute,
     AuthenticatedResellerCustomersRoute: AuthenticatedResellerCustomersRoute,
     AuthenticatedResellerDomainRoute: AuthenticatedResellerDomainRoute,
-    AuthenticatedResellerEarningsRoute: AuthenticatedResellerEarningsRoute,
     AuthenticatedResellerListingsRoute: AuthenticatedResellerListingsRoute,
     AuthenticatedResellerMarketingRoute: AuthenticatedResellerMarketingRoute,
     AuthenticatedResellerMenusRoute: AuthenticatedResellerMenusRoute,
@@ -1517,6 +1515,8 @@ const AuthenticatedResellerRouteRouteChildren: AuthenticatedResellerRouteRouteCh
     AuthenticatedResellerSettingsRoute: AuthenticatedResellerSettingsRoute,
     AuthenticatedResellerSupportRoute: AuthenticatedResellerSupportRoute,
     AuthenticatedResellerThemeRoute: AuthenticatedResellerThemeRoute,
+    AuthenticatedResellerTransactionsRoute:
+      AuthenticatedResellerTransactionsRoute,
     AuthenticatedResellerVisitorsRoute: AuthenticatedResellerVisitorsRoute,
     AuthenticatedResellerIndexRoute: AuthenticatedResellerIndexRoute,
   }

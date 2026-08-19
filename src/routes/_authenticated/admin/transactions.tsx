@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { TransactionReport } from "@/components/transaction-report";
 
-export const Route = createFileRoute("/_authenticated/admin/reseller-earning")({
+export const Route = createFileRoute("/_authenticated/admin/transactions")({
   component: AdminTransactionReportPage,
   head: () => ({
     meta: [

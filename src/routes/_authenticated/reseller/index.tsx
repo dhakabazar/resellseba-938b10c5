@@ -239,7 +239,7 @@ function ResellerDashboard() {
               <Plus className="h-4 w-4" /> Add order
             </button>
             <Link
-              to="/reseller/earnings"
+              to="/reseller/transactions"
               className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground shadow-elegant transition-all hover:opacity-90 active:scale-95"
             >
               <Wallet className="h-4 w-4" /> Reports
@@ -255,7 +255,7 @@ function ResellerDashboard() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
           <StatCard
             label="Total Profit"
-            to="/reseller/earnings"
+            to="/reseller/transactions"
               tone="primary"
             value={bdt(lifetime.delivered + commissionLifetime)}
             icon={<TrendingUp className="h-4 w-4" />}
@@ -279,7 +279,7 @@ function ResellerDashboard() {
           />
           <StatCard
             label="Outstanding"
-            to="/reseller/earnings"
+            to="/reseller/transactions"
               tone="amber"
             value={bdt(Math.max(lifetime.delivered + commissionLifetime - lifetime.paidOut, 0))}
             icon={<Clock className="h-4 w-4" />}
