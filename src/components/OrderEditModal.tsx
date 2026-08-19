@@ -612,7 +612,14 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                   {totals.discount > 0 && <Row label="Discount" value={-totals.discount} />}
                   <Row label="Packaging cost" value={totals.packaging} />
                   {isAdmin && <Row label="Courier cost" value={totals.deliveryCost} />}
+                  {totals.advance > 0 && (
+                    <>
+                      <Row label={`Advance (${advanceBy})`} value={totals.advance} />
+                      <Row label="COD to collect" value={totals.codDue} />
+                    </>
+                  )}
                   <Row label="Received" value={totals.received} />
+
 
                   <div className="mt-2 flex justify-between border-t pt-2 text-sm font-bold text-primary">
                     <span>Grand total</span>
