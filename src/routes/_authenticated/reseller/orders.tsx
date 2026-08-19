@@ -30,7 +30,7 @@ import {
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { NewOrderModal } from "@/components/NewOrderModal";
 import { OrderEditModal } from "@/components/OrderEditModal";
-import { OrderItemsStrip, type StripItem } from "@/components/order-items-strip";
+import { OrderItemsStrip, type StripItem, ImageLightbox, OrderProductCell } from "@/components/order-items-strip";
 import { Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { useDepositStatus } from "@/lib/deposit";
