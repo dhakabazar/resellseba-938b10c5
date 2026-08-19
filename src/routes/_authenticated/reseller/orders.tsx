@@ -359,6 +359,16 @@ function OrdersPage() {
       return;
     }
 
+    const blocked = visible.filter(
+      (o) => marked.includes(o.id) && !(nextStatuses(o.status, "reseller") as string[]).includes(newStatus),
+    );
+    if (blocked.length > 0) {
+      toast.error(
+        `${blocked.length} orders cannot move to this status — only New Order, Send To admin and Cancelled can be switched.`,
+      );
+      return;
+    }
+
     setConfirmModal({
       open: true,
       title: "Bulk Status Update",
