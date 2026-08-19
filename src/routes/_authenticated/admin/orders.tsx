@@ -501,7 +501,13 @@ function AdminOrdersPage() {
                           <DropdownMenuItem onClick={() => setEditId(o.id)}>
                             <Pencil className="mr-2 h-4 w-4" /> Edit Order
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => setStatusModal({ open: true, orderId: o.id, currentStatus: o.status })}>
+                          <DropdownMenuItem
+                            onClick={() =>
+                              o.status === "pending_partial"
+                                ? setSettleModal({ orderId: o.id, status: "partial_full", pickKind: true })
+                                : setStatusModal({ open: true, orderId: o.id, currentStatus: o.status })
+                            }
+                          >
                             <Settings2 className="mr-2 h-4 w-4" /> Change Status
                           </DropdownMenuItem>
                           {(() => {
