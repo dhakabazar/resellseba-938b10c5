@@ -9,7 +9,8 @@ import { Loader2, Download, ArrowDownRight, ArrowUpRight, Wallet, TrendingUp, Al
 import { supabase } from "@/integrations/supabase/client";
 import { StatCard } from "@/components/ui-kit";
 import { SearchableSelect } from "@/components/searchable-select";
-import { DateRangeBar, DEFAULT_DATE_RANGE, resolveRange, type DateRangeState } from "@/components/date-range-filter";
+import { Pagination } from "@/components/data-list";
+import { DateRangeBar, resolveRange, type DateRangeState } from "@/components/date-range-filter";
 import { bdt, toCsv, downloadCsv, PROFIT_FORMULA_HINT } from "@/lib/finance-report";
 import { orderStatusLabel, orderStatusTone } from "@/lib/courier-status";
 
@@ -340,7 +341,7 @@ export function TransactionReport({
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {filtered.map((r, i) => {
+                {paged.map((r, i) => {
                   const inflow = r.direction === "in";
                   const voided = r.direction === "void";
                   const isPartial = !!r.order_id && PARTIAL_STATUSES.includes(r.status);
@@ -468,6 +469,11 @@ export function TransactionReport({
 
               </tbody>
             </table>
+          </div>
+        )}
+        {!loading && !error && filtered.length > 0 && (
+          <div className="border-t px-3 py-2">
+            <Pagination page={page} perPage={perPage} total={filtered.length} onPage={setPage} />
           </div>
         )}
       </div>
