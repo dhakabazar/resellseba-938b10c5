@@ -68,6 +68,7 @@ const ROUTE_PERMISSIONS: Record<string, string[]> = {
   "/admin/maintenance": ["settings.manage"],
   "/admin/domains": ["settings.manage"],
   "/admin/deposits": ["settings.manage", "resellers.manage", "finance.view"],
+  "/admin/deposit-transactions": ["finance.view", "resellers.manage", "settings.manage"],
   "/admin/settings": ["settings.manage"],
   "/admin/privacy": ["settings.manage"],
 };
