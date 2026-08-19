@@ -65,6 +65,16 @@ type OrderRow = {
   customer_phone: string;
   address_line: string;
   area: string;
+  city: string | null;
+  subtotal: number;
+  discount: number;
+  shipping_cost: number;
+  sa_cost_total: number;
+  packaging_total: number | null;
+  delivery_cost: number | null;
+  received_amount: number | null;
+  advance_amount: number | null;
+  advance_by: string | null;
   total: number;
   status: string;
   payment_status: string;
@@ -152,7 +162,7 @@ function AdminOrdersPage() {
     const statuses = ORDER_TABS.find((t) => t.key === tab)?.statuses ?? [];
     let q = supabase
       .from("orders")
-      .select("id,reseller_id,order_number,customer_name,customer_phone,address_line,area,total,status,payment_status,payment_method,forwarded_to_admin,created_at,reseller_note,admin_note,resellers(business_name,code,contact_phone)")
+      .select("id,reseller_id,order_number,customer_name,customer_phone,address_line,area,city,subtotal,discount,shipping_cost,sa_cost_total,packaging_total,delivery_cost,received_amount,advance_amount,advance_by,total,status,payment_status,payment_method,forwarded_to_admin,created_at,reseller_note,admin_note,resellers(business_name,code,contact_phone)")
       .order("created_at", { ascending: false });
     if (statuses.length > 0) q = q.in("status", statuses);
     const [{ data }, { data: allStats }, { data: rs }, { data: p }] = await Promise.all([
@@ -519,61 +529,93 @@ function AdminOrdersPage() {
                   </div>
                 </div>
                 {expandedOrders.includes(o.id) && (
-                  <div className="bg-muted/30 px-12 py-6">
-                    <OrderItemsList items={stripItems(o.id)} onZoom={setZoomImage} className="mb-6" />
-                    <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-                      <div>
+                  <div className="bg-muted/30 px-4 py-5 md:px-8">
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                      <OrderItemsList items={stripItems(o.id)} onZoom={setZoomImage} />
 
-
-                        <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">Shipping Details</h4>
-                        <div className="rounded-lg border bg-background p-4 text-sm shadow-sm">
-                          <div className="mb-1 font-semibold">{o.customer_name}</div>
-                          <div className="mb-3 font-mono text-xs">{o.customer_phone}</div>
-                          <div className="text-muted-foreground">{o.address_line}</div>
-                          <div className="mt-1 font-medium text-primary uppercase text-[10px]">{o.area.replace("_", " ")}</div>
-                          
-                          <div className="mt-4 flex flex-wrap gap-2 border-t pt-4">
+                      <div className="space-y-4">
+                        <div>
+                          <h4 className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                            Shipping Address
+                          </h4>
+                          <div className="rounded-lg border bg-background p-3 text-sm shadow-sm">
+                            <div className="font-medium">{o.customer_name}</div>
+                            <div className="mt-0.5 font-mono text-xs text-muted-foreground">{o.customer_phone}</div>
+                            <div className="mt-1 text-muted-foreground">{o.address_line}</div>
+                            <div className="text-muted-foreground">
+                              {o.area?.replace("_", " ")}
+                              {o.city ? `, ${o.city}` : ""}
+                            </div>
+                            <div className="mt-2 inline-block rounded bg-primary/10 px-2 py-1 text-xs font-medium uppercase text-primary">
+                              Payment: {o.payment_method}
+                            </div>
                             {(() => {
-                              const isBooked = shipments.some(s => s.order_id === o.id && (s.consignment_id || s.tracking_id));
-                              if (!isBooked) {
-                                return (
+                              const isBooked = shipments.some(
+                                (s) => s.order_id === o.id && (s.consignment_id || s.tracking_id),
+                              );
+                              if (isBooked) return null;
+                              return (
+                                <div className="mt-3 border-t pt-3">
                                   <button
                                     onClick={() => setBookingModal({ open: true, orderIds: [o.id] })}
                                     className="inline-flex items-center gap-1.5 rounded-md bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary transition-colors hover:bg-primary/20"
                                   >
-                                    <Truck className="h-3 w-3" /> {activeProviderLabel ? `Book ${activeProviderLabel}` : "Book Courier"}
+                                    <Truck className="h-3 w-3" />{" "}
+                                    {activeProviderLabel ? `Book ${activeProviderLabel}` : "Book Courier"}
                                   </button>
-                                );
-                              }
-                              return null;
+                                </div>
+                              );
                             })()}
                           </div>
                         </div>
-                      </div>
-                      <div>
-                        <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">Notes & Financials</h4>
-                        <div className="space-y-3">
-                          {o.admin_note && (
-                            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-                              <span className="mb-1 block text-[10px] font-bold uppercase">Admin Note:</span>
-                              {o.admin_note}
-                            </div>
-                          )}
-                          {o.reseller_note && (
-                            <div className="rounded-lg border bg-background p-3 text-sm italic text-muted-foreground">
-                              <span className="mb-1 block text-[10px] font-bold uppercase not-italic">Reseller Note:</span>
-                              "{o.reseller_note}"
-                            </div>
-                          )}
-                          <div className="rounded-lg border bg-background p-3 text-sm">
-                             <div className="flex justify-between font-bold">
-                               <span>Total Bill</span>
-                               <span className="text-primary">৳{Number(o.total).toFixed(0)}</span>
-                             </div>
-                             <div className="mt-1 flex justify-between text-xs text-muted-foreground uppercase">
-                               <span>Payment Method</span>
-                               <span>{o.payment_method}</span>
-                             </div>
+
+                        {o.admin_note && (
+                          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+                            <span className="mb-1 block text-[10px] font-bold uppercase">Admin Note</span>
+                            {o.admin_note}
+                          </div>
+                        )}
+                        {o.reseller_note && (
+                          <div className="rounded-lg border bg-background p-3 text-sm italic text-muted-foreground">
+                            <span className="mb-1 block text-[10px] font-bold uppercase not-italic">Reseller Note</span>
+                            "{o.reseller_note}"
+                          </div>
+                        )}
+
+                        <div className="rounded-lg border bg-background p-3 text-sm shadow-sm">
+                          <h4 className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                            Financial Summary
+                          </h4>
+                          <div className="flex justify-between border-b border-dashed py-1">
+                            <span>Subtotal</span>
+                            <span>৳{Number(o.subtotal).toFixed(0)}</span>
+                          </div>
+                          <div className="flex justify-between border-b border-dashed py-1">
+                            <span>Shipping</span>
+                            <span>৳{Number(o.shipping_cost).toFixed(0)}</span>
+                          </div>
+                          <div className="flex justify-between border-b border-dashed py-1">
+                            <span>Discount</span>
+                            <span>৳{Number(o.discount).toFixed(0)}</span>
+                          </div>
+                          <div className="mt-1 flex justify-between py-1 font-bold text-primary">
+                            <span>Grand Total</span>
+                            <span>৳{Number(o.total).toFixed(0)}</span>
+                          </div>
+                          <div className="flex justify-between py-1 text-[11px] text-muted-foreground">
+                            <span>Received</span>
+                            <span className={orderShortfall(o) > 0 ? "font-semibold text-destructive" : ""}>
+                              ৳{orderReceived(o).toFixed(0)}
+                            </span>
+                          </div>
+                          <div
+                            className={
+                              "mt-1 flex justify-between border-t pt-1 font-bold " +
+                              (orderProfit(o) < 0 ? "text-destructive" : "text-success")
+                            }
+                          >
+                            <span>{orderProfit(o) < 0 ? "Reseller Loss" : "Reseller Profit"}</span>
+                            <span>৳{orderProfit(o).toFixed(0)}</span>
                           </div>
                         </div>
                       </div>
