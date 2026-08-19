@@ -256,14 +256,31 @@ export const RESELLER_LOCKED_STATUSES: OrderStatus[] = [
   "damaged",
 ];
 
+/** Reseller can edit / delete / change status only while the order sits in these states. */
+export const RESELLER_ACTION_STATUSES: OrderStatus[] = ["draft", "pending", "forwarded", "cancelled"];
+
+export function resellerCanAct(status: string): boolean {
+  return (RESELLER_ACTION_STATUSES as string[]).includes(status);
+}
+
 /**
  * Allowed next statuses.
- *  · reseller: only `pending` → "send to admin" (forwarded) or cancel
+ *  · reseller: pending ↔ send to admin ↔ cancelled only
  *  · admin/staff: full flow, but the settlement statuses go through the settle modal
  */
 export function nextStatuses(current: string, role: "reseller" | "admin"): OrderStatus[] {
   if (role === "reseller") {
-    return current === "pending" || current === "draft" ? ["forwarded", "cancelled"] : [];
+    switch (current) {
+      case "draft":
+      case "pending":
+        return ["forwarded", "cancelled"];
+      case "forwarded":
+        return ["pending", "cancelled"];
+      case "cancelled":
+        return ["pending", "forwarded"];
+      default:
+        return [];
+    }
   }
   switch (current) {
     case "draft":

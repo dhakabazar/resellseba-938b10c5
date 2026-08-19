@@ -63,6 +63,8 @@ import {
   orderStatusLabel,
   orderStatusTone,
   ORDER_STATUS_OPTIONS,
+  nextStatuses,
+  resellerCanAct,
   type OrderTabKey,
 } from "@/lib/courier-status";
 
@@ -357,6 +359,16 @@ function OrdersPage() {
       return;
     }
 
+    const blocked = visible.filter(
+      (o) => marked.includes(o.id) && !(nextStatuses(o.status, "reseller") as string[]).includes(newStatus),
+    );
+    if (blocked.length > 0) {
+      toast.error(
+        `${blocked.length} orders cannot move to this status — only New Order, Send To admin and Cancelled can be switched.`,
+      );
+      return;
+    }
+
     setConfirmModal({
       open: true,
       title: "Bulk Status Update",
@@ -388,7 +400,7 @@ function OrdersPage() {
     
     // Check if any order is NOT pending/confirmed or is booked
     const bookedIds = shipments.filter(s => s.consignment_id || s.tracking_id).map(s => s.order_id);
-    const restricted = visible.filter(o => marked.includes(o.id) && (!["pending", "forwarded"].includes(o.status) || bookedIds.includes(o.id)));
+    const restricted = visible.filter(o => marked.includes(o.id) && (!resellerCanAct(o.status) || bookedIds.includes(o.id)));
     
     if (restricted.length > 0) {
       toast.error(`${restricted.length} orders cannot be deleted (only Pending orders that are not booked).`);
@@ -434,8 +446,8 @@ function OrdersPage() {
     if (!order) return;
 
     const isBooked = shipments.some(s => s.order_id === id && (s.consignment_id || s.tracking_id));
-    if (!["pending", "forwarded"].includes(order.status) || isBooked) {
-      toast.error("Admin confirm korar age porjonto order delete kora jabe.");
+    if (!resellerCanAct(order.status) || isBooked) {
+      toast.error("Only New Order, Send To admin or Cancelled orders can be deleted.");
       return;
     }
 
@@ -694,14 +706,14 @@ function OrdersPage() {
                           <Eye className="mr-2 h-4 w-4" /> View Details
                         </DropdownMenuItem>
 
-                        {(o.status === "pending" || o.status === "forwarded") && (
+                        {resellerCanAct(o.status) && (
                           <DropdownMenuItem onClick={() => setEditId(o.id)}>
                             <Pencil className="mr-2 h-4 w-4" /> Edit Order
                           </DropdownMenuItem>
                         )}
                         {(() => {
                           const isBooked = shipments.some(s => s.order_id === o.id && (s.consignment_id || s.tracking_id));
-                          if (!isBooked) {
+                          if (!isBooked && resellerCanAct(o.status) && nextStatuses(o.status, "reseller").length > 0) {
                             return (
                               <DropdownMenuItem onClick={() => setStatusModal({ open: true, orderId: o.id, currentStatus: o.status })}>
                                 <Settings2 className="mr-2 h-4 w-4" /> Change Status
@@ -721,7 +733,7 @@ function OrdersPage() {
                             <FileText className="mr-2 h-4 w-4" /> View Invoice
                           </Link>
                         </DropdownMenuItem>
-                        {(o.status === "pending" || o.status === "forwarded") && !shipments.some(s => s.order_id === o.id && (s.consignment_id || s.tracking_id)) && (
+                        {resellerCanAct(o.status) && !shipments.some(s => s.order_id === o.id && (s.consignment_id || s.tracking_id)) && (
                           <>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem 
@@ -1114,7 +1126,7 @@ function OrdersPage() {
             
             <div className="p-4">
               <div className="grid grid-cols-1 gap-1.5">
-                {['pending', 'forwarded', 'cancelled'].map((s) => (
+                {(nextStatuses(statusModal.currentStatus, "reseller") as string[]).map((s) => (
                   <button
                     key={s}
                     disabled={loading}
@@ -1253,7 +1265,7 @@ function OrderDrawer({
     onError: (err: any) => toast.error(err.message || "Failed to recheck status"),
   });
 
-  async function setStatus(next: "forwarded" | "cancelled") {
+  async function setStatus(next: "pending" | "forwarded" | "cancelled") {
     if (next === "forwarded" && depositBlocked) {
       toast.error(fillText(depositBlockText ?? DEFAULT_DEPOSIT_TEXTS.orderBlockToast, { due: depositDue ?? 0 }));
       return;
@@ -1262,7 +1274,9 @@ function OrderDrawer({
     const patch: Record<string, unknown> =
       next === "forwarded"
         ? { status: "forwarded", forwarded_to_admin: true, forwarded_at: new Date().toISOString() }
-        : { status: "cancelled" };
+        : next === "pending"
+          ? { status: "pending", forwarded_to_admin: false, forwarded_at: null }
+          : { status: "cancelled" };
     const { error } = await supabase.from("orders").update(patch as any).eq("id", orderId);
     if (error) {
       toast.error(error.message);
@@ -1270,7 +1284,9 @@ function OrderDrawer({
       return;
     }
     await supabase.from("order_status_history").insert({ order_id: orderId, status: next as any });
-    toast.success(next === "forwarded" ? "Order sent to admin" : "Order cancelled");
+    toast.success(
+      next === "forwarded" ? "Order sent to admin" : next === "pending" ? "Order moved to New Order" : "Order cancelled",
+    );
     setBusy(false);
     onChanged();
     refetch();
@@ -1313,8 +1329,9 @@ function OrderDrawer({
   const profit = orderProfit(order);
   const total = Number(order.total || 0);
   
-  // Reseller can only confirm/cancel if pending and not forwarded
-  const canAct = order.status === "pending" || order.status === "draft";
+  // Reseller may only move between New Order · Send To admin · Cancelled
+  const allowedNext = nextStatuses(order.status, "reseller") as string[];
+  const canAct = allowedNext.length > 0;
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
@@ -1337,22 +1354,36 @@ function OrderDrawer({
         <div className="space-y-8">
           {canAct && (
             <div className="flex gap-3 surface-card p-4 border-primary/20 bg-primary/5">
-              <button
-                disabled={busy}
-                onClick={() => setStatus("forwarded")}
-                className="btn-brand inline-flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-bold shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
-              >
-                <CheckCircle2 className="h-4 w-4" /> Send to admin
-              </button>
-              <button
-                disabled={busy}
-                onClick={() => setStatus("cancelled")}
-                className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-destructive/20 bg-background px-4 py-2.5 text-sm font-bold text-destructive shadow-sm hover:bg-destructive/5 transition-all disabled:opacity-50"
-              >
-                <Ban className="h-4 w-4" /> Cancel Order
-              </button>
+              {allowedNext.includes("pending") && (
+                <button
+                  disabled={busy}
+                  onClick={() => setStatus("pending")}
+                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border bg-background px-4 py-2.5 text-sm font-bold shadow-sm transition-all hover:bg-muted disabled:opacity-50"
+                >
+                  <CheckCircle2 className="h-4 w-4" /> Move to New Order
+                </button>
+              )}
+              {allowedNext.includes("forwarded") && (
+                <button
+                  disabled={busy}
+                  onClick={() => setStatus("forwarded")}
+                  className="btn-brand inline-flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-bold shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+                >
+                  <CheckCircle2 className="h-4 w-4" /> Send to admin
+                </button>
+              )}
+              {allowedNext.includes("cancelled") && (
+                <button
+                  disabled={busy}
+                  onClick={() => setStatus("cancelled")}
+                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-destructive/20 bg-background px-4 py-2.5 text-sm font-bold text-destructive shadow-sm hover:bg-destructive/5 transition-all disabled:opacity-50"
+                >
+                  <Ban className="h-4 w-4" /> Cancel Order
+                </button>
+              )}
             </div>
           )}
+
 
           {/* Top Section: Customer */}
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
