@@ -226,7 +226,10 @@ export function DepositLedger({
             setDeleteRow(null);
             if (!row) return;
             const { error } = await supabase.from("reseller_deposits").delete().eq("id", row.id);
-            if (error) return toast.error(error.message);
+            if (error) {
+              toast.error(error.message);
+              return;
+            }
             toast.success("Entry deleted");
             void load();
             onChanged?.();
