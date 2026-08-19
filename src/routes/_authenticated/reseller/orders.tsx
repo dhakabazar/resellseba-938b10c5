@@ -868,7 +868,7 @@ function OrdersPage() {
                 </div>
 
                 {/* Desktop row */}
-                <div className="hidden grid-cols-[30px_minmax(60px,0.7fr)_minmax(100px,1fr)_minmax(100px,1.2fr)_60px_80px_100px_60px] items-center gap-2 border-b bg-muted/30 px-4 py-3 text-sm md:grid">
+                <div className="hidden grid-cols-[30px_minmax(60px,0.7fr)_minmax(120px,1fr)_minmax(100px,1fr)_minmax(100px,1.2fr)_60px_80px_100px_60px] items-center gap-2 border-b bg-muted/30 px-4 py-3 text-sm md:grid">
                   <div className="flex flex-col items-center gap-1.5">
                     <input
                       type="checkbox"
@@ -888,6 +888,14 @@ function OrdersPage() {
                     <div className="text-[11px] text-muted-foreground">
                       {new Date(o.created_at).toLocaleDateString()}
                     </div>
+                  </div>
+
+                  <div className="min-w-0">
+                    <OrderProductCell
+                      items={stripItems(o.id)}
+                      expanded={expandedOrders.includes(o.id)}
+                      onZoom={(src) => setZoomImage(src)}
+                    />
                   </div>
 
                   <div className="min-w-0 text-xs text-muted-foreground">
