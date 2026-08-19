@@ -21,9 +21,15 @@ export type OrderStatus =
   | "ready_to_ship"
   | "processing"
   | "shipped"
+  | "packaging"
   | "delivered"
   | "partial"
+  | "pending_partial"
+  | "partial_full"
+  | "partial_item"
+  | "partial_delivery"
   | "pending_return"
+  | "damaged"
   | "returned"
   | "cancelled";
 
@@ -45,7 +51,7 @@ export const STEADFAST_STATUS_MAP: Record<string, StatusMapping> = {
   cancelled_approval_pending: { ship: "in_transit", order: "pending_return", label: "Cancelled (approval pending)" },
   unknown_approval_pending: { ship: "in_transit", order: "shipped", label: "Unknown (approval pending)" },
   delivered: { ship: "delivered", order: "delivered", label: "Delivered" },
-  partial_delivered: { ship: "delivered", order: "partial", label: "Partial delivered" },
+  partial_delivered: { ship: "delivered", order: "pending_partial", label: "Partial delivered" },
   // courier side return — order waits in Pending Return until admin receives it
   cancelled: { ship: "returned", order: "pending_return", label: "Cancelled / returning" },
   return_requested: { ship: "returned", order: "pending_return", label: "Return requested" },
@@ -70,7 +76,7 @@ export const CARRYBEE_STATUS_MAP: Record<string, StatusMapping> = {
   "assigned-for-delivery": { ship: "in_transit", order: "shipped", label: "Assigned for delivery" },
   "delivery-on-hold": { ship: "in_transit", order: "shipped", label: "Delivery on hold" },
   delivered: { ship: "delivered", order: "delivered", label: "Delivered" },
-  "partial-delivery": { ship: "delivered", order: "partial", label: "Partial delivered" },
+  "partial-delivery": { ship: "delivered", order: "pending_partial", label: "Partial delivered" },
   "delivery-failed": { ship: "in_transit", order: "pending_return", label: "Delivery failed" },
   returned: { ship: "returned", order: "pending_return", label: "Returned (courier)" },
   "paid-return": { ship: "returned", order: "pending_return", label: "Paid return" },
@@ -100,7 +106,7 @@ export const PATHAO_STATUS_MAP: Record<string, StatusMapping> = {
   "received-at-last-mile-hub": { ship: "in_transit", order: "shipped", label: "Received at last mile hub" },
   "assigned-for-delivery": { ship: "in_transit", order: "shipped", label: "Assigned for delivery" },
   delivered: { ship: "delivered", order: "delivered", label: "Delivered" },
-  "partial-delivery": { ship: "delivered", order: "partial", label: "Partial delivered" },
+  "partial-delivery": { ship: "delivered", order: "pending_partial", label: "Partial delivered" },
   "delivery-failed": { ship: "in_transit", order: "pending_return", label: "Delivery failed" },
   "on-hold": { ship: "in_transit", order: "shipped", label: "On hold" },
   paid: { ship: "delivered", order: "delivered", label: "Paid / invoiced" },
@@ -171,9 +177,15 @@ export type OrderTabKey =
   | "confirmed"
   | "rts"
   | "courier"
+  | "packaging"
   | "delivered"
   | "partial"
+  | "pending_partial"
+  | "partial_full"
+  | "partial_item"
+  | "partial_delivery"
   | "pending_return"
+  | "damaged"
   | "returned"
   | "cancelled";
 
