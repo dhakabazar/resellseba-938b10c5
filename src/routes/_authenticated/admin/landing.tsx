@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/ui-kit";
 import { ImageUploader, type UploadedImage } from "@/components/ImageUploader";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { APP_ICON_NAMES } from "@/lib/icons";
 
 export const Route = createFileRoute("/_authenticated/admin/landing")({
   component: LandingEditor,
@@ -36,7 +37,7 @@ type LandingContent = {
   footer: { tagline: string };
 };
 
-const ICONS = ["Boxes", "Truck", "Wallet", "Megaphone", "Globe", "BarChart3", "ShieldCheck", "Sparkles", "ClipboardList", "Send", "PackageCheck", "Coins", "BanknoteArrowDown", "ShoppingBag", "Users"];
+const ICONS = APP_ICON_NAMES;
 
 
 function LandingEditor() {
