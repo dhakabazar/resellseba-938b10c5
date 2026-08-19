@@ -520,8 +520,9 @@ function AdminOrdersPage() {
                 </div>
                 {expandedOrders.includes(o.id) && (
                   <div className="bg-muted/30 px-12 py-6">
+                    <OrderItemsList items={stripItems(o.id)} onZoom={setZoomImage} className="mb-6" />
                     <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-                      <div>
+
                         <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">Shipping Details</h4>
                         <div className="rounded-lg border bg-background p-4 text-sm shadow-sm">
                           <div className="mb-1 font-semibold">{o.customer_name}</div>
