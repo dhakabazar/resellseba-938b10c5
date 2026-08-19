@@ -34,6 +34,9 @@ export type TxRow = {
   buy_delivery: number;
   packaging: number;
   buy_total: number;
+  /** Money the courier collected on delivery (advance baade). */
+  collected: number;
+  /** Total money received for this order = collected + advance already paid. */
   received: number;
   advance: number;
   advance_by: string | null;
@@ -86,6 +89,8 @@ const NO_PRODUCT_COST_STATUSES = ["returned", "pending_return", "cancelled", "pa
 function PartialSummary({ r }: { r: TxRow }) {
   const total = Number(r.sell_total) || 0;
   const received = Number(r.received) || 0;
+  const advance = Number(r.advance) || 0;
+  const collected = Number(r.collected ?? received - advance) || 0;
   const gap = Math.max(total - received, 0);
   const pct = total > 0 ? Math.min(100, Math.round((received / total) * 100)) : 0;
   return (
@@ -101,6 +106,11 @@ function PartialSummary({ r }: { r: TxRow }) {
         <span className="font-semibold text-amber-600">{pct}% received</span>
         {gap > 0 && <span className="text-destructive">short {bdt(gap)}</span>}
       </div>
+      {advance > 0 && (
+        <div className="mt-1 border-t border-amber-500/20 pt-1 text-[10px] text-muted-foreground">
+          Courier {bdt(collected)} + advance {bdt(advance)} ({r.advance_by ?? "reseller"})
+        </div>
+      )}
     </div>
   );
 }
@@ -239,7 +249,8 @@ export function TransactionReport({
         "Sell subtotal",
         "Sell delivery",
         "Sell total",
-        "Received",
+        "Collected by courier",
+        "Received (incl. advance)",
         "Buy product",
         "Buy delivery",
         "Packaging",
@@ -260,6 +271,7 @@ export function TransactionReport({
         r.sell_subtotal,
         r.sell_delivery,
         r.sell_total,
+        r.collected ?? 0,
         r.received,
         r.buy_product,
         r.buy_delivery,
@@ -443,7 +455,7 @@ export function TransactionReport({
 
                   <th className="px-3 py-2 text-right">Delivery</th>
                   <th className="px-3 py-2 text-right">Packaging</th>
-                  <th className="px-3 py-2 text-right">Received</th>
+                  <th className="px-3 py-2 text-right">Received (incl. advance)</th>
                   <th className="px-3 py-2 text-right">Advance</th>
                   <th className="px-3 py-2 text-right">Amount</th>
                   <th className="px-3 py-2 text-right">Balance</th>
@@ -540,7 +552,18 @@ export function TransactionReport({
                         {r.order_id ? bdt(Number(r.packaging)) : "—"}
                       </td>
                       <td className="px-3 py-2 text-right tabular-nums">
-                        {r.order_id ? bdt(Number(r.received)) : "—"}
+                        {r.order_id ? (
+                          <div className="whitespace-nowrap leading-tight">
+                            <div className="text-[11px] font-bold">{bdt(Number(r.received))}</div>
+                            {Number(r.advance) > 0 && (
+                              <div className="text-[10px] text-muted-foreground">
+                                courier {bdt(Number(r.collected ?? 0))} + advance {bdt(Number(r.advance))}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          "—"
+                        )}
                       </td>
                       <td className="px-3 py-2 text-right">
                         {r.order_id && Number(r.advance) > 0 ? (
@@ -557,6 +580,11 @@ export function TransactionReport({
                               >
                                 {(r.advance_by ?? "reseller") === "admin" ? "received by admin" : "received by reseller"}
                               </span>
+                            </div>
+                            <div className="mt-0.5 text-[10px] text-muted-foreground">
+                              {(r.advance_by ?? "reseller") === "admin"
+                                ? "kept by admin · balance unchanged"
+                                : "already with reseller · minus in balance"}
                             </div>
                           </div>
 

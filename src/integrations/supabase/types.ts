@@ -2193,6 +2193,7 @@ export type Database = {
           buy_delivery: number
           buy_product: number
           buy_total: number
+          collected: number
           direction: string
           kind: string
           label: string
