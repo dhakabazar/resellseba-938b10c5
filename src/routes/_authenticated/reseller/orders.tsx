@@ -969,22 +969,10 @@ function OrdersPage() {
                   <div className="flex justify-end">{actions}</div>
                 </div>
 
-                <OrderItemsStrip items={stripItems(o.id)} />
-
                 {/* Collapsible content section */}
                 {expandedOrders.includes(o.id) && (
                   <div className="border-t bg-muted/20 px-4 py-4 animate-in slide-in-from-top-2 duration-200">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {/* Products list */}
-                      <div>
-                        <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
-                          <PackageCheck className="h-3.5 w-3.5" /> Ordered Products ({items.length})
-                        </h4>
-                        <div className="overflow-hidden rounded-lg border bg-background">
-                          <OrderItemsStrip items={stripItems(o.id)} limit={2} className="border-t-0 bg-transparent" />
-                        </div>
-                      </div>
-
                       {/* Order metadata & shipping details */}
                       <div className="space-y-4">
                         <div>
