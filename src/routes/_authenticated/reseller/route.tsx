@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { AppShell, type NavEntry } from "@/components/AppShell";
 import { useAuth } from "@/lib/use-auth";
+import { useVerification } from "@/lib/use-verification";
 import { useBrandingTheme } from "@/lib/branding";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -80,6 +81,7 @@ const NAV: NavEntry[] = [
 
 function ResellerLayout() {
   const { user, roles, loading } = useAuth();
+  const { required: needsVerify, loading: verifyLoading } = useVerification();
   const nav = useNavigate();
   const [storeName, setStoreName] = useState("My store");
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
@@ -88,7 +90,11 @@ function ResellerLayout() {
   const [approved, setApproved] = useState<boolean | null>(null);
 
   useEffect(() => {
-    if (loading) return;
+    if (loading || verifyLoading) return;
+    if (needsVerify) {
+      nav({ to: "/verify", replace: true });
+      return;
+    }
     if (roles.includes("super_admin") || roles.includes("staff")) {
       nav({ to: "/admin", replace: true });
       return;
@@ -96,7 +102,7 @@ function ResellerLayout() {
     if (!roles.includes("reseller") && !roles.includes("leader")) {
       nav({ to: "/onboarding", replace: true });
     }
-  }, [loading, roles, nav]);
+  }, [loading, roles, nav, needsVerify, verifyLoading]);
 
   useEffect(() => {
     if (approved === false) nav({ to: "/onboarding", replace: true });

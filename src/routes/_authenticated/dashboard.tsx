@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 import { useAuth } from "@/lib/use-auth";
+import { useVerification } from "@/lib/use-verification";
 import { Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -9,11 +10,18 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 
 function DashboardRouter() {
   const { roles, permissions, loading, user } = useAuth();
+  const { required: needsVerify, loading: verifyLoading } = useVerification();
   const nav = useNavigate();
   const done = useRef(false);
 
   useEffect(() => {
-    if (loading || !user || done.current) return;
+    if (loading || verifyLoading || !user || done.current) return;
+
+    if (needsVerify) {
+      done.current = true;
+      nav({ to: "/verify", replace: true });
+      return;
+    }
     
     const isSuperAdmin = roles.includes("super_admin");
     const isStaff = roles.includes("staff");
@@ -29,7 +37,7 @@ function DashboardRouter() {
     } else {
       nav({ to: "/onboarding", replace: true });
     }
-  }, [roles, permissions, loading, user, nav]);
+  }, [roles, permissions, loading, user, nav, needsVerify, verifyLoading]);
 
   return (
     <div className="grid min-h-screen place-items-center">
