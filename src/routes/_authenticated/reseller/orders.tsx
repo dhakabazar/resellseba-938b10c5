@@ -1325,8 +1325,9 @@ function OrderDrawer({
   const profit = orderProfit(order);
   const total = Number(order.total || 0);
   
-  // Reseller can only confirm/cancel if pending and not forwarded
-  const canAct = order.status === "pending" || order.status === "draft";
+  // Reseller may only move between New Order · Send To admin · Cancelled
+  const allowedNext = nextStatuses(order.status, "reseller") as string[];
+  const canAct = allowedNext.length > 0;
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
