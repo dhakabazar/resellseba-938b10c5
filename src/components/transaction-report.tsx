@@ -107,7 +107,7 @@ function PartialSummary({ r }: { r: TxRow }) {
         {gap > 0 && <span className="text-destructive">short {bdt(gap)}</span>}
       </div>
       {advance > 0 && (
-        <div className="mt-1 border-t border-amber-500/20 pt-1 text-[10px] text-muted-foreground">
+        <div className="mt-1 border-t border-amber-500/20 pt-1 text-[9px] text-muted-foreground">
           Courier {bdt(collected)} + advance {bdt(advance)} ({r.advance_by ?? "reseller"})
         </div>
       )}
