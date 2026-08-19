@@ -102,7 +102,7 @@ function AdminOrdersPage() {
   const [shipments, setShipments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
-  const [tab, setTab] = useState<OrderTabKey>(tabParam ?? "confirmed");
+  const [tab, setTab] = useState<OrderTabKey>(tabParam ?? "forwarded");
 
   const [selected, setSelected] = useState<OrderRow | null>(null);
   const [open, setOpen] = useState(false);
