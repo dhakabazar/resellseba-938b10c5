@@ -76,6 +76,10 @@ function StackCell({
 
 const PARTIAL_STATUSES = ["partial", "partial_full", "partial_item", "partial_delivery", "damaged"];
 
+/** Product ferot chole ase — product cost dhora hoy na. */
+const NO_PRODUCT_COST_STATUSES = ["returned", "pending_return", "cancelled", "partial_delivery"];
+
+
 /** At-a-glance partial settlement summary: collected vs order value. */
 function PartialSummary({ r }: { r: TxRow }) {
   const total = Number(r.sell_total) || 0;
@@ -317,7 +321,9 @@ export function TransactionReport({
                   <th className="px-3 py-2 text-left">Date</th>
                   <th className="px-3 py-2 text-left">Status</th>
                   <th className="px-3 py-2 text-left">Meta / note</th>
+                  <th className="px-3 py-2 text-right">Order value</th>
                   <th className="px-3 py-2 text-right">Subtotal</th>
+
                   <th className="px-3 py-2 text-right">Delivery</th>
                   <th className="px-3 py-2 text-right">Packaging</th>
                   <th className="px-3 py-2 text-right">Received</th>
@@ -388,13 +394,27 @@ export function TransactionReport({
                         </div>
                         {isPartial && <PartialSummary r={r} />}
                       </td>
-                      <td className="px-3 py-2 text-right">
+                      <td className="px-3 py-2 text-right tabular-nums">
                         {r.order_id ? (
-                          <StackCell top={["Buy", Number(r.buy_product)]} bottom={["Sell", Number(r.sell_subtotal)]} />
+                          <div className="whitespace-nowrap leading-tight">
+                            <div className="text-[11px] font-bold">{bdt(Number(r.sell_total))}</div>
+                            <div className="text-[10px] text-muted-foreground">customer total</div>
+                          </div>
                         ) : (
                           <span className="text-muted-foreground">—</span>
                         )}
                       </td>
+                      <td className="px-3 py-2 text-right">
+                        {r.order_id ? (
+                          <StackCell
+                            top={["Buy", NO_PRODUCT_COST_STATUSES.includes(r.status) ? 0 : Number(r.buy_product)]}
+                            bottom={["Sell", Number(r.sell_subtotal)]}
+                          />
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </td>
+
                       <td className="px-3 py-2 text-right">
                         {r.order_id ? (
                           <StackCell
@@ -415,8 +435,20 @@ export function TransactionReport({
                         {r.order_id && Number(r.advance) > 0 ? (
                           <div className="whitespace-nowrap leading-tight">
                             <div className="text-[11px] font-semibold tabular-nums">{bdt(Number(r.advance))}</div>
-                            <div className="text-[10px] capitalize text-muted-foreground">{r.advance_by ?? "reseller"}</div>
+                            <div className="mt-0.5">
+                              <span
+                                className={
+                                  "rounded-full px-1.5 py-0.5 text-[10px] font-semibold capitalize " +
+                                  ((r.advance_by ?? "reseller") === "admin"
+                                    ? "bg-primary/10 text-primary"
+                                    : "bg-amber-500/15 text-amber-600")
+                                }
+                              >
+                                {(r.advance_by ?? "reseller") === "admin" ? "admin peyeche" : "reseller peyeche"}
+                              </span>
+                            </div>
                           </div>
+
                         ) : (
                           <span className="text-muted-foreground">—</span>
                         )}
