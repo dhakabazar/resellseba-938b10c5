@@ -25,6 +25,7 @@ import {
   orderPackaging,
   isFailedOrder,
 } from "@/lib/finance-report";
+import { OrderMoneyPanel, AdvanceChip } from "@/components/order-money";
 
 
 import {
@@ -615,42 +616,7 @@ function AdminOrdersPage() {
                           </div>
                         )}
 
-                        <div className="rounded-lg border bg-background p-3 text-sm shadow-sm">
-                          <h4 className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                            Financial Summary
-                          </h4>
-                          <div className="flex justify-between border-b border-dashed py-1">
-                            <span>Subtotal</span>
-                            <span>৳{Number(o.subtotal).toFixed(0)}</span>
-                          </div>
-                          <div className="flex justify-between border-b border-dashed py-1">
-                            <span>Shipping</span>
-                            <span>৳{Number(o.shipping_cost).toFixed(0)}</span>
-                          </div>
-                          <div className="flex justify-between border-b border-dashed py-1">
-                            <span>Discount</span>
-                            <span>৳{Number(o.discount).toFixed(0)}</span>
-                          </div>
-                          <div className="mt-1 flex justify-between py-1 font-bold text-primary">
-                            <span>Grand Total</span>
-                            <span>৳{Number(o.total).toFixed(0)}</span>
-                          </div>
-                          <div className="flex justify-between py-1 text-[11px] text-muted-foreground">
-                            <span>Received</span>
-                            <span className={orderShortfall(o) > 0 ? "font-semibold text-destructive" : ""}>
-                              ৳{orderReceived(o).toFixed(0)}
-                            </span>
-                          </div>
-                          <div
-                            className={
-                              "mt-1 flex justify-between border-t pt-1 font-bold " +
-                              (orderProfit(o) < 0 ? "text-destructive" : "text-success")
-                            }
-                          >
-                            <span>{orderProfit(o) < 0 ? "Reseller Loss" : "Reseller Profit"}</span>
-                            <span>৳{orderProfit(o).toFixed(0)}</span>
-                          </div>
-                        </div>
+                        <OrderMoneyPanel order={o} role="admin" />
                       </div>
                     </div>
                   </div>
@@ -880,15 +846,6 @@ function OrderDrawer({
 
 
   const { order, items, shipments, events } = data;
-  const subtotal = Number(order.subtotal || 0);
-  const shipping = Number(order.shipping_cost || 0);
-  const saCost = Number(order.sa_cost_total || 0);
-  const received = orderReceived(order);
-  const shortfall = orderShortfall(order);
-  const failed = isFailedOrder(order);
-  const packaging = orderPackaging(order);
-  const profit = orderProfit(order);
-  const adminProfit = saCost > 0 ? subtotal - saCost : 0;
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
@@ -954,72 +911,14 @@ function OrderDrawer({
                 Financial Breakdown
               </h3>
             </div>
-            <div className="p-5">
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-                <div className="space-y-1">
-                  <span className="text-[10px] font-medium text-muted-foreground uppercase">Revenue</span>
-                  <p className="text-xl font-bold">৳{subtotal.toLocaleString()}</p>
-                  <p className="text-[10px] text-muted-foreground">Excluding delivery</p>
-                  <p className="text-[10px] font-medium">
-                    Received <span className="tabular-nums">৳{received.toLocaleString()}</span>
-                    {shortfall > 0 && (
-                      <span className="ml-1 text-destructive">(−৳{shortfall.toLocaleString()} not received)</span>
-                    )}
-                  </p>
-                </div>
-                <div className="space-y-1">
-                  <span className="text-[10px] font-medium text-amber-600 uppercase flex items-center gap-1">
-                    <Wallet className="h-3 w-3" />
-                    {profit < 0 ? "Reseller Loss" : "Reseller Profit"}
-                  </span>
-                  <p className={"text-xl font-bold " + (profit < 0 ? "text-destructive" : "text-amber-600")}>
-                    ৳{profit.toLocaleString()}
-                  </p>
-                  <p className="text-[10px] text-muted-foreground">
-                    {failed
-                      ? `Failed delivery — delivery ৳${shipping.toLocaleString()} + packaging ৳${packaging.toLocaleString()} loss`
-                      : "Received − delivery − product − packaging"}
-                  </p>
-                </div>
-                <div className="space-y-1">
-                  <span className="text-[10px] font-medium text-green-600 uppercase flex items-center gap-1">
-                    <PackageCheck className="h-3 w-3" />
-                    Admin Profit
-                  </span>
-                  <p className="text-xl font-bold text-green-600">৳{adminProfit.toLocaleString()}</p>
-                  <p className="text-[10px] text-muted-foreground">Platform net</p>
-                </div>
+            <div className="space-y-3 p-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <AdvanceChip order={order} />
+                <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold uppercase text-muted-foreground">
+                  {order.payment_method} · {order.payment_status}
+                </span>
               </div>
-
-              <div className="mt-6 space-y-2 border-t pt-4">
-                <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">Base Cost (SA Cost)</span>
-                  <span className="font-medium">৳{saCost.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">Shipping Cost</span>
-                  <span className="font-medium">৳{shipping.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">Packaging Cost (inside SA cost)</span>
-                  <span className="font-medium">৳{packaging.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">Received from courier</span>
-                  <span className={"font-medium " + (shortfall > 0 ? "text-destructive" : "")}>
-                    ৳{received.toLocaleString()}
-                  </span>
-                </div>
-                <div className="flex justify-between border-t pt-2 text-sm font-bold">
-                  <span>Grand Total</span>
-                  <span className="text-primary text-base">৳{Number(order.total).toLocaleString()}</span>
-                </div>
-                <div className="mt-1 flex justify-end gap-2 text-[10px] font-bold uppercase text-muted-foreground/60">
-                   <span>{order.payment_method}</span>
-                   <span>•</span>
-                   <span>{order.payment_status}</span>
-                </div>
-              </div>
+              <OrderMoneyPanel order={order} role="admin" />
             </div>
           </div>
 

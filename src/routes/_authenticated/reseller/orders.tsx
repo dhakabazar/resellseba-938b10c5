@@ -36,6 +36,7 @@ import { toast } from "sonner";
 import { useDepositStatus } from "@/lib/deposit";
 import { DEFAULT_DEPOSIT_TEXTS, fillText, useDepositSettings } from "@/lib/deposit-settings";
 import { bdt, orderProfit, orderReceived, orderShortfall } from "@/lib/finance-report";
+import { OrderMoneyPanel, AdvanceChip } from "@/components/order-money";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getOrderDetails, recheckCourierStatus } from "@/lib/order-details.functions";
@@ -105,6 +106,11 @@ type OrderRow = {
   notes: string | null;
   reseller_note: string | null;
   created_at: string;
+  received_amount?: number | null;
+  packaging_total?: number | null;
+  delivery_cost?: number | null;
+  advance_amount?: number | null;
+  advance_by?: string | null;
 };
 
 type Line = { listing_id?: string; product_id?: string; qty: number; name?: string; price?: number; cost?: number; image?: string; delivery?: any };
@@ -117,7 +123,7 @@ export const Route = createFileRoute("/_authenticated/reseller/orders")({
 });
 
 const ORDER_COLUMNS =
-  "id,order_number,customer_name,customer_phone,address_line,city,area,subtotal,shipping_cost,discount,total,sa_cost_total,reseller_profit,received_amount,packaging_total,payment_method,status,payment_status,forwarded_to_admin,notes,reseller_note,created_at";
+  "id,order_number,customer_name,customer_phone,address_line,city,area,subtotal,shipping_cost,discount,total,sa_cost_total,reseller_profit,received_amount,packaging_total,delivery_cost,advance_amount,advance_by,payment_method,status,payment_status,forwarded_to_admin,notes,reseller_note,created_at";
 
 type OrderItemLite = {
   order_id: string;
@@ -1015,40 +1021,7 @@ function OrdersPage() {
                           </div>
                         )}
 
-                        <div className="rounded-lg border bg-background p-3 text-sm shadow-sm">
-                           <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Financial Summary</h4>
-                           <div className="flex justify-between py-1 border-b border-dashed">
-                             <span>Subtotal</span>
-                             <span>৳{Number(o.subtotal).toFixed(0)}</span>
-                           </div>
-                           <div className="flex justify-between py-1 border-b border-dashed">
-                             <span>Shipping</span>
-                             <span>৳{Number(o.shipping_cost).toFixed(0)}</span>
-                           </div>
-                           <div className="flex justify-between py-1 border-b border-dashed">
-                             <span>Discount</span>
-                             <span>৳{Number(o.discount).toFixed(0)}</span>
-                           </div>
-                           <div className="flex justify-between py-1 font-bold text-primary mt-1">
-                             <span>Grand Total</span>
-                             <span>৳{Number(o.total).toFixed(0)}</span>
-                           </div>
-                           <div className="flex justify-between py-1 text-[11px] text-muted-foreground">
-                             <span>Received</span>
-                             <span className={orderShortfall(o) > 0 ? "text-destructive font-semibold" : ""}>
-                               ৳{orderReceived(o).toFixed(0)}
-                             </span>
-                           </div>
-                           <div
-                             className={
-                               "flex justify-between py-1 font-bold mt-1 pt-1 border-t " +
-                               (orderProfit(o) < 0 ? "text-destructive" : "text-success")
-                             }
-                           >
-                             <span>{orderProfit(o) < 0 ? "Your Loss" : "Your Profit"}</span>
-                             <span>৳{orderProfit(o).toFixed(0)}</span>
-                           </div>
-                        </div>
+                        <OrderMoneyPanel order={o} role="reseller" />
                       </div>
                     </div>
                   </div>
@@ -1322,11 +1295,7 @@ function OrderDrawer({
 
 
   const { order, items, shipments, events } = data;
-  const subtotal = Number(order.subtotal || 0);
-  const shipping = Number(order.shipping_cost || 0);
-  const discount = Number(order.discount || 0);
   const profit = orderProfit(order);
-  const total = Number(order.total || 0);
   
   // Reseller may only move between New Order · Send To admin · Cancelled
   const allowedNext = nextStatuses(order.status, "reseller") as string[];
@@ -1430,39 +1399,14 @@ function OrderDrawer({
                 Earnings Summary
               </h3>
             </div>
-            <div className="p-5">
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                <div className="space-y-1">
-                  <span className="text-[10px] font-medium text-muted-foreground uppercase">Sale Amount</span>
-                  <p className="text-2xl font-bold">৳{subtotal.toLocaleString()}</p>
-                  <p className="text-[10px] text-muted-foreground">Customer billing subtotal</p>
-                </div>
-                <div className="space-y-1">
-                  <span className="text-[10px] font-medium text-green-600 uppercase flex items-center gap-1">
-                    <Wallet className="h-3 w-3" />
-                    Your Net Profit
-                  </span>
-                  <p className="text-2xl font-bold text-green-600">৳{profit.toLocaleString()}</p>
-                  <p className="text-[10px] text-muted-foreground italic">After platform costs</p>
-                </div>
+            <div className="space-y-3 p-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <AdvanceChip order={order} />
+                <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold uppercase text-muted-foreground">
+                  {order.payment_method} · {order.payment_status}
+                </span>
               </div>
-
-              <div className="mt-6 space-y-2 border-t border-amber-100 pt-4">
-                <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">Shipping Charge</span>
-                  <span className="font-medium">৳{shipping.toLocaleString()}</span>
-                </div>
-                {discount > 0 && (
-                  <div className="flex justify-between text-xs text-destructive">
-                    <span>Discount Applied</span>
-                    <span>-৳{discount.toLocaleString()}</span>
-                  </div>
-                )}
-                <div className="flex justify-between border-t border-amber-100 pt-2 text-sm font-bold">
-                  <span>Grand Total (COD)</span>
-                  <span className="text-primary text-base">৳{total.toLocaleString()}</span>
-                </div>
-              </div>
+              <OrderMoneyPanel order={order} role="reseller" />
             </div>
           </div>
 
