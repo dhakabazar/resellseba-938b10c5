@@ -33,9 +33,72 @@ export type TxRow = {
   packaging: number;
   buy_total: number;
   received: number;
+  advance: number;
+  advance_by: string | null;
   amount: number;
   running: number;
 };
+
+/** Date on top, time below. */
+function DateCell({ at }: { at: string }) {
+  const d = new Date(at);
+  return (
+    <div className="whitespace-nowrap leading-tight">
+      <div className="text-[11px] font-semibold">{d.toLocaleDateString()}</div>
+      <div className="text-[10px] text-muted-foreground">
+        {d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+      </div>
+    </div>
+  );
+}
+
+/** Two stacked labelled money values (Buy/Sell, Admin/Reseller). */
+function StackCell({
+  top,
+  bottom,
+}: {
+  top: [string, number];
+  bottom: [string, number];
+}) {
+  return (
+    <div className="whitespace-nowrap text-right leading-tight tabular-nums">
+      <div className="text-[11px]">
+        <span className="text-muted-foreground">{top[0]}-</span>
+        <span className="font-semibold">{bdt(Number(top[1]))}</span>
+      </div>
+      <div className="text-[11px]">
+        <span className="text-muted-foreground">{bottom[0]}-</span>
+        <span className="font-semibold">{bdt(Number(bottom[1]))}</span>
+      </div>
+    </div>
+  );
+}
+
+const PARTIAL_STATUSES = ["partial", "partial_full", "partial_item", "partial_delivery", "damaged"];
+
+/** At-a-glance partial settlement summary: collected vs order value. */
+function PartialSummary({ r }: { r: TxRow }) {
+  const total = Number(r.sell_total) || 0;
+  const received = Number(r.received) || 0;
+  const gap = Math.max(total - received, 0);
+  const pct = total > 0 ? Math.min(100, Math.round((received / total) * 100)) : 0;
+  return (
+    <div className="mt-1 max-w-[240px] rounded-lg border border-amber-500/30 bg-amber-500/5 px-2 py-1.5">
+      <div className="flex items-center justify-between text-[10px] font-semibold">
+        <span className="text-amber-600">Collected {bdt(received)}</span>
+        <span className="text-muted-foreground">of {bdt(total)}</span>
+      </div>
+      <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-amber-500/15">
+        <div className="h-full rounded-full bg-amber-500" style={{ width: `${pct}%` }} />
+      </div>
+      <div className="mt-1 flex items-center justify-between text-[10px]">
+        <span className="font-semibold text-amber-600">{pct}% received</span>
+        {gap > 0 && <span className="text-destructive">short {bdt(gap)}</span>}
+      </div>
+    </div>
+  );
+}
+
 
 const KIND_OPTIONS = [
   { value: "", label: "All transactions" },
@@ -136,6 +199,8 @@ export function TransactionReport({
         "Buy delivery",
         "Packaging",
         "Buy total",
+        "Advance",
+        "Advance by",
         "Amount",
         "Direction",
         "Running balance",
@@ -155,10 +220,13 @@ export function TransactionReport({
         r.buy_delivery,
         r.packaging,
         r.buy_total,
+        r.advance ?? 0,
+        r.advance_by ?? "",
         r.amount,
         r.direction,
         r.running,
       ]),
+
     );
     downloadCsv(`transaction-report-${new Date().toISOString().slice(0, 10)}.csv`, csv);
   };
@@ -240,18 +308,20 @@ export function TransactionReport({
           <div className="p-8 text-center text-xs text-muted-foreground">No transaction in this range.</div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[1000px] text-xs">
+            <table className="w-full min-w-[1120px] text-xs">
               <thead className="bg-muted/40 text-[10px] uppercase tracking-wide text-muted-foreground">
                 <tr>
                   <th className="px-3 py-2 text-left">Type</th>
+                  {admin && <th className="px-3 py-2 text-left">Reseller</th>}
                   <th className="px-3 py-2 text-right">Amount</th>
                   <th className="px-3 py-2 text-left">Date</th>
                   <th className="px-3 py-2 text-left">Status</th>
                   <th className="px-3 py-2 text-left">Meta / note</th>
-                  <th className="px-3 py-2 text-right">Subtotal (buy/sell)</th>
-                  <th className="px-3 py-2 text-right">Delivery (buy/sell)</th>
+                  <th className="px-3 py-2 text-right">Subtotal</th>
+                  <th className="px-3 py-2 text-right">Delivery</th>
                   <th className="px-3 py-2 text-right">Packaging</th>
                   <th className="px-3 py-2 text-right">Received</th>
+                  <th className="px-3 py-2 text-right">Advance</th>
                   <th className="px-3 py-2 text-right">Balance</th>
                 </tr>
               </thead>
@@ -259,8 +329,9 @@ export function TransactionReport({
                 {filtered.map((r, i) => {
                   const inflow = r.direction === "in";
                   const voided = r.direction === "void";
+                  const isPartial = !!r.order_id && PARTIAL_STATUSES.includes(r.status);
                   return (
-                    <tr key={`${r.at}-${i}`} className="hover:bg-muted/20">
+                    <tr key={`${r.at}-${i}`} className="align-top hover:bg-muted/20">
                       <td className="px-3 py-2">
                         <span
                           className={
@@ -276,12 +347,13 @@ export function TransactionReport({
                         >
                           {r.kind}
                         </span>
-                        {admin && (
-                          <div className="mt-1 truncate text-[10px] text-muted-foreground">
-                            {r.reseller_name} · {r.reseller_code}
-                          </div>
-                        )}
                       </td>
+                      {admin && (
+                        <td className="px-3 py-2">
+                          <div className="max-w-[150px] truncate text-[11px] font-semibold">{r.reseller_name}</div>
+                          <div className="text-[10px] text-muted-foreground">{r.reseller_code}</div>
+                        </td>
+                      )}
                       <td
                         className={
                           "px-3 py-2 text-right font-bold tabular-nums " +
@@ -291,15 +363,15 @@ export function TransactionReport({
                         {inflow ? "+" : "−"}
                         {bdt(Number(r.amount))}
                       </td>
-                      <td className="whitespace-nowrap px-3 py-2 text-[11px] text-muted-foreground">
-                        {new Date(r.at).toLocaleString()}
+                      <td className="px-3 py-2">
+                        <DateCell at={r.at} />
                       </td>
                       <td className="px-3 py-2">
                         <span className={`rounded-full px-2 py-0.5 text-[10px] capitalize ${orderStatusTone(r.status)}`}>
                           {orderStatusLabel(r.status)}
                         </span>
                       </td>
-                      <td className="max-w-[260px] px-3 py-2">
+                      <td className="max-w-[280px] px-3 py-2">
                         {r.order_id ? (
                           <Link
                             to={admin ? "/admin/orders" : "/reseller/orders"}
@@ -311,13 +383,27 @@ export function TransactionReport({
                         ) : (
                           <span className="font-semibold">{r.label}</span>
                         )}
-                        {r.note && <div className="mt-0.5 break-words text-[11px] text-muted-foreground">{r.note}</div>}
+                        <div className="mt-0.5 break-words text-[11px] text-muted-foreground">
+                          {r.note || r.label}
+                        </div>
+                        {isPartial && <PartialSummary r={r} />}
                       </td>
-                      <td className="px-3 py-2 text-right tabular-nums">
-                        {r.order_id ? `${bdt(Number(r.buy_product))} / ${bdt(Number(r.sell_subtotal))}` : "—"}
+                      <td className="px-3 py-2 text-right">
+                        {r.order_id ? (
+                          <StackCell top={["Buy", Number(r.buy_product)]} bottom={["Sell", Number(r.sell_subtotal)]} />
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
                       </td>
-                      <td className="px-3 py-2 text-right tabular-nums">
-                        {r.order_id ? `${bdt(Number(r.buy_delivery))} / ${bdt(Number(r.sell_delivery))}` : "—"}
+                      <td className="px-3 py-2 text-right">
+                        {r.order_id ? (
+                          <StackCell
+                            top={["Admin", Number(r.buy_delivery)]}
+                            bottom={["Reseller", Number(r.sell_delivery)]}
+                          />
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
                       </td>
                       <td className="px-3 py-2 text-right tabular-nums">
                         {r.order_id ? bdt(Number(r.packaging)) : "—"}
@@ -325,10 +411,21 @@ export function TransactionReport({
                       <td className="px-3 py-2 text-right tabular-nums">
                         {r.order_id ? bdt(Number(r.received)) : "—"}
                       </td>
+                      <td className="px-3 py-2 text-right">
+                        {r.order_id && Number(r.advance) > 0 ? (
+                          <div className="whitespace-nowrap leading-tight">
+                            <div className="text-[11px] font-semibold tabular-nums">{bdt(Number(r.advance))}</div>
+                            <div className="text-[10px] capitalize text-muted-foreground">{r.advance_by ?? "reseller"}</div>
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </td>
                       <td className="px-3 py-2 text-right font-semibold tabular-nums">{bdt(Number(r.running))}</td>
                     </tr>
                   );
                 })}
+
               </tbody>
             </table>
           </div>
