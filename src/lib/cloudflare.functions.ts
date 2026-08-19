@@ -225,7 +225,8 @@ export const connectDomain = createServerFn({ method: "POST" })
       .single();
     if (error) {
       await cf.deleteCustomHostname(conf, state.id);
-      throw new Response(error.message, { status: 400 });
+      const dup = (error as any).code === "23505";
+      throw new Response(dup ? "This domain is already connected" : error.message, { status: 400 });
     }
     return mapRow(row);
   });
