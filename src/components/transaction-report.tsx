@@ -106,15 +106,16 @@ function PartialSummary({ r }: { r: TxRow }) {
 }
 
 /**
- * Running balance per reseller (oldest → newest): every in adds, every out subtracts,
- * so the Balance column is always the simple sum of the Amount column above it.
+ * Running balance: every in adds, every out subtracts, so Balance is always the
+ * simple sum of the Amount column above it. When a single reseller is selected the
+ * balance runs per reseller; with "All resellers" it is one combined balance.
  */
-function withRunningBalance(rows: TxRow[]): TxRow[] {
+function withRunningBalance(rows: TxRow[], perReseller: boolean): TxRow[] {
   const asc = [...rows].sort((a, b) => new Date(a.at).getTime() - new Date(b.at).getTime());
   const run = new Map<string, number>();
   const balances = new Map<TxRow, number>();
   for (const r of asc) {
-    const key = r.reseller_id ?? "-";
+    const key = perReseller ? (r.reseller_id ?? "-") : "all";
     let bal = run.get(key) ?? 0;
     const amount = Number(r.amount) || 0;
     if (r.direction === "in") bal += amount;
@@ -124,6 +125,7 @@ function withRunningBalance(rows: TxRow[]): TxRow[] {
   }
   return rows.map((r) => ({ ...r, running: balances.get(r) ?? (Number(r.running) || 0) }));
 }
+
 
 
 
