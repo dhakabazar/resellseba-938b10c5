@@ -192,9 +192,12 @@ export function TransactionReport({
       profit = 0,
       loss = 0;
     for (const r of filtered) {
+      if (r.kind === "deposit") {
+        deposit += Number(r.amount);
+        continue; // security deposit is held money, not earnings
+      }
       if (r.direction === "in") inflow += Number(r.amount);
       if (r.direction === "out") outflow += Number(r.amount);
-      if (r.kind === "deposit") deposit += Number(r.amount);
       if (r.kind === "withdraw" && r.direction === "out") withdraw += Number(r.amount);
       if (r.kind === "profit") profit += Number(r.amount);
       if (r.kind === "loss") loss += Number(r.amount);
