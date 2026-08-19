@@ -211,7 +211,7 @@ export function NewOrderModal({
     if (firstError) return toast.error(firstError);
     const low = picked.find((x) => x.sellPrice < x.minPrice);
     if (low)
-      return toast.error(`${low.p.name}: সর্বনিম্ন বিক্রয় মূল্য ৳${low.minPrice} — এর নিচে অর্ডার করা যাবে না`);
+      return toast.error(`${low.p.name}: minimum selling price is ৳${low.minPrice} — order cannot be placed below this`);
     setBusy(true);
     try {
       const { data: order, error } = await supabase
@@ -525,7 +525,7 @@ export function NewOrderModal({
                                   onBlur={() => {
                                     if (sellPrice < minPrice) {
                                       setLines((prev) => prev.map((l, idx) => (idx === i ? { ...l, price: minPrice } : l)));
-                                      toast.error(`সর্বনিম্ন বিক্রয় মূল্য ৳${minPrice} — এর নিচে দেওয়া যাবে না`);
+                                      toast.error(`Minimum selling price is ৳${minPrice} — cannot go below this`);
                                     }
                                   }}
                                   className={`w-20 rounded-lg border bg-background px-2 py-1 text-[11px] font-bold tabular-nums focus:ring-2 focus:ring-primary/20 ${
