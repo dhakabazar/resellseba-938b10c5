@@ -53,7 +53,34 @@ const EMPTY_CONFIG: CfConfig = {
 export async function loadConfigAsCaller(supabase: any): Promise<CfConfig> {
   const { data, error } = await supabase.rpc("cf_config_get");
   if (error) throw new Response(error.message, { status: 403 });
-  return { ...EMPTY_CONFIG, ...(data ?? {}) } as CfConfig;
+  const row = (Array.isArray(data) ? data[0] : data) ?? {};
+  return { ...EMPTY_CONFIG, ...row, api_token: row.api_token ?? envToken() } as CfConfig;
+}
+
+/** Cloudflare token from a server secret (never reaches the browser). */
+function envToken(): string | null {
+  const v = process.env["CLOUDFLARE_API_TOKEN"];
+  return typeof v === "string" && v.trim() ? v.trim() : null;
+}
+
+/**
+ * Non-secret settings for any signed-in caller (resellers provisioning their own
+ * hostname). The token comes from the server secret only.
+ */
+export async function loadConfigForProvisioning(supabase: any): Promise<CfConfig> {
+  const { data, error } = await supabase.rpc("cf_config_settings");
+  if (error) throw new Response(error.message, { status: 403 });
+  const row = (Array.isArray(data) ? data[0] : data) ?? {};
+  return { ...EMPTY_CONFIG, ...row, api_token: envToken() } as CfConfig;
+}
+
+/** Admin config when permitted, otherwise the non-secret + env-token config. */
+export async function loadConfigFlexible(supabase: any): Promise<CfConfig> {
+  try {
+    return await loadConfigAsCaller(supabase);
+  } catch {
+    return loadConfigForProvisioning(supabase);
+  }
 }
 
 /** Public-safe DNS guide values for any signed-in user. */

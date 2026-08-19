@@ -190,7 +190,7 @@ export const connectDomain = createServerFn({ method: "POST" })
       .maybeSingle();
     if (dupe) throw new Response("This domain is already connected", { status: 400 });
 
-    const conf = cf.requireActiveConfig(await cf.loadConfigAsCaller(db));
+    const conf = cf.requireActiveConfig(await cf.loadConfigFlexible(db));
     const state = await cf.createCustomHostname(conf, hostname);
     let workerDomainId: string | null = null;
     try {
@@ -238,7 +238,7 @@ export const refreshDomain = createServerFn({ method: "POST" })
     const cf = await import("@/lib/cloudflare.server");
     const db = context.supabase;
     const row = await loadDomainForCaller({ supabase: context.supabase, userId: context.userId }, data.id);
-    const conf = cf.requireActiveConfig(await cf.loadConfigAsCaller(db));
+    const conf = cf.requireActiveConfig(await cf.loadConfigFlexible(db));
 
     let state;
     try {
@@ -295,7 +295,7 @@ export const disconnectDomain = createServerFn({ method: "POST" })
     const cf = await import("@/lib/cloudflare.server");
     const db = context.supabase;
     const row = await loadDomainForCaller({ supabase: context.supabase, userId: context.userId }, data.id);
-    const conf = await cf.loadConfigAsCaller(db);
+    const conf = await cf.loadConfigFlexible(db);
 
     if (conf.api_token && conf.zone_id && row.cloudflare_hostname_id)
       await cf.deleteCustomHostname(conf, row.cloudflare_hostname_id);
