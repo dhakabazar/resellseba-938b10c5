@@ -101,21 +101,47 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
 
   const totals = useMemo(() => {
     const subtotal = items.reduce((s, it) => s + it.reseller_price * it.quantity, 0);
-    const saCost = items.reduce((s, it) => s + it.sa_price * it.quantity, 0);
+    /** Product cost = item base cost minus its packaging part; packaging is tracked order-level. */
+    const packagingDefault = items.reduce((s, it) => {
+      const p = allProducts.find((x) => x.id === it.product_id);
+      return s + Number(p?.packaging_cost ?? 0) * it.quantity;
+    }, 0);
+    const itemCost = items.reduce((s, it) => s + it.sa_price * it.quantity, 0);
+    const productCost = Math.max(itemCost - packagingDefault, 0);
+    const packaging = packagingInput.trim() === "" ? packagingDefault : Math.max(Number(packagingInput) || 0, 0);
+    const saCost = productCost + packaging;
     const shipping = shippingMode === "auto" ? autoShipping : Number(shippingManual || 0);
-    const total = subtotal + shipping;
+    const disc = Math.min(Math.max(Number(discount) || 0, 0), subtotal + shipping);
+    const total = subtotal + shipping - disc;
     const recv = received.trim() === "" ? total : Number(received) || 0;
+    const deliveryCost = deliveryCostInput.trim() === "" ? shipping : Math.max(Number(deliveryCostInput) || 0, 0);
     return {
       subtotal,
       saCost,
+      productCost,
+      packagingDefault,
+      packaging,
       shipping,
+      deliveryCost,
+      discount: disc,
       total,
       received: recv,
       shortfall: Math.max(total - recv, 0),
       // Profit always follows the money really collected.
-      profit: recv - shipping - saCost,
+      profit: recv - deliveryCost - saCost,
     };
-  }, [items, shippingMode, shippingManual, autoShipping, received]);
+  }, [
+    items,
+    allProducts,
+    shippingMode,
+    shippingManual,
+    autoShipping,
+    received,
+    discount,
+    packagingInput,
+    deliveryCostInput,
+  ]);
+
 
   /** Minimum sell price per line = SA base cost of that item. */
   function minFor(it: EditItem) {
