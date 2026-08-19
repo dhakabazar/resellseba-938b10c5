@@ -126,7 +126,12 @@ function AdminOrdersPage() {
 
   useEffect(() => {
     navigate({
-      search: (prev) => ({ ...prev, tab, reseller: filters.reseller || undefined }),
+      search: (prev) => {
+        const next: any = { ...prev, tab, reseller: filters.reseller || undefined };
+        if (tab === "forwarded") delete next.tab;
+        if (!filters.reseller) delete next.reseller;
+        return next;
+      },
       replace: true,
     });
   }, [tab, filters.reseller]);
