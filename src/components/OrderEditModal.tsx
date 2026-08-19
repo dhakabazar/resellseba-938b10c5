@@ -319,19 +319,19 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                 </h3>
                 <div className="grid gap-x-4 gap-y-3 sm:grid-cols-2">
                   <label className="space-y-1">
-                    <span className="text-[13px] font-bold text-foreground/80">Name</span>
+                    <span className="text-[13px] font-semibold text-foreground/80">Name</span>
                     <input className={inp} value={name} onChange={(e) => setName(sanitizeName(e.target.value))} />
                   </label>
                   <label className="space-y-1">
-                    <span className="text-[13px] font-bold text-foreground/80">Mobile</span>
+                    <span className="text-[13px] font-semibold text-foreground/80">Mobile</span>
                     <input className={inp} value={phone} onChange={(e) => setPhone(normalizePhone(e.target.value))} />
                   </label>
                   <label className="space-y-1 sm:col-span-2">
-                    <span className="text-[13px] font-bold text-foreground/80">Address</span>
+                    <span className="text-[13px] font-semibold text-foreground/80">Address</span>
                     <textarea rows={2} className={inp} value={address} onChange={(e) => setAddress(e.target.value)} />
                   </label>
                   <label className="space-y-1">
-                    <span className="text-[13px] font-bold text-foreground/80">Delivery area</span>
+                    <span className="text-[13px] font-semibold text-foreground/80">Delivery area</span>
                     <select className={inp} value={area} onChange={(e) => setArea(e.target.value as any)}>
                       <option value="inside_dhaka">Inside Dhaka</option>
                       <option value="outside_dhaka">Outside Dhaka</option>
@@ -339,7 +339,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                   </label>
                   {isAdmin && (
                     <label className="space-y-1">
-                      <span className="text-[13px] font-bold text-foreground/80">Payment status</span>
+                      <span className="text-[13px] font-semibold text-foreground/80">Payment status</span>
                       <select className={inp} value={paymentStatus} onChange={(e) => setPaymentStatus(e.target.value)}>
                         <option value="unpaid">Unpaid</option>
                         <option value="partial">Partial</option>
