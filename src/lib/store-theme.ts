@@ -50,16 +50,21 @@ export type StoreTheme = {
   id: StoreThemeId;
   name: string;
   description: string;
-  /** google fonts stylesheet for this theme */
-  fontHref: string;
   /** typography / shape tokens — palette independent */
   vars: Record<string, string>;
   layout: StoreThemeLayout;
   palettes: StorePalette[];
 };
 
-const G = (families: string) =>
-  `https://fonts.googleapis.com/css2?${families}&display=swap`;
+/**
+ * Device font stacks. No webfont is downloaded — every theme uses fonts that
+ * already exist on the visitor's device (including Bengali system fonts), so
+ * the storefront never calls Google Fonts or any external font server.
+ */
+const SYS_SANS =
+  'system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Bengali", "Hind Siliguri", "Helvetica Neue", Arial, sans-serif';
+const SYS_SERIF =
+  'Georgia, "Times New Roman", "Noto Serif Bengali", "Noto Serif", serif';
 
 /** Builds a border color from the ink color so borders never clash. */
 const pal = (
@@ -83,12 +88,11 @@ export const STORE_THEMES: StoreTheme[] = [
     id: "aurora",
     name: "Aurora",
     description: "Modern gradient commerce — soft cards, glass header, bold hero.",
-    fontHref: G("family=Sora:wght@500;600;700&family=Manrope:wght@400;500;600;700"),
     vars: {
       "--st-radius": "16px",
       "--st-radius-sm": "10px",
-      "--st-font-head": "'Sora', system-ui, sans-serif",
-      "--st-font-body": "'Manrope', system-ui, sans-serif",
+      "--st-font-head": SYS_SANS,
+      "--st-font-body": SYS_SANS,
       "--st-head-weight": "700",
       "--st-track": "-0.02em",
     },
@@ -148,12 +152,11 @@ export const STORE_THEMES: StoreTheme[] = [
     id: "noir",
     name: "Noir Luxe",
     description: "Dark premium boutique — serif headlines, metallic accents, spotlight hero.",
-    fontHref: G("family=Cormorant+Garamond:wght@500;600;700&family=Karla:wght@400;500;600;700"),
     vars: {
       "--st-radius": "4px",
       "--st-radius-sm": "2px",
-      "--st-font-head": "'Cormorant Garamond', Georgia, serif",
-      "--st-font-body": "'Karla', system-ui, sans-serif",
+      "--st-font-head": SYS_SERIF,
+      "--st-font-body": SYS_SANS,
       "--st-head-weight": "600",
       "--st-track": "0.01em",
     },
@@ -213,12 +216,11 @@ export const STORE_THEMES: StoreTheme[] = [
     id: "bazaar",
     name: "Bazaar",
     description: "High-density marketplace — colored top bar, compact cards, deal strips.",
-    fontHref: G("family=Hind+Siliguri:wght@500;600;700&family=Barlow:wght@400;500;600;700"),
     vars: {
       "--st-radius": "8px",
       "--st-radius-sm": "6px",
-      "--st-font-head": "'Hind Siliguri', system-ui, sans-serif",
-      "--st-font-body": "'Barlow', system-ui, sans-serif",
+      "--st-font-head": SYS_SANS,
+      "--st-font-body": SYS_SANS,
       "--st-head-weight": "700",
       "--st-track": "0",
     },
@@ -278,12 +280,11 @@ export const STORE_THEMES: StoreTheme[] = [
     id: "atelier",
     name: "Atelier",
     description: "Editorial minimal — paper tones, serif display, generous whitespace.",
-    fontHref: G("family=Instrument+Serif:ital@0;1&family=Work+Sans:wght@400;500;600"),
     vars: {
       "--st-radius": "2px",
       "--st-radius-sm": "2px",
-      "--st-font-head": "'Instrument Serif', Georgia, serif",
-      "--st-font-body": "'Work Sans', system-ui, sans-serif",
+      "--st-font-head": SYS_SERIF,
+      "--st-font-body": SYS_SANS,
       "--st-head-weight": "400",
       "--st-track": "-0.01em",
     },
@@ -395,14 +396,10 @@ export function storeThemeStyle(theme: StoreTheme, paletteId?: string | null): R
   } as React.CSSProperties;
 }
 
-/** Ensures the theme's webfont stylesheet is present (client only). */
-export function ensureThemeFont(theme: StoreTheme) {
-  if (typeof document === "undefined") return;
-  const id = `st-font-${theme.id}`;
-  if (document.getElementById(id)) return;
-  const link = document.createElement("link");
-  link.id = id;
-  link.rel = "stylesheet";
-  link.href = theme.fontHref;
-  document.head.appendChild(link);
+/**
+ * Kept for backwards compatibility: themes now use device fonts only, so
+ * there is no external stylesheet to load.
+ */
+export function ensureThemeFont(_theme: StoreTheme) {
+  /* no external webfont — device fonts only */
 }
