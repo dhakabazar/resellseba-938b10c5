@@ -212,7 +212,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
     if (first) return toast.error(first);
     const low = items.find((it) => it.reseller_price < minFor(it));
     if (low)
-      return toast.error(`${low.product_name}: সর্বনিম্ন বিক্রয় মূল্য ৳${minFor(low)} — এর নিচে সেভ করা যাবে না`);
+      return toast.error(`${low.product_name}: minimum selling price is ৳${minFor(low)} — cannot save below this`);
     setBusy(true);
     try {
       if (removed.length > 0) {
@@ -314,24 +314,24 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
             <div className="min-h-0 flex-1 space-y-6 overflow-y-auto p-4 sm:p-6">
               {/* Customer */}
               <section className="space-y-3">
-                <h3 className="text-[13px] font-black uppercase tracking-wide text-foreground/80">
+                <h3 className="text-[13px] font-bold uppercase tracking-wide text-foreground/80">
                   Customer information
                 </h3>
                 <div className="grid gap-x-4 gap-y-3 sm:grid-cols-2">
                   <label className="space-y-1">
-                    <span className="text-[13px] font-bold text-foreground/80">Name</span>
+                    <span className="text-[13px] font-semibold text-foreground/80">Name</span>
                     <input className={inp} value={name} onChange={(e) => setName(sanitizeName(e.target.value))} />
                   </label>
                   <label className="space-y-1">
-                    <span className="text-[13px] font-bold text-foreground/80">Mobile</span>
+                    <span className="text-[13px] font-semibold text-foreground/80">Mobile</span>
                     <input className={inp} value={phone} onChange={(e) => setPhone(normalizePhone(e.target.value))} />
                   </label>
                   <label className="space-y-1 sm:col-span-2">
-                    <span className="text-[13px] font-bold text-foreground/80">Address</span>
+                    <span className="text-[13px] font-semibold text-foreground/80">Address</span>
                     <textarea rows={2} className={inp} value={address} onChange={(e) => setAddress(e.target.value)} />
                   </label>
                   <label className="space-y-1">
-                    <span className="text-[13px] font-bold text-foreground/80">Delivery area</span>
+                    <span className="text-[13px] font-semibold text-foreground/80">Delivery area</span>
                     <select className={inp} value={area} onChange={(e) => setArea(e.target.value as any)}>
                       <option value="inside_dhaka">Inside Dhaka</option>
                       <option value="outside_dhaka">Outside Dhaka</option>
@@ -339,7 +339,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                   </label>
                   {isAdmin && (
                     <label className="space-y-1">
-                      <span className="text-[13px] font-bold text-foreground/80">Payment status</span>
+                      <span className="text-[13px] font-semibold text-foreground/80">Payment status</span>
                       <select className={inp} value={paymentStatus} onChange={(e) => setPaymentStatus(e.target.value)}>
                         <option value="unpaid">Unpaid</option>
                         <option value="partial">Partial</option>
@@ -354,7 +354,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
 
               {/* Items */}
               <section className="space-y-3">
-                <h3 className="text-[13px] font-black uppercase tracking-wide text-foreground/80">
+                <h3 className="text-[13px] font-bold uppercase tracking-wide text-foreground/80">
                   Products & pricing
                 </h3>
                 <div className="relative">
@@ -414,7 +414,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                       </div>
                       <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
                         <label className="space-y-1">
-                          <span className="text-[11px] font-bold uppercase text-muted-foreground">Qty</span>
+                          <span className="text-[11px] font-semibold uppercase text-muted-foreground">Qty</span>
                           <div className="flex items-center gap-1">
                             <button
                               type="button"
@@ -450,7 +450,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                           </div>
                         </label>
                         <label className="space-y-1">
-                          <span className="text-[11px] font-bold uppercase text-muted-foreground">
+                          <span className="text-[11px] font-semibold uppercase text-muted-foreground">
                             Sell price · min ৳{minFor(it)}
                           </span>
                           <input
@@ -466,14 +466,14 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                               const min = minFor(it);
                               if (it.reseller_price < min) {
                                 setItems((prev) => prev.map((x) => (x === it ? { ...x, reseller_price: min } : x)));
-                                toast.error(`সর্বনিম্ন বিক্রয় মূল্য ৳${min} — এর নিচে দেওয়া যাবে না`);
+                                toast.error(`Minimum selling price is ৳${min} — cannot go below this`);
                               }
                             }}
                           />
                         </label>
                         {isAdmin && (
                           <label className="space-y-1">
-                            <span className="text-[11px] font-bold uppercase text-muted-foreground">Base cost</span>
+                            <span className="text-[11px] font-semibold uppercase text-muted-foreground">Base cost</span>
                             <input
                               className={inp}
                               value={it.sa_price}
@@ -486,7 +486,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                           </label>
                         )}
                         <div className="space-y-1">
-                          <span className="text-[11px] font-bold uppercase text-muted-foreground">Line total</span>
+                          <span className="text-[11px] font-semibold uppercase text-muted-foreground">Line total</span>
                           <div className="px-1 py-1.5 text-xs font-bold tabular-nums">
                             ৳{(it.reseller_price * it.quantity).toFixed(0)}
                           </div>
@@ -499,19 +499,19 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
 
               {/* Charges */}
               <section className="space-y-3">
-                <SectionLabel>ডেলিভারি ও অন্যান্য চার্জ</SectionLabel>
+                <SectionLabel>Delivery & Other Charges</SectionLabel>
                 <div className="grid gap-3 rounded-2xl border bg-muted/20 p-4 sm:grid-cols-2">
                   <MoneyField
-                    label="ডেলিভারি চার্জ (কাস্টমার দিবে)"
-                    hint={`ডিফল্ট ৳${autoShipping.toFixed(0)}`}
+                    label="Delivery Charge (Customer pays)"
+                    hint={`Default ৳${autoShipping.toFixed(0)}`}
                     value={shipInput}
                     onChange={setShipInput}
                     placeholder={autoShipping.toFixed(0)}
                   />
-                  <MoneyField label="ডিসকাউন্ট" value={discount} onChange={setDiscount} placeholder="0" />
+                  <MoneyField label="Discount" value={discount} onChange={setDiscount} placeholder="0" />
                   <MoneyField
-                    label="প্যাকেজিং কস্ট"
-                    hint={isAdmin ? "এডিট করা যাবে" : "শুধু অ্যাডমিন"}
+                    label="Packaging Cost"
+                    hint={isAdmin ? "Editable" : "Admin only"}
                     disabled={!isAdmin}
                     value={packagingInput}
                     onChange={setPackagingInput}
@@ -519,8 +519,8 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                   />
                   {isAdmin && (
                     <MoneyField
-                      label="কুরিয়ার কস্ট (অ্যাডমিন খরচ)"
-                      hint={`ডিফল্ট ৳${totals.shipping.toFixed(0)}`}
+                      label="Courier Cost (Admin cost)"
+                      hint={`Default ৳${totals.shipping.toFixed(0)}`}
                       value={deliveryCostInput}
                       onChange={setDeliveryCostInput}
                       placeholder={totals.shipping.toFixed(0)}
@@ -531,12 +531,12 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                   খালি রাখলে ডিফল্ট বসবে। ডেলিভারি চার্জ = কাস্টমার দিবে, কুরিয়ার কস্ট = অ্যাডমিনের খরচ।
                 </p>
 
-                <SectionLabel>অ্যাডভান্স পেমেন্ট</SectionLabel>
+                <SectionLabel>Advance Payment</SectionLabel>
                 <div className="space-y-3 rounded-2xl border border-primary/20 bg-primary/[0.03] p-4">
                   <div className="grid gap-3 sm:grid-cols-2">
                     <MoneyField
-                      label="অ্যাডভান্স অ্যামাউন্ট"
-                      hint="আগে পেলে"
+                      label="Advance Amount"
+                      hint="If already received"
                       value={advance}
                       onChange={setAdvance}
                       placeholder="0"
@@ -549,10 +549,10 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                   </p>
                 </div>
 
-                <SectionLabel>পেমেন্ট মেথড ও নোট</SectionLabel>
+                <SectionLabel>Payment Method & Note</SectionLabel>
                 <div className="grid gap-3 rounded-2xl border bg-muted/20 p-4 sm:grid-cols-2">
                   <label className="space-y-1">
-                    <span className="text-[13px] font-bold text-foreground/80">পেমেন্ট মেথড</span>
+                    <span className="text-[13px] font-semibold text-foreground/80">Payment Method</span>
                     <select className={inp} value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
                       <option value="cod">Cash on Delivery</option>
                       <option value="bkash">bKash</option>
@@ -563,8 +563,8 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                     </select>
                   </label>
                   <label className="space-y-1">
-                    <span className="text-[13px] font-bold text-foreground/80">
-                      {isAdmin ? "অ্যাডমিন নোট" : "আপনার নোট"}
+                    <span className="text-[13px] font-semibold text-foreground/80">
+                      {isAdmin ? "Admin Note" : "Your Note"}
                     </span>
                     <input className={inp} value={note} onChange={(e) => setNote(e.target.value)} />
                   </label>
@@ -575,7 +575,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
 
                 {isAdmin && (
                   <label className="mt-3 block">
-                    <span className="text-[13px] font-bold text-foreground/80">
+                    <span className="text-[13px] font-semibold text-foreground/80">
                       Received amount (partial delivery)
                     </span>
                     <input
@@ -586,7 +586,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                       onChange={(e) => setReceived(e.target.value)}
                     />
                     <span className="mt-1 block text-[10px] text-muted-foreground">
-                      Courier partial payment dile ekhane collected amount din — profit ei amount theke calculate hobe.
+                      If courier paid partially, enter collected amount here — profit is calculated from this amount.
                     </span>
                   </label>
                 )}

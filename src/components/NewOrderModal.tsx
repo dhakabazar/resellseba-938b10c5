@@ -211,7 +211,7 @@ export function NewOrderModal({
     if (firstError) return toast.error(firstError);
     const low = picked.find((x) => x.sellPrice < x.minPrice);
     if (low)
-      return toast.error(`${low.p.name}: সর্বনিম্ন বিক্রয় মূল্য ৳${low.minPrice} — এর নিচে অর্ডার করা যাবে না`);
+      return toast.error(`${low.p.name}: minimum selling price is ৳${low.minPrice} — order cannot be placed below this`);
     setBusy(true);
     try {
       const { data: order, error } = await supabase
@@ -321,7 +321,7 @@ export function NewOrderModal({
             <div className="space-y-6 p-4 sm:p-6 border-b">
               {isAdmin && (
                 <div className="space-y-3">
-                  <label className="text-[13px] font-black uppercase tracking-wide text-foreground/80">Reseller Selection</label>
+                  <label className="text-[13px] font-bold uppercase tracking-wide text-foreground/80">Reseller Selection</label>
                   <div className="rounded-xl border bg-muted/30 p-3 space-y-3">
                     <div className="relative">
                       <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/60" />
@@ -380,7 +380,7 @@ export function NewOrderModal({
 
               <div className="space-y-6">
                 <div className="space-y-3">
-                  <label className="text-[13px] font-black uppercase tracking-wide text-foreground/80">Customer Information</label>
+                  <label className="text-[13px] font-bold uppercase tracking-wide text-foreground/80">Customer Information</label>
                   <div className="grid gap-x-4 gap-y-3 sm:grid-cols-2">
                     <Field label="Customer Full Name">
                       <input
@@ -421,7 +421,7 @@ export function NewOrderModal({
 
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <label className="text-[13px] font-black uppercase tracking-wide text-foreground/80">Order Items</label>
+                    <label className="text-[13px] font-bold uppercase tracking-wide text-foreground/80">Order Items</label>
                     {picked.length > 0 && (
                       <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[9px] font-bold text-primary animate-in zoom-in">
                         {picked.length} {picked.length === 1 ? 'Item' : 'Items'} Selected
@@ -514,7 +514,7 @@ export function NewOrderModal({
                               <div className="truncate text-xs font-black text-foreground">{p.name}</div>
                               <div className="mt-1"><ProductCodeChip code={p.product_code} /></div>
                               <div className="mt-1.5 flex items-center gap-2">
-                                <span className="text-[9px] font-bold uppercase text-muted-foreground">Sell ৳</span>
+                                <span className="text-[9px] font-semibold uppercase text-muted-foreground">Sell ৳</span>
                                 <input
                                   value={sellPrice}
                                   inputMode="numeric"
@@ -525,7 +525,7 @@ export function NewOrderModal({
                                   onBlur={() => {
                                     if (sellPrice < minPrice) {
                                       setLines((prev) => prev.map((l, idx) => (idx === i ? { ...l, price: minPrice } : l)));
-                                      toast.error(`সর্বনিম্ন বিক্রয় মূল্য ৳${minPrice} — এর নিচে দেওয়া যাবে না`);
+                                      toast.error(`Minimum selling price is ৳${minPrice} — cannot go below this`);
                                     }
                                   }}
                                   className={`w-20 rounded-lg border bg-background px-2 py-1 text-[11px] font-bold tabular-nums focus:ring-2 focus:ring-primary/20 ${
@@ -573,7 +573,7 @@ export function NewOrderModal({
                     {/* Delivery Area Picker (Inside Cart Section) */}
                     {totals.showAreaPicker && (
                       <div className="p-4 border-t bg-muted/10 animate-in fade-in slide-in-from-bottom-2">
-                        <label className="mb-2.5 block text-[10px] font-black text-muted-foreground/80 uppercase tracking-widest">Select Delivery Destination</label>
+                        <label className="mb-2.5 block text-[10px] font-bold text-muted-foreground/80 uppercase tracking-widest">Select Delivery Destination</label>
                         <div className="grid grid-cols-2 gap-3">
                           {(
                             [
@@ -605,19 +605,19 @@ export function NewOrderModal({
 
                 {picked.length > 0 && (
                   <div className="space-y-3">
-                    <SectionLabel>ডেলিভারি ও অন্যান্য চার্জ</SectionLabel>
+                    <SectionLabel>Delivery & Other Charges</SectionLabel>
                     <div className="grid gap-3 rounded-2xl border bg-muted/20 p-4 sm:grid-cols-2">
                       <MoneyField
-                        label="ডেলিভারি চার্জ (কাস্টমার দিবে)"
-                        hint={`ডিফল্ট ৳${totals.autoShipping.toFixed(0)}`}
+                        label="Delivery Charge (Customer pays)"
+                        hint={`Default ৳${totals.autoShipping.toFixed(0)}`}
                         value={shipOverride}
                         onChange={setShipOverride}
                         placeholder={totals.autoShipping.toFixed(0)}
                       />
-                      <MoneyField label="ডিসকাউন্ট" value={discount} onChange={setDiscount} placeholder="0" />
+                      <MoneyField label="Discount" value={discount} onChange={setDiscount} placeholder="0" />
                       <MoneyField
-                        label="প্যাকেজিং কস্ট"
-                        hint={isAdmin ? "এডিট করা যাবে" : "শুধু অ্যাডমিন"}
+                        label="Packaging Cost"
+                        hint={isAdmin ? "Editable" : "Admin only"}
                         disabled={!isAdmin}
                         value={isAdmin ? packagingOverride : ""}
                         onChange={setPackagingOverride}
@@ -625,8 +625,8 @@ export function NewOrderModal({
                       />
                       {isAdmin && (
                         <MoneyField
-                          label="কুরিয়ার কস্ট (অ্যাডমিন খরচ)"
-                          hint={`ডিফল্ট ৳${totals.shipping.toFixed(0)}`}
+                          label="Courier Cost (Admin cost)"
+                          hint={`Default ৳${totals.shipping.toFixed(0)}`}
                           value={deliveryCostOverride}
                           onChange={setDeliveryCostOverride}
                           placeholder={totals.shipping.toFixed(0)}
@@ -638,12 +638,12 @@ export function NewOrderModal({
                     </p>
 
                     {/* Advance payment */}
-                    <SectionLabel>অ্যাডভান্স পেমেন্ট</SectionLabel>
+                    <SectionLabel>Advance Payment</SectionLabel>
                     <div className="space-y-3 rounded-2xl border border-primary/20 bg-primary/[0.03] p-4">
                       <div className="grid gap-3 sm:grid-cols-2">
                         <MoneyField
-                          label="অ্যাডভান্স অ্যামাউন্ট"
-                          hint="আগে পেলে"
+                          label="Advance Amount"
+                          hint="If already received"
                           value={advance}
                           onChange={setAdvance}
                           placeholder="0"
@@ -657,9 +657,9 @@ export function NewOrderModal({
                       </p>
                     </div>
 
-                    <SectionLabel>পেমেন্ট মেথড ও নোট</SectionLabel>
+                    <SectionLabel>Payment Method & Note</SectionLabel>
                     <div className="grid gap-3 rounded-2xl border bg-muted/20 p-4 sm:grid-cols-2">
-                      <Field label="পেমেন্ট মেথড">
+                      <Field label="Payment Method">
                         <select
                           value={paymentMethod}
                           onChange={(e) => setPaymentMethod(e.target.value)}
@@ -672,11 +672,11 @@ export function NewOrderModal({
                           <option value="sslcommerz">SSLCommerz</option>
                         </select>
                       </Field>
-                      <Field label="অর্ডার নোট (অপশনাল)">
+                      <Field label="Order Note (Optional)">
                         <input
                           value={note}
                           onChange={(e) => setNote(e.target.value)}
-                          placeholder="বিশেষ নির্দেশনা..."
+                          placeholder="Special instructions..."
                           className="w-full rounded-lg border px-3 py-2 text-[13px] focus:ring-2 focus:ring-primary/20"
                         />
                       </Field>
@@ -693,7 +693,7 @@ export function NewOrderModal({
             <aside className="flex flex-col bg-muted/20 p-4 sm:p-6 h-full border-t">
               <div className="flex-1">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/80">Order Summary</h3>
+                  <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80">Order Summary</h3>
                 </div>
               </div>
 
@@ -745,12 +745,12 @@ export function NewOrderModal({
                   
                   <div className="flex justify-between items-center">
                     <div>
-                      <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 block">Payable Total</span>
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 block">Payable Total</span>
                       <span className="text-2xl font-black text-primary tracking-tight">৳{totals.total.toFixed(0)}</span>
                     </div>
                     {!isAdmin && totals.profit !== 0 && (
                       <div className="text-right">
-                        <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 block">
+                        <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/60 block">
                           {totals.resellerAdvance > 0 ? "Final amount (advance baade)" : "Estimated Profit"}
                         </span>
                         <span
@@ -801,7 +801,7 @@ function Field({
 }) {
   return (
     <div className={className}>
-      <label className="mb-1.5 block text-[13px] font-bold">{label}</label>
+      <label className="mb-1.5 block text-[13px] font-semibold">{label}</label>
       {children}
     </div>
   );
