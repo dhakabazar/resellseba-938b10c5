@@ -1016,40 +1016,7 @@ function OrdersPage() {
                           </div>
                         )}
 
-                        <div className="rounded-lg border bg-background p-3 text-sm shadow-sm">
-                           <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Financial Summary</h4>
-                           <div className="flex justify-between py-1 border-b border-dashed">
-                             <span>Subtotal</span>
-                             <span>৳{Number(o.subtotal).toFixed(0)}</span>
-                           </div>
-                           <div className="flex justify-between py-1 border-b border-dashed">
-                             <span>Shipping</span>
-                             <span>৳{Number(o.shipping_cost).toFixed(0)}</span>
-                           </div>
-                           <div className="flex justify-between py-1 border-b border-dashed">
-                             <span>Discount</span>
-                             <span>৳{Number(o.discount).toFixed(0)}</span>
-                           </div>
-                           <div className="flex justify-between py-1 font-bold text-primary mt-1">
-                             <span>Grand Total</span>
-                             <span>৳{Number(o.total).toFixed(0)}</span>
-                           </div>
-                           <div className="flex justify-between py-1 text-[11px] text-muted-foreground">
-                             <span>Received</span>
-                             <span className={orderShortfall(o) > 0 ? "text-destructive font-semibold" : ""}>
-                               ৳{orderReceived(o).toFixed(0)}
-                             </span>
-                           </div>
-                           <div
-                             className={
-                               "flex justify-between py-1 font-bold mt-1 pt-1 border-t " +
-                               (orderProfit(o) < 0 ? "text-destructive" : "text-success")
-                             }
-                           >
-                             <span>{orderProfit(o) < 0 ? "Your Loss" : "Your Profit"}</span>
-                             <span>৳{orderProfit(o).toFixed(0)}</span>
-                           </div>
-                        </div>
+                        <OrderMoneyPanel order={o} role="reseller" />
                       </div>
                     </div>
                   </div>
