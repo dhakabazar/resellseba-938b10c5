@@ -598,14 +598,20 @@ function AdminOrdersPage() {
                   <X className="h-4 w-4" />
                 </button>
               </div>
-              <div className="p-4">
+              <div className="max-h-[60vh] overflow-y-auto p-4">
                 <div className="grid grid-cols-1 gap-1.5">
-                  {(statusModal.isBulk
-                    ? ORDER_STATUS_OPTIONS
-                    : (Array.from(
-                        new Set([...nextStatuses(statusModal.currentStatus, "admin"), statusModal.currentStatus]),
-                      ) as typeof ORDER_STATUS_OPTIONS)
-                  ).map((s) => (
+                  {(() => {
+                    const recommended = statusModal.isBulk
+                      ? []
+                      : nextStatuses(statusModal.currentStatus, "admin");
+                    return Array.from(
+                      new Set([
+                        ...recommended,
+                        statusModal.currentStatus,
+                        ...ORDER_STATUS_OPTIONS,
+                      ]),
+                    ) as typeof ORDER_STATUS_OPTIONS;
+                  })().map((s) => (
                     <button
                       key={s}
                       disabled={loading}
