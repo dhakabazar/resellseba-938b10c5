@@ -333,3 +333,40 @@ export function orderStatusTone(status: string) {
   if (status === "packaging") return "bg-violet-500/15 text-violet-600";
   return "bg-primary/15 text-primary";
 }
+
+export type OrderTabGroup = "processing" | "delivered" | "partial" | "terminal";
+
+/** Visual grouping for order list tabs. */
+export function orderTabGroup(key: OrderTabKey): OrderTabGroup {
+  switch (key) {
+    case "delivered":
+      return "delivered";
+    case "pending_partial":
+    case "partial_full":
+    case "partial_item":
+    case "partial_delivery":
+      return "partial";
+    case "pending_return":
+    case "returned":
+    case "damaged":
+    case "cancelled":
+      return "terminal";
+    default:
+      return "processing";
+  }
+}
+
+/** Tailwind classes for a tab in its group. */
+export function orderTabClasses(key: OrderTabKey, active: boolean) {
+  const group = orderTabGroup(key);
+  if (active) {
+    if (group === "delivered") return "bg-emerald-600 text-white border-emerald-600 shadow-sm";
+    if (group === "partial") return "bg-amber-500 text-white border-amber-500 shadow-sm";
+    if (group === "terminal") return "bg-rose-600 text-white border-rose-600 shadow-sm";
+    return "bg-primary text-primary-foreground border-primary shadow-sm";
+  }
+  if (group === "delivered") return "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100";
+  if (group === "partial") return "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100";
+  if (group === "terminal") return "bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100";
+  return "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100";
+}
