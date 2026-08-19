@@ -339,29 +339,10 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                     <textarea rows={2} className={inp} value={address} onChange={(e) => setAddress(e.target.value)} />
                   </label>
                   <label className="space-y-1">
-                    <span className="text-[13px] font-bold text-foreground/80">City</span>
-                    <input className={inp} value={city} onChange={(e) => setCity(e.target.value)} />
-                  </label>
-                  <label className="space-y-1">
-                    <span className="text-[13px] font-bold text-foreground/80">Landmark</span>
-                    <input className={inp} value={landmark} onChange={(e) => setLandmark(e.target.value)} />
-                  </label>
-                  <label className="space-y-1">
                     <span className="text-[13px] font-bold text-foreground/80">Delivery area</span>
                     <select className={inp} value={area} onChange={(e) => setArea(e.target.value as any)}>
                       <option value="inside_dhaka">Inside Dhaka</option>
                       <option value="outside_dhaka">Outside Dhaka</option>
-                    </select>
-                  </label>
-                  <label className="space-y-1">
-                    <span className="text-[13px] font-bold text-foreground/80">Payment method</span>
-                    <select className={inp} value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
-                      <option value="cod">Cash on Delivery</option>
-                      <option value="bkash">bKash</option>
-                      <option value="nagad">Nagad</option>
-                      <option value="rocket">Rocket</option>
-                      <option value="sslcommerz">SSLCommerz</option>
-                      <option value="other">Other</option>
                     </select>
                   </label>
                   {isAdmin && (
@@ -375,13 +356,8 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                       </select>
                     </label>
                   )}
-                  <label className="space-y-1 sm:col-span-2">
-                    <span className="text-[13px] font-bold text-foreground/80">
-                      {isAdmin ? "Admin note" : "Your note"}
-                    </span>
-                    <input className={inp} value={note} onChange={(e) => setNote(e.target.value)} />
-                  </label>
                 </div>
+
               </section>
 
               {/* Items */}
