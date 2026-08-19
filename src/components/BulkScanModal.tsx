@@ -5,8 +5,25 @@ import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { orderStatusLabel } from "@/lib/courier-status";
 
-/** Single, fixed logic: Packaging → Courier Handover. No auto, no other mode. */
-const SCAN_HINT = "Packaging → Courier Handover";
+/** Two fixed logics — no auto detection. */
+export type ScanMode = "handover" | "return";
+
+const MODES: Record<ScanMode, { title: string; hint: string; from: string; to: string; note: string }> = {
+  handover: {
+    title: "Bulk scan · Courier Handover",
+    hint: "Packaging → Courier Handover",
+    from: "packaging",
+    to: "ready_to_ship",
+    note: "Bulk scan handover",
+  },
+  return: {
+    title: "Bulk scan · Return received",
+    hint: "Pending Return → Returned",
+    from: "pending_return",
+    to: "returned",
+    note: "Bulk scan return received",
+  },
+};
 
 type LogRow = {
   id: string;
