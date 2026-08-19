@@ -175,6 +175,7 @@ function OrdersPage() {
   const [pickScope, setPickScope] = useState<"filtered" | "marked">("filtered");
   const [marked, setMarked] = useState<string[]>([]);
   const [expandedOrders, setExpandedOrders] = useState<string[]>([]);
+  const [zoomImage, setZoomImage] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [editId, setEditId] = useState<string | null>(null);
   const [statusModal, setStatusModal] = useState<{ open: boolean; orderId: string; currentStatus: string; isBulk?: boolean } | null>(null);
