@@ -225,7 +225,11 @@ function BulkScanModal({ mode, onClose }: { mode: ScanMode; onClose: () => void 
         }
         const { error } = await supabase
           .from("orders")
-          .update({ status: step.to as any })
+          .update(
+            mode === "return"
+              ? ({ status: step.to, received_amount: 0, settled_at: new Date().toISOString() } as any)
+              : ({ status: step.to } as any),
+          )
           .eq("id", order.id);
         if (error) {
           if (sound) beepError();
