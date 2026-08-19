@@ -39,16 +39,26 @@ type OrderRow = {
 
 const num = (v: unknown) => Number(v ?? 0) || 0;
 
+/** Partial receive kinds — admin picks one when settling a Pending Partial order. */
+const PARTIAL_KINDS: { key: string; label: string; hint: string }[] = [
+  { key: "partial_full", label: "Partial (Full item)", hint: "Customer kept all items, paid less" },
+  { key: "partial_item", label: "Partial (Item)", hint: "Some items returned" },
+  { key: "partial_delivery", label: "Partial (Delivery Charge)", hint: "All items returned, delivery paid" },
+];
+
 export function OrderSettleModal({
   open,
   orderId,
   targetStatus,
+  allowKindSwitch = false,
   onClose,
   onSaved,
 }: {
   open: boolean;
   orderId: string | null;
   targetStatus: string;
+  /** show the partial-kind picker (used from Pending Partial → status change) */
+  allowKindSwitch?: boolean;
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -61,10 +71,15 @@ export function OrderSettleModal({
   const [delivery, setDelivery] = useState(0);
   const [packaging, setPackaging] = useState(0);
   const [note, setNote] = useState("");
+  const [target, setTarget] = useState(targetStatus);
 
-  const itemPartial = targetStatus === "partial_item";
-  const failed = targetStatus === "returned";
-  const deliveryOnly = targetStatus === "partial_delivery";
+  useEffect(() => {
+    if (open) setTarget(targetStatus);
+  }, [open, targetStatus]);
+
+  const itemPartial = target === "partial_item";
+  const failed = target === "returned";
+  const deliveryOnly = target === "partial_delivery";
 
   useEffect(() => {
     if (!open || !orderId) return;
@@ -92,18 +107,18 @@ export function OrderSettleModal({
         setPackaging(num(row.packaging_total));
         setNote(row.settlement_note ?? "");
         setReceived(
-          targetStatus === "returned"
+          target === "returned"
             ? 0
             : row.received_amount != null
               ? num(row.received_amount)
-              : targetStatus === "partial_delivery"
+              : target === "partial_delivery"
                 ? num(row.shipping_cost)
                 : num(row.total),
         );
       }
       setLoading(false);
     })();
-  }, [open, orderId, targetStatus]);
+  }, [open, orderId, target]);
 
   const calc = useMemo(() => {
     const fullProduct = Math.max(num(order?.sa_cost_total) - num(order?.packaging_total), 0);
@@ -135,7 +150,7 @@ export function OrderSettleModal({
     const { error } = await supabase
       .from("orders")
       .update({
-        status: targetStatus as never,
+        status: target as never,
         received_amount: failed ? 0 : received,
         delivery_cost: delivery,
         packaging_total: packaging,
@@ -155,10 +170,10 @@ export function OrderSettleModal({
     }
     await supabase.from("order_status_history").insert({
       order_id: order.id,
-      status: targetStatus as never,
-      note: note ? `Settled: ${note}` : `Settled as ${orderStatusLabel(targetStatus)}`,
+      status: target as never,
+      note: note ? `Settled: ${note}` : `Settled as ${orderStatusLabel(target)}`,
     });
-    toast.success(`Order #${order.order_number} settled — ${orderStatusLabel(targetStatus)}`);
+    toast.success(`Order #${order.order_number} settled — ${orderStatusLabel(target)}`);
     setSaving(false);
     onSaved();
     onClose();
@@ -169,7 +184,7 @@ export function OrderSettleModal({
       <div className="my-8 w-full max-w-2xl overflow-hidden rounded-2xl bg-background shadow-2xl ring-1 ring-black/5">
         <div className="flex items-center justify-between border-b bg-muted/30 px-5 py-4">
           <div>
-            <h3 className="text-sm font-bold">Settle order — {orderStatusLabel(targetStatus)}</h3>
+            <h3 className="text-sm font-bold">Settle order — {orderStatusLabel(target)}</h3>
             <p className="text-[11px] text-muted-foreground">
               {order ? `#${order.order_number} · ${order.customer_name}` : "Loading…"}
             </p>
@@ -185,6 +200,33 @@ export function OrderSettleModal({
           </div>
         ) : (
           <div className="space-y-4 p-5">
+            {allowKindSwitch && (
+              <div>
+                <label className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  Partial receive type
+                </label>
+                <div className="mt-1 grid gap-2 sm:grid-cols-3">
+                  {PARTIAL_KINDS.map((k) => (
+                    <button
+                      key={k.key}
+                      type="button"
+                      onClick={() => setTarget(k.key)}
+                      className={`rounded-lg border px-3 py-2 text-left transition-colors ${
+                        target === k.key
+                          ? "border-primary bg-primary/5 ring-1 ring-primary/20"
+                          : "hover:bg-accent"
+                      }`}
+                    >
+                      <div className={`text-xs font-semibold ${target === k.key ? "text-primary" : ""}`}>
+                        {k.label}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground">{k.hint}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="grid gap-3 sm:grid-cols-3">
               <Field
                 label={failed ? "Received (return = 0)" : "Received amount"}

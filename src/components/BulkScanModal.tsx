@@ -5,8 +5,25 @@ import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { orderStatusLabel } from "@/lib/courier-status";
 
-/** Single, fixed logic: Packaging → Courier Handover. No auto, no other mode. */
-const SCAN_HINT = "Packaging → Courier Handover";
+/** Two fixed logics — no auto detection. */
+export type ScanMode = "handover" | "return";
+
+const MODES: Record<ScanMode, { title: string; hint: string; from: string; to: string; note: string }> = {
+  handover: {
+    title: "Bulk scan · Courier Handover",
+    hint: "Packaging → Courier Handover",
+    from: "packaging",
+    to: "ready_to_ship",
+    note: "Bulk scan handover",
+  },
+  return: {
+    title: "Bulk scan · Return received",
+    hint: "Pending Return → Returned",
+    from: "pending_return",
+    to: "returned",
+    note: "Bulk scan return received",
+  },
+};
 
 type LogRow = {
   id: string;
@@ -82,20 +99,25 @@ async function findOrder(code: string) {
   return byShip ?? null;
 }
 
-function nextStatus(current: string): { to: string } | { error: string } {
-  if (current === "packaging") return { to: "ready_to_ship" };
-  if (current === "ready_to_ship") return { error: "Already in Courier Handover" };
-  return { error: `Not allowed from ${orderStatusLabel(current)}` };
+function nextStatus(mode: ScanMode, current: string): { to: string } | { error: string } {
+  const m = MODES[mode];
+  if (current === m.from) return { to: m.to };
+  if (current === m.to) return { error: `Already in ${orderStatusLabel(m.to)}` };
+  return {
+    error: `Not allowed — order is in ${orderStatusLabel(current)} (needs ${orderStatusLabel(m.from)})`,
+  };
 }
 
 /* ---------------- component ---------------- */
 
 export function BulkScanButton({
   compact = false,
+  mode = "handover",
   onDone,
   className,
 }: {
   compact?: boolean;
+  mode?: ScanMode;
   onDone?: () => void;
   className?: string;
 }) {
@@ -107,18 +129,22 @@ export function BulkScanButton({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        title="Bulk scan handover"
+        title={MODES[mode].hint}
         className={cn(
           "inline-flex items-center gap-2 rounded-md border border-primary/30 bg-primary/10 px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/20",
           className,
         )}
       >
         <ScanLine className="h-4 w-4" />
-        {compact ? <span className="hidden sm:inline">Bulk scan</span> : <span>Bulk scan</span>}
+        {(() => {
+          const label = mode === "return" ? "Bulk return" : "Bulk scan";
+          return compact ? <span className="hidden sm:inline">{label}</span> : <span>{label}</span>;
+        })()}
       </button>
       {open && mounted
         ? createPortal(
             <BulkScanModal
+              mode={mode}
               onClose={() => {
                 setOpen(false);
                 onDone?.();
@@ -131,7 +157,8 @@ export function BulkScanButton({
   );
 }
 
-function BulkScanModal({ onClose }: { onClose: () => void }) {
+function BulkScanModal({ mode, onClose }: { mode: ScanMode; onClose: () => void }) {
+  const cfg = MODES[mode];
   const [sound, setSound] = useState(true);
   const [camOn, setCamOn] = useState(false);
   const [camError, setCamError] = useState<string | null>(null);
@@ -191,7 +218,7 @@ function BulkScanModal({ onClose }: { onClose: () => void }) {
           push({ code: order.order_number, ok: false, message: `Duplicate — already scanned (${already})` });
           return;
         }
-        const step = nextStatus(order.status as string);
+        const step = nextStatus(mode, order.status as string);
         if ("error" in step) {
 
           if (sound) beepError();
@@ -201,7 +228,11 @@ function BulkScanModal({ onClose }: { onClose: () => void }) {
         }
         const { error } = await supabase
           .from("orders")
-          .update({ status: step.to as any })
+          .update(
+            mode === "return"
+              ? ({ status: step.to, received_amount: 0, settled_at: new Date().toISOString() } as any)
+              : ({ status: step.to } as any),
+          )
           .eq("id", order.id);
         if (error) {
           if (sound) beepError();
@@ -212,7 +243,7 @@ function BulkScanModal({ onClose }: { onClose: () => void }) {
         await supabase.from("order_status_history").insert({
           order_id: order.id,
           status: step.to as any,
-          note: "Bulk scan handover",
+          note: cfg.note,
         });
         doneRef.current.set(order.id, orderStatusLabel(step.to));
         if (sound) beepSuccess();
@@ -228,7 +259,7 @@ function BulkScanModal({ onClose }: { onClose: () => void }) {
         setBusy(false);
       }
     },
-    [push, sound],
+    [push, sound, mode, cfg.note],
   );
 
   // keep the scan box focused for hardware scanners, but never steal focus
@@ -311,8 +342,8 @@ function BulkScanModal({ onClose }: { onClose: () => void }) {
             <ScanLine className="h-5 w-5" />
           </div>
           <div className="min-w-0 flex-1">
-            <div className="truncate text-base font-bold">Bulk scan · Courier Handover</div>
-            <div className="truncate text-xs text-muted-foreground">{SCAN_HINT}</div>
+            <div className="truncate text-base font-bold">{cfg.title}</div>
+            <div className="truncate text-xs text-muted-foreground">{cfg.hint}</div>
           </div>
           <button
             type="button"
@@ -336,7 +367,7 @@ function BulkScanModal({ onClose }: { onClose: () => void }) {
           {/* left: controls */}
           <div className="space-y-3">
             <div className="rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-xs font-medium text-primary">
-              Packaging → Courier Handover
+              {cfg.hint}
             </div>
 
             <form
@@ -460,7 +491,7 @@ function BulkScanModal({ onClose }: { onClose: () => void }) {
 
         <div className="flex items-center justify-between gap-3 border-t bg-muted/30 px-4 py-3 sm:px-5">
           <div className="text-xs text-muted-foreground">
-            {counts.ok} handed over · {counts.fail} failed
+            {counts.ok} updated · {counts.fail} failed
           </div>
           <button
             type="button"

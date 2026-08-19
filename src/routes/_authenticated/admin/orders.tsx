@@ -127,7 +127,9 @@ function AdminOrdersPage() {
   const [page, setPage] = useState(1);
   const [editId, setEditId] = useState<string | null>(null);
   const [statusModal, setStatusModal] = useState<{ open: boolean; orderId: string; currentStatus: string; isBulk?: boolean } | null>(null);
-  const [settleModal, setSettleModal] = useState<{ orderId: string; status: string } | null>(null);
+  const [settleModal, setSettleModal] = useState<{ orderId: string; status: string; pickKind?: boolean } | null>(
+    null,
+  );
   const [bookingModal, setBookingModal] = useState<{ open: boolean; orderIds: string[] }>({ open: false, orderIds: [] });
   const [zoomImage, setZoomImage] = useState<string | null>(null);
   
@@ -313,7 +315,7 @@ function AdminOrdersPage() {
             className="flex-row items-center justify-between"
             actions={
                 <div className="flex items-center gap-2">
-                  <BulkScanButton onDone={() => load()} />
+                  <BulkScanButton mode={tab === "pending_return" ? "return" : "handover"} onDone={() => load()} />
                   <button
                       onClick={() => setOpen(true)}
                       className="btn-brand inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium"
@@ -499,7 +501,13 @@ function AdminOrdersPage() {
                           <DropdownMenuItem onClick={() => setEditId(o.id)}>
                             <Pencil className="mr-2 h-4 w-4" /> Edit Order
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => setStatusModal({ open: true, orderId: o.id, currentStatus: o.status })}>
+                          <DropdownMenuItem
+                            onClick={() =>
+                              o.status === "pending_partial"
+                                ? setSettleModal({ orderId: o.id, status: "partial_full", pickKind: true })
+                                : setStatusModal({ open: true, orderId: o.id, currentStatus: o.status })
+                            }
+                          >
                             <Settings2 className="mr-2 h-4 w-4" /> Change Status
                           </DropdownMenuItem>
                           {(() => {
@@ -721,6 +729,7 @@ function AdminOrdersPage() {
           open={!!settleModal}
           orderId={settleModal?.orderId ?? null}
           targetStatus={settleModal?.status ?? "delivered"}
+          allowKindSwitch={!!settleModal?.pickKind}
           onClose={() => setSettleModal(null)}
           onSaved={() => void load()}
         />
