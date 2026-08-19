@@ -36,6 +36,7 @@ import { toast } from "sonner";
 import { useDepositStatus } from "@/lib/deposit";
 import { DEFAULT_DEPOSIT_TEXTS, fillText, useDepositSettings } from "@/lib/deposit-settings";
 import { bdt, orderProfit, orderReceived, orderShortfall } from "@/lib/finance-report";
+import { OrderMoneyPanel, AdvanceChip } from "@/components/order-money";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getOrderDetails, recheckCourierStatus } from "@/lib/order-details.functions";

@@ -25,6 +25,7 @@ import {
   orderPackaging,
   isFailedOrder,
 } from "@/lib/finance-report";
+import { OrderMoneyPanel, AdvanceChip } from "@/components/order-money";
 
 
 import {
