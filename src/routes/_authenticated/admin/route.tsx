@@ -90,7 +90,7 @@ const NAV: NavEntry[] = [
     label: "Finance",
     icon: <Wallet className="h-4 w-4" />,
     items: [
-      { label: "Reseller Earning", to: "/admin/reseller-earning", icon: <LineChart className="h-4 w-4" /> },
+      { label: "Transaction Report", to: "/admin/reseller-earning", icon: <LineChart className="h-4 w-4" /> },
       { label: "Business report", to: "/admin/business-report", icon: <PieChart className="h-4 w-4" /> },
       { label: "Payouts", to: "/admin/payouts", icon: <Wallet className="h-4 w-4" /> },
       { label: "Commissions", to: "/admin/commissions", icon: <Percent className="h-4 w-4" /> },
