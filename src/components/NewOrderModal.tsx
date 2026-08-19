@@ -213,8 +213,11 @@ export function NewOrderModal({
           admin_note: isAdmin ? note : null,
           subtotal: totals.subtotal,
           shipping_cost: totals.shipping,
+          discount: totals.discount,
           total: totals.total,
           sa_cost_total: totals.saCost,
+          packaging_total: totals.packaging,
+          delivery_cost: totals.deliveryCost,
           reseller_profit: totals.profit,
           status: "pending",
           forwarded_to_admin: true,
@@ -241,6 +244,22 @@ export function NewOrderModal({
       });
       const { error: ie } = await supabase.from("order_items").insert(items);
       if (ie) throw ie;
+
+      // order_items triggers recalc packaging from product defaults — re-apply the order meta last.
+      const { error: me } = await supabase
+        .from("orders")
+        .update({
+          packaging_total: totals.packaging,
+          sa_cost_total: totals.saCost,
+          delivery_cost: totals.deliveryCost,
+          discount: totals.discount,
+          shipping_cost: totals.shipping,
+          subtotal: totals.subtotal,
+          total: totals.total,
+        })
+        .eq("id", order.id);
+      if (me) throw me;
+
 
       toast.success(isAdmin ? "Order created successfully" : "Order created and sent to admin");
       onCreated();
