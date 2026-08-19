@@ -581,6 +581,11 @@ export function TransactionReport({
                                 {(r.advance_by ?? "reseller") === "admin" ? "received by admin" : "received by reseller"}
                               </span>
                             </div>
+                            <div className="mt-0.5 text-[10px] text-muted-foreground">
+                              {(r.advance_by ?? "reseller") === "admin"
+                                ? "kept by admin · balance unchanged"
+                                : "already with reseller · minus in balance"}
+                            </div>
                           </div>
 
                         ) : (
