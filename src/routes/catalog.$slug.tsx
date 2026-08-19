@@ -101,11 +101,6 @@ function CatalogDetails() {
               ))}
             </div>
           )}
-          <div className="mt-4 flex flex-wrap gap-2">
-            <CopyBtn text={p.name} title="Title" label="Title copied" />
-            <CopyBtn text={detailText} title="Details" label="Details copied" />
-            <ImagePickerButton images={p.images} baseName={p.name} />
-          </div>
         </div>
 
         <div>
@@ -164,17 +159,16 @@ function CatalogDetails() {
             </div>
           </div>
 
-          {p.description && (
-            <div className="mt-6">
-              <h2 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Description</h2>
-              <div
-                className="prose prose-sm mt-3 max-w-none text-sm leading-relaxed text-foreground/90 [&_img]:rounded-lg"
-                dangerouslySetInnerHTML={{ __html: p.description }}
-              />
+          <div className="surface-card mt-5 p-5">
+            <h2 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Reseller tools</h2>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <CopyBtn text={p.name} title="Title" label="Title copied" />
+              <CopyBtn text={detailText} title="Details" label="Details copied" />
+              <ImagePickerButton images={p.images} baseName={p.name} />
             </div>
-          )}
+          </div>
 
-          <div className="surface-card mt-8 p-5 text-sm">
+          <div className="surface-card mt-6 p-5 text-sm">
             <p className="font-semibold">এই প্রোডাক্ট বিক্রি করতে চান?</p>
             <p className="mt-1 text-muted-foreground">রিসেলার হিসেবে সাইনআপ করে নিজের স্টোরে লিস্ট করুন।</p>
             <Link
@@ -187,6 +181,16 @@ function CatalogDetails() {
           </div>
         </div>
       </div>
+
+      {p.description && (
+        <section className="mt-10 lg:mt-14">
+          <h2 className="text-lg font-bold">Product details</h2>
+          <div
+            className="prose prose-sm mt-4 max-w-none text-sm leading-relaxed text-foreground/90 [&_img]:rounded-lg"
+            dangerouslySetInnerHTML={{ __html: p.description }}
+          />
+        </section>
+      )}
     </div>
   );
 }
