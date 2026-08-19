@@ -567,7 +567,7 @@ export function TransactionReport({
                           <div className="whitespace-nowrap leading-tight">
                             <div className="text-[11px] font-semibold tabular-nums">{bdt(Number(r.advance))}</div>
                             <div className="mt-0.5 text-[10px] capitalize text-muted-foreground">
-                              {(r.advance_by ?? "reseller") === "admin" ? "received by admin" : "received by reseller"}
+                              {(r.advance_by ?? "reseller") === "admin" ? "by admin" : "by reseller"}
                             </div>
                           </div>
                         ) : (
