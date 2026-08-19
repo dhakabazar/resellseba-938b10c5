@@ -2186,6 +2186,8 @@ export type Database = {
           _to: string
         }
         Returns: {
+          advance: number
+          advance_by: string
           amount: number
           at: string
           buy_delivery: number
