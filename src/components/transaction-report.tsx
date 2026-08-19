@@ -179,7 +179,7 @@ export function TransactionReport({
       } as never)
       .then(({ data, error }) => {
         if (error) setError(error.message);
-        setRows(withRunningBalance((data ?? []) as TxRow[]));
+        setRows(withRunningBalance((data ?? []) as TxRow[], Boolean((admin ? reseller : resellerId) || "")));
         setLoading(false);
       });
   }, [admin, reseller, resellerId, range]);
