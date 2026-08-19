@@ -1169,6 +1169,8 @@ function OrdersPage() {
         variant={confirmModal.variant}
         isLoading={loading}
       />
+
+      {zoomImage && <ImageLightbox src={zoomImage} onClose={() => setZoomImage(null)} />}
     </div>
 
   );
