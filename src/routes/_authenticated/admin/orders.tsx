@@ -356,7 +356,6 @@ function AdminOrdersPage() {
         <div className="mb-4 flex flex-wrap items-center gap-2">
             <OrderSearch mode={searchMode} onMode={setSearchMode} value={filters.q} onChange={(v) => setFilters({ ...filters, q: v })} />
             <SearchableSelect
-              label="Reseller"
               options={resellerOptions.map((r) => ({ value: r.value, label: r.label }))}
               value={filters.reseller}
               onChange={(v) => {
@@ -368,14 +367,14 @@ function AdminOrdersPage() {
               className="min-w-[220px]"
             />
             <div className="ml-auto flex items-center gap-2">
-              <span className="text-xs font-medium text-muted-foreground hidden sm:inline">Per page:</span>
-              <select 
+              <select
                 value={filters.perPage}
                 onChange={(e) => setFilters({ ...filters, perPage: Number(e.target.value) })}
-                className="h-9 rounded-md border bg-background px-2 text-xs font-medium outline-none focus:ring-1 focus:ring-primary"
+                className="h-10 rounded-md border bg-background px-2 text-xs font-medium outline-none focus:ring-1 focus:ring-primary"
+                title="Per page"
               >
                 {[10, 20, 50, 100].map((n) => (
-                  <option key={n} value={n}>{n}</option>
+                  <option key={n} value={n}>{n} / page</option>
                 ))}
                 <option value={-1}>All</option>
               </select>

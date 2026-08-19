@@ -62,7 +62,7 @@ export function SearchableSelect({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex h-9 w-full items-center justify-between gap-2 rounded-md border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+        className="flex h-10 w-full items-center justify-between gap-2 rounded-md border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
         title={label ?? placeholder}
       >
         <span className={`truncate ${selected ? "" : "text-muted-foreground"}`}>
