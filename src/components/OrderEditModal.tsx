@@ -113,23 +113,14 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
   }, [items, allProducts, area]);
 
   const totals = useMemo(() => {
-    const subtotal = items.reduce((s, it) => s + (Number(it.reseller_price) || 0) * (Number(it.quantity) || 0), 0);
-    /**
-     * Per line: base cost = stored sa_price, or the live product price when it is missing.
-     * Product cost = base minus that line's packaging part (packaging is tracked order-level),
-     * clamped per line so one odd line can never eat another line's cost.
-     */
-    let packagingDefault = 0;
-    let productCost = 0;
-    for (const it of items) {
-      const qty = Number(it.quantity) || 0;
+    const subtotal = items.reduce((s, it) => s + it.reseller_price * it.quantity, 0);
+    /** Product cost = item base cost minus its packaging part; packaging is tracked order-level. */
+    const packagingDefault = items.reduce((s, it) => {
       const p = allProducts.find((x) => x.id === it.product_id);
-      const pack = Number(p?.packaging_cost ?? 0) || 0;
-      const live = p ? (Number(p.reseller_price ?? 0) || 0) + pack : 0;
-      const base = (Number(it.sa_price) || 0) > 0 ? Number(it.sa_price) : live;
-      packagingDefault += pack * qty;
-      productCost += Math.max(base - pack, 0) * qty;
-    }
+      return s + Number(p?.packaging_cost ?? 0) * it.quantity;
+    }, 0);
+    const itemCost = items.reduce((s, it) => s + it.sa_price * it.quantity, 0);
+    const productCost = Math.max(itemCost - packagingDefault, 0);
     const packaging = packagingInput.trim() === "" ? packagingDefault : Math.max(Number(packagingInput) || 0, 0);
     const saCost = productCost + packaging;
     const shipping = shipInput.trim() === "" ? autoShipping : Math.max(Number(shipInput) || 0, 0);
