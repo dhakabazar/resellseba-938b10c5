@@ -220,6 +220,15 @@ function AdminOrdersPage() {
 
   async function bulkUpdateStatus(newStatus: string) {
     if (marked.length === 0) return;
+    if (isPartialStatus(newStatus)) {
+      toast.error("Partial statuses can't be set in bulk — settle each order individually.");
+      return;
+    }
+    const blocked = marked.filter((id) => isPartialStatus(orders.find((o) => o.id === id)?.status || ""));
+    if (blocked.length > 0) {
+      toast.error(`${blocked.length} selected order(s) are in a partial status — bulk status change is blocked.`);
+      return;
+    }
     setConfirmModal({
       open: true,
       title: "Bulk Status Update",
