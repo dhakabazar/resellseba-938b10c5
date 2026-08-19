@@ -1,4 +1,3 @@
-import { CalendarDays } from "lucide-react";
 import {
   DATE_PRESET_OPTIONS,
   DEFAULT_ORDER_FILTERS,
@@ -108,9 +107,7 @@ export function DateRangeBar({
     <div className="surface-card mb-6 space-y-3 p-3 sm:p-4">
       <div className="flex flex-wrap items-end gap-3">
         <label className="flex min-w-0 flex-col gap-1">
-          <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
-            <CalendarDays className="h-3.5 w-3.5" /> {label}
-          </span>
+          <span className="text-[11px] font-medium text-muted-foreground">{label}</span>
           <select
             value={value.preset}
             onChange={(e) => {
@@ -125,9 +122,8 @@ export function DateRangeBar({
               </option>
             ))}
           </select>
-          {/* Resolved range shown under the dropdown. */}
-          <span className="text-xs font-semibold text-muted-foreground">{rangeLabel(value)}</span>
         </label>
+
 
 
         {value.preset === "custom" && (
