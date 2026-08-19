@@ -670,32 +670,8 @@ export function NewOrderModal({
                           onChange={setAdvance}
                           placeholder="0"
                         />
-                        <div>
-                          <div className="mb-1.5 flex items-baseline gap-2">
-                            <span className="text-[11px] font-semibold">Who received it?</span>
-                          </div>
-                          <div className="grid grid-cols-2 gap-2">
-                            {(
-                              [
-                                ["admin", "Admin"],
-                                ["reseller", "Reseller"],
-                              ] as const
-                            ).map(([v, label]) => (
-                              <button
-                                key={v}
-                                type="button"
-                                onClick={() => setAdvanceBy(v)}
-                                className={`rounded-xl border-2 px-3 py-2 text-[11px] font-bold transition-all ${
-                                  advanceBy === v
-                                    ? "border-primary bg-primary text-primary-foreground shadow-sm"
-                                    : "border-muted bg-background text-muted-foreground hover:border-primary/40"
-                                }`}
-                              >
-                                {label}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
+                        <AdvanceByToggle value={advanceBy} onChange={setAdvanceBy} />
+
                       </div>
                       <p className="text-[10px] leading-relaxed text-muted-foreground">
                         Advance thakle courier COD hobe ৳{totals.codDue.toFixed(0)}. Admin receive korle taka admin er
