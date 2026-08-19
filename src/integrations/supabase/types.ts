@@ -393,6 +393,48 @@ export type Database = {
           },
         ]
       }
+      expenses: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          created_by: string | null
+          id: string
+          method: string | null
+          note: string | null
+          reference: string | null
+          spent_on: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          method?: string | null
+          note?: string | null
+          reference?: string | null
+          spent_on?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          method?: string | null
+          note?: string | null
+          reference?: string | null
+          spent_on?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       global_settings: {
         Row: {
           accent_color: string | null
