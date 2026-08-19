@@ -592,7 +592,11 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                 <div className="rounded-xl border bg-muted/20 p-4 text-xs">
                   <Row label="Subtotal" value={totals.subtotal} />
                   <Row label="Delivery" value={totals.shipping} />
+                  {totals.discount > 0 && <Row label="Discount" value={-totals.discount} />}
+                  <Row label="Packaging cost" value={totals.packaging} />
+                  {isAdmin && <Row label="Courier cost" value={totals.deliveryCost} />}
                   <Row label="Received" value={totals.received} />
+
                   <div className="mt-2 flex justify-between border-t pt-2 text-sm font-bold text-primary">
                     <span>Grand total</span>
                     <span>৳{totals.total.toFixed(0)}</span>
