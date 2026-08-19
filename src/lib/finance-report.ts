@@ -40,16 +40,27 @@ export type ProfitOrder = {
   sa_cost_total: number | string;
   received_amount?: number | string | null;
   packaging_total?: number | string | null;
+  /** Admin-set delivery cost for this order (falls back to shipping_cost). */
+  delivery_cost?: number | string | null;
+  /** Product cost of the items the customer kept — only used for `partial_item`. */
+  kept_product_cost?: number | string | null;
 };
 
-/** Failed delivery — parcel came back, so only delivery + packaging is burned. */
-/** Delivered or partially delivered — money is realized with received-amount math. */
+/** Delivered / partial / damaged — money is realized with received-amount math. */
 export function isRealizedStatus(status?: string | null) {
-  return status === "delivered" || status === "partial";
+  return (
+    status === "delivered" ||
+    status === "partial" ||
+    status === "partial_full" ||
+    status === "partial_item" ||
+    status === "partial_delivery" ||
+    status === "damaged"
+  );
 }
 
+/** Failed delivery — parcel came back, so only delivery + packaging is burned. */
 export function isFailedOrder(o: ProfitOrder) {
-  return o.status === "returned" || o.status === "cancelled";
+  return o.status === "returned" || o.status === "pending_return" || o.status === "cancelled";
 }
 
 /** Packaging cost of the order (already inside sa_cost_total). */
@@ -57,9 +68,33 @@ export function orderPackaging(o: ProfitOrder) {
   return n(o.packaging_total);
 }
 
+/** Admin delivery cost used in every cost calculation. */
+export function orderDeliveryCost(o: ProfitOrder) {
+  return n(o.delivery_cost) || n(o.shipping_cost);
+}
+
+/** Full product cost (admin price, packaging baade). */
+export function orderProductCost(o: ProfitOrder) {
+  return Math.max(n(o.sa_cost_total) - orderPackaging(o), 0);
+}
+
+/** Product cost of the items the customer actually kept. */
+export function orderKeptProductCost(o: ProfitOrder) {
+  if (o.status === "returned" || o.status === "cancelled" || o.status === "partial_delivery") return 0;
+  if (o.status === "partial_item" && o.kept_product_cost != null && o.kept_product_cost !== "")
+    return n(o.kept_product_cost);
+  return orderProductCost(o);
+}
+
+/** Admin cost of the order: kept product cost + delivery + packaging. */
+export function orderCost(o: ProfitOrder) {
+  if (o.status === "cancelled") return 0;
+  return orderKeptProductCost(o) + orderDeliveryCost(o) + orderPackaging(o);
+}
+
 /**
  * Money actually received for this order.
- * Failed delivery = 0, delivered = courier received amount (partial safe),
+ * Return / cancel = 0, otherwise the courier received amount (partial safe),
  * still running = expected customer total.
  */
 export function orderReceived(o: ProfitOrder) {
@@ -70,7 +105,8 @@ export function orderReceived(o: ProfitOrder) {
 
 /** Partial delivery = courier collected less than the order value. */
 export function isPartialOrder(o: ProfitOrder) {
-  if (o.status === "partial") return true;
+  if (o.status === "partial" || o.status === "partial_full" || o.status === "partial_item" || o.status === "partial_delivery")
+    return true;
   return !isFailedOrder(o) && o.received_amount != null && o.received_amount !== "" && n(o.received_amount) < n(o.total);
 }
 
@@ -81,18 +117,22 @@ export function orderShortfall(o: ProfitOrder) {
 
 /**
  * Single source of truth for order profit / loss.
- *  · Delivered or partial → received amount − delivery − product cost − packaging cost
- *  · Returned or cancelled → loss of delivery charge + packaging cost (product returns to admin)
- *  · Still running → expected profit from the order total
+ *  · delivered / partial_full / damaged → received − (product + delivery + packaging)
+ *  · partial_item → received − (kept product cost + delivery + packaging)
+ *  · partial_delivery → received − (delivery + packaging)
+ *  · returned / pending_return → loss of delivery + packaging
+ *  · cancelled → 0 (courier e jayni)
+ *  · still running → expected profit from the order total
  */
 export function orderProfit(o: ProfitOrder) {
-  if (isFailedOrder(o)) return -(n(o.shipping_cost) + orderPackaging(o));
-  return orderReceived(o) - n(o.shipping_cost) - n(o.sa_cost_total);
+  if (o.status === "cancelled") return 0;
+  if (isFailedOrder(o)) return -(orderDeliveryCost(o) + orderPackaging(o));
+  return orderReceived(o) - orderCost(o);
 }
 
 /** Reusable hint shown on every profit report/card so the math is transparent. */
 export const PROFIT_FORMULA_HINT =
-  "Profit = received amount − delivery charge − product cost − packaging cost. Partial delivery uses the amount the courier actually collected. Failed delivery (returned/cancelled) counts delivery charge + packaging cost as loss, because the product comes back.";
+  "Profit = received amount − product cost − delivery charge − packaging cost. Partial delivery uses the amount the courier actually collected; item partial hole shudhu je product customer rekheche tar cost dhora hoy. Return received hole delivery charge + packaging cost loss, karon product ferot ase.";
 
 
 

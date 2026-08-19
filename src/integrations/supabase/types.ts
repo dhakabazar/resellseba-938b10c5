@@ -722,6 +722,7 @@ export type Database = {
           profit: number
           quantity: number
           reseller_price: number
+          returned_qty: number
           sa_price: number
           sku: string | null
         }
@@ -737,6 +738,7 @@ export type Database = {
           profit?: number
           quantity?: number
           reseller_price?: number
+          returned_qty?: number
           sa_price?: number
           sku?: string | null
         }
@@ -752,6 +754,7 @@ export type Database = {
           profit?: number
           quantity?: number
           reseller_price?: number
+          returned_qty?: number
           sa_price?: number
           sku?: string | null
         }
@@ -824,6 +827,8 @@ export type Database = {
           customer_email: string | null
           customer_name: string
           customer_phone: string
+          damage_note: string | null
+          delivery_cost: number
           discount: number
           forwarded_at: string | null
           forwarded_to_admin: boolean
@@ -839,8 +844,12 @@ export type Database = {
           reseller_note: string | null
           reseller_profit: number
           sa_cost_total: number
+          settled_at: string | null
+          settled_by: string | null
+          settlement_note: string | null
           shipping_cost: number
           status: Database["public"]["Enums"]["order_status"]
+          stock_restored: boolean
           subtotal: number
           total: number
           updated_at: string
@@ -854,6 +863,8 @@ export type Database = {
           customer_email?: string | null
           customer_name: string
           customer_phone: string
+          damage_note?: string | null
+          delivery_cost?: number
           discount?: number
           forwarded_at?: string | null
           forwarded_to_admin?: boolean
@@ -869,8 +880,12 @@ export type Database = {
           reseller_note?: string | null
           reseller_profit?: number
           sa_cost_total?: number
+          settled_at?: string | null
+          settled_by?: string | null
+          settlement_note?: string | null
           shipping_cost?: number
           status?: Database["public"]["Enums"]["order_status"]
+          stock_restored?: boolean
           subtotal?: number
           total?: number
           updated_at?: string
@@ -884,6 +899,8 @@ export type Database = {
           customer_email?: string | null
           customer_name?: string
           customer_phone?: string
+          damage_note?: string | null
+          delivery_cost?: number
           discount?: number
           forwarded_at?: string | null
           forwarded_to_admin?: boolean
@@ -899,8 +916,12 @@ export type Database = {
           reseller_note?: string | null
           reseller_profit?: number
           sa_cost_total?: number
+          settled_at?: string | null
+          settled_by?: string | null
+          settlement_note?: string | null
           shipping_cost?: number
           status?: Database["public"]["Enums"]["order_status"]
+          stock_restored?: boolean
           subtotal?: number
           total?: number
           updated_at?: string
@@ -2072,6 +2093,7 @@ export type Database = {
         Returns: undefined
       }
       my_permissions: { Args: never; Returns: string[] }
+      order_kept_product_cost: { Args: { _order_id: string }; Returns: number }
       purge_store_visits: { Args: never; Returns: number }
       recalc_order_packaging: {
         Args: { _order_id: string }
@@ -2150,6 +2172,37 @@ export type Database = {
           visits: number
         }[]
       }
+      transaction_report: {
+        Args: {
+          _from: string
+          _limit?: number
+          _reseller_id: string
+          _to: string
+        }
+        Returns: {
+          amount: number
+          at: string
+          buy_delivery: number
+          buy_product: number
+          buy_total: number
+          direction: string
+          kind: string
+          label: string
+          note: string
+          order_id: string
+          order_number: string
+          packaging: number
+          received: number
+          reseller_code: string
+          reseller_id: string
+          reseller_name: string
+          running: number
+          sell_delivery: number
+          sell_subtotal: number
+          sell_total: number
+          status: string
+        }[]
+      }
     }
     Enums: {
       app_role: "super_admin" | "reseller" | "leader" | "staff"
@@ -2174,6 +2227,12 @@ export type Database = {
         | "cancelled"
         | "ready_to_ship"
         | "pending_return"
+        | "packaging"
+        | "pending_partial"
+        | "partial_full"
+        | "partial_item"
+        | "partial_delivery"
+        | "damaged"
       payment_method:
         | "cod"
         | "bkash"
@@ -2344,6 +2403,12 @@ export const Constants = {
         "cancelled",
         "ready_to_ship",
         "pending_return",
+        "packaging",
+        "pending_partial",
+        "partial_full",
+        "partial_item",
+        "partial_delivery",
+        "damaged",
       ],
       payment_method: [
         "cod",
