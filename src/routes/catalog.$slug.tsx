@@ -181,6 +181,16 @@ function CatalogDetails() {
           </div>
         </div>
       </div>
+
+      {p.description && (
+        <section className="mt-10 lg:mt-14">
+          <h2 className="text-lg font-bold">Product details</h2>
+          <div
+            className="prose prose-sm mt-4 max-w-none text-sm leading-relaxed text-foreground/90 [&_img]:rounded-lg"
+            dangerouslySetInnerHTML={{ __html: p.description }}
+          />
+        </section>
+      )}
     </div>
   );
 }
