@@ -1295,11 +1295,7 @@ function OrderDrawer({
 
 
   const { order, items, shipments, events } = data;
-  const subtotal = Number(order.subtotal || 0);
-  const shipping = Number(order.shipping_cost || 0);
-  const discount = Number(order.discount || 0);
   const profit = orderProfit(order);
-  const total = Number(order.total || 0);
   
   // Reseller may only move between New Order · Send To admin · Cancelled
   const allowedNext = nextStatuses(order.status, "reseller") as string[];
