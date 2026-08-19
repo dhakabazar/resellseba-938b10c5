@@ -76,6 +76,10 @@ function StackCell({
 
 const PARTIAL_STATUSES = ["partial", "partial_full", "partial_item", "partial_delivery", "damaged"];
 
+/** Product ferot chole ase — product cost dhora hoy na. */
+const NO_PRODUCT_COST_STATUSES = ["returned", "pending_return", "cancelled", "partial_delivery"];
+
+
 /** At-a-glance partial settlement summary: collected vs order value. */
 function PartialSummary({ r }: { r: TxRow }) {
   const total = Number(r.sell_total) || 0;
