@@ -55,6 +55,7 @@ import {
   type OrderTabKey,
   nextStatuses,
   SETTLEMENT_STATUSES,
+  isPartialStatus,
 } from "@/lib/courier-status";
 
 type OrderRow = {
