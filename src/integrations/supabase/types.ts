@@ -2091,6 +2091,69 @@ export type Database = {
         Args: { _area: string; _product_id: string }
         Returns: number
       }
+      cf_config_get: {
+        Args: never
+        Returns: {
+          a_record_ip: string | null
+          account_id: string | null
+          api_token: string | null
+          auto_worker_domain: boolean
+          cname_target: string | null
+          id: number
+          is_active: boolean
+          updated_at: string
+          worker_name: string | null
+          zone_id: string | null
+          zone_name: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "cloudflare_config"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      cf_config_save: {
+        Args: {
+          _a_record_ip: string
+          _account_id: string
+          _api_token: string
+          _auto_worker_domain: boolean
+          _cname_target: string
+          _is_active: boolean
+          _worker_name: string
+          _zone_id: string
+          _zone_name: string
+        }
+        Returns: {
+          a_record_ip: string | null
+          account_id: string | null
+          api_token: string | null
+          auto_worker_domain: boolean
+          cname_target: string | null
+          id: number
+          is_active: boolean
+          updated_at: string
+          worker_name: string | null
+          zone_id: string | null
+          zone_name: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "cloudflare_config"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      cf_dns_guide: {
+        Args: never
+        Returns: {
+          a_record_ip: string
+          active: boolean
+          cname_target: string
+          zone_name: string
+        }[]
+      }
       create_public_order: {
         Args: {
           _address_line: string
