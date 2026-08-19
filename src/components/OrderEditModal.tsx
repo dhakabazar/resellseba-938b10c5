@@ -499,26 +499,19 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
 
               {/* Charges */}
               <section className="space-y-3">
-                <SectionLabel>Charges &amp; adjustments</SectionLabel>
+                <SectionLabel>ডেলিভারি ও অন্যান্য চার্জ</SectionLabel>
                 <div className="grid gap-3 rounded-2xl border bg-muted/20 p-4 sm:grid-cols-2">
-                  <div>
-                    <div className="mb-1.5 text-[11px] font-semibold">Delivery charge mode</div>
-                    <select className={inp} value={shippingMode} onChange={(e) => setShippingMode(e.target.value as any)}>
-                      <option value="auto">Auto (product rules)</option>
-                      <option value="manual">Manual override</option>
-                    </select>
-                  </div>
                   <MoneyField
-                    label="Delivery charge"
-                    hint={shippingMode === "auto" ? "auto" : "manual"}
-                    disabled={shippingMode === "auto"}
-                    value={shippingMode === "auto" ? autoShipping : shippingManual}
-                    onChange={(v) => setShippingManual(Number(v) || 0)}
+                    label="ডেলিভারি চার্জ (কাস্টমার দিবে)"
+                    hint={`ডিফল্ট ৳${autoShipping.toFixed(0)}`}
+                    value={shipInput}
+                    onChange={setShipInput}
+                    placeholder={autoShipping.toFixed(0)}
                   />
-                  <MoneyField label="Discount" value={discount} onChange={setDiscount} placeholder="0" />
+                  <MoneyField label="ডিসকাউন্ট" value={discount} onChange={setDiscount} placeholder="0" />
                   <MoneyField
-                    label="Packaging cost"
-                    hint={isAdmin ? "editable" : "admin controlled"}
+                    label="প্যাকেজিং কস্ট"
+                    hint={isAdmin ? "এডিট করা যাবে" : "শুধু অ্যাডমিন"}
                     disabled={!isAdmin}
                     value={packagingInput}
                     onChange={setPackagingInput}
@@ -526,33 +519,57 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                   />
                   {isAdmin && (
                     <MoneyField
-                      label="Courier cost"
-                      hint={`default ৳${totals.shipping.toFixed(0)}`}
+                      label="কুরিয়ার কস্ট (অ্যাডমিন খরচ)"
+                      hint={`ডিফল্ট ৳${totals.shipping.toFixed(0)}`}
                       value={deliveryCostInput}
                       onChange={setDeliveryCostInput}
                       placeholder={totals.shipping.toFixed(0)}
                     />
                   )}
                 </div>
+                <p className="text-[12px] leading-relaxed text-muted-foreground">
+                  খালি রাখলে ডিফল্ট বসবে। ডেলিভারি চার্জ = কাস্টমার দিবে, কুরিয়ার কস্ট = অ্যাডমিনের খরচ।
+                </p>
 
-                <SectionLabel>Advance received</SectionLabel>
+                <SectionLabel>অ্যাডভান্স পেমেন্ট</SectionLabel>
                 <div className="space-y-3 rounded-2xl border border-primary/20 bg-primary/[0.03] p-4">
                   <div className="grid gap-3 sm:grid-cols-2">
                     <MoneyField
-                      label="Advance amount"
-                      hint="customer age dile"
+                      label="অ্যাডভান্স অ্যামাউন্ট"
+                      hint="আগে পেলে"
                       value={advance}
                       onChange={setAdvance}
                       placeholder="0"
                     />
                     <AdvanceByToggle value={advanceBy} onChange={setAdvanceBy} />
                   </div>
-                  <p className="text-[10px] leading-relaxed text-muted-foreground">
-                    Advance thakle courier COD hobe ৳{totals.codDue.toFixed(0)}. Admin receive korle taka admin er kachei
-                    thake, tai reseller er hisab theke kaTa hoy na. Reseller receive korle sei taka final amount theke bad
-                    jabe.
+                  <p className="text-[12px] leading-relaxed text-muted-foreground">
+                    কুরিয়ার COD হবে ৳{totals.codDue.toFixed(0)}। অ্যাডমিন নিলে রিসেলারের হিসাব থেকে কাটে না, রিসেলার নিলে
+                    ফাইনাল অ্যামাউন্ট থেকে বাদ যাবে।
                   </p>
                 </div>
+
+                <SectionLabel>পেমেন্ট মেথড ও নোট</SectionLabel>
+                <div className="grid gap-3 rounded-2xl border bg-muted/20 p-4 sm:grid-cols-2">
+                  <label className="space-y-1">
+                    <span className="text-[13px] font-bold text-foreground/80">পেমেন্ট মেথড</span>
+                    <select className={inp} value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
+                      <option value="cod">Cash on Delivery</option>
+                      <option value="bkash">bKash</option>
+                      <option value="nagad">Nagad</option>
+                      <option value="rocket">Rocket</option>
+                      <option value="sslcommerz">SSLCommerz</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </label>
+                  <label className="space-y-1">
+                    <span className="text-[13px] font-bold text-foreground/80">
+                      {isAdmin ? "অ্যাডমিন নোট" : "আপনার নোট"}
+                    </span>
+                    <input className={inp} value={note} onChange={(e) => setNote(e.target.value)} />
+                  </label>
+                </div>
+
 
 
 
