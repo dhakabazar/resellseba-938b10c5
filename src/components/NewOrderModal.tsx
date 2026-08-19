@@ -48,6 +48,10 @@ export function NewOrderModal({
   const [shipOverride, setShipOverride] = useState("");
   const [packagingOverride, setPackagingOverride] = useState("");
   const [deliveryCostOverride, setDeliveryCostOverride] = useState("");
+  /** Advance already collected from the customer + who is holding that cash. */
+  const [advance, setAdvance] = useState("");
+  const [advanceBy, setAdvanceBy] = useState<"admin" | "reseller">(isAdmin ? "admin" : "reseller");
+
 
 
   const trendingResellers = useMemo(() => {
