@@ -199,6 +199,8 @@ export function TransactionReport({
         "Buy delivery",
         "Packaging",
         "Buy total",
+        "Advance",
+        "Advance by",
         "Amount",
         "Direction",
         "Running balance",
@@ -218,10 +220,13 @@ export function TransactionReport({
         r.buy_delivery,
         r.packaging,
         r.buy_total,
+        r.advance ?? 0,
+        r.advance_by ?? "",
         r.amount,
         r.direction,
         r.running,
       ]),
+
     );
     downloadCsv(`transaction-report-${new Date().toISOString().slice(0, 10)}.csv`, csv);
   };
