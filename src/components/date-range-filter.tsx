@@ -64,7 +64,7 @@ export function DateRangeBar({
         <div className="flex flex-col items-end gap-1">
           <label className="inline-flex items-center gap-1.5">
             <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="text-[11px] font-medium text-muted-foreground">{label}</span>
+            {label ? <span className="text-[11px] font-medium text-muted-foreground">{label}</span> : null}
             <select
               value={value.preset}
               onChange={(e) => {
