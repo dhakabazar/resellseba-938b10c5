@@ -149,14 +149,17 @@ const KIND_OPTIONS = [
 
 export function TransactionReport({
   resellerId,
+  initialReseller,
   admin = false,
 }: {
   /** Fixed reseller (reseller panel) or the admin's selected reseller. */
   resellerId?: string | null;
+  /** Admin: preselect this reseller in the filter (from URL). */
+  initialReseller?: string | null;
   admin?: boolean;
 }) {
   const [range, setRange] = useState<DateRangeState>({ preset: "lifetime", from: "", to: "" });
-  const [reseller, setReseller] = useState<string>(resellerId ?? "");
+  const [reseller, setReseller] = useState<string>(resellerId ?? initialReseller ?? "");
   const [kind, setKind] = useState("");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);

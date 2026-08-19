@@ -2,6 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { TransactionReport } from "@/components/transaction-report";
 
 export const Route = createFileRoute("/_authenticated/admin/transactions")({
+  validateSearch: (s: Record<string, unknown>): { reseller?: string } => ({
+    reseller: typeof s.reseller === "string" && s.reseller ? s.reseller : undefined,
+  }),
   component: AdminTransactionReportPage,
   head: () => ({
     meta: [
@@ -19,9 +22,10 @@ export const Route = createFileRoute("/_authenticated/admin/transactions")({
 });
 
 function AdminTransactionReportPage() {
+  const { reseller } = Route.useSearch();
   return (
     <div className="space-y-5">
-      <TransactionReport admin />
+      <TransactionReport admin initialReseller={reseller ?? null} />
     </div>
   );
 }
