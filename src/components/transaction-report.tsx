@@ -5,7 +5,7 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Loader2, Download, ArrowDownRight, ArrowUpRight, Wallet, TrendingUp, AlertTriangle } from "lucide-react";
+import { Loader2, Download, Search, X, ArrowDownRight, ArrowUpRight, Wallet, TrendingUp, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { StatCard } from "@/components/ui-kit";
 import { SearchableSelect } from "@/components/searchable-select";
@@ -124,8 +124,9 @@ export function TransactionReport({
   const [range, setRange] = useState<DateRangeState>({ preset: "lifetime", from: "", to: "" });
   const [reseller, setReseller] = useState<string>(resellerId ?? "");
   const [kind, setKind] = useState("");
+  const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(20);
+  const [perPage, setPerPage] = useState<number | "all">(20);
   const [rows, setRows] = useState<TxRow[]>([]);
   const [resellers, setResellers] = useState<{ id: string; business_name: string; code: string }[]>([]);
   const [loading, setLoading] = useState(true);
@@ -159,19 +160,28 @@ export function TransactionReport({
       });
   }, [admin, reseller, resellerId, range]);
 
-  const filtered = useMemo(
-    () => rows.filter((r) => !kind || r.kind === kind),
-    [rows, kind],
-  );
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return rows.filter((r) => {
+      if (kind && r.kind !== kind) return false;
+      if (!q) return true;
+      const haystack = [r.reseller_name, r.reseller_code, r.order_number, r.note, r.label, r.status]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(q);
+    });
+  }, [rows, kind, search]);
 
   const paged = useMemo(() => {
+    if (perPage === "all") return filtered;
     const start = (page - 1) * perPage;
     return filtered.slice(start, start + perPage);
   }, [filtered, page, perPage]);
 
   useEffect(() => {
     setPage(1);
-  }, [kind, reseller, range]);
+  }, [kind, reseller, range, search, perPage]);
 
 
   const totals = useMemo(() => {
@@ -243,8 +253,45 @@ export function TransactionReport({
 
   return (
     <div className="space-y-4">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight sm:text-2xl">Transaction report</h1>
+          <p className="text-[11px] text-muted-foreground sm:text-xs">
+            {admin ? "All reseller money movements in one ledger." : "Your profit, loss, deposit and withdraw ledger."}
+          </p>
+        </div>
+        <button
+          onClick={exportCsv}
+          className="inline-flex h-8 shrink-0 items-center gap-1.5 self-start rounded-md border px-3 text-xs font-semibold hover:bg-accent sm:self-auto"
+        >
+          <Download className="h-3.5 w-3.5" /> CSV
+        </button>
+      </div>
+
       <div className="surface-card p-3 sm:p-4">
-        <div className="flex flex-wrap items-end gap-2 lg:flex-nowrap">
+        <div className="flex flex-nowrap items-end gap-2 overflow-x-auto pb-1">
+          <div className="flex w-[30%] min-w-[240px] shrink-0 flex-col gap-1">
+            <span className="text-[11px] font-medium text-muted-foreground">Search</span>
+            <div className="flex h-9 items-center rounded-md border bg-background px-2 focus-within:ring-2 focus-within:ring-ring">
+              <Search className="mr-2 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Order, reseller, note…"
+                className="h-full w-full bg-transparent text-sm outline-none"
+              />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch("")}
+                  className="ml-1 rounded p-0.5 text-muted-foreground hover:bg-accent"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+          </div>
+
           {admin && (
             <SearchableSelect
               label="Reseller"
@@ -255,7 +302,7 @@ export function TransactionReport({
                 { value: "", label: "All resellers" },
                 ...resellers.map((r) => ({ value: r.id, label: `${r.business_name} · ${r.code}` })),
               ]}
-              className="w-48 shrink-0"
+              className="min-w-[160px] flex-1"
             />
           )}
           <SearchableSelect
@@ -263,32 +310,30 @@ export function TransactionReport({
             value={kind}
             onChange={setKind}
             options={KIND_OPTIONS}
-            className="w-40 shrink-0"
+            className="min-w-[130px] flex-1"
           />
-          <DateRangeBar compact label="" value={range} onChange={setRange} />
-          <div className="flex flex-col gap-1">
+          <div className="flex min-w-[180px] flex-1 items-end">
+            <DateRangeBar compact label="" value={range} onChange={setRange} />
+          </div>
+          <div className="flex w-24 shrink-0 flex-col gap-1">
             <span className="text-[11px] font-medium text-muted-foreground">Per page</span>
             <select
-              value={perPage}
+              value={String(perPage)}
               onChange={(e) => {
-                setPerPage(Number(e.target.value));
+                const v = e.target.value;
+                setPerPage(v === "all" ? "all" : Number(v));
                 setPage(1);
               }}
-              className="h-7 rounded-md border bg-background px-1.5 text-xs outline-none focus:ring-2 focus:ring-ring"
+              className="h-9 rounded-md border bg-background px-1.5 text-xs outline-none focus:ring-2 focus:ring-ring"
             >
-              {[20, 50, 100, 200].map((n) => (
+              {[20, 50, 100, 200, 500, 1000].map((n) => (
                 <option key={n} value={n}>
-                  {n} / page
+                  {n}
                 </option>
               ))}
+              <option value="all">All</option>
             </select>
           </div>
-          <button
-            onClick={exportCsv}
-            className="ml-auto inline-flex h-7 shrink-0 items-center gap-1.5 rounded-md border px-2.5 text-xs font-semibold hover:bg-accent"
-          >
-            <Download className="h-3.5 w-3.5" /> CSV
-          </button>
         </div>
       </div>
 

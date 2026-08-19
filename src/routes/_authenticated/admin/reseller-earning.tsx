@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { PageHeader } from "@/components/ui-kit";
 import { TransactionReport } from "@/components/transaction-report";
 
 export const Route = createFileRoute("/_authenticated/admin/reseller-earning")({
@@ -22,10 +21,6 @@ export const Route = createFileRoute("/_authenticated/admin/reseller-earning")({
 function AdminTransactionReportPage() {
   return (
     <div className="space-y-5">
-      <PageHeader
-        title="Transaction report"
-        description="All reseller money movements in one ledger."
-      />
       <TransactionReport admin />
     </div>
   );

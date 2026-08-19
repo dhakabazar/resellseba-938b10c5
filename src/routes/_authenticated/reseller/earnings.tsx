@@ -2,7 +2,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/use-auth";
-import { PageHeader } from "@/components/ui-kit";
 import { TransactionReport } from "@/components/transaction-report";
 import { Loader2 } from "lucide-react";
 
@@ -43,10 +42,6 @@ function EarningsPage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader
-        title="Transaction report"
-        description="Your profit, loss, deposit and withdraw ledger."
-      />
       {loading ? (
         <div className="flex items-center justify-center py-16">
           <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
