@@ -512,7 +512,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
               {/* Charges */}
               <section className="space-y-3">
                 <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80">
-                  Delivery charge
+                  Charges & adjustments
                 </h3>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <label className="space-y-1">
@@ -531,7 +531,45 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                       onChange={(e) => setShippingManual(Number(e.target.value) || 0)}
                     />
                   </label>
+                  <label className="space-y-1">
+                    <span className="text-[10px] font-semibold text-muted-foreground">Discount (৳)</span>
+                    <input
+                      className={inp}
+                      inputMode="numeric"
+                      placeholder="0"
+                      value={discount}
+                      onChange={(e) => setDiscount(e.target.value)}
+                    />
+                  </label>
+                  <label className="space-y-1">
+                    <span className="text-[10px] font-semibold text-muted-foreground">
+                      Packaging cost{isAdmin ? "" : " (admin controlled)"}
+                    </span>
+                    <input
+                      className={inp}
+                      inputMode="numeric"
+                      disabled={!isAdmin}
+                      placeholder={`৳${totals.packagingDefault.toFixed(0)}`}
+                      value={packagingInput}
+                      onChange={(e) => setPackagingInput(e.target.value)}
+                    />
+                  </label>
+                  {isAdmin && (
+                    <label className="space-y-1">
+                      <span className="text-[10px] font-semibold text-muted-foreground">
+                        Courier cost (default ৳{totals.shipping.toFixed(0)})
+                      </span>
+                      <input
+                        className={inp}
+                        inputMode="numeric"
+                        placeholder={`৳${totals.shipping.toFixed(0)}`}
+                        value={deliveryCostInput}
+                        onChange={(e) => setDeliveryCostInput(e.target.value)}
+                      />
+                    </label>
+                  )}
                 </div>
+
 
                 {isAdmin && (
                   <label className="mt-3 block">
