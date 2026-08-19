@@ -37,6 +37,7 @@ import { NewOrderModal } from "@/components/NewOrderModal";
 import { OrderEditModal } from "@/components/OrderEditModal";
 import { OrderItemsStrip, type StripItem } from "@/components/order-items-strip";
 
+import { OrderSettleModal } from "@/components/OrderSettleModal";
 import { ShipmentBookingModal } from "@/components/ShipmentBookingModal";
 import { toast } from "sonner";
 import { CourierTimeline, type CourierEvent } from "@/components/CourierTimeline";
@@ -52,6 +53,8 @@ import {
   orderStatusTone,
   orderStatusLabel,
   type OrderTabKey,
+  nextStatuses,
+  SETTLEMENT_STATUSES,
 } from "@/lib/courier-status";
 
 type OrderRow = {
@@ -114,6 +117,7 @@ function AdminOrdersPage() {
   const [page, setPage] = useState(1);
   const [editId, setEditId] = useState<string | null>(null);
   const [statusModal, setStatusModal] = useState<{ open: boolean; orderId: string; currentStatus: string; isBulk?: boolean } | null>(null);
+  const [settleModal, setSettleModal] = useState<{ orderId: string; status: string } | null>(null);
   const [bookingModal, setBookingModal] = useState<{ open: boolean; orderIds: string[] }>({ open: false, orderIds: [] });
   
   const fetchActive = useServerFn(getActiveCouriers);
@@ -596,13 +600,23 @@ function AdminOrdersPage() {
               </div>
               <div className="p-4">
                 <div className="grid grid-cols-1 gap-1.5">
-                  {ORDER_STATUS_OPTIONS.map((s) => (
+                  {(statusModal.isBulk
+                    ? ORDER_STATUS_OPTIONS
+                    : (Array.from(
+                        new Set([...nextStatuses(statusModal.currentStatus, "admin"), statusModal.currentStatus]),
+                      ) as typeof ORDER_STATUS_OPTIONS)
+                  ).map((s) => (
                     <button
                       key={s}
                       disabled={loading}
                       onClick={async () => {
                         if (statusModal.isBulk) {
                           await bulkUpdateStatus(s);
+                          setStatusModal(null);
+                          return;
+                        }
+                        if ((SETTLEMENT_STATUSES as string[]).includes(s)) {
+                          setSettleModal({ orderId: statusModal.orderId, status: s });
                           setStatusModal(null);
                           return;
                         }
@@ -645,6 +659,13 @@ function AdminOrdersPage() {
             </div>
           </div>
         )}
+        <OrderSettleModal
+          open={!!settleModal}
+          orderId={settleModal?.orderId ?? null}
+          targetStatus={settleModal?.status ?? "delivered"}
+          onClose={() => setSettleModal(null)}
+          onSaved={() => void load()}
+        />
         <ShipmentBookingModal
           isOpen={bookingModal.open}
           onClose={() => setBookingModal({ open: false, orderIds: [] })}

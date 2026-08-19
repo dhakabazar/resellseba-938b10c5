@@ -185,15 +185,23 @@ export function statusTab(status: string): OrderTabKey {
   return "all";
 }
 
-export const REALIZED_STATUSES = ["delivered", "partial"];
+export const REALIZED_STATUSES = [
+  "delivered",
+  "partial",
+  "partial_full",
+  "partial_item",
+  "partial_delivery",
+  "damaged",
+];
 export const LOST_STATUSES = ["returned", "cancelled"];
-export const RISK_STATUSES = ["pending_return"];
+export const RISK_STATUSES = ["pending_return", "pending_partial"];
 /** Money still moving — not yet earned, not yet lost. */
 export const PIPELINE_STATUSES = [
   "draft",
   "pending",
   "confirmed",
   "forwarded",
+  "packaging",
   "ready_to_ship",
   "processing",
   "shipped",

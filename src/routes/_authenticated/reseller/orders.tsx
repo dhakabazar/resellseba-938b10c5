@@ -387,7 +387,7 @@ function OrdersPage() {
     
     // Check if any order is NOT pending/confirmed or is booked
     const bookedIds = shipments.filter(s => s.consignment_id || s.tracking_id).map(s => s.order_id);
-    const restricted = visible.filter(o => marked.includes(o.id) && (o.status !== "pending" || bookedIds.includes(o.id)));
+    const restricted = visible.filter(o => marked.includes(o.id) && (!["pending", "forwarded"].includes(o.status) || bookedIds.includes(o.id)));
     
     if (restricted.length > 0) {
       toast.error(`${restricted.length} orders cannot be deleted (only Pending orders that are not booked).`);
@@ -433,8 +433,8 @@ function OrdersPage() {
     if (!order) return;
 
     const isBooked = shipments.some(s => s.order_id === id && (s.consignment_id || s.tracking_id));
-    if (order.status !== "pending" || isBooked) {
-      toast.error("You can only delete Pending orders that are not booked.");
+    if (!["pending", "forwarded"].includes(order.status) || isBooked) {
+      toast.error("Admin confirm korar age porjonto order delete kora jabe.");
       return;
     }
 
@@ -692,7 +692,7 @@ function OrdersPage() {
                           <Eye className="mr-2 h-4 w-4" /> View Details
                         </DropdownMenuItem>
 
-                        {o.status === "pending" && (
+                        {(o.status === "pending" || o.status === "forwarded") && (
                           <DropdownMenuItem onClick={() => setEditId(o.id)}>
                             <Pencil className="mr-2 h-4 w-4" /> Edit Order
                           </DropdownMenuItem>
@@ -719,7 +719,7 @@ function OrdersPage() {
                             <FileText className="mr-2 h-4 w-4" /> View Invoice
                           </Link>
                         </DropdownMenuItem>
-                        {o.status === "pending" && !shipments.some(s => s.order_id === o.id && (s.consignment_id || s.tracking_id)) && (
+                        {(o.status === "pending" || o.status === "forwarded") && !shipments.some(s => s.order_id === o.id && (s.consignment_id || s.tracking_id)) && (
                           <>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem 
@@ -854,7 +854,7 @@ function OrdersPage() {
                           {o.payment_method}
                         </span>
                         <span
-                          className={`rounded px-1.5 py-0.5 ${o.status === "confirmed" && o.forwarded_to_admin ? "bg-success/10 text-success" : "hidden"}`}
+                          className={`rounded px-1.5 py-0.5 ${(o.status === "forwarded" || o.status === "confirmed") && o.forwarded_to_admin ? "bg-success/10 text-success" : "hidden"}`}
                         >
                           {o.forwarded_to_admin ? "Sent to admin" : ""}
                         </span>
@@ -950,7 +950,7 @@ function OrdersPage() {
                     >
                       {orderStatusLabel(o.status)}
                     </span>
-                    {o.status === "confirmed" && o.forwarded_to_admin && (
+                    {(o.status === "forwarded" || o.status === "confirmed") && o.forwarded_to_admin && (
                       <div className="mt-0.5 text-[9px] text-success font-medium">
                         Sent to admin
                       </div>
@@ -1108,12 +1108,12 @@ function OrdersPage() {
             
             <div className="p-4">
               <div className="grid grid-cols-1 gap-1.5">
-                {['pending', 'confirmed', 'cancelled'].map((s) => (
+                {['pending', 'forwarded', 'cancelled'].map((s) => (
                   <button
                     key={s}
                     disabled={loading}
                     onClick={async () => {
-                      if (s === "confirmed" && deposit.blocked) {
+                      if (s === "forwarded" && deposit.blocked) {
                         toast.error(fillText(depositTexts.orderBlockToast, { due: deposit.due, required: deposit.requiredAmount, balance: deposit.balance, frozen: deposit.frozenAmount }));
                         return;
                       }
@@ -1245,15 +1245,15 @@ function OrderDrawer({
     onError: (err: any) => toast.error(err.message || "Failed to recheck status"),
   });
 
-  async function setStatus(next: "confirmed" | "cancelled") {
-    if (next === "confirmed" && depositBlocked) {
+  async function setStatus(next: "forwarded" | "cancelled") {
+    if (next === "forwarded" && depositBlocked) {
       toast.error(fillText(depositBlockText ?? DEFAULT_DEPOSIT_TEXTS.orderBlockToast, { due: depositDue ?? 0 }));
       return;
     }
     setBusy(true);
     const patch: Record<string, unknown> =
-      next === "confirmed"
-        ? { status: "confirmed", forwarded_to_admin: true, forwarded_at: new Date().toISOString() }
+      next === "forwarded"
+        ? { status: "forwarded", forwarded_to_admin: true, forwarded_at: new Date().toISOString() }
         : { status: "cancelled" };
     const { error } = await supabase.from("orders").update(patch as any).eq("id", orderId);
     if (error) {
@@ -1262,7 +1262,7 @@ function OrderDrawer({
       return;
     }
     await supabase.from("order_status_history").insert({ order_id: orderId, status: next as any });
-    toast.success(next === "confirmed" ? "Order confirmed and sent to admin" : "Order cancelled");
+    toast.success(next === "forwarded" ? "Order sent to admin" : "Order cancelled");
     setBusy(false);
     onChanged();
     refetch();
@@ -1306,7 +1306,7 @@ function OrderDrawer({
   const total = Number(order.total || 0);
   
   // Reseller can only confirm/cancel if pending and not forwarded
-  const canAct = !order.forwarded_to_admin && (order.status === "pending" || order.status === "draft");
+  const canAct = order.status === "pending" || order.status === "draft";
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
@@ -1331,10 +1331,10 @@ function OrderDrawer({
             <div className="flex gap-3 surface-card p-4 border-primary/20 bg-primary/5">
               <button
                 disabled={busy}
-                onClick={() => setStatus("confirmed")}
+                onClick={() => setStatus("forwarded")}
                 className="btn-brand inline-flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-bold shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
               >
-                <CheckCircle2 className="h-4 w-4" /> Confirm Order
+                <CheckCircle2 className="h-4 w-4" /> Send to admin
               </button>
               <button
                 disabled={busy}

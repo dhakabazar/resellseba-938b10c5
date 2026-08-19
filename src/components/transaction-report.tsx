@@ -1,0 +1,339 @@
+/**
+ * Transaction report — single money report for admin and reseller.
+ * Replaces the old money timeline / earning report: every order settlement,
+ * security deposit and withdraw request in one running-balance table.
+ */
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "@tanstack/react-router";
+import { Loader2, Download, ArrowDownRight, ArrowUpRight, Wallet, TrendingUp, AlertTriangle } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { StatCard } from "@/components/ui-kit";
+import { SearchableSelect } from "@/components/searchable-select";
+import { DateRangeBar, DEFAULT_DATE_RANGE, resolveRange, type DateRangeState } from "@/components/date-range-filter";
+import { bdt, toCsv, downloadCsv, PROFIT_FORMULA_HINT } from "@/lib/finance-report";
+import { orderStatusLabel, orderStatusTone } from "@/lib/courier-status";
+
+export type TxRow = {
+  at: string;
+  kind: string; // profit | loss | deposit | withdraw
+  direction: string; // in | out | void
+  reseller_id: string;
+  reseller_name: string;
+  reseller_code: string;
+  order_id: string | null;
+  order_number: string | null;
+  status: string;
+  label: string;
+  note: string | null;
+  sell_subtotal: number;
+  sell_delivery: number;
+  sell_total: number;
+  buy_product: number;
+  buy_delivery: number;
+  packaging: number;
+  buy_total: number;
+  received: number;
+  amount: number;
+  running: number;
+};
+
+const KIND_OPTIONS = [
+  { value: "", label: "All transactions" },
+  { value: "profit", label: "Order profit" },
+  { value: "loss", label: "Order loss" },
+  { value: "deposit", label: "Security deposit" },
+  { value: "withdraw", label: "Withdraw" },
+];
+
+export function TransactionReport({
+  resellerId,
+  admin = false,
+}: {
+  /** Fixed reseller (reseller panel) or the admin's selected reseller. */
+  resellerId?: string | null;
+  admin?: boolean;
+}) {
+  const [range, setRange] = useState<DateRangeState>(DEFAULT_DATE_RANGE);
+  const [reseller, setReseller] = useState<string>(resellerId ?? "");
+  const [kind, setKind] = useState("");
+  const [q, setQ] = useState("");
+  const [rows, setRows] = useState<TxRow[]>([]);
+  const [resellers, setResellers] = useState<{ id: string; business_name: string; code: string }[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!admin) return;
+    void supabase
+      .from("resellers")
+      .select("id,business_name,code")
+      .order("business_name")
+      .then(({ data }) => setResellers(data ?? []));
+  }, [admin]);
+
+  useEffect(() => {
+    if (!admin && !resellerId) return;
+    const { fromTs, toTs } = resolveRange(range);
+    setLoading(true);
+    setError(null);
+    void supabase
+      .rpc("transaction_report", {
+        _reseller_id: (admin ? reseller : resellerId) || null,
+        _from: fromTs != null ? new Date(fromTs).toISOString() : null,
+        _to: toTs != null ? new Date(toTs).toISOString() : null,
+        _limit: 1000,
+      } as never)
+      .then(({ data, error }) => {
+        if (error) setError(error.message);
+        setRows(((data ?? []) as TxRow[]).map((r) => ({ ...r })));
+        setLoading(false);
+      });
+  }, [admin, reseller, resellerId, range]);
+
+  const filtered = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    return rows.filter((r) => {
+      if (kind && r.kind !== kind) return false;
+      if (!needle) return true;
+      return [r.order_number, r.label, r.note, r.reseller_name, r.reseller_code, r.status]
+        .filter(Boolean)
+        .some((v) => String(v).toLowerCase().includes(needle));
+    });
+  }, [rows, kind, q]);
+
+  const totals = useMemo(() => {
+    let inflow = 0,
+      outflow = 0,
+      deposit = 0,
+      withdraw = 0,
+      profit = 0,
+      loss = 0;
+    for (const r of filtered) {
+      if (r.direction === "in") inflow += Number(r.amount);
+      if (r.direction === "out") outflow += Number(r.amount);
+      if (r.kind === "deposit") deposit += Number(r.amount);
+      if (r.kind === "withdraw" && r.direction === "out") withdraw += Number(r.amount);
+      if (r.kind === "profit") profit += Number(r.amount);
+      if (r.kind === "loss") loss += Number(r.amount);
+    }
+    return { inflow, outflow, deposit, withdraw, profit, loss, balance: inflow - outflow };
+  }, [filtered]);
+
+  const exportCsv = () => {
+    const csv = toCsv(
+      [
+        "Date",
+        "Type",
+        "Reseller",
+        "Order",
+        "Status",
+        "Note",
+        "Sell subtotal",
+        "Sell delivery",
+        "Sell total",
+        "Received",
+        "Buy product",
+        "Buy delivery",
+        "Packaging",
+        "Buy total",
+        "Amount",
+        "Direction",
+        "Running balance",
+      ],
+      filtered.map((r) => [
+        new Date(r.at).toLocaleString(),
+        r.kind,
+        `${r.reseller_name} (${r.reseller_code})`,
+        r.order_number ?? "",
+        r.status,
+        r.note ?? "",
+        r.sell_subtotal,
+        r.sell_delivery,
+        r.sell_total,
+        r.received,
+        r.buy_product,
+        r.buy_delivery,
+        r.packaging,
+        r.buy_total,
+        r.amount,
+        r.direction,
+        r.running,
+      ]),
+    );
+    downloadCsv(`transaction-report-${new Date().toISOString().slice(0, 10)}.csv`, csv);
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="surface-card flex flex-wrap items-end justify-between gap-3 p-4">
+        <div className="flex flex-wrap items-end gap-2">
+          {admin && (
+            <SearchableSelect
+              label="Reseller"
+              placeholder="All resellers"
+              value={reseller}
+              onChange={setReseller}
+              options={[
+                { value: "", label: "All resellers" },
+                ...resellers.map((r) => ({ value: r.id, label: `${r.business_name} · ${r.code}` })),
+              ]}
+              className="w-56"
+            />
+          )}
+          <SearchableSelect
+            label="Type"
+            value={kind}
+            onChange={setKind}
+            options={KIND_OPTIONS}
+            className="w-44"
+          />
+          <div className="flex flex-col gap-1">
+            <span className="text-[11px] font-medium text-muted-foreground">Search</span>
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Order no, note, status…"
+              className="h-8 w-52 rounded-md border bg-background px-2 text-xs outline-none focus:ring-2 focus:ring-ring"
+            />
+          </div>
+        </div>
+        <DateRangeBar
+          compact
+          value={range}
+          onChange={setRange}
+          right={
+            <button
+              onClick={exportCsv}
+              className="inline-flex h-7 items-center gap-1.5 rounded-md border px-2.5 text-xs font-semibold hover:bg-accent"
+            >
+              <Download className="h-3.5 w-3.5" /> CSV
+            </button>
+          }
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <StatCard label="Total in" value={bdt(totals.inflow)} icon={<ArrowDownRight className="h-4 w-4" />} />
+        <StatCard label="Total out" value={bdt(totals.outflow)} icon={<ArrowUpRight className="h-4 w-4" />} />
+        <StatCard label="Balance" value={bdt(totals.balance)} icon={<Wallet className="h-4 w-4" />} />
+        <StatCard
+          label="Order profit / loss"
+          value={`${bdt(totals.profit)} / ${bdt(totals.loss)}`}
+          icon={<TrendingUp className="h-4 w-4" />}
+        />
+        <StatCard label="Security deposit" value={bdt(totals.deposit)} icon={<Wallet className="h-4 w-4" />} />
+        <StatCard label="Withdrawn" value={bdt(totals.withdraw)} icon={<ArrowUpRight className="h-4 w-4" />} />
+        <StatCard label="Transactions" value={String(filtered.length)} icon={<TrendingUp className="h-4 w-4" />} />
+        <StatCard label="Loss orders" value={String(filtered.filter((r) => r.kind === "loss").length)} icon={<AlertTriangle className="h-4 w-4" />} />
+      </div>
+
+      <p className="rounded-lg border bg-muted/30 px-3 py-2 text-[11px] text-muted-foreground">{PROFIT_FORMULA_HINT}</p>
+
+      <div className="surface-card overflow-hidden">
+        {loading ? (
+          <div className="flex items-center justify-center py-16">
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          </div>
+        ) : error ? (
+          <div className="p-6 text-center text-xs text-destructive">{error}</div>
+        ) : filtered.length === 0 ? (
+          <div className="p-8 text-center text-xs text-muted-foreground">No transaction in this range.</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[1000px] text-xs">
+              <thead className="bg-muted/40 text-[10px] uppercase tracking-wide text-muted-foreground">
+                <tr>
+                  <th className="px-3 py-2 text-left">Type</th>
+                  <th className="px-3 py-2 text-right">Amount</th>
+                  <th className="px-3 py-2 text-left">Date</th>
+                  <th className="px-3 py-2 text-left">Status</th>
+                  <th className="px-3 py-2 text-left">Meta / note</th>
+                  <th className="px-3 py-2 text-right">Subtotal (buy/sell)</th>
+                  <th className="px-3 py-2 text-right">Delivery (buy/sell)</th>
+                  <th className="px-3 py-2 text-right">Packaging</th>
+                  <th className="px-3 py-2 text-right">Received</th>
+                  <th className="px-3 py-2 text-right">Balance</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {filtered.map((r, i) => {
+                  const inflow = r.direction === "in";
+                  const voided = r.direction === "void";
+                  return (
+                    <tr key={`${r.at}-${i}`} className="hover:bg-muted/20">
+                      <td className="px-3 py-2">
+                        <span
+                          className={
+                            "rounded-full px-2 py-0.5 text-[10px] font-bold uppercase " +
+                            (r.kind === "deposit"
+                              ? "bg-primary/10 text-primary"
+                              : r.kind === "withdraw"
+                                ? "bg-amber-500/15 text-amber-600"
+                                : inflow
+                                  ? "bg-success/15 text-success"
+                                  : "bg-destructive/15 text-destructive")
+                          }
+                        >
+                          {r.kind}
+                        </span>
+                        {admin && (
+                          <div className="mt-1 truncate text-[10px] text-muted-foreground">
+                            {r.reseller_name} · {r.reseller_code}
+                          </div>
+                        )}
+                      </td>
+                      <td
+                        className={
+                          "px-3 py-2 text-right font-bold tabular-nums " +
+                          (voided ? "text-muted-foreground line-through" : inflow ? "text-success" : "text-destructive")
+                        }
+                      >
+                        {inflow ? "+" : "−"}
+                        {bdt(Number(r.amount))}
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-2 text-[11px] text-muted-foreground">
+                        {new Date(r.at).toLocaleString()}
+                      </td>
+                      <td className="px-3 py-2">
+                        <span className={`rounded-full px-2 py-0.5 text-[10px] capitalize ${orderStatusTone(r.status)}`}>
+                          {orderStatusLabel(r.status)}
+                        </span>
+                      </td>
+                      <td className="max-w-[260px] px-3 py-2">
+                        {r.order_id ? (
+                          <Link
+                            to={admin ? "/admin/orders" : "/reseller/orders"}
+                            search={{ q: r.order_number ?? "" } as never}
+                            className="font-semibold text-primary hover:underline"
+                          >
+                            #{r.order_number}
+                          </Link>
+                        ) : (
+                          <span className="font-semibold">{r.label}</span>
+                        )}
+                        {r.note && <div className="mt-0.5 break-words text-[11px] text-muted-foreground">{r.note}</div>}
+                      </td>
+                      <td className="px-3 py-2 text-right tabular-nums">
+                        {r.order_id ? `${bdt(Number(r.buy_product))} / ${bdt(Number(r.sell_subtotal))}` : "—"}
+                      </td>
+                      <td className="px-3 py-2 text-right tabular-nums">
+                        {r.order_id ? `${bdt(Number(r.buy_delivery))} / ${bdt(Number(r.sell_delivery))}` : "—"}
+                      </td>
+                      <td className="px-3 py-2 text-right tabular-nums">
+                        {r.order_id ? bdt(Number(r.packaging)) : "—"}
+                      </td>
+                      <td className="px-3 py-2 text-right tabular-nums">
+                        {r.order_id ? bdt(Number(r.received)) : "—"}
+                      </td>
+                      <td className="px-3 py-2 text-right font-semibold tabular-nums">{bdt(Number(r.running))}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
