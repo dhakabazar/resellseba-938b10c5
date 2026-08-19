@@ -5,6 +5,8 @@ import { addressError, nameError, normalizePhone, phoneError, sanitizeName } fro
 import { Loader2, Plus, Minus, X, Trash2, Search } from "lucide-react";
 import { toast } from "sonner";
 import { ProductCodeChip } from "@/components/product-code";
+import { AdvanceByToggle, MoneyField, SectionLabel } from "@/components/order-form-fields";
+
 
 type Line = { listing_id?: string; product_id?: string; qty: number; name?: string; price?: number; cost?: number; image?: string; delivery?: any };
 
@@ -48,6 +50,10 @@ export function NewOrderModal({
   const [shipOverride, setShipOverride] = useState("");
   const [packagingOverride, setPackagingOverride] = useState("");
   const [deliveryCostOverride, setDeliveryCostOverride] = useState("");
+  /** Advance already collected from the customer + who is holding that cash. */
+  const [advance, setAdvance] = useState("");
+  const [advanceBy, setAdvanceBy] = useState<"admin" | "reseller">(isAdmin ? "admin" : "reseller");
+
 
 
   const trendingResellers = useMemo(() => {
@@ -146,6 +152,9 @@ export function NewOrderModal({
     const saCost = productCost + packaging;
     const deliveryCost =
       deliveryCostOverride.trim() === "" ? shipping : Math.max(Number(deliveryCostOverride) || 0, 0);
+    const adv = Math.min(Math.max(Number(advance) || 0, 0), total);
+    const resellerAdvance = advanceBy === "reseller" ? adv : 0;
+    const grossProfit = total - deliveryCost - saCost;
 
     return {
       subtotal,
@@ -158,11 +167,16 @@ export function NewOrderModal({
       total,
       saCost,
       deliveryCost,
-      profit: total - deliveryCost - saCost,
+      advance: adv,
+      resellerAdvance,
+      codDue: Math.max(total - adv, 0),
+      grossProfit,
+      profit: grossProfit - resellerAdvance,
       shipFrom,
       showAreaPicker,
     };
-  }, [picked, area, shipOverride, packagingOverride, discount, deliveryCostOverride]);
+  }, [picked, area, shipOverride, packagingOverride, discount, deliveryCostOverride, advance, advanceBy]);
+
 
 
   const errors = {
@@ -218,6 +232,9 @@ export function NewOrderModal({
           sa_cost_total: totals.saCost,
           packaging_total: totals.packaging,
           delivery_cost: totals.deliveryCost,
+          advance_amount: totals.advance,
+          advance_by: totals.advance > 0 ? advanceBy : null,
+
           reseller_profit: totals.profit,
           status: "pending",
           forwarded_to_admin: true,
@@ -252,6 +269,9 @@ export function NewOrderModal({
           packaging_total: totals.packaging,
           sa_cost_total: totals.saCost,
           delivery_cost: totals.deliveryCost,
+          advance_amount: totals.advance,
+          advance_by: totals.advance > 0 ? advanceBy : null,
+
           discount: totals.discount,
           shipping_cost: totals.shipping,
           subtotal: totals.subtotal,
@@ -607,55 +627,61 @@ export function NewOrderModal({
 
                 {picked.length > 0 && (
                   <div className="space-y-3">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80">
-                      Charges & adjustments
-                    </label>
-                    <div className="grid gap-3 rounded-xl border bg-muted/20 p-3 sm:grid-cols-2">
-                      <Field label={`Delivery charge (auto ৳${totals.autoShipping.toFixed(0)})`}>
-                        <input
-                          inputMode="numeric"
-                          value={shipOverride}
-                          onChange={(e) => setShipOverride(e.target.value)}
-                          placeholder={`Auto ৳${totals.autoShipping.toFixed(0)}`}
-                          className="w-full rounded-lg border bg-background px-3 py-1.5 text-xs tabular-nums focus:ring-2 focus:ring-primary/20"
-                        />
-                      </Field>
-                      <Field label="Discount (৳)">
-                        <input
-                          inputMode="numeric"
-                          value={discount}
-                          onChange={(e) => setDiscount(e.target.value)}
-                          placeholder="0"
-                          className="w-full rounded-lg border bg-background px-3 py-1.5 text-xs tabular-nums focus:ring-2 focus:ring-primary/20"
-                        />
-                      </Field>
-                      <Field label={`Packaging cost${isAdmin ? "" : " (admin controlled)"}`}>
-                        <input
-                          inputMode="numeric"
-                          disabled={!isAdmin}
-                          value={isAdmin ? packagingOverride : ""}
-                          onChange={(e) => setPackagingOverride(e.target.value)}
-                          placeholder={`৳${totals.packagingDefault.toFixed(0)}`}
-                          className="w-full rounded-lg border bg-background px-3 py-1.5 text-xs tabular-nums focus:ring-2 focus:ring-primary/20 disabled:opacity-70"
-                        />
-                      </Field>
+                    <SectionLabel>Charges &amp; adjustments</SectionLabel>
+                    <div className="grid gap-3 rounded-2xl border bg-muted/20 p-4 sm:grid-cols-2">
+                      <MoneyField
+                        label="Delivery charge"
+                        hint={`auto ৳${totals.autoShipping.toFixed(0)}`}
+                        value={shipOverride}
+                        onChange={setShipOverride}
+                        placeholder={totals.autoShipping.toFixed(0)}
+                      />
+                      <MoneyField label="Discount" value={discount} onChange={setDiscount} placeholder="0" />
+                      <MoneyField
+                        label="Packaging cost"
+                        hint={isAdmin ? "editable" : "admin controlled"}
+                        disabled={!isAdmin}
+                        value={isAdmin ? packagingOverride : ""}
+                        onChange={setPackagingOverride}
+                        placeholder={totals.packagingDefault.toFixed(0)}
+                      />
                       {isAdmin && (
-                        <Field label={`Courier cost (default ৳${totals.shipping.toFixed(0)})`}>
-                          <input
-                            inputMode="numeric"
-                            value={deliveryCostOverride}
-                            onChange={(e) => setDeliveryCostOverride(e.target.value)}
-                            placeholder={`৳${totals.shipping.toFixed(0)}`}
-                            className="w-full rounded-lg border bg-background px-3 py-1.5 text-xs tabular-nums focus:ring-2 focus:ring-primary/20"
-                          />
-                        </Field>
+                        <MoneyField
+                          label="Courier cost"
+                          hint={`default ৳${totals.shipping.toFixed(0)}`}
+                          value={deliveryCostOverride}
+                          onChange={setDeliveryCostOverride}
+                          placeholder={totals.shipping.toFixed(0)}
+                        />
                       )}
                     </div>
-                    <p className="text-[10px] text-muted-foreground">
+                    <p className="text-[10px] leading-relaxed text-muted-foreground">
                       Khali rakhle default value boshbe. Packaging cost shudhu admin/staff change korte parbe.
                     </p>
+
+                    {/* Advance payment */}
+                    <SectionLabel>Advance received</SectionLabel>
+                    <div className="space-y-3 rounded-2xl border border-primary/20 bg-primary/[0.03] p-4">
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <MoneyField
+                          label="Advance amount"
+                          hint="customer age dile"
+                          value={advance}
+                          onChange={setAdvance}
+                          placeholder="0"
+                        />
+                        <AdvanceByToggle value={advanceBy} onChange={setAdvanceBy} />
+
+                      </div>
+                      <p className="text-[10px] leading-relaxed text-muted-foreground">
+                        Advance thakle courier COD hobe ৳{totals.codDue.toFixed(0)}. Admin receive korle taka admin er
+                        kachei thake, tai reseller er hisab theke kaTa hoy na. Reseller receive korle sei taka final
+                        amount theke bad jabe.
+                      </p>
+                    </div>
                   </div>
                 )}
+
               </div>
             </div>
 
@@ -693,6 +719,23 @@ export function NewOrderModal({
                     <span className="font-medium">Packaging cost</span>
                     <span className="font-black text-foreground">৳{totals.packaging.toFixed(0)}</span>
                   </div>
+                  {totals.advance > 0 && (
+                    <>
+                      <div className="flex justify-between text-xs">
+                        <span className="font-medium text-muted-foreground">
+                          Advance received
+                          <span className="ml-1.5 rounded bg-primary/10 px-1.5 py-0.5 text-[9px] font-black uppercase text-primary">
+                            {advanceBy}
+                          </span>
+                        </span>
+                        <span className="font-black text-foreground">৳{totals.advance.toFixed(0)}</span>
+                      </div>
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span className="font-medium">COD to collect</span>
+                        <span className="font-black text-foreground">৳{totals.codDue.toFixed(0)}</span>
+                      </div>
+                    </>
+                  )}
 
 
                   <div className="my-3 border-t-2 border-dashed border-muted" />
@@ -702,13 +745,20 @@ export function NewOrderModal({
                       <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 block">Payable Total</span>
                       <span className="text-2xl font-black text-primary tracking-tight">৳{totals.total.toFixed(0)}</span>
                     </div>
-                    {!isAdmin && totals.profit > 0 && (
+                    {!isAdmin && totals.profit !== 0 && (
                       <div className="text-right">
-                        <span className="text-[9px] font-black uppercase tracking-widest text-success/60 block">Estimated Profit</span>
-                        <span className="text-lg font-black text-success tracking-tight">৳{totals.profit.toFixed(0)}</span>
+                        <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 block">
+                          {totals.resellerAdvance > 0 ? "Final amount (advance baade)" : "Estimated Profit"}
+                        </span>
+                        <span
+                          className={`text-lg font-black tracking-tight ${totals.profit < 0 ? "text-destructive" : "text-success"}`}
+                        >
+                          ৳{totals.profit.toFixed(0)}
+                        </span>
                       </div>
                     )}
                   </div>
+
                 </div>
 
                 <button

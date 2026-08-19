@@ -17,7 +17,11 @@ export type ReportOrder = {
   received_amount?: number | string | null;
   /** Packaging cost of this order — part of sa_cost_total, tracked separately for loss math. */
   packaging_total?: number | string | null;
+  /** Advance collected before delivery + who holds it. */
+  advance_amount?: number | string | null;
+  advance_by?: string | null;
 };
+
 
 export type ReportItem = {
   order_id: string;
@@ -44,7 +48,22 @@ export type ProfitOrder = {
   delivery_cost?: number | string | null;
   /** Product cost of the items the customer kept — only used for `partial_item`. */
   kept_product_cost?: number | string | null;
+  /** Money already collected before delivery. */
+  advance_amount?: number | string | null;
+  /** Who is holding the advance: "admin" or "reseller". */
+  advance_by?: string | null;
 };
+
+/** Advance money already collected for this order. */
+export function orderAdvance(o: ProfitOrder) {
+  return Math.max(n(o.advance_amount), 0);
+}
+
+/** Advance that sits in the reseller's own hand — deducted from their final amount. */
+export function resellerHeldAdvance(o: ProfitOrder) {
+  return o.advance_by === "reseller" ? orderAdvance(o) : 0;
+}
+
 
 /** Delivered / partial / damaged — money is realized with received-amount math. */
 export function isRealizedStatus(status?: string | null) {
@@ -94,12 +113,12 @@ export function orderCost(o: ProfitOrder) {
 
 /**
  * Money actually received for this order.
- * Return / cancel = 0, otherwise the courier received amount (partial safe),
+ * Return / cancel = 0, otherwise courier collected amount + advance already taken,
  * still running = expected customer total.
  */
 export function orderReceived(o: ProfitOrder) {
   if (isFailedOrder(o)) return 0;
-  if (o.received_amount != null && o.received_amount !== "") return n(o.received_amount);
+  if (o.received_amount != null && o.received_amount !== "") return n(o.received_amount) + orderAdvance(o);
   return n(o.total);
 }
 
@@ -107,7 +126,7 @@ export function orderReceived(o: ProfitOrder) {
 export function isPartialOrder(o: ProfitOrder) {
   if (o.status === "partial" || o.status === "partial_full" || o.status === "partial_item" || o.status === "partial_delivery")
     return true;
-  return !isFailedOrder(o) && o.received_amount != null && o.received_amount !== "" && n(o.received_amount) < n(o.total);
+  return !isFailedOrder(o) && o.received_amount != null && o.received_amount !== "" && orderReceived(o) < n(o.total);
 }
 
 /** How much of the order value was never collected. */
@@ -123,16 +142,19 @@ export function orderShortfall(o: ProfitOrder) {
  *  · returned / pending_return → loss of delivery + packaging
  *  · cancelled → 0 (courier e jayni)
  *  · still running → expected profit from the order total
+ * Advance taken by the reseller is deducted at the end (that cash is already with them);
+ * advance taken by admin stays with admin, so nothing extra is deducted.
  */
 export function orderProfit(o: ProfitOrder) {
   if (o.status === "cancelled") return 0;
   if (isFailedOrder(o)) return -(orderDeliveryCost(o) + orderPackaging(o));
-  return orderReceived(o) - orderCost(o);
+  return orderReceived(o) - orderCost(o) - resellerHeldAdvance(o);
 }
 
 /** Reusable hint shown on every profit report/card so the math is transparent. */
 export const PROFIT_FORMULA_HINT =
-  "Profit = received amount − product cost − delivery charge − packaging cost. Partial delivery uses the amount the courier actually collected; item partial hole shudhu je product customer rekheche tar cost dhora hoy. Return received hole delivery charge + packaging cost loss, karon product ferot ase.";
+  "Profit = received amount − product cost − delivery charge − packaging cost. Advance receive kora amount collected hisabe dhora hoy; reseller advance nile seta final amount theke bad jai, admin nile ta admin er kachei thake. Partial delivery uses the amount the courier actually collected; item partial hole shudhu je product customer rekheche tar cost dhora hoy. Return received hole delivery charge + packaging cost loss, karon product ferot ase.";
+
 
 
 

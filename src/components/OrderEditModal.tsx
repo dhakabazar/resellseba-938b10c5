@@ -4,6 +4,8 @@ import { productDeliveryCharge } from "@/lib/delivery";
 import { addressError, nameError, normalizePhone, phoneError, sanitizeName } from "@/lib/checkout-validate";
 import { Loader2, Minus, Plus, Search, ShoppingCart, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
+import { AdvanceByToggle, MoneyField, SectionLabel } from "@/components/order-form-fields";
+
 
 type EditItem = {
   id?: string;
@@ -47,6 +49,10 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
   const [discount, setDiscount] = useState("");
   const [packagingInput, setPackagingInput] = useState("");
   const [deliveryCostInput, setDeliveryCostInput] = useState("");
+  /** Advance already collected + who is holding that cash. */
+  const [advance, setAdvance] = useState("");
+  const [advanceBy, setAdvanceBy] = useState<"admin" | "reseller">(isAdmin ? "admin" : "reseller");
+
   /** Money actually collected by the courier. Empty = full order total received. */
   const [received, setReceived] = useState<string>("");
   const [query, setQuery] = useState("");
@@ -78,7 +84,10 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
       setDiscount(Number(o.discount ?? 0) ? String(Number(o.discount)) : "");
       setPackagingInput(o.packaging_total == null ? "" : String(Number(o.packaging_total)));
       setDeliveryCostInput(Number(o.delivery_cost ?? 0) ? String(Number(o.delivery_cost)) : "");
+      setAdvance(Number((o as any).advance_amount ?? 0) ? String(Number((o as any).advance_amount)) : "");
+      setAdvanceBy(((o as any).advance_by === "reseller" ? "reseller" : "admin") as any);
       setShippingMode("manual");
+
 
       setItems(
         (its ?? []).map((it: any) => ({
@@ -124,6 +133,8 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
     const total = subtotal + shipping - disc;
     const recv = received.trim() === "" ? total : Number(received) || 0;
     const deliveryCost = deliveryCostInput.trim() === "" ? shipping : Math.max(Number(deliveryCostInput) || 0, 0);
+    const adv = Math.min(Math.max(Number(advance) || 0, 0), total);
+    const resellerAdvance = advanceBy === "reseller" ? adv : 0;
     return {
       subtotal,
       saCost,
@@ -135,9 +146,12 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
       discount: disc,
       total,
       received: recv,
+      advance: adv,
+      resellerAdvance,
+      codDue: Math.max(total - adv, 0),
       shortfall: Math.max(total - recv, 0),
-      // Profit always follows the money really collected.
-      profit: recv - deliveryCost - saCost,
+      // Profit always follows the money really collected, minus any advance the reseller already holds.
+      profit: recv - deliveryCost - saCost - resellerAdvance,
     };
   }, [
     items,
@@ -149,6 +163,9 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
     discount,
     packagingInput,
     deliveryCostInput,
+    advance,
+    advanceBy,
+
   ]);
 
 
@@ -250,6 +267,9 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
           total: totals.total,
           sa_cost_total: totals.saCost,
           reseller_profit: totals.profit,
+          advance_amount: totals.advance,
+          advance_by: totals.advance > 0 ? advanceBy : null,
+
           ...(isAdmin
             ? {
                 packaging_total: totals.packaging,
@@ -511,64 +531,61 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
 
               {/* Charges */}
               <section className="space-y-3">
-                <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80">
-                  Charges & adjustments
-                </h3>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <label className="space-y-1">
-                    <span className="text-[10px] font-semibold text-muted-foreground">Delivery charge mode</span>
+                <SectionLabel>Charges &amp; adjustments</SectionLabel>
+                <div className="grid gap-3 rounded-2xl border bg-muted/20 p-4 sm:grid-cols-2">
+                  <div>
+                    <div className="mb-1.5 text-[11px] font-semibold">Delivery charge mode</div>
                     <select className={inp} value={shippingMode} onChange={(e) => setShippingMode(e.target.value as any)}>
                       <option value="auto">Auto (product rules)</option>
                       <option value="manual">Manual override</option>
                     </select>
-                  </label>
-                  <label className="space-y-1">
-                    <span className="text-[10px] font-semibold text-muted-foreground">Delivery charge</span>
-                    <input
-                      className={inp}
-                      disabled={shippingMode === "auto"}
-                      value={shippingMode === "auto" ? autoShipping : shippingManual}
-                      onChange={(e) => setShippingManual(Number(e.target.value) || 0)}
-                    />
-                  </label>
-                  <label className="space-y-1">
-                    <span className="text-[10px] font-semibold text-muted-foreground">Discount (৳)</span>
-                    <input
-                      className={inp}
-                      inputMode="numeric"
-                      placeholder="0"
-                      value={discount}
-                      onChange={(e) => setDiscount(e.target.value)}
-                    />
-                  </label>
-                  <label className="space-y-1">
-                    <span className="text-[10px] font-semibold text-muted-foreground">
-                      Packaging cost{isAdmin ? "" : " (admin controlled)"}
-                    </span>
-                    <input
-                      className={inp}
-                      inputMode="numeric"
-                      disabled={!isAdmin}
-                      placeholder={`৳${totals.packagingDefault.toFixed(0)}`}
-                      value={packagingInput}
-                      onChange={(e) => setPackagingInput(e.target.value)}
-                    />
-                  </label>
+                  </div>
+                  <MoneyField
+                    label="Delivery charge"
+                    hint={shippingMode === "auto" ? "auto" : "manual"}
+                    disabled={shippingMode === "auto"}
+                    value={shippingMode === "auto" ? autoShipping : shippingManual}
+                    onChange={(v) => setShippingManual(Number(v) || 0)}
+                  />
+                  <MoneyField label="Discount" value={discount} onChange={setDiscount} placeholder="0" />
+                  <MoneyField
+                    label="Packaging cost"
+                    hint={isAdmin ? "editable" : "admin controlled"}
+                    disabled={!isAdmin}
+                    value={packagingInput}
+                    onChange={setPackagingInput}
+                    placeholder={totals.packagingDefault.toFixed(0)}
+                  />
                   {isAdmin && (
-                    <label className="space-y-1">
-                      <span className="text-[10px] font-semibold text-muted-foreground">
-                        Courier cost (default ৳{totals.shipping.toFixed(0)})
-                      </span>
-                      <input
-                        className={inp}
-                        inputMode="numeric"
-                        placeholder={`৳${totals.shipping.toFixed(0)}`}
-                        value={deliveryCostInput}
-                        onChange={(e) => setDeliveryCostInput(e.target.value)}
-                      />
-                    </label>
+                    <MoneyField
+                      label="Courier cost"
+                      hint={`default ৳${totals.shipping.toFixed(0)}`}
+                      value={deliveryCostInput}
+                      onChange={setDeliveryCostInput}
+                      placeholder={totals.shipping.toFixed(0)}
+                    />
                   )}
                 </div>
+
+                <SectionLabel>Advance received</SectionLabel>
+                <div className="space-y-3 rounded-2xl border border-primary/20 bg-primary/[0.03] p-4">
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <MoneyField
+                      label="Advance amount"
+                      hint="customer age dile"
+                      value={advance}
+                      onChange={setAdvance}
+                      placeholder="0"
+                    />
+                    <AdvanceByToggle value={advanceBy} onChange={setAdvanceBy} />
+                  </div>
+                  <p className="text-[10px] leading-relaxed text-muted-foreground">
+                    Advance thakle courier COD hobe ৳{totals.codDue.toFixed(0)}. Admin receive korle taka admin er kachei
+                    thake, tai reseller er hisab theke kaTa hoy na. Reseller receive korle sei taka final amount theke bad
+                    jabe.
+                  </p>
+                </div>
+
 
 
                 {isAdmin && (
@@ -595,7 +612,14 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                   {totals.discount > 0 && <Row label="Discount" value={-totals.discount} />}
                   <Row label="Packaging cost" value={totals.packaging} />
                   {isAdmin && <Row label="Courier cost" value={totals.deliveryCost} />}
+                  {totals.advance > 0 && (
+                    <>
+                      <Row label={`Advance (${advanceBy})`} value={totals.advance} />
+                      <Row label="COD to collect" value={totals.codDue} />
+                    </>
+                  )}
                   <Row label="Received" value={totals.received} />
+
 
                   <div className="mt-2 flex justify-between border-t pt-2 text-sm font-bold text-primary">
                     <span>Grand total</span>
