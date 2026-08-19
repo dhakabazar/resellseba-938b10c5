@@ -741,6 +741,23 @@ export function NewOrderModal({
                     <span className="font-medium">Packaging cost</span>
                     <span className="font-black text-foreground">৳{totals.packaging.toFixed(0)}</span>
                   </div>
+                  {totals.advance > 0 && (
+                    <>
+                      <div className="flex justify-between text-xs">
+                        <span className="font-medium text-muted-foreground">
+                          Advance received
+                          <span className="ml-1.5 rounded bg-primary/10 px-1.5 py-0.5 text-[9px] font-black uppercase text-primary">
+                            {advanceBy}
+                          </span>
+                        </span>
+                        <span className="font-black text-foreground">৳{totals.advance.toFixed(0)}</span>
+                      </div>
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span className="font-medium">COD to collect</span>
+                        <span className="font-black text-foreground">৳{totals.codDue.toFixed(0)}</span>
+                      </div>
+                    </>
+                  )}
 
 
                   <div className="my-3 border-t-2 border-dashed border-muted" />
@@ -750,13 +767,20 @@ export function NewOrderModal({
                       <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 block">Payable Total</span>
                       <span className="text-2xl font-black text-primary tracking-tight">৳{totals.total.toFixed(0)}</span>
                     </div>
-                    {!isAdmin && totals.profit > 0 && (
+                    {!isAdmin && totals.profit !== 0 && (
                       <div className="text-right">
-                        <span className="text-[9px] font-black uppercase tracking-widest text-success/60 block">Estimated Profit</span>
-                        <span className="text-lg font-black text-success tracking-tight">৳{totals.profit.toFixed(0)}</span>
+                        <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 block">
+                          {totals.resellerAdvance > 0 ? "Final amount (advance baade)" : "Estimated Profit"}
+                        </span>
+                        <span
+                          className={`text-lg font-black tracking-tight ${totals.profit < 0 ? "text-destructive" : "text-success"}`}
+                        >
+                          ৳{totals.profit.toFixed(0)}
+                        </span>
                       </div>
                     )}
                   </div>
+
                 </div>
 
                 <button
