@@ -34,6 +34,9 @@ export type TxRow = {
   buy_delivery: number;
   packaging: number;
   buy_total: number;
+  /** Money the courier collected on delivery (advance baade). */
+  collected: number;
+  /** Total money received for this order = collected + advance already paid. */
   received: number;
   advance: number;
   advance_by: string | null;
