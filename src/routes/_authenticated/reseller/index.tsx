@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getMyReseller } from "@/lib/app-data";
 import { useDepositStatus } from "@/lib/deposit";
 import { DepositNotice } from "@/components/deposit-notice";
 import { useAuth } from "@/lib/use-auth";
@@ -77,11 +78,7 @@ function ResellerDashboard() {
     async (r: DateRangeState) => {
       if (!uid) return;
       setLoading(true);
-      const { data: reseller } = await supabase
-        .from("resellers")
-        .select("id")
-        .eq("user_id", uid)
-        .maybeSingle();
+      const reseller = await getMyReseller(uid);
       if (!reseller) {
         setLoading(false);
         return;
