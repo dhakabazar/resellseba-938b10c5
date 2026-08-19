@@ -51,6 +51,7 @@ function DomainPage() {
   const [rows, setRows] = useState<DomainRow[]>([]);
   const [guide, setGuide] = useState<DnsGuide | null>(null);
   const [hostname, setHostname] = useState("");
+  const [mode, setMode] = useState<"cloudflare" | "dns">("cloudflare");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<DomainRow | null>(null);
@@ -61,6 +62,7 @@ function DomainPage() {
         const [d, g] = await Promise.all([load({ data: {} }), guideFn({})]);
         setRows(d);
         setGuide(g);
+        setMode(g.cfReady ? "cloudflare" : g.dnsReady ? "dns" : "cloudflare");
       } catch (err) {
         toast.error(errorText(err));
       } finally {
@@ -74,7 +76,7 @@ function DomainPage() {
     e.preventDefault();
     setBusy("add");
     try {
-      const row = await connect({ data: { hostname } });
+      const row = await connect({ data: { hostname, mode } });
       setRows((rs) => [...rs, row]);
       setHostname("");
       toast.success("Domain connected — now add the DNS records below");
@@ -134,6 +136,7 @@ function DomainPage() {
     );
 
   const cname = guide?.cnameTarget || guide?.zoneName || "";
+  const both = !!guide?.cfReady && !!guide?.dnsReady;
 
   return (
     <div>
@@ -145,7 +148,27 @@ function DomainPage() {
         </div>
       )}
 
-      <form onSubmit={add} className="surface-card mb-5 flex flex-wrap items-end gap-2 p-4">
+      <form onSubmit={add} className="surface-card mb-5 space-y-3 p-4">
+        {both && (
+          <div className="flex flex-wrap gap-2">
+            {([
+              { key: "cloudflare", label: "Cloudflare (auto SSL)" },
+              { key: "dns", label: "Server DNS" },
+            ] as const).map((o) => (
+              <button
+                type="button"
+                key={o.key}
+                onClick={() => setMode(o.key)}
+                className={`rounded-md border px-3 py-1.5 text-xs font-medium transition ${
+                  mode === o.key ? "border-primary bg-primary-soft text-primary" : "hover:bg-muted"
+                }`}
+              >
+                {o.label}
+              </button>
+            ))}
+          </div>
+        )}
+      <div className="flex flex-wrap items-end gap-2">
         <div className="min-w-[220px] flex-1">
           <label className="mb-1 block text-xs font-medium">Hostname</label>
           <input
@@ -162,25 +185,46 @@ function DomainPage() {
         >
           {busy === "add" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />} Connect
         </button>
+      </div>
       </form>
 
       <div className="surface-card mb-5 p-5 text-sm">
         <div className="mb-2 flex items-center gap-2 font-semibold">
           <Globe className="h-4 w-4 text-primary" /> DNS setup instructions
         </div>
-        <ol className="ml-4 list-decimal space-y-1.5 text-muted-foreground">
-          <li>Open your domain provider&apos;s DNS settings (GoDaddy, Namecheap, Cloudflare…).</li>
-          <li>
-            Subdomain: add a <code className="rounded bg-muted px-1 text-xs">CNAME</code> record pointing to{" "}
-            {cname ? <CopyChip value={cname} /> : <span className="italic">target will appear once admin sets it up</span>}
-          </li>
-          {guide?.aRecordIp && (
+        {mode === "cloudflare" ? (
+          <ol className="ml-4 list-decimal space-y-1.5 text-muted-foreground">
+            <li>Open your domain provider&apos;s DNS settings (GoDaddy, Namecheap, Cloudflare…).</li>
             <li>
-              Root domain: add an <code className="rounded bg-muted px-1 text-xs">A</code> record to <CopyChip value={guide.aRecordIp} />
+              Subdomain: add a <code className="rounded bg-muted px-1 text-xs">CNAME</code> record pointing to{" "}
+              {cname ? <CopyChip value={cname} /> : <span className="italic">target will appear once admin sets it up</span>}
             </li>
-          )}
-          <li>DNS can take 5–60 minutes. Then press “Check status” — SSL is issued automatically.</li>
-        </ol>
+            {guide?.aRecordIp && (
+              <li>
+                Root domain: add an <code className="rounded bg-muted px-1 text-xs">A</code> record to <CopyChip value={guide.aRecordIp} />
+              </li>
+            )}
+            <li>DNS can take 5–60 minutes. Then press “Check status” — SSL is issued automatically.</li>
+          </ol>
+        ) : (
+          <ol className="ml-4 list-decimal space-y-1.5 text-muted-foreground">
+            <li>Open your domain provider&apos;s DNS settings.</li>
+            {guide?.serverIp && (
+              <li>
+                Root domain: add an <code className="rounded bg-muted px-1 text-xs">A</code> record to <CopyChip value={guide.serverIp} />
+              </li>
+            )}
+            {guide?.serverCname && (
+              <li>
+                Subdomain: add a <code className="rounded bg-muted px-1 text-xs">CNAME</code> record to{" "}
+                <CopyChip value={guide.serverCname} />
+              </li>
+            )}
+            <li>Keep the record un-proxied (grey cloud) if your provider is Cloudflare.</li>
+            <li>DNS can take 5–60 minutes. Then press “Check status” — we verify the record live.</li>
+            {guide?.serverNote && <li className="text-foreground">{guide.serverNote}</li>}
+          </ol>
+        )}
       </div>
 
       <div className="grid gap-3">
@@ -194,6 +238,9 @@ function DomainPage() {
                 <div className="flex items-center gap-2 font-medium">
                   {r.hostname}
                   {r.is_primary && <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] text-primary">Primary</span>}
+                  <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
+                    {r.mode === "dns" ? "Server DNS" : "Cloudflare"}
+                  </span>
                 </div>
                 <div className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
                   {r.verified_at ? (
