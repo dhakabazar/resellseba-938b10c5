@@ -821,6 +821,8 @@ export type Database = {
         Row: {
           address_line: string
           admin_note: string | null
+          advance_amount: number
+          advance_by: string | null
           area: Database["public"]["Enums"]["delivery_area"]
           city: string | null
           created_at: string
@@ -857,6 +859,8 @@ export type Database = {
         Insert: {
           address_line: string
           admin_note?: string | null
+          advance_amount?: number
+          advance_by?: string | null
           area?: Database["public"]["Enums"]["delivery_area"]
           city?: string | null
           created_at?: string
@@ -893,6 +897,8 @@ export type Database = {
         Update: {
           address_line?: string
           admin_note?: string | null
+          advance_amount?: number
+          advance_by?: string | null
           area?: Database["public"]["Enums"]["delivery_area"]
           city?: string | null
           created_at?: string
