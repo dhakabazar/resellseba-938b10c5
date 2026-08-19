@@ -228,6 +228,22 @@ export const ORDER_STATUS_OPTIONS: OrderStatus[] = [
   "cancelled",
 ];
 
+/**
+ * Partial family — every partial status is settled one order at a time
+ * (amount / kept items differ per order), so bulk status change is blocked.
+ */
+export const PARTIAL_STATUSES: OrderStatus[] = [
+  "pending_partial",
+  "partial",
+  "partial_full",
+  "partial_item",
+  "partial_delivery",
+];
+
+export function isPartialStatus(status: string): boolean {
+  return (PARTIAL_STATUSES as string[]).includes(status);
+}
+
 /** Statuses that need admin settlement input (amount / returned items). */
 export const SETTLEMENT_STATUSES: OrderStatus[] = [
   "delivered",
