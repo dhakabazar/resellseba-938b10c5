@@ -126,10 +126,14 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
     const shipping = shipInput.trim() === "" ? autoShipping : Math.max(Number(shipInput) || 0, 0);
     const disc = Math.min(Math.max(Number(discount) || 0, 0), subtotal + shipping);
     const total = subtotal + shipping - disc;
-    const recv = received.trim() === "" ? total : Number(received) || 0;
     const deliveryCost = deliveryCostInput.trim() === "" ? shipping : Math.max(Number(deliveryCostInput) || 0, 0);
     const adv = Math.min(Math.max(Number(advance) || 0, 0), total);
     const resellerAdvance = advanceBy === "reseller" ? adv : 0;
+    const codDue = Math.max(total - adv, 0);
+    /** Courier collected part only — advance is already in hand. */
+    const collected = received.trim() === "" ? codDue : Math.max(Number(received) || 0, 0);
+    /** Total money received for this order = courier collected + advance already paid. */
+    const recv = collected + adv;
     return {
       subtotal,
       saCost,
@@ -141,9 +145,10 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
       discount: disc,
       total,
       received: recv,
+      collected,
       advance: adv,
       resellerAdvance,
-      codDue: Math.max(total - adv, 0),
+      codDue,
       shortfall: Math.max(total - recv, 0),
       // Profit always follows the money really collected, minus any advance the reseller already holds.
       profit: recv - deliveryCost - saCost - resellerAdvance,
@@ -581,12 +586,13 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                     <input
                       type="number"
                       className={inp}
-                      placeholder={`Empty = full ৳${totals.total.toFixed(0)} received`}
+                      placeholder={`Empty = full ৳${totals.codDue.toFixed(0)} collected`}
                       value={received}
                       onChange={(e) => setReceived(e.target.value)}
                     />
                     <span className="mt-1 block text-[10px] text-muted-foreground">
-                      If courier paid partially, enter collected amount here — profit is calculated from this amount.
+                      Enter only what the courier collected. Any advance ({`৳${totals.advance.toFixed(0)}`}) is added on
+                      top automatically — profit is calculated from the total received.
                     </span>
                   </label>
                 )}
@@ -599,11 +605,19 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                   {isAdmin && <Row label="Courier cost" value={totals.deliveryCost} />}
                   {totals.advance > 0 && (
                     <>
-                      <Row label={`Advance (${advanceBy})`} value={totals.advance} />
+                      <Row label={`Advance already paid (${advanceBy})`} value={totals.advance} />
                       <Row label="COD to collect" value={totals.codDue} />
+                      <Row label="Courier collected" value={totals.collected} />
                     </>
                   )}
-                  <Row label="Received" value={totals.received} />
+                  <Row label="Received (incl. advance)" value={totals.received} />
+                  {totals.advance > 0 && (
+                    <div className="mt-0.5 text-[10px] text-muted-foreground">
+                      {advanceBy === "reseller"
+                        ? "Advance is already with the reseller, so it is deducted from their final amount."
+                        : "Advance is held by admin — no plus/minus on the reseller balance."}
+                    </div>
+                  )}
 
 
                   <div className="mt-2 flex justify-between border-t pt-2 text-sm font-bold text-primary">
