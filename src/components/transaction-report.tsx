@@ -291,8 +291,8 @@ export function TransactionReport({
       </div>
 
       <div className="surface-card p-3 sm:p-4">
-        <div className="flex flex-nowrap items-end gap-2 overflow-x-auto pb-1">
-          <div className="flex w-[30%] min-w-[240px] shrink-0 flex-col gap-1">
+        <div className="flex flex-wrap items-end gap-2">
+          <div className="flex w-full min-w-[240px] flex-col gap-1 sm:w-[30%]">
             <span className="text-[11px] font-medium text-muted-foreground">Search</span>
             <div className="flex h-9 items-center rounded-md border bg-background px-2 focus-within:ring-2 focus-within:ring-ring">
               <Search className="mr-2 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
@@ -324,7 +324,7 @@ export function TransactionReport({
                 { value: "", label: "All resellers" },
                 ...resellers.map((r) => ({ value: r.id, label: `${r.business_name} · ${r.code}` })),
               ]}
-              className="min-w-[160px] flex-1"
+              className="min-w-[150px] flex-1"
             />
           )}
           <SearchableSelect
@@ -334,10 +334,48 @@ export function TransactionReport({
             options={KIND_OPTIONS}
             className="min-w-[130px] flex-1"
           />
-          <div className="flex min-w-[180px] flex-1 items-end">
-            <DateRangeBar compact label="" value={range} onChange={setRange} />
+          <div className="flex min-w-[150px] flex-1 flex-col gap-1">
+            <span className="text-[11px] font-medium text-muted-foreground">Date</span>
+            <select
+              value={range.preset}
+              onChange={(e) => {
+                const p = e.target.value as DatePreset;
+                setRange(p === "custom" ? { ...range, preset: "custom" } : { preset: p, from: "", to: "" });
+              }}
+              className="h-9 w-full rounded-md border bg-background px-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+            >
+              {DATE_PRESET_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.value === range.preset ? `${o.label} · ${rangeLabel(range)}` : o.label}
+                </option>
+              ))}
+            </select>
           </div>
-          <div className="flex w-24 shrink-0 flex-col gap-1">
+          {range.preset === "custom" && (
+            <>
+              <div className="flex min-w-[130px] flex-1 flex-col gap-1">
+                <span className="text-[11px] font-medium text-muted-foreground">From</span>
+                <input
+                  type="date"
+                  value={range.from}
+                  max={range.to || undefined}
+                  onChange={(e) => setRange({ ...range, from: e.target.value })}
+                  className="h-9 rounded-md border bg-background px-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+              <div className="flex min-w-[130px] flex-1 flex-col gap-1">
+                <span className="text-[11px] font-medium text-muted-foreground">To</span>
+                <input
+                  type="date"
+                  value={range.to}
+                  min={range.from || undefined}
+                  onChange={(e) => setRange({ ...range, to: e.target.value })}
+                  className="h-9 rounded-md border bg-background px-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+            </>
+          )}
+          <div className="flex w-20 shrink-0 flex-col gap-1">
             <span className="text-[11px] font-medium text-muted-foreground">Per page</span>
             <select
               value={String(perPage)}
@@ -357,6 +395,7 @@ export function TransactionReport({
             </select>
           </div>
         </div>
+
       </div>
 
 
