@@ -890,8 +890,6 @@ function DepositModal({
   const [reference, setReference] = useState("");
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [deleteRow, setDeleteRow] = useState<DepositRow | null>(null);
 
   const balance = rows.reduce((n, r) => n + Number(r.amount), 0);
   const due = required ? Math.max(Number(requiredAmount || 0) - balance, 0) : 0;
@@ -900,7 +898,6 @@ function DepositModal({
     "w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring";
 
   async function loadRows() {
-    setLoading(true);
     const { data, error } = await supabase
       .from("reseller_deposits")
       .select("id,amount,method,reference,note,created_at")
@@ -908,7 +905,6 @@ function DepositModal({
       .order("created_at", { ascending: false });
     if (error) toast.error(error.message);
     setRows((data ?? []) as DepositRow[]);
-    setLoading(false);
   }
 
   useEffect(() => {
