@@ -37,16 +37,19 @@ let resellerForUser: string | null = null;
 /** One `global_settings` read per session (shared by every caller). */
 export function getGlobalSettings(force = false): Promise<GlobalSettings | null> {
   if (force) settingsPromise = null;
-  if (!settingsPromise) {
-    settingsPromise = supabase
-      .from("global_settings")
-      .select("*")
-      .eq("id", 1)
-      .maybeSingle()
-      .then(({ data }) => (data as GlobalSettings | null) ?? null)
-      .catch(() => null);
+  let p = settingsPromise;
+  if (!p) {
+    p = (async () => {
+      try {
+        const { data } = await supabase.from("global_settings").select("*").eq("id", 1).maybeSingle();
+        return (data as GlobalSettings | null) ?? null;
+      } catch {
+        return null;
+      }
+    })();
+    settingsPromise = p;
   }
-  return settingsPromise;
+  return p;
 }
 
 /** One `resellers` lookup per signed-in user (shared by every reseller screen). */
