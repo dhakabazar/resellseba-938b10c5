@@ -33,6 +33,42 @@ export async function loadConfig(db: any): Promise<CfConfig> {
   }) as CfConfig;
 }
 
+const EMPTY_CONFIG: CfConfig = {
+  api_token: null,
+  account_id: null,
+  zone_id: null,
+  zone_name: null,
+  worker_name: null,
+  cname_target: null,
+  a_record_ip: null,
+  auto_worker_domain: false,
+  is_active: false,
+  updated_at: new Date().toISOString(),
+};
+
+/**
+ * Load the config through a SECURITY DEFINER RPC using the caller's own client.
+ * This keeps custom domains working without a service-role key.
+ */
+export async function loadConfigAsCaller(supabase: any): Promise<CfConfig> {
+  const { data, error } = await supabase.rpc("cf_config_get");
+  if (error) throw new Response(error.message, { status: 403 });
+  return { ...EMPTY_CONFIG, ...(data ?? {}) } as CfConfig;
+}
+
+/** Public-safe DNS guide values for any signed-in user. */
+export async function loadDnsGuideAsCaller(supabase: any) {
+  const { data, error } = await supabase.rpc("cf_dns_guide");
+  if (error) throw new Response(error.message, { status: 403 });
+  const row = Array.isArray(data) ? data[0] : data;
+  return {
+    cnameTarget: row?.cname_target ?? "",
+    aRecordIp: row?.a_record_ip ?? "",
+    zoneName: row?.zone_name ?? "",
+    active: !!row?.active,
+  };
+}
+
 /** Config that is safe to send to the admin UI — token is masked. */
 export function maskConfig(c: CfConfig) {
   const token = c.api_token ?? "";
