@@ -89,6 +89,8 @@ const NO_PRODUCT_COST_STATUSES = ["returned", "pending_return", "cancelled", "pa
 function PartialSummary({ r }: { r: TxRow }) {
   const total = Number(r.sell_total) || 0;
   const received = Number(r.received) || 0;
+  const advance = Number(r.advance) || 0;
+  const collected = Number(r.collected ?? received - advance) || 0;
   const gap = Math.max(total - received, 0);
   const pct = total > 0 ? Math.min(100, Math.round((received / total) * 100)) : 0;
   return (
