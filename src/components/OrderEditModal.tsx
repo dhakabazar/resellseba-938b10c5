@@ -82,7 +82,10 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
       setDiscount(Number(o.discount ?? 0) ? String(Number(o.discount)) : "");
       setPackagingInput(o.packaging_total == null ? "" : String(Number(o.packaging_total)));
       setDeliveryCostInput(Number(o.delivery_cost ?? 0) ? String(Number(o.delivery_cost)) : "");
+      setAdvance(Number((o as any).advance_amount ?? 0) ? String(Number((o as any).advance_amount)) : "");
+      setAdvanceBy(((o as any).advance_by === "reseller" ? "reseller" : "admin") as any);
       setShippingMode("manual");
+
 
       setItems(
         (its ?? []).map((it: any) => ({
