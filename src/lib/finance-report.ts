@@ -44,7 +44,22 @@ export type ProfitOrder = {
   delivery_cost?: number | string | null;
   /** Product cost of the items the customer kept — only used for `partial_item`. */
   kept_product_cost?: number | string | null;
+  /** Money already collected before delivery. */
+  advance_amount?: number | string | null;
+  /** Who is holding the advance: "admin" or "reseller". */
+  advance_by?: string | null;
 };
+
+/** Advance money already collected for this order. */
+export function orderAdvance(o: ProfitOrder) {
+  return Math.max(n(o.advance_amount), 0);
+}
+
+/** Advance that sits in the reseller's own hand — deducted from their final amount. */
+export function resellerHeldAdvance(o: ProfitOrder) {
+  return o.advance_by === "reseller" ? orderAdvance(o) : 0;
+}
+
 
 /** Delivered / partial / damaged — money is realized with received-amount math. */
 export function isRealizedStatus(status?: string | null) {
