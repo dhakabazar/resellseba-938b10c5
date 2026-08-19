@@ -237,21 +237,36 @@ function ProductPage() {
             <p className={cx("mt-3 text-xs leading-relaxed", muted)}>{store.content.text("pdp_returns")}</p>
           )}
 
-
-          {p.description && (
-            <div className="mt-8">
-              <div className="flex items-center justify-between gap-3">
-                <Heading className="text-lg">Product details</Heading>
-                {tools && <CopyButton value={detailsText} label="details" />}
-              </div>
-              <div
-                className={cx("prose prose-sm mt-2 max-w-none text-sm leading-relaxed", muted)}
-                dangerouslySetInnerHTML={{ __html: p.description }}
-              />
-            </div>
-          )}
+          <Link
+            to="/login"
+            search={{ mode: "signup" }}
+            className={cx(
+              "mt-6 flex items-center justify-center gap-2 rounded-[var(--st-radius)] border px-4 py-3 text-sm font-medium",
+              "bg-[var(--st-bg-alt)] hover:border-[var(--st-primary)] hover:text-[var(--st-primary)]",
+              borderc,
+            )}
+          >
+            এই প্রোডাক্ট বিক্রি করতে চান?
+          </Link>
         </div>
       </div>
+
+      {p.description && (
+        <section className="mt-12 lg:mt-16">
+          <div className="flex items-center justify-between gap-3">
+            <Heading className="text-xl">Product details</Heading>
+            {tools && <CopyButton value={detailsText} label="details" />}
+          </div>
+          <div
+            className={cx(
+              "prose prose-sm mt-4 max-w-none rounded-[var(--st-radius)] border p-5 text-sm leading-relaxed",
+              borderc,
+              muted,
+            )}
+            dangerouslySetInnerHTML={{ __html: p.description }}
+          />
+        </section>
+      )}
 
       {related.length > 0 && (
         <section className="mt-16">
