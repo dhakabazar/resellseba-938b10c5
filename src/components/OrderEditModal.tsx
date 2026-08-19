@@ -126,10 +126,14 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
     const shipping = shipInput.trim() === "" ? autoShipping : Math.max(Number(shipInput) || 0, 0);
     const disc = Math.min(Math.max(Number(discount) || 0, 0), subtotal + shipping);
     const total = subtotal + shipping - disc;
-    const recv = received.trim() === "" ? total : Number(received) || 0;
     const deliveryCost = deliveryCostInput.trim() === "" ? shipping : Math.max(Number(deliveryCostInput) || 0, 0);
     const adv = Math.min(Math.max(Number(advance) || 0, 0), total);
     const resellerAdvance = advanceBy === "reseller" ? adv : 0;
+    const codDue = Math.max(total - adv, 0);
+    /** Courier collected part only — advance is already in hand. */
+    const collected = received.trim() === "" ? codDue : Math.max(Number(received) || 0, 0);
+    /** Total money received for this order = courier collected + advance already paid. */
+    const recv = collected + adv;
     return {
       subtotal,
       saCost,
