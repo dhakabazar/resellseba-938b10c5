@@ -122,7 +122,7 @@ function withRunningBalance(rows: TxRow[]): TxRow[] {
     run.set(key, bal);
     balances.set(r, bal);
   }
-  return rows.map((r) => ({ ...r, running: balances.get(r) ?? Number(r.running) || 0 }));
+  return rows.map((r) => ({ ...r, running: balances.get(r) ?? (Number(r.running) || 0) }));
 }
 
 
