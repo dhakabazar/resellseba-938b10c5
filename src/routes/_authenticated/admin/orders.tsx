@@ -109,13 +109,14 @@ export const Route = createFileRoute("/_authenticated/admin/orders")({
 
 function AdminOrdersPage() {
   const { tab: tabParam, reseller: resellerParam, q: qParam } = Route.useSearch();
+  const navigate = useNavigate({ from: "/_authenticated/admin/orders" });
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [allOrders, setAllOrders] = useState<{ status: string }[]>([]);
   const [orderItems, setOrderItems] = useState<OrderItemLite[]>([]);
   const [shipments, setShipments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  
-  const [tab, setTab] = useState<OrderTabKey>(tabParam ?? (qParam ? "all" : "forwarded"));
+
+  const [tab, setTab] = useState<OrderTabKey>(tabParam ?? ((resellerParam || qParam) ? "all" : "forwarded"));
 
   const [selected, setSelected] = useState<OrderRow | null>(null);
   const [open, setOpen] = useState(false);
