@@ -2,6 +2,9 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { sendVerificationCode } from "@/lib/verification.functions";
+import { fetchAdvancedSettings } from "@/lib/advanced-settings";
 import { toast } from "sonner";
 import { Loader2, Mail, ArrowLeft, Eye, EyeOff } from "lucide-react";
 
@@ -32,6 +35,7 @@ function AuthPage() {
   const [phone, setPhone] = useState("");
   const [busy, setBusy] = useState(false);
   const [sentEmail, setSentEmail] = useState<string | null>(null);
+  const sendCode = useServerFn(sendVerificationCode);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -67,8 +71,17 @@ function AuthPage() {
         if (!data.session) {
           setSentEmail(email);
         } else {
-          toast.success("অ্যাকাউন্ট তৈরি হয়েছে!");
-          nav({ to: "/dashboard", replace: true });
+          const adv = await fetchAdvancedSettings();
+          if (adv.verifyEnabled && (adv.verifyEmail || adv.verifySms)) {
+            // Fire the codes off, then let /verify collect them.
+            if (adv.verifyEmail) await sendCode({ data: { channel: "email" } }).catch(() => null);
+            if (adv.verifySms) await sendCode({ data: { channel: "sms" } }).catch(() => null);
+            toast.success("অ্যাকাউন্ট তৈরি হয়েছে — এখন ভেরিফাই করুন");
+            nav({ to: "/verify", replace: true });
+          } else {
+            toast.success("অ্যাকাউন্ট তৈরি হয়েছে!");
+            nav({ to: "/dashboard", replace: true });
+          }
         }
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });

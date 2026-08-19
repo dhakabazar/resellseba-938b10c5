@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/use-auth";
+import { useVerification } from "@/lib/use-verification";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, Store, Mail } from "lucide-react";
@@ -17,6 +18,7 @@ export const Route = createFileRoute("/_authenticated/onboarding")({
 
 function Onboarding() {
   const { user, roles, permissions, loading } = useAuth();
+  const { required: needsVerify, loading: verifyLoading } = useVerification();
   const nav = useNavigate();
   const [businessName, setBusinessName] = useState("");
   const [code, setCode] = useState("");
@@ -30,6 +32,10 @@ function Onboarding() {
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<"none" | "pending" | "active" | "suspended" | "rejected">("none");
   const [storePrefix, setStorePrefix] = useState("/s/");
+
+  useEffect(() => {
+    if (!verifyLoading && needsVerify) nav({ to: "/verify", replace: true });
+  }, [needsVerify, verifyLoading, nav]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
