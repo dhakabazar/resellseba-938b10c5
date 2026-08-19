@@ -230,6 +230,9 @@ export function NewOrderModal({
           sa_cost_total: totals.saCost,
           packaging_total: totals.packaging,
           delivery_cost: totals.deliveryCost,
+          advance_amount: totals.advance,
+          advance_by: totals.advance > 0 ? advanceBy : null,
+
           reseller_profit: totals.profit,
           status: "pending",
           forwarded_to_admin: true,
