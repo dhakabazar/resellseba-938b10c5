@@ -650,13 +650,19 @@ function AdminOrdersPage() {
                     const recommended = statusModal.isBulk
                       ? []
                       : nextStatuses(statusModal.currentStatus, "admin");
-                    return Array.from(
+                    const list = Array.from(
                       new Set([
                         ...recommended,
                         statusModal.currentStatus,
                         ...ORDER_STATUS_OPTIONS,
                       ]),
                     ) as typeof ORDER_STATUS_OPTIONS;
+                    // Keep the order-list (tab) serial everywhere.
+                    const rank = (s: string) => {
+                      const i = (ORDER_STATUS_OPTIONS as string[]).indexOf(s);
+                      return i === -1 ? 999 : i;
+                    };
+                    return list.slice().sort((a, b) => rank(a) - rank(b));
                   })().map((s) => (
                     <button
                       key={s}
