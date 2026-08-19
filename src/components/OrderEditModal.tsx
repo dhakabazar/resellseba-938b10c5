@@ -43,9 +43,14 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
   const [note, setNote] = useState("");
   const [shippingMode, setShippingMode] = useState<"auto" | "manual">("auto");
   const [shippingManual, setShippingManual] = useState(0);
+  /** Order level adjustments — "" means keep the default value. */
+  const [discount, setDiscount] = useState("");
+  const [packagingInput, setPackagingInput] = useState("");
+  const [deliveryCostInput, setDeliveryCostInput] = useState("");
   /** Money actually collected by the courier. Empty = full order total received. */
   const [received, setReceived] = useState<string>("");
   const [query, setQuery] = useState("");
+
 
   useEffect(() => {
     (async () => {
