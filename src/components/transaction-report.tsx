@@ -390,13 +390,27 @@ export function TransactionReport({
                         </div>
                         {isPartial && <PartialSummary r={r} />}
                       </td>
-                      <td className="px-3 py-2 text-right">
+                      <td className="px-3 py-2 text-right tabular-nums">
                         {r.order_id ? (
-                          <StackCell top={["Buy", Number(r.buy_product)]} bottom={["Sell", Number(r.sell_subtotal)]} />
+                          <div className="whitespace-nowrap leading-tight">
+                            <div className="text-[11px] font-bold">{bdt(Number(r.sell_total))}</div>
+                            <div className="text-[10px] text-muted-foreground">customer total</div>
+                          </div>
                         ) : (
                           <span className="text-muted-foreground">—</span>
                         )}
                       </td>
+                      <td className="px-3 py-2 text-right">
+                        {r.order_id ? (
+                          <StackCell
+                            top={["Buy", NO_PRODUCT_COST_STATUSES.includes(r.status) ? 0 : Number(r.buy_product)]}
+                            bottom={["Sell", Number(r.sell_subtotal)]}
+                          />
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </td>
+
                       <td className="px-3 py-2 text-right">
                         {r.order_id ? (
                           <StackCell
