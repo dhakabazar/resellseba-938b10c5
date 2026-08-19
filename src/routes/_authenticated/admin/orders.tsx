@@ -65,6 +65,16 @@ type OrderRow = {
   customer_phone: string;
   address_line: string;
   area: string;
+  city: string | null;
+  subtotal: number;
+  discount: number;
+  shipping_cost: number;
+  sa_cost_total: number;
+  packaging_total: number | null;
+  delivery_cost: number | null;
+  received_amount: number | null;
+  advance_amount: number | null;
+  advance_by: string | null;
   total: number;
   status: string;
   payment_status: string;
@@ -152,7 +162,7 @@ function AdminOrdersPage() {
     const statuses = ORDER_TABS.find((t) => t.key === tab)?.statuses ?? [];
     let q = supabase
       .from("orders")
-      .select("id,reseller_id,order_number,customer_name,customer_phone,address_line,area,total,status,payment_status,payment_method,forwarded_to_admin,created_at,reseller_note,admin_note,resellers(business_name,code,contact_phone)")
+      .select("id,reseller_id,order_number,customer_name,customer_phone,address_line,area,city,subtotal,discount,shipping_cost,sa_cost_total,packaging_total,delivery_cost,received_amount,advance_amount,advance_by,total,status,payment_status,payment_method,forwarded_to_admin,created_at,reseller_note,admin_note,resellers(business_name,code,contact_phone)")
       .order("created_at", { ascending: false });
     if (statuses.length > 0) q = q.in("status", statuses);
     const [{ data }, { data: allStats }, { data: rs }, { data: p }] = await Promise.all([
