@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Globe, Loader2, RefreshCw, Save, ShieldCheck, Trash2, Plug, CheckCircle2, AlertCircle } from "lucide-react";
+import { Globe, Loader2, RefreshCw, Save, Server, ShieldCheck, Trash2, Plug, CheckCircle2, AlertCircle } from "lucide-react";
 import { PageHeader } from "@/components/ui-kit";
 import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
 import {
@@ -20,6 +20,11 @@ export const Route = createFileRoute("/_authenticated/admin/domains")({
 });
 
 type Form = {
+  mode: "cloudflare" | "dns" | "both";
+  server_a_ip: string;
+  server_cname: string;
+  server_note: string;
+  dns_active: boolean;
   api_token: string;
   account_id: string;
   zone_id: string;
@@ -32,6 +37,11 @@ type Form = {
 };
 
 const EMPTY: Form = {
+  mode: "both",
+  server_a_ip: "",
+  server_cname: "",
+  server_note: "",
+  dns_active: false,
   api_token: "",
   account_id: "",
   zone_id: "",
@@ -163,10 +173,66 @@ function DomainsAdmin() {
     <div>
       <PageHeader
         title="Custom domains"
-        description="Cloudflare credentials + every reseller domain. Connect and delete happens automatically through the Cloudflare API."
+        description="Choose how reseller domains are served — Cloudflare API automation, plain server DNS, or both — and manage every connected domain."
       />
 
-      <form onSubmit={onSave} className="surface-card mb-6 space-y-4 p-5">
+      <form onSubmit={onSave} className="space-y-6">
+        <div className="surface-card space-y-3 p-5">
+          <div className="text-sm font-semibold">Which setup do resellers use?</div>
+          <div className="grid gap-2 sm:grid-cols-3">
+            {([
+              { key: "cloudflare", title: "Cloudflare only", note: "Hostnames + SSL created through the Cloudflare API." },
+              { key: "dns", title: "Server DNS only", note: "Reseller points A/CNAME at your server. No API needed." },
+              { key: "both", title: "Both", note: "Reseller picks the method that fits their domain." },
+            ] as const).map((o) => (
+              <button
+                type="button"
+                key={o.key}
+                onClick={() => setForm((f) => ({ ...f, mode: o.key }))}
+                className={`rounded-lg border p-3 text-left text-sm transition ${
+                  form.mode === o.key ? "border-primary bg-primary-soft" : "hover:bg-muted"
+                }`}
+              >
+                <div className="font-medium">{o.title}</div>
+                <div className="mt-0.5 text-[11px] text-muted-foreground">{o.note}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {form.mode !== "cloudflare" && (
+          <div className="surface-card space-y-4 p-5">
+            <div className="flex items-center gap-2 text-sm font-semibold">
+              <Server className="h-4 w-4 text-primary" /> Server DNS setup
+            </div>
+            <div className="flex flex-wrap gap-3">
+              {field("server_a_ip", "Server IP (A record)", "203.0.113.10")}
+              {field("server_cname", "Server CNAME target", "stores.yourplatform.com")}
+            </div>
+            <label className="flex flex-col gap-1">
+              <span className="text-xs font-medium text-muted-foreground">Instruction note for resellers (optional)</span>
+              <textarea
+                rows={2}
+                value={form.server_note}
+                placeholder="After DNS points here, contact support so SSL can be issued on the server."
+                onChange={(e) => setForm((f) => ({ ...f, server_note: e.target.value }))}
+                className="rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+              />
+            </label>
+            <label className="inline-flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={form.dns_active}
+                onChange={(e) => setForm((f) => ({ ...f, dns_active: e.target.checked }))}
+                className="h-4 w-4 rounded border"
+              />
+              Server DNS mode active
+            </label>
+          </div>
+        )}
+
+        {form.mode !== "dns" && (
+        <div className="surface-card space-y-4 p-5">
         <div className="flex items-center gap-2 text-sm font-semibold">
           <ShieldCheck className="h-4 w-4 text-primary" /> Cloudflare credentials
         </div>
@@ -222,10 +288,14 @@ function DomainsAdmin() {
           </label>
         </div>
 
+        </div>
+        )}
+
         <div className="flex flex-wrap gap-2">
           <button disabled={busy === "save"} className="btn-brand inline-flex items-center gap-1.5 rounded-md px-4 py-2 text-sm font-medium">
             {busy === "save" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save
           </button>
+          {form.mode !== "dns" && (
           <button
             type="button"
             onClick={onTest}
@@ -234,6 +304,7 @@ function DomainsAdmin() {
           >
             {busy === "test" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plug className="h-4 w-4" />} Test connection
           </button>
+          )}
         </div>
       </form>
 
@@ -248,6 +319,9 @@ function DomainsAdmin() {
               <div className="flex items-center gap-2 font-medium">
                 {r.hostname}
                 {r.is_primary && <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] text-primary">Primary</span>}
+                <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
+                  {r.mode === "dns" ? "Server DNS" : "Cloudflare"}
+                </span>
               </div>
               <div className="mt-0.5 text-xs text-muted-foreground">
                 {r.reseller_name ?? "—"} {r.reseller_code ? `· ${r.reseller_code}` : ""}
@@ -289,7 +363,7 @@ function DomainsAdmin() {
       <ConfirmModal
         isOpen={!!confirm}
         title="Disconnect domain?"
-        description="The hostname will be removed from Cloudflare and the store will stop serving on it."
+        description="The hostname will be removed and the store will stop serving on it."
         detail={confirm?.hostname}
         confirmText="Disconnect"
         isLoading={busy === confirm?.id}
