@@ -390,7 +390,7 @@ function OrdersPage() {
     
     // Check if any order is NOT pending/confirmed or is booked
     const bookedIds = shipments.filter(s => s.consignment_id || s.tracking_id).map(s => s.order_id);
-    const restricted = visible.filter(o => marked.includes(o.id) && (!["pending", "forwarded"].includes(o.status) || bookedIds.includes(o.id)));
+    const restricted = visible.filter(o => marked.includes(o.id) && (!resellerCanAct(o.status) || bookedIds.includes(o.id)));
     
     if (restricted.length > 0) {
       toast.error(`${restricted.length} orders cannot be deleted (only Pending orders that are not booked).`);
