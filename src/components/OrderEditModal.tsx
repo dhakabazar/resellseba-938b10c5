@@ -37,21 +37,19 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
-  const [city, setCity] = useState("");
-  const [landmark, setLandmark] = useState("");
   const [area, setArea] = useState<"inside_dhaka" | "outside_dhaka">("outside_dhaka");
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [paymentStatus, setPaymentStatus] = useState("unpaid");
   const [note, setNote] = useState("");
-  const [shippingMode, setShippingMode] = useState<"auto" | "manual">("auto");
-  const [shippingManual, setShippingManual] = useState(0);
+  /** Delivery charge override — "" means use the product default. */
+  const [shipInput, setShipInput] = useState("");
   /** Order level adjustments — "" means keep the default value. */
   const [discount, setDiscount] = useState("");
   const [packagingInput, setPackagingInput] = useState("");
   const [deliveryCostInput, setDeliveryCostInput] = useState("");
   /** Advance already collected + who is holding that cash. */
   const [advance, setAdvance] = useState("");
-  const [advanceBy, setAdvanceBy] = useState<"admin" | "reseller">(isAdmin ? "admin" : "reseller");
+  const [advanceBy, setAdvanceBy] = useState<"admin" | "reseller">("reseller");
 
   /** Money actually collected by the courier. Empty = full order total received. */
   const [received, setReceived] = useState<string>("");
@@ -73,20 +71,17 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
       setName(o.customer_name ?? "");
       setPhone(o.customer_phone ?? "");
       setAddress(o.address_line ?? "");
-      setCity(o.city ?? "");
-      setLandmark(o.landmark ?? "");
       setArea((o.area === "inside_dhaka" ? "inside_dhaka" : "outside_dhaka") as any);
       setPaymentMethod(o.payment_method ?? "cod");
       setPaymentStatus(o.payment_status ?? "unpaid");
       setNote((isAdmin ? o.admin_note : o.reseller_note) ?? "");
-      setShippingManual(Number(o.shipping_cost ?? 0));
+      setShipInput(Number(o.shipping_cost ?? 0) ? String(Number(o.shipping_cost)) : "");
       setReceived(o.received_amount == null ? "" : String(Number(o.received_amount)));
       setDiscount(Number(o.discount ?? 0) ? String(Number(o.discount)) : "");
       setPackagingInput(o.packaging_total == null ? "" : String(Number(o.packaging_total)));
       setDeliveryCostInput(Number(o.delivery_cost ?? 0) ? String(Number(o.delivery_cost)) : "");
       setAdvance(Number((o as any).advance_amount ?? 0) ? String(Number((o as any).advance_amount)) : "");
-      setAdvanceBy(((o as any).advance_by === "reseller" ? "reseller" : "admin") as any);
-      setShippingMode("manual");
+      setAdvanceBy(((o as any).advance_by === "admin" ? "admin" : "reseller") as any);
 
 
       setItems(
@@ -128,7 +123,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
     const productCost = Math.max(itemCost - packagingDefault, 0);
     const packaging = packagingInput.trim() === "" ? packagingDefault : Math.max(Number(packagingInput) || 0, 0);
     const saCost = productCost + packaging;
-    const shipping = shippingMode === "auto" ? autoShipping : Number(shippingManual || 0);
+    const shipping = shipInput.trim() === "" ? autoShipping : Math.max(Number(shipInput) || 0, 0);
     const disc = Math.min(Math.max(Number(discount) || 0, 0), subtotal + shipping);
     const total = subtotal + shipping - disc;
     const recv = received.trim() === "" ? total : Number(received) || 0;
@@ -156,8 +151,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
   }, [
     items,
     allProducts,
-    shippingMode,
-    shippingManual,
+    shipInput,
     autoShipping,
     received,
     discount,
@@ -255,8 +249,6 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
           customer_name: sanitizeName(name).trim(),
           customer_phone: normalizePhone(phone),
           address_line: address.trim(),
-          city: city.trim() || null,
-          landmark: landmark.trim() || null,
           area: area as any,
           payment_method: paymentMethod as any,
           ...(isAdmin ? { payment_status: paymentStatus as any } : {}),
@@ -291,7 +283,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
     }
   }
 
-  const inp = "w-full rounded-lg border bg-background px-3 py-1.5 text-xs focus:ring-2 focus:ring-primary/20";
+  const inp = "w-full rounded-lg border bg-background px-3 py-2 text-[13px] focus:ring-2 focus:ring-primary/20";
 
   return (
     <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4">
@@ -322,51 +314,32 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
             <div className="min-h-0 flex-1 space-y-6 overflow-y-auto p-4 sm:p-6">
               {/* Customer */}
               <section className="space-y-3">
-                <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80">
+                <h3 className="text-[13px] font-black uppercase tracking-wide text-foreground/80">
                   Customer information
                 </h3>
                 <div className="grid gap-x-4 gap-y-3 sm:grid-cols-2">
                   <label className="space-y-1">
-                    <span className="text-[10px] font-semibold text-muted-foreground">Name</span>
+                    <span className="text-[13px] font-bold text-foreground/80">Name</span>
                     <input className={inp} value={name} onChange={(e) => setName(sanitizeName(e.target.value))} />
                   </label>
                   <label className="space-y-1">
-                    <span className="text-[10px] font-semibold text-muted-foreground">Mobile</span>
+                    <span className="text-[13px] font-bold text-foreground/80">Mobile</span>
                     <input className={inp} value={phone} onChange={(e) => setPhone(normalizePhone(e.target.value))} />
                   </label>
                   <label className="space-y-1 sm:col-span-2">
-                    <span className="text-[10px] font-semibold text-muted-foreground">Address</span>
+                    <span className="text-[13px] font-bold text-foreground/80">Address</span>
                     <textarea rows={2} className={inp} value={address} onChange={(e) => setAddress(e.target.value)} />
                   </label>
                   <label className="space-y-1">
-                    <span className="text-[10px] font-semibold text-muted-foreground">City</span>
-                    <input className={inp} value={city} onChange={(e) => setCity(e.target.value)} />
-                  </label>
-                  <label className="space-y-1">
-                    <span className="text-[10px] font-semibold text-muted-foreground">Landmark</span>
-                    <input className={inp} value={landmark} onChange={(e) => setLandmark(e.target.value)} />
-                  </label>
-                  <label className="space-y-1">
-                    <span className="text-[10px] font-semibold text-muted-foreground">Delivery area</span>
+                    <span className="text-[13px] font-bold text-foreground/80">Delivery area</span>
                     <select className={inp} value={area} onChange={(e) => setArea(e.target.value as any)}>
                       <option value="inside_dhaka">Inside Dhaka</option>
                       <option value="outside_dhaka">Outside Dhaka</option>
                     </select>
                   </label>
-                  <label className="space-y-1">
-                    <span className="text-[10px] font-semibold text-muted-foreground">Payment method</span>
-                    <select className={inp} value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
-                      <option value="cod">Cash on Delivery</option>
-                      <option value="bkash">bKash</option>
-                      <option value="nagad">Nagad</option>
-                      <option value="rocket">Rocket</option>
-                      <option value="sslcommerz">SSLCommerz</option>
-                      <option value="other">Other</option>
-                    </select>
-                  </label>
                   {isAdmin && (
                     <label className="space-y-1">
-                      <span className="text-[10px] font-semibold text-muted-foreground">Payment status</span>
+                      <span className="text-[13px] font-bold text-foreground/80">Payment status</span>
                       <select className={inp} value={paymentStatus} onChange={(e) => setPaymentStatus(e.target.value)}>
                         <option value="unpaid">Unpaid</option>
                         <option value="partial">Partial</option>
@@ -375,18 +348,13 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                       </select>
                     </label>
                   )}
-                  <label className="space-y-1 sm:col-span-2">
-                    <span className="text-[10px] font-semibold text-muted-foreground">
-                      {isAdmin ? "Admin note" : "Your note"}
-                    </span>
-                    <input className={inp} value={note} onChange={(e) => setNote(e.target.value)} />
-                  </label>
                 </div>
+
               </section>
 
               {/* Items */}
               <section className="space-y-3">
-                <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80">
+                <h3 className="text-[13px] font-black uppercase tracking-wide text-foreground/80">
                   Products & pricing
                 </h3>
                 <div className="relative">
@@ -446,7 +414,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                       </div>
                       <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
                         <label className="space-y-1">
-                          <span className="text-[9px] font-bold uppercase text-muted-foreground">Qty</span>
+                          <span className="text-[11px] font-bold uppercase text-muted-foreground">Qty</span>
                           <div className="flex items-center gap-1">
                             <button
                               type="button"
@@ -482,7 +450,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                           </div>
                         </label>
                         <label className="space-y-1">
-                          <span className="text-[9px] font-bold uppercase text-muted-foreground">
+                          <span className="text-[11px] font-bold uppercase text-muted-foreground">
                             Sell price · min ৳{minFor(it)}
                           </span>
                           <input
@@ -505,7 +473,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                         </label>
                         {isAdmin && (
                           <label className="space-y-1">
-                            <span className="text-[9px] font-bold uppercase text-muted-foreground">Base cost</span>
+                            <span className="text-[11px] font-bold uppercase text-muted-foreground">Base cost</span>
                             <input
                               className={inp}
                               value={it.sa_price}
@@ -518,7 +486,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                           </label>
                         )}
                         <div className="space-y-1">
-                          <span className="text-[9px] font-bold uppercase text-muted-foreground">Line total</span>
+                          <span className="text-[11px] font-bold uppercase text-muted-foreground">Line total</span>
                           <div className="px-1 py-1.5 text-xs font-bold tabular-nums">
                             ৳{(it.reseller_price * it.quantity).toFixed(0)}
                           </div>
@@ -531,26 +499,19 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
 
               {/* Charges */}
               <section className="space-y-3">
-                <SectionLabel>Charges &amp; adjustments</SectionLabel>
+                <SectionLabel>ডেলিভারি ও অন্যান্য চার্জ</SectionLabel>
                 <div className="grid gap-3 rounded-2xl border bg-muted/20 p-4 sm:grid-cols-2">
-                  <div>
-                    <div className="mb-1.5 text-[11px] font-semibold">Delivery charge mode</div>
-                    <select className={inp} value={shippingMode} onChange={(e) => setShippingMode(e.target.value as any)}>
-                      <option value="auto">Auto (product rules)</option>
-                      <option value="manual">Manual override</option>
-                    </select>
-                  </div>
                   <MoneyField
-                    label="Delivery charge"
-                    hint={shippingMode === "auto" ? "auto" : "manual"}
-                    disabled={shippingMode === "auto"}
-                    value={shippingMode === "auto" ? autoShipping : shippingManual}
-                    onChange={(v) => setShippingManual(Number(v) || 0)}
+                    label="ডেলিভারি চার্জ (কাস্টমার দিবে)"
+                    hint={`ডিফল্ট ৳${autoShipping.toFixed(0)}`}
+                    value={shipInput}
+                    onChange={setShipInput}
+                    placeholder={autoShipping.toFixed(0)}
                   />
-                  <MoneyField label="Discount" value={discount} onChange={setDiscount} placeholder="0" />
+                  <MoneyField label="ডিসকাউন্ট" value={discount} onChange={setDiscount} placeholder="0" />
                   <MoneyField
-                    label="Packaging cost"
-                    hint={isAdmin ? "editable" : "admin controlled"}
+                    label="প্যাকেজিং কস্ট"
+                    hint={isAdmin ? "এডিট করা যাবে" : "শুধু অ্যাডমিন"}
                     disabled={!isAdmin}
                     value={packagingInput}
                     onChange={setPackagingInput}
@@ -558,39 +519,63 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                   />
                   {isAdmin && (
                     <MoneyField
-                      label="Courier cost"
-                      hint={`default ৳${totals.shipping.toFixed(0)}`}
+                      label="কুরিয়ার কস্ট (অ্যাডমিন খরচ)"
+                      hint={`ডিফল্ট ৳${totals.shipping.toFixed(0)}`}
                       value={deliveryCostInput}
                       onChange={setDeliveryCostInput}
                       placeholder={totals.shipping.toFixed(0)}
                     />
                   )}
                 </div>
+                <p className="text-[12px] leading-relaxed text-muted-foreground">
+                  খালি রাখলে ডিফল্ট বসবে। ডেলিভারি চার্জ = কাস্টমার দিবে, কুরিয়ার কস্ট = অ্যাডমিনের খরচ।
+                </p>
 
-                <SectionLabel>Advance received</SectionLabel>
+                <SectionLabel>অ্যাডভান্স পেমেন্ট</SectionLabel>
                 <div className="space-y-3 rounded-2xl border border-primary/20 bg-primary/[0.03] p-4">
                   <div className="grid gap-3 sm:grid-cols-2">
                     <MoneyField
-                      label="Advance amount"
-                      hint="customer age dile"
+                      label="অ্যাডভান্স অ্যামাউন্ট"
+                      hint="আগে পেলে"
                       value={advance}
                       onChange={setAdvance}
                       placeholder="0"
                     />
                     <AdvanceByToggle value={advanceBy} onChange={setAdvanceBy} />
                   </div>
-                  <p className="text-[10px] leading-relaxed text-muted-foreground">
-                    Advance thakle courier COD hobe ৳{totals.codDue.toFixed(0)}. Admin receive korle taka admin er kachei
-                    thake, tai reseller er hisab theke kaTa hoy na. Reseller receive korle sei taka final amount theke bad
-                    jabe.
+                  <p className="text-[12px] leading-relaxed text-muted-foreground">
+                    কুরিয়ার COD হবে ৳{totals.codDue.toFixed(0)}। অ্যাডমিন নিলে রিসেলারের হিসাব থেকে কাটে না, রিসেলার নিলে
+                    ফাইনাল অ্যামাউন্ট থেকে বাদ যাবে।
                   </p>
                 </div>
+
+                <SectionLabel>পেমেন্ট মেথড ও নোট</SectionLabel>
+                <div className="grid gap-3 rounded-2xl border bg-muted/20 p-4 sm:grid-cols-2">
+                  <label className="space-y-1">
+                    <span className="text-[13px] font-bold text-foreground/80">পেমেন্ট মেথড</span>
+                    <select className={inp} value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
+                      <option value="cod">Cash on Delivery</option>
+                      <option value="bkash">bKash</option>
+                      <option value="nagad">Nagad</option>
+                      <option value="rocket">Rocket</option>
+                      <option value="sslcommerz">SSLCommerz</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </label>
+                  <label className="space-y-1">
+                    <span className="text-[13px] font-bold text-foreground/80">
+                      {isAdmin ? "অ্যাডমিন নোট" : "আপনার নোট"}
+                    </span>
+                    <input className={inp} value={note} onChange={(e) => setNote(e.target.value)} />
+                  </label>
+                </div>
+
 
 
 
                 {isAdmin && (
                   <label className="mt-3 block">
-                    <span className="text-[10px] font-semibold text-muted-foreground">
+                    <span className="text-[13px] font-bold text-foreground/80">
                       Received amount (partial delivery)
                     </span>
                     <input
