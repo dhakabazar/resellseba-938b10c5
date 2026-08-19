@@ -322,7 +322,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
             <div className="min-h-0 flex-1 space-y-6 overflow-y-auto p-4 sm:p-6">
               {/* Customer */}
               <section className="space-y-3">
-                <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80">
+                <h3 className="text-[13px] font-black uppercase tracking-wide text-foreground/80">
                   Customer information
                 </h3>
                 <div className="grid gap-x-4 gap-y-3 sm:grid-cols-2">
@@ -386,7 +386,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
 
               {/* Items */}
               <section className="space-y-3">
-                <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80">
+                <h3 className="text-[13px] font-black uppercase tracking-wide text-foreground/80">
                   Products & pricing
                 </h3>
                 <div className="relative">

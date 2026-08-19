@@ -321,7 +321,7 @@ export function NewOrderModal({
             <div className="space-y-6 p-4 sm:p-6 border-b">
               {isAdmin && (
                 <div className="space-y-3">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80">Reseller Selection</label>
+                  <label className="text-[13px] font-black uppercase tracking-wide text-foreground/80">Reseller Selection</label>
                   <div className="rounded-xl border bg-muted/30 p-3 space-y-3">
                     <div className="relative">
                       <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/60" />
@@ -380,7 +380,7 @@ export function NewOrderModal({
 
               <div className="space-y-6">
                 <div className="space-y-3">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80">Customer Information</label>
+                  <label className="text-[13px] font-black uppercase tracking-wide text-foreground/80">Customer Information</label>
                   <div className="grid gap-x-4 gap-y-3 sm:grid-cols-2">
                     <Field label="Customer Full Name">
                       <input
@@ -443,7 +443,7 @@ export function NewOrderModal({
 
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80">Order Items</label>
+                    <label className="text-[13px] font-black uppercase tracking-wide text-foreground/80">Order Items</label>
                     {picked.length > 0 && (
                       <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[9px] font-bold text-primary animate-in zoom-in">
                         {picked.length} {picked.length === 1 ? 'Item' : 'Items'} Selected
