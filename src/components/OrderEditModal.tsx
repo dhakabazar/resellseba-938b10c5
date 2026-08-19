@@ -131,6 +131,8 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
     const total = subtotal + shipping - disc;
     const recv = received.trim() === "" ? total : Number(received) || 0;
     const deliveryCost = deliveryCostInput.trim() === "" ? shipping : Math.max(Number(deliveryCostInput) || 0, 0);
+    const adv = Math.min(Math.max(Number(advance) || 0, 0), total);
+    const resellerAdvance = advanceBy === "reseller" ? adv : 0;
     return {
       subtotal,
       saCost,
@@ -142,9 +144,12 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
       discount: disc,
       total,
       received: recv,
+      advance: adv,
+      resellerAdvance,
+      codDue: Math.max(total - adv, 0),
       shortfall: Math.max(total - recv, 0),
-      // Profit always follows the money really collected.
-      profit: recv - deliveryCost - saCost,
+      // Profit always follows the money really collected, minus any advance the reseller already holds.
+      profit: recv - deliveryCost - saCost - resellerAdvance,
     };
   }, [
     items,
@@ -156,6 +161,9 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
     discount,
     packagingInput,
     deliveryCostInput,
+    advance,
+    advanceBy,
+
   ]);
 
 
