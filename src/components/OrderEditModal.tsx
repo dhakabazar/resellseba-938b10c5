@@ -37,14 +37,12 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
-  const [city, setCity] = useState("");
-  const [landmark, setLandmark] = useState("");
   const [area, setArea] = useState<"inside_dhaka" | "outside_dhaka">("outside_dhaka");
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [paymentStatus, setPaymentStatus] = useState("unpaid");
   const [note, setNote] = useState("");
-  const [shippingMode, setShippingMode] = useState<"auto" | "manual">("auto");
-  const [shippingManual, setShippingManual] = useState(0);
+  /** Delivery charge override — "" means use the product default. */
+  const [shipInput, setShipInput] = useState("");
   /** Order level adjustments — "" means keep the default value. */
   const [discount, setDiscount] = useState("");
   const [packagingInput, setPackagingInput] = useState("");
@@ -73,20 +71,17 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
       setName(o.customer_name ?? "");
       setPhone(o.customer_phone ?? "");
       setAddress(o.address_line ?? "");
-      setCity(o.city ?? "");
-      setLandmark(o.landmark ?? "");
       setArea((o.area === "inside_dhaka" ? "inside_dhaka" : "outside_dhaka") as any);
       setPaymentMethod(o.payment_method ?? "cod");
       setPaymentStatus(o.payment_status ?? "unpaid");
       setNote((isAdmin ? o.admin_note : o.reseller_note) ?? "");
-      setShippingManual(Number(o.shipping_cost ?? 0));
+      setShipInput(Number(o.shipping_cost ?? 0) ? String(Number(o.shipping_cost)) : "");
       setReceived(o.received_amount == null ? "" : String(Number(o.received_amount)));
       setDiscount(Number(o.discount ?? 0) ? String(Number(o.discount)) : "");
       setPackagingInput(o.packaging_total == null ? "" : String(Number(o.packaging_total)));
       setDeliveryCostInput(Number(o.delivery_cost ?? 0) ? String(Number(o.delivery_cost)) : "");
       setAdvance(Number((o as any).advance_amount ?? 0) ? String(Number((o as any).advance_amount)) : "");
       setAdvanceBy(((o as any).advance_by === "admin" ? "admin" : "reseller") as any);
-      setShippingMode("manual");
 
 
       setItems(
@@ -128,7 +123,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
     const productCost = Math.max(itemCost - packagingDefault, 0);
     const packaging = packagingInput.trim() === "" ? packagingDefault : Math.max(Number(packagingInput) || 0, 0);
     const saCost = productCost + packaging;
-    const shipping = shippingMode === "auto" ? autoShipping : Number(shippingManual || 0);
+    const shipping = shipInput.trim() === "" ? autoShipping : Math.max(Number(shipInput) || 0, 0);
     const disc = Math.min(Math.max(Number(discount) || 0, 0), subtotal + shipping);
     const total = subtotal + shipping - disc;
     const recv = received.trim() === "" ? total : Number(received) || 0;
@@ -156,8 +151,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
   }, [
     items,
     allProducts,
-    shippingMode,
-    shippingManual,
+    shipInput,
     autoShipping,
     received,
     discount,
@@ -255,8 +249,6 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
           customer_name: sanitizeName(name).trim(),
           customer_phone: normalizePhone(phone),
           address_line: address.trim(),
-          city: city.trim() || null,
-          landmark: landmark.trim() || null,
           area: area as any,
           payment_method: paymentMethod as any,
           ...(isAdmin ? { payment_status: paymentStatus as any } : {}),
