@@ -393,7 +393,7 @@ function AdminOrdersPage() {
                 key={o.id}
                 className={`overflow-hidden rounded-xl border bg-card shadow-sm transition-all hover:shadow-md hover:border-primary/40 ${marked.includes(o.id) ? "border-primary ring-1 ring-primary/30" : ""}`}
               >
-                <div className="hidden grid-cols-[40px_minmax(70px,0.8fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(120px,1fr)_70px_90px_60px] items-center gap-1 border-b bg-muted/30 px-4 py-3 text-sm md:grid">
+                <div className="hidden grid-cols-[40px_minmax(70px,0.7fr)_minmax(140px,1fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(120px,1fr)_70px_90px_60px] items-center gap-1 border-b bg-muted/30 px-4 py-3 text-sm md:grid">
                   <div className="flex flex-col items-center gap-1.5">
                     <input
                       type="checkbox"
@@ -414,6 +414,7 @@ function AdminOrdersPage() {
                       {new Date(o.created_at).toLocaleDateString()}
                     </div>
                   </div>
+                  <OrderProductCell items={stripItems(o.id)} expanded={expandedOrders.includes(o.id)} onZoom={setZoomImage} />
                   <div className="min-w-0">
                      <div className="font-medium truncate">{o.customer_name}</div>
                      <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
