@@ -212,7 +212,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
     if (first) return toast.error(first);
     const low = items.find((it) => it.reseller_price < minFor(it));
     if (low)
-      return toast.error(`${low.product_name}: সর্বনিম্ন বিক্রয় মূল্য ৳${minFor(low)} — এর নিচে সেভ করা যাবে না`);
+      return toast.error(`${low.product_name}: minimum selling price is ৳${minFor(low)} — cannot save below this`);
     setBusy(true);
     try {
       if (removed.length > 0) {
@@ -466,7 +466,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                               const min = minFor(it);
                               if (it.reseller_price < min) {
                                 setItems((prev) => prev.map((x) => (x === it ? { ...x, reseller_price: min } : x)));
-                                toast.error(`সর্বনিম্ন বিক্রয় মূল্য ৳${min} — এর নিচে দেওয়া যাবে না`);
+                                toast.error(`Minimum selling price is ৳${min} — cannot go below this`);
                               }
                             }}
                           />
