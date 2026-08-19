@@ -51,6 +51,7 @@ const ROUTE_PERMISSIONS: Record<string, string[]> = {
   "/admin/customers": ["orders.view", "orders.edit", "reports.view"],
   "/admin/transactions": ["finance.view"],
   "/admin/business-report": ["reports.view"],
+  "/admin/expenses": ["finance.view", "reports.view", "settings.manage"],
   "/admin/payouts": ["payouts.manage"],
   "/admin/commissions": ["commissions.manage"],
   "/admin/resellers": ["resellers.manage"],
@@ -93,6 +94,7 @@ const NAV: NavEntry[] = [
     items: [
       { label: "Transaction Report", to: "/admin/transactions", icon: <LineChart className="h-4 w-4" /> },
       { label: "Business report", to: "/admin/business-report", icon: <PieChart className="h-4 w-4" /> },
+      { label: "Expenses", to: "/admin/expenses", icon: <Receipt className="h-4 w-4" /> },
       { label: "Payouts", to: "/admin/payouts", icon: <Wallet className="h-4 w-4" /> },
       { label: "Commissions", to: "/admin/commissions", icon: <Percent className="h-4 w-4" /> },
       { label: "Deposit transactions", to: "/admin/deposit-transactions", icon: <ShieldCheck className="h-4 w-4" /> },
