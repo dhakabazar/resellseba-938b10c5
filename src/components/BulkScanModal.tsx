@@ -5,13 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { orderStatusLabel } from "@/lib/courier-status";
 
-type ScanMode = "auto" | "confirmed_to_rts" | "rts_to_courier";
-
-const MODES: { value: ScanMode; label: string; hint: string }[] = [
-  { value: "auto", label: "Auto", hint: "Confirmed → Ready to ship, Ready to ship → To courier" },
-  { value: "confirmed_to_rts", label: "Confirmed → Ready to ship", hint: "Only confirmed orders" },
-  { value: "rts_to_courier", label: "Ready to ship → To courier", hint: "Handover to courier" },
-];
+/** Single, fixed logic: Packaging → Courier Handover. No auto, no other mode. */
+const SCAN_HINT = "Packaging → Courier Handover";
 
 type LogRow = {
   id: string;
@@ -87,14 +82,9 @@ async function findOrder(code: string) {
   return byShip ?? null;
 }
 
-function nextStatus(mode: ScanMode, current: string): { to: string } | { error: string } {
-  const allowConfirm = mode === "auto" || mode === "confirmed_to_rts";
-  const allowCourier = mode === "auto" || mode === "rts_to_courier";
-  if (current === "confirmed" && allowConfirm) return { to: "ready_to_ship" };
-  if (current === "ready_to_ship" && allowCourier) return { to: "shipped" };
-  if (current === "ready_to_ship" && !allowCourier)
-    return { error: "Already ready to ship" };
-  if (current === "shipped") return { error: "Already handed to courier" };
+function nextStatus(current: string): { to: string } | { error: string } {
+  if (current === "packaging") return { to: "ready_to_ship" };
+  if (current === "ready_to_ship") return { error: "Already in Courier Handover" };
   return { error: `Not allowed from ${orderStatusLabel(current)}` };
 }
 
@@ -142,7 +132,6 @@ export function BulkScanButton({
 }
 
 function BulkScanModal({ onClose }: { onClose: () => void }) {
-  const [mode, setMode] = useState<ScanMode>("auto");
   const [sound, setSound] = useState(true);
   const [camOn, setCamOn] = useState(false);
   const [camError, setCamError] = useState<string | null>(null);
@@ -202,7 +191,7 @@ function BulkScanModal({ onClose }: { onClose: () => void }) {
           push({ code: order.order_number, ok: false, message: `Duplicate — already scanned (${already})` });
           return;
         }
-        const step = nextStatus(mode, order.status as string);
+        const step = nextStatus(order.status as string);
         if ("error" in step) {
 
           if (sound) beepError();
@@ -239,7 +228,7 @@ function BulkScanModal({ onClose }: { onClose: () => void }) {
         setBusy(false);
       }
     },
-    [mode, push, sound],
+    [push, sound],
   );
 
   // keep the scan box focused for hardware scanners, but never steal focus
@@ -313,8 +302,6 @@ function BulkScanModal({ onClose }: { onClose: () => void }) {
     };
   }, [camOn, handleCode]);
 
-  const modeHint = MODES.find((m) => m.value === mode)?.hint ?? "";
-
   return (
     <div className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-background/80 p-3 backdrop-blur-sm sm:items-center sm:p-6">
       <div className="w-full max-w-3xl overflow-hidden rounded-2xl border bg-card shadow-2xl">
@@ -324,8 +311,8 @@ function BulkScanModal({ onClose }: { onClose: () => void }) {
             <ScanLine className="h-5 w-5" />
           </div>
           <div className="min-w-0 flex-1">
-            <div className="truncate text-base font-bold">Bulk scan · courier handover</div>
-            <div className="truncate text-xs text-muted-foreground">{modeHint}</div>
+            <div className="truncate text-base font-bold">Bulk scan · Courier Handover</div>
+            <div className="truncate text-xs text-muted-foreground">{SCAN_HINT}</div>
           </div>
           <button
             type="button"
@@ -348,23 +335,8 @@ function BulkScanModal({ onClose }: { onClose: () => void }) {
         <div className="grid gap-4 p-4 sm:p-5 md:grid-cols-[1.1fr_1fr]">
           {/* left: controls */}
           <div className="space-y-3">
-            <div>
-              <label className="mb-1 block text-xs font-medium text-muted-foreground">Scan mode</label>
-              <select
-                value={mode}
-                onChange={(e) => {
-                  setMode(e.target.value as ScanMode);
-                  e.currentTarget.blur();
-                  setTimeout(() => inputRef.current?.focus(), 50);
-                }}
-                className="h-10 w-full rounded-md border bg-background px-2 text-sm outline-none focus:ring-1 focus:ring-primary"
-              >
-                {MODES.map((m) => (
-                  <option key={m.value} value={m.value}>
-                    {m.label}
-                  </option>
-                ))}
-              </select>
+            <div className="rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-xs font-medium text-primary">
+              Packaging → Courier Handover
             </div>
 
             <form

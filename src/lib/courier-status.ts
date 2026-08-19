@@ -177,7 +177,7 @@ export type OrderTabKey =
   | "forwarded"
   | "confirmed"
   | "packaging"
-  | "rts"
+  | "handover"
   | "courier"
   | "delivered"
   | "pending_partial"
@@ -196,7 +196,7 @@ export const ORDER_TABS: { key: OrderTabKey; label: string; statuses: OrderStatu
   { key: "forwarded", label: "Send To admin", statuses: ["forwarded"] },
   { key: "confirmed", label: "Confirmed", statuses: ["confirmed"] },
   { key: "packaging", label: "Packaging", statuses: ["packaging"] },
-  { key: "rts", label: "RTS Order", statuses: ["ready_to_ship"] },
+  { key: "handover", label: "Courier Handover", statuses: ["ready_to_ship"] },
   { key: "courier", label: "To Courier", statuses: ["shipped", "processing"] },
   { key: "delivered", label: "Delivered", statuses: ["delivered"] },
   { key: "pending_partial", label: "Pending Partial", statuses: ["pending_partial"] },
@@ -320,7 +320,7 @@ const STATUS_LABELS: Record<string, string> = {
   forwarded: "Send To admin",
   confirmed: "Confirmed",
   packaging: "Packaging",
-  ready_to_ship: "RTS Order",
+  ready_to_ship: "Courier Handover",
   processing: "To Courier",
   shipped: "To Courier",
   delivered: "Delivered",
