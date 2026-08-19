@@ -17,6 +17,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as CatalogIndexRouteImport } from './routes/catalog.index'
 import { Route as SCodeRouteImport } from './routes/s.$code'
 import { Route as CatalogSlugRouteImport } from './routes/catalog.$slug'
+import { Route as AuthenticatedVerifyRouteImport } from './routes/_authenticated/verify'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedResellerRouteRouteImport } from './routes/_authenticated/reseller/route'
@@ -68,6 +69,7 @@ import { Route as AuthenticatedAdminBrandsRouteImport } from './routes/_authenti
 import { Route as AuthenticatedAdminAgentsRouteImport } from './routes/_authenticated/admin/agents'
 import { Route as AuthenticatedAdminAgentReportRouteImport } from './routes/_authenticated/admin/agent-report'
 import { Route as AuthenticatedAdminAgentPayoutsRouteImport } from './routes/_authenticated/admin/agent-payouts'
+import { Route as AuthenticatedAdminAdvancedRouteImport } from './routes/_authenticated/admin/advanced'
 import { Route as AuthenticatedAdminProductsIndexRouteImport } from './routes/_authenticated/admin/products.index'
 import { Route as SCodePSlugRouteImport } from './routes/s.$code.p.$slug'
 import { Route as SCodeCSlugRouteImport } from './routes/s.$code.c.$slug'
@@ -119,6 +121,11 @@ const CatalogSlugRoute = CatalogSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
   getParentRoute: () => CatalogRoute,
+} as any)
+const AuthenticatedVerifyRoute = AuthenticatedVerifyRouteImport.update({
+  id: '/verify',
+  path: '/verify',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
   id: '/onboarding',
@@ -417,6 +424,12 @@ const AuthenticatedAdminAgentPayoutsRoute =
     path: '/agent-payouts',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
+const AuthenticatedAdminAdvancedRoute =
+  AuthenticatedAdminAdvancedRouteImport.update({
+    id: '/advanced',
+    path: '/advanced',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
 const AuthenticatedAdminProductsIndexRoute =
   AuthenticatedAdminProductsIndexRouteImport.update({
     id: '/products/',
@@ -495,9 +508,11 @@ export interface FileRoutesByFullPath {
   '/reseller': typeof AuthenticatedResellerRouteRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/verify': typeof AuthenticatedVerifyRoute
   '/catalog/$slug': typeof CatalogSlugRoute
   '/s/$code': typeof SCodeRouteWithChildren
   '/catalog/': typeof CatalogIndexRoute
+  '/admin/advanced': typeof AuthenticatedAdminAdvancedRoute
   '/admin/agent-payouts': typeof AuthenticatedAdminAgentPayoutsRoute
   '/admin/agent-report': typeof AuthenticatedAdminAgentReportRoute
   '/admin/agents': typeof AuthenticatedAdminAgentsRoute
@@ -564,8 +579,10 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/verify': typeof AuthenticatedVerifyRoute
   '/catalog/$slug': typeof CatalogSlugRoute
   '/catalog': typeof CatalogIndexRoute
+  '/admin/advanced': typeof AuthenticatedAdminAdvancedRoute
   '/admin/agent-payouts': typeof AuthenticatedAdminAgentPayoutsRoute
   '/admin/agent-report': typeof AuthenticatedAdminAgentReportRoute
   '/admin/agents': typeof AuthenticatedAdminAgentsRoute
@@ -637,9 +654,11 @@ export interface FileRoutesById {
   '/_authenticated/reseller': typeof AuthenticatedResellerRouteRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
+  '/_authenticated/verify': typeof AuthenticatedVerifyRoute
   '/catalog/$slug': typeof CatalogSlugRoute
   '/s/$code': typeof SCodeRouteWithChildren
   '/catalog/': typeof CatalogIndexRoute
+  '/_authenticated/admin/advanced': typeof AuthenticatedAdminAdvancedRoute
   '/_authenticated/admin/agent-payouts': typeof AuthenticatedAdminAgentPayoutsRoute
   '/_authenticated/admin/agent-report': typeof AuthenticatedAdminAgentReportRoute
   '/_authenticated/admin/agents': typeof AuthenticatedAdminAgentsRoute
@@ -711,9 +730,11 @@ export interface FileRouteTypes {
     | '/reseller'
     | '/dashboard'
     | '/onboarding'
+    | '/verify'
     | '/catalog/$slug'
     | '/s/$code'
     | '/catalog/'
+    | '/admin/advanced'
     | '/admin/agent-payouts'
     | '/admin/agent-report'
     | '/admin/agents'
@@ -780,8 +801,10 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/dashboard'
     | '/onboarding'
+    | '/verify'
     | '/catalog/$slug'
     | '/catalog'
+    | '/admin/advanced'
     | '/admin/agent-payouts'
     | '/admin/agent-report'
     | '/admin/agents'
@@ -852,9 +875,11 @@ export interface FileRouteTypes {
     | '/_authenticated/reseller'
     | '/_authenticated/dashboard'
     | '/_authenticated/onboarding'
+    | '/_authenticated/verify'
     | '/catalog/$slug'
     | '/s/$code'
     | '/catalog/'
+    | '/_authenticated/admin/advanced'
     | '/_authenticated/admin/agent-payouts'
     | '/_authenticated/admin/agent-report'
     | '/_authenticated/admin/agents'
@@ -989,6 +1014,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/catalog/$slug'
       preLoaderRoute: typeof CatalogSlugRouteImport
       parentRoute: typeof CatalogRoute
+    }
+    '/_authenticated/verify': {
+      id: '/_authenticated/verify'
+      path: '/verify'
+      fullPath: '/verify'
+      preLoaderRoute: typeof AuthenticatedVerifyRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/onboarding': {
       id: '/_authenticated/onboarding'
@@ -1347,6 +1379,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAgentPayoutsRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/_authenticated/admin/advanced': {
+      id: '/_authenticated/admin/advanced'
+      path: '/advanced'
+      fullPath: '/admin/advanced'
+      preLoaderRoute: typeof AuthenticatedAdminAdvancedRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
     '/_authenticated/admin/products/': {
       id: '/_authenticated/admin/products/'
       path: '/products'
@@ -1435,6 +1474,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAdminRouteRouteChildren {
+  AuthenticatedAdminAdvancedRoute: typeof AuthenticatedAdminAdvancedRoute
   AuthenticatedAdminAgentPayoutsRoute: typeof AuthenticatedAdminAgentPayoutsRoute
   AuthenticatedAdminAgentReportRoute: typeof AuthenticatedAdminAgentReportRoute
   AuthenticatedAdminAgentsRoute: typeof AuthenticatedAdminAgentsRoute
@@ -1469,6 +1509,7 @@ interface AuthenticatedAdminRouteRouteChildren {
 
 const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren =
   {
+    AuthenticatedAdminAdvancedRoute: AuthenticatedAdminAdvancedRoute,
     AuthenticatedAdminAgentPayoutsRoute: AuthenticatedAdminAgentPayoutsRoute,
     AuthenticatedAdminAgentReportRoute: AuthenticatedAdminAgentReportRoute,
     AuthenticatedAdminAgentsRoute: AuthenticatedAdminAgentsRoute,
@@ -1576,6 +1617,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedResellerRouteRoute: typeof AuthenticatedResellerRouteRouteWithChildren
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
+  AuthenticatedVerifyRoute: typeof AuthenticatedVerifyRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -1583,6 +1625,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedResellerRouteRoute: AuthenticatedResellerRouteRouteWithChildren,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
+  AuthenticatedVerifyRoute: AuthenticatedVerifyRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

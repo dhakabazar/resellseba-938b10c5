@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAdvancedSettings } from "@/lib/advanced-settings";
 import { deliveryLabel, deliveryMode } from "@/lib/delivery";
 import { useAuth } from "@/lib/use-auth";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
@@ -58,6 +59,7 @@ function CatalogPage() {
   const [perPage, setPerPage] = useState(20);
   const [page, setPage] = useState(1);
   const [detailId, setDetailId] = useState<string | null>(null);
+  const { settings: adv } = useAdvancedSettings();
 
   useEffect(() => {
     if (!user) return;
@@ -368,7 +370,7 @@ function CatalogPage() {
                     Delivery: {deliveryLabel(p)} · customer pays
                   </div>
                   <div className="mt-1 text-xs text-muted-foreground">
-                    Suggested ৳{p.suggested_price} · Stock {p.stock}
+                    Suggested ৳{p.suggested_price}{adv.resellerCatalogShowStock ? ` · Stock ${p.stock}` : ""}
                   </div>
                   {isListed ? (
                     <button
@@ -473,6 +475,7 @@ function CatalogPage() {
 }
 
 function ProductDetailModal({ id, onClose, brands, categories }: { id: string; onClose: () => void; brands: Opt[]; categories: Opt[] }) {
+  const { settings: adv } = useAdvancedSettings();
   const [p, setP] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [active, setActive] = useState(0);
@@ -571,10 +574,12 @@ function ProductDetailModal({ id, onClose, brands, categories }: { id: string; o
                   <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Delivery</div>
                   <div className="text-sm font-medium">{deliveryLabel(p)}</div>
                 </div>
-                <div>
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Stock</div>
-                  <div className={`text-sm font-medium ${p.stock <= 5 ? "text-destructive" : ""}`}>{p.stock} units</div>
-                </div>
+                {adv.resellerCatalogShowStock && (
+                  <div>
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Stock</div>
+                    <div className={`text-sm font-medium ${p.stock <= 5 ? "text-destructive" : ""}`}>{p.stock} units</div>
+                  </div>
+                )}
               </div>
 
               <div>

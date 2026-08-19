@@ -438,6 +438,7 @@ export type Database = {
       global_settings: {
         Row: {
           accent_color: string | null
+          advanced_settings: Json
           contact_email: string | null
           contact_phone: string | null
           deposit_default_amount: number
@@ -461,6 +462,7 @@ export type Database = {
         }
         Insert: {
           accent_color?: string | null
+          advanced_settings?: Json
           contact_email?: string | null
           contact_phone?: string | null
           deposit_default_amount?: number
@@ -484,6 +486,7 @@ export type Database = {
         }
         Update: {
           accent_color?: string | null
+          advanced_settings?: Json
           contact_email?: string | null
           contact_phone?: string | null
           deposit_default_amount?: number
@@ -1270,25 +1273,31 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string
+          email_verified_at: string | null
           full_name: string | null
           id: string
           phone: string | null
+          phone_verified_at: string | null
           updated_at: string
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string
+          email_verified_at?: string | null
           full_name?: string | null
           id: string
           phone?: string | null
+          phone_verified_at?: string | null
           updated_at?: string
         }
         Update: {
           avatar_url?: string | null
           created_at?: string
+          email_verified_at?: string | null
           full_name?: string | null
           id?: string
           phone?: string | null
+          phone_verified_at?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -1963,6 +1972,36 @@ export type Database = {
           },
         ]
       }
+      verification_codes: {
+        Row: {
+          attempts: number
+          channel: string
+          code_hash: string
+          created_at: string
+          expires_at: string
+          target: string
+          user_id: string
+        }
+        Insert: {
+          attempts?: number
+          channel: string
+          code_hash: string
+          created_at?: string
+          expires_at: string
+          target: string
+          user_id: string
+        }
+        Update: {
+          attempts?: number
+          channel?: string
+          code_hash?: string
+          created_at?: string
+          expires_at?: string
+          target?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       public_marketing_pixels: {
@@ -2344,6 +2383,23 @@ export type Database = {
           sell_subtotal: number
           sell_total: number
           status: string
+        }[]
+      }
+      verify_check: {
+        Args: { _channel: string; _code: string }
+        Returns: boolean
+      }
+      verify_issue: {
+        Args: { _channel: string; _code: string; _target: string }
+        Returns: undefined
+      }
+      verify_state: {
+        Args: never
+        Returns: {
+          email_sent_at: string
+          email_verified_at: string
+          phone_verified_at: string
+          sms_sent_at: string
         }[]
       }
     }
