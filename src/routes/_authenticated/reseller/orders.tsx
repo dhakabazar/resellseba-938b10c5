@@ -1398,39 +1398,14 @@ function OrderDrawer({
                 Earnings Summary
               </h3>
             </div>
-            <div className="p-5">
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                <div className="space-y-1">
-                  <span className="text-[10px] font-medium text-muted-foreground uppercase">Sale Amount</span>
-                  <p className="text-2xl font-bold">৳{subtotal.toLocaleString()}</p>
-                  <p className="text-[10px] text-muted-foreground">Customer billing subtotal</p>
-                </div>
-                <div className="space-y-1">
-                  <span className="text-[10px] font-medium text-green-600 uppercase flex items-center gap-1">
-                    <Wallet className="h-3 w-3" />
-                    Your Net Profit
-                  </span>
-                  <p className="text-2xl font-bold text-green-600">৳{profit.toLocaleString()}</p>
-                  <p className="text-[10px] text-muted-foreground italic">After platform costs</p>
-                </div>
+            <div className="space-y-3 p-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <AdvanceChip order={order} />
+                <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold uppercase text-muted-foreground">
+                  {order.payment_method} · {order.payment_status}
+                </span>
               </div>
-
-              <div className="mt-6 space-y-2 border-t border-amber-100 pt-4">
-                <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">Shipping Charge</span>
-                  <span className="font-medium">৳{shipping.toLocaleString()}</span>
-                </div>
-                {discount > 0 && (
-                  <div className="flex justify-between text-xs text-destructive">
-                    <span>Discount Applied</span>
-                    <span>-৳{discount.toLocaleString()}</span>
-                  </div>
-                )}
-                <div className="flex justify-between border-t border-amber-100 pt-2 text-sm font-bold">
-                  <span>Grand Total (COD)</span>
-                  <span className="text-primary text-base">৳{total.toLocaleString()}</span>
-                </div>
-              </div>
+              <OrderMoneyPanel order={order} role="reseller" />
             </div>
           </div>
 
