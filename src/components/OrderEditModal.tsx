@@ -51,7 +51,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
   const [deliveryCostInput, setDeliveryCostInput] = useState("");
   /** Advance already collected + who is holding that cash. */
   const [advance, setAdvance] = useState("");
-  const [advanceBy, setAdvanceBy] = useState<"admin" | "reseller">(isAdmin ? "admin" : "reseller");
+  const [advanceBy, setAdvanceBy] = useState<"admin" | "reseller">("reseller");
 
   /** Money actually collected by the courier. Empty = full order total received. */
   const [received, setReceived] = useState<string>("");
@@ -85,7 +85,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
       setPackagingInput(o.packaging_total == null ? "" : String(Number(o.packaging_total)));
       setDeliveryCostInput(Number(o.delivery_cost ?? 0) ? String(Number(o.delivery_cost)) : "");
       setAdvance(Number((o as any).advance_amount ?? 0) ? String(Number((o as any).advance_amount)) : "");
-      setAdvanceBy(((o as any).advance_by === "reseller" ? "reseller" : "admin") as any);
+      setAdvanceBy(((o as any).advance_by === "admin" ? "admin" : "reseller") as any);
       setShippingMode("manual");
 
 
@@ -291,7 +291,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
     }
   }
 
-  const inp = "w-full rounded-lg border bg-background px-3 py-1.5 text-xs focus:ring-2 focus:ring-primary/20";
+  const inp = "w-full rounded-lg border bg-background px-3 py-2 text-[13px] focus:ring-2 focus:ring-primary/20";
 
   return (
     <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4">
@@ -327,34 +327,34 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                 </h3>
                 <div className="grid gap-x-4 gap-y-3 sm:grid-cols-2">
                   <label className="space-y-1">
-                    <span className="text-[10px] font-semibold text-muted-foreground">Name</span>
+                    <span className="text-[13px] font-bold text-foreground/80">Name</span>
                     <input className={inp} value={name} onChange={(e) => setName(sanitizeName(e.target.value))} />
                   </label>
                   <label className="space-y-1">
-                    <span className="text-[10px] font-semibold text-muted-foreground">Mobile</span>
+                    <span className="text-[13px] font-bold text-foreground/80">Mobile</span>
                     <input className={inp} value={phone} onChange={(e) => setPhone(normalizePhone(e.target.value))} />
                   </label>
                   <label className="space-y-1 sm:col-span-2">
-                    <span className="text-[10px] font-semibold text-muted-foreground">Address</span>
+                    <span className="text-[13px] font-bold text-foreground/80">Address</span>
                     <textarea rows={2} className={inp} value={address} onChange={(e) => setAddress(e.target.value)} />
                   </label>
                   <label className="space-y-1">
-                    <span className="text-[10px] font-semibold text-muted-foreground">City</span>
+                    <span className="text-[13px] font-bold text-foreground/80">City</span>
                     <input className={inp} value={city} onChange={(e) => setCity(e.target.value)} />
                   </label>
                   <label className="space-y-1">
-                    <span className="text-[10px] font-semibold text-muted-foreground">Landmark</span>
+                    <span className="text-[13px] font-bold text-foreground/80">Landmark</span>
                     <input className={inp} value={landmark} onChange={(e) => setLandmark(e.target.value)} />
                   </label>
                   <label className="space-y-1">
-                    <span className="text-[10px] font-semibold text-muted-foreground">Delivery area</span>
+                    <span className="text-[13px] font-bold text-foreground/80">Delivery area</span>
                     <select className={inp} value={area} onChange={(e) => setArea(e.target.value as any)}>
                       <option value="inside_dhaka">Inside Dhaka</option>
                       <option value="outside_dhaka">Outside Dhaka</option>
                     </select>
                   </label>
                   <label className="space-y-1">
-                    <span className="text-[10px] font-semibold text-muted-foreground">Payment method</span>
+                    <span className="text-[13px] font-bold text-foreground/80">Payment method</span>
                     <select className={inp} value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
                       <option value="cod">Cash on Delivery</option>
                       <option value="bkash">bKash</option>
@@ -366,7 +366,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                   </label>
                   {isAdmin && (
                     <label className="space-y-1">
-                      <span className="text-[10px] font-semibold text-muted-foreground">Payment status</span>
+                      <span className="text-[13px] font-bold text-foreground/80">Payment status</span>
                       <select className={inp} value={paymentStatus} onChange={(e) => setPaymentStatus(e.target.value)}>
                         <option value="unpaid">Unpaid</option>
                         <option value="partial">Partial</option>
@@ -376,7 +376,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                     </label>
                   )}
                   <label className="space-y-1 sm:col-span-2">
-                    <span className="text-[10px] font-semibold text-muted-foreground">
+                    <span className="text-[13px] font-bold text-foreground/80">
                       {isAdmin ? "Admin note" : "Your note"}
                     </span>
                     <input className={inp} value={note} onChange={(e) => setNote(e.target.value)} />
@@ -446,7 +446,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                       </div>
                       <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
                         <label className="space-y-1">
-                          <span className="text-[9px] font-bold uppercase text-muted-foreground">Qty</span>
+                          <span className="text-[11px] font-bold uppercase text-muted-foreground">Qty</span>
                           <div className="flex items-center gap-1">
                             <button
                               type="button"
@@ -482,7 +482,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                           </div>
                         </label>
                         <label className="space-y-1">
-                          <span className="text-[9px] font-bold uppercase text-muted-foreground">
+                          <span className="text-[11px] font-bold uppercase text-muted-foreground">
                             Sell price · min ৳{minFor(it)}
                           </span>
                           <input
@@ -505,7 +505,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                         </label>
                         {isAdmin && (
                           <label className="space-y-1">
-                            <span className="text-[9px] font-bold uppercase text-muted-foreground">Base cost</span>
+                            <span className="text-[11px] font-bold uppercase text-muted-foreground">Base cost</span>
                             <input
                               className={inp}
                               value={it.sa_price}
@@ -518,7 +518,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                           </label>
                         )}
                         <div className="space-y-1">
-                          <span className="text-[9px] font-bold uppercase text-muted-foreground">Line total</span>
+                          <span className="text-[11px] font-bold uppercase text-muted-foreground">Line total</span>
                           <div className="px-1 py-1.5 text-xs font-bold tabular-nums">
                             ৳{(it.reseller_price * it.quantity).toFixed(0)}
                           </div>
@@ -590,7 +590,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
 
                 {isAdmin && (
                   <label className="mt-3 block">
-                    <span className="text-[10px] font-semibold text-muted-foreground">
+                    <span className="text-[13px] font-bold text-foreground/80">
                       Received amount (partial delivery)
                     </span>
                     <input

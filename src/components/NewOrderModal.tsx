@@ -52,7 +52,7 @@ export function NewOrderModal({
   const [deliveryCostOverride, setDeliveryCostOverride] = useState("");
   /** Advance already collected from the customer + who is holding that cash. */
   const [advance, setAdvance] = useState("");
-  const [advanceBy, setAdvanceBy] = useState<"admin" | "reseller">(isAdmin ? "admin" : "reseller");
+  const [advanceBy, setAdvanceBy] = useState<"admin" | "reseller">("reseller");
 
 
 
@@ -801,7 +801,7 @@ function Field({
 }) {
   return (
     <div className={className}>
-      <label className="mb-1 block text-xs font-medium">{label}</label>
+      <label className="mb-1.5 block text-[13px] font-bold">{label}</label>
       {children}
     </div>
   );
