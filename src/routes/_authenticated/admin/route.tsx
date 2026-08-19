@@ -68,6 +68,7 @@ const ROUTE_PERMISSIONS: Record<string, string[]> = {
   "/admin/maintenance": ["settings.manage"],
   "/admin/domains": ["settings.manage"],
   "/admin/deposits": ["settings.manage", "resellers.manage", "finance.view"],
+  "/admin/deposit-transactions": ["finance.view", "resellers.manage", "settings.manage"],
   "/admin/settings": ["settings.manage"],
   "/admin/privacy": ["settings.manage"],
 };
@@ -94,6 +95,7 @@ const NAV: NavEntry[] = [
       { label: "Business report", to: "/admin/business-report", icon: <PieChart className="h-4 w-4" /> },
       { label: "Payouts", to: "/admin/payouts", icon: <Wallet className="h-4 w-4" /> },
       { label: "Commissions", to: "/admin/commissions", icon: <Percent className="h-4 w-4" /> },
+      { label: "Deposit transactions", to: "/admin/deposit-transactions", icon: <ShieldCheck className="h-4 w-4" /> },
     ],
   },
   { label: "Resellers", to: "/admin/resellers", icon: <Users className="h-4 w-4" /> },

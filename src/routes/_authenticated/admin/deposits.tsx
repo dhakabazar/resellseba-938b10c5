@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/ui-kit";
 import { toast } from "sonner";
-import { DepositLedger } from "@/components/deposit-ledger";
 import { Loader2, Save, RotateCcw, ShieldCheck } from "lucide-react";
 import {
   DEFAULT_DEPOSIT_TEXTS,
@@ -213,16 +212,6 @@ function DepositSettingsPage() {
           </div>
         </div>
 
-        <div className="surface-card space-y-3 p-6 lg:col-span-2">
-          <div>
-            <h3 className="text-sm font-semibold">Deposit transactions</h3>
-            <p className="text-xs text-muted-foreground">
-              Every reseller deposit, refund and adjustment. Edit or delete an entry — the reseller balance and due
-              amount update instantly.
-            </p>
-          </div>
-          <DepositLedger />
-        </div>
       </div>
 
     </div>
