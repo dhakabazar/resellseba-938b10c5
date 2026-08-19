@@ -136,7 +136,10 @@ export function BulkScanButton({
         )}
       >
         <ScanLine className="h-4 w-4" />
-        {compact ? <span className="hidden sm:inline">Bulk scan</span> : <span>Bulk scan</span>}
+        {(() => {
+          const label = mode === "return" ? "Bulk return" : "Bulk scan";
+          return compact ? <span className="hidden sm:inline">{label}</span> : <span>{label}</span>;
+        })()}
       </button>
       {open && mounted
         ? createPortal(
