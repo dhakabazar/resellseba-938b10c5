@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/ui-kit";
 import { toast } from "sonner";
+import { DepositLedger } from "@/components/deposit-ledger";
 import { Loader2, Save, RotateCcw, ShieldCheck } from "lucide-react";
 import {
   DEFAULT_DEPOSIT_TEXTS,
