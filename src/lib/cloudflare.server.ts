@@ -3,6 +3,8 @@
 
 const CF_API = "https://api.cloudflare.com/client/v4";
 
+export type DomainMode = "cloudflare" | "dns";
+
 export type CfConfig = {
   api_token: string | null;
   account_id: string | null;
@@ -14,6 +16,12 @@ export type CfConfig = {
   auto_worker_domain: boolean;
   is_active: boolean;
   updated_at: string;
+  /** Which setups are allowed: cloudflare only, server DNS only, or both. */
+  mode: "cloudflare" | "dns" | "both";
+  server_a_ip: string | null;
+  server_cname: string | null;
+  server_note: string | null;
+  dns_active: boolean;
 };
 
 export async function loadConfig(db: any): Promise<CfConfig> {
@@ -30,6 +38,11 @@ export async function loadConfig(db: any): Promise<CfConfig> {
     auto_worker_domain: false,
     is_active: false,
     updated_at: new Date().toISOString(),
+    mode: "both",
+    server_a_ip: null,
+    server_cname: null,
+    server_note: null,
+    dns_active: false,
   }) as CfConfig;
 }
 
@@ -44,6 +57,11 @@ const EMPTY_CONFIG: CfConfig = {
   auto_worker_domain: false,
   is_active: false,
   updated_at: new Date().toISOString(),
+  mode: "both",
+  server_a_ip: null,
+  server_cname: null,
+  server_note: null,
+  dns_active: false,
 };
 
 /**
@@ -93,6 +111,12 @@ export async function loadDnsGuideAsCaller(supabase: any) {
     aRecordIp: row?.a_record_ip ?? "",
     zoneName: row?.zone_name ?? "",
     active: !!row?.active,
+    mode: (row?.mode ?? "both") as "cloudflare" | "dns" | "both",
+    serverIp: row?.server_a_ip ?? "",
+    serverCname: row?.server_cname ?? "",
+    serverNote: row?.server_note ?? "",
+    cfReady: !!row?.cf_ready,
+    dnsReady: !!row?.dns_ready,
   };
 }
 
@@ -111,11 +135,54 @@ export function maskConfig(c: CfConfig) {
     auto_worker_domain: !!c.auto_worker_domain,
     is_active: !!c.is_active,
     updated_at: c.updated_at,
+    mode: c.mode ?? "both",
+    server_a_ip: c.server_a_ip ?? "",
+    server_cname: c.server_cname ?? "",
+    server_note: c.server_note ?? "",
+    dns_active: !!c.dns_active,
   };
 }
 export type MaskedCfConfig = ReturnType<typeof maskConfig>;
 
+/** The server-DNS route is usable (no Cloudflare API needed). */
+export function requireDnsConfig(c: CfConfig) {
+  if ((c.mode ?? "both") === "cloudflare")
+    throw new Response("Server DNS mode is turned off. Enable it in Admin → Custom domains.", { status: 400 });
+  if (!c.dns_active) throw new Response("Server DNS mode is turned off. Enable it in Admin → Custom domains.", { status: 400 });
+  if (!c.server_a_ip && !c.server_cname)
+    throw new Response("Server IP / CNAME target is missing. Set it in Admin → Custom domains.", { status: 400 });
+  return c;
+}
+
+/** DNS target the reseller must point at, for server-DNS domains. */
+export function dnsTargetFor(c: CfConfig) {
+  return c.server_cname || c.server_a_ip || "";
+}
+
+/** Resolve a hostname over DNS-over-HTTPS and check it points at our server. */
+export async function checkDnsPointing(c: CfConfig, hostname: string) {
+  const answers: string[] = [];
+  for (const type of ["A", "CNAME"]) {
+    try {
+      const res = await fetch(
+        `https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(hostname)}&type=${type}`,
+        { headers: { accept: "application/dns-json" } },
+      );
+      const body: any = await res.json();
+      for (const a of body?.Answer ?? []) answers.push(String(a?.data ?? "").replace(/\.$/, "").toLowerCase());
+    } catch (err) {
+      console.error("DoH lookup failed", err);
+    }
+  }
+  const ip = (c.server_a_ip ?? "").trim().toLowerCase();
+  const cname = (c.server_cname ?? "").trim().toLowerCase();
+  const ok = answers.some((a) => (ip && a === ip) || (cname && (a === cname || a.endsWith(`.${cname}`))));
+  return { ok, answers };
+}
+
 export function requireActiveConfig(c: CfConfig) {
+  if ((c.mode ?? "both") === "dns")
+    throw new Response("Cloudflare mode is turned off. Use server DNS or enable it in Admin → Custom domains.", { status: 400 });
   if (!c.is_active) throw new Response("Cloudflare integration is turned off. Enable it in Admin → Custom domains.", { status: 400 });
   if (!c.api_token) throw new Response("Cloudflare API token is missing. Set it in Admin → Custom domains.", { status: 400 });
   if (!c.zone_id) throw new Response("Cloudflare Zone ID is missing. Set it in Admin → Custom domains.", { status: 400 });
