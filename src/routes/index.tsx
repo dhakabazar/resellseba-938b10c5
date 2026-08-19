@@ -23,7 +23,6 @@ import {
   PackageCheck,
   Coins,
   BanknoteArrowDown,
-  type LucideIcon,
   HelpCircle,
 } from "lucide-react";
 import { APP_ICONS } from "@/lib/icons";
