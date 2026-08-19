@@ -106,6 +106,11 @@ type OrderRow = {
   notes: string | null;
   reseller_note: string | null;
   created_at: string;
+  received_amount?: number | null;
+  packaging_total?: number | null;
+  delivery_cost?: number | null;
+  advance_amount?: number | null;
+  advance_by?: string | null;
 };
 
 type Line = { listing_id?: string; product_id?: string; qty: number; name?: string; price?: number; cost?: number; image?: string; delivery?: any };
