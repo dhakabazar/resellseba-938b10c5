@@ -120,8 +120,7 @@ function AdvancedSettingsPage() {
     <div className="space-y-5">
       <PageHeader
         title="Advanced settings"
-        subtitle="Platform logic switches — notun logic ekhane jog hote thakbe."
-        icon={<Sliders className="h-5 w-5" />}
+        description="Platform logic switches — notun logic ekhane jog hote thakbe."
         actions={
           <button
             onClick={save}
