@@ -10,7 +10,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { StatCard } from "@/components/ui-kit";
 import { SearchableSelect } from "@/components/searchable-select";
 import { Pagination } from "@/components/data-list";
-import { DateRangeBar, resolveRange, type DateRangeState } from "@/components/date-range-filter";
+import { resolveRange, rangeLabel, type DateRangeState } from "@/components/date-range-filter";
+import { DATE_PRESET_OPTIONS, type DatePreset } from "@/components/order-filters";
 import { bdt, toCsv, downloadCsv, PROFIT_FORMULA_HINT } from "@/lib/finance-report";
 import { orderStatusLabel, orderStatusTone } from "@/lib/courier-status";
 
@@ -105,15 +106,16 @@ function PartialSummary({ r }: { r: TxRow }) {
 }
 
 /**
- * Running balance per reseller (oldest → newest): every in adds, every out subtracts,
- * so the Balance column is always the simple sum of the Amount column above it.
+ * Running balance: every in adds, every out subtracts, so Balance is always the
+ * simple sum of the Amount column above it. When a single reseller is selected the
+ * balance runs per reseller; with "All resellers" it is one combined balance.
  */
-function withRunningBalance(rows: TxRow[]): TxRow[] {
+function withRunningBalance(rows: TxRow[], perReseller: boolean): TxRow[] {
   const asc = [...rows].sort((a, b) => new Date(a.at).getTime() - new Date(b.at).getTime());
   const run = new Map<string, number>();
   const balances = new Map<TxRow, number>();
   for (const r of asc) {
-    const key = r.reseller_id ?? "-";
+    const key = perReseller ? (r.reseller_id ?? "-") : "all";
     let bal = run.get(key) ?? 0;
     const amount = Number(r.amount) || 0;
     if (r.direction === "in") bal += amount;
@@ -123,6 +125,7 @@ function withRunningBalance(rows: TxRow[]): TxRow[] {
   }
   return rows.map((r) => ({ ...r, running: balances.get(r) ?? (Number(r.running) || 0) }));
 }
+
 
 
 
@@ -176,7 +179,7 @@ export function TransactionReport({
       } as never)
       .then(({ data, error }) => {
         if (error) setError(error.message);
-        setRows(withRunningBalance((data ?? []) as TxRow[]));
+        setRows(withRunningBalance((data ?? []) as TxRow[], Boolean((admin ? reseller : resellerId) || "")));
         setLoading(false);
       });
   }, [admin, reseller, resellerId, range]);
@@ -291,8 +294,8 @@ export function TransactionReport({
       </div>
 
       <div className="surface-card p-3 sm:p-4">
-        <div className="flex flex-nowrap items-end gap-2 overflow-x-auto pb-1">
-          <div className="flex w-[30%] min-w-[240px] shrink-0 flex-col gap-1">
+        <div className="flex flex-wrap items-end gap-2">
+          <div className="flex w-full min-w-[240px] flex-col gap-1 sm:w-[30%]">
             <span className="text-[11px] font-medium text-muted-foreground">Search</span>
             <div className="flex h-9 items-center rounded-md border bg-background px-2 focus-within:ring-2 focus-within:ring-ring">
               <Search className="mr-2 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
@@ -324,7 +327,7 @@ export function TransactionReport({
                 { value: "", label: "All resellers" },
                 ...resellers.map((r) => ({ value: r.id, label: `${r.business_name} · ${r.code}` })),
               ]}
-              className="min-w-[160px] flex-1"
+              className="min-w-[150px] flex-1"
             />
           )}
           <SearchableSelect
@@ -334,10 +337,48 @@ export function TransactionReport({
             options={KIND_OPTIONS}
             className="min-w-[130px] flex-1"
           />
-          <div className="flex min-w-[180px] flex-1 items-end">
-            <DateRangeBar compact label="" value={range} onChange={setRange} />
+          <div className="flex min-w-[150px] flex-1 flex-col gap-1">
+            <span className="text-[11px] font-medium text-muted-foreground">Date</span>
+            <select
+              value={range.preset}
+              onChange={(e) => {
+                const p = e.target.value as DatePreset;
+                setRange(p === "custom" ? { ...range, preset: "custom" } : { preset: p, from: "", to: "" });
+              }}
+              className="h-9 w-full rounded-md border bg-background px-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+            >
+              {DATE_PRESET_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.value === range.preset ? `${o.label} · ${rangeLabel(range)}` : o.label}
+                </option>
+              ))}
+            </select>
           </div>
-          <div className="flex w-24 shrink-0 flex-col gap-1">
+          {range.preset === "custom" && (
+            <>
+              <div className="flex min-w-[130px] flex-1 flex-col gap-1">
+                <span className="text-[11px] font-medium text-muted-foreground">From</span>
+                <input
+                  type="date"
+                  value={range.from}
+                  max={range.to || undefined}
+                  onChange={(e) => setRange({ ...range, from: e.target.value })}
+                  className="h-9 rounded-md border bg-background px-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+              <div className="flex min-w-[130px] flex-1 flex-col gap-1">
+                <span className="text-[11px] font-medium text-muted-foreground">To</span>
+                <input
+                  type="date"
+                  value={range.to}
+                  min={range.from || undefined}
+                  onChange={(e) => setRange({ ...range, to: e.target.value })}
+                  className="h-9 rounded-md border bg-background px-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+            </>
+          )}
+          <div className="flex w-20 shrink-0 flex-col gap-1">
             <span className="text-[11px] font-medium text-muted-foreground">Per page</span>
             <select
               value={String(perPage)}
@@ -357,6 +398,7 @@ export function TransactionReport({
             </select>
           </div>
         </div>
+
       </div>
 
 
