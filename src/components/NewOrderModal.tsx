@@ -43,6 +43,12 @@ export function NewOrderModal({
   const [busy, setBusy] = useState(false);
   const [query, setQuery] = useState("");
   const [resellerSearch, setResellerSearch] = useState("");
+  /** Order level adjustments — "" means keep the automatic/default value. */
+  const [discount, setDiscount] = useState("");
+  const [shipOverride, setShipOverride] = useState("");
+  const [packagingOverride, setPackagingOverride] = useState("");
+  const [deliveryCostOverride, setDeliveryCostOverride] = useState("");
+
 
   const trendingResellers = useMemo(() => {
     return resellers.slice(0, 5);
