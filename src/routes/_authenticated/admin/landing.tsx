@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { clearAppDataCache } from "@/lib/app-data";
 import { PageHeader } from "@/components/ui-kit";
 import { ImageUploader, type UploadedImage } from "@/components/ImageUploader";
 import { Loader2, Plus, Trash2 } from "lucide-react";
@@ -55,6 +56,7 @@ function LandingEditor() {
     if (!c) return;
     setBusy(true);
     const { error } = await supabase.from("global_settings").update({ landing_content: c as never }).eq("id", 1);
+    clearAppDataCache("settings");
     setBusy(false);
     if (error) toast.error(error.message);
     else toast.success("Landing page save hoyeche");

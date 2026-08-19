@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { clearAppDataCache } from "@/lib/app-data";
 import { PageHeader } from "@/components/ui-kit";
 import { Loader2, Save, Eye } from "lucide-react";
 import { toast } from "sonner";
@@ -75,6 +76,7 @@ function PrivacyEditor() {
       .from("global_settings")
       .update({ privacy_policy: html })
       .eq("id", 1);
+    clearAppDataCache("settings");
     setBusy(false);
     if (error) toast.error(error.message);
     else toast.success("Privacy policy saved");
