@@ -26,6 +26,7 @@ import {
   type LucideIcon,
   HelpCircle,
 } from "lucide-react";
+import { APP_ICONS } from "@/lib/icons";
 import { toast } from "sonner";
 import {
   Accordion,
@@ -55,10 +56,7 @@ export const Route = createFileRoute("/")({
   component: RootResolver,
 });
 
-const ICON_MAP: Record<string, LucideIcon> = {
-  Boxes, Truck, Wallet, Megaphone, Globe, BarChart3, ShieldCheck, Sparkles,
-  ClipboardList, Send, PackageCheck, Coins, BanknoteArrowDown, ShoppingBag, Users,
-};
+const ICON_MAP = APP_ICONS;
 
 type Feature = { icon: string; title: string; desc: string };
 type FlowStep = { icon: string; title: string; desc: string };
