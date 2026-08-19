@@ -3,11 +3,12 @@
 export function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex items-center gap-2">
-      <span className="h-3 w-1 rounded-full bg-primary" />
-      <span className="text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground/80">{children}</span>
+      <span className="h-4 w-1.5 rounded-full bg-primary" />
+      <span className="text-[13px] font-black uppercase tracking-[0.08em] text-foreground/80">{children}</span>
     </div>
   );
 }
+
 
 export function MoneyField({
   label,
