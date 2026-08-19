@@ -972,7 +972,9 @@ function OrdersPage() {
                 {/* Collapsible content section */}
                 {expandedOrders.includes(o.id) && (
                   <div className="border-t bg-muted/20 px-4 py-4 animate-in slide-in-from-top-2 duration-200">
+                    <OrderItemsList items={stripItems(o.id)} onZoom={setZoomImage} className="mb-6" />
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
                       {/* Order metadata & shipping details */}
                       <div className="space-y-4">
                         <div>
