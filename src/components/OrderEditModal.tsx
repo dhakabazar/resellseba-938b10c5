@@ -586,12 +586,13 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                     <input
                       type="number"
                       className={inp}
-                      placeholder={`Empty = full ৳${totals.total.toFixed(0)} received`}
+                      placeholder={`Empty = full ৳${totals.codDue.toFixed(0)} collected`}
                       value={received}
                       onChange={(e) => setReceived(e.target.value)}
                     />
                     <span className="mt-1 block text-[10px] text-muted-foreground">
-                      If courier paid partially, enter collected amount here — profit is calculated from this amount.
+                      Enter only what the courier collected. Any advance ({`৳${totals.advance.toFixed(0)}`}) is added on
+                      top automatically — profit is calculated from the total received.
                     </span>
                   </label>
                 )}
