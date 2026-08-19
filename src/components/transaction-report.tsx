@@ -393,7 +393,6 @@ export function TransactionReport({
                 <tr>
                   <th className="px-3 py-2 text-left">Type</th>
                   {admin && <th className="px-3 py-2 text-left">Reseller</th>}
-                  <th className="px-3 py-2 text-right">Amount</th>
                   <th className="px-3 py-2 text-left">Date</th>
                   <th className="px-3 py-2 text-left">Status</th>
                   <th className="px-3 py-2 text-left">Meta / note</th>
@@ -404,7 +403,9 @@ export function TransactionReport({
                   <th className="px-3 py-2 text-right">Packaging</th>
                   <th className="px-3 py-2 text-right">Received</th>
                   <th className="px-3 py-2 text-right">Advance</th>
+                  <th className="px-3 py-2 text-right">Amount</th>
                   <th className="px-3 py-2 text-right">Balance</th>
+
                 </tr>
               </thead>
               <tbody className="divide-y">
