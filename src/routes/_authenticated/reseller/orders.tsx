@@ -867,11 +867,10 @@ function OrdersPage() {
                         <span className="rounded border px-1.5 py-0.5 uppercase text-muted-foreground">
                           {o.payment_method}
                         </span>
-                        <span
-                          className={`rounded px-1.5 py-0.5 ${(o.status === "forwarded" || o.status === "confirmed") && o.forwarded_to_admin ? "bg-success/10 text-success" : "hidden"}`}
-                        >
-                          {o.forwarded_to_admin ? "Sent to admin" : ""}
-                        </span>
+                        {o.status === "forwarded" && o.forwarded_to_admin && (
+                          <span className="rounded bg-success/10 px-1.5 py-0.5 text-success">Sent to admin</span>
+                        )}
+
 
                       </div>
 
