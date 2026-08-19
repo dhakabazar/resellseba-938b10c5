@@ -531,7 +531,7 @@ export function TransactionReport({
                             <div className="text-[11px] font-bold">{bdt(Number(r.received))}</div>
                             {Number(r.advance) > 0 && (
                               <div className="text-[9px] text-muted-foreground">
-                                courier {bdt(Number(r.collected ?? 0))} + advance {bdt(Number(r.advance))}
+                                cou {bdt(Number(r.collected ?? 0))} + adv {bdt(Number(r.advance))}
                               </div>
                             )}
                           </div>
