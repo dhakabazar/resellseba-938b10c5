@@ -573,10 +573,12 @@ function ProductDetailModal({ id, onClose, brands, categories }: { id: string; o
                   <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Delivery</div>
                   <div className="text-sm font-medium">{deliveryLabel(p)}</div>
                 </div>
-                <div>
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Stock</div>
-                  <div className={`text-sm font-medium ${p.stock <= 5 ? "text-destructive" : ""}`}>{p.stock} units</div>
-                </div>
+                {adv.resellerCatalogShowStock && (
+                  <div>
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Stock</div>
+                    <div className={`text-sm font-medium ${p.stock <= 5 ? "text-destructive" : ""}`}>{p.stock} units</div>
+                  </div>
+                )}
               </div>
 
               <div>
