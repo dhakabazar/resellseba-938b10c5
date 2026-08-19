@@ -437,16 +437,8 @@ export function TransactionReport({
                           <div className="text-[10px] text-muted-foreground">{r.reseller_code}</div>
                         </td>
                       )}
-                      <td
-                        className={
-                          "px-3 py-2 text-right font-bold tabular-nums " +
-                          (voided ? "text-muted-foreground line-through" : inflow ? "text-success" : "text-destructive")
-                        }
-                      >
-                        {inflow ? "+" : "−"}
-                        {bdt(Number(r.amount))}
-                      </td>
                       <td className="px-3 py-2">
+
                         <DateCell at={r.at} />
                       </td>
                       <td className="px-3 py-2">
