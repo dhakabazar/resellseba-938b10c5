@@ -265,6 +265,9 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
           total: totals.total,
           sa_cost_total: totals.saCost,
           reseller_profit: totals.profit,
+          advance_amount: totals.advance,
+          advance_by: totals.advance > 0 ? advanceBy : null,
+
           ...(isAdmin
             ? {
                 packaging_total: totals.packaging,
