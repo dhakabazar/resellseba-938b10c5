@@ -737,6 +737,11 @@ export function NewOrderModal({
                         <span className="font-medium">COD to collect</span>
                         <span className="font-black text-foreground">৳{totals.codDue.toFixed(0)}</span>
                       </div>
+                      <div className="text-[10px] leading-snug text-muted-foreground">
+                        {advanceBy === "reseller"
+                          ? "Advance is already with the reseller, so it is deducted from their final amount."
+                          : "Advance is held by admin — no plus/minus on the reseller balance."}
+                      </div>
                     </>
                   )}
 
