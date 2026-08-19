@@ -134,7 +134,7 @@ export function ResellerProfile({
     admin ? { to: "/admin/orders", search: { reseller: r.id, ...(tab ? { tab } : {}) } } : {};
   const payoutsLink = (status?: string) =>
     admin ? { to: "/admin/payouts", search: { reseller: r.id, ...(status ? { status } : {}) } } : {};
-  const earningLink = () => (admin ? { to: "/admin/reseller-earning", search: { reseller: r.id } } : {});
+  const earningLink = () => (admin ? { to: "/admin/transactions", search: { reseller: r.id } } : {});
   const storeUrl = typeof window !== "undefined" ? `${window.location.origin}/s/${r.code}` : `/s/${r.code}`;
   const depositDue = r.deposit_required
     ? Math.max(Number(r.deposit_required_amount ?? 0) - (s?.deposit_balance ?? 0), 0)
