@@ -7,22 +7,11 @@ import { bdt } from "@/lib/finance-report";
 import {
   ArrowRight,
   Boxes,
-  BarChart3,
-  Truck,
-  Wallet,
-  Globe,
-  ShieldCheck,
-  Megaphone,
   Sparkles,
   Check,
   ShoppingBag,
   Layers,
   Users,
-  ClipboardList,
-  Send,
-  PackageCheck,
-  Coins,
-  BanknoteArrowDown,
   HelpCircle,
 } from "lucide-react";
 import { APP_ICONS } from "@/lib/icons";
