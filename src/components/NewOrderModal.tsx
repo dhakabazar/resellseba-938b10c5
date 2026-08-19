@@ -625,55 +625,85 @@ export function NewOrderModal({
 
                 {picked.length > 0 && (
                   <div className="space-y-3">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80">
-                      Charges & adjustments
-                    </label>
-                    <div className="grid gap-3 rounded-xl border bg-muted/20 p-3 sm:grid-cols-2">
-                      <Field label={`Delivery charge (auto ৳${totals.autoShipping.toFixed(0)})`}>
-                        <input
-                          inputMode="numeric"
-                          value={shipOverride}
-                          onChange={(e) => setShipOverride(e.target.value)}
-                          placeholder={`Auto ৳${totals.autoShipping.toFixed(0)}`}
-                          className="w-full rounded-lg border bg-background px-3 py-1.5 text-xs tabular-nums focus:ring-2 focus:ring-primary/20"
-                        />
-                      </Field>
-                      <Field label="Discount (৳)">
-                        <input
-                          inputMode="numeric"
-                          value={discount}
-                          onChange={(e) => setDiscount(e.target.value)}
-                          placeholder="0"
-                          className="w-full rounded-lg border bg-background px-3 py-1.5 text-xs tabular-nums focus:ring-2 focus:ring-primary/20"
-                        />
-                      </Field>
-                      <Field label={`Packaging cost${isAdmin ? "" : " (admin controlled)"}`}>
-                        <input
-                          inputMode="numeric"
-                          disabled={!isAdmin}
-                          value={isAdmin ? packagingOverride : ""}
-                          onChange={(e) => setPackagingOverride(e.target.value)}
-                          placeholder={`৳${totals.packagingDefault.toFixed(0)}`}
-                          className="w-full rounded-lg border bg-background px-3 py-1.5 text-xs tabular-nums focus:ring-2 focus:ring-primary/20 disabled:opacity-70"
-                        />
-                      </Field>
+                    <SectionLabel>Charges &amp; adjustments</SectionLabel>
+                    <div className="grid gap-3 rounded-2xl border bg-muted/20 p-4 sm:grid-cols-2">
+                      <MoneyField
+                        label="Delivery charge"
+                        hint={`auto ৳${totals.autoShipping.toFixed(0)}`}
+                        value={shipOverride}
+                        onChange={setShipOverride}
+                        placeholder={totals.autoShipping.toFixed(0)}
+                      />
+                      <MoneyField label="Discount" value={discount} onChange={setDiscount} placeholder="0" />
+                      <MoneyField
+                        label="Packaging cost"
+                        hint={isAdmin ? "editable" : "admin controlled"}
+                        disabled={!isAdmin}
+                        value={isAdmin ? packagingOverride : ""}
+                        onChange={setPackagingOverride}
+                        placeholder={totals.packagingDefault.toFixed(0)}
+                      />
                       {isAdmin && (
-                        <Field label={`Courier cost (default ৳${totals.shipping.toFixed(0)})`}>
-                          <input
-                            inputMode="numeric"
-                            value={deliveryCostOverride}
-                            onChange={(e) => setDeliveryCostOverride(e.target.value)}
-                            placeholder={`৳${totals.shipping.toFixed(0)}`}
-                            className="w-full rounded-lg border bg-background px-3 py-1.5 text-xs tabular-nums focus:ring-2 focus:ring-primary/20"
-                          />
-                        </Field>
+                        <MoneyField
+                          label="Courier cost"
+                          hint={`default ৳${totals.shipping.toFixed(0)}`}
+                          value={deliveryCostOverride}
+                          onChange={setDeliveryCostOverride}
+                          placeholder={totals.shipping.toFixed(0)}
+                        />
                       )}
                     </div>
-                    <p className="text-[10px] text-muted-foreground">
+                    <p className="text-[10px] leading-relaxed text-muted-foreground">
                       Khali rakhle default value boshbe. Packaging cost shudhu admin/staff change korte parbe.
                     </p>
+
+                    {/* Advance payment */}
+                    <SectionLabel>Advance received</SectionLabel>
+                    <div className="space-y-3 rounded-2xl border border-primary/20 bg-primary/[0.03] p-4">
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <MoneyField
+                          label="Advance amount"
+                          hint="customer age dile"
+                          value={advance}
+                          onChange={setAdvance}
+                          placeholder="0"
+                        />
+                        <div>
+                          <div className="mb-1.5 flex items-baseline gap-2">
+                            <span className="text-[11px] font-semibold">Who received it?</span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            {(
+                              [
+                                ["admin", "Admin"],
+                                ["reseller", "Reseller"],
+                              ] as const
+                            ).map(([v, label]) => (
+                              <button
+                                key={v}
+                                type="button"
+                                onClick={() => setAdvanceBy(v)}
+                                className={`rounded-xl border-2 px-3 py-2 text-[11px] font-bold transition-all ${
+                                  advanceBy === v
+                                    ? "border-primary bg-primary text-primary-foreground shadow-sm"
+                                    : "border-muted bg-background text-muted-foreground hover:border-primary/40"
+                                }`}
+                              >
+                                {label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                      <p className="text-[10px] leading-relaxed text-muted-foreground">
+                        Advance thakle courier COD hobe ৳{totals.codDue.toFixed(0)}. Admin receive korle taka admin er
+                        kachei thake, tai reseller er hisab theke kaTa hoy na. Reseller receive korle sei taka final
+                        amount theke bad jabe.
+                      </p>
+                    </div>
                   </div>
                 )}
+
               </div>
             </div>
 
