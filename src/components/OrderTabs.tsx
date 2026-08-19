@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
-import { ORDER_TABS, type OrderTabKey } from "@/lib/courier-status";
+import { ORDER_TABS, orderTabClasses, type OrderTabKey } from "@/lib/courier-status";
 
 /**
  * Responsive order status tabs.
@@ -37,22 +37,28 @@ export function OrderTabs({
       <div
         className={`${open ? "grid" : "hidden"} grid-cols-2 gap-2 text-sm sm:flex sm:flex-wrap`}
       >
-        {ORDER_TABS.map((t) => (
-          <button
-            key={t.key}
-            type="button"
-            onClick={() => {
-              onChange(t.key);
-              setOpen(false);
-            }}
-            className={`min-w-0 rounded-md border px-2.5 py-1.5 text-center text-xs sm:px-3 sm:text-sm ${
-              tab === t.key ? "border-primary bg-primary/10 font-medium text-primary" : "hover:bg-accent"
-            }`}
-          >
-            <span className="truncate">{t.label}</span>
-            <span className="ml-1.5 text-[11px] text-muted-foreground">{count(t.key)}</span>
-          </button>
-        ))}
+        {ORDER_TABS.map((t) => {
+          const active = tab === t.key;
+          return (
+            <button
+              key={t.key}
+              type="button"
+              onClick={() => {
+                onChange(t.key);
+                setOpen(false);
+              }}
+              className={`min-w-0 rounded-md border px-2.5 py-1.5 text-center text-xs transition-colors sm:px-3 sm:text-sm ${orderTabClasses(
+                t.key,
+                active,
+              )}`}
+            >
+              <span className="truncate font-medium">{t.label}</span>
+              <span className={`ml-1.5 text-[11px] ${active ? "text-current opacity-80" : "text-muted-foreground"}`}>
+                {count(t.key)}
+              </span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
