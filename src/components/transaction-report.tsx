@@ -104,6 +104,27 @@ function PartialSummary({ r }: { r: TxRow }) {
   );
 }
 
+/**
+ * Earnings running balance per reseller (oldest → newest).
+ * Security deposit is held money, so it does not add to the earnings balance.
+ */
+function withRunningBalance(rows: TxRow[]): TxRow[] {
+  const asc = [...rows].sort((a, b) => new Date(a.at).getTime() - new Date(b.at).getTime());
+  const run = new Map<string, number>();
+  const balances = new Map<TxRow, number>();
+  for (const r of asc) {
+    const key = r.reseller_id ?? "-";
+    let bal = run.get(key) ?? 0;
+    const amount = Number(r.amount) || 0;
+    if (r.kind === "profit") bal += amount;
+    else if (r.kind === "loss") bal -= amount;
+    else if (r.kind === "withdraw" && r.direction === "out") bal -= amount;
+    run.set(key, bal);
+    balances.set(r, bal);
+  }
+  return rows.map((r) => ({ ...r, running: balances.get(r) ?? Number(r.running) || 0 }));
+}
+
 
 const KIND_OPTIONS = [
   { value: "", label: "All transactions" },
