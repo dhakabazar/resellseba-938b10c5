@@ -127,7 +127,10 @@ function ExpensesPage() {
   const remove = async () => {
     if (!del) return;
     const { error } = await supabase.from("expenses").delete().eq("id", del.id);
-    if (error) return toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     toast.success("Expense deleted.");
     setDel(null);
     void load();

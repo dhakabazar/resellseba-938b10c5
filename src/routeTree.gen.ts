@@ -55,6 +55,7 @@ import { Route as AuthenticatedAdminNotificationsRouteImport } from './routes/_a
 import { Route as AuthenticatedAdminMarketingRouteImport } from './routes/_authenticated/admin/marketing'
 import { Route as AuthenticatedAdminMaintenanceRouteImport } from './routes/_authenticated/admin/maintenance'
 import { Route as AuthenticatedAdminLandingRouteImport } from './routes/_authenticated/admin/landing'
+import { Route as AuthenticatedAdminExpensesRouteImport } from './routes/_authenticated/admin/expenses'
 import { Route as AuthenticatedAdminDomainsRouteImport } from './routes/_authenticated/admin/domains'
 import { Route as AuthenticatedAdminDepositsRouteImport } from './routes/_authenticated/admin/deposits'
 import { Route as AuthenticatedAdminDepositTransactionsRouteImport } from './routes/_authenticated/admin/deposit-transactions'
@@ -338,6 +339,12 @@ const AuthenticatedAdminLandingRoute =
     path: '/landing',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
+const AuthenticatedAdminExpensesRoute =
+  AuthenticatedAdminExpensesRouteImport.update({
+    id: '/expenses',
+    path: '/expenses',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
 const AuthenticatedAdminDomainsRoute =
   AuthenticatedAdminDomainsRouteImport.update({
     id: '/domains',
@@ -503,6 +510,7 @@ export interface FileRoutesByFullPath {
   '/admin/deposit-transactions': typeof AuthenticatedAdminDepositTransactionsRoute
   '/admin/deposits': typeof AuthenticatedAdminDepositsRoute
   '/admin/domains': typeof AuthenticatedAdminDomainsRoute
+  '/admin/expenses': typeof AuthenticatedAdminExpensesRoute
   '/admin/landing': typeof AuthenticatedAdminLandingRoute
   '/admin/maintenance': typeof AuthenticatedAdminMaintenanceRoute
   '/admin/marketing': typeof AuthenticatedAdminMarketingRoute
@@ -570,6 +578,7 @@ export interface FileRoutesByTo {
   '/admin/deposit-transactions': typeof AuthenticatedAdminDepositTransactionsRoute
   '/admin/deposits': typeof AuthenticatedAdminDepositsRoute
   '/admin/domains': typeof AuthenticatedAdminDomainsRoute
+  '/admin/expenses': typeof AuthenticatedAdminExpensesRoute
   '/admin/landing': typeof AuthenticatedAdminLandingRoute
   '/admin/maintenance': typeof AuthenticatedAdminMaintenanceRoute
   '/admin/marketing': typeof AuthenticatedAdminMarketingRoute
@@ -643,6 +652,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/deposit-transactions': typeof AuthenticatedAdminDepositTransactionsRoute
   '/_authenticated/admin/deposits': typeof AuthenticatedAdminDepositsRoute
   '/_authenticated/admin/domains': typeof AuthenticatedAdminDomainsRoute
+  '/_authenticated/admin/expenses': typeof AuthenticatedAdminExpensesRoute
   '/_authenticated/admin/landing': typeof AuthenticatedAdminLandingRoute
   '/_authenticated/admin/maintenance': typeof AuthenticatedAdminMaintenanceRoute
   '/_authenticated/admin/marketing': typeof AuthenticatedAdminMarketingRoute
@@ -716,6 +726,7 @@ export interface FileRouteTypes {
     | '/admin/deposit-transactions'
     | '/admin/deposits'
     | '/admin/domains'
+    | '/admin/expenses'
     | '/admin/landing'
     | '/admin/maintenance'
     | '/admin/marketing'
@@ -783,6 +794,7 @@ export interface FileRouteTypes {
     | '/admin/deposit-transactions'
     | '/admin/deposits'
     | '/admin/domains'
+    | '/admin/expenses'
     | '/admin/landing'
     | '/admin/maintenance'
     | '/admin/marketing'
@@ -855,6 +867,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/deposit-transactions'
     | '/_authenticated/admin/deposits'
     | '/_authenticated/admin/domains'
+    | '/_authenticated/admin/expenses'
     | '/_authenticated/admin/landing'
     | '/_authenticated/admin/maintenance'
     | '/_authenticated/admin/marketing'
@@ -1243,6 +1256,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminLandingRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/_authenticated/admin/expenses': {
+      id: '/_authenticated/admin/expenses'
+      path: '/expenses'
+      fullPath: '/admin/expenses'
+      preLoaderRoute: typeof AuthenticatedAdminExpensesRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
     '/_authenticated/admin/domains': {
       id: '/_authenticated/admin/domains'
       path: '/domains'
@@ -1427,6 +1447,7 @@ interface AuthenticatedAdminRouteRouteChildren {
   AuthenticatedAdminDepositTransactionsRoute: typeof AuthenticatedAdminDepositTransactionsRoute
   AuthenticatedAdminDepositsRoute: typeof AuthenticatedAdminDepositsRoute
   AuthenticatedAdminDomainsRoute: typeof AuthenticatedAdminDomainsRoute
+  AuthenticatedAdminExpensesRoute: typeof AuthenticatedAdminExpensesRoute
   AuthenticatedAdminLandingRoute: typeof AuthenticatedAdminLandingRoute
   AuthenticatedAdminMaintenanceRoute: typeof AuthenticatedAdminMaintenanceRoute
   AuthenticatedAdminMarketingRoute: typeof AuthenticatedAdminMarketingRoute
@@ -1462,6 +1483,7 @@ const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren
       AuthenticatedAdminDepositTransactionsRoute,
     AuthenticatedAdminDepositsRoute: AuthenticatedAdminDepositsRoute,
     AuthenticatedAdminDomainsRoute: AuthenticatedAdminDomainsRoute,
+    AuthenticatedAdminExpensesRoute: AuthenticatedAdminExpensesRoute,
     AuthenticatedAdminLandingRoute: AuthenticatedAdminLandingRoute,
     AuthenticatedAdminMaintenanceRoute: AuthenticatedAdminMaintenanceRoute,
     AuthenticatedAdminMarketingRoute: AuthenticatedAdminMarketingRoute,
