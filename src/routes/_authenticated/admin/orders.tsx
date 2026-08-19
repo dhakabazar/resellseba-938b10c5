@@ -846,15 +846,6 @@ function OrderDrawer({
 
 
   const { order, items, shipments, events } = data;
-  const subtotal = Number(order.subtotal || 0);
-  const shipping = Number(order.shipping_cost || 0);
-  const saCost = Number(order.sa_cost_total || 0);
-  const received = orderReceived(order);
-  const shortfall = orderShortfall(order);
-  const failed = isFailedOrder(order);
-  const packaging = orderPackaging(order);
-  const profit = orderProfit(order);
-  const adminProfit = saCost > 0 ? subtotal - saCost : 0;
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
