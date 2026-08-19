@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, StatCard } from "@/components/ui-kit";
@@ -9,19 +9,28 @@ import {
   resolveDateRange,
   type OrderFilterState,
 } from "@/components/order-filters";
-import { ReportCard, ReportTabs } from "@/components/report-blocks";
-import { bdt, toCsv, downloadCsv, isRealizedStatus, type ReportOrder } from "@/lib/finance-report";
+import { ReportCard, ReportTabs, SortTh, toneOf } from "@/components/report-blocks";
+import { Pagination, usePaginated } from "@/components/data-list";
+import { bdt, toCsv, downloadCsv, orderProfit, orderReceived } from "@/lib/finance-report";
+import { agentCommission, AGENT_COMMISSION_HINT } from "@/lib/agents";
 import {
-  Loader2,
-  Download,
-  Wallet,
-  Package,
-  Truck,
-  Boxes,
-  Percent,
-  TrendingDown,
-  Award,
-} from "lucide-react";
+  ADMIN_PROFIT_HINT,
+  buildCourierRows,
+  buildPnL,
+  buildProductRows,
+  buildResellerRows,
+  orderBuyingCost,
+  sortRows,
+  type BizItem,
+  type BizOrder,
+  type BizProduct,
+  type CourierRow,
+  type Expense,
+  type ProductRow,
+  type ResellerRow,
+  type SortDir,
+} from "@/lib/business-report";
+import { Loader2, Download, Wallet, Boxes, TrendingUp, Receipt, Package, Users, Truck, Target } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/business-report")({
   component: BusinessReportPage,
@@ -30,327 +39,239 @@ export const Route = createFileRoute("/_authenticated/admin/business-report")({
       { title: "Business report — Admin" },
       {
         name: "description",
-        content: "Own business P&L: product cost, packaging, admin revenue, delivery margin and net profit.",
+        content: "Most selling products, reseller and courier performance, agent targets and the admin profit & loss.",
       },
       { property: "og:title", content: "Business report — Admin" },
-      { property: "og:description", content: "Product wise cost and profit for the admin business." },
+      { property: "og:description", content: "Five simple reports: products, resellers, couriers, agents, profit & loss." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
 });
 
-type OrderRow = ReportOrder & {
-  customer_name: string;
-  customer_phone: string;
-  address_line: string | null;
-  resellers?: { business_name: string; code: string } | null;
-};
-type ItemRow = {
-  order_id: string;
-  product_id: string | null;
-  product_name: string;
-  quantity: number;
-  sa_price: number;
-  reseller_price: number;
-  line_total: number;
-};
-type ProductRow = {
-  id: string;
-  name: string;
-  product_code: string;
-  buying_price: number;
-  packaging_cost: number;
-  reseller_price: number;
-};
-type Shipment = { order_id: string; provider: string; cost: number | null };
-type Reseller = { id: string; business_name: string; code: string };
-type Commission = { amount: number; status: string; created_at: string };
-
-type Tab = "overview" | "products" | "trend" | "status" | "how";
-const TABS: { key: Tab; label: string }[] = [
-  { key: "overview", label: "Overview" },
-  { key: "products", label: "Product P&L" },
-  { key: "trend", label: "Trend" },
-  { key: "status", label: "Status split" },
-  { key: "how", label: "How it's calculated" },
+type Tab = "products" | "resellers" | "couriers" | "agents" | "pnl";
+const TABS: { key: Tab; label: string; hint?: string }[] = [
+  { key: "products", label: "Most selling products" },
+  { key: "resellers", label: "Reseller report" },
+  { key: "couriers", label: "Courier report" },
+  { key: "agents", label: "Agent report" },
+  { key: "pnl", label: "Profit & loss" },
 ];
 
-type Line = {
+type Agent = {
+  id: string;
+  display_name: string;
+  sale_target: number | string;
+  commission_rate: number | string;
+  is_active: boolean;
+};
+type ResellerLite = { id: string; business_name: string; code: string; agent_id: string | null };
+type AgentRow = {
   key: string;
   name: string;
-  code: string;
+  resellers: number;
   orders: number;
-  qty: number;
-  deliveredQty: number;
-  returnedQty: number;
-  customerSell: number;
-  adminRevenue: number;
-  buyCost: number;
-  packCost: number;
+  sales: number;
+  target: number;
+  achieved: number;
+  rate: number;
+  commission: number;
   adminProfit: number;
-  resellerShare: number;
-  deliveredRevenue: number;
-  deliveredCost: number;
-  deliveredProfit: number;
+  netAdminProfit: number;
 };
 
 const th = "px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground";
-const td = "px-3 py-2 align-middle";
 
 function BusinessReportPage() {
   const [loading, setLoading] = useState(true);
-  const [orders, setOrders] = useState<OrderRow[]>([]);
-  const [items, setItems] = useState<ItemRow[]>([]);
-  const [products, setProducts] = useState<ProductRow[]>([]);
-  const [shipments, setShipments] = useState<Shipment[]>([]);
-  const [resellers, setResellers] = useState<Reseller[]>([]);
-  const [commissions, setCommissions] = useState<Commission[]>([]);
+  const [orders, setOrders] = useState<BizOrder[]>([]);
+  const [items, setItems] = useState<BizItem[]>([]);
+  const [products, setProducts] = useState<BizProduct[]>([]);
+  const [shipments, setShipments] = useState<{ order_id: string; provider: string; cost: number | null }[]>([]);
+  const [resellers, setResellers] = useState<ResellerLite[]>([]);
+  const [agents, setAgents] = useState<Agent[]>([]);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+
   const [filters, setFilters] = useState<OrderFilterState>(DEFAULT_ORDER_FILTERS);
-  const [tab, setTab] = useState<Tab>("overview");
-  const [gran, setGran] = useState<"day" | "month">("day");
-  const [productQ, setProductQ] = useState("");
-  const [basis, setBasis] = useState<"delivered" | "all">("delivered");
+  const [tab, setTab] = useState<Tab>("products");
+  const [page, setPage] = useState(1);
+
+  const [prodSort, setProdSort] = useState<{ key: keyof ProductRow; dir: SortDir }>({ key: "saleQty", dir: "desc" });
+  const [resSort, setResSort] = useState<{ key: keyof ResellerRow; dir: SortDir }>({ key: "orders", dir: "desc" });
+  const [couSort, setCouSort] = useState<{ key: keyof CourierRow; dir: SortDir }>({ key: "parcels", dir: "desc" });
+  const [agtSort, setAgtSort] = useState<{ key: keyof AgentRow; dir: SortDir }>({ key: "sales", dir: "desc" });
 
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const [o, it, p, s, r, c] = await Promise.all([
+      const [o, it, p, s, r, a, e] = await Promise.all([
         supabase
           .from("orders")
           .select(
-            "id,order_number,reseller_id,status,created_at,customer_name,customer_phone,address_line,subtotal,shipping_cost,discount,total,sa_cost_total,reseller_profit,received_amount,packaging_total,resellers(business_name,code)",
+            "id,order_number,reseller_id,status,created_at,customer_name,customer_phone,address_line,subtotal,shipping_cost,total,sa_cost_total,reseller_profit,received_amount,packaging_total,delivery_cost,advance_amount,advance_by,resellers(business_name,code)",
           )
           .order("created_at", { ascending: false }),
-        supabase.from("order_items").select("order_id,product_id,product_name,quantity,sa_price,reseller_price,line_total"),
-        supabase.from("products").select("id,name,product_code,buying_price,packaging_cost,reseller_price"),
+        supabase
+          .from("order_items")
+          .select("order_id,product_id,product_name,quantity,returned_qty,sa_price,line_total,profit"),
+        supabase.from("products").select("id,name,product_code,buying_price,packaging_cost,og_image_url"),
         supabase.from("shipments").select("order_id,provider,cost"),
-        supabase.from("resellers").select("id,business_name,code"),
-        supabase.from("leader_commissions").select("amount,status,created_at"),
+        supabase.from("resellers").select("id,business_name,code,agent_id"),
+        supabase.from("agents").select("id,display_name,sale_target,commission_rate,is_active"),
+        supabase.from("expenses").select("*"),
       ]);
-      setOrders((o.data ?? []) as unknown as OrderRow[]);
-      setItems((it.data ?? []) as unknown as ItemRow[]);
-      setProducts((p.data ?? []) as unknown as ProductRow[]);
-      setShipments((s.data ?? []) as Shipment[]);
-      setResellers((r.data ?? []) as Reseller[]);
-      setCommissions((c.data ?? []) as Commission[]);
+      setOrders((o.data ?? []) as unknown as BizOrder[]);
+      setItems((it.data ?? []) as unknown as BizItem[]);
+      setProducts((p.data ?? []) as unknown as BizProduct[]);
+      setShipments((s.data ?? []) as unknown as { order_id: string; provider: string; cost: number | null }[]);
+      setResellers((r.data ?? []) as unknown as ResellerLite[]);
+      setAgents((a.data ?? []) as unknown as Agent[]);
+      setExpenses((e.data ?? []) as unknown as Expense[]);
       setLoading(false);
     })();
   }, []);
 
-  const scoped = useMemo(() => applyOrderFilters(orders, filters), [orders, filters]);
-  const orderById = useMemo(() => new Map(scoped.map((o) => [o.id, o])), [scoped]);
-  const scopedItems = useMemo(() => items.filter((i) => orderById.has(i.order_id)), [items, orderById]);
-  const productById = useMemo(() => new Map(products.map((p) => [p.id, p])), [products]);
+  useEffect(() => setPage(1), [tab, filters]);
 
-  /** Product wise admin P&L. Admin revenue = what the reseller pays admin (sa_price). */
-  const lines = useMemo(() => {
-    const map = new Map<string, Line & { orderIds: Set<string> }>();
-    for (const i of scopedItems) {
-      const o = orderById.get(i.order_id);
-      if (!o) continue;
-      const p = i.product_id ? productById.get(i.product_id) : undefined;
-      const key = i.product_id ?? `name:${i.product_name}`;
-      const row =
-        map.get(key) ??
-        ({
-          key,
-          name: p?.name ?? i.product_name,
-          code: p?.product_code ?? "—",
-          orders: 0,
-          qty: 0,
-          deliveredQty: 0,
-          returnedQty: 0,
-          customerSell: 0,
-          adminRevenue: 0,
-          buyCost: 0,
-          packCost: 0,
-          adminProfit: 0,
-          resellerShare: 0,
-          deliveredRevenue: 0,
-          deliveredCost: 0,
-          deliveredProfit: 0,
-          orderIds: new Set<string>(),
-        } as Line & { orderIds: Set<string> });
+  const productMap = useMemo(() => new Map(products.map((p) => [p.id, p])), [products]);
+  const scoped = useMemo(
+    () => applyOrderFilters(orders as unknown as (BizOrder & { customer_name: string; customer_phone: string })[], filters),
+    [orders, filters],
+  ) as unknown as BizOrder[];
+  const scopedIds = useMemo(() => new Set(scoped.map((o) => o.id)), [scoped]);
+  const scopedItems = useMemo(() => items.filter((i) => scopedIds.has(i.order_id)), [items, scopedIds]);
 
-      const qty = Number(i.quantity);
-      const pack = Number(p?.packaging_cost ?? 0) * qty;
-      const buy = Number(p?.buying_price ?? 0) * qty;
-      const adminRev = Number(i.sa_price) * qty;
-      const sell = Number(i.line_total);
-
-      row.orderIds.add(i.order_id);
-      row.qty += qty;
-      row.customerSell += sell;
-      row.adminRevenue += adminRev;
-      row.buyCost += buy;
-      row.packCost += pack;
-      row.resellerShare += sell - adminRev;
-      if (isRealizedStatus(o.status)) {
-        row.deliveredQty += qty;
-        row.deliveredRevenue += adminRev;
-        row.deliveredCost += buy + pack;
-      } else if (o.status === "returned" || o.status === "cancelled") {
-        row.returnedQty += qty;
-      }
-      map.set(key, row);
-    }
-    let rows = Array.from(map.values()).map((r) => {
-      r.orders = r.orderIds.size;
-      r.adminProfit = r.adminRevenue - r.buyCost - r.packCost;
-      r.deliveredProfit = r.deliveredRevenue - r.deliveredCost;
-      return r as Line;
-    });
-    const q = productQ.trim().toLowerCase();
-    if (q) rows = rows.filter((r) => r.name.toLowerCase().includes(q) || r.code.toLowerCase().includes(q));
-    return rows.sort((a, b) =>
-      basis === "delivered" ? b.deliveredProfit - a.deliveredProfit : b.adminProfit - a.adminProfit,
-    );
-  }, [scopedItems, orderById, productById, productQ, basis]);
-
-  /** Courier cost and delivery collection on the scoped set. */
-  const delivery = useMemo(() => {
-    const deliveredIds = new Set(scoped.filter((o) => isRealizedStatus(o.status)).map((o) => o.id));
-    const failedIds = new Set(
-      scoped.filter((o) => o.status === "returned" || o.status === "pending_return").map((o) => o.id),
-    );
-    let courierCost = 0;
-    let lostCourierCost = 0;
-    for (const s of shipments) {
-      if (!orderById.has(s.order_id)) continue;
-      const cost = Number(s.cost ?? 0);
-      courierCost += cost;
-      if (failedIds.has(s.order_id)) lostCourierCost += cost;
-    }
-    const collected = scoped
-      .filter((o) => (basis === "delivered" ? deliveredIds.has(o.id) : true))
-      .reduce((t, o) => t + Number(o.shipping_cost), 0);
-    return { courierCost, lostCourierCost, collected, margin: collected - courierCost };
-  }, [scoped, shipments, orderById, basis]);
-
-  const totals = useMemo(() => {
-    const pick = <K extends keyof Line>(k: K) => lines.reduce((t, l) => t + Number(l[k]), 0);
-    const revenue = basis === "delivered" ? pick("deliveredRevenue") : pick("adminRevenue");
-    const cost = basis === "delivered" ? pick("deliveredCost") : pick("buyCost") + pick("packCost");
-    const grossProfit = revenue - cost;
-    // Keep the commission window in sync with the date filter used everywhere else.
+  const scopedExpenses = useMemo(() => {
     const { fromTs, toTs } = resolveDateRange(filters);
-    const inRange = commissions.filter((c) => {
-      const ts = new Date(c.created_at).getTime();
-      if (fromTs !== null && ts < fromTs) return false;
-      if (toTs !== null && ts > toTs) return false;
+    return expenses.filter((e) => {
+      const ts = new Date(`${e.spent_on}T12:00:00`).getTime();
+      if (fromTs != null && ts < fromTs) return false;
+      if (toTs != null && ts > toTs) return false;
       return true;
     });
-    const commissionDue = inRange
-      .filter((c) => c.status !== "paid")
-      .reduce((t, c) => t + Number(c.amount), 0);
-    const commissionPaid = inRange
-      .filter((c) => c.status === "paid")
-      .reduce((t, c) => t + Number(c.amount), 0);
-    return {
-      revenue,
-      cost,
-      buy: pick("buyCost"),
-      pack: pick("packCost"),
-      grossProfit,
-      qty: basis === "delivered" ? pick("deliveredQty") : pick("qty"),
-      customerSell: pick("customerSell"),
-      resellerShare: pick("resellerShare"),
-      commissionDue,
-      commissionPaid,
-      net: grossProfit + delivery.margin - (commissionDue + commissionPaid),
-      margin: revenue > 0 ? (grossProfit / revenue) * 100 : 0,
-    };
-  }, [lines, basis, delivery.margin, commissions, filters]);
+  }, [expenses, filters]);
 
-  /** Trend on admin P&L (order date bucketed). */
-  const trend = useMemo(() => {
-    const buckets = new Map<string, { key: string; orders: number; revenue: number; cost: number; profit: number }>();
-    const itemsByOrder = new Map<string, ItemRow[]>();
+  const productRows = useMemo(
+    () => sortRows(buildProductRows(scoped, scopedItems, productMap), prodSort.key, prodSort.dir),
+    [scoped, scopedItems, productMap, prodSort],
+  );
+  const resellerRows = useMemo(
+    () => sortRows(buildResellerRows(scoped, scopedItems, productMap), resSort.key, resSort.dir),
+    [scoped, scopedItems, productMap, resSort],
+  );
+  const courierRows = useMemo(
+    () => sortRows(buildCourierRows(scoped, scopedItems, productMap, shipments), couSort.key, couSort.dir),
+    [scoped, scopedItems, productMap, shipments, couSort],
+  );
+
+  const agentRows = useMemo(() => {
+    const itemsByOrder = new Map<string, BizItem[]>();
     for (const i of scopedItems) {
       const arr = itemsByOrder.get(i.order_id) ?? [];
       arr.push(i);
       itemsByOrder.set(i.order_id, arr);
     }
-    for (const o of scoped) {
-      if (basis === "delivered" && !isRealizedStatus(o.status)) continue;
-      const d = new Date(o.created_at);
-      const key =
-        gran === "month"
-          ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
-          : d.toISOString().slice(0, 10);
-      const b = buckets.get(key) ?? { key, orders: 0, revenue: 0, cost: 0, profit: 0 };
-      b.orders += 1;
-      for (const i of itemsByOrder.get(o.id) ?? []) {
-        const p = i.product_id ? productById.get(i.product_id) : undefined;
-        const qty = Number(i.quantity);
-        b.revenue += Number(i.sa_price) * qty;
-        b.cost += (Number(p?.buying_price ?? 0) + Number(p?.packaging_cost ?? 0)) * qty;
+    const rows: AgentRow[] = agents.map((ag) => {
+      const mine = new Set(resellers.filter((r) => r.agent_id === ag.id).map((r) => r.id));
+      const mineOrders = scoped.filter((o) => o.reseller_id && mine.has(o.reseller_id));
+      let sales = 0;
+      let base = 0;
+      let adminProfit = 0;
+      for (const o of mineOrders) {
+        sales += orderReceived(o);
+        base += orderProfit(o);
+        adminProfit += orderReceived(o) - orderProfit(o) - orderBuyingCost(itemsByOrder.get(o.id) ?? [], o.status, productMap);
       }
-      b.profit = b.revenue - b.cost;
-      buckets.set(key, b);
-    }
-    return Array.from(buckets.values()).sort((a, b) => (a.key < b.key ? 1 : -1));
-  }, [scoped, scopedItems, productById, gran, basis]);
+      const target = Number(ag.sale_target ?? 0) || 0;
+      const rate = Number(ag.commission_rate ?? 0) || 0;
+      const commission = agentCommission(base, rate);
+      return {
+        key: ag.id,
+        name: ag.display_name,
+        resellers: mine.size,
+        orders: mineOrders.length,
+        sales,
+        target,
+        achieved: target > 0 ? (sales / target) * 100 : 0,
+        rate,
+        commission,
+        adminProfit,
+        netAdminProfit: adminProfit - commission,
+      };
+    });
+    return sortRows(rows, agtSort.key, agtSort.dir);
+  }, [agents, resellers, scoped, scopedItems, productMap, agtSort]);
 
-  /** Status split on admin P&L. */
-  const statusSplit = useMemo(() => {
-    const map = new Map<string, { status: string; orders: number; revenue: number; cost: number; profit: number }>();
-    const itemsByOrder = new Map<string, ItemRow[]>();
-    for (const i of scopedItems) {
-      const arr = itemsByOrder.get(i.order_id) ?? [];
-      arr.push(i);
-      itemsByOrder.set(i.order_id, arr);
-    }
-    for (const o of scoped) {
-      const b = map.get(o.status) ?? { status: o.status, orders: 0, revenue: 0, cost: 0, profit: 0 };
-      b.orders += 1;
-      for (const i of itemsByOrder.get(o.id) ?? []) {
-        const p = i.product_id ? productById.get(i.product_id) : undefined;
-        const qty = Number(i.quantity);
-        b.revenue += Number(i.sa_price) * qty;
-        b.cost += (Number(p?.buying_price ?? 0) + Number(p?.packaging_cost ?? 0)) * qty;
-      }
-      b.profit = b.revenue - b.cost;
-      map.set(o.status, b);
-    }
-    return Array.from(map.values()).sort((a, b) => b.orders - a.orders);
-  }, [scoped, scopedItems, productById]);
+  const agentCommissionTotal = useMemo(() => agentRows.reduce((t, a) => t + a.commission, 0), [agentRows]);
+  const pnl = useMemo(
+    () => buildPnL(scoped, scopedItems, productMap, scopedExpenses, agentCommissionTotal),
+    [scoped, scopedItems, productMap, scopedExpenses, agentCommissionTotal],
+  );
 
-  const exportProducts = () =>
-    downloadCsv(
-      "business-report-products.csv",
+  const perPage = filters.perPage;
+  const pagedProducts = usePaginated(productRows, page, perPage);
+  const pagedResellers = usePaginated(resellerRows, page, perPage);
+  const pagedAgents = usePaginated(agentRows, page, perPage);
+
+  const sortP = (k: keyof ProductRow) =>
+    setProdSort((s) => ({ key: k, dir: s.key === k && s.dir === "desc" ? "asc" : "desc" }));
+  const sortR = (k: keyof ResellerRow) =>
+    setResSort((s) => ({ key: k, dir: s.key === k && s.dir === "desc" ? "asc" : "desc" }));
+  const sortC = (k: keyof CourierRow) =>
+    setCouSort((s) => ({ key: k, dir: s.key === k && s.dir === "desc" ? "asc" : "desc" }));
+  const sortA = (k: keyof AgentRow) =>
+    setAgtSort((s) => ({ key: k, dir: s.key === k && s.dir === "desc" ? "asc" : "desc" }));
+
+  const exportCurrent = () => {
+    if (tab === "products")
+      return downloadCsv(
+        "most-selling-products.csv",
+        toCsv(
+          ["Product", "Code", "Orders", "Sale qty", "Returned qty", "Sell value", "Admin revenue", "Buying cost", "Admin profit"],
+          productRows.map((r) => [r.name, r.code, r.orders, r.saleQty, r.returnedQty, r.sellValue, r.adminRevenue, r.buyCost, r.adminProfit]),
+        ),
+      );
+    if (tab === "resellers")
+      return downloadCsv(
+        "reseller-report.csv",
+        toCsv(
+          ["Reseller", "Code", "Orders", "Delivered", "Failed", "Order value", "Received", "Advance", "Reseller profit", "Admin profit"],
+          resellerRows.map((r) => [r.name, r.code, r.orders, r.delivered, r.failed, r.value, r.received, r.advance, r.resellerProfit, r.adminProfit]),
+        ),
+      );
+    if (tab === "couriers")
+      return downloadCsv(
+        "courier-report.csv",
+        toCsv(
+          ["Courier", "Parcels", "Delivered", "Returned", "Parcel value", "Received", "Courier bill", "Admin profit"],
+          courierRows.map((r) => [r.name, r.parcels, r.delivered, r.returned, r.value, r.received, r.courierBill, r.adminProfit]),
+        ),
+      );
+    if (tab === "agents")
+      return downloadCsv(
+        "agent-report.csv",
+        toCsv(
+          ["Agent", "Resellers", "Orders", "Sales", "Target", "Achieved %", "Rate %", "Commission", "Admin profit", "Net after commission"],
+          agentRows.map((r) => [r.name, r.resellers, r.orders, r.sales, r.target, r.achieved.toFixed(1), r.rate, r.commission, r.adminProfit, r.netAdminProfit]),
+        ),
+      );
+    return downloadCsv(
+      "admin-profit-loss.csv",
       toCsv(
+        ["Line", "Amount"],
         [
-          "Product",
-          "Code",
-          "Orders",
-          "Qty",
-          "Delivered qty",
-          "Returned qty",
-          "Customer paid",
-          "Admin revenue",
-          "Buying cost",
-          "Packaging",
-          "Admin profit",
-          "Delivered profit",
-          "Reseller share",
+          ["Order value", pnl.value],
+          ["Received (incl. advance)", pnl.received],
+          ["Reseller payout", pnl.resellerPayout],
+          ["Product buying cost", pnl.buyCost],
+          ["Gross profit", pnl.grossProfit],
+          ["Expenses", pnl.expenses],
+          ["Agent commission", pnl.agentCommission],
+          ["Net profit", pnl.netProfit],
         ],
-        lines.map((l) => [
-          l.name,
-          l.code,
-          l.orders,
-          l.qty,
-          l.deliveredQty,
-          l.returnedQty,
-          l.customerSell,
-          l.adminRevenue,
-          l.buyCost,
-          l.packCost,
-          l.adminProfit,
-          l.deliveredProfit,
-          l.resellerShare,
-        ]),
       ),
     );
+  };
 
   if (loading) {
     return (
@@ -364,25 +285,20 @@ function BusinessReportPage() {
     <div>
       <PageHeader
         title="Business report"
-        description="Own P&L — buying cost, packaging, admin revenue, delivery margin and net profit."
+        description="Five simple reports — products, resellers, couriers, agents and your own profit & loss."
         actions={
           <div className="flex items-center gap-2">
-            <div className="surface-card flex items-center gap-1 p-1">
-              {(["delivered", "all"] as const).map((b) => (
-                <button
-                  key={b}
-                  type="button"
-                  onClick={() => setBasis(b)}
-                  className={
-                    "rounded-md px-3 py-1.5 text-xs font-medium " +
-                    (basis === b ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent")
-                  }
-                >
-                  {b === "delivered" ? "Delivered + partial" : "All orders"}
-                </button>
-              ))}
-            </div>
-            <button type="button" onClick={exportProducts} className="inline-flex items-center rounded-md border px-2.5 py-1.5 text-xs hover:bg-accent">
+            <Link
+              to="/admin/expenses"
+              className="inline-flex items-center rounded-md border px-2.5 py-1.5 text-xs hover:bg-accent"
+            >
+              <Receipt className="mr-1.5 h-3.5 w-3.5" /> Expenses
+            </Link>
+            <button
+              type="button"
+              onClick={exportCurrent}
+              className="inline-flex items-center rounded-md border px-2.5 py-1.5 text-xs hover:bg-accent"
+            >
               <Download className="mr-1.5 h-3.5 w-3.5" /> Export
             </button>
           </div>
@@ -401,161 +317,176 @@ function BusinessReportPage() {
 
       <div className="mb-6 grid gap-4 grid-cols-2 lg:grid-cols-4">
         <StatCard
-          label="Admin revenue"
-          value={bdt(totals.revenue)}
-          hint={`${basis === "delivered" ? "Delivered + partial orders" : "All scoped orders"} · ${totals.qty} qty · customer paid ${bdt(totals.customerSell)}`}
+          label="Received money"
+          value={bdt(pnl.received)}
+          hint={`${pnl.orders} orders · order value ${bdt(pnl.value)} · advance ${bdt(pnl.advance)} included`}
           icon={<Wallet className="h-4 w-4" />}
         />
         <StatCard
-          label="Product + packaging cost"
-          value={bdt(totals.cost)}
-          hint={`Buying ${bdt(totals.buy)} · Packaging ${bdt(totals.pack)}`}
+          label="Reseller payout"
+          value={bdt(pnl.resellerPayout)}
+          hint="What the resellers finally earn from these orders"
+          icon={<Users className="h-4 w-4" />}
+          tone="sky"
+        />
+        <StatCard
+          label="Product buying cost"
+          value={bdt(pnl.buyCost)}
+          hint="Your own buying price of the items the customer kept"
           icon={<Boxes className="h-4 w-4" />}
           tone="violet"
         />
         <StatCard
-          label="Gross profit"
-          value={bdt(totals.grossProfit)}
-          hint={`Admin revenue − product & packaging cost · ${totals.margin.toFixed(1)}% margin`}
-          icon={<Package className="h-4 w-4" />}
+          label="Net admin profit"
+          value={bdt(pnl.netProfit)}
+          hint={`Gross ${bdt(pnl.grossProfit)} − expenses ${bdt(pnl.expenses)} − agent commission ${bdt(pnl.agentCommission)}`}
+          icon={<TrendingUp className="h-4 w-4" />}
           tone="emerald"
-        />
-        <StatCard
-          label="Net business profit"
-          value={bdt(totals.net)}
-          hint={`Gross profit ${bdt(totals.grossProfit)} + delivery margin ${bdt(delivery.margin)} − leader commission ${bdt(totals.commissionDue)}`}
-          icon={<Percent className="h-4 w-4" />}
-        />
-        <StatCard
-          label="Delivery collected"
-          value={bdt(delivery.collected)}
-          hint={`Delivery charge on ${basis === "delivered" ? "delivered + partial" : "all scoped"} orders · courier bill ${bdt(delivery.courierCost)}`}
-          icon={<Truck className="h-4 w-4" />}
-          tone="sky"
-        />
-        <StatCard
-          label="Delivery margin"
-          value={bdt(delivery.margin)}
-          hint={`Collected ${bdt(delivery.collected)} − courier bill ${bdt(delivery.courierCost)}`}
-          icon={<Truck className="h-4 w-4" />}
-          tone="sky"
-        />
-        <StatCard
-          label="Return courier loss"
-          value={bdt(delivery.lostCourierCost)}
-          hint="Courier bill on returned / pending-return shipments — never recovered"
-          icon={<TrendingDown className="h-4 w-4" />}
-          tone="rose"
-        />
-        <StatCard
-          label="Leader commission"
-          value={bdt(totals.commissionDue)}
-          hint={`Commission on this date range · paid ${bdt(totals.commissionPaid)}`}
-          icon={<Award className="h-4 w-4" />}
-          tone="amber"
         />
       </div>
 
       <ReportTabs tabs={TABS} active={tab} onChange={setTab} />
 
-      {tab === "overview" && (
-        <ReportCard title="Top products by profit" hint="Highest contributing products on this filter">
-          <table className="w-full min-w-[720px] text-sm">
-            <thead className="bg-muted/20 text-left">
-              <tr>
-                <th className={th}>Product</th>
-                <th className={`${th} text-right`}>Qty</th>
-                <th className={`${th} text-right`}>Admin revenue</th>
-                <th className={`${th} text-right`}>Cost</th>
-                <th className={`${th} text-right`}>Profit</th>
-                <th className={`${th} text-right`}>Margin</th>
-              </tr>
-            </thead>
-            <tbody>
-              {lines.slice(0, 10).map((l) => {
-                const rev = basis === "delivered" ? l.deliveredRevenue : l.adminRevenue;
-                const cost = basis === "delivered" ? l.deliveredCost : l.buyCost + l.packCost;
-                const profit = rev - cost;
-                return (
-                  <tr key={l.key} className="border-t">
-                    <td className={td}>
-                      <div className="font-medium">{l.name}</div>
-                      <div className="text-[11px] text-muted-foreground">#{l.code}</div>
-                    </td>
-                    <td className={`${td} text-right`}>{basis === "delivered" ? l.deliveredQty : l.qty}</td>
-                    <td className={`${td} text-right`}>{bdt(rev)}</td>
-                    <td className={`${td} text-right`}>{bdt(cost)}</td>
-                    <td className={`${td} text-right font-semibold`}>{bdt(profit)}</td>
-                    <td className={`${td} text-right`}>{rev > 0 ? `${((profit / rev) * 100).toFixed(1)}%` : "—"}</td>
-                  </tr>
-                );
-              })}
-              {lines.length === 0 && (
-                <tr>
-                  <td className={`${td} text-center text-muted-foreground`} colSpan={6}>
-                    No sales in this range
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </ReportCard>
-      )}
-
       {tab === "products" && (
-        <ReportCard
-          title="Product wise cost & profit"
-          hint="Admin revenue is the reseller-paid price; reseller share is customer price above it"
-          right={
-            <input
-              value={productQ}
-              onChange={(e) => setProductQ(e.target.value)}
-              placeholder="Search product or code"
-              className="h-9 w-52 rounded-lg border bg-background px-3 text-xs outline-none focus:ring-2 focus:ring-primary/30"
-            />
-          }
-        >
-          <table className="w-full min-w-[1080px] text-sm">
-            <thead className="bg-muted/20 text-left">
+        <>
+          <ReportCard title="Most selling products" hint="Default: highest sale count first. Click any column arrow to sort.">
+            <table className="w-full min-w-[880px] text-sm">
+              <thead className="bg-muted/20">
+                <tr>
+                  <th className={th + " text-left"}>Product</th>
+                  <SortTh label="Orders" sortKey="orders" active={prodSort.key} dir={prodSort.dir} onSort={sortP} />
+                  <SortTh label="Sale count" sortKey="saleQty" active={prodSort.key} dir={prodSort.dir} onSort={sortP} hint="Quantity the customer kept" />
+                  <SortTh label="Returned" sortKey="returnedQty" active={prodSort.key} dir={prodSort.dir} onSort={sortP} />
+                  <SortTh label="Sell value" sortKey="sellValue" active={prodSort.key} dir={prodSort.dir} onSort={sortP} />
+                  <SortTh label="Admin revenue" sortKey="adminRevenue" active={prodSort.key} dir={prodSort.dir} onSort={sortP} />
+                  <SortTh label="Buying cost" sortKey="buyCost" active={prodSort.key} dir={prodSort.dir} onSort={sortP} />
+                  <SortTh label="Total profit" sortKey="adminProfit" active={prodSort.key} dir={prodSort.dir} onSort={sortP} hint="Admin revenue − buying cost" />
+                </tr>
+              </thead>
+              <tbody>
+                {pagedProducts.map((r) => (
+                  <tr key={r.key} className="border-t">
+                    <td className="px-3 py-2">
+                      <div className="flex items-center gap-3">
+                        <div className="h-11 w-11 shrink-0 overflow-hidden rounded-lg border bg-muted">
+                          {r.image ? (
+                            <img src={r.image} alt={r.name} loading="lazy" className="h-full w-full object-cover" />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+                              <Package className="h-4 w-4" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="truncate font-medium">{r.name}</div>
+                          <div className="font-mono text-[11px] text-muted-foreground">#{r.code}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-3 py-2 text-center text-muted-foreground">{r.orders}</td>
+                    <td className="px-3 py-2 text-center font-semibold tabular-nums">{r.saleQty}</td>
+                    <td className="px-3 py-2 text-center text-muted-foreground">{r.returnedQty || "—"}</td>
+                    <td className="px-3 py-2 text-center tabular-nums">{bdt(r.sellValue)}</td>
+                    <td className="px-3 py-2 text-center tabular-nums">{bdt(r.adminRevenue)}</td>
+                    <td className="px-3 py-2 text-center tabular-nums text-muted-foreground">{bdt(r.buyCost)}</td>
+                    <td className={"px-3 py-2 text-center font-semibold tabular-nums " + toneOf(r.adminProfit)}>{bdt(r.adminProfit)}</td>
+                  </tr>
+                ))}
+                {pagedProducts.length === 0 && (
+                  <tr>
+                    <td colSpan={8} className="px-3 py-10 text-center text-xs text-muted-foreground">
+                      No product sold in this range.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </ReportCard>
+          <Pagination page={page} perPage={perPage} total={productRows.length} onPage={setPage} />
+        </>
+      )}
+
+      {tab === "resellers" && (
+        <>
+          <ReportCard title="Reseller report" hint={ADMIN_PROFIT_HINT}>
+            <table className="w-full min-w-[900px] text-sm">
+              <thead className="bg-muted/20">
+                <tr>
+                  <th className={th + " text-left"}>Reseller</th>
+                  <SortTh label="Orders" sortKey="orders" active={resSort.key} dir={resSort.dir} onSort={sortR} />
+                  <SortTh label="Delivered" sortKey="delivered" active={resSort.key} dir={resSort.dir} onSort={sortR} />
+                  <SortTh label="Failed" sortKey="failed" active={resSort.key} dir={resSort.dir} onSort={sortR} />
+                  <SortTh label="Order value" sortKey="value" active={resSort.key} dir={resSort.dir} onSort={sortR} />
+                  <SortTh label="Received" sortKey="received" active={resSort.key} dir={resSort.dir} onSort={sortR} hint="Courier collection + advance already taken" />
+                  <SortTh label="Reseller profit" sortKey="resellerProfit" active={resSort.key} dir={resSort.dir} onSort={sortR} />
+                  <SortTh label="Admin profit" sortKey="adminProfit" active={resSort.key} dir={resSort.dir} onSort={sortR} />
+                </tr>
+              </thead>
+              <tbody>
+                {pagedResellers.map((r) => (
+                  <tr key={r.key} className="border-t">
+                    <td className="px-3 py-2">
+                      <div className="font-medium">{r.name}</div>
+                      <div className="font-mono text-[11px] text-muted-foreground">{r.code}</div>
+                    </td>
+                    <td className="px-3 py-2 text-center font-semibold">{r.orders}</td>
+                    <td className="px-3 py-2 text-center text-success">{r.delivered}</td>
+                    <td className="px-3 py-2 text-center text-destructive">{r.failed || "—"}</td>
+                    <td className="px-3 py-2 text-center tabular-nums">{bdt(r.value)}</td>
+                    <td className="px-3 py-2 text-center tabular-nums">
+                      {bdt(r.received)}
+                      {r.advance > 0 && <div className="text-[9px] text-primary">adv {bdt(r.advance)} included</div>}
+                    </td>
+                    <td className={"px-3 py-2 text-center tabular-nums " + toneOf(r.resellerProfit)}>{bdt(r.resellerProfit)}</td>
+                    <td className={"px-3 py-2 text-center font-semibold tabular-nums " + toneOf(r.adminProfit)}>{bdt(r.adminProfit)}</td>
+                  </tr>
+                ))}
+                {pagedResellers.length === 0 && (
+                  <tr>
+                    <td colSpan={8} className="px-3 py-10 text-center text-xs text-muted-foreground">
+                      No reseller order in this range.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </ReportCard>
+          <Pagination page={page} perPage={perPage} total={resellerRows.length} onPage={setPage} />
+        </>
+      )}
+
+      {tab === "couriers" && (
+        <ReportCard title="Courier report" hint="Parcel count, parcel value and admin profit per courier.">
+          <table className="w-full min-w-[820px] text-sm">
+            <thead className="bg-muted/20">
               <tr>
-                <th className={th}>Product</th>
-                <th className={`${th} text-right`}>Orders</th>
-                <th className={`${th} text-right`}>Qty</th>
-                <th className={`${th} text-right`}>Delivered</th>
-                <th className={`${th} text-right`}>Returned</th>
-                <th className={`${th} text-right`}>Customer paid</th>
-                <th className={`${th} text-right`}>Admin revenue</th>
-                <th className={`${th} text-right`}>Buying</th>
-                <th className={`${th} text-right`}>Packaging</th>
-                <th className={`${th} text-right`}>Admin profit</th>
-                <th className={`${th} text-right`}>Delivered profit</th>
-                <th className={`${th} text-right`}>Reseller share</th>
+                <th className={th + " text-left"}>Courier</th>
+                <SortTh label="Parcels" sortKey="parcels" active={couSort.key} dir={couSort.dir} onSort={sortC} />
+                <SortTh label="Delivered" sortKey="delivered" active={couSort.key} dir={couSort.dir} onSort={sortC} />
+                <SortTh label="Returned" sortKey="returned" active={couSort.key} dir={couSort.dir} onSort={sortC} />
+                <SortTh label="Parcel value" sortKey="value" active={couSort.key} dir={couSort.dir} onSort={sortC} />
+                <SortTh label="Received" sortKey="received" active={couSort.key} dir={couSort.dir} onSort={sortC} />
+                <SortTh label="Courier bill" sortKey="courierBill" active={couSort.key} dir={couSort.dir} onSort={sortC} />
+                <SortTh label="Admin profit" sortKey="adminProfit" active={couSort.key} dir={couSort.dir} onSort={sortC} />
               </tr>
             </thead>
             <tbody>
-              {lines.map((l) => (
-                <tr key={l.key} className="border-t">
-                  <td className={td}>
-                    <div className="font-medium">{l.name}</div>
-                    <div className="text-[11px] text-muted-foreground">#{l.code}</div>
-                  </td>
-                  <td className={`${td} text-right`}>{l.orders}</td>
-                  <td className={`${td} text-right`}>{l.qty}</td>
-                  <td className={`${td} text-right`}>{l.deliveredQty}</td>
-                  <td className={`${td} text-right`}>{l.returnedQty}</td>
-                  <td className={`${td} text-right`}>{bdt(l.customerSell)}</td>
-                  <td className={`${td} text-right`}>{bdt(l.adminRevenue)}</td>
-                  <td className={`${td} text-right`}>{bdt(l.buyCost)}</td>
-                  <td className={`${td} text-right`}>{bdt(l.packCost)}</td>
-                  <td className={`${td} text-right font-semibold`}>{bdt(l.adminProfit)}</td>
-                  <td className={`${td} text-right`}>{bdt(l.deliveredProfit)}</td>
-                  <td className={`${td} text-right text-muted-foreground`}>{bdt(l.resellerShare)}</td>
+              {courierRows.map((r) => (
+                <tr key={r.key} className="border-t">
+                  <td className="px-3 py-2 font-medium capitalize">{r.name}</td>
+                  <td className="px-3 py-2 text-center font-semibold">{r.parcels}</td>
+                  <td className="px-3 py-2 text-center text-success">{r.delivered}</td>
+                  <td className="px-3 py-2 text-center text-destructive">{r.returned || "—"}</td>
+                  <td className="px-3 py-2 text-center tabular-nums">{bdt(r.value)}</td>
+                  <td className="px-3 py-2 text-center tabular-nums">{bdt(r.received)}</td>
+                  <td className="px-3 py-2 text-center tabular-nums text-muted-foreground">{bdt(r.courierBill)}</td>
+                  <td className={"px-3 py-2 text-center font-semibold tabular-nums " + toneOf(r.adminProfit)}>{bdt(r.adminProfit)}</td>
                 </tr>
               ))}
-              {lines.length === 0 && (
+              {courierRows.length === 0 && (
                 <tr>
-                  <td className={`${td} text-center text-muted-foreground`} colSpan={12}>
-                    No sales in this range
+                  <td colSpan={8} className="px-3 py-10 text-center text-xs text-muted-foreground">
+                    No parcel in this range.
                   </td>
                 </tr>
               )}
@@ -564,106 +495,149 @@ function BusinessReportPage() {
         </ReportCard>
       )}
 
-      {tab === "trend" && (
-        <ReportCard
-          title="Profit trend"
-          hint="Bucketed by order date"
-          right={
-            <div className="surface-card flex items-center gap-1 p-1">
-              {(["day", "month"] as const).map((g) => (
-                <button
-                  key={g}
-                  type="button"
-                  onClick={() => setGran(g)}
-                  className={
-                    "rounded-md px-3 py-1 text-xs font-medium " +
-                    (gran === g ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent")
-                  }
-                >
-                  {g === "day" ? "Daily" : "Monthly"}
-                </button>
-              ))}
-            </div>
-          }
-        >
-          <table className="w-full min-w-[640px] text-sm">
-            <thead className="bg-muted/20 text-left">
-              <tr>
-                <th className={th}>{gran === "day" ? "Date" : "Month"}</th>
-                <th className={`${th} text-right`}>Orders</th>
-                <th className={`${th} text-right`}>Admin revenue</th>
-                <th className={`${th} text-right`}>Cost</th>
-                <th className={`${th} text-right`}>Profit</th>
-              </tr>
-            </thead>
-            <tbody>
-              {trend.map((b) => (
-                <tr key={b.key} className="border-t">
-                  <td className={td}>{b.key}</td>
-                  <td className={`${td} text-right`}>{b.orders}</td>
-                  <td className={`${td} text-right`}>{bdt(b.revenue)}</td>
-                  <td className={`${td} text-right`}>{bdt(b.cost)}</td>
-                  <td className={`${td} text-right font-semibold`}>{bdt(b.profit)}</td>
-                </tr>
-              ))}
-              {trend.length === 0 && (
+      {tab === "agents" && (
+        <>
+          <ReportCard title="Agent report" hint={AGENT_COMMISSION_HINT}>
+            <table className="w-full min-w-[920px] text-sm">
+              <thead className="bg-muted/20">
                 <tr>
-                  <td className={`${td} text-center text-muted-foreground`} colSpan={5}>
-                    No data
-                  </td>
+                  <th className={th + " text-left"}>Agent</th>
+                  <SortTh label="Resellers" sortKey="resellers" active={agtSort.key} dir={agtSort.dir} onSort={sortA} />
+                  <SortTh label="Orders" sortKey="orders" active={agtSort.key} dir={agtSort.dir} onSort={sortA} />
+                  <SortTh label="Sales" sortKey="sales" active={agtSort.key} dir={agtSort.dir} onSort={sortA} />
+                  <SortTh label="Target" sortKey="target" active={agtSort.key} dir={agtSort.dir} onSort={sortA} />
+                  <SortTh label="Achieved" sortKey="achieved" active={agtSort.key} dir={agtSort.dir} onSort={sortA} />
+                  <SortTh label="Commission" sortKey="commission" active={agtSort.key} dir={agtSort.dir} onSort={sortA} />
+                  <SortTh label="Admin profit" sortKey="adminProfit" active={agtSort.key} dir={agtSort.dir} onSort={sortA} />
+                  <SortTh label="Net after commission" sortKey="netAdminProfit" active={agtSort.key} dir={agtSort.dir} onSort={sortA} />
                 </tr>
-              )}
-            </tbody>
-          </table>
-        </ReportCard>
+              </thead>
+              <tbody>
+                {pagedAgents.map((r) => (
+                  <tr key={r.key} className="border-t">
+                    <td className="px-3 py-2 font-medium">{r.name}</td>
+                    <td className="px-3 py-2 text-center text-muted-foreground">{r.resellers}</td>
+                    <td className="px-3 py-2 text-center">{r.orders}</td>
+                    <td className="px-3 py-2 text-center tabular-nums">{bdt(r.sales)}</td>
+                    <td className="px-3 py-2 text-center tabular-nums text-muted-foreground">{r.target ? bdt(r.target) : "—"}</td>
+                    <td className="px-3 py-2 text-center">
+                      {r.target ? (
+                        <div className="mx-auto w-24">
+                          <div className="mb-1 text-[11px] font-semibold">{r.achieved.toFixed(0)}%</div>
+                          <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+                            <div
+                              className={"h-full rounded-full " + (r.achieved >= 100 ? "bg-success" : "bg-primary")}
+                              style={{ width: `${Math.min(r.achieved, 100)}%` }}
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">No target</span>
+                      )}
+                    </td>
+                    <td className="px-3 py-2 text-center tabular-nums">
+                      {bdt(r.commission)}
+                      <div className="text-[9px] text-muted-foreground">{r.rate}% rate</div>
+                    </td>
+                    <td className={"px-3 py-2 text-center tabular-nums " + toneOf(r.adminProfit)}>{bdt(r.adminProfit)}</td>
+                    <td className={"px-3 py-2 text-center font-semibold tabular-nums " + toneOf(r.netAdminProfit)}>
+                      {bdt(r.netAdminProfit)}
+                    </td>
+                  </tr>
+                ))}
+                {pagedAgents.length === 0 && (
+                  <tr>
+                    <td colSpan={9} className="px-3 py-10 text-center text-xs text-muted-foreground">
+                      No agent yet.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </ReportCard>
+          <Pagination page={page} perPage={perPage} total={agentRows.length} onPage={setPage} />
+        </>
       )}
 
-      {tab === "status" && (
-        <ReportCard title="Status split" hint="Admin revenue and cost locked by current order status">
-          <table className="w-full min-w-[640px] text-sm">
-            <thead className="bg-muted/20 text-left">
-              <tr>
-                <th className={th}>Status</th>
-                <th className={`${th} text-right`}>Orders</th>
-                <th className={`${th} text-right`}>Admin revenue</th>
-                <th className={`${th} text-right`}>Cost</th>
-                <th className={`${th} text-right`}>Profit</th>
-              </tr>
-            </thead>
-            <tbody>
-              {statusSplit.map((s) => (
-                <tr key={s.status} className="border-t">
-                  <td className={`${td} capitalize`}>{s.status.replace(/_/g, " ")}</td>
-                  <td className={`${td} text-right`}>{s.orders}</td>
-                  <td className={`${td} text-right`}>{bdt(s.revenue)}</td>
-                  <td className={`${td} text-right`}>{bdt(s.cost)}</td>
-                  <td className={`${td} text-right font-semibold`}>{bdt(s.profit)}</td>
+      {tab === "pnl" && (
+        <>
+          <ReportCard
+            title="Admin profit & loss"
+            hint={ADMIN_PROFIT_HINT}
+            right={
+              <Link
+                to="/admin/expenses"
+                className="inline-flex items-center rounded-md border px-2.5 py-1.5 text-xs hover:bg-accent"
+              >
+                <Receipt className="mr-1.5 h-3.5 w-3.5" /> Manage expenses
+              </Link>
+            }
+          >
+            <table className="w-full min-w-[560px] text-sm">
+              <tbody>
+                {[
+                  { label: "Order value", value: pnl.value, muted: true, note: `${pnl.orders} orders in this range` },
+                  {
+                    label: "Received (incl. advance)",
+                    value: pnl.received,
+                    note: `advance ${bdt(pnl.advance)} counted as received — same as the transaction report`,
+                  },
+                  { label: "Reseller final payout", value: -pnl.resellerPayout, note: "what the resellers earn from these orders" },
+                  { label: "Product buying cost", value: -pnl.buyCost, note: "your buying price of the kept items" },
+                ].map((r) => (
+                  <tr key={r.label} className="border-t">
+                    <td className="px-3 py-2">
+                      <div className="font-medium">{r.label}</div>
+                      <div className="text-[11px] text-muted-foreground">{r.note}</div>
+                    </td>
+                    <td className={"px-3 py-2 text-right font-semibold tabular-nums " + (r.muted ? "text-muted-foreground" : toneOf(r.value))}>
+                      {bdt(r.value)}
+                    </td>
+                  </tr>
+                ))}
+                <tr className="border-t bg-muted/30">
+                  <td className="px-3 py-2 font-bold">Gross profit</td>
+                  <td className={"px-3 py-2 text-right font-bold tabular-nums " + toneOf(pnl.grossProfit)}>{bdt(pnl.grossProfit)}</td>
                 </tr>
-              ))}
-              {statusSplit.length === 0 && (
-                <tr>
-                  <td className={`${td} text-center text-muted-foreground`} colSpan={5}>
-                    No data
+                {pnl.expenseByCategory.map((c) => (
+                  <tr key={c.category} className="border-t">
+                    <td className="px-3 py-2 pl-8 capitalize text-muted-foreground">Expense · {c.category}</td>
+                    <td className="px-3 py-2 text-right tabular-nums text-destructive">−{bdt(c.amount)}</td>
+                  </tr>
+                ))}
+                <tr className="border-t">
+                  <td className="px-3 py-2">
+                    <div className="font-medium">Total expenses</div>
+                    <div className="text-[11px] text-muted-foreground">
+                      Delivery and packaging are only deducted here — record them once as an expense.
+                    </div>
+                  </td>
+                  <td className="px-3 py-2 text-right font-semibold tabular-nums text-destructive">−{bdt(pnl.expenses)}</td>
+                </tr>
+                <tr className="border-t">
+                  <td className="px-3 py-2">
+                    <div className="font-medium">Agent commission</div>
+                    <div className="text-[11px] text-muted-foreground">Earned commission of all agents on these orders</div>
+                  </td>
+                  <td className="px-3 py-2 text-right font-semibold tabular-nums text-destructive">−{bdt(pnl.agentCommission)}</td>
+                </tr>
+                <tr className="border-t bg-primary/5">
+                  <td className="px-3 py-3 text-base font-black">Net admin profit</td>
+                  <td className={"px-3 py-3 text-right text-base font-black tabular-nums " + toneOf(pnl.netProfit)}>
+                    {bdt(pnl.netProfit)}
                   </td>
                 </tr>
-              )}
-            </tbody>
-          </table>
-        </ReportCard>
-      )}
+              </tbody>
+            </table>
+          </ReportCard>
 
-      {tab === "how" && (
-        <ReportCard title="How it's calculated">
-          <ul className="space-y-2 p-4 text-sm text-muted-foreground">
-            <li>Admin revenue = reseller price + packaging charged to the reseller, per sold unit.</li>
-            <li>Cost = product buying price + packaging cost, per sold unit.</li>
-            <li>Admin profit = admin revenue − cost. Delivered profit counts delivered orders only.</li>
-            <li>Reseller share = customer paid amount above admin revenue (never part of admin profit).</li>
-            <li>Delivery margin = delivery collected from customers − courier bills on booked shipments.</li>
-            <li>Net business profit = gross profit + delivery margin − leader commission ledger.</li>
-            <li>Every block follows the filter bar above (date range, reseller, search).</li>
-          </ul>
-        </ReportCard>
+          <div className="mb-6 grid gap-4 grid-cols-2 lg:grid-cols-4">
+            <StatCard label="Total expense" value={bdt(pnl.expenses)} hint={`${scopedExpenses.length} expense entries in this range`} icon={<Receipt className="h-4 w-4" />} tone="rose" />
+            <StatCard label="Delivery charge (info)" value={bdt(pnl.delivery)} hint="Not deducted here — add it as a courier expense to deduct once" icon={<Truck className="h-4 w-4" />} tone="sky" />
+            <StatCard label="Packaging (info)" value={bdt(pnl.packaging)} hint="Not deducted here — add it as a packaging expense to deduct once" icon={<Boxes className="h-4 w-4" />} tone="violet" />
+            <StatCard label="Agent commission" value={bdt(pnl.agentCommission)} hint="Deducted from the net profit" icon={<Target className="h-4 w-4" />} />
+          </div>
+        </>
       )}
     </div>
   );
