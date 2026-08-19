@@ -604,8 +604,61 @@ export function NewOrderModal({
                     )}
                   </div>
                 </div>
+
+                {picked.length > 0 && (
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80">
+                      Charges & adjustments
+                    </label>
+                    <div className="grid gap-3 rounded-xl border bg-muted/20 p-3 sm:grid-cols-2">
+                      <Field label={`Delivery charge (auto ৳${totals.autoShipping.toFixed(0)})`}>
+                        <input
+                          inputMode="numeric"
+                          value={shipOverride}
+                          onChange={(e) => setShipOverride(e.target.value)}
+                          placeholder={`Auto ৳${totals.autoShipping.toFixed(0)}`}
+                          className="w-full rounded-lg border bg-background px-3 py-1.5 text-xs tabular-nums focus:ring-2 focus:ring-primary/20"
+                        />
+                      </Field>
+                      <Field label="Discount (৳)">
+                        <input
+                          inputMode="numeric"
+                          value={discount}
+                          onChange={(e) => setDiscount(e.target.value)}
+                          placeholder="0"
+                          className="w-full rounded-lg border bg-background px-3 py-1.5 text-xs tabular-nums focus:ring-2 focus:ring-primary/20"
+                        />
+                      </Field>
+                      <Field label={`Packaging cost${isAdmin ? "" : " (admin controlled)"}`}>
+                        <input
+                          inputMode="numeric"
+                          disabled={!isAdmin}
+                          value={isAdmin ? packagingOverride : ""}
+                          onChange={(e) => setPackagingOverride(e.target.value)}
+                          placeholder={`৳${totals.packagingDefault.toFixed(0)}`}
+                          className="w-full rounded-lg border bg-background px-3 py-1.5 text-xs tabular-nums focus:ring-2 focus:ring-primary/20 disabled:opacity-70"
+                        />
+                      </Field>
+                      {isAdmin && (
+                        <Field label={`Courier cost (default ৳${totals.shipping.toFixed(0)})`}>
+                          <input
+                            inputMode="numeric"
+                            value={deliveryCostOverride}
+                            onChange={(e) => setDeliveryCostOverride(e.target.value)}
+                            placeholder={`৳${totals.shipping.toFixed(0)}`}
+                            className="w-full rounded-lg border bg-background px-3 py-1.5 text-xs tabular-nums focus:ring-2 focus:ring-primary/20"
+                          />
+                        </Field>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-muted-foreground">
+                      Khali rakhle default value boshbe. Packaging cost shudhu admin/staff change korte parbe.
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
+
 
             {/* Right Column: Order Summary */}
             <aside className="flex flex-col bg-muted/20 p-4 sm:p-6 h-full border-t">
