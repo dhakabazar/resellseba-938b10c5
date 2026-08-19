@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { clearAppDataCache } from "@/lib/app-data";
 import { PageHeader } from "@/components/ui-kit";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -71,6 +72,7 @@ function SettingsPage() {
       flagship_reseller_code: flagshipCode || null,
       label_size: labelSize,
     } as any);
+    clearAppDataCache("settings");
     setBusy(false);
     if (error) toast.error(error.message);
     else toast.success("Settings saved — refresh the page to apply");

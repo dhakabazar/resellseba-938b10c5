@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getMyReseller } from "@/lib/app-data";
 import { useAuth } from "@/lib/use-auth";
 import { TransactionReport } from "@/components/transaction-report";
 import { Loader2 } from "lucide-react";
@@ -29,15 +30,10 @@ function TransactionsPage() {
 
   useEffect(() => {
     if (!user) return;
-    void supabase
-      .from("resellers")
-      .select("id")
-      .eq("user_id", user.id)
-      .maybeSingle()
-      .then(({ data }) => {
-        setResellerId(data?.id ?? null);
-        setLoading(false);
-      });
+    void getMyReseller(user.id).then((data) => {
+      setResellerId(data?.id ?? null);
+      setLoading(false);
+    });
   }, [user]);
 
   return (

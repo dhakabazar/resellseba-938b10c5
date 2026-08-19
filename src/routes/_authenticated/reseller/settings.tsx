@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getMyReseller } from "@/lib/app-data";
 import { useAuth } from "@/lib/use-auth";
 import { PageHeader } from "@/components/ui-kit";
 import { ExternalLink, Loader2 } from "lucide-react";
@@ -47,11 +48,7 @@ function SettingsPage() {
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const { data: r } = await supabase
-        .from("resellers")
-        .select("id,business_name,code")
-        .eq("user_id", user.id)
-        .maybeSingle();
+      const r = await getMyReseller(user.id);
       if (!r) return setLoading(false);
       setRid(r.id);
       setCode(r.code);

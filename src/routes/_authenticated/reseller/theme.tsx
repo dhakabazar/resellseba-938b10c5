@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getMyReseller } from "@/lib/app-data";
 import { useAuth } from "@/lib/use-auth";
 import { PageHeader } from "@/components/ui-kit";
 import { Check, ExternalLink, Eye, Loader2, Monitor, Smartphone } from "lucide-react";
@@ -51,7 +52,7 @@ function ThemePage() {
     if (!uid) return;
     let alive = true;
     (async () => {
-      const { data: r } = await supabase.from("resellers").select("id,code").eq("user_id", uid).maybeSingle();
+      const r = await getMyReseller(uid);
       if (!alive) return;
       if (!r) return setLoading(false);
       setRid(r.id);

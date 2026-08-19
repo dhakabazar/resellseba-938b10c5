@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getMyReseller } from "@/lib/app-data";
 import { deliveryLabel } from "@/lib/delivery";
 import { useAuth } from "@/lib/use-auth";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
@@ -48,11 +49,7 @@ function ListingsPage() {
   async function load() {
     if (!user) return;
     setLoading(true);
-    const { data: r } = await supabase
-      .from("resellers")
-      .select("id")
-      .eq("user_id", user.id)
-      .maybeSingle();
+    const r = await getMyReseller(user.id);
     if (!r) return setLoading(false);
     const { data } = await supabase
       .from("reseller_listings")

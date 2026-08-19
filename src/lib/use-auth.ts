@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { clearAppDataCache } from "@/lib/app-data";
 
 export type Role = "super_admin" | "reseller" | "leader" | "staff";
 
@@ -60,6 +61,7 @@ async function loadAccess(userId: string): Promise<{ roles: Role[]; permissions:
 
 function applySession(session: Session | null) {
   if (!session?.user) {
+    clearAppDataCache();
     authVersion++;
     publish({ session: null, user: null, roles: [], permissions: [], loading: false });
     return;
@@ -82,6 +84,7 @@ function applySession(session: Session | null) {
   }
 
 
+  clearAppDataCache("reseller");
   const version = ++authVersion;
 
   publish({ session, user: session.user, roles: [], permissions: [], loading: true });

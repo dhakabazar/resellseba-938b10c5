@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getMyReseller } from "@/lib/app-data";
 import { PageHeader } from "@/components/ui-kit";
 import { Facebook, Zap, LineChart, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -27,7 +28,7 @@ function ResellerMarketing() {
     setLoading(true);
     const { data: userData } = await supabase.auth.getUser();
     if (!userData.user) return;
-    const { data: rs } = await supabase.from("resellers").select("id").eq("user_id", userData.user.id).maybeSingle();
+    const rs = await getMyReseller(userData.user.id);
     if (!rs) { setLoading(false); return; }
     setResellerId(rs.id);
     const { data } = await supabase.from("marketing_configs").select("*").eq("reseller_id", rs.id);

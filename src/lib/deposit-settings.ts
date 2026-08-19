@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getGlobalSettings } from "@/lib/app-data";
 import { bdt } from "@/lib/finance-report";
 
 /** Every deposit-related text is editable from Admin → System → Security deposit. */
@@ -65,11 +66,7 @@ export function useDepositSettings() {
 
   const reload = useCallback(async () => {
     setLoading(true);
-    const { data } = await supabase
-      .from("global_settings")
-      .select("deposit_texts,deposit_trigger_default_on,deposit_default_amount,deposit_default_frozen")
-      .eq("id", 1)
-      .maybeSingle();
+    const data = await getGlobalSettings();
     const row = data as any;
     setTexts(mergeTexts(row?.deposit_texts));
     setDefaults({

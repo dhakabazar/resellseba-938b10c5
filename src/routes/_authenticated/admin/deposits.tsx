@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { clearAppDataCache } from "@/lib/app-data";
 import { PageHeader } from "@/components/ui-kit";
 import { toast } from "sonner";
 import { Loader2, Save, RotateCcw, ShieldCheck } from "lucide-react";
@@ -75,6 +76,7 @@ function DepositSettingsPage() {
         deposit_texts: texts as any,
       } as any)
       .eq("id", 1);
+    clearAppDataCache("settings");
     setBusy(false);
     if (error) return toast.error(error.message);
     toast.success("Deposit settings saved");

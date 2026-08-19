@@ -37,6 +37,7 @@ import { AppShell, type NavEntry } from "@/components/AppShell";
 import { BulkScanButton } from "@/components/BulkScanModal";
 import { useAuth } from "@/lib/use-auth";
 import { useBrandingTheme } from "@/lib/branding";
+import { getGlobalSettings } from "@/lib/app-data";
 import { Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -226,19 +227,18 @@ function AdminLayout() {
   }, [loading, user, canEnter, canViewRoute, roles, permissions, pathname, nav, isStaff, isSuperAdmin, landing]);
 
   useEffect(() => {
-    supabase
-      .from("global_settings")
-      .select("site_name, logo_url, primary_color")
-      .eq("id", 1)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data)
-          setBrand({
-            name: data.site_name ?? "Admin",
-            logoUrl: data.logo_url ?? null,
-            primary: data.primary_color ?? null,
-          });
+    let alive = true;
+    void getGlobalSettings().then((data) => {
+      if (!alive || !data) return;
+      setBrand({
+        name: data.site_name ?? "Admin",
+        logoUrl: data.logo_url ?? null,
+        primary: data.primary_color ?? null,
       });
+    });
+    return () => {
+      alive = false;
+    };
   }, []);
 
   useBrandingTheme(brand.primary);

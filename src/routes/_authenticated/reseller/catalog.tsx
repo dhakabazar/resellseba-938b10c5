@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getMyReseller } from "@/lib/app-data";
 import { useAdvancedSettings } from "@/lib/advanced-settings";
 import { deliveryLabel, deliveryMode } from "@/lib/delivery";
 import { useAuth } from "@/lib/use-auth";
@@ -64,20 +65,18 @@ function CatalogPage() {
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const { data: r } = await supabase
-        .from("resellers")
-        .select("id")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      if (r) {
-        setResellerId(r.id);
+      // Catalog, brands and categories don't depend on the reseller row, so
+      // every request goes out at once instead of waiting in a chain.
+      const listingsPromise = getMyReseller(user.id).then(async (r) => {
+        if (!r) return null;
         const { data: mine } = await supabase
           .from("reseller_listings")
           .select("product_id")
           .eq("reseller_id", r.id);
-        setListed(new Set((mine ?? []).map((m) => m.product_id)));
-      }
-      const [{ data }, { data: b }, { data: c }] = await Promise.all([
+        return { id: r.id, mine: mine ?? [] };
+      });
+
+      const [{ data }, { data: b }, { data: c }, listings] = await Promise.all([
         supabase
           .from("products")
           .select(
@@ -87,7 +86,12 @@ function CatalogPage() {
           .order("created_at", { ascending: false }),
         supabase.from("brands").select("id,name").eq("is_active", true).order("name"),
         supabase.from("categories").select("id,name").eq("is_active", true).order("name"),
+        listingsPromise,
       ]);
+      if (listings) {
+        setResellerId(listings.id);
+        setListed(new Set(listings.mine.map((m) => m.product_id)));
+      }
       setItems((data ?? []) as P[]);
       setBrands((b ?? []) as Opt[]);
       setCategories((c ?? []) as Opt[]);

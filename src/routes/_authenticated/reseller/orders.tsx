@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getMyReseller } from "@/lib/app-data";
 import { productDeliveryCharge, deliveryLabel } from "@/lib/delivery";
 import { addressError, nameError, normalizePhone, phoneError, sanitizeName } from "@/lib/checkout-validate";
 import { useAuth } from "@/lib/use-auth";
@@ -209,11 +210,7 @@ function OrdersPage() {
   async function load() {
     if (!user) return;
     setLoading(true);
-    const { data: r } = await supabase
-      .from("resellers")
-      .select("id")
-      .eq("user_id", user.id)
-      .maybeSingle();
+    const r = await getMyReseller(user.id);
     if (!r) return setLoading(false);
     setResellerId(r.id);
     const [{ data: o }, { data: l }, { data: p }] = await Promise.all([

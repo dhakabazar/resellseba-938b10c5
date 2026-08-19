@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getGlobalSettings } from "@/lib/app-data";
 import { PageHeader } from "@/components/ui-kit";
 import { Phone, MessageCircle, Mail, Copy, Loader2, Headphones, UserCheck } from "lucide-react";
 import type { Agent } from "@/lib/agents";
@@ -52,11 +53,7 @@ function SupportPage() {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase
-        .from("global_settings")
-        .select("site_name, logo_url, contact_email, contact_phone")
-        .eq("id", 1)
-        .maybeSingle();
+      const data = await getGlobalSettings();
       setS((data ?? null) as Settings | null);
 
       // My agent: the follow-up contact assigned to this reseller (if any).
