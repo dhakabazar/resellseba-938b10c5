@@ -584,7 +584,6 @@ function AdminOrdersPage() {
                      </DropdownMenu>
                   </div>
                 </div>
-                <OrderItemsStrip items={stripItems(o.id)} />
                 {expandedOrders.includes(o.id) && (
                   <div className="bg-muted/30 px-12 py-6">
                     <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
