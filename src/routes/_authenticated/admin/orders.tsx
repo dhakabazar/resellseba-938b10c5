@@ -35,7 +35,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { NewOrderModal } from "@/components/NewOrderModal";
 import { OrderEditModal } from "@/components/OrderEditModal";
-import { type StripItem, ImageLightbox } from "@/components/order-items-strip";
+import { type StripItem, ImageLightbox, OrderProductCell } from "@/components/order-items-strip";
 
 import { OrderSettleModal } from "@/components/OrderSettleModal";
 import { ShipmentBookingModal } from "@/components/ShipmentBookingModal";
