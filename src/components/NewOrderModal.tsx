@@ -605,19 +605,19 @@ export function NewOrderModal({
 
                 {picked.length > 0 && (
                   <div className="space-y-3">
-                    <SectionLabel>ডেলিভারি ও অন্যান্য চার্জ</SectionLabel>
+                    <SectionLabel>Delivery & Other Charges</SectionLabel>
                     <div className="grid gap-3 rounded-2xl border bg-muted/20 p-4 sm:grid-cols-2">
                       <MoneyField
-                        label="ডেলিভারি চার্জ (কাস্টমার দিবে)"
-                        hint={`ডিফল্ট ৳${totals.autoShipping.toFixed(0)}`}
+                        label="Delivery Charge (Customer pays)"
+                        hint={`Default ৳${totals.autoShipping.toFixed(0)}`}
                         value={shipOverride}
                         onChange={setShipOverride}
                         placeholder={totals.autoShipping.toFixed(0)}
                       />
-                      <MoneyField label="ডিসকাউন্ট" value={discount} onChange={setDiscount} placeholder="0" />
+                      <MoneyField label="Discount" value={discount} onChange={setDiscount} placeholder="0" />
                       <MoneyField
-                        label="প্যাকেজিং কস্ট"
-                        hint={isAdmin ? "এডিট করা যাবে" : "শুধু অ্যাডমিন"}
+                        label="Packaging Cost"
+                        hint={isAdmin ? "Editable" : "Admin only"}
                         disabled={!isAdmin}
                         value={isAdmin ? packagingOverride : ""}
                         onChange={setPackagingOverride}
@@ -625,8 +625,8 @@ export function NewOrderModal({
                       />
                       {isAdmin && (
                         <MoneyField
-                          label="কুরিয়ার কস্ট (অ্যাডমিন খরচ)"
-                          hint={`ডিফল্ট ৳${totals.shipping.toFixed(0)}`}
+                          label="Courier Cost (Admin cost)"
+                          hint={`Default ৳${totals.shipping.toFixed(0)}`}
                           value={deliveryCostOverride}
                           onChange={setDeliveryCostOverride}
                           placeholder={totals.shipping.toFixed(0)}
@@ -638,12 +638,12 @@ export function NewOrderModal({
                     </p>
 
                     {/* Advance payment */}
-                    <SectionLabel>অ্যাডভান্স পেমেন্ট</SectionLabel>
+                    <SectionLabel>Advance Payment</SectionLabel>
                     <div className="space-y-3 rounded-2xl border border-primary/20 bg-primary/[0.03] p-4">
                       <div className="grid gap-3 sm:grid-cols-2">
                         <MoneyField
-                          label="অ্যাডভান্স অ্যামাউন্ট"
-                          hint="আগে পেলে"
+                          label="Advance Amount"
+                          hint="If already received"
                           value={advance}
                           onChange={setAdvance}
                           placeholder="0"
@@ -657,9 +657,9 @@ export function NewOrderModal({
                       </p>
                     </div>
 
-                    <SectionLabel>পেমেন্ট মেথড ও নোট</SectionLabel>
+                    <SectionLabel>Payment Method & Note</SectionLabel>
                     <div className="grid gap-3 rounded-2xl border bg-muted/20 p-4 sm:grid-cols-2">
-                      <Field label="পেমেন্ট মেথড">
+                      <Field label="Payment Method">
                         <select
                           value={paymentMethod}
                           onChange={(e) => setPaymentMethod(e.target.value)}
@@ -672,11 +672,11 @@ export function NewOrderModal({
                           <option value="sslcommerz">SSLCommerz</option>
                         </select>
                       </Field>
-                      <Field label="অর্ডার নোট (অপশনাল)">
+                      <Field label="Order Note (Optional)">
                         <input
                           value={note}
                           onChange={(e) => setNote(e.target.value)}
-                          placeholder="বিশেষ নির্দেশনা..."
+                          placeholder="Special instructions..."
                           className="w-full rounded-lg border px-3 py-2 text-[13px] focus:ring-2 focus:ring-primary/20"
                         />
                       </Field>
