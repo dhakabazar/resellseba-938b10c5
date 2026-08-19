@@ -120,10 +120,11 @@ export function TransactionReport({
   resellerId?: string | null;
   admin?: boolean;
 }) {
-  const [range, setRange] = useState<DateRangeState>(DEFAULT_DATE_RANGE);
+  const [range, setRange] = useState<DateRangeState>({ preset: "lifetime", from: "", to: "" });
   const [reseller, setReseller] = useState<string>(resellerId ?? "");
   const [kind, setKind] = useState("");
-  const [q, setQ] = useState("");
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(20);
   const [rows, setRows] = useState<TxRow[]>([]);
   const [resellers, setResellers] = useState<{ id: string; business_name: string; code: string }[]>([]);
   const [loading, setLoading] = useState(true);
