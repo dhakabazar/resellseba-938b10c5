@@ -41,6 +41,7 @@ function AdminDashboard() {
   const [orderOpen, setOrderOpen] = useState(false);
   const [allProducts, setAllProducts] = useState<any[]>([]);
   const [resellers, setResellers] = useState<any[]>([]);
+  const modalDataLoaded = useRef(false);
   const [loading, setLoading] = useState(true);
   const [counts, setCounts] = useState({ products: 0, resellers: 0, pendingResellers: 0, brands: 0 });
   const [rows, setRows] = useState<OrderRow[]>([]);
@@ -149,7 +150,10 @@ function AdminDashboard() {
   }, []);
 
 
+  // Order-modal data is only fetched the first time the modal is opened.
   useEffect(() => {
+    if (!orderOpen || modalDataLoaded.current) return;
+    modalDataLoaded.current = true;
     void (async () => {
       const [rs, ps] = await Promise.all([
         supabase.from("resellers").select("id,business_name,code,contact_phone").order("business_name"),
@@ -163,7 +167,7 @@ function AdminDashboard() {
       setResellers((rs.data ?? []) as any[]);
       setAllProducts((ps.data ?? []) as any[]);
     })();
-  }, []);
+  }, [orderOpen]);
 
   useEffect(() => {
     void loadLifetime();
