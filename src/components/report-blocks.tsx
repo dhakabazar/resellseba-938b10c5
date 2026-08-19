@@ -329,3 +329,45 @@ export function RawStatusList({ report, showAdminCost = true }: { report: Financ
   );
 }
 
+
+/** Sortable table header cell — click to toggle asc/desc, arrow shows direction. */
+export function SortTh<K extends string>({
+  label,
+  sortKey,
+  active,
+  dir,
+  onSort,
+  hint,
+  align = "center",
+}: {
+  label: string;
+  sortKey: K;
+  active: K;
+  dir: "asc" | "desc";
+  onSort: (k: K) => void;
+  hint?: string;
+  align?: "left" | "center" | "right";
+}) {
+  const on = active === sortKey;
+  return (
+    <th
+      className={
+        "px-2 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground " +
+        (align === "left" ? "text-left" : align === "right" ? "text-right" : "text-center")
+      }
+      title={hint}
+    >
+      <button
+        type="button"
+        onClick={() => onSort(sortKey)}
+        className={
+          "inline-flex items-center gap-1 rounded px-1 py-0.5 transition-colors hover:text-foreground " +
+          (on ? "text-primary" : "")
+        }
+      >
+        <span>{label}</span>
+        <span className="text-[9px] leading-none">{on ? (dir === "asc" ? "▲" : "▼") : "↕"}</span>
+      </button>
+    </th>
+  );
+}
