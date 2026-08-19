@@ -2,11 +2,11 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Pagination, usePaginated, type FilterOption } from "@/components/data-list";
 import {
-  OrderFilterBar,
   applyOrderFilters,
   DEFAULT_ORDER_FILTERS,
   type OrderFilterState,
 } from "@/components/order-filters";
+import { SearchableSelect } from "@/components/searchable-select";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
 import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
@@ -109,19 +109,32 @@ export const Route = createFileRoute("/_authenticated/admin/orders")({
 
 function AdminOrdersPage() {
   const { tab: tabParam, reseller: resellerParam, q: qParam } = Route.useSearch();
+  const navigate = Route.useNavigate();
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [allOrders, setAllOrders] = useState<{ status: string }[]>([]);
   const [orderItems, setOrderItems] = useState<OrderItemLite[]>([]);
   const [shipments, setShipments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  
-  const [tab, setTab] = useState<OrderTabKey>(tabParam ?? (qParam ? "all" : "forwarded"));
+
+  const [tab, setTab] = useState<OrderTabKey>(tabParam ?? ((resellerParam || qParam) ? "all" : "forwarded"));
 
   const [selected, setSelected] = useState<OrderRow | null>(null);
   const [open, setOpen] = useState(false);
   const [allProducts, setAllProducts] = useState<any[]>([]);
   const [resellers, setResellers] = useState<any[]>([]);
   const [filters, setFilters] = useState<OrderFilterState>({ ...DEFAULT_ORDER_FILTERS, reseller: resellerParam ?? "", q: qParam ?? "" });
+
+  useEffect(() => {
+    navigate({
+      search: (prev) => {
+        const next: any = { ...prev, tab, reseller: filters.reseller || undefined };
+        if (tab === "forwarded") delete next.tab;
+        if (!filters.reseller) delete next.reseller;
+        return next;
+      },
+      replace: true,
+    });
+  }, [tab, filters.reseller]);
 
   const [searchMode, setSearchMode] = useState<OrderSearchMode>("order");
   const [expandedOrders, setExpandedOrders] = useState<string[]>([]);
@@ -342,6 +355,18 @@ function AdminOrdersPage() {
         />
         <div className="mb-4 flex flex-wrap items-center gap-2">
             <OrderSearch mode={searchMode} onMode={setSearchMode} value={filters.q} onChange={(v) => setFilters({ ...filters, q: v })} />
+            <SearchableSelect
+              label="Reseller"
+              options={resellerOptions.map((r) => ({ value: r.value, label: r.label }))}
+              value={filters.reseller}
+              onChange={(v) => {
+                setFilters({ ...filters, reseller: v });
+                if (v) setTab("all");
+              }}
+              placeholder="All resellers"
+              searchPlaceholder="Search reseller…"
+              className="min-w-[220px]"
+            />
             <div className="ml-auto flex items-center gap-2">
               <span className="text-xs font-medium text-muted-foreground hidden sm:inline">Per page:</span>
               <select 
