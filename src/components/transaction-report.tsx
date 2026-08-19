@@ -317,7 +317,9 @@ export function TransactionReport({
                   <th className="px-3 py-2 text-left">Date</th>
                   <th className="px-3 py-2 text-left">Status</th>
                   <th className="px-3 py-2 text-left">Meta / note</th>
+                  <th className="px-3 py-2 text-right">Order value</th>
                   <th className="px-3 py-2 text-right">Subtotal</th>
+
                   <th className="px-3 py-2 text-right">Delivery</th>
                   <th className="px-3 py-2 text-right">Packaging</th>
                   <th className="px-3 py-2 text-right">Received</th>
