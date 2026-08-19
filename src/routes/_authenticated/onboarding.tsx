@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/use-auth";
 import { useVerification } from "@/lib/use-verification";
 import { supabase } from "@/integrations/supabase/client";
+import { getGlobalSettings } from "@/lib/app-data";
 import { toast } from "sonner";
 import { Loader2, Store, Mail } from "lucide-react";
 
@@ -158,8 +159,9 @@ function ContactButton({ variant }: { variant: "whatsapp" | "email" }) {
   const [contact, setContact] = useState<{ phone: string | null; email: string | null } | null>(null);
 
   useEffect(() => {
-    supabase.from("global_settings").select("contact_phone, contact_email").eq("id", 1).maybeSingle()
-      .then(({ data }) => setContact({ phone: data?.contact_phone ?? null, email: data?.contact_email ?? null }));
+    void getGlobalSettings().then((data) =>
+      setContact({ phone: data?.contact_phone ?? null, email: data?.contact_email ?? null }),
+    );
   }, []);
 
   if (variant === "whatsapp") {
