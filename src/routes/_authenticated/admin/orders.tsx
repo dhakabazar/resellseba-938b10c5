@@ -729,6 +729,7 @@ function AdminOrdersPage() {
           open={!!settleModal}
           orderId={settleModal?.orderId ?? null}
           targetStatus={settleModal?.status ?? "delivered"}
+          allowKindSwitch={!!settleModal?.pickKind}
           onClose={() => setSettleModal(null)}
           onSaved={() => void load()}
         />
