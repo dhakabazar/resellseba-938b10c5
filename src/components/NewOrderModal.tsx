@@ -125,9 +125,10 @@ export function NewOrderModal({
     let isUniversalFlat = true;
 
     for (const { line, p, sellPrice } of picked) {
-      subtotal += Number(sellPrice) * line.qty;
-      productCost += Number(p.reseller_price) * line.qty;
-      packagingDefault += Number(p.packaging_cost) * line.qty;
+      const qty = Number(line.qty) || 0;
+      subtotal += (Number(sellPrice) || 0) * qty;
+      productCost += (Number(p.reseller_price) || 0) * qty;
+      packagingDefault += (Number(p.packaging_cost) || 0) * qty;
 
       const mode = deliveryMode(p);
       if (mode !== "free") isUniversalFree = false;
