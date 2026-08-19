@@ -696,14 +696,14 @@ function OrdersPage() {
                           <Eye className="mr-2 h-4 w-4" /> View Details
                         </DropdownMenuItem>
 
-                        {(o.status === "pending" || o.status === "forwarded") && (
+                        {resellerCanAct(o.status) && (
                           <DropdownMenuItem onClick={() => setEditId(o.id)}>
                             <Pencil className="mr-2 h-4 w-4" /> Edit Order
                           </DropdownMenuItem>
                         )}
                         {(() => {
                           const isBooked = shipments.some(s => s.order_id === o.id && (s.consignment_id || s.tracking_id));
-                          if (!isBooked) {
+                          if (!isBooked && resellerCanAct(o.status) && nextStatuses(o.status, "reseller").length > 0) {
                             return (
                               <DropdownMenuItem onClick={() => setStatusModal({ open: true, orderId: o.id, currentStatus: o.status })}>
                                 <Settings2 className="mr-2 h-4 w-4" /> Change Status
