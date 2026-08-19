@@ -47,6 +47,10 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
   const [discount, setDiscount] = useState("");
   const [packagingInput, setPackagingInput] = useState("");
   const [deliveryCostInput, setDeliveryCostInput] = useState("");
+  /** Advance already collected + who is holding that cash. */
+  const [advance, setAdvance] = useState("");
+  const [advanceBy, setAdvanceBy] = useState<"admin" | "reseller">(isAdmin ? "admin" : "reseller");
+
   /** Money actually collected by the courier. Empty = full order total received. */
   const [received, setReceived] = useState<string>("");
   const [query, setQuery] = useState("");
