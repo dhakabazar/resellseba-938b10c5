@@ -414,7 +414,13 @@ function AdminOrdersPage() {
                       {new Date(o.created_at).toLocaleDateString()}
                     </div>
                   </div>
-                  <OrderProductCell items={stripItems(o.id)} expanded={expandedOrders.includes(o.id)} onZoom={setZoomImage} />
+                  <OrderProductCell
+                    items={stripItems(o.id)}
+                    expanded={expandedOrders.includes(o.id)}
+                    onZoom={setZoomImage}
+                    onToggle={() => setExpandedOrders(prev => prev.includes(o.id) ? prev.filter(id => id !== o.id) : [...prev, o.id])}
+                  />
+
                   <div className="min-w-0">
                      <div className="font-medium truncate">{o.customer_name}</div>
                      <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
