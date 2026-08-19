@@ -683,7 +683,18 @@ export function NewOrderModal({
                     </div>
                     <span className="font-black text-foreground">৳{totals.shipping.toFixed(0)}</span>
                   </div>
-                  
+                  {totals.discount > 0 && (
+                    <div className="flex justify-between text-xs text-destructive">
+                      <span className="font-medium">Discount</span>
+                      <span className="font-black">−৳{totals.discount.toFixed(0)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span className="font-medium">Packaging cost</span>
+                    <span className="font-black text-foreground">৳{totals.packaging.toFixed(0)}</span>
+                  </div>
+
+
                   <div className="my-3 border-t-2 border-dashed border-muted" />
                   
                   <div className="flex justify-between items-center">
