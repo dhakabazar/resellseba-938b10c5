@@ -1350,22 +1350,36 @@ function OrderDrawer({
         <div className="space-y-8">
           {canAct && (
             <div className="flex gap-3 surface-card p-4 border-primary/20 bg-primary/5">
-              <button
-                disabled={busy}
-                onClick={() => setStatus("forwarded")}
-                className="btn-brand inline-flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-bold shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
-              >
-                <CheckCircle2 className="h-4 w-4" /> Send to admin
-              </button>
-              <button
-                disabled={busy}
-                onClick={() => setStatus("cancelled")}
-                className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-destructive/20 bg-background px-4 py-2.5 text-sm font-bold text-destructive shadow-sm hover:bg-destructive/5 transition-all disabled:opacity-50"
-              >
-                <Ban className="h-4 w-4" /> Cancel Order
-              </button>
+              {allowedNext.includes("pending") && (
+                <button
+                  disabled={busy}
+                  onClick={() => setStatus("pending")}
+                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border bg-background px-4 py-2.5 text-sm font-bold shadow-sm transition-all hover:bg-muted disabled:opacity-50"
+                >
+                  <CheckCircle2 className="h-4 w-4" /> Move to New Order
+                </button>
+              )}
+              {allowedNext.includes("forwarded") && (
+                <button
+                  disabled={busy}
+                  onClick={() => setStatus("forwarded")}
+                  className="btn-brand inline-flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-bold shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+                >
+                  <CheckCircle2 className="h-4 w-4" /> Send to admin
+                </button>
+              )}
+              {allowedNext.includes("cancelled") && (
+                <button
+                  disabled={busy}
+                  onClick={() => setStatus("cancelled")}
+                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-destructive/20 bg-background px-4 py-2.5 text-sm font-bold text-destructive shadow-sm hover:bg-destructive/5 transition-all disabled:opacity-50"
+                >
+                  <Ban className="h-4 w-4" /> Cancel Order
+                </button>
+              )}
             </div>
           )}
+
 
           {/* Top Section: Customer */}
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
