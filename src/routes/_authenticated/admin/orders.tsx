@@ -591,15 +591,15 @@ function AdminOrdersPage() {
         />
         {statusModal && statusModal.open && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-            <div className="w-full max-w-sm overflow-hidden rounded-xl bg-background shadow-2xl ring-1 ring-black/5 animate-in fade-in zoom-in duration-200 sm:max-w-md">
+            <div className="w-full max-w-2xl overflow-hidden rounded-xl bg-background shadow-2xl ring-1 ring-black/5 animate-in fade-in zoom-in duration-200">
               <div className="flex items-center justify-between border-b px-5 py-4 bg-muted/30">
                 <h3 className="text-sm font-bold text-foreground">Change Status</h3>
                 <button onClick={() => setStatusModal(null)} className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
                   <X className="h-4 w-4" />
                 </button>
               </div>
-              <div className="max-h-[60vh] overflow-y-auto p-4">
-                <div className="grid grid-cols-1 gap-1.5">
+              <div className="max-h-[70vh] overflow-y-auto p-4">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
                   {(() => {
                     const recommended = statusModal.isBulk
                       ? []
@@ -631,7 +631,7 @@ function AdminOrdersPage() {
                           .from("orders")
                           .update({ status: s as any })
                           .eq("id", statusModal.orderId);
-                        
+
                         if (error) {
                           toast.error(error.message);
                         } else {
