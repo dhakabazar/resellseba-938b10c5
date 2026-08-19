@@ -68,12 +68,10 @@ export const ADMIN_PROFIT_HINT =
 
 /** Quantity of an item the customer actually kept (returns go back to stock). */
 export function keptQty(item: BizItem, status: string) {
-  if (status === "partial_delivery" || isFailedOrder({ ...emptyProfit, status })) return 0;
-  if (!isRealizedStatus(status)) return 0;
+  if (status === "partial_delivery" || !isRealizedStatus(status)) return 0;
   return Math.max(Number(item.quantity) - Number(item.returned_qty ?? 0), 0);
 }
 
-const emptyProfit = { total: 0, shipping_cost: 0, sa_cost_total: 0 } as ProfitOrder;
 
 /** Admin buying cost of the kept items of one order. */
 export function orderBuyingCost(items: BizItem[], status: string, products: Map<string, BizProduct>) {
