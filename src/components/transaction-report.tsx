@@ -158,16 +158,20 @@ export function TransactionReport({
       });
   }, [admin, reseller, resellerId, range]);
 
-  const filtered = useMemo(() => {
-    const needle = q.trim().toLowerCase();
-    return rows.filter((r) => {
-      if (kind && r.kind !== kind) return false;
-      if (!needle) return true;
-      return [r.order_number, r.label, r.note, r.reseller_name, r.reseller_code, r.status]
-        .filter(Boolean)
-        .some((v) => String(v).toLowerCase().includes(needle));
-    });
-  }, [rows, kind, q]);
+  const filtered = useMemo(
+    () => rows.filter((r) => !kind || r.kind === kind),
+    [rows, kind],
+  );
+
+  const paged = useMemo(() => {
+    const start = (page - 1) * perPage;
+    return filtered.slice(start, start + perPage);
+  }, [filtered, page, perPage]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [kind, reseller, range]);
+
 
   const totals = useMemo(() => {
     let inflow = 0,
