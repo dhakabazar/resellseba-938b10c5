@@ -3,8 +3,11 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { MaskedCfConfig } from "@/lib/cloudflare.server";
 
+export type DomainMode = "cloudflare" | "dns";
+
 export type DomainRow = {
   id: string;
+  mode: DomainMode;
   reseller_id: string;
   reseller_name: string | null;
   reseller_code: string | null;
@@ -23,7 +26,18 @@ export type DomainRow = {
   created_at: string;
 };
 
-export type DnsGuide = { cnameTarget: string; aRecordIp: string; zoneName: string; active: boolean };
+export type DnsGuide = {
+  cnameTarget: string;
+  aRecordIp: string;
+  zoneName: string;
+  active: boolean;
+  mode: "cloudflare" | "dns" | "both";
+  serverIp: string;
+  serverCname: string;
+  serverNote: string;
+  cfReady: boolean;
+  dnsReady: boolean;
+};
 
 /** Masked Cloudflare credentials for the admin settings screen. */
 export const getCloudflareConfig = createServerFn({ method: "GET" })
@@ -50,6 +64,11 @@ export const saveCloudflareConfig = createServerFn({ method: "POST" })
         a_record_ip: z.string().max(64).default(""),
         auto_worker_domain: z.boolean().default(false),
         is_active: z.boolean().default(false),
+        mode: z.enum(["cloudflare", "dns", "both"]).default("both"),
+        server_a_ip: z.string().max(64).default(""),
+        server_cname: z.string().max(253).default(""),
+        server_note: z.string().max(2000).default(""),
+        dns_active: z.boolean().default(false),
       })
       .parse(d),
   )
@@ -68,6 +87,11 @@ export const saveCloudflareConfig = createServerFn({ method: "POST" })
       _a_record_ip: data.a_record_ip.trim(),
       _auto_worker_domain: data.auto_worker_domain,
       _is_active: data.is_active,
+      _mode: data.mode,
+      _server_a_ip: data.server_a_ip.trim(),
+      _server_cname: data.server_cname.trim(),
+      _server_note: data.server_note.trim(),
+      _dns_active: data.dns_active,
     });
     if (error) throw new Response(error.message, { status: 400 });
     return maskConfig(await loadConfigAsCaller(context.supabase));
@@ -128,6 +152,7 @@ async function loadDomainForCaller(ctx: Ctx, id: string) {
 function mapRow(row: any, reseller?: { business_name?: string | null; code?: string | null } | null): DomainRow {
   return {
     id: row.id,
+    mode: (row.mode === "dns" ? "dns" : "cloudflare") as DomainMode,
     reseller_id: row.reseller_id,
     reseller_name: reseller?.business_name ?? null,
     reseller_code: reseller?.code ?? null,
@@ -175,7 +200,15 @@ export const listDomains = createServerFn({ method: "GET" })
 /** Add a hostname and provision it on Cloudflare. */
 export const connectDomain = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ hostname: z.string().max(300), resellerId: z.string().uuid().optional() }).parse(d))
+  .inputValidator((d) =>
+    z
+      .object({
+        hostname: z.string().max(300),
+        resellerId: z.string().uuid().optional(),
+        mode: z.enum(["cloudflare", "dns"]).default("cloudflare"),
+      })
+      .parse(d),
+  )
   .handler(async ({ data, context }): Promise<DomainRow> => {
     const cf = await import("@/lib/cloudflare.server");
     const ctx = { supabase: context.supabase, userId: context.userId };
@@ -190,6 +223,37 @@ export const connectDomain = createServerFn({ method: "POST" })
       .maybeSingle();
     if (dupe) throw new Response("This domain is already connected", { status: 400 });
 
+    const { count } = await db
+      .from("reseller_domains")
+      .select("id", { count: "exact", head: true })
+      .eq("reseller_id", resellerId);
+    const isPrimary = (count ?? 0) === 0;
+
+    // Server-DNS mode: no Cloudflare API call, the reseller just points DNS at our server.
+    if (data.mode === "dns") {
+      const conf = cf.requireDnsConfig(await cf.loadConfigFlexible(db));
+      const { data: row, error } = await db
+        .from("reseller_domains")
+        .insert({
+          reseller_id: resellerId,
+          hostname,
+          mode: "dns",
+          is_primary: isPrimary,
+          ssl_status: "pending",
+          ownership_status: "dns_pending",
+          dns_target: cf.dnsTargetFor(conf),
+          last_checked_at: new Date().toISOString(),
+          last_error: null,
+        })
+        .select("*")
+        .single();
+      if (error) {
+        const dup = (error as any).code === "23505";
+        throw new Response(dup ? "This domain is already connected" : error.message, { status: 400 });
+      }
+      return mapRow(row);
+    }
+
     const conf = cf.requireActiveConfig(await cf.loadConfigFlexible(db));
     const state = await cf.createCustomHostname(conf, hostname);
     let workerDomainId: string | null = null;
@@ -199,17 +263,13 @@ export const connectDomain = createServerFn({ method: "POST" })
       console.error("worker domain attach failed", err);
     }
 
-    const { count } = await db
-      .from("reseller_domains")
-      .select("id", { count: "exact", head: true })
-      .eq("reseller_id", resellerId);
-
     const { data: row, error } = await db
       .from("reseller_domains")
       .insert({
         reseller_id: resellerId,
         hostname,
-        is_primary: (count ?? 0) === 0,
+        mode: "cloudflare",
+        is_primary: isPrimary,
         ssl_status: state.sslStatus,
         ownership_status: state.ownershipStatus,
         cloudflare_hostname_id: state.id,
@@ -239,6 +299,29 @@ export const refreshDomain = createServerFn({ method: "POST" })
     const cf = await import("@/lib/cloudflare.server");
     const db = context.supabase;
     const row = await loadDomainForCaller({ supabase: context.supabase, userId: context.userId }, data.id);
+
+    if (row.mode === "dns") {
+      const conf = cf.requireDnsConfig(await cf.loadConfigFlexible(db));
+      const { ok, answers } = await cf.checkDnsPointing(conf, row.hostname);
+      const { data: updated, error } = await db
+        .from("reseller_domains")
+        .update({
+          dns_target: cf.dnsTargetFor(conf),
+          ssl_status: ok ? "active" : "pending",
+          ownership_status: ok ? "active" : "dns_pending",
+          verified_at: ok ? (row.verified_at ?? new Date().toISOString()) : null,
+          last_checked_at: new Date().toISOString(),
+          last_error: ok
+            ? null
+            : `DNS is not pointing here yet${answers.length ? ` (found: ${answers.slice(0, 3).join(", ")})` : ""}`,
+        })
+        .eq("id", row.id)
+        .select("*")
+        .single();
+      if (error) throw new Response(error.message, { status: 400 });
+      return mapRow(updated);
+    }
+
     const conf = cf.requireActiveConfig(await cf.loadConfigFlexible(db));
 
     let state;
@@ -298,9 +381,10 @@ export const disconnectDomain = createServerFn({ method: "POST" })
     const row = await loadDomainForCaller({ supabase: context.supabase, userId: context.userId }, data.id);
     const conf = await cf.loadConfigFlexible(db);
 
-    if (conf.api_token && conf.zone_id && row.cloudflare_hostname_id)
+    if (row.mode !== "dns" && conf.api_token && conf.zone_id && row.cloudflare_hostname_id)
       await cf.deleteCustomHostname(conf, row.cloudflare_hostname_id);
-    if (conf.api_token && row.worker_domain_id) await cf.detachWorkerDomain(conf, row.worker_domain_id);
+    if (row.mode !== "dns" && conf.api_token && row.worker_domain_id)
+      await cf.detachWorkerDomain(conf, row.worker_domain_id);
 
     const { error } = await db.from("reseller_domains").delete().eq("id", row.id);
     if (error) throw new Response(error.message, { status: 400 });

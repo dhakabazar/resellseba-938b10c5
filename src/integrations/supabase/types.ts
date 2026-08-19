@@ -259,8 +259,13 @@ export type Database = {
           api_token: string | null
           auto_worker_domain: boolean
           cname_target: string | null
+          dns_active: boolean
           id: number
           is_active: boolean
+          mode: string
+          server_a_ip: string | null
+          server_cname: string | null
+          server_note: string | null
           updated_at: string
           worker_name: string | null
           zone_id: string | null
@@ -272,8 +277,13 @@ export type Database = {
           api_token?: string | null
           auto_worker_domain?: boolean
           cname_target?: string | null
+          dns_active?: boolean
           id?: number
           is_active?: boolean
+          mode?: string
+          server_a_ip?: string | null
+          server_cname?: string | null
+          server_note?: string | null
           updated_at?: string
           worker_name?: string | null
           zone_id?: string | null
@@ -285,8 +295,13 @@ export type Database = {
           api_token?: string | null
           auto_worker_domain?: boolean
           cname_target?: string | null
+          dns_active?: boolean
           id?: number
           is_active?: boolean
+          mode?: string
+          server_a_ip?: string | null
+          server_cname?: string | null
+          server_note?: string | null
           updated_at?: string
           worker_name?: string | null
           zone_id?: string | null
@@ -1360,6 +1375,7 @@ export type Database = {
           is_primary: boolean
           last_checked_at: string | null
           last_error: string | null
+          mode: string
           ownership_status: string | null
           reseller_id: string
           ssl_status: string
@@ -1377,6 +1393,7 @@ export type Database = {
           is_primary?: boolean
           last_checked_at?: string | null
           last_error?: string | null
+          mode?: string
           ownership_status?: string | null
           reseller_id: string
           ssl_status?: string
@@ -1394,6 +1411,7 @@ export type Database = {
           is_primary?: boolean
           last_checked_at?: string | null
           last_error?: string | null
+          mode?: string
           ownership_status?: string | null
           reseller_id?: string
           ssl_status?: string
@@ -2138,8 +2156,13 @@ export type Database = {
           api_token: string | null
           auto_worker_domain: boolean
           cname_target: string | null
+          dns_active: boolean
           id: number
           is_active: boolean
+          mode: string
+          server_a_ip: string | null
+          server_cname: string | null
+          server_note: string | null
           updated_at: string
           worker_name: string | null
           zone_id: string | null
@@ -2159,7 +2182,12 @@ export type Database = {
           _api_token: string
           _auto_worker_domain: boolean
           _cname_target: string
+          _dns_active?: boolean
           _is_active: boolean
+          _mode?: string
+          _server_a_ip?: string
+          _server_cname?: string
+          _server_note?: string
           _worker_name: string
           _zone_id: string
           _zone_name: string
@@ -2170,8 +2198,13 @@ export type Database = {
           api_token: string | null
           auto_worker_domain: boolean
           cname_target: string | null
+          dns_active: boolean
           id: number
           is_active: boolean
+          mode: string
+          server_a_ip: string | null
+          server_cname: string | null
+          server_note: string | null
           updated_at: string
           worker_name: string | null
           zone_id: string | null
@@ -2191,8 +2224,13 @@ export type Database = {
           account_id: string
           auto_worker_domain: boolean
           cname_target: string
+          dns_active: boolean
           has_token: boolean
           is_active: boolean
+          mode: string
+          server_a_ip: string
+          server_cname: string
+          server_note: string
           updated_at: string
           worker_name: string
           zone_id: string
@@ -2204,7 +2242,13 @@ export type Database = {
         Returns: {
           a_record_ip: string
           active: boolean
+          cf_ready: boolean
           cname_target: string
+          dns_ready: boolean
+          mode: string
+          server_a_ip: string
+          server_cname: string
+          server_note: string
           zone_name: string
         }[]
       }
