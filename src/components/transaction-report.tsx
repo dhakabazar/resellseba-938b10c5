@@ -451,15 +451,13 @@ export function TransactionReport({
                   <th className="px-3 py-2 text-left">Status</th>
                   <th className="px-3 py-2 text-left">Meta / note</th>
                   <th className="px-3 py-2 text-right">Order value</th>
+                  <th className="px-3 py-2 text-right">Received (incl. advance)</th>
                   <th className="px-3 py-2 text-right">Subtotal</th>
-
                   <th className="px-3 py-2 text-right">Delivery</th>
                   <th className="px-3 py-2 text-right">Packaging</th>
-                  <th className="px-3 py-2 text-right">Received (incl. advance)</th>
                   <th className="px-3 py-2 text-right">Advance</th>
                   <th className="px-3 py-2 text-right">Amount</th>
                   <th className="px-3 py-2 text-right">Balance</th>
-
                 </tr>
               </thead>
               <tbody className="divide-y">
