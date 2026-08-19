@@ -157,7 +157,8 @@ export function BulkScanButton({
   );
 }
 
-function BulkScanModal({ mode, onClose }: { mode: ScanMode; onClose: () => void }) {
+function BulkScanModal({ mode: initialMode, onClose }: { mode: ScanMode; onClose: () => void }) {
+  const [mode, setMode] = useState<ScanMode>(initialMode);
   const cfg = MODES[mode];
   const [sound, setSound] = useState(true);
   const [camOn, setCamOn] = useState(false);
@@ -173,6 +174,7 @@ function BulkScanModal({ mode, onClose }: { mode: ScanMode; onClose: () => void 
   const seenRef = useRef<Map<string, number>>(new Map());
   const doneRef = useRef<Map<string, string>>(new Map());
   const busyRef = useRef(false);
+
 
 
   const counts = useMemo(
