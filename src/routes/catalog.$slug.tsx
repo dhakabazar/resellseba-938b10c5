@@ -101,11 +101,6 @@ function CatalogDetails() {
               ))}
             </div>
           )}
-          <div className="mt-4 flex flex-wrap gap-2">
-            <CopyBtn text={p.name} title="Title" label="Title copied" />
-            <CopyBtn text={detailText} title="Details" label="Details copied" />
-            <ImagePickerButton images={p.images} baseName={p.name} />
-          </div>
         </div>
 
         <div>
