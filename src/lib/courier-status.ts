@@ -175,9 +175,11 @@ export type OrderTabKey =
   | "all"
   | "new"
   | "confirmed"
+  | "forwarded"
   | "rts"
   | "courier"
   | "packaging"
+  | "processing"
   | "delivered"
   | "partial"
   | "pending_partial"
@@ -192,17 +194,17 @@ export type OrderTabKey =
 export const ORDER_TABS: { key: OrderTabKey; label: string; statuses: OrderStatus[] }[] = [
   { key: "all", label: "All Orders", statuses: [] },
   { key: "new", label: "New Order", statuses: ["draft", "pending"] },
-  { key: "confirmed", label: "Confirmed", statuses: ["confirmed", "forwarded"] },
+  { key: "confirmed", label: "Confirmed", statuses: ["confirmed"] },
+  { key: "forwarded", label: "Forwarded", statuses: ["forwarded"] },
   { key: "packaging", label: "Packaging", statuses: ["packaging"] },
   { key: "rts", label: "RTS Order", statuses: ["ready_to_ship"] },
-  { key: "courier", label: "To Courier", statuses: ["processing", "shipped"] },
+  { key: "processing", label: "Processing", statuses: ["processing"] },
+  { key: "courier", label: "To Courier", statuses: ["shipped"] },
   { key: "delivered", label: "Delivered", statuses: ["delivered"] },
   { key: "pending_partial", label: "Pending Partial", statuses: ["pending_partial"] },
-  {
-    key: "partial",
-    label: "Partial",
-    statuses: ["partial", "partial_full", "partial_item", "partial_delivery"],
-  },
+  { key: "partial_full", label: "Partial (Full item)", statuses: ["partial_full"] },
+  { key: "partial_item", label: "Partial (Item)", statuses: ["partial_item"] },
+  { key: "partial_delivery", label: "Partial (Delivery)", statuses: ["partial_delivery"] },
   { key: "pending_return", label: "Pending Return", statuses: ["pending_return"] },
   { key: "returned", label: "Returned", statuses: ["returned"] },
   { key: "damaged", label: "Damaged", statuses: ["damaged"] },
