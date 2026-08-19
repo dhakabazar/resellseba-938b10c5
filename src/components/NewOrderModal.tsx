@@ -43,6 +43,12 @@ export function NewOrderModal({
   const [busy, setBusy] = useState(false);
   const [query, setQuery] = useState("");
   const [resellerSearch, setResellerSearch] = useState("");
+  /** Order level adjustments — "" means keep the automatic/default value. */
+  const [discount, setDiscount] = useState("");
+  const [shipOverride, setShipOverride] = useState("");
+  const [packagingOverride, setPackagingOverride] = useState("");
+  const [deliveryCostOverride, setDeliveryCostOverride] = useState("");
+
 
   const trendingResellers = useMemo(() => {
     return resellers.slice(0, 5);
@@ -105,33 +111,59 @@ export function NewOrderModal({
 
   const totals = useMemo(() => {
     let subtotal = 0;
-    let saCost = 0;
-    let shipping = 0;
+    let productCost = 0;
+    let packagingDefault = 0;
+    let autoShipping = 0;
     let shipFrom: string | null = null;
     let isUniversalFree = true;
     let isUniversalFlat = true;
 
     for (const { line, p, sellPrice } of picked) {
       subtotal += Number(sellPrice) * line.qty;
-      saCost += (Number(p.reseller_price) + Number(p.packaging_cost)) * line.qty;
-      
+      productCost += Number(p.reseller_price) * line.qty;
+      packagingDefault += Number(p.packaging_cost) * line.qty;
+
       const mode = deliveryMode(p);
       if (mode !== "free") isUniversalFree = false;
       if (mode !== "flat") isUniversalFlat = false;
 
       const dc = productDeliveryCharge(p, area);
-      if (dc > shipping) {
-        shipping = dc;
+      if (dc > autoShipping) {
+        autoShipping = dc;
         shipFrom = p.name;
       }
     }
-    
+
     // Determine if we should show area selection
     // If all items are "free", or all items are "flat" with the same charge, we don't need area picker
     const showAreaPicker = picked.length > 0 && !isUniversalFree && !isUniversalFlat;
 
-    return { subtotal, shipping, total: subtotal + shipping, saCost, profit: subtotal - saCost, shipFrom, showAreaPicker };
-  }, [picked, area]);
+    const shipping = shipOverride.trim() === "" ? autoShipping : Math.max(Number(shipOverride) || 0, 0);
+    const packaging =
+      packagingOverride.trim() === "" ? packagingDefault : Math.max(Number(packagingOverride) || 0, 0);
+    const disc = Math.min(Math.max(Number(discount) || 0, 0), subtotal + shipping);
+    const total = subtotal + shipping - disc;
+    const saCost = productCost + packaging;
+    const deliveryCost =
+      deliveryCostOverride.trim() === "" ? shipping : Math.max(Number(deliveryCostOverride) || 0, 0);
+
+    return {
+      subtotal,
+      autoShipping,
+      shipping,
+      packagingDefault,
+      packaging,
+      productCost,
+      discount: disc,
+      total,
+      saCost,
+      deliveryCost,
+      profit: total - deliveryCost - saCost,
+      shipFrom,
+      showAreaPicker,
+    };
+  }, [picked, area, shipOverride, packagingOverride, discount, deliveryCostOverride]);
+
 
   const errors = {
     name: nameError(name),
@@ -181,8 +213,11 @@ export function NewOrderModal({
           admin_note: isAdmin ? note : null,
           subtotal: totals.subtotal,
           shipping_cost: totals.shipping,
+          discount: totals.discount,
           total: totals.total,
           sa_cost_total: totals.saCost,
+          packaging_total: totals.packaging,
+          delivery_cost: totals.deliveryCost,
           reseller_profit: totals.profit,
           status: "pending",
           forwarded_to_admin: true,
@@ -209,6 +244,22 @@ export function NewOrderModal({
       });
       const { error: ie } = await supabase.from("order_items").insert(items);
       if (ie) throw ie;
+
+      // order_items triggers recalc packaging from product defaults — re-apply the order meta last.
+      const { error: me } = await supabase
+        .from("orders")
+        .update({
+          packaging_total: totals.packaging,
+          sa_cost_total: totals.saCost,
+          delivery_cost: totals.deliveryCost,
+          discount: totals.discount,
+          shipping_cost: totals.shipping,
+          subtotal: totals.subtotal,
+          total: totals.total,
+        })
+        .eq("id", order.id);
+      if (me) throw me;
+
 
       toast.success(isAdmin ? "Order created successfully" : "Order created and sent to admin");
       onCreated();
@@ -553,8 +604,61 @@ export function NewOrderModal({
                     )}
                   </div>
                 </div>
+
+                {picked.length > 0 && (
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80">
+                      Charges & adjustments
+                    </label>
+                    <div className="grid gap-3 rounded-xl border bg-muted/20 p-3 sm:grid-cols-2">
+                      <Field label={`Delivery charge (auto ৳${totals.autoShipping.toFixed(0)})`}>
+                        <input
+                          inputMode="numeric"
+                          value={shipOverride}
+                          onChange={(e) => setShipOverride(e.target.value)}
+                          placeholder={`Auto ৳${totals.autoShipping.toFixed(0)}`}
+                          className="w-full rounded-lg border bg-background px-3 py-1.5 text-xs tabular-nums focus:ring-2 focus:ring-primary/20"
+                        />
+                      </Field>
+                      <Field label="Discount (৳)">
+                        <input
+                          inputMode="numeric"
+                          value={discount}
+                          onChange={(e) => setDiscount(e.target.value)}
+                          placeholder="0"
+                          className="w-full rounded-lg border bg-background px-3 py-1.5 text-xs tabular-nums focus:ring-2 focus:ring-primary/20"
+                        />
+                      </Field>
+                      <Field label={`Packaging cost${isAdmin ? "" : " (admin controlled)"}`}>
+                        <input
+                          inputMode="numeric"
+                          disabled={!isAdmin}
+                          value={isAdmin ? packagingOverride : ""}
+                          onChange={(e) => setPackagingOverride(e.target.value)}
+                          placeholder={`৳${totals.packagingDefault.toFixed(0)}`}
+                          className="w-full rounded-lg border bg-background px-3 py-1.5 text-xs tabular-nums focus:ring-2 focus:ring-primary/20 disabled:opacity-70"
+                        />
+                      </Field>
+                      {isAdmin && (
+                        <Field label={`Courier cost (default ৳${totals.shipping.toFixed(0)})`}>
+                          <input
+                            inputMode="numeric"
+                            value={deliveryCostOverride}
+                            onChange={(e) => setDeliveryCostOverride(e.target.value)}
+                            placeholder={`৳${totals.shipping.toFixed(0)}`}
+                            className="w-full rounded-lg border bg-background px-3 py-1.5 text-xs tabular-nums focus:ring-2 focus:ring-primary/20"
+                          />
+                        </Field>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-muted-foreground">
+                      Khali rakhle default value boshbe. Packaging cost shudhu admin/staff change korte parbe.
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
+
 
             {/* Right Column: Order Summary */}
             <aside className="flex flex-col bg-muted/20 p-4 sm:p-6 h-full border-t">
@@ -579,7 +683,18 @@ export function NewOrderModal({
                     </div>
                     <span className="font-black text-foreground">৳{totals.shipping.toFixed(0)}</span>
                   </div>
-                  
+                  {totals.discount > 0 && (
+                    <div className="flex justify-between text-xs text-destructive">
+                      <span className="font-medium">Discount</span>
+                      <span className="font-black">−৳{totals.discount.toFixed(0)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span className="font-medium">Packaging cost</span>
+                    <span className="font-black text-foreground">৳{totals.packaging.toFixed(0)}</span>
+                  </div>
+
+
                   <div className="my-3 border-t-2 border-dashed border-muted" />
                   
                   <div className="flex justify-between items-center">

@@ -43,9 +43,14 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
   const [note, setNote] = useState("");
   const [shippingMode, setShippingMode] = useState<"auto" | "manual">("auto");
   const [shippingManual, setShippingManual] = useState(0);
+  /** Order level adjustments — "" means keep the default value. */
+  const [discount, setDiscount] = useState("");
+  const [packagingInput, setPackagingInput] = useState("");
+  const [deliveryCostInput, setDeliveryCostInput] = useState("");
   /** Money actually collected by the courier. Empty = full order total received. */
   const [received, setReceived] = useState<string>("");
   const [query, setQuery] = useState("");
+
 
   useEffect(() => {
     (async () => {
@@ -70,7 +75,11 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
       setNote((isAdmin ? o.admin_note : o.reseller_note) ?? "");
       setShippingManual(Number(o.shipping_cost ?? 0));
       setReceived(o.received_amount == null ? "" : String(Number(o.received_amount)));
+      setDiscount(Number(o.discount ?? 0) ? String(Number(o.discount)) : "");
+      setPackagingInput(o.packaging_total == null ? "" : String(Number(o.packaging_total)));
+      setDeliveryCostInput(Number(o.delivery_cost ?? 0) ? String(Number(o.delivery_cost)) : "");
       setShippingMode("manual");
+
       setItems(
         (its ?? []).map((it: any) => ({
           id: it.id,
@@ -101,21 +110,47 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
 
   const totals = useMemo(() => {
     const subtotal = items.reduce((s, it) => s + it.reseller_price * it.quantity, 0);
-    const saCost = items.reduce((s, it) => s + it.sa_price * it.quantity, 0);
+    /** Product cost = item base cost minus its packaging part; packaging is tracked order-level. */
+    const packagingDefault = items.reduce((s, it) => {
+      const p = allProducts.find((x) => x.id === it.product_id);
+      return s + Number(p?.packaging_cost ?? 0) * it.quantity;
+    }, 0);
+    const itemCost = items.reduce((s, it) => s + it.sa_price * it.quantity, 0);
+    const productCost = Math.max(itemCost - packagingDefault, 0);
+    const packaging = packagingInput.trim() === "" ? packagingDefault : Math.max(Number(packagingInput) || 0, 0);
+    const saCost = productCost + packaging;
     const shipping = shippingMode === "auto" ? autoShipping : Number(shippingManual || 0);
-    const total = subtotal + shipping;
+    const disc = Math.min(Math.max(Number(discount) || 0, 0), subtotal + shipping);
+    const total = subtotal + shipping - disc;
     const recv = received.trim() === "" ? total : Number(received) || 0;
+    const deliveryCost = deliveryCostInput.trim() === "" ? shipping : Math.max(Number(deliveryCostInput) || 0, 0);
     return {
       subtotal,
       saCost,
+      productCost,
+      packagingDefault,
+      packaging,
       shipping,
+      deliveryCost,
+      discount: disc,
       total,
       received: recv,
       shortfall: Math.max(total - recv, 0),
       // Profit always follows the money really collected.
-      profit: recv - shipping - saCost,
+      profit: recv - deliveryCost - saCost,
     };
-  }, [items, shippingMode, shippingManual, autoShipping, received]);
+  }, [
+    items,
+    allProducts,
+    shippingMode,
+    shippingManual,
+    autoShipping,
+    received,
+    discount,
+    packagingInput,
+    deliveryCostInput,
+  ]);
+
 
   /** Minimum sell price per line = SA base cost of that item. */
   function minFor(it: EditItem) {
@@ -169,29 +204,6 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
       return toast.error(`${low.product_name}: সর্বনিম্ন বিক্রয় মূল্য ৳${minFor(low)} — এর নিচে সেভ করা যাবে না`);
     setBusy(true);
     try {
-      const { error: oe } = await supabase
-        .from("orders")
-        .update({
-          customer_name: sanitizeName(name).trim(),
-          customer_phone: normalizePhone(phone),
-          address_line: address.trim(),
-          city: city.trim() || null,
-          landmark: landmark.trim() || null,
-          area: area as any,
-          payment_method: paymentMethod as any,
-          ...(isAdmin ? { payment_status: paymentStatus as any } : {}),
-          ...(isAdmin ? { admin_note: note || null } : { reseller_note: note || null }),
-          subtotal: totals.subtotal,
-          shipping_cost: totals.shipping,
-          discount: 0,
-          total: totals.total,
-          sa_cost_total: totals.saCost,
-          reseller_profit: totals.profit,
-          ...(isAdmin ? { received_amount: received.trim() === "" ? null : Number(received) || 0 } : {}),
-        })
-        .eq("id", orderId);
-      if (oe) throw oe;
-
       if (removed.length > 0) {
         const { error } = await supabase.from("order_items").delete().in("id", removed);
         if (error) throw error;
@@ -218,6 +230,37 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
           if (error) throw error;
         }
       }
+
+      // Item writes trigger a packaging recalc from product defaults, so order meta is saved last.
+      const { error: oe } = await supabase
+        .from("orders")
+        .update({
+          customer_name: sanitizeName(name).trim(),
+          customer_phone: normalizePhone(phone),
+          address_line: address.trim(),
+          city: city.trim() || null,
+          landmark: landmark.trim() || null,
+          area: area as any,
+          payment_method: paymentMethod as any,
+          ...(isAdmin ? { payment_status: paymentStatus as any } : {}),
+          ...(isAdmin ? { admin_note: note || null } : { reseller_note: note || null }),
+          subtotal: totals.subtotal,
+          shipping_cost: totals.shipping,
+          discount: totals.discount,
+          total: totals.total,
+          sa_cost_total: totals.saCost,
+          reseller_profit: totals.profit,
+          ...(isAdmin
+            ? {
+                packaging_total: totals.packaging,
+                delivery_cost: totals.deliveryCost,
+                received_amount: received.trim() === "" ? null : Number(received) || 0,
+              }
+            : {}),
+        })
+        .eq("id", orderId);
+      if (oe) throw oe;
+
 
       toast.success("Order updated — status unchanged");
       onSaved();
@@ -469,7 +512,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
               {/* Charges */}
               <section className="space-y-3">
                 <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80">
-                  Delivery charge
+                  Charges & adjustments
                 </h3>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <label className="space-y-1">
@@ -488,7 +531,45 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                       onChange={(e) => setShippingManual(Number(e.target.value) || 0)}
                     />
                   </label>
+                  <label className="space-y-1">
+                    <span className="text-[10px] font-semibold text-muted-foreground">Discount (৳)</span>
+                    <input
+                      className={inp}
+                      inputMode="numeric"
+                      placeholder="0"
+                      value={discount}
+                      onChange={(e) => setDiscount(e.target.value)}
+                    />
+                  </label>
+                  <label className="space-y-1">
+                    <span className="text-[10px] font-semibold text-muted-foreground">
+                      Packaging cost{isAdmin ? "" : " (admin controlled)"}
+                    </span>
+                    <input
+                      className={inp}
+                      inputMode="numeric"
+                      disabled={!isAdmin}
+                      placeholder={`৳${totals.packagingDefault.toFixed(0)}`}
+                      value={packagingInput}
+                      onChange={(e) => setPackagingInput(e.target.value)}
+                    />
+                  </label>
+                  {isAdmin && (
+                    <label className="space-y-1">
+                      <span className="text-[10px] font-semibold text-muted-foreground">
+                        Courier cost (default ৳{totals.shipping.toFixed(0)})
+                      </span>
+                      <input
+                        className={inp}
+                        inputMode="numeric"
+                        placeholder={`৳${totals.shipping.toFixed(0)}`}
+                        value={deliveryCostInput}
+                        onChange={(e) => setDeliveryCostInput(e.target.value)}
+                      />
+                    </label>
+                  )}
                 </div>
+
 
                 {isAdmin && (
                   <label className="mt-3 block">
@@ -511,7 +592,11 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                 <div className="rounded-xl border bg-muted/20 p-4 text-xs">
                   <Row label="Subtotal" value={totals.subtotal} />
                   <Row label="Delivery" value={totals.shipping} />
+                  {totals.discount > 0 && <Row label="Discount" value={-totals.discount} />}
+                  <Row label="Packaging cost" value={totals.packaging} />
+                  {isAdmin && <Row label="Courier cost" value={totals.deliveryCost} />}
                   <Row label="Received" value={totals.received} />
+
                   <div className="mt-2 flex justify-between border-t pt-2 text-sm font-bold text-primary">
                     <span>Grand total</span>
                     <span>৳{totals.total.toFixed(0)}</span>
