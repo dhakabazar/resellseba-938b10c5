@@ -549,8 +549,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                     <AdvanceByToggle value={advanceBy} onChange={setAdvanceBy} />
                   </div>
                   <p className="text-[12px] leading-relaxed text-muted-foreground">
-                    কুরিয়ার COD হবে ৳{totals.codDue.toFixed(0)}। অ্যাডমিন নিলে রিসেলারের হিসাব থেকে কাটে না, রিসেলার নিলে
-                    ফাইনাল অ্যামাউন্ট থেকে বাদ যাবে।
+                    অ্যাডমিন নিলে রিসেলারের হিসাব থেকে কাটে না, রিসেলার নিলে ফাইনাল অ্যামাউন্ট থেকে বাদ যাবে।
                   </p>
                 </div>
 
