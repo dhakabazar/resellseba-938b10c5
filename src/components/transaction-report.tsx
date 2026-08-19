@@ -264,6 +264,7 @@ export function TransactionReport({
         r.sell_subtotal,
         r.sell_delivery,
         r.sell_total,
+        r.collected ?? 0,
         r.received,
         r.buy_product,
         r.buy_delivery,
