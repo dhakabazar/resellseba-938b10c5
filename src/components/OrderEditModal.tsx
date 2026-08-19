@@ -499,19 +499,19 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
 
               {/* Charges */}
               <section className="space-y-3">
-                <SectionLabel>ডেলিভারি ও অন্যান্য চার্জ</SectionLabel>
+                <SectionLabel>Delivery & Other Charges</SectionLabel>
                 <div className="grid gap-3 rounded-2xl border bg-muted/20 p-4 sm:grid-cols-2">
                   <MoneyField
-                    label="ডেলিভারি চার্জ (কাস্টমার দিবে)"
-                    hint={`ডিফল্ট ৳${autoShipping.toFixed(0)}`}
+                    label="Delivery Charge (Customer pays)"
+                    hint={`Default ৳${autoShipping.toFixed(0)}`}
                     value={shipInput}
                     onChange={setShipInput}
                     placeholder={autoShipping.toFixed(0)}
                   />
-                  <MoneyField label="ডিসকাউন্ট" value={discount} onChange={setDiscount} placeholder="0" />
+                  <MoneyField label="Discount" value={discount} onChange={setDiscount} placeholder="0" />
                   <MoneyField
-                    label="প্যাকেজিং কস্ট"
-                    hint={isAdmin ? "এডিট করা যাবে" : "শুধু অ্যাডমিন"}
+                    label="Packaging Cost"
+                    hint={isAdmin ? "Editable" : "Admin only"}
                     disabled={!isAdmin}
                     value={packagingInput}
                     onChange={setPackagingInput}
@@ -519,8 +519,8 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                   />
                   {isAdmin && (
                     <MoneyField
-                      label="কুরিয়ার কস্ট (অ্যাডমিন খরচ)"
-                      hint={`ডিফল্ট ৳${totals.shipping.toFixed(0)}`}
+                      label="Courier Cost (Admin cost)"
+                      hint={`Default ৳${totals.shipping.toFixed(0)}`}
                       value={deliveryCostInput}
                       onChange={setDeliveryCostInput}
                       placeholder={totals.shipping.toFixed(0)}
@@ -531,12 +531,12 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                   খালি রাখলে ডিফল্ট বসবে। ডেলিভারি চার্জ = কাস্টমার দিবে, কুরিয়ার কস্ট = অ্যাডমিনের খরচ।
                 </p>
 
-                <SectionLabel>অ্যাডভান্স পেমেন্ট</SectionLabel>
+                <SectionLabel>Advance Payment</SectionLabel>
                 <div className="space-y-3 rounded-2xl border border-primary/20 bg-primary/[0.03] p-4">
                   <div className="grid gap-3 sm:grid-cols-2">
                     <MoneyField
-                      label="অ্যাডভান্স অ্যামাউন্ট"
-                      hint="আগে পেলে"
+                      label="Advance Amount"
+                      hint="If already received"
                       value={advance}
                       onChange={setAdvance}
                       placeholder="0"
@@ -549,10 +549,10 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                   </p>
                 </div>
 
-                <SectionLabel>পেমেন্ট মেথড ও নোট</SectionLabel>
+                <SectionLabel>Payment Method & Note</SectionLabel>
                 <div className="grid gap-3 rounded-2xl border bg-muted/20 p-4 sm:grid-cols-2">
                   <label className="space-y-1">
-                    <span className="text-[13px] font-bold text-foreground/80">পেমেন্ট মেথড</span>
+                    <span className="text-[13px] font-semibold text-foreground/80">Payment Method</span>
                     <select className={inp} value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
                       <option value="cod">Cash on Delivery</option>
                       <option value="bkash">bKash</option>
@@ -563,8 +563,8 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                     </select>
                   </label>
                   <label className="space-y-1">
-                    <span className="text-[13px] font-bold text-foreground/80">
-                      {isAdmin ? "অ্যাডমিন নোট" : "আপনার নোট"}
+                    <span className="text-[13px] font-semibold text-foreground/80">
+                      {isAdmin ? "Admin Note" : "Your Note"}
                     </span>
                     <input className={inp} value={note} onChange={(e) => setNote(e.target.value)} />
                   </label>
@@ -575,7 +575,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
 
                 {isAdmin && (
                   <label className="mt-3 block">
-                    <span className="text-[13px] font-bold text-foreground/80">
+                    <span className="text-[13px] font-semibold text-foreground/80">
                       Received amount (partial delivery)
                     </span>
                     <input
@@ -586,7 +586,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                       onChange={(e) => setReceived(e.target.value)}
                     />
                     <span className="mt-1 block text-[10px] text-muted-foreground">
-                      Courier partial payment dile ekhane collected amount din — profit ei amount theke calculate hobe.
+                      If courier paid partially, enter collected amount here — profit is calculated from this amount.
                     </span>
                   </label>
                 )}
