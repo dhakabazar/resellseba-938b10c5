@@ -315,7 +315,7 @@ function AdminOrdersPage() {
             className="flex-row items-center justify-between"
             actions={
                 <div className="flex items-center gap-2">
-                  <BulkScanButton onDone={() => load()} />
+                  <BulkScanButton mode={tab === "pending_return" ? "return" : "handover"} onDone={() => load()} />
                   <button
                       onClick={() => setOpen(true)}
                       className="btn-brand inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium"
