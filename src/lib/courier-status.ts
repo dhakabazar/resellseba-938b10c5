@@ -174,43 +174,42 @@ export function courierStatusLabel(raw: string | null | undefined, provider?: st
 export type OrderTabKey =
   | "all"
   | "new"
-  | "confirmed"
   | "forwarded"
+  | "confirmed"
+  | "packaging"
   | "rts"
   | "courier"
-  | "packaging"
-  | "processing"
   | "delivered"
-  | "partial"
   | "pending_partial"
   | "partial_full"
   | "partial_item"
   | "partial_delivery"
   | "pending_return"
-  | "damaged"
   | "returned"
+  | "damaged"
   | "cancelled";
 
+/** Single source of truth for the order flow — tabs, modals and report filters. */
 export const ORDER_TABS: { key: OrderTabKey; label: string; statuses: OrderStatus[] }[] = [
   { key: "all", label: "All Orders", statuses: [] },
   { key: "new", label: "New Order", statuses: ["draft", "pending"] },
+  { key: "forwarded", label: "Send To admin", statuses: ["forwarded"] },
   { key: "confirmed", label: "Confirmed", statuses: ["confirmed"] },
-  { key: "forwarded", label: "Forwarded", statuses: ["forwarded"] },
   { key: "packaging", label: "Packaging", statuses: ["packaging"] },
   { key: "rts", label: "RTS Order", statuses: ["ready_to_ship"] },
-  { key: "processing", label: "Processing", statuses: ["processing"] },
-  { key: "courier", label: "To Courier", statuses: ["shipped"] },
+  { key: "courier", label: "To Courier", statuses: ["shipped", "processing"] },
   { key: "delivered", label: "Delivered", statuses: ["delivered"] },
   { key: "pending_partial", label: "Pending Partial", statuses: ["pending_partial"] },
-  { key: "partial_full", label: "Partial (Full item)", statuses: ["partial_full"] },
+  { key: "partial_full", label: "Partial (Full item)", statuses: ["partial_full", "partial"] },
   { key: "partial_item", label: "Partial (Item)", statuses: ["partial_item"] },
-  { key: "partial_delivery", label: "Partial (Delivery)", statuses: ["partial_delivery"] },
+  { key: "partial_delivery", label: "Partial (Delivery Charge)", statuses: ["partial_delivery"] },
   { key: "pending_return", label: "Pending Return", statuses: ["pending_return"] },
   { key: "returned", label: "Returned", statuses: ["returned"] },
   { key: "damaged", label: "Damaged", statuses: ["damaged"] },
   { key: "cancelled", label: "Cancelled", statuses: ["cancelled"] },
 ];
 
+/** Flow order for status pickers — mirrors ORDER_TABS exactly. */
 export const ORDER_STATUS_OPTIONS: OrderStatus[] = [
   "pending",
   "forwarded",
