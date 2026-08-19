@@ -350,6 +350,18 @@ function AdminOrdersPage() {
         />
         <div className="mb-4 flex flex-wrap items-center gap-2">
             <OrderSearch mode={searchMode} onMode={setSearchMode} value={filters.q} onChange={(v) => setFilters({ ...filters, q: v })} />
+            <SearchableSelect
+              label="Reseller"
+              options={resellerOptions.map((r) => ({ value: r.value, label: r.label }))}
+              value={filters.reseller}
+              onChange={(v) => {
+                setFilters({ ...filters, reseller: v });
+                if (v) setTab("all");
+              }}
+              placeholder="All resellers"
+              searchPlaceholder="Search reseller…"
+              className="min-w-[220px]"
+            />
             <div className="ml-auto flex items-center gap-2">
               <span className="text-xs font-medium text-muted-foreground hidden sm:inline">Per page:</span>
               <select 
