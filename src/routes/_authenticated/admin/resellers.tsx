@@ -1069,72 +1069,11 @@ function DepositModal({
             </div>
           </form>
 
-          <div className="overflow-hidden rounded-md border">
-            <table className="w-full text-xs">
-              <thead className="bg-muted/40 text-left uppercase text-muted-foreground">
-                <tr>
-                  <th className="p-2">Date</th>
-                  <th>Amount</th>
-                  <th>Method</th>
-                  <th>Reference</th>
-                  <th>Note</th>
-                  <th className="p-2 text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((r) => (
-                  <tr key={r.id} className="border-t">
-                    <td className="p-2">{new Date(r.created_at).toLocaleDateString()}</td>
-                    <td className="font-medium">৳{Number(r.amount).toLocaleString()}</td>
-                    <td className="capitalize">{r.method ?? "—"}</td>
-                    <td className="text-muted-foreground">{r.reference ?? "—"}</td>
-                    <td className="text-muted-foreground">{r.note ?? "—"}</td>
-                    <td className="p-2 text-right">
-                      <button
-                        type="button"
-                        onClick={() => setDeleteRow(r)}
-                        className="rounded-md p-1 text-destructive hover:bg-destructive/10"
-                        aria-label="Delete entry"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-                {!loading && rows.length === 0 && (
-                  <tr>
-                    <td colSpan={6} className="p-6 text-center text-muted-foreground">
-                      No deposit entries yet.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+          <div className="space-y-2">
+            <div className="text-xs font-semibold">Deposit transactions</div>
+            <DepositLedger compact resellerId={reseller.id} onChanged={loadRows} />
           </div>
 
-          {deleteRow && (
-            <ConfirmModal
-              isOpen
-              variant="danger"
-              title="Delete deposit entry?"
-              description={`Deleting the ৳${Number(deleteRow.amount).toLocaleString()} (${deleteRow.method ?? "—"}) entry will reduce the reseller's deposit balance and block order confirmation if a deposit becomes due.`}
-              confirmText="Delete"
-              cancelText="Cancel"
-              onClose={() => setDeleteRow(null)}
-              onConfirm={async () => {
-                const row = deleteRow;
-                setDeleteRow(null);
-                if (!row) return;
-                const { error } = await supabase.from("reseller_deposits").delete().eq("id", row.id);
-                if (error) {
-                  toast.error(error.message);
-                  return;
-                }
-                toast.success("Entry deleted");
-                loadRows();
-              }}
-            />
-          )}
         </div>
       </div>
     </div>
