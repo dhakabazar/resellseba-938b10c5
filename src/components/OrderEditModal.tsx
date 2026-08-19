@@ -529,64 +529,61 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
 
               {/* Charges */}
               <section className="space-y-3">
-                <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80">
-                  Charges & adjustments
-                </h3>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <label className="space-y-1">
-                    <span className="text-[10px] font-semibold text-muted-foreground">Delivery charge mode</span>
+                <SectionLabel>Charges &amp; adjustments</SectionLabel>
+                <div className="grid gap-3 rounded-2xl border bg-muted/20 p-4 sm:grid-cols-2">
+                  <div>
+                    <div className="mb-1.5 text-[11px] font-semibold">Delivery charge mode</div>
                     <select className={inp} value={shippingMode} onChange={(e) => setShippingMode(e.target.value as any)}>
                       <option value="auto">Auto (product rules)</option>
                       <option value="manual">Manual override</option>
                     </select>
-                  </label>
-                  <label className="space-y-1">
-                    <span className="text-[10px] font-semibold text-muted-foreground">Delivery charge</span>
-                    <input
-                      className={inp}
-                      disabled={shippingMode === "auto"}
-                      value={shippingMode === "auto" ? autoShipping : shippingManual}
-                      onChange={(e) => setShippingManual(Number(e.target.value) || 0)}
-                    />
-                  </label>
-                  <label className="space-y-1">
-                    <span className="text-[10px] font-semibold text-muted-foreground">Discount (৳)</span>
-                    <input
-                      className={inp}
-                      inputMode="numeric"
-                      placeholder="0"
-                      value={discount}
-                      onChange={(e) => setDiscount(e.target.value)}
-                    />
-                  </label>
-                  <label className="space-y-1">
-                    <span className="text-[10px] font-semibold text-muted-foreground">
-                      Packaging cost{isAdmin ? "" : " (admin controlled)"}
-                    </span>
-                    <input
-                      className={inp}
-                      inputMode="numeric"
-                      disabled={!isAdmin}
-                      placeholder={`৳${totals.packagingDefault.toFixed(0)}`}
-                      value={packagingInput}
-                      onChange={(e) => setPackagingInput(e.target.value)}
-                    />
-                  </label>
+                  </div>
+                  <MoneyField
+                    label="Delivery charge"
+                    hint={shippingMode === "auto" ? "auto" : "manual"}
+                    disabled={shippingMode === "auto"}
+                    value={shippingMode === "auto" ? autoShipping : shippingManual}
+                    onChange={(v) => setShippingManual(Number(v) || 0)}
+                  />
+                  <MoneyField label="Discount" value={discount} onChange={setDiscount} placeholder="0" />
+                  <MoneyField
+                    label="Packaging cost"
+                    hint={isAdmin ? "editable" : "admin controlled"}
+                    disabled={!isAdmin}
+                    value={packagingInput}
+                    onChange={setPackagingInput}
+                    placeholder={totals.packagingDefault.toFixed(0)}
+                  />
                   {isAdmin && (
-                    <label className="space-y-1">
-                      <span className="text-[10px] font-semibold text-muted-foreground">
-                        Courier cost (default ৳{totals.shipping.toFixed(0)})
-                      </span>
-                      <input
-                        className={inp}
-                        inputMode="numeric"
-                        placeholder={`৳${totals.shipping.toFixed(0)}`}
-                        value={deliveryCostInput}
-                        onChange={(e) => setDeliveryCostInput(e.target.value)}
-                      />
-                    </label>
+                    <MoneyField
+                      label="Courier cost"
+                      hint={`default ৳${totals.shipping.toFixed(0)}`}
+                      value={deliveryCostInput}
+                      onChange={setDeliveryCostInput}
+                      placeholder={totals.shipping.toFixed(0)}
+                    />
                   )}
                 </div>
+
+                <SectionLabel>Advance received</SectionLabel>
+                <div className="space-y-3 rounded-2xl border border-primary/20 bg-primary/[0.03] p-4">
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <MoneyField
+                      label="Advance amount"
+                      hint="customer age dile"
+                      value={advance}
+                      onChange={setAdvance}
+                      placeholder="0"
+                    />
+                    <AdvanceByToggle value={advanceBy} onChange={setAdvanceBy} />
+                  </div>
+                  <p className="text-[10px] leading-relaxed text-muted-foreground">
+                    Advance thakle courier COD hobe ৳{totals.codDue.toFixed(0)}. Admin receive korle taka admin er kachei
+                    thake, tai reseller er hisab theke kaTa hoy na. Reseller receive korle sei taka final amount theke bad
+                    jabe.
+                  </p>
+                </div>
+
 
 
                 {isAdmin && (
