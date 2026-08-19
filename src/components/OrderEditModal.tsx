@@ -75,7 +75,11 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
       setNote((isAdmin ? o.admin_note : o.reseller_note) ?? "");
       setShippingManual(Number(o.shipping_cost ?? 0));
       setReceived(o.received_amount == null ? "" : String(Number(o.received_amount)));
+      setDiscount(Number(o.discount ?? 0) ? String(Number(o.discount)) : "");
+      setPackagingInput(o.packaging_total == null ? "" : String(Number(o.packaging_total)));
+      setDeliveryCostInput(Number(o.delivery_cost ?? 0) ? String(Number(o.delivery_cost)) : "");
       setShippingMode("manual");
+
       setItems(
         (its ?? []).map((it: any) => ({
           id: it.id,
