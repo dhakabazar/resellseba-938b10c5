@@ -4,7 +4,6 @@ import { useServerFn } from "@tanstack/react-start";
 import { getCatalogProduct } from "@/lib/catalog.functions";
 import { CopyBtn } from "@/components/catalog/shell";
 import { ImagePickerButton } from "@/components/catalog/image-picker";
-import { useResellerTools } from "@/components/store/reseller-tools";
 import { bdt } from "@/lib/finance-report";
 import { ArrowLeft, Loader2, Truck } from "lucide-react";
 
@@ -30,7 +29,8 @@ function CatalogDetails() {
   const [state, setState] = useState<"loading" | "done">("loading");
   const [p, setP] = useState<P>(null);
   const [idx, setIdx] = useState(0);
-  const showPrices = useResellerTools();
+  // Master catalog is a reseller-facing showcase: admin price & profit are always visible.
+  const showPrices = true;
 
   useEffect(() => {
     setState("loading");

@@ -4,7 +4,6 @@ import { useServerFn } from "@tanstack/react-start";
 import { getCatalog } from "@/lib/catalog.functions";
 import { CopyBtn, useCatalogBrand } from "@/components/catalog/shell";
 import { ImagePickerButton } from "@/components/catalog/image-picker";
-import { useResellerTools } from "@/components/store/reseller-tools";
 import { ProductCodeChip } from "@/components/product-code";
 import { bdt } from "@/lib/finance-report";
 import { Boxes, Layers, Loader2, Search, Sparkles, Tag } from "lucide-react";
@@ -55,7 +54,8 @@ function CatalogIndex() {
   const fetchCatalog = useServerFn(getCatalog);
   const [data, setData] = useState<{ categories: Cat[]; brands: { id: string; name: string; slug: string }[]; products: Prod[] } | null>(null);
   const [term, setTerm] = useState(q ?? "");
-  const showPrices = useResellerTools();
+  // Master catalog is a reseller-facing showcase: admin price & profit are always visible.
+  const showPrices = true;
 
   useEffect(() => {
     fetchCatalog().then((d) => setData(d as never));
