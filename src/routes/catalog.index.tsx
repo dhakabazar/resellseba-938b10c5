@@ -50,7 +50,7 @@ type Prod = {
 };
 
 function CatalogIndex() {
-  const { category, brand, q } = Route.useSearch();
+  const { category, brand, q, page } = Route.useSearch();
   const { banner, siteName } = useCatalogBrand();
   const navigate = useNavigate();
   const fetchCatalog = useServerFn(getCatalog);
@@ -58,6 +58,8 @@ function CatalogIndex() {
   const [term, setTerm] = useState(q ?? "");
   // Master catalog is a reseller-facing showcase: admin price & profit are always visible.
   const showPrices = true;
+  const perPage = 100;
+  const currentPage = page ?? 1;
 
   useEffect(() => {
     fetchCatalog().then((d) => setData(d as never));
@@ -74,6 +76,11 @@ function CatalogIndex() {
     if (t) list = list.filter((p) => p.name.toLowerCase().includes(t) || p.code.includes(t));
     return list;
   }, [data, activeCat, activeBrand, q]);
+
+  const pagedRows = usePaginated(rows, currentPage, perPage);
+
+  const setPage = (p: number) =>
+    void navigate({ to: "/catalog", search: { category, brand, q, page: p > 1 ? p : undefined } });
 
   return (
     <div>
