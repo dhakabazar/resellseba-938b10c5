@@ -154,7 +154,7 @@ function CatalogIndex() {
             <div className="mt-6 flex flex-wrap gap-2">
               <Link
                 to="/catalog"
-                search={{}}
+                search={{ page: undefined }}
                 className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
                   !category ? "border-primary bg-primary text-primary-foreground" : "hover:border-primary/50"
                 }`}
@@ -165,7 +165,7 @@ function CatalogIndex() {
                 <Link
                   key={c.id}
                   to="/catalog"
-                  search={{ category: c.slug }}
+                  search={{ category: c.slug, page: undefined }}
                   className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
                     category === c.slug ? "border-primary bg-primary text-primary-foreground" : "hover:border-primary/50"
                   }`}
