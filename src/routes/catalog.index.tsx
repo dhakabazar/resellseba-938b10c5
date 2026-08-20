@@ -16,6 +16,7 @@ export const Route = createFileRoute("/catalog/")({
     category: typeof s.category === "string" && s.category ? s.category : undefined,
     brand: typeof s.brand === "string" && s.brand ? s.brand : undefined,
     q: typeof s.q === "string" && s.q ? s.q : undefined,
+    page: typeof s.page === "number" && s.page > 1 ? s.page : undefined,
   }),
   head: () => ({
     meta: [
