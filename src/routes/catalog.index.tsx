@@ -117,7 +117,7 @@ function CatalogIndex() {
             className="mx-auto mt-7 flex max-w-md items-center gap-2"
             onSubmit={(e) => {
               e.preventDefault();
-              void navigate({ to: "/catalog", search: { category, brand, q: term.trim() || undefined } });
+              void navigate({ to: "/catalog", search: { category, brand, q: term.trim() || undefined, page: undefined } });
             }}
           >
             <div className="relative flex-1">
