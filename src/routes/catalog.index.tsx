@@ -6,15 +6,17 @@ import { CopyBtn, useCatalogBrand } from "@/components/catalog/shell";
 import { ImagePickerButton } from "@/components/catalog/image-picker";
 import { ProductCodeChip } from "@/components/product-code";
 import { bdt } from "@/lib/finance-report";
+import { Pagination, usePaginated } from "@/components/data-list";
 import { Boxes, Layers, Loader2, Search, Sparkles, Tag } from "lucide-react";
 
-type Search = { category?: string; brand?: string; q?: string };
+type Search = { category?: string; brand?: string; q?: string; page?: number };
 
 export const Route = createFileRoute("/catalog/")({
   validateSearch: (s: Record<string, unknown>): Search => ({
     category: typeof s.category === "string" && s.category ? s.category : undefined,
     brand: typeof s.brand === "string" && s.brand ? s.brand : undefined,
     q: typeof s.q === "string" && s.q ? s.q : undefined,
+    page: typeof s.page === "number" && s.page > 1 ? s.page : undefined,
   }),
   head: () => ({
     meta: [
@@ -48,7 +50,7 @@ type Prod = {
 };
 
 function CatalogIndex() {
-  const { category, brand, q } = Route.useSearch();
+  const { category, brand, q, page } = Route.useSearch();
   const { banner, siteName } = useCatalogBrand();
   const navigate = useNavigate();
   const fetchCatalog = useServerFn(getCatalog);
@@ -56,6 +58,8 @@ function CatalogIndex() {
   const [term, setTerm] = useState(q ?? "");
   // Master catalog is a reseller-facing showcase: admin price & profit are always visible.
   const showPrices = true;
+  const perPage = 100;
+  const currentPage = page ?? 1;
 
   useEffect(() => {
     fetchCatalog().then((d) => setData(d as never));
@@ -72,6 +76,11 @@ function CatalogIndex() {
     if (t) list = list.filter((p) => p.name.toLowerCase().includes(t) || p.code.includes(t));
     return list;
   }, [data, activeCat, activeBrand, q]);
+
+  const pagedRows = usePaginated(rows, currentPage, perPage);
+
+  const setPage = (p: number) =>
+    void navigate({ to: "/catalog", search: { category, brand, q, page: p > 1 ? p : undefined } });
 
   return (
     <div>
@@ -108,7 +117,7 @@ function CatalogIndex() {
             className="mx-auto mt-7 flex max-w-md items-center gap-2"
             onSubmit={(e) => {
               e.preventDefault();
-              void navigate({ to: "/catalog", search: { category, brand, q: term.trim() || undefined } });
+              void navigate({ to: "/catalog", search: { category, brand, q: term.trim() || undefined, page: undefined } });
             }}
           >
             <div className="relative flex-1">
@@ -145,7 +154,7 @@ function CatalogIndex() {
             <div className="mt-6 flex flex-wrap gap-2">
               <Link
                 to="/catalog"
-                search={{}}
+                search={{ page: undefined }}
                 className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
                   !category ? "border-primary bg-primary text-primary-foreground" : "hover:border-primary/50"
                 }`}
@@ -156,7 +165,7 @@ function CatalogIndex() {
                 <Link
                   key={c.id}
                   to="/catalog"
-                  search={{ category: c.slug }}
+                  search={{ category: c.slug, page: undefined }}
                   className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
                     category === c.slug ? "border-primary bg-primary text-primary-foreground" : "hover:border-primary/50"
                   }`}
@@ -173,70 +182,73 @@ function CatalogIndex() {
                 কোনো প্রোডাক্ট পাওয়া যায়নি।
               </div>
             ) : (
-              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-                {rows.map((p) => (
-                  <div key={p.id} className="group surface-card flex flex-col overflow-hidden">
-                    <Link to="/catalog/$slug" params={{ slug: p.slug }} className="relative block aspect-square overflow-hidden bg-muted">
-                      {p.image ? (
-                        <img
-                          src={p.image}
-                          alt={p.name}
-                          loading="lazy"
-                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                        />
-                      ) : (
-                        <div className="grid h-full w-full place-items-center text-xs text-muted-foreground">No image</div>
-                      )}
-                    </Link>
-                    <div className="flex flex-1 flex-col p-4">
-                      <div className="flex items-center justify-between gap-2">
-                        <ProductCodeChip code={p.code} />
+              <>
+                <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                  {pagedRows.map((p) => (
+                    <div key={p.id} className="group surface-card flex flex-col overflow-hidden">
+                      <Link to="/catalog/$slug" params={{ slug: p.slug }} className="relative block aspect-square overflow-hidden bg-muted">
+                        {p.image ? (
+                          <img
+                            src={p.image}
+                            alt={p.name}
+                            loading="lazy"
+                            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                        ) : (
+                          <div className="grid h-full w-full place-items-center text-xs text-muted-foreground">No image</div>
+                        )}
+                      </Link>
+                      <div className="flex flex-1 flex-col p-4">
+                        <div className="flex items-center justify-between gap-2">
+                          <ProductCodeChip code={p.code} />
+                          <Link
+                            to="/catalog/$slug"
+                            params={{ slug: p.slug }}
+                            className="rounded-lg border px-2.5 py-1 text-[11px] font-semibold hover:border-primary/50 hover:text-primary"
+                          >
+                            Details
+                          </Link>
+                        </div>
                         <Link
                           to="/catalog/$slug"
                           params={{ slug: p.slug }}
-                          className="rounded-lg border px-2.5 py-1 text-[11px] font-semibold hover:border-primary/50 hover:text-primary"
+                          className="mt-2 line-clamp-2 text-sm font-bold leading-tight hover:text-primary"
                         >
-                          Details
+                          {p.name}
                         </Link>
-                      </div>
-                      <Link
-                        to="/catalog/$slug"
-                        params={{ slug: p.slug }}
-                        className="mt-2 line-clamp-2 text-sm font-bold leading-tight hover:text-primary"
-                      >
-                        {p.name}
-                      </Link>
-                      {showPrices ? (
-                        <div className="mt-3 grid grid-cols-3 gap-2 rounded-xl border bg-muted/40 p-2.5 text-[11px]">
-                          <div>
-                            <div className="font-bold uppercase tracking-wide text-muted-foreground">Admin</div>
-                            <div className="text-sm font-bold">{bdt(p.resellerPrice)}</div>
+                        {showPrices ? (
+                          <div className="mt-3 grid grid-cols-3 gap-2 rounded-xl border bg-muted/40 p-2.5 text-[11px]">
+                            <div>
+                              <div className="font-bold uppercase tracking-wide text-muted-foreground">Admin</div>
+                              <div className="text-sm font-bold">{bdt(p.resellerPrice)}</div>
+                            </div>
+                            <div>
+                              <div className="font-bold uppercase tracking-wide text-muted-foreground">Sale</div>
+                              <div className="text-sm font-black text-primary">{bdt(p.price)}</div>
+                            </div>
+                            <div>
+                              <div className="font-bold uppercase tracking-wide text-muted-foreground">Profit</div>
+                              <div className="text-sm font-bold text-emerald-600">{bdt(Math.max(0, p.price - p.resellerPrice))}</div>
+                            </div>
                           </div>
-                          <div>
-                            <div className="font-bold uppercase tracking-wide text-muted-foreground">Sale</div>
-                            <div className="text-sm font-black text-primary">{bdt(p.price)}</div>
+                        ) : (
+                          <div className="mt-3">
+                            <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Sale price</div>
+                            <div className="text-base font-black text-primary">{bdt(p.price)}</div>
                           </div>
-                          <div>
-                            <div className="font-bold uppercase tracking-wide text-muted-foreground">Profit</div>
-                            <div className="text-sm font-bold text-emerald-600">{bdt(Math.max(0, p.price - p.resellerPrice))}</div>
-                          </div>
+                        )}
+                        <div className="mt-3 flex flex-wrap gap-1.5 border-t pt-3">
+                          <CopyBtn text={p.name} title="Title" label="Title copied" />
+                          <CopyBtn text={`${p.name}\n\n${p.short}\n\nPrice: ${bdt(p.price)}`} title="Details" label="Details copied" />
+                          <ImagePickerButton images={p.images ?? (p.image ? [p.image] : [])} baseName={p.name} />
                         </div>
-                      ) : (
-                        <div className="mt-3">
-                          <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Sale price</div>
-                          <div className="text-base font-black text-primary">{bdt(p.price)}</div>
-                        </div>
-                      )}
-                      <div className="mt-3 flex flex-wrap gap-1.5 border-t pt-3">
-                        <CopyBtn text={p.name} title="Title" label="Title copied" />
-                        <CopyBtn text={`${p.name}\n\n${p.short}\n\nPrice: ${bdt(p.price)}`} title="Details" label="Details copied" />
-                        <ImagePickerButton images={p.images ?? (p.image ? [p.image] : [])} baseName={p.name} />
                       </div>
-                    </div>
 
-                  </div>
-                ))}
-              </div>
+                    </div>
+                  ))}
+                </div>
+                <Pagination page={currentPage} perPage={perPage} total={rows.length} onPage={setPage} />
+              </>
             )}
           </section>
         </>
