@@ -118,7 +118,6 @@ export function NewOrderModal({
   const totals = useMemo(() => {
     let subtotal = 0;
     let productCost = 0;
-    let packagingDefault = 0;
     let autoShipping = 0;
     let shipFrom: string | null = null;
     let isUniversalFree = true;
@@ -127,7 +126,6 @@ export function NewOrderModal({
     for (const { line, p, sellPrice } of picked) {
       subtotal += Number(sellPrice) * line.qty;
       productCost += Number(p.reseller_price) * line.qty;
-      packagingDefault += Number(p.packaging_cost) * line.qty;
 
       const mode = deliveryMode(p);
       if (mode !== "free") isUniversalFree = false;
@@ -140,6 +138,11 @@ export function NewOrderModal({
       }
     }
 
+    const packagingDefault = packagingTotal(
+      picked.map(({ line, p }) => ({ packaging: Number(p.packaging_cost ?? 0), qty: line.qty })),
+      packagingSum,
+    );
+
     // Determine if we should show area selection
     // If all items are "free", or all items are "flat" with the same charge, we don't need area picker
     const showAreaPicker = picked.length > 0 && !isUniversalFree && !isUniversalFlat;
@@ -147,6 +150,7 @@ export function NewOrderModal({
     const shipping = shipOverride.trim() === "" ? autoShipping : Math.max(Number(shipOverride) || 0, 0);
     const packaging =
       packagingOverride.trim() === "" ? packagingDefault : Math.max(Number(packagingOverride) || 0, 0);
+
     const disc = Math.min(Math.max(Number(discount) || 0, 0), subtotal + shipping);
     const total = subtotal + shipping - disc;
     const saCost = productCost + packaging;
