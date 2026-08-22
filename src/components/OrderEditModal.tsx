@@ -5,6 +5,9 @@ import { addressError, nameError, normalizePhone, phoneError, sanitizeName } fro
 import { Loader2, Minus, Plus, Search, ShoppingCart, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { AdvanceByToggle, MoneyField, SectionLabel } from "@/components/order-form-fields";
+import { packagingModeHint, packagingTotal } from "@/lib/packaging";
+import { useAdvancedSettings } from "@/lib/advanced-settings";
+
 
 
 type EditItem = {
@@ -50,6 +53,10 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
   /** Advance already collected + who is holding that cash. */
   const [advance, setAdvance] = useState("");
   const [advanceBy, setAdvanceBy] = useState<"admin" | "reseller">("reseller");
+  /** Packaging charge rule from Admin → System → Advanced settings. */
+  const { settings: advanced } = useAdvancedSettings();
+  const packagingSum = advanced.packagingChargeSum;
+
 
   /** Money actually collected by the courier. Empty = full order total received. */
   const [received, setReceived] = useState<string>("");
@@ -115,12 +122,16 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
   const totals = useMemo(() => {
     const subtotal = items.reduce((s, it) => s + it.reseller_price * it.quantity, 0);
     /** Product cost = item base cost minus its packaging part; packaging is tracked order-level. */
-    const packagingDefault = items.reduce((s, it) => {
+    const packagingLines = items.map((it) => {
       const p = allProducts.find((x) => x.id === it.product_id);
-      return s + Number(p?.packaging_cost ?? 0) * it.quantity;
-    }, 0);
+      return { packaging: Number(p?.packaging_cost ?? 0), qty: it.quantity };
+    });
+    /** Always the per-item sum — sa_price already carries each item's packaging. */
+    const packagingInItems = packagingTotal(packagingLines, true);
+    const packagingDefault = packagingTotal(packagingLines, packagingSum);
     const itemCost = items.reduce((s, it) => s + it.sa_price * it.quantity, 0);
-    const productCost = Math.max(itemCost - packagingDefault, 0);
+    const productCost = Math.max(itemCost - packagingInItems, 0);
+
     const packaging = packagingInput.trim() === "" ? packagingDefault : Math.max(Number(packagingInput) || 0, 0);
     const saCost = productCost + packaging;
     const shipping = shipInput.trim() === "" ? autoShipping : Math.max(Number(shipInput) || 0, 0);
@@ -166,8 +177,9 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
     deliveryCostInput,
     advance,
     advanceBy,
-
+    packagingSum,
   ]);
+
 
 
   /** Minimum sell price per line = SA base cost of that item. */
@@ -518,7 +530,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                   <MoneyField label="Discount" value={discount} onChange={setDiscount} placeholder="0" />
                   <MoneyField
                     label="Packaging Cost"
-                    hint={isAdmin ? "Editable" : "Admin only"}
+                    hint={packagingSum ? "Sum of all items" : "Highest item only"}
                     disabled={!isAdmin}
                     value={packagingInput}
                     onChange={setPackagingInput}
@@ -536,7 +548,10 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                 </div>
                 <p className="text-[12px] leading-relaxed text-muted-foreground">
                   খালি রাখলে ডিফল্ট বসবে। ডেলিভারি চার্জ = কাস্টমার দিবে, কুরিয়ার কস্ট = অ্যাডমিনের খরচ।
+                  <br />
+                  {packagingModeHint(packagingSum)}
                 </p>
+
 
                 <SectionLabel>Advance Payment</SectionLabel>
                 <div className="space-y-3 rounded-2xl border border-primary/20 bg-primary/[0.03] p-4">
