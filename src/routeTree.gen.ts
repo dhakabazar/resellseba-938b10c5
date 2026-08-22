@@ -28,7 +28,6 @@ import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authentic
 import { Route as SCodeThanksRouteImport } from './routes/s.$code.thanks'
 import { Route as SCodeCheckoutRouteImport } from './routes/s.$code.checkout'
 import { Route as ApiPublicRobotsRouteImport } from './routes/api/public/robots'
-import { Route as ApiPublicEnvcheckRouteImport } from './routes/api/public/envcheck'
 import { Route as AuthenticatedResellerVisitorsRouteImport } from './routes/_authenticated/reseller/visitors'
 import { Route as AuthenticatedResellerTransactionsRouteImport } from './routes/_authenticated/reseller/transactions'
 import { Route as AuthenticatedResellerThemeRouteImport } from './routes/_authenticated/reseller/theme'
@@ -178,11 +177,6 @@ const SCodeCheckoutRoute = SCodeCheckoutRouteImport.update({
 const ApiPublicRobotsRoute = ApiPublicRobotsRouteImport.update({
   id: '/api/public/robots',
   path: '/api/public/robots',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicEnvcheckRoute = ApiPublicEnvcheckRouteImport.update({
-  id: '/api/public/envcheck',
-  path: '/api/public/envcheck',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedResellerVisitorsRoute =
@@ -560,7 +554,6 @@ export interface FileRoutesByFullPath {
   '/reseller/theme': typeof AuthenticatedResellerThemeRoute
   '/reseller/transactions': typeof AuthenticatedResellerTransactionsRoute
   '/reseller/visitors': typeof AuthenticatedResellerVisitorsRoute
-  '/api/public/envcheck': typeof ApiPublicEnvcheckRoute
   '/api/public/robots': typeof ApiPublicRobotsRoute
   '/s/$code/checkout': typeof SCodeCheckoutRoute
   '/s/$code/thanks': typeof SCodeThanksRoute
@@ -631,7 +624,6 @@ export interface FileRoutesByTo {
   '/reseller/theme': typeof AuthenticatedResellerThemeRoute
   '/reseller/transactions': typeof AuthenticatedResellerTransactionsRoute
   '/reseller/visitors': typeof AuthenticatedResellerVisitorsRoute
-  '/api/public/envcheck': typeof ApiPublicEnvcheckRoute
   '/api/public/robots': typeof ApiPublicRobotsRoute
   '/s/$code/checkout': typeof SCodeCheckoutRoute
   '/s/$code/thanks': typeof SCodeThanksRoute
@@ -708,7 +700,6 @@ export interface FileRoutesById {
   '/_authenticated/reseller/theme': typeof AuthenticatedResellerThemeRoute
   '/_authenticated/reseller/transactions': typeof AuthenticatedResellerTransactionsRoute
   '/_authenticated/reseller/visitors': typeof AuthenticatedResellerVisitorsRoute
-  '/api/public/envcheck': typeof ApiPublicEnvcheckRoute
   '/api/public/robots': typeof ApiPublicRobotsRoute
   '/s/$code/checkout': typeof SCodeCheckoutRoute
   '/s/$code/thanks': typeof SCodeThanksRoute
@@ -785,7 +776,6 @@ export interface FileRouteTypes {
     | '/reseller/theme'
     | '/reseller/transactions'
     | '/reseller/visitors'
-    | '/api/public/envcheck'
     | '/api/public/robots'
     | '/s/$code/checkout'
     | '/s/$code/thanks'
@@ -856,7 +846,6 @@ export interface FileRouteTypes {
     | '/reseller/theme'
     | '/reseller/transactions'
     | '/reseller/visitors'
-    | '/api/public/envcheck'
     | '/api/public/robots'
     | '/s/$code/checkout'
     | '/s/$code/thanks'
@@ -932,7 +921,6 @@ export interface FileRouteTypes {
     | '/_authenticated/reseller/theme'
     | '/_authenticated/reseller/transactions'
     | '/_authenticated/reseller/visitors'
-    | '/api/public/envcheck'
     | '/api/public/robots'
     | '/s/$code/checkout'
     | '/s/$code/thanks'
@@ -960,7 +948,6 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   PrivacyRoute: typeof PrivacyRoute
   SCodeRoute: typeof SCodeRouteWithChildren
-  ApiPublicEnvcheckRoute: typeof ApiPublicEnvcheckRoute
   ApiPublicRobotsRoute: typeof ApiPublicRobotsRoute
   ApiPublicCourierCarrybeeRoute: typeof ApiPublicCourierCarrybeeRoute
   ApiPublicCourierPathaoRoute: typeof ApiPublicCourierPathaoRoute
@@ -1103,13 +1090,6 @@ declare module '@tanstack/react-router' {
       path: '/api/public/robots'
       fullPath: '/api/public/robots'
       preLoaderRoute: typeof ApiPublicRobotsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/envcheck': {
-      id: '/api/public/envcheck'
-      path: '/api/public/envcheck'
-      fullPath: '/api/public/envcheck'
-      preLoaderRoute: typeof ApiPublicEnvcheckRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/reseller/visitors': {
@@ -1689,7 +1669,6 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   PrivacyRoute: PrivacyRoute,
   SCodeRoute: SCodeRouteWithChildren,
-  ApiPublicEnvcheckRoute: ApiPublicEnvcheckRoute,
   ApiPublicRobotsRoute: ApiPublicRobotsRoute,
   ApiPublicCourierCarrybeeRoute: ApiPublicCourierCarrybeeRoute,
   ApiPublicCourierPathaoRoute: ApiPublicCourierPathaoRoute,
