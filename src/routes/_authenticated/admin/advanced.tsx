@@ -53,6 +53,20 @@ const GROUPS: Group[] = [
     ],
   },
   {
+    title: "Order packaging charge",
+    hint: "Ek parcel e ekadhik product hole packaging charge kivabe hisab hobe.",
+    icon: <Boxes className="h-4 w-4" />,
+    rows: [
+      {
+        key: "packagingChargeSum",
+        label: "Add up every product's packaging charge",
+        help:
+          "ON = protita product er packaging charge × quantity jog hobe (ekhon jemon ache). OFF = ekadhik product hole sob gulor moddhe jetar packaging charge sob theke besi, sudhu setai ekbar dhora hobe. Single product hole dui khetrei ek e.",
+      },
+    ],
+  },
+
+  {
     title: "Reseller registration verification",
     hint: "Master switch off thakle verify na korei registration complete hoye jabe.",
     icon: <ShieldCheck className="h-4 w-4" />,
