@@ -122,12 +122,16 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
   const totals = useMemo(() => {
     const subtotal = items.reduce((s, it) => s + it.reseller_price * it.quantity, 0);
     /** Product cost = item base cost minus its packaging part; packaging is tracked order-level. */
-    const packagingDefault = items.reduce((s, it) => {
+    const packagingLines = items.map((it) => {
       const p = allProducts.find((x) => x.id === it.product_id);
-      return s + Number(p?.packaging_cost ?? 0) * it.quantity;
-    }, 0);
+      return { packaging: Number(p?.packaging_cost ?? 0), qty: it.quantity };
+    });
+    /** Always the per-item sum — sa_price already carries each item's packaging. */
+    const packagingInItems = packagingTotal(packagingLines, true);
+    const packagingDefault = packagingTotal(packagingLines, packagingSum);
     const itemCost = items.reduce((s, it) => s + it.sa_price * it.quantity, 0);
-    const productCost = Math.max(itemCost - packagingDefault, 0);
+    const productCost = Math.max(itemCost - packagingInItems, 0);
+
     const packaging = packagingInput.trim() === "" ? packagingDefault : Math.max(Number(packagingInput) || 0, 0);
     const saCost = productCost + packaging;
     const shipping = shipInput.trim() === "" ? autoShipping : Math.max(Number(shipInput) || 0, 0);
