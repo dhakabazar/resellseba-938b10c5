@@ -508,7 +508,12 @@ function ProductDetailModal({ id, onClose, brands, categories }: { id: string; o
 
   const brandName = brands.find(b => b.id === p.brand_id)?.name;
   const categoryName = categories.find(c => c.id === p.category_id)?.name;
-  const imageUrls = [p.og_image_url, ...(p.product_images?.map((i: any) => i.url) || [])].filter(Boolean) as string[];
+  const imageUrls = [
+    ...new Set(
+      [p.og_image_url, ...(p.product_images?.map((i: any) => i.url) || [])].filter(Boolean) as string[],
+    ),
+  ];
+
   const activeUrl = imageUrls[Math.min(active, imageUrls.length - 1)] ?? null;
   const detailsText = stripHtml([p.short_description, p.description].filter(Boolean).join("\n\n"));
 

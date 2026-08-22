@@ -45,18 +45,19 @@ export type TxRow = {
   running: number;
 };
 
-/** Date on top, time below. */
+/** Date on top, update time below. */
 function DateCell({ at }: { at: string }) {
   const d = new Date(at);
   return (
     <div className="whitespace-nowrap leading-tight">
       <div className="text-[11px] font-semibold">{d.toLocaleDateString()}</div>
-      <div className="text-[10px] text-muted-foreground">
-        {d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+      <div className="text-[10px] font-medium tabular-nums text-muted-foreground">
+        {d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
       </div>
     </div>
   );
 }
+
 
 /** Two stacked labelled money values (Buy/Sell, Admin/Reseller). */
 function StackCell({
@@ -452,7 +453,7 @@ export function TransactionReport({
                 <tr>
                   <th className="px-3 py-2 text-left">Type</th>
                   {admin && <th className="px-3 py-2 text-left">Reseller</th>}
-                  <th className="px-3 py-2 text-left">Date</th>
+                  <th className="px-3 py-2 text-left">Date / update time</th>
                   <th className="px-3 py-2 text-left">Status</th>
                   <th className="px-3 py-2 text-left">Meta / note</th>
                   <th className="px-3 py-2 text-right">Order value</th>
