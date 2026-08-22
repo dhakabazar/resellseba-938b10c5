@@ -688,13 +688,56 @@ export function NewOrderModal({
             </div>
 
 
-            {/* Right Column: Order Summary */}
-            <aside className="flex flex-col bg-muted/20 p-4 sm:p-6 h-full border-t">
-              <div className="flex-1">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80">Order Summary</h3>
+            {/* Right Column: Advance, payment & summary */}
+            <aside className="flex flex-col gap-4 bg-muted/20 p-4 sm:p-6 border-t lg:border-t-0">
+              {picked.length > 0 && (
+                <div className="space-y-3">
+                  <SectionLabel>Advance Payment</SectionLabel>
+                  <div className="space-y-3 rounded-2xl border border-primary/20 bg-primary/[0.03] p-4">
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <MoneyField
+                        label="Advance Amount"
+                        hint="If already received"
+                        value={advance}
+                        onChange={setAdvance}
+                        placeholder="0"
+                      />
+                      <AdvanceByToggle value={advanceBy} onChange={setAdvanceBy} />
+                    </div>
+                    <p className="text-[12px] leading-relaxed text-muted-foreground">
+                      অ্যাডমিন নিলে রিসেলারের হিসাব থেকে কাটে না, রিসেলার নিলে ফাইনাল অ্যামাউন্ট থেকে বাদ যাবে।
+                    </p>
+                  </div>
+
+                  <SectionLabel>Payment Method & Note</SectionLabel>
+                  <div className="grid gap-3 rounded-2xl border bg-background p-4">
+                    <Field label="Payment Method">
+                      <select
+                        value={paymentMethod}
+                        onChange={(e) => setPaymentMethod(e.target.value)}
+                        className="w-full rounded-lg border bg-background px-3 py-2 text-[13px] focus:ring-2 focus:ring-primary/20"
+                      >
+                        <option value="cod">Cash on Delivery</option>
+                        <option value="bkash">bKash</option>
+                        <option value="nagad">Nagad</option>
+                        <option value="rocket">Rocket</option>
+                        <option value="sslcommerz">SSLCommerz</option>
+                      </select>
+                    </Field>
+                    <Field label="Order Note (Optional)">
+                      <input
+                        value={note}
+                        onChange={(e) => setNote(e.target.value)}
+                        placeholder="Special instructions..."
+                        className="w-full rounded-lg border px-3 py-2 text-[13px] focus:ring-2 focus:ring-primary/20"
+                      />
+                    </Field>
+                  </div>
                 </div>
-              </div>
+              )}
+
+              <SectionLabel>Order Summary</SectionLabel>
+
 
 
               {/* Summary Section (Now a Sticky Footer in the Right Column) */}
