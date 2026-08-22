@@ -299,7 +299,7 @@ export function NewOrderModal({
     >
       <form
         onSubmit={submit}
-        className="flex max-h-[95vh] w-full max-w-3xl flex-col overflow-hidden rounded-t-2xl border bg-background shadow-2xl sm:max-h-[90vh] sm:rounded-xl"
+        className="flex max-h-[95vh] w-full max-w-3xl flex-col overflow-hidden rounded-t-2xl border bg-background shadow-2xl sm:max-h-[90vh] sm:rounded-xl lg:max-w-6xl"
       >
         <div className="flex items-center justify-between gap-2 border-b px-4 py-3 sm:px-6 bg-muted/30">
           <div>
@@ -316,9 +316,10 @@ export function NewOrderModal({
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto">
-          <div className="flex flex-col">
+          <div className="flex flex-col lg:grid lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)] lg:items-start">
             {/* Left Column: Selection & Details */}
-            <div className="space-y-6 p-4 sm:p-6 border-b">
+            <div className="space-y-6 p-4 sm:p-6 border-b lg:border-b-0 lg:border-r">
+
               {isAdmin && (
                 <div className="space-y-3">
                   <label className="text-[13px] font-bold uppercase tracking-wide text-foreground/80">Reseller Selection</label>
@@ -636,65 +637,65 @@ export function NewOrderModal({
                     <p className="text-[12px] leading-relaxed text-muted-foreground">
                       খালি রাখলে ডিফল্ট বসবে। ডেলিভারি চার্জ = কাস্টমার দিবে, কুরিয়ার কস্ট = অ্যাডমিনের খরচ।
                     </p>
-
-                    {/* Advance payment */}
-                    <SectionLabel>Advance Payment</SectionLabel>
-                    <div className="space-y-3 rounded-2xl border border-primary/20 bg-primary/[0.03] p-4">
-                      <div className="grid gap-3 sm:grid-cols-2">
-                        <MoneyField
-                          label="Advance Amount"
-                          hint="If already received"
-                          value={advance}
-                          onChange={setAdvance}
-                          placeholder="0"
-                        />
-                        <AdvanceByToggle value={advanceBy} onChange={setAdvanceBy} />
-
-                      </div>
-                      <p className="text-[12px] leading-relaxed text-muted-foreground">
-                        অ্যাডমিন নিলে রিসেলারের হিসাব থেকে কাটে না, রিসেলার নিলে ফাইনাল অ্যামাউন্ট থেকে বাদ যাবে।
-                      </p>
-                    </div>
-
-                    <SectionLabel>Payment Method & Note</SectionLabel>
-                    <div className="grid gap-3 rounded-2xl border bg-muted/20 p-4 sm:grid-cols-2">
-                      <Field label="Payment Method">
-                        <select
-                          value={paymentMethod}
-                          onChange={(e) => setPaymentMethod(e.target.value)}
-                          className="w-full rounded-lg border bg-background px-3 py-2 text-[13px] focus:ring-2 focus:ring-primary/20"
-                        >
-                          <option value="cod">Cash on Delivery</option>
-                          <option value="bkash">bKash</option>
-                          <option value="nagad">Nagad</option>
-                          <option value="rocket">Rocket</option>
-                          <option value="sslcommerz">SSLCommerz</option>
-                        </select>
-                      </Field>
-                      <Field label="Order Note (Optional)">
-                        <input
-                          value={note}
-                          onChange={(e) => setNote(e.target.value)}
-                          placeholder="Special instructions..."
-                          className="w-full rounded-lg border px-3 py-2 text-[13px] focus:ring-2 focus:ring-primary/20"
-                        />
-                      </Field>
-                    </div>
                   </div>
                 )}
+
 
 
               </div>
             </div>
 
 
-            {/* Right Column: Order Summary */}
-            <aside className="flex flex-col bg-muted/20 p-4 sm:p-6 h-full border-t">
-              <div className="flex-1">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80">Order Summary</h3>
+            {/* Right Column: Advance, payment & summary */}
+            <aside className="flex flex-col gap-4 bg-muted/20 p-4 sm:p-6 border-t lg:border-t-0">
+              {picked.length > 0 && (
+                <div className="space-y-3">
+                  <SectionLabel>Advance Payment</SectionLabel>
+                  <div className="space-y-3 rounded-2xl border border-primary/20 bg-primary/[0.03] p-4">
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <MoneyField
+                        label="Advance Amount"
+                        hint="If already received"
+                        value={advance}
+                        onChange={setAdvance}
+                        placeholder="0"
+                      />
+                      <AdvanceByToggle value={advanceBy} onChange={setAdvanceBy} />
+                    </div>
+                    <p className="text-[12px] leading-relaxed text-muted-foreground">
+                      অ্যাডমিন নিলে রিসেলারের হিসাব থেকে কাটে না, রিসেলার নিলে ফাইনাল অ্যামাউন্ট থেকে বাদ যাবে।
+                    </p>
+                  </div>
+
+                  <SectionLabel>Payment Method & Note</SectionLabel>
+                  <div className="grid gap-3 rounded-2xl border bg-background p-4">
+                    <Field label="Payment Method">
+                      <select
+                        value={paymentMethod}
+                        onChange={(e) => setPaymentMethod(e.target.value)}
+                        className="w-full rounded-lg border bg-background px-3 py-2 text-[13px] focus:ring-2 focus:ring-primary/20"
+                      >
+                        <option value="cod">Cash on Delivery</option>
+                        <option value="bkash">bKash</option>
+                        <option value="nagad">Nagad</option>
+                        <option value="rocket">Rocket</option>
+                        <option value="sslcommerz">SSLCommerz</option>
+                      </select>
+                    </Field>
+                    <Field label="Order Note (Optional)">
+                      <input
+                        value={note}
+                        onChange={(e) => setNote(e.target.value)}
+                        placeholder="Special instructions..."
+                        className="w-full rounded-lg border px-3 py-2 text-[13px] focus:ring-2 focus:ring-primary/20"
+                      />
+                    </Field>
+                  </div>
                 </div>
-              </div>
+              )}
+
+              <SectionLabel>Order Summary</SectionLabel>
+
 
 
               {/* Summary Section (Now a Sticky Footer in the Right Column) */}
@@ -813,7 +814,7 @@ export function NewOrderModal({
                 >
                   {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : (
                     <>
-                      <span>{isAdmin ? "Confirm and Place Order" : "Place Order & Send to Admin"}</span>
+                      <span>Place Order</span>
                       <Plus className="h-4 w-4 group-hover:rotate-90 transition-transform" />
                     </>
                   )}
