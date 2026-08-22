@@ -2,6 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { LogOut, ChevronRight, ChevronDown, Menu, X, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { ResellerAvatar } from "@/components/reseller-avatar";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -35,7 +36,7 @@ export function AppShell({
   title: string;
   brand: { name: string; sub?: string; logoUrl?: string | null };
   nav: NavEntry[];
-  user: { name: string; email: string };
+  user: { name: string; email: string; avatarUrl?: string | null };
   headerRight?: ReactNode;
   children: ReactNode;
 }) {
@@ -160,11 +161,14 @@ export function AppShell({
       </nav>
       <div className={cn("border-t border-sidebar-border", collapsed ? "p-2" : "p-3")}>
         {!collapsed && (
-          <div className="mb-2 px-2">
-            <div className="truncate text-sm font-medium text-sidebar-foreground">
-              {user.name}
+          <div className="mb-2 flex items-center gap-2 px-2">
+            <ResellerAvatar url={user.avatarUrl} name={user.name} size={32} />
+            <div className="min-w-0">
+              <div className="truncate text-sm font-medium text-sidebar-foreground">
+                {user.name}
+              </div>
+              <div className="truncate text-xs text-muted-foreground">{user.email}</div>
             </div>
-            <div className="truncate text-xs text-muted-foreground">{user.email}</div>
           </div>
         )}
         <Button

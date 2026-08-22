@@ -1,3 +1,4 @@
+import { ResellerAvatar } from "@/components/reseller-avatar";
 import { Copy, ExternalLink, Phone, Mail, MapPin, IdCard, Lock, ShieldCheck, AlertTriangle, ArrowUpRight } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
@@ -24,6 +25,7 @@ export type ResellerProfileData = {
   deposit_required: boolean;
   deposit_required_amount: number;
   frozen_amount: number;
+  avatar_url?: string | null;
   email?: string | null;
   email_verified?: boolean | null;
 };
@@ -145,9 +147,7 @@ export function ResellerProfile({
       {/* Identity */}
       <div className="surface-card p-4">
         <div className="flex flex-wrap items-start gap-4">
-          <div className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-primary/10 text-lg font-bold uppercase text-primary">
-            {r.business_name.slice(0, 2)}
-          </div>
+          <ResellerAvatar url={r.avatar_url} name={r.business_name} size={56} />
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="truncate text-lg font-semibold">{r.business_name}</h2>

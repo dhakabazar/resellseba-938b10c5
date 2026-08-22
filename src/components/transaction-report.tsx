@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { StatCard } from "@/components/ui-kit";
 import { SearchableSelect } from "@/components/searchable-select";
 import { Pagination } from "@/components/data-list";
+import { ResellerAvatar } from "@/components/reseller-avatar";
 import { resolveRange, rangeLabel, type DateRangeState } from "@/components/date-range-filter";
 import { DATE_PRESET_OPTIONS, type DatePreset } from "@/components/order-filters";
 import { bdt, toCsv, downloadCsv, PROFIT_FORMULA_HINT } from "@/lib/finance-report";
@@ -165,15 +166,16 @@ export function TransactionReport({
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState<number | "all">(20);
   const [rows, setRows] = useState<TxRow[]>([]);
-  const [resellers, setResellers] = useState<{ id: string; business_name: string; code: string }[]>([]);
+  const [resellers, setResellers] = useState<{ id: string; business_name: string; code: string; avatar_url: string | null }[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const avatarById = useMemo(() => new Map(resellers.map((r) => [r.id, r.avatar_url])), [resellers]);
 
   useEffect(() => {
     if (!admin) return;
     void supabase
       .from("resellers")
-      .select("id,business_name,code")
+      .select("id,business_name,code,avatar_url")
       .order("business_name")
       .then(({ data }) => setResellers(data ?? []));
   }, [admin]);
@@ -488,8 +490,17 @@ export function TransactionReport({
                       </td>
                       {admin && (
                         <td className="px-3 py-2">
-                          <div className="max-w-[150px] truncate text-[11px] font-semibold">{r.reseller_name}</div>
-                          <div className="text-[10px] text-muted-foreground">{r.reseller_code}</div>
+                          <div className="flex items-center gap-2">
+                            <ResellerAvatar
+                              url={r.reseller_id ? avatarById.get(r.reseller_id) ?? null : null}
+                              name={r.reseller_name}
+                              size={24}
+                            />
+                            <div className="min-w-0">
+                              <div className="max-w-[150px] truncate text-[11px] font-semibold">{r.reseller_name}</div>
+                              <div className="text-[10px] text-muted-foreground">{r.reseller_code}</div>
+                            </div>
+                          </div>
                         </td>
                       )}
                       <td className="px-3 py-2">

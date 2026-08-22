@@ -1682,6 +1682,7 @@ export type Database = {
           agent_id: string | null
           approved_at: string | null
           approved_by: string | null
+          avatar_url: string | null
           business_name: string
           code: string
           commission_rate: number
@@ -1710,6 +1711,7 @@ export type Database = {
           agent_id?: string | null
           approved_at?: string | null
           approved_by?: string | null
+          avatar_url?: string | null
           business_name: string
           code: string
           commission_rate?: number
@@ -1738,6 +1740,7 @@ export type Database = {
           agent_id?: string | null
           approved_at?: string | null
           approved_by?: string | null
+          avatar_url?: string | null
           business_name?: string
           code?: string
           commission_rate?: number

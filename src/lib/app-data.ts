@@ -28,6 +28,7 @@ export type MyReseller = {
   code: string;
   business_name: string;
   status: string;
+  avatar_url?: string | null;
 };
 
 let settingsPromise: Promise<GlobalSettings | null> | null = null;
@@ -68,7 +69,7 @@ export function getMyReseller(userId?: string | null, force = false): Promise<My
         resellerForUser = uid;
         const { data } = await supabase
           .from("resellers")
-          .select("id, code, business_name, status")
+          .select("id, code, business_name, status, avatar_url")
           .eq("user_id", uid)
           .maybeSingle();
         return (data as MyReseller | null) ?? null;

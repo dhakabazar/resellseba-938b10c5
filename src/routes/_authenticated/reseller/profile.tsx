@@ -3,12 +3,14 @@ import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/use-auth";
+import { clearAppDataCache } from "@/lib/app-data";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
 import {
   ResellerProfile,
   type ResellerProfileData,
   type ResellerProfileSummary,
 } from "@/components/ResellerProfile";
+import { ResellerAccountForm } from "@/components/reseller-account-form";
 
 export const Route = createFileRoute("/_authenticated/reseller/profile")({
   head: () => ({
@@ -28,6 +30,7 @@ function ResellerProfilePage() {
   const [summary, setSummary] = useState<ResellerProfileSummary>(null);
   const [orders, setOrders] = useState<number | undefined>(undefined);
   const [loading, setLoading] = useState(true);
+  const [reload, setReload] = useState(0);
 
   useEffect(() => {
     if (!user) return;
@@ -36,7 +39,7 @@ function ResellerProfilePage() {
       const { data: r } = await supabase
         .from("resellers")
         .select(
-          "id,code,business_name,status,contact_phone,address,nid_number,commission_rate,leader_id,notes,created_at,approved_at,payout_method,payout_account_name,payout_account_number,payout_bank_name,payout_branch,payout_routing,deposit_required,deposit_required_amount,frozen_amount",
+          "id,code,avatar_url,business_name,status,contact_phone,address,nid_number,commission_rate,leader_id,notes,created_at,approved_at,payout_method,payout_account_name,payout_account_number,payout_bank_name,payout_branch,payout_routing,deposit_required,deposit_required_amount,frozen_amount",
         )
         .eq("user_id", user.id)
         .maybeSingle();
@@ -82,7 +85,7 @@ function ResellerProfilePage() {
       setOrders(countRes.count ?? 0);
       setLoading(false);
     })();
-  }, [user]);
+  }, [user, reload]);
 
   return (
     <div className="space-y-4">
@@ -97,7 +100,24 @@ function ResellerProfilePage() {
       ) : !data ? (
         <EmptyState title="Profile not found" description="No reseller account is linked to this login." />
       ) : (
-        <ResellerProfile reseller={data} summary={summary} orders={orders} />
+        <>
+          <ResellerAccountForm
+            reseller={{
+              id: data.id,
+              business_name: data.business_name,
+              contact_phone: data.contact_phone,
+              address: data.address,
+              nid_number: data.nid_number ?? null,
+              avatar_url: data.avatar_url ?? null,
+            }}
+            email={data.email ?? null}
+            onSaved={() => {
+              clearAppDataCache();
+              setReload((n) => n + 1);
+            }}
+          />
+          <ResellerProfile reseller={data} summary={summary} orders={orders} />
+        </>
       )}
     </div>
   );
