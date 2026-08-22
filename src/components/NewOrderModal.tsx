@@ -6,6 +6,9 @@ import { Loader2, Plus, Minus, X, Trash2, Search } from "lucide-react";
 import { toast } from "sonner";
 import { ProductCodeChip } from "@/components/product-code";
 import { AdvanceByToggle, MoneyField, SectionLabel } from "@/components/order-form-fields";
+import { packagingModeHint, packagingTotal } from "@/lib/packaging";
+import { useAdvancedSettings } from "@/lib/advanced-settings";
+
 
 
 type Line = { listing_id?: string; product_id?: string; qty: number; name?: string; price?: number; cost?: number; image?: string; delivery?: any };
