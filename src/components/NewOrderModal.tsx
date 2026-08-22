@@ -856,7 +856,7 @@ export function NewOrderModal({
                 >
                   {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : (
                     <>
-                      <span>{isAdmin ? "Confirm and Place Order" : "Place Order & Send to Admin"}</span>
+                      <span>Place Order</span>
                       <Plus className="h-4 w-4 group-hover:rotate-90 transition-transform" />
                     </>
                   )}
