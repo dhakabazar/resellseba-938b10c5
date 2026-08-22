@@ -2134,6 +2134,41 @@ export type Database = {
       }
     }
     Functions: {
+      admin_assign_role: {
+        Args: {
+          _custom_role_id: string
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: undefined
+      }
+      admin_auth_users: {
+        Args: never
+        Returns: {
+          created_at: string
+          email: string
+          email_confirmed: boolean
+          user_id: string
+        }[]
+      }
+      admin_confirm_user_email: {
+        Args: { _user_id: string }
+        Returns: {
+          already_confirmed: boolean
+          email: string
+        }[]
+      }
+      admin_create_staff_user: {
+        Args: {
+          _custom_role_id: string
+          _email: string
+          _full_name: string
+          _password: string
+          _role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: string
+      }
+      admin_delete_user: { Args: { _user_id: string }; Returns: undefined }
       admin_reseller_metrics: {
         Args: never
         Returns: {
@@ -2146,6 +2181,14 @@ export type Database = {
           pending_payout: number
           reseller_id: string
         }[]
+      }
+      admin_set_user_password: {
+        Args: { _password: string; _user_id: string }
+        Returns: undefined
+      }
+      assert_admin_permission: {
+        Args: { _permissions: string[] }
+        Returns: undefined
       }
       calculate_delivery_charge: {
         Args: { _area: string; _product_id: string }
