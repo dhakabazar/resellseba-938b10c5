@@ -260,7 +260,12 @@ function ListingDetailModal({ id, onClose }: { id: string; onClose: () => void }
   const p = l?.products;
   if (!p) return null;
 
-  const images = [p.og_image_url, ...(p.product_images?.map((i: any) => i.url) || [])].filter(Boolean) as string[];
+  const images = [
+    ...new Set(
+      [p.og_image_url, ...(p.product_images?.map((i: any) => i.url) || [])].filter(Boolean) as string[],
+    ),
+  ];
+
   const activeUrl = images[Math.min(active, images.length - 1)] ?? null;
   const detailsText = stripHtml([p.short_description, p.description].filter(Boolean).join("\n\n"));
   const myCost = p.reseller_price + p.packaging_cost;
