@@ -5,6 +5,9 @@ import { addressError, nameError, normalizePhone, phoneError, sanitizeName } fro
 import { Loader2, Minus, Plus, Search, ShoppingCart, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { AdvanceByToggle, MoneyField, SectionLabel } from "@/components/order-form-fields";
+import { packagingModeHint, packagingTotal } from "@/lib/packaging";
+import { useAdvancedSettings } from "@/lib/advanced-settings";
+
 
 
 type EditItem = {
