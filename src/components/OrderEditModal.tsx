@@ -177,8 +177,9 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
     deliveryCostInput,
     advance,
     advanceBy,
-
+    packagingSum,
   ]);
+
 
 
   /** Minimum sell price per line = SA base cost of that item. */
