@@ -186,7 +186,7 @@ export function NewOrderModal({
       shipFrom,
       showAreaPicker,
     };
-  }, [picked, area, shipOverride, packagingOverride, discount, deliveryCostOverride, advance, advanceBy]);
+  }, [picked, area, shipOverride, packagingOverride, discount, deliveryCostOverride, advance, advanceBy, packagingSum]);
 
 
 
