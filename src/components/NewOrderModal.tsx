@@ -56,6 +56,10 @@ export function NewOrderModal({
   /** Advance already collected from the customer + who is holding that cash. */
   const [advance, setAdvance] = useState("");
   const [advanceBy, setAdvanceBy] = useState<"admin" | "reseller">("reseller");
+  /** Packaging charge rule from Admin → System → Advanced settings. */
+  const { settings: advanced } = useAdvancedSettings();
+  const packagingSum = advanced.packagingChargeSum;
+
 
 
 
