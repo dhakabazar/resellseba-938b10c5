@@ -629,7 +629,7 @@ export function NewOrderModal({
                       <MoneyField label="Discount" value={discount} onChange={setDiscount} placeholder="0" />
                       <MoneyField
                         label="Packaging Cost"
-                        hint={isAdmin ? "Editable" : "Admin only"}
+                        hint={packagingSum ? "Sum of all items" : "Highest item only"}
                         disabled={!isAdmin}
                         value={isAdmin ? packagingOverride : ""}
                         onChange={setPackagingOverride}
@@ -647,7 +647,10 @@ export function NewOrderModal({
                     </div>
                     <p className="text-[12px] leading-relaxed text-muted-foreground">
                       খালি রাখলে ডিফল্ট বসবে। ডেলিভারি চার্জ = কাস্টমার দিবে, কুরিয়ার কস্ট = অ্যাডমিনের খরচ।
+                      <br />
+                      {packagingModeHint(packagingSum)}
                     </p>
+
                   </div>
                 )}
 
