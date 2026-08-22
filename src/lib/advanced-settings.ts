@@ -9,6 +9,8 @@ import { getGlobalSettings, clearAppDataCache } from "@/lib/app-data";
 export type AdvancedSettings = {
   /** Show the product stock number on the reseller catalog grid. */
   resellerCatalogShowStock: boolean;
+  /** ON = add up every product's packaging cost. OFF = charge only the highest one. */
+  packagingChargeSum: boolean;
   /** Master switch: when off, no verification is required at signup. */
   verifyEnabled: boolean;
   /** Require the email code (only used when the master switch is on). */
@@ -19,10 +21,12 @@ export type AdvancedSettings = {
 
 export const DEFAULT_ADVANCED_SETTINGS: AdvancedSettings = {
   resellerCatalogShowStock: true,
+  packagingChargeSum: true,
   verifyEnabled: false,
   verifyEmail: true,
   verifySms: false,
 };
+
 
 export function mergeAdvanced(raw: unknown): AdvancedSettings {
   const r = (raw ?? {}) as Partial<AdvancedSettings>;
