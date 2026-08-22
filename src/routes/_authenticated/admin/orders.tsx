@@ -721,9 +721,12 @@ function AdminOrdersPage() {
                           return;
                         }
                         setLoading(true);
+                        const curr = orders.find((o) => o.id === statusModal.orderId);
+                        const patch: Record<string, unknown> = { status: s as any };
+                        if (s === "delivered") patch.received_amount = Number(curr?.total ?? 0);
                         const { error } = await supabase
                           .from("orders")
-                          .update({ status: s as any })
+                          .update(patch as any)
                           .eq("id", statusModal.orderId);
 
                         if (error) {
