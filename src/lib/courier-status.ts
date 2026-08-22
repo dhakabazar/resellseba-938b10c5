@@ -244,9 +244,12 @@ export function isPartialStatus(status: string): boolean {
   return (PARTIAL_STATUSES as string[]).includes(status);
 }
 
-/** Statuses that need admin settlement input (amount / returned items). */
+/**
+ * Statuses that need admin settlement input (amount / returned items).
+ * "delivered" is intentionally excluded: a full delivery means nothing changed,
+ * so the full order total is collected and no settlement popup is needed.
+ */
 export const SETTLEMENT_STATUSES: OrderStatus[] = [
-  "delivered",
   "partial_full",
   "partial_item",
   "partial_delivery",
