@@ -10,7 +10,7 @@ import {
   clearAdvancedSettingsCache,
   type AdvancedSettings,
 } from "@/lib/advanced-settings";
-import { Loader2, Save, Package, ShieldCheck, Mail, Smartphone, Info } from "lucide-react";
+import { Loader2, Save, Package, ShieldCheck, Mail, Smartphone, Info, Boxes } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/advanced")({
   component: AdvancedSettingsPage,
