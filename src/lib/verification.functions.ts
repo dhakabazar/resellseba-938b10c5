@@ -24,7 +24,18 @@ export const sendVerificationCode = createServerFn({ method: "POST" })
       return { ok: false, error: data.channel === "email" ? "No email on this account" : "No phone number on this account" };
     }
 
-    const cfg = await pickConfig(supabase, null, data.channel);
+    // The platform sender lives on a row a signing-up reseller cannot read, and
+    // its credentials must never reach the browser, so it is loaded server-side
+    // with elevated access (falling back to the caller's own access for admins).
+    let sender = null as Awaited<ReturnType<typeof pickConfig>>;
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      sender = await pickConfig(supabaseAdmin, null, data.channel);
+    } catch (err) {
+      console.error("[verify] elevated sender lookup unavailable", err);
+    }
+    if (!sender) sender = await pickConfig(supabase, null, data.channel);
+    const cfg = sender;
     if (!cfg) {
       return { ok: false, error: `No active ${data.channel} sender is configured yet` };
     }
@@ -48,14 +59,22 @@ export const sendVerificationCode = createServerFn({ method: "POST" })
             `<p>Hi ${profile?.full_name || ""},</p><p>Your verification code is <b style="font-size:20px">${code}</b>.</p><p>It expires in 15 minutes.</p>`,
           );
 
-    await supabase.from("notification_logs").insert({
+    // Platform-level log row (no reseller_id): a reseller cannot insert it, so
+    // logging is best effort and never blocks the verification flow.
+    const logRow = {
       channel: data.channel,
       recipient: target,
       template: "signup_verification",
       status: res.ok ? "sent" : "failed",
       error: res.error || null,
       payload: null,
-    });
+    };
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      await supabaseAdmin.from("notification_logs").insert(logRow as any);
+    } catch {
+      await supabase.from("notification_logs").insert(logRow);
+    }
 
     if (!res.ok) return { ok: false, error: res.error || "Could not send the code" };
     return { ok: true, target: maskTarget(data.channel, target) };

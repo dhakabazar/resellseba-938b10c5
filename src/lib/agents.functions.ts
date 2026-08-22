@@ -34,18 +34,9 @@ export const listAgentCandidates = createServerFn({ method: "GET" })
       (profiles ?? []).map((p: any) => [p.id, p.full_name ?? null]),
     );
 
-    const emails: Record<string, string | null> = {};
-    try {
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      for (let page = 1; page <= 10; page++) {
-        const { data, error: err } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 100 });
-        if (err) break;
-        for (const u of data?.users ?? []) emails[u.id] = u.email ?? null;
-        if (!data?.users || data.users.length < 100) break;
-      }
-    } catch (err) {
-      console.error("[agents] email lookup unavailable", err);
-    }
+    // Emails come from a permission-checked database function (no privileged key).
+    const { loadAuthEmails } = await import("@/lib/auth-admin.server");
+    const emails = await loadAuthEmails(db);
 
     return ids.map((id) => ({
       user_id: id,

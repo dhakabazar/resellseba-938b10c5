@@ -10,13 +10,9 @@ export const confirmUserEmail = createServerFn({ method: "POST" })
   .inputValidator((d) => input.parse(d))
   .handler(async ({ data, context }) => {
     await assertPermission(context.supabase, context.userId, "resellers.manage");
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: got, error: getErr } = await supabaseAdmin.auth.admin.getUserById(data.userId);
-    if (getErr || !got?.user) throw new Response("User not found", { status: 404 });
-    if (got.user.email_confirmed_at) return { ok: true, alreadyConfirmed: true, email: got.user.email };
-    const { error } = await supabaseAdmin.auth.admin.updateUserById(data.userId, { email_confirm: true });
-    if (error) throw new Response(error.message, { status: 400 });
-    return { ok: true, alreadyConfirmed: false, email: got.user.email };
+    const { confirmEmail } = await import("@/lib/auth-admin.server");
+    const res = await confirmEmail(context.supabase, data.userId);
+    return { ok: true, alreadyConfirmed: res.alreadyConfirmed, email: res.email };
   });
 
 export type EmailStatus = {
@@ -29,25 +25,12 @@ export const listResellerEmailStatus = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<EmailStatus[]> => {
     await assertPermission(context.supabase, context.userId, "resellers.manage");
-    // Auth emails need the privileged key. If it is unavailable in this
-    // deployment, return an empty list instead of breaking the whole page.
-    const users: any[] = [];
-    try {
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      for (let page = 1; page <= 10; page++) {
-        const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 100 });
-        if (error) break;
-        users.push(...(data?.users ?? []));
-        if (!data?.users || data.users.length < 100) break;
-      }
-    } catch (err) {
-      console.error("[resellers] email status unavailable", err);
-      return [];
-    }
+    const { loadAuthUsers } = await import("@/lib/auth-admin.server");
+    const users = await loadAuthUsers(context.supabase);
     return users.map((u) => ({
-      user_id: u.id,
-      email: u.email ?? null,
-      email_confirmed: !!u.email_confirmed_at,
+      user_id: u.user_id,
+      email: u.email,
+      email_confirmed: u.email_confirmed,
     }));
   });
 
@@ -56,12 +39,10 @@ export const deleteAuthUser = createServerFn({ method: "POST" })
   .inputValidator((d) => input.parse(d))
   .handler(async ({ data, context }) => {
     await assertAnyPermission(context.supabase, context.userId, ["staff.manage", "resellers.manage"]);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
-    if (error) throw new Response(error.message, { status: 400 });
+    const { deleteUser } = await import("@/lib/auth-admin.server");
+    await deleteUser(context.supabase, data.userId);
     return { ok: true };
   });
-
 
 export type StaffUser = {
   id: string;
@@ -78,8 +59,6 @@ export const listStaffUsers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<StaffUser[]> => {
     await assertPermission(context.supabase, context.userId, "staff.manage");
-    // Read through the caller's RLS-scoped client: the service-role key is not
-    // available in every deployment environment, and this page must still work.
     const db = context.supabase;
 
     const { data: roleRows, error: roleErr } = await db
@@ -96,20 +75,10 @@ export const listStaffUsers = createServerFn({ method: "GET" })
       .select("id, full_name, created_at")
       .in("id", ids);
 
-    // Emails live in the auth schema and need the privileged key. Best effort:
-    // if it is unavailable, the list still renders without email addresses.
-    const emails: Record<string, string | null> = {};
-    try {
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      for (let page = 1; page <= 10; page++) {
-        const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 100 });
-        if (error) break;
-        for (const u of data?.users ?? []) emails[u.id] = u.email ?? null;
-        if (!data?.users || data.users.length < 100) break;
-      }
-    } catch (err) {
-      console.error("[staff] email lookup unavailable", err);
-    }
+    // Emails come from a permission-checked database function, so no privileged
+    // server key is needed.
+    const { loadAuthEmails } = await import("@/lib/auth-admin.server");
+    const emails = await loadAuthEmails(db);
 
     const profileMap: Record<string, any> = Object.fromEntries((profiles ?? []).map((p: any) => [p.id, p]));
     return (roleRows ?? []).map((r: any) => ({
