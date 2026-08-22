@@ -53,6 +53,10 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
   /** Advance already collected + who is holding that cash. */
   const [advance, setAdvance] = useState("");
   const [advanceBy, setAdvanceBy] = useState<"admin" | "reseller">("reseller");
+  /** Packaging charge rule from Admin → System → Advanced settings. */
+  const { settings: advanced } = useAdvancedSettings();
+  const packagingSum = advanced.packagingChargeSum;
+
 
   /** Money actually collected by the courier. Empty = full order total received. */
   const [received, setReceived] = useState<string>("");
