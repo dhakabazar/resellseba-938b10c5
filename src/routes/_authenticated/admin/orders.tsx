@@ -252,7 +252,24 @@ function AdminOrdersPage() {
       variant: "warning",
       onConfirm: async () => {
         setLoading(true);
-        const { error } = await supabase.from("orders").update({ status: newStatus as any }).in("id", marked);
+        let error: { message: string } | null = null;
+        if (newStatus === "delivered") {
+          // Full delivery = full order total collected.
+          for (const id of marked) {
+            const o = orders.find((x) => x.id === id);
+            const res = await supabase
+              .from("orders")
+              .update({ status: newStatus as any, received_amount: Number(o?.total ?? 0) })
+              .eq("id", id);
+            if (res.error) {
+              error = res.error;
+              break;
+            }
+          }
+        } else {
+          const res = await supabase.from("orders").update({ status: newStatus as any }).in("id", marked);
+          error = res.error;
+        }
         if (error) toast.error(error.message);
         else {
           toast.success(`${marked.length} orders updated`);
@@ -704,9 +721,12 @@ function AdminOrdersPage() {
                           return;
                         }
                         setLoading(true);
+                        const curr = orders.find((o) => o.id === statusModal.orderId);
+                        const patch: Record<string, unknown> = { status: s as any };
+                        if (s === "delivered") patch.received_amount = Number(curr?.total ?? 0);
                         const { error } = await supabase
                           .from("orders")
-                          .update({ status: s as any })
+                          .update(patch as any)
                           .eq("id", statusModal.orderId);
 
                         if (error) {
