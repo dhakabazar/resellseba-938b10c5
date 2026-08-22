@@ -530,7 +530,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                   <MoneyField label="Discount" value={discount} onChange={setDiscount} placeholder="0" />
                   <MoneyField
                     label="Packaging Cost"
-                    hint={isAdmin ? "Editable" : "Admin only"}
+                    hint={packagingSum ? "Sum of all items" : "Highest item only"}
                     disabled={!isAdmin}
                     value={packagingInput}
                     onChange={setPackagingInput}
@@ -548,7 +548,10 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                 </div>
                 <p className="text-[12px] leading-relaxed text-muted-foreground">
                   খালি রাখলে ডিফল্ট বসবে। ডেলিভারি চার্জ = কাস্টমার দিবে, কুরিয়ার কস্ট = অ্যাডমিনের খরচ।
+                  <br />
+                  {packagingModeHint(packagingSum)}
                 </p>
+
 
                 <SectionLabel>Advance Payment</SectionLabel>
                 <div className="space-y-3 rounded-2xl border border-primary/20 bg-primary/[0.03] p-4">
