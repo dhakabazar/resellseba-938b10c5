@@ -88,6 +88,7 @@ function ResellerLayout() {
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [storeCode, setStoreCode] = useState<string | null>(null);
   const [primary, setPrimary] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [approved, setApproved] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -120,6 +121,7 @@ function ResellerLayout() {
         setApproved(r.status === "active");
         setStoreName(r.business_name);
         setStoreCode(r.code);
+        setAvatarUrl(r.avatar_url ?? null);
         const { data: s } = await supabase
           .from("reseller_settings")
           .select("logo_url, primary_color")
@@ -158,8 +160,9 @@ function ResellerLayout() {
       brand={{ name: storeName, sub: storeCode ? `/${storeCode}` : "Reseller", logoUrl }}
       nav={NAV}
       user={{
-        name: user.user_metadata?.full_name ?? "Reseller",
+        name: storeName || (user.user_metadata?.full_name ?? "Reseller"),
         email: user.email ?? "",
+        avatarUrl,
       }}
       headerRight={
         storeCode ? (

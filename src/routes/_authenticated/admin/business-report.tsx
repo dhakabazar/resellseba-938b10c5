@@ -11,6 +11,7 @@ import {
 } from "@/components/order-filters";
 import { ReportCard, ReportTabs, SortTh, toneOf } from "@/components/report-blocks";
 import { Pagination, usePaginated } from "@/components/data-list";
+import { ResellerAvatar } from "@/components/reseller-avatar";
 import { bdt, toCsv, downloadCsv, orderProfit, orderReceived } from "@/lib/finance-report";
 import { agentCommission, AGENT_COMMISSION_HINT } from "@/lib/agents";
 import {
@@ -65,7 +66,7 @@ type Agent = {
   commission_rate: number | string;
   is_active: boolean;
 };
-type ResellerLite = { id: string; business_name: string; code: string; agent_id: string | null };
+type ResellerLite = { id: string; business_name: string; code: string; agent_id: string | null; avatar_url?: string | null };
 type AgentRow = {
   key: string;
   name: string;
@@ -116,7 +117,7 @@ function BusinessReportPage() {
           .select("order_id,product_id,product_name,quantity,returned_qty,sa_price,line_total,profit"),
         supabase.from("products").select("id,name,product_code,buying_price,packaging_cost,og_image_url"),
         supabase.from("shipments").select("order_id,provider,cost"),
-        supabase.from("resellers").select("id,business_name,code,agent_id"),
+        supabase.from("resellers").select("id,business_name,code,agent_id,avatar_url"),
         supabase.from("agents").select("id,display_name,sale_target,commission_rate,is_active"),
         supabase.from("expenses").select("*"),
       ]);
@@ -211,6 +212,10 @@ function BusinessReportPage() {
   const perPage = filters.perPage;
   const pagedProducts = usePaginated(productRows, page, perPage);
   const pagedResellers = usePaginated(resellerRows, page, perPage);
+  const avatarByReseller = useMemo(
+    () => new Map(resellers.map((r) => [r.id, r.avatar_url ?? null])),
+    [resellers],
+  );
   const pagedAgents = usePaginated(agentRows, page, perPage);
 
   const sortP = (k: keyof ProductRow) =>
@@ -426,8 +431,13 @@ function BusinessReportPage() {
                 {pagedResellers.map((r) => (
                   <tr key={r.key} className="border-t">
                     <td className="px-3 py-2">
-                      <div className="font-medium">{r.name}</div>
-                      <div className="font-mono text-[11px] text-muted-foreground">{r.code}</div>
+                      <div className="flex items-center gap-2">
+                        <ResellerAvatar url={avatarByReseller.get(r.key) ?? null} name={r.name} size={28} />
+                        <div className="min-w-0">
+                          <div className="font-medium">{r.name}</div>
+                          <div className="font-mono text-[11px] text-muted-foreground">{r.code}</div>
+                        </div>
+                      </div>
                     </td>
                     <td className="px-3 py-2 text-center font-semibold">{r.orders}</td>
                     <td className="px-3 py-2 text-center text-success">{r.delivered}</td>

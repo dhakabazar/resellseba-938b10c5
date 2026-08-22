@@ -1,0 +1,1 @@
+ALTER TABLE public.resellers ADD COLUMN IF NOT EXISTS avatar_url text;

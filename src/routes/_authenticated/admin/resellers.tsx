@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { ResellerAvatar } from "@/components/reseller-avatar";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
 import { DataToolbar, Pagination, usePaginated } from "@/components/data-list";
 import { SearchableSelect } from "@/components/searchable-select";
@@ -54,6 +55,7 @@ type Status = "pending" | "active" | "suspended" | "rejected";
 type Reseller = {
   id: string;
   user_id: string;
+  avatar_url?: string | null;
   business_name: string;
   code: string;
   contact_phone: string | null;
@@ -142,7 +144,7 @@ function ResellersPage() {
       supabase
         .from("resellers")
         .select(
-          "id,user_id,business_name,code,contact_phone,address,nid_number,status,commission_rate,leader_id,agent_id,notes,approved_at,created_at,payout_method,payout_account_name,payout_account_number,payout_bank_name,payout_branch,payout_routing,deposit_required,deposit_required_amount,frozen_amount",
+          "id,user_id,avatar_url,business_name,code,contact_phone,address,nid_number,status,commission_rate,leader_id,agent_id,notes,approved_at,created_at,payout_method,payout_account_name,payout_account_number,payout_bank_name,payout_branch,payout_routing,deposit_required,deposit_required_amount,frozen_amount",
         )
         .order("created_at", { ascending: false }),
       supabase.rpc("admin_reseller_metrics"),
@@ -384,9 +386,7 @@ function ResellersPage() {
             return (
               <div key={r.id} className="surface-card p-4 shadow-sm transition hover:shadow-md">
                 <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold uppercase text-primary">
-                    {r.business_name.slice(0, 2)}
-                  </div>
+                  <ResellerAvatar url={r.avatar_url} name={r.business_name} size={40} />
 
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-1.5">
