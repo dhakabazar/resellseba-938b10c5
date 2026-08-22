@@ -316,9 +316,10 @@ export function NewOrderModal({
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto">
-          <div className="flex flex-col">
+          <div className="flex flex-col lg:grid lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)] lg:items-start">
             {/* Left Column: Selection & Details */}
-            <div className="space-y-6 p-4 sm:p-6 border-b">
+            <div className="space-y-6 p-4 sm:p-6 border-b lg:border-b-0 lg:border-r">
+
               {isAdmin && (
                 <div className="space-y-3">
                   <label className="text-[13px] font-bold uppercase tracking-wide text-foreground/80">Reseller Selection</label>
