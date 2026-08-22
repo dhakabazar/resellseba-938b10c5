@@ -636,52 +636,9 @@ export function NewOrderModal({
                     <p className="text-[12px] leading-relaxed text-muted-foreground">
                       খালি রাখলে ডিফল্ট বসবে। ডেলিভারি চার্জ = কাস্টমার দিবে, কুরিয়ার কস্ট = অ্যাডমিনের খরচ।
                     </p>
-
-                    {/* Advance payment */}
-                    <SectionLabel>Advance Payment</SectionLabel>
-                    <div className="space-y-3 rounded-2xl border border-primary/20 bg-primary/[0.03] p-4">
-                      <div className="grid gap-3 sm:grid-cols-2">
-                        <MoneyField
-                          label="Advance Amount"
-                          hint="If already received"
-                          value={advance}
-                          onChange={setAdvance}
-                          placeholder="0"
-                        />
-                        <AdvanceByToggle value={advanceBy} onChange={setAdvanceBy} />
-
-                      </div>
-                      <p className="text-[12px] leading-relaxed text-muted-foreground">
-                        অ্যাডমিন নিলে রিসেলারের হিসাব থেকে কাটে না, রিসেলার নিলে ফাইনাল অ্যামাউন্ট থেকে বাদ যাবে।
-                      </p>
-                    </div>
-
-                    <SectionLabel>Payment Method & Note</SectionLabel>
-                    <div className="grid gap-3 rounded-2xl border bg-muted/20 p-4 sm:grid-cols-2">
-                      <Field label="Payment Method">
-                        <select
-                          value={paymentMethod}
-                          onChange={(e) => setPaymentMethod(e.target.value)}
-                          className="w-full rounded-lg border bg-background px-3 py-2 text-[13px] focus:ring-2 focus:ring-primary/20"
-                        >
-                          <option value="cod">Cash on Delivery</option>
-                          <option value="bkash">bKash</option>
-                          <option value="nagad">Nagad</option>
-                          <option value="rocket">Rocket</option>
-                          <option value="sslcommerz">SSLCommerz</option>
-                        </select>
-                      </Field>
-                      <Field label="Order Note (Optional)">
-                        <input
-                          value={note}
-                          onChange={(e) => setNote(e.target.value)}
-                          placeholder="Special instructions..."
-                          className="w-full rounded-lg border px-3 py-2 text-[13px] focus:ring-2 focus:ring-primary/20"
-                        />
-                      </Field>
-                    </div>
                   </div>
                 )}
+
 
 
               </div>
