@@ -1,5 +1,11 @@
 import { useEffect, useState } from "react";
 import { getGlobalSettings, clearAppDataCache } from "@/lib/app-data";
+import {
+  DEFAULT_DELIVERY_SETTINGS,
+  mergeDeliverySettings,
+  setGlobalDelivery,
+  type DeliverySettings,
+} from "@/lib/delivery";
 
 /**
  * Advanced system settings — small feature switches an admin can flip without
