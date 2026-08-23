@@ -25,7 +25,6 @@ type L = {
     delivery_inside: number;
     delivery_outside: number;
     delivery_sub?: number | null;
-  delivery_sub?: number | null;
     delivery_mode: string | null;
     delivery_flat: number | null;
     og_image_url: string | null;
