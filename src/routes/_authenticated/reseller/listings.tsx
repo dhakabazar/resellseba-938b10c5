@@ -24,6 +24,8 @@ type L = {
     packaging_cost: number;
     delivery_inside: number;
     delivery_outside: number;
+    delivery_sub?: number | null;
+  delivery_sub?: number | null;
     delivery_mode: string | null;
     delivery_flat: number | null;
     og_image_url: string | null;
@@ -54,7 +56,7 @@ function ListingsPage() {
     const { data } = await supabase
       .from("reseller_listings")
       .select(
-        "id,selling_price,is_active,products(name,slug,product_code,reseller_price,packaging_cost,delivery_inside,delivery_outside,delivery_mode,delivery_flat,og_image_url)",
+        "id,selling_price,is_active,products(name,slug,product_code,reseller_price,packaging_cost,delivery_inside,delivery_outside,delivery_sub,delivery_mode,delivery_flat,og_image_url)",
       )
       .eq("reseller_id", r.id)
       .order("created_at", { ascending: false });
@@ -237,7 +239,7 @@ function ListingDetailModal({ id, onClose }: { id: string; onClose: () => void }
           id, selling_price,
           products (
             id, name, product_code, description, short_description, og_image_url, stock, reseller_price, packaging_cost,
-            delivery_mode, delivery_flat, delivery_inside, delivery_outside,
+            delivery_mode, delivery_flat, delivery_inside, delivery_outside, delivery_sub,
             product_images (url),
             brands (name),
             categories (name)

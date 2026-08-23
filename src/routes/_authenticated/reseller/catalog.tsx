@@ -24,6 +24,7 @@ type P = {
   packaging_cost: number;
   delivery_inside: number;
   delivery_outside: number;
+  delivery_sub?: number | null;
   delivery_mode: string | null;
   delivery_flat: number | null;
   suggested_price: number;
@@ -80,7 +81,7 @@ function CatalogPage() {
         supabase
           .from("products")
           .select(
-            "id,name,slug,product_code,reseller_price,packaging_cost,delivery_inside,delivery_outside,delivery_mode,delivery_flat,suggested_price,stock,og_image_url,brand_id,category_id",
+            "id,name,slug,product_code,reseller_price,packaging_cost,delivery_inside,delivery_outside,delivery_sub,delivery_mode,delivery_flat,suggested_price,stock,og_image_url,brand_id,category_id",
           )
           .eq("is_active", true)
           .order("created_at", { ascending: false }),
@@ -431,10 +432,11 @@ function CatalogPage() {
                   buying: 0,
                   resellerPrice: Number(selected.reseller_price) || 0,
                   packaging: Number(selected.packaging_cost) || 0,
-                  deliveryMode: deliveryMode(selected) as "area" | "free" | "flat",
+                  deliveryMode: deliveryMode(selected),
                   deliveryFlat: Number(selected.delivery_flat ?? 0),
                   deliveryInside: Number(selected.delivery_inside) || 0,
                   deliveryOutside: Number(selected.delivery_outside) || 0,
+                  deliverySub: Number(selected.delivery_sub ?? selected.delivery_outside) || 0,
                   sellPrice: priceNum || 0,
                 }}
               />

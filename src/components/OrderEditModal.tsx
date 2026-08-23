@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { productDeliveryCharge } from "@/lib/delivery";
+import { areaOptions, productDeliveryCharge } from "@/lib/delivery";
 import { addressError, nameError, normalizePhone, phoneError, sanitizeName } from "@/lib/checkout-validate";
 import { Loader2, Minus, Plus, Search, ShoppingCart, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
@@ -352,8 +352,11 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                   <label className="space-y-1">
                     <span className="text-[13px] font-semibold text-foreground/80">Delivery area</span>
                     <select className={inp} value={area} onChange={(e) => setArea(e.target.value as any)}>
-                      <option value="inside_dhaka">Inside Dhaka</option>
-                      <option value="outside_dhaka">Outside Dhaka</option>
+                      {areaOptions().map((a) => (
+                        <option key={a.value} value={a.value}>
+                          {a.label}
+                        </option>
+                      ))}
                     </select>
                   </label>
                   {isAdmin && (

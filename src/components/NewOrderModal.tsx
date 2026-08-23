@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { productDeliveryCharge, deliveryLabel, deliveryMode } from "@/lib/delivery";
+import { areaOptions, productDeliveryCharge, deliveryLabel, deliveryMode } from "@/lib/delivery";
 import { addressError, nameError, normalizePhone, phoneError, sanitizeName } from "@/lib/checkout-validate";
 import { Loader2, Plus, Minus, X, Trash2, Search } from "lucide-react";
 import { toast } from "sonner";
@@ -586,13 +586,8 @@ export function NewOrderModal({
                     {totals.showAreaPicker && (
                       <div className="p-4 border-t bg-muted/10 animate-in fade-in slide-in-from-bottom-2">
                         <label className="mb-2.5 block text-[10px] font-bold text-muted-foreground/80 uppercase tracking-widest">Select Delivery Destination</label>
-                        <div className="grid grid-cols-2 gap-3">
-                          {(
-                            [
-                              ["inside_dhaka", "Inside Dhaka"],
-                              ["outside_dhaka", "Outside Dhaka"],
-                            ] as const
-                          ).map(([v, label]) => (
+                        <div className="grid grid-cols-3 gap-2">
+                          {areaOptions().map(({ value: v, label }) => (
                             <button
                               key={v}
                               type="button"
