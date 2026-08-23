@@ -1189,6 +1189,7 @@ export type Database = {
           delivery_inside: number
           delivery_mode: string
           delivery_outside: number
+          delivery_sub: number
           description: string | null
           id: string
           is_active: boolean
@@ -1218,6 +1219,7 @@ export type Database = {
           delivery_inside?: number
           delivery_mode?: string
           delivery_outside?: number
+          delivery_sub?: number
           description?: string | null
           id?: string
           is_active?: boolean
@@ -1247,6 +1249,7 @@ export type Database = {
           delivery_inside?: number
           delivery_mode?: string
           delivery_outside?: number
+          delivery_sub?: number
           description?: string | null
           id?: string
           is_active?: boolean
@@ -2395,6 +2398,17 @@ export type Database = {
           paid_out: number
           pending_payout: number
         }[]
+      }
+      resolve_delivery_charge: {
+        Args: {
+          _area: string
+          _flat: number
+          _inside: number
+          _mode: string
+          _outside: number
+          _sub: number
+        }
+        Returns: number
       }
       seed_reseller_store: { Args: { _reseller_id: string }; Returns: number }
       store_visit_access: { Args: { _reseller_id: string }; Returns: boolean }

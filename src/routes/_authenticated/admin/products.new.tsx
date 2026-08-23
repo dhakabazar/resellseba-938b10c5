@@ -9,6 +9,7 @@ import { RichTextEditor } from "@/components/RichTextEditor";
 import { uniqueProductSlug } from "@/lib/slug";
 import { Hint } from "@/components/Hint";
 import { AdminProductCalc } from "@/components/price-breakdown";
+import { areaLabel, deliverySettingsSummary, globalDelivery, resolveDelivery, resolvedCharge, type ProductDeliveryMode } from "@/lib/delivery";
 import { ProductImportModal } from "@/components/ProductImportModal";
 import { takeImportDraft } from "@/lib/product-import";
 import { CloudDownload } from "lucide-react";
@@ -27,10 +28,11 @@ function NewProduct() {
   const [buying, setBuying] = useState("");
   const [resellerPrice, setResellerPrice] = useState("");
   const [packaging, setPackaging] = useState("0");
-  const [deliveryMode, setDeliveryMode] = useState<"area" | "free" | "flat">("area");
+  const [deliveryMode, setDeliveryMode] = useState<ProductDeliveryMode>("global");
   const [deliveryFlat, setDeliveryFlat] = useState("0");
   const [deliveryIn, setDeliveryIn] = useState("60");
   const [deliveryOut, setDeliveryOut] = useState("130");
+  const [deliverySub, setDeliverySub] = useState("90");
   const [suggested, setSuggested] = useState("");
   const [stock, setStock] = useState("0");
   const [images, setImages] = useState<UploadedImage[]>([]);
@@ -71,8 +73,18 @@ function NewProduct() {
     const buy = Number(buying) || 0;
     const rp = Number(resellerPrice) || 0;
     const pkg = Number(packaging) || 0;
-    const di = deliveryMode === "free" ? 0 : deliveryMode === "flat" ? Number(deliveryFlat) || 0 : Number(deliveryIn) || 0;
-    const dOut = deliveryMode === "free" ? 0 : deliveryMode === "flat" ? Number(deliveryFlat) || 0 : Number(deliveryOut) || 0;
+    const r = resolveDelivery(
+      {
+        delivery_mode: deliveryMode,
+        delivery_flat: Number(deliveryFlat) || 0,
+        delivery_inside: Number(deliveryIn) || 0,
+        delivery_outside: Number(deliveryOut) || 0,
+        delivery_sub: Number(deliverySub) || 0,
+      },
+      globalDelivery(),
+    );
+    const di = resolvedCharge(r, "inside_dhaka");
+    const dOut = resolvedCharge(r, "outside_dhaka");
     const sug = Number(suggested) || 0;
     const saProfit = rp - buy;
     // Reseller's minimum sell = reseller_price + packaging (delivery is charged separately to customer)
@@ -81,7 +93,7 @@ function NewProduct() {
     const resellerBaseOut = rp + pkg + dOut;
     const resellerProfitAtSuggested = sug - rp - pkg;
     return { saProfit, resellerMinSell, resellerBaseIn, resellerBaseOut, resellerProfitAtSuggested };
-  }, [buying, resellerPrice, packaging, deliveryIn, deliveryOut, deliveryMode, deliveryFlat, suggested]);
+  }, [buying, resellerPrice, packaging, deliveryIn, deliveryOut, deliveryMode, deliveryFlat, deliverySub, suggested]);
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
@@ -110,9 +122,10 @@ function NewProduct() {
           reseller_price: Number(resellerPrice),
           packaging_cost: Number(packaging),
           delivery_mode: deliveryMode,
-          delivery_flat: deliveryMode === "flat" ? Number(deliveryFlat) || 0 : 0,
-          delivery_inside: deliveryMode === "area" ? Number(deliveryIn) : 0,
-          delivery_outside: deliveryMode === "area" ? Number(deliveryOut) : 0,
+          delivery_flat: deliveryMode === "flat" || deliveryMode === "custom" ? Number(deliveryFlat) || 0 : 0,
+          delivery_inside: deliveryMode === "area" ? Number(deliveryIn) || 0 : 0,
+          delivery_outside: deliveryMode === "area" ? Number(deliveryOut) || 0 : 0,
+          delivery_sub: deliveryMode === "area" ? Number(deliverySub) || 0 : 0,
           suggested_price: Number(suggested),
           stock: Number(stock),
           og_image_url: images[0]?.url ?? null,
@@ -245,9 +258,13 @@ function NewProduct() {
             <Field label="Packaging cost (৳)" hint="Per-order packaging cost, deducted from the reseller.">
               <input type="number" min={0} value={packaging} onChange={(e) => setPackaging(e.target.value)} className={inputCls} />
             </Field>
-            <Field label="Delivery type" hint="Area-wise, free, or flat rate. Can be edited later.">
+            <Field
+              label="Delivery type"
+              hint={`Global rule (default) — ${deliverySettingsSummary(globalDelivery())}. Onno kichu select korle ei product er nijer charge priority pabe.`}
+            >
               <select value={deliveryMode} onChange={(e) => setDeliveryMode(e.target.value as typeof deliveryMode)} className={inputCls}>
-                <option value="area">Area-wise (Inside / Outside Dhaka)</option>
+                <option value="global">Global setting (default)</option>
+                <option value="area">Area-wise (3 areas)</option>
                 <option value="free">Free shipping</option>
                 <option value="flat">Flat rate (same everywhere)</option>
               </select>
@@ -259,13 +276,21 @@ function NewProduct() {
             )}
             {deliveryMode === "area" && (
               <>
-                <Field label="Delivery inside Dhaka (৳)" hint="Courier charge inside Dhaka, paid by customer.">
+                <Field label={`Delivery ${areaLabel("inside_dhaka")} (৳)`} hint="Courier charge, paid by customer.">
                   <input type="number" min={0} value={deliveryIn} onChange={(e) => setDeliveryIn(e.target.value)} className={inputCls} />
                 </Field>
-                <Field label="Delivery outside Dhaka (৳)" hint="Courier charge outside Dhaka, paid by customer.">
+                <Field label={`Delivery ${areaLabel("sub_dhaka")} (৳)`} hint="Courier charge, paid by customer.">
+                  <input type="number" min={0} value={deliverySub} onChange={(e) => setDeliverySub(e.target.value)} className={inputCls} />
+                </Field>
+                <Field label={`Delivery ${areaLabel("outside_dhaka")} (৳)`} hint="Courier charge, paid by customer.">
                   <input type="number" min={0} value={deliveryOut} onChange={(e) => setDeliveryOut(e.target.value)} className={inputCls} />
                 </Field>
               </>
+            )}
+            {deliveryMode === "custom" && (
+              <Field label="Custom delivery charge (৳)" hint="Order add / edit e manual change kora jabe.">
+                <input type="number" min={0} value={deliveryFlat} onChange={(e) => setDeliveryFlat(e.target.value)} className={inputCls} />
+              </Field>
             )}
             <Field label="Stock">
               <input type="number" min={0} value={stock} onChange={(e) => setStock(e.target.value)} className={inputCls} />
@@ -285,6 +310,7 @@ function NewProduct() {
                 deliveryFlat: Number(deliveryFlat) || 0,
                 deliveryInside: Number(deliveryIn) || 0,
                 deliveryOutside: Number(deliveryOut) || 0,
+                deliverySub: Number(deliverySub) || 0,
                 sellPrice: Number(suggested) || 0,
               }}
             />

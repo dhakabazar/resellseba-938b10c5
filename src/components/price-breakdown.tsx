@@ -1,4 +1,11 @@
 import { bdt } from "@/lib/finance-report";
+import {
+  areaLabel,
+  globalDelivery,
+  resolveDelivery,
+  resolvedCharge,
+  type ProductDeliveryMode,
+} from "@/lib/delivery";
 
 /** One line of a per-unit money breakdown. Used by product create/edit and reseller catalog. */
 export function CalcRow({
@@ -54,19 +61,40 @@ export type ProductCalcInput = {
   buying: number;
   resellerPrice: number;
   packaging: number;
-  deliveryMode: "area" | "free" | "flat";
+  /** `global` = inherit Admin → Advanced settings → Delivery charge. */
+  deliveryMode: ProductDeliveryMode;
   deliveryFlat: number;
   deliveryInside: number;
   deliveryOutside: number;
+  deliverySub?: number;
   sellPrice: number; // suggested (admin) or reseller's own selling price
 };
 
+/** Merge product delivery config over the global rule. */
+function resolved(i: ProductCalcInput) {
+  return resolveDelivery(
+    {
+      delivery_mode: i.deliveryMode,
+      delivery_flat: i.deliveryFlat,
+      delivery_inside: i.deliveryInside,
+      delivery_outside: i.deliveryOutside,
+      delivery_sub: i.deliverySub ?? null,
+    },
+    globalDelivery(),
+  );
+}
+
 export function productCalc(i: ProductCalcInput) {
-  const dIn = i.deliveryMode === "free" ? 0 : i.deliveryMode === "flat" ? i.deliveryFlat : i.deliveryInside;
-  const dOut = i.deliveryMode === "free" ? 0 : i.deliveryMode === "flat" ? i.deliveryFlat : i.deliveryOutside;
+  const r = resolved(i);
+  const dIn = resolvedCharge(r, "inside_dhaka");
+  const dSub = resolvedCharge(r, "sub_dhaka");
+  const dOut = resolvedCharge(r, "outside_dhaka");
   const resellerCost = i.resellerPrice + i.packaging;
   return {
+    mode: r.mode,
+    source: r.source,
     dIn,
+    dSub,
     dOut,
     adminProfit: i.resellerPrice - i.buying,
     adminReceives: resellerCost,
@@ -74,15 +102,18 @@ export function productCalc(i: ProductCalcInput) {
     minSell: resellerCost,
     resellerProfit: i.sellPrice - resellerCost,
     customerInside: i.sellPrice + dIn,
+    customerSub: i.sellPrice + dSub,
     customerOutside: i.sellPrice + dOut,
     margin: i.sellPrice > 0 ? ((i.sellPrice - resellerCost) / i.sellPrice) * 100 : 0,
   };
 }
 
 function deliveryLabel(i: ProductCalcInput, c: ReturnType<typeof productCalc>) {
-  if (i.deliveryMode === "free") return "Free shipping (customer pays ৳0)";
-  if (i.deliveryMode === "flat") return `Flat ${bdt(c.dIn)} (all areas)`;
-  return `Inside ${bdt(c.dIn)} · Outside ${bdt(c.dOut)}`;
+  const tag = c.source === "global" ? " · global rule" : "";
+  if (c.mode === "free") return `Free shipping (customer pays ৳0)${tag}`;
+  if (c.mode === "flat") return `Flat ${bdt(c.dIn)} (all areas)${tag}`;
+  if (c.mode === "custom") return `Custom ${bdt(c.dIn)} (editable per order)${tag}`;
+  return `${areaLabel("inside_dhaka")} ${bdt(c.dIn)} · ${areaLabel("sub_dhaka")} ${bdt(c.dSub)} · ${areaLabel("outside_dhaka")} ${bdt(c.dOut)}${tag}`;
 }
 
 /** Admin-side + reseller-side calculation, side by side. Shown on product create/edit. */
@@ -108,8 +139,9 @@ export function AdminProductCalc({ input }: { input: ProductCalcInput }) {
         <div className="mt-2 border-t pt-2">
           <CalcRow label={`Sell price ${bdt(input.sellPrice)} → profit`} value={bdt(c.resellerProfit)} tone={c.resellerProfit >= 0 ? "success" : "danger"} strong />
           <CalcRow label="Margin" value={`${c.margin.toFixed(1)}%`} muted />
-          <CalcRow label="Customer pays (inside Dhaka)" value={bdt(c.customerInside)} muted />
-          <CalcRow label="Customer pays (outside Dhaka)" value={bdt(c.customerOutside)} muted />
+          <CalcRow label={`Customer pays (${areaLabel("inside_dhaka")})`} value={bdt(c.customerInside)} muted />
+          <CalcRow label={`Customer pays (${areaLabel("sub_dhaka")})`} value={bdt(c.customerSub)} muted />
+          <CalcRow label={`Customer pays (${areaLabel("outside_dhaka")})`} value={bdt(c.customerOutside)} muted />
         </div>
       </CalcPanel>
     </div>
@@ -128,8 +160,9 @@ export function ResellerProductCalc({ input }: { input: ProductCalcInput }) {
         <CalcRow label={`Your sell price ${bdt(input.sellPrice)} → profit`} value={bdt(c.resellerProfit)} strong tone={c.resellerProfit >= 0 ? "success" : "danger"} />
         <CalcRow label="Margin" value={`${c.margin.toFixed(1)}%`} muted />
         <CalcRow label="Delivery (collected from customer)" value={deliveryLabel(input, c)} muted />
-        <CalcRow label="Customer pays (inside Dhaka)" value={bdt(c.customerInside)} muted />
-        <CalcRow label="Customer pays (outside Dhaka)" value={bdt(c.customerOutside)} muted />
+        <CalcRow label={`Customer pays (${areaLabel("inside_dhaka")})`} value={bdt(c.customerInside)} muted />
+        <CalcRow label={`Customer pays (${areaLabel("sub_dhaka")})`} value={bdt(c.customerSub)} muted />
+        <CalcRow label={`Customer pays (${areaLabel("outside_dhaka")})`} value={bdt(c.customerOutside)} muted />
       </div>
     </CalcPanel>
   );

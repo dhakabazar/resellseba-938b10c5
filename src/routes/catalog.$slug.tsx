@@ -5,6 +5,7 @@ import { getCatalogProduct } from "@/lib/catalog.functions";
 import { CopyBtn } from "@/components/catalog/shell";
 import { ImagePickerButton } from "@/components/catalog/image-picker";
 import { bdt } from "@/lib/finance-report";
+import { areaLabel } from "@/lib/delivery";
 import { ArrowLeft, Loader2, Truck } from "lucide-react";
 
 export const Route = createFileRoute("/catalog/$slug")({
