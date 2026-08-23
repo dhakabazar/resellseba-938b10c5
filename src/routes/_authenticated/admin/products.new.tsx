@@ -9,7 +9,7 @@ import { RichTextEditor } from "@/components/RichTextEditor";
 import { uniqueProductSlug } from "@/lib/slug";
 import { Hint } from "@/components/Hint";
 import { AdminProductCalc } from "@/components/price-breakdown";
-import { areaLabel, deliverySettingsSummary, globalDelivery, type ProductDeliveryMode } from "@/lib/delivery";
+import { areaLabel, deliverySettingsSummary, globalDelivery, resolveDelivery, resolvedCharge, type ProductDeliveryMode } from "@/lib/delivery";
 import { ProductImportModal } from "@/components/ProductImportModal";
 import { takeImportDraft } from "@/lib/product-import";
 import { CloudDownload } from "lucide-react";
@@ -73,8 +73,18 @@ function NewProduct() {
     const buy = Number(buying) || 0;
     const rp = Number(resellerPrice) || 0;
     const pkg = Number(packaging) || 0;
-    const di = deliveryCalcInput.dIn;
-    const dOut = deliveryCalcInput.dOut;
+    const r = resolveDelivery(
+      {
+        delivery_mode: deliveryMode,
+        delivery_flat: Number(deliveryFlat) || 0,
+        delivery_inside: Number(deliveryIn) || 0,
+        delivery_outside: Number(deliveryOut) || 0,
+        delivery_sub: Number(deliverySub) || 0,
+      },
+      globalDelivery(),
+    );
+    const di = resolvedCharge(r, "inside_dhaka");
+    const dOut = resolvedCharge(r, "outside_dhaka");
     const sug = Number(suggested) || 0;
     const saProfit = rp - buy;
     // Reseller's minimum sell = reseller_price + packaging (delivery is charged separately to customer)
@@ -83,7 +93,7 @@ function NewProduct() {
     const resellerBaseOut = rp + pkg + dOut;
     const resellerProfitAtSuggested = sug - rp - pkg;
     return { saProfit, resellerMinSell, resellerBaseIn, resellerBaseOut, resellerProfitAtSuggested };
-  }, [buying, resellerPrice, packaging, deliveryIn, deliveryOut, deliveryMode, deliveryFlat, suggested]);
+  }, [buying, resellerPrice, packaging, deliveryIn, deliveryOut, deliveryMode, deliveryFlat, deliverySub, suggested]);
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
