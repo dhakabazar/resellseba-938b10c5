@@ -11,6 +11,7 @@
  */
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { mergeDeliverySettings, setGlobalDelivery } from "@/lib/delivery";
 
 export type GlobalSettings = {
   id: number;
