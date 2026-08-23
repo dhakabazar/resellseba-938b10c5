@@ -14,6 +14,7 @@ import { Loader2, Save, Package, ShieldCheck, Mail, Smartphone, Info, Boxes, Tru
 import {
   DELIVERY_AREAS,
   deliverySettingsSummary,
+  setGlobalDelivery,
   type DeliveryArea,
   type DeliveryMode,
   type DeliverySettings,
@@ -128,6 +129,7 @@ function AdvancedSettingsPage() {
     setBusy(false);
     if (error) return toast.error(error.message);
     clearAdvancedSettingsCache();
+    setGlobalDelivery(settings.delivery);
     toast.success("Advanced settings saved");
   }
 
