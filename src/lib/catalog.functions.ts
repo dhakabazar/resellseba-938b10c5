@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { pickImage, type ImgRow } from "@/lib/catalog.server";
+import { mergeDeliverySettings, resolveDelivery } from "@/lib/delivery";
 
 /** Public master catalog — active products only, no cost/profit leak beyond reseller price. */
 export const getCatalog = createServerFn({ method: "GET" }).handler(async () => {
@@ -58,10 +59,17 @@ export const getCatalog = createServerFn({ method: "GET" }).handler(async () => 
 export const getCatalogProduct = createServerFn({ method: "GET" })
   .inputValidator((d: { slug: string }) => ({ slug: String(d.slug) }))
   .handler(async ({ data }) => {
+    const { data: gs } = await supabase
+      .from("global_settings")
+      .select("advanced_settings")
+      .eq("id", 1)
+      .maybeSingle();
+    const globalDelivery = mergeDeliverySettings((gs as any)?.advanced_settings?.delivery);
+
     const { data: row } = await supabase
       .from("products")
       .select(
-        "id, name, slug, product_code, short_description, description, suggested_price, reseller_price, keywords, stock, weight_grams, delivery_mode, delivery_inside, delivery_outside, delivery_flat, categories(name, slug), brands(name, slug), product_images(url, is_primary, sort_order, alt_text)",
+        "id, name, slug, product_code, short_description, description, suggested_price, reseller_price, keywords, stock, weight_grams, delivery_mode, delivery_inside, delivery_outside, delivery_sub, delivery_flat, categories(name, slug), brands(name, slug), product_images(url, is_primary, sort_order, alt_text)",
       )
       .eq("slug", data.slug)
       .eq("is_active", true)
@@ -72,6 +80,7 @@ export const getCatalogProduct = createServerFn({ method: "GET" })
     const images = [...((p.product_images ?? []) as ImgRow[])].sort(
       (a, b) => Number(b.is_primary) - Number(a.is_primary) || a.sort_order - b.sort_order,
     );
+    const resolved = resolveDelivery(p as any, globalDelivery);
     return {
       id: p.id as string,
       name: p.name as string,
@@ -83,10 +92,13 @@ export const getCatalogProduct = createServerFn({ method: "GET" })
       resellerPrice: Number(p.reseller_price ?? 0),
       stock: Number(p.stock ?? 0),
       weight: p.weight_grams as number | null,
-      deliveryMode: p.delivery_mode as string,
-      deliveryInside: Number(p.delivery_inside ?? 0),
-      deliveryOutside: Number(p.delivery_outside ?? 0),
-      deliveryFlat: Number(p.delivery_flat ?? 0),
+      /** Effective delivery (product override merged over the global rule). */
+      deliveryMode: resolved.mode,
+      deliverySource: resolved.source,
+      deliveryInside: resolved.charges.inside_dhaka,
+      deliverySub: resolved.charges.sub_dhaka,
+      deliveryOutside: resolved.charges.outside_dhaka,
+      deliveryFlat: resolved.mode === "custom" ? resolved.custom : resolved.flat,
       category: p.categories?.name ?? null,
       categorySlug: p.categories?.slug ?? null,
       brand: p.brands?.name ?? null,
