@@ -148,12 +148,13 @@ function CatalogDetails() {
             <div className="mt-3 grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
               {p.deliveryMode === "free" ? (
                 <span className="font-semibold text-emerald-600">Free delivery</span>
-              ) : p.deliveryMode === "flat" ? (
-                <span>Flat: {bdt(p.deliveryFlat)}</span>
+              ) : p.deliveryMode === "flat" || p.deliveryMode === "custom" ? (
+                <span>{p.deliveryMode === "flat" ? "Flat" : "Custom"}: {bdt(p.deliveryFlat)}</span>
               ) : (
                 <>
-                  <span>Inside Dhaka: {bdt(p.deliveryInside)}</span>
-                  <span>Outside Dhaka: {bdt(p.deliveryOutside)}</span>
+                  <span>{areaLabel("inside_dhaka")}: {bdt(p.deliveryInside)}</span>
+                  <span>{areaLabel("sub_dhaka")}: {bdt(p.deliverySub)}</span>
+                  <span>{areaLabel("outside_dhaka")}: {bdt(p.deliveryOutside)}</span>
                 </>
               )}
             </div>

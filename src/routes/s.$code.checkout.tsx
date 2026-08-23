@@ -5,7 +5,8 @@ import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { initBkash, initSslcommerz } from "@/lib/payments.functions";
-import { productDeliveryCharge, type DeliveryArea } from "@/lib/delivery";
+import { areaOptions, productDeliveryCharge, type DeliveryArea } from "@/lib/delivery";
+import { useAdvancedSettings } from "@/lib/advanced-settings";
 import { addressError, nameError, normalizePhone, phoneError, sanitizeName } from "@/lib/checkout-validate";
 import { addToCart, bdt, clearCart, removeFromCart, setCartQty } from "@/lib/store-cart";
 import { useStore } from "@/components/store/store-context";
@@ -23,13 +24,14 @@ export const Route = createFileRoute("/s/$code/checkout")({
 
 type PayMethod = { method: string; label: string; instructions: string | null };
 
-const AREAS: { value: DeliveryArea; label: string }[] = [
-  { value: "inside_dhaka", label: "Inside Dhaka" },
-  { value: "sub_dhaka", label: "Sub Dhaka" },
-  { value: "outside_dhaka", label: "Outside Dhaka" },
-];
+/** Area names come from Admin → Advanced settings → Delivery charge. */
+function useAreas() {
+  const { settings } = useAdvancedSettings();
+  return areaOptions(settings.delivery);
+}
 
 function Checkout() {
+  const AREAS = useAreas();
   const { code } = Route.useParams();
   const { l: directListing, q: directQty } = Route.useSearch();
   const nav = useNavigate();

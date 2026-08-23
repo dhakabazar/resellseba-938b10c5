@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { ShoppingBag } from "lucide-react";
 import { bdt } from "@/lib/store-cart";
-import { deliveryLabel } from "@/lib/delivery";
+import { deliveryLabel, resolveDelivery } from "@/lib/delivery";
 import { useStore, type StoreListing } from "./store-context";
 
 export const cx = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(" ");
@@ -114,7 +114,7 @@ export function ProductCard({ listing }: { listing: StoreListing }) {
   const variant = theme.layout.card;
   const img = image(listing);
   const p = listing.product!;
-  const free = (p.delivery_mode ?? "area") === "free";
+  const free = resolveDelivery(p).mode === "free";
 
   const shell =
     variant === "soft"

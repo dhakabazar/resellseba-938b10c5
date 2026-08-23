@@ -1,5 +1,11 @@
 import { useEffect, useState } from "react";
 import { getGlobalSettings, clearAppDataCache } from "@/lib/app-data";
+import {
+  DEFAULT_DELIVERY_SETTINGS,
+  mergeDeliverySettings,
+  setGlobalDelivery,
+  type DeliverySettings,
+} from "@/lib/delivery";
 
 /**
  * Advanced system settings — small feature switches an admin can flip without
@@ -17,6 +23,8 @@ export type AdvancedSettings = {
   verifyEmail: boolean;
   /** Require the SMS code (only used when the master switch is on). */
   verifySms: boolean;
+  /** Platform-wide delivery charge rule (products can override it). */
+  delivery: DeliverySettings;
 };
 
 export const DEFAULT_ADVANCED_SETTINGS: AdvancedSettings = {
@@ -25,15 +33,20 @@ export const DEFAULT_ADVANCED_SETTINGS: AdvancedSettings = {
   verifyEnabled: false,
   verifyEmail: true,
   verifySms: false,
+  delivery: DEFAULT_DELIVERY_SETTINGS,
 };
 
 
 export function mergeAdvanced(raw: unknown): AdvancedSettings {
-  const r = (raw ?? {}) as Partial<AdvancedSettings>;
+  const r = (raw ?? {}) as Record<string, unknown>;
   const out = { ...DEFAULT_ADVANCED_SETTINGS };
   for (const k of Object.keys(out) as (keyof AdvancedSettings)[]) {
-    if (typeof r[k] === "boolean") out[k] = r[k] as boolean;
+    if (typeof out[k] === "boolean" && typeof r[k] === "boolean") {
+      (out as any)[k] = r[k];
+    }
   }
+  out.delivery = mergeDeliverySettings(r.delivery);
+  setGlobalDelivery(out.delivery);
   return out;
 }
 
