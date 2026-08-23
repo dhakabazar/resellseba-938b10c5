@@ -44,6 +44,7 @@ export function getGlobalSettings(force = false): Promise<GlobalSettings | null>
     p = (async () => {
       try {
         const { data } = await supabase.from("global_settings").select("*").eq("id", 1).maybeSingle();
+        setGlobalDelivery(mergeDeliverySettings((data as any)?.advanced_settings?.delivery));
         return (data as GlobalSettings | null) ?? null;
       } catch {
         return null;
