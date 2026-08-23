@@ -8,6 +8,7 @@ import {
   type ThemeContentValues,
 } from "@/lib/store-content";
 import { buildMenuTree, fetchMenuRows, type MenuNode } from "@/lib/store-menu";
+import { getGlobalSettings } from "@/lib/app-data";
 
 
 export type StoreImage = { url: string; is_primary: boolean | null; sort_order?: number | null };
@@ -27,6 +28,7 @@ export type StoreProduct = {
   delivery_flat: number | null;
   delivery_inside: number | null;
   delivery_outside: number | null;
+  delivery_sub: number | null;
   product_images: StoreImage[];
 };
 
@@ -116,6 +118,8 @@ export function useStoreLoader(code: string, themeOverride?: string | null, pale
     let alive = true;
     (async () => {
       setState("loading");
+      // Loads the platform-wide delivery rule into the shared cache (once per session).
+      void getGlobalSettings();
       const { data: r } = await supabase
         .from("public_stores")
         .select("*")
@@ -131,7 +135,7 @@ export function useStoreLoader(code: string, themeOverride?: string | null, pale
       const { data: rows } = await supabase
         .from("reseller_listings")
         .select(
-          "id, selling_price, custom_title, custom_description, extra_delivery_inside, extra_delivery_outside, created_at, product:products(id,name,slug,product_code,short_description,description,stock,category_id,brand_id,is_featured,is_active,delivery_mode,delivery_flat,delivery_inside,delivery_outside, product_images(url,is_primary,sort_order))",
+          "id, selling_price, custom_title, custom_description, extra_delivery_inside, extra_delivery_outside, created_at, product:products(id,name,slug,product_code,short_description,description,stock,category_id,brand_id,is_featured,is_active,delivery_mode,delivery_flat,delivery_inside,delivery_outside,delivery_sub, product_images(url,is_primary,sort_order))",
         )
         .eq("reseller_id", rid)
         .eq("is_active", true)

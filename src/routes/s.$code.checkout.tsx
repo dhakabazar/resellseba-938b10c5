@@ -23,11 +23,11 @@ export const Route = createFileRoute("/s/$code/checkout")({
 
 type PayMethod = { method: string; label: string; instructions: string | null };
 
-const AREAS: { value: DeliveryArea; label: string }[] = [
-  { value: "inside_dhaka", label: "Inside Dhaka" },
-  { value: "sub_dhaka", label: "Sub Dhaka" },
-  { value: "outside_dhaka", label: "Outside Dhaka" },
-];
+/** Area names come from Admin → Advanced settings → Delivery charge. */
+function useAreas() {
+  const { settings } = useAdvancedSettings();
+  return areaOptions(settings.delivery);
+}
 
 function Checkout() {
   const { code } = Route.useParams();
