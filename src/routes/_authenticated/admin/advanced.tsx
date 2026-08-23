@@ -10,7 +10,14 @@ import {
   clearAdvancedSettingsCache,
   type AdvancedSettings,
 } from "@/lib/advanced-settings";
-import { Loader2, Save, Package, ShieldCheck, Mail, Smartphone, Info, Boxes } from "lucide-react";
+import { Loader2, Save, Package, ShieldCheck, Mail, Smartphone, Info, Boxes, Truck } from "lucide-react";
+import {
+  DELIVERY_AREAS,
+  deliverySettingsSummary,
+  type DeliveryArea,
+  type DeliveryMode,
+  type DeliverySettings,
+} from "@/lib/delivery";
 
 export const Route = createFileRoute("/_authenticated/admin/advanced")({
   component: AdvancedSettingsPage,
@@ -155,6 +162,11 @@ function AdvancedSettingsPage() {
         </span>
       </div>
 
+      <DeliveryCard
+        value={settings.delivery}
+        onChange={(delivery) => setSettings((s) => ({ ...s, delivery }))}
+      />
+
       <div className="grid gap-5 lg:grid-cols-2">
         {GROUPS.map((group) => (
           <section key={group.title} className="surface-card overflow-hidden">
@@ -201,6 +213,125 @@ function AdvancedSettingsPage() {
         ))}
       </div>
     </div>
+  );
+}
+
+
+const DELIVERY_MODES: { value: DeliveryMode; label: string; help: string }[] = [
+  { value: "area", label: "Area-wise", help: "3 ta area, protita area er alada charge." },
+  { value: "flat", label: "Flat rate", help: "Sob area te ek e charge." },
+  { value: "free", label: "Free shipping", help: "Customer delivery charge dibe na." },
+  { value: "custom", label: "Custom", help: "Ekta default amount, order e manual change kora jabe." },
+];
+
+/** Global delivery charge rule. A product can still override it from product edit. */
+function DeliveryCard({
+  value,
+  onChange,
+}: {
+  value: DeliverySettings;
+  onChange: (v: DeliverySettings) => void;
+}) {
+  const inp =
+    "w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:border-primary";
+
+  function setArea(area: DeliveryArea, patch: Partial<{ label: string; charge: number }>) {
+    onChange({ ...value, areas: { ...value.areas, [area]: { ...value.areas[area], ...patch } } });
+  }
+
+  return (
+    <section className="surface-card overflow-hidden">
+      <header className="flex items-center gap-2 border-b bg-muted/30 px-4 py-3">
+        <span className="grid h-8 w-8 place-items-center rounded-md bg-primary/10 text-primary">
+          <Truck className="h-4 w-4" />
+        </span>
+        <div>
+          <h2 className="text-sm font-semibold">Delivery charge (global)</h2>
+          <p className="text-xs text-muted-foreground">
+            Ei rule sob product e apply hobe. Product edit e delivery charge set kora thakle
+            sei product er nijer setting priority pabe (priority 1).
+          </p>
+        </div>
+      </header>
+
+      <div className="space-y-4 p-4">
+        <div className="grid gap-2 sm:grid-cols-4">
+          {DELIVERY_MODES.map((m) => (
+            <button
+              key={m.value}
+              type="button"
+              onClick={() => onChange({ ...value, mode: m.value })}
+              aria-pressed={value.mode === m.value}
+              className={`rounded-lg border p-3 text-left transition ${
+                value.mode === m.value ? "border-primary bg-primary/5" : "hover:bg-muted/40"
+              }`}
+            >
+              <div className="text-sm font-medium">{m.label}</div>
+              <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">{m.help}</p>
+            </button>
+          ))}
+        </div>
+
+        {value.mode === "area" && (
+          <div className="space-y-2">
+            <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Areas (name change kora jabe)
+            </div>
+            {DELIVERY_AREAS.map((area) => (
+              <div key={area} className="grid gap-2 sm:grid-cols-[2fr_1fr]">
+                <input
+                  value={value.areas[area].label}
+                  onChange={(e) => setArea(area, { label: e.target.value })}
+                  className={inp}
+                  placeholder="Area name"
+                />
+                <input
+                  type="number"
+                  min={0}
+                  value={value.areas[area].charge}
+                  onChange={(e) => setArea(area, { charge: Number(e.target.value) || 0 })}
+                  className={inp}
+                  placeholder="Charge"
+                />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {value.mode === "flat" && (
+          <label className="block max-w-xs text-xs font-medium">
+            Flat charge (all areas)
+            <input
+              type="number"
+              min={0}
+              value={value.flat}
+              onChange={(e) => onChange({ ...value, flat: Number(e.target.value) || 0 })}
+              className={inp + " mt-1"}
+            />
+          </label>
+        )}
+
+        {value.mode === "custom" && (
+          <label className="block max-w-xs text-xs font-medium">
+            Default custom charge
+            <input
+              type="number"
+              min={0}
+              value={value.custom}
+              onChange={(e) => onChange({ ...value, custom: Number(e.target.value) || 0 })}
+              className={inp + " mt-1"}
+            />
+            <span className="mt-1 block text-[11px] font-normal text-muted-foreground">
+              Order add / edit e ei charge manual change kora jabe.
+            </span>
+          </label>
+        )}
+
+        <p className="rounded-md bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+          {deliverySettingsSummary(value)}
+        </p>
+      </div>
+    </section>
   );
 }
 
