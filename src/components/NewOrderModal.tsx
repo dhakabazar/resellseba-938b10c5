@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { areaOptions, productDeliveryCharge, deliveryLabel, deliveryMode } from "@/lib/delivery";
+import { areaOptions, productDeliveryCharge, deliveryLabel, deliveryMode, type DeliveryArea } from "@/lib/delivery";
 import { addressError, nameError, normalizePhone, phoneError, sanitizeName } from "@/lib/checkout-validate";
 import { Loader2, Plus, Minus, X, Trash2, Search } from "lucide-react";
 import { toast } from "sonner";
@@ -41,7 +41,7 @@ export function NewOrderModal({
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
-  const [area, setArea] = useState<"inside_dhaka" | "outside_dhaka">("outside_dhaka");
+  const [area, setArea] = useState<DeliveryArea>("outside_dhaka");
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [note, setNote] = useState("");
   const [lines, setLines] = useState<Line[]>([]);
