@@ -27,14 +27,14 @@ admin only (webhook ar change korbe na):
 Admin cost = product cost (admin reseller_price, received item onujayi) + delivery charge (admin-set/default) + packaging cost.
 Reseller sale = customer received amount (discount ar reseller price already order-e).
 
-| Status | Received | Cost | Reseller profit |
-|---|---|---|---|
-| delivered | full cod (paid order hole 0 + already paid) | product+delivery+pack | received − cost |
-| partial_full | admin-boshano amount | full cost | received − cost |
-| partial_item | admin-boshano amount | only received item cost + delivery + pack | received − cost |
-| partial_delivery | shudhu delivery charge amount | delivery + pack | received − (delivery+pack) |
-| returned | 0 | delivery + pack | −(delivery + pack) |
-| damaged | jotota collect hoyeche | product+delivery+pack | received − cost (loss dekhabe) |
+| Status           | Received                                    | Cost                                      | Reseller profit                |
+| ---------------- | ------------------------------------------- | ----------------------------------------- | ------------------------------ |
+| delivered        | full cod (paid order hole 0 + already paid) | product+delivery+pack                     | received − cost                |
+| partial_full     | admin-boshano amount                        | full cost                                 | received − cost                |
+| partial_item     | admin-boshano amount                        | only received item cost + delivery + pack | received − cost                |
+| partial_delivery | shudhu delivery charge amount               | delivery + pack                           | received − (delivery+pack)     |
+| returned         | 0                                           | delivery + pack                           | −(delivery + pack)             |
+| damaged          | jotota collect hoyeche                      | product+delivery+pack                     | received − cost (loss dekhabe) |
 
 Reseller-er product price / discount change = reseller-er nijer porshon (admin profit-e count hobe na). Admin delivery charge / packaging change = oi order-e apply hobe, ar note-e log thakbe.
 
