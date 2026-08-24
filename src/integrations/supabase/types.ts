@@ -842,6 +842,47 @@ export type Database = {
           },
         ]
       }
+      order_notes: {
+        Row: {
+          author_id: string | null
+          author_name: string | null
+          author_role: string
+          body: string
+          created_at: string
+          id: string
+          order_id: string
+          updated_at: string
+        }
+        Insert: {
+          author_id?: string | null
+          author_name?: string | null
+          author_role?: string
+          body: string
+          created_at?: string
+          id?: string
+          order_id: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string | null
+          author_name?: string | null
+          author_role?: string
+          body?: string
+          created_at?: string
+          id?: string
+          order_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_notes_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_status_history: {
         Row: {
           changed_by: string | null
@@ -2366,11 +2407,13 @@ export type Database = {
       }
       my_permissions: { Args: never; Returns: string[] }
       order_kept_product_cost: { Args: { _order_id: string }; Returns: number }
+      order_visible_to_me: { Args: { _order_id: string }; Returns: boolean }
       purge_store_visits: { Args: never; Returns: number }
       recalc_order_packaging: {
         Args: { _order_id: string }
         Returns: undefined
       }
+      reseller_can_note: { Args: { _order_id: string }; Returns: boolean }
       reseller_deposit_balance: {
         Args: { _reseller_id: string }
         Returns: number
