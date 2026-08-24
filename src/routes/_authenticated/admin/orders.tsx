@@ -41,6 +41,7 @@ import { type StripItem, ImageLightbox, OrderItemsList, OrderProductCell } from 
 import { OrderSettleModal } from "@/components/OrderSettleModal";
 import { ShipmentBookingModal } from "@/components/ShipmentBookingModal";
 import { toast } from "sonner";
+import { OrderNotes } from "@/components/order-notes";
 import { CourierTimeline, type CourierEvent } from "@/components/CourierTimeline";
 import { bookSteadfast } from "@/lib/couriers.functions";
 import { OrderTabs } from "@/components/OrderTabs";
@@ -1018,6 +1019,10 @@ function OrderDrawer({
               )}
             </div>
           )}
+
+          <OrderNotes orderId={order.id} canWrite authorRole="admin" />
+
+
 
           {/* Courier Section - Moved to Bottom and Enhanced */}
           <div className="surface-card overflow-hidden">

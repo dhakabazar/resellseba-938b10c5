@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getMyReseller } from "@/lib/app-data";
 import { productDeliveryCharge, deliveryLabel } from "@/lib/delivery";
 import { addressError, nameError, normalizePhone, phoneError, sanitizeName } from "@/lib/checkout-validate";
+import { OrderNotes } from "@/components/order-notes";
 import { useAuth } from "@/lib/use-auth";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
 import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
@@ -420,18 +421,28 @@ function OrdersPage() {
       variant: "danger",
       onConfirm: async () => {
         setLoading(true);
-        const { error } = await supabase
+        // delete order items first (child rows), then verify what actually got removed
+        await supabase.from("order_items").delete().in("order_id", marked);
+        const { data: gone, error } = await supabase
           .from("orders")
           .delete()
-          .in("id", marked);
-        
+          .in("id", marked)
+          .select("id");
+
         if (error) {
           toast.error(error.message);
+        } else if (!gone || gone.length === 0) {
+          toast.error("Delete failed: you do not have permission to delete these orders.");
         } else {
-          toast.success(`${marked.length} orders deleted`);
+          if (gone.length < marked.length) {
+            toast.warning(`${gone.length} of ${marked.length} orders deleted, the rest were not permitted.`);
+          } else {
+            toast.success(`${gone.length} orders deleted`);
+          }
           setMarked([]);
           await load();
         }
+
         setConfirmModal(prev => ({ ...prev, open: false }));
         setLoading(false);
       }
@@ -1461,6 +1472,15 @@ function OrderDrawer({
               )}
             </div>
           )}
+
+          <OrderNotes
+            orderId={order.id}
+            canWrite={resellerCanAct(order.status)}
+            authorRole="reseller"
+            lockedHint="Notes can only be added or edited while the order is New Order, Send To admin or Cancelled."
+          />
+
+
 
           {/* Courier Section - Moved to Bottom */}
           <div className="surface-card overflow-hidden">
