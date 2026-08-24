@@ -475,12 +475,20 @@ function OrdersPage() {
       variant: "danger",
       onConfirm: async () => {
         setLoading(true);
-        const { error } = await supabase.from("orders").delete().eq("id", id);
+        await supabase.from("order_items").delete().eq("order_id", id);
+        const { data: gone, error } = await supabase
+          .from("orders")
+          .delete()
+          .eq("id", id)
+          .select("id");
         if (error) toast.error(error.message);
-        else {
+        else if (!gone || gone.length === 0) {
+          toast.error("Delete failed: you do not have permission to delete this order.");
+        } else {
           toast.success("Order deleted");
           load();
         }
+
         setConfirmModal(prev => ({ ...prev, open: false }));
         setLoading(false);
       }
