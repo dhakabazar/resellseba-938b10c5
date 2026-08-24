@@ -1019,6 +1019,10 @@ function OrderDrawer({
             </div>
           )}
 
+          <OrderNotes orderId={order.id} canWrite authorRole="admin" />
+
+
+
           {/* Courier Section - Moved to Bottom and Enhanced */}
           <div className="surface-card overflow-hidden">
             <div className="flex items-center justify-between border-b px-4 py-3 bg-muted/30">
