@@ -1462,6 +1462,15 @@ function OrderDrawer({
             </div>
           )}
 
+          <OrderNotes
+            orderId={order.id}
+            canWrite={resellerCanAct(order.status)}
+            authorRole="reseller"
+            lockedHint="Notes can only be added or edited while the order is New Order, Send To admin or Cancelled."
+          />
+
+
+
           {/* Courier Section - Moved to Bottom */}
           <div className="surface-card overflow-hidden">
             <div className="flex items-center justify-between border-b px-4 py-3 bg-muted/30">
