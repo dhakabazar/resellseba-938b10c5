@@ -34,6 +34,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useCan } from "@/lib/use-auth";
 import { NewOrderModal } from "@/components/NewOrderModal";
 import { OrderEditModal } from "@/components/OrderEditModal";
 import { type StripItem, ImageLightbox, OrderItemsList, OrderProductCell } from "@/components/order-items-strip";
@@ -109,6 +110,12 @@ export const Route = createFileRoute("/_authenticated/admin/orders")({
 });
 
 function AdminOrdersPage() {
+  const can = useCan();
+  const canCreate = can("orders.create");
+  const canEdit = can("orders.edit");
+  const canDelete = can("orders.delete");
+  const canStatus = can("orders.status", "orders.edit");
+  const canShip = can("orders.ship", "couriers.manage");
   const { tab: tabParam, reseller: resellerParam, q: qParam } = Route.useSearch();
   const navigate = Route.useNavigate();
   const [orders, setOrders] = useState<OrderRow[]>([]);
@@ -359,15 +366,17 @@ function AdminOrdersPage() {
             className="flex-row items-center justify-between"
             actions={
                 <div className="flex items-center gap-2">
-                  {!isPartialStatus(tab) && (
+                  {!isPartialStatus(tab) && canStatus && (
                     <BulkScanButton mode={tab === "pending_return" ? "return" : "handover"} onDone={() => load()} />
                   )}
+                  {canCreate && (
                   <button
                       onClick={() => setOpen(true)}
                       className="btn-brand inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium"
                   >
                       <Plus className="h-4 w-4" /> New Order
                   </button>
+                  )}
                 </div>
             }
         />
@@ -402,7 +411,7 @@ function AdminOrdersPage() {
         {marked.length > 0 && (
           <div className="mb-4 flex flex-wrap items-center gap-2 rounded-md border border-primary/40 bg-primary/5 px-3 py-2">
             <span className="mr-2 text-sm font-medium">{marked.length} marked</span>
-            {(() => {
+            {canStatus && (() => {
               const partialMarked = marked.some((id) => isPartialStatus(orders.find((o) => o.id === id)?.status || ""));
               return (
                 <button
@@ -427,18 +436,22 @@ function AdminOrdersPage() {
             >
               <Printer className="h-3.5 w-3.5" /> Print Labels
             </button>
+            {canShip && (
             <button
               onClick={() => setBookingModal({ open: true, orderIds: marked })}
               className="inline-flex h-9 items-center gap-2 rounded-md border bg-background px-3 text-xs font-medium hover:bg-accent"
             >
               <Truck className="h-3.5 w-3.5" /> {activeProviderLabel ? `Book ${activeProviderLabel}` : "Book Courier"}
             </button>
+            )}
+            {canDelete && (
             <button
               onClick={bulkDeleteOrders}
               className="inline-flex h-9 items-center gap-2 rounded-md border border-destructive/40 bg-background px-3 text-xs font-medium text-destructive hover:bg-destructive/10"
             >
               <Trash2 className="h-3.5 w-3.5" /> Delete
             </button>
+            )}
             <button
               onClick={() => setMarked([])}
               className="ml-auto text-xs text-muted-foreground hover:text-foreground"
@@ -568,9 +581,12 @@ function AdminOrdersPage() {
                           <DropdownMenuItem onClick={() => setSelected(o)}>
                             <Eye className="mr-2 h-4 w-4" /> View Details
                           </DropdownMenuItem>
+                          {canEdit && (
                           <DropdownMenuItem onClick={() => setEditId(o.id)}>
                             <Pencil className="mr-2 h-4 w-4" /> Edit Order
                           </DropdownMenuItem>
+                          )}
+                          {canStatus && (
                           <DropdownMenuItem
                             onClick={() =>
                               o.status === "pending_partial"
@@ -580,7 +596,8 @@ function AdminOrdersPage() {
                           >
                             <Settings2 className="mr-2 h-4 w-4" /> Change Status
                           </DropdownMenuItem>
-                          {(() => {
+                          )}
+                          {canShip && (() => {
                             const isBooked = shipments.some(s => s.order_id === o.id && (s.consignment_id || s.tracking_id));
                             if (!isBooked) {
                               return (
@@ -591,7 +608,7 @@ function AdminOrdersPage() {
                             }
                             return null;
                           })()}
-                          {(() => {
+                          {canDelete && (() => {
                             const isBooked = shipments.some(s => s.order_id === o.id && (s.consignment_id || s.tracking_id));
                             return (
                               <DropdownMenuItem
