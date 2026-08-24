@@ -139,3 +139,15 @@ export function useAuth(): AuthState {
 export function hasRole(roles: Role[], r: Role) {
   return roles.includes(r);
 }
+
+/**
+ * Permission gate for UI actions. Super admin always passes; staff pass when
+ * their custom role holds at least one of the listed permissions.
+ */
+export function useCan() {
+  const { roles, permissions } = useAuth();
+  const isSuperAdmin = roles.includes("super_admin");
+  return (...needed: string[]) =>
+    isSuperAdmin || needed.some((permission) => permissions.includes(permission));
+}
+
