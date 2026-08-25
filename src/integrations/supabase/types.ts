@@ -2410,6 +2410,7 @@ export type Database = {
         Returns: undefined
       }
       my_permissions: { Args: never; Returns: string[] }
+      order_has_shipment: { Args: { _order_id: string }; Returns: boolean }
       order_kept_product_cost: { Args: { _order_id: string }; Returns: number }
       order_visible_to_me: { Args: { _order_id: string }; Returns: boolean }
       purge_store_visits: { Args: never; Returns: number }

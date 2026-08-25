@@ -421,8 +421,6 @@ function OrdersPage() {
       variant: "danger",
       onConfirm: async () => {
         setLoading(true);
-        // delete order items first (child rows), then verify what actually got removed
-        await supabase.from("order_items").delete().in("order_id", marked);
         const { data: gone, error } = await supabase
           .from("orders")
           .delete()

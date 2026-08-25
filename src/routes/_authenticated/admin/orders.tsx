@@ -230,11 +230,12 @@ function AdminOrdersPage() {
       variant: isBooked ? "warning" : "danger",
       onConfirm: async () => {
         setLoading(true);
-        const { error } = await supabase.from("orders").delete().eq("id", id);
+        const { data: deleted, error } = await supabase.from("orders").delete().eq("id", id).select("id");
         if (error) toast.error(error.message);
+        else if (!deleted || deleted.length === 0) toast.error("Delete failed: you do not have permission to delete this order.");
         else {
           toast.success("Order deleted");
-          load();
+          await load();
         }
         setConfirmModal(prev => ({ ...prev, open: false }));
         setLoading(false);
@@ -303,10 +304,12 @@ function AdminOrdersPage() {
       variant: bookedCount > 0 ? "warning" : "danger",
       onConfirm: async () => {
         setLoading(true);
-        const { error } = await supabase.from("orders").delete().in("id", marked);
+        const { data: deleted, error } = await supabase.from("orders").delete().in("id", marked).select("id");
         if (error) toast.error(error.message);
+        else if (!deleted || deleted.length === 0) toast.error("Delete failed: you do not have permission to delete these orders.");
         else {
-          toast.success(`${marked.length} orders deleted`);
+          if (deleted.length < marked.length) toast.warning(`${deleted.length} of ${marked.length} orders deleted, the rest were not permitted.`);
+          else toast.success(`${deleted.length} orders deleted`);
           setMarked([]);
           await load();
         }
