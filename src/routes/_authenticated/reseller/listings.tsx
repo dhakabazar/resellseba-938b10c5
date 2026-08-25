@@ -55,7 +55,7 @@ function ListingsPage() {
     const { data } = await supabase
       .from("reseller_listings")
       .select(
-        "id,selling_price,is_active,products(name,slug,product_code,reseller_price,packaging_cost,delivery_inside,delivery_outside,delivery_sub,delivery_mode,delivery_flat,og_image_url)",
+        "id,selling_price,is_active,products(id,brand_id,category_id,name,slug,product_code,reseller_price,packaging_cost,delivery_inside,delivery_outside,delivery_sub,delivery_mode,delivery_flat,og_image_url)",
       )
       .eq("reseller_id", r.id)
       .order("created_at", { ascending: false });
