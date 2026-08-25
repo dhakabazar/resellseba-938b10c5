@@ -146,6 +146,9 @@ export function areaOptions(g: DeliverySettings = active): { value: DeliveryArea
 /* -------------------------------------------------------------------- product */
 
 export type DeliveryConfig = {
+  id?: string | null;
+  brand_id?: string | null;
+  category_id?: string | null;
   delivery_mode?: string | null;
   delivery_flat?: number | null;
   delivery_inside?: number | null;
@@ -155,7 +158,9 @@ export type DeliveryConfig = {
 
 export type ResolvedDelivery = {
   /** Where the numbers came from. */
-  source: "product" | "global";
+  source: "product" | "rule" | "global";
+  /** Rule name when `source = "rule"`. */
+  ruleName?: string;
   mode: DeliveryMode;
   flat: number;
   custom: number;
@@ -167,10 +172,37 @@ export function productDeliveryMode(p: DeliveryConfig): ProductDeliveryMode {
   return m === "free" || m === "flat" || m === "area" || m === "custom" ? m : "global";
 }
 
-/** Merge global + per-product delivery config. Product setting wins. */
+/** First enabled custom rule that targets this product / its brand / its category. */
+export function matchDeliveryRule(p: DeliveryConfig, g: DeliverySettings = active): DeliveryRule | null {
+  for (const rule of g.rules ?? []) {
+    if (!rule.enabled) continue;
+    const t = rule.target;
+    if (!t.products.length && !t.brands.length && !t.categories.length) continue;
+    if (p.id && t.products.includes(p.id)) return rule;
+    if (p.brand_id && t.brands.includes(p.brand_id)) return rule;
+    if (p.category_id && t.categories.includes(p.category_id)) return rule;
+  }
+  return null;
+}
+
+/**
+ * Merge product override → custom rule → global.
+ * Priority: 1) product's own setting, 2) matching custom rule, 3) global rule.
+ */
 export function resolveDelivery(p: DeliveryConfig, g: DeliverySettings = active): ResolvedDelivery {
   const own = productDeliveryMode(p);
   if (own === "global") {
+    const rule = matchDeliveryRule(p, g);
+    if (rule) {
+      return {
+        source: "rule",
+        ruleName: rule.name,
+        mode: rule.mode,
+        flat: rule.flat,
+        custom: rule.custom,
+        charges: { ...rule.areas },
+      };
+    }
     return {
       source: "global",
       mode: g.mode,
@@ -183,6 +215,7 @@ export function resolveDelivery(p: DeliveryConfig, g: DeliverySettings = active)
       },
     };
   }
+
   const inside = num(p.delivery_inside, 0);
   const outside = num(p.delivery_outside, 0);
   return {
