@@ -18,12 +18,27 @@ export type ProductDeliveryMode = DeliveryMode | "global";
 
 export const DELIVERY_AREAS: DeliveryArea[] = ["inside_dhaka", "sub_dhaka", "outside_dhaka"];
 
+/** Custom rule: applies to any product matched by product / brand / category. */
+export type DeliveryRule = {
+  id: string;
+  name: string;
+  enabled: boolean;
+  mode: DeliveryMode;
+  flat: number;
+  custom: number;
+  /** Area charges for `mode = "area"`. */
+  areas: Record<DeliveryArea, number>;
+  target: { products: string[]; brands: string[]; categories: string[] };
+};
+
 export type DeliverySettings = {
   mode: DeliveryMode;
   flat: number;
   /** Default charge when the mode is `custom` (freely editable per order). */
   custom: number;
   areas: Record<DeliveryArea, { label: string; charge: number }>;
+  /** Custom rules, checked top-to-bottom. First match wins. */
+  rules: DeliveryRule[];
 };
 
 export const DEFAULT_DELIVERY_SETTINGS: DeliverySettings = {
@@ -35,7 +50,49 @@ export const DEFAULT_DELIVERY_SETTINGS: DeliverySettings = {
     sub_dhaka: { label: "Sub Dhaka", charge: 90 },
     outside_dhaka: { label: "Outside Dhaka", charge: 130 },
   },
+  rules: [],
 };
+
+export function emptyDeliveryRule(): DeliveryRule {
+  return {
+    id: `r${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`,
+    name: "New rule",
+    enabled: true,
+    mode: "flat",
+    flat: 0,
+    custom: 0,
+    areas: { inside_dhaka: 0, sub_dhaka: 0, outside_dhaka: 0 },
+    target: { products: [], brands: [], categories: [] },
+  };
+}
+
+function idList(v: unknown): string[] {
+  return Array.isArray(v) ? v.filter((x): x is string => typeof x === "string" && !!x) : [];
+}
+
+export function mergeDeliveryRule(raw: unknown): DeliveryRule {
+  const r = (raw ?? {}) as any;
+  const base = emptyDeliveryRule();
+  const mode = (["area", "free", "flat", "custom"] as DeliveryMode[]).includes(r.mode) ? (r.mode as DeliveryMode) : base.mode;
+  return {
+    id: typeof r.id === "string" && r.id ? r.id : base.id,
+    name: typeof r.name === "string" && r.name.trim() ? r.name.trim() : base.name,
+    enabled: r.enabled !== false,
+    mode,
+    flat: num(r.flat, 0),
+    custom: num(r.custom, 0),
+    areas: {
+      inside_dhaka: num(r.areas?.inside_dhaka, 0),
+      sub_dhaka: num(r.areas?.sub_dhaka, 0),
+      outside_dhaka: num(r.areas?.outside_dhaka, 0),
+    },
+    target: {
+      products: idList(r.target?.products),
+      brands: idList(r.target?.brands),
+      categories: idList(r.target?.categories),
+    },
+  };
+}
 
 export function mergeDeliverySettings(raw: unknown): DeliverySettings {
   const r = (raw ?? {}) as Partial<DeliverySettings>;
@@ -55,8 +112,10 @@ export function mergeDeliverySettings(raw: unknown): DeliverySettings {
     flat: num(r.flat, DEFAULT_DELIVERY_SETTINGS.flat),
     custom: num(r.custom, DEFAULT_DELIVERY_SETTINGS.custom),
     areas,
+    rules: Array.isArray((r as any).rules) ? (r as any).rules.map(mergeDeliveryRule) : [],
   };
 }
+
 
 function num(v: unknown, fallback = 0): number {
   const n = Number(v);
