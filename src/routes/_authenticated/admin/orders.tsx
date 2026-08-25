@@ -46,7 +46,8 @@ import { OrderNotes } from "@/components/order-notes";
 import { CourierTimeline, type CourierEvent } from "@/components/CourierTimeline";
 import { bookSteadfast } from "@/lib/couriers.functions";
 import { OrderTabs } from "@/components/OrderTabs";
-import { Pencil } from "lucide-react";
+import { Pencil, ExternalLink } from "lucide-react";
+import { courierTrackingUrl } from "@/lib/courier-tracking";
 import { PickListModal } from "@/components/pick-list-modal";
 import { OrderSearch, type OrderSearchMode } from "@/components/order-search";
 import { printShippingLabels } from "@/lib/labels";
@@ -1135,9 +1136,6 @@ function OrderDrawer({
           </div>
         </div>
         
-        <div className="mt-12 text-center text-[10px] text-muted-foreground/40 font-mono tracking-widest pb-8">
-          ORDER_ID: {order.id}
-        </div>
       </div>
     </div>
   );

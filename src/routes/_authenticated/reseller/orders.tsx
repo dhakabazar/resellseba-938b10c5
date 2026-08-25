@@ -33,7 +33,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { NewOrderModal } from "@/components/NewOrderModal";
 import { OrderEditModal } from "@/components/OrderEditModal";
 import { type StripItem, ImageLightbox, OrderItemsList, OrderProductCell } from "@/components/order-items-strip";
-import { Pencil } from "lucide-react";
+import { Pencil, ExternalLink } from "lucide-react";
+import { courierTrackingUrl } from "@/lib/courier-tracking";
 import { toast } from "sonner";
 import { useDepositStatus } from "@/lib/deposit";
 import { DEFAULT_DEPOSIT_TEXTS, fillText, useDepositSettings } from "@/lib/deposit-settings";
@@ -1548,9 +1549,6 @@ function OrderDrawer({
           </div>
         </div>
         
-        <div className="mt-12 text-center text-[10px] text-muted-foreground/40 font-mono tracking-widest pb-8">
-          ORDER_ID: {order.id}
-        </div>
       </div>
     </div>
   );
