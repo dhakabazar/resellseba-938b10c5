@@ -46,7 +46,8 @@ import { OrderNotes } from "@/components/order-notes";
 import { CourierTimeline, type CourierEvent } from "@/components/CourierTimeline";
 import { bookSteadfast } from "@/lib/couriers.functions";
 import { OrderTabs } from "@/components/OrderTabs";
-import { Pencil } from "lucide-react";
+import { Pencil, ExternalLink } from "lucide-react";
+import { courierTrackingUrl } from "@/lib/courier-tracking";
 import { PickListModal } from "@/components/pick-list-modal";
 import { OrderSearch, type OrderSearchMode } from "@/components/order-search";
 import { printShippingLabels } from "@/lib/labels";
@@ -551,10 +552,30 @@ function AdminOrdersPage() {
                      {shipments.filter(s => s.order_id === o.id).length > 0 ? (
                        shipments.filter(s => s.order_id === o.id).map(s => (
                          <div key={s.id} className="flex flex-col gap-0.5 min-w-0">
-                           <div className="flex items-center gap-1 text-[10px] font-bold text-primary leading-tight">
-                             <CourierLogo provider={s.provider} size={14} />
-                             <span className="truncate">{courierLabel(s.provider)}</span>
-                           </div>
+                           {(() => {
+                             const url = courierTrackingUrl(s.provider, s, (o as any).customer_phone);
+                             const inner = (
+                               <>
+                                 <CourierLogo provider={s.provider} size={14} />
+                                 <span className="truncate">{courierLabel(s.provider)}</span>
+                                 {url && <ExternalLink className="h-2.5 w-2.5 shrink-0 opacity-60" />}
+                               </>
+                             );
+                             return url ? (
+                               <a
+                                 href={url}
+                                 target="_blank"
+                                 rel="noopener noreferrer"
+                                 title="Track on courier website"
+                                 className="flex items-center gap-1 text-[10px] font-bold text-primary leading-tight hover:underline"
+                               >
+                                 {inner}
+                               </a>
+                             ) : (
+                               <div className="flex items-center gap-1 text-[10px] font-bold text-primary leading-tight">{inner}</div>
+                             );
+                           })()}
+
                            <div className="text-[10px] text-muted-foreground tabular-nums font-medium flex items-center gap-1">
                              <span className="truncate">#{s.consignment_id || "N/A"}</span>
                              {s.consignment_id && (
@@ -1074,7 +1095,17 @@ function OrderDrawer({
                             <CourierLogo provider={s.provider} size={24} />
                           </div>
                           <div>
-                            <span className="text-sm font-bold block">{courierLabel(s.provider)}</span>
+                            {(() => {
+                              const trackUrl = courierTrackingUrl(s.provider, s, (order as any).customer_phone);
+                              return trackUrl ? (
+                                <a href={trackUrl} target="_blank" rel="noopener noreferrer" title="Track on courier website" className="text-sm font-bold flex items-center gap-1 text-primary hover:underline">
+                                  {courierLabel(s.provider)}
+                                  <ExternalLink className="h-3 w-3 opacity-70" />
+                                </a>
+                              ) : (
+                                <span className="text-sm font-bold block">{courierLabel(s.provider)}</span>
+                              );
+                            })()}
                             <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">#{s.consignment_id || s.tracking_id}</span>
                           </div>
                         </div>
@@ -1115,9 +1146,6 @@ function OrderDrawer({
           </div>
         </div>
         
-        <div className="mt-12 text-center text-[10px] text-muted-foreground/40 font-mono tracking-widest pb-8">
-          ORDER_ID: {order.id}
-        </div>
       </div>
     </div>
   );
