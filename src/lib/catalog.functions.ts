@@ -19,7 +19,7 @@ export const getCatalog = createServerFn({ method: "GET" }).handler(async () => 
     supabase
       .from("products")
       .select(
-        "id, name, slug, product_code, short_description, suggested_price, reseller_price, category_id, brand_id, is_featured, created_at, product_images(url, is_primary, sort_order)",
+        "id, brand_id, category_id, name, slug, product_code, short_description, suggested_price, reseller_price, is_featured, created_at, product_images(url, is_primary, sort_order)",
       )
       .eq("is_active", true)
       .order("created_at", { ascending: false })
@@ -69,7 +69,7 @@ export const getCatalogProduct = createServerFn({ method: "GET" })
     const { data: row } = await supabase
       .from("products")
       .select(
-        "id, name, slug, product_code, short_description, description, suggested_price, reseller_price, keywords, stock, weight_grams, delivery_mode, delivery_inside, delivery_outside, delivery_sub, delivery_flat, categories(name, slug), brands(name, slug), product_images(url, is_primary, sort_order, alt_text)",
+        "id, brand_id, category_id, name, slug, product_code, short_description, description, suggested_price, reseller_price, keywords, stock, weight_grams, delivery_mode, delivery_inside, delivery_outside, delivery_sub, delivery_flat, categories(name, slug), brands(name, slug), product_images(url, is_primary, sort_order, alt_text)",
       )
       .eq("slug", data.slug)
       .eq("is_active", true)

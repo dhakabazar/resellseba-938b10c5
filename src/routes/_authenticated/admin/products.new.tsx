@@ -75,6 +75,8 @@ function NewProduct() {
     const pkg = Number(packaging) || 0;
     const r = resolveDelivery(
       {
+        brand_id: brandId || null,
+        category_id: categoryId || null,
         delivery_mode: deliveryMode,
         delivery_flat: Number(deliveryFlat) || 0,
         delivery_inside: Number(deliveryIn) || 0,

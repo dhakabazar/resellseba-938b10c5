@@ -196,7 +196,7 @@ function AdminOrdersPage() {
       q,
       supabase.from("orders").select("status"),
       supabase.from("resellers").select("id,business_name,code,contact_phone").order("business_name"),
-      supabase.from("products").select("id,name,slug,product_code,og_image_url,suggested_price,reseller_price,packaging_cost,delivery_mode,delivery_flat,delivery_inside,delivery_outside").eq("is_active", true),
+      supabase.from("products").select("id,brand_id,category_id,name,slug,product_code,og_image_url,suggested_price,reseller_price,packaging_cost,delivery_mode,delivery_flat,delivery_inside,delivery_outside").eq("is_active", true),
     ]);
     const rows = (data ?? []) as OrderRow[];
     setOrders(rows);

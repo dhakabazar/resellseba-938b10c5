@@ -19,6 +19,7 @@ import {
   type DeliveryMode,
   type DeliverySettings,
 } from "@/lib/delivery";
+import { DeliveryRulesCard } from "@/components/delivery-rules-card";
 
 export const Route = createFileRoute("/_authenticated/admin/advanced")({
   component: AdvancedSettingsPage,
@@ -165,6 +166,11 @@ function AdvancedSettingsPage() {
       </div>
 
       <DeliveryCard
+        value={settings.delivery}
+        onChange={(delivery) => setSettings((s) => ({ ...s, delivery }))}
+      />
+
+      <DeliveryRulesCard
         value={settings.delivery}
         onChange={(delivery) => setSettings((s) => ({ ...s, delivery }))}
       />
