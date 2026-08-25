@@ -551,10 +551,30 @@ function AdminOrdersPage() {
                      {shipments.filter(s => s.order_id === o.id).length > 0 ? (
                        shipments.filter(s => s.order_id === o.id).map(s => (
                          <div key={s.id} className="flex flex-col gap-0.5 min-w-0">
-                           <div className="flex items-center gap-1 text-[10px] font-bold text-primary leading-tight">
-                             <CourierLogo provider={s.provider} size={14} />
-                             <span className="truncate">{courierLabel(s.provider)}</span>
-                           </div>
+                           {(() => {
+                             const url = courierTrackingUrl(s.provider, s, (o as any).customer_phone);
+                             const inner = (
+                               <>
+                                 <CourierLogo provider={s.provider} size={14} />
+                                 <span className="truncate">{courierLabel(s.provider)}</span>
+                                 {url && <ExternalLink className="h-2.5 w-2.5 shrink-0 opacity-60" />}
+                               </>
+                             );
+                             return url ? (
+                               <a
+                                 href={url}
+                                 target="_blank"
+                                 rel="noopener noreferrer"
+                                 title="Track on courier website"
+                                 className="flex items-center gap-1 text-[10px] font-bold text-primary leading-tight hover:underline"
+                               >
+                                 {inner}
+                               </a>
+                             ) : (
+                               <div className="flex items-center gap-1 text-[10px] font-bold text-primary leading-tight">{inner}</div>
+                             );
+                           })()}
+
                            <div className="text-[10px] text-muted-foreground tabular-nums font-medium flex items-center gap-1">
                              <span className="truncate">#{s.consignment_id || "N/A"}</span>
                              {s.consignment_id && (
