@@ -263,7 +263,7 @@ export function productDeliveryCharge(
 /** Short label like "Free shipping", "Flat ৳80", "৳60 / ৳90 / ৳130". */
 export function deliveryLabel(p: DeliveryConfig, g: DeliverySettings = active): string {
   const r = resolveDelivery(p, g);
-  const suffix = r.source === "global" ? " (global)" : "";
+  const suffix = r.source === "global" ? " (global)" : r.source === "rule" ? ` (${r.ruleName})` : "";
   if (r.mode === "free") return `Free shipping${suffix}`;
   if (r.mode === "flat") return `Flat ৳${r.flat}${suffix}`;
   if (r.mode === "custom") return `Custom ৳${r.custom}${suffix}`;
