@@ -19,7 +19,7 @@ export const getCatalog = createServerFn({ method: "GET" }).handler(async () => 
     supabase
       .from("products")
       .select(
-        "id, brand_id, category_id, name, slug, product_code, short_description, suggested_price, reseller_price, category_id, brand_id, is_featured, created_at, product_images(url, is_primary, sort_order)",
+        "id, brand_id, category_id, name, slug, product_code, short_description, suggested_price, reseller_price, is_featured, created_at, product_images(url, is_primary, sort_order)",
       )
       .eq("is_active", true)
       .order("created_at", { ascending: false })
