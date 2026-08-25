@@ -2377,6 +2377,10 @@ export type Database = {
       }
       current_agent_id: { Args: never; Returns: string }
       current_reseller_id: { Args: never; Returns: string }
+      delivery_rule_charge: {
+        Args: { _area: string; _product_id: string }
+        Returns: number
+      }
       generate_product_code: { Args: never; Returns: string }
       generate_reseller_code: { Args: { _seed: string }; Returns: string }
       has_any_permission: {
@@ -2449,6 +2453,18 @@ export type Database = {
           _inside: number
           _mode: string
           _outside: number
+          _sub: number
+        }
+        Returns: number
+      }
+      resolve_delivery_charge_for: {
+        Args: {
+          _area: string
+          _flat: number
+          _inside: number
+          _mode: string
+          _outside: number
+          _product_id: string
           _sub: number
         }
         Returns: number

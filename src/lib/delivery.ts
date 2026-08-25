@@ -18,12 +18,27 @@ export type ProductDeliveryMode = DeliveryMode | "global";
 
 export const DELIVERY_AREAS: DeliveryArea[] = ["inside_dhaka", "sub_dhaka", "outside_dhaka"];
 
+/** Custom rule: applies to any product matched by product / brand / category. */
+export type DeliveryRule = {
+  id: string;
+  name: string;
+  enabled: boolean;
+  mode: DeliveryMode;
+  flat: number;
+  custom: number;
+  /** Area charges for `mode = "area"`. */
+  areas: Record<DeliveryArea, number>;
+  target: { products: string[]; brands: string[]; categories: string[] };
+};
+
 export type DeliverySettings = {
   mode: DeliveryMode;
   flat: number;
   /** Default charge when the mode is `custom` (freely editable per order). */
   custom: number;
   areas: Record<DeliveryArea, { label: string; charge: number }>;
+  /** Custom rules, checked top-to-bottom. First match wins. */
+  rules: DeliveryRule[];
 };
 
 export const DEFAULT_DELIVERY_SETTINGS: DeliverySettings = {
@@ -35,7 +50,49 @@ export const DEFAULT_DELIVERY_SETTINGS: DeliverySettings = {
     sub_dhaka: { label: "Sub Dhaka", charge: 90 },
     outside_dhaka: { label: "Outside Dhaka", charge: 130 },
   },
+  rules: [],
 };
+
+export function emptyDeliveryRule(): DeliveryRule {
+  return {
+    id: `r${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`,
+    name: "New rule",
+    enabled: true,
+    mode: "flat",
+    flat: 0,
+    custom: 0,
+    areas: { inside_dhaka: 0, sub_dhaka: 0, outside_dhaka: 0 },
+    target: { products: [], brands: [], categories: [] },
+  };
+}
+
+function idList(v: unknown): string[] {
+  return Array.isArray(v) ? v.filter((x): x is string => typeof x === "string" && !!x) : [];
+}
+
+export function mergeDeliveryRule(raw: unknown): DeliveryRule {
+  const r = (raw ?? {}) as any;
+  const base = emptyDeliveryRule();
+  const mode = (["area", "free", "flat", "custom"] as DeliveryMode[]).includes(r.mode) ? (r.mode as DeliveryMode) : base.mode;
+  return {
+    id: typeof r.id === "string" && r.id ? r.id : base.id,
+    name: typeof r.name === "string" && r.name.trim() ? r.name.trim() : base.name,
+    enabled: r.enabled !== false,
+    mode,
+    flat: num(r.flat, 0),
+    custom: num(r.custom, 0),
+    areas: {
+      inside_dhaka: num(r.areas?.inside_dhaka, 0),
+      sub_dhaka: num(r.areas?.sub_dhaka, 0),
+      outside_dhaka: num(r.areas?.outside_dhaka, 0),
+    },
+    target: {
+      products: idList(r.target?.products),
+      brands: idList(r.target?.brands),
+      categories: idList(r.target?.categories),
+    },
+  };
+}
 
 export function mergeDeliverySettings(raw: unknown): DeliverySettings {
   const r = (raw ?? {}) as Partial<DeliverySettings>;
@@ -55,8 +112,10 @@ export function mergeDeliverySettings(raw: unknown): DeliverySettings {
     flat: num(r.flat, DEFAULT_DELIVERY_SETTINGS.flat),
     custom: num(r.custom, DEFAULT_DELIVERY_SETTINGS.custom),
     areas,
+    rules: Array.isArray((r as any).rules) ? (r as any).rules.map(mergeDeliveryRule) : [],
   };
 }
+
 
 function num(v: unknown, fallback = 0): number {
   const n = Number(v);
@@ -87,6 +146,9 @@ export function areaOptions(g: DeliverySettings = active): { value: DeliveryArea
 /* -------------------------------------------------------------------- product */
 
 export type DeliveryConfig = {
+  id?: string | null;
+  brand_id?: string | null;
+  category_id?: string | null;
   delivery_mode?: string | null;
   delivery_flat?: number | null;
   delivery_inside?: number | null;
@@ -96,7 +158,9 @@ export type DeliveryConfig = {
 
 export type ResolvedDelivery = {
   /** Where the numbers came from. */
-  source: "product" | "global";
+  source: "product" | "rule" | "global";
+  /** Rule name when `source = "rule"`. */
+  ruleName?: string;
   mode: DeliveryMode;
   flat: number;
   custom: number;
@@ -108,10 +172,37 @@ export function productDeliveryMode(p: DeliveryConfig): ProductDeliveryMode {
   return m === "free" || m === "flat" || m === "area" || m === "custom" ? m : "global";
 }
 
-/** Merge global + per-product delivery config. Product setting wins. */
+/** First enabled custom rule that targets this product / its brand / its category. */
+export function matchDeliveryRule(p: DeliveryConfig, g: DeliverySettings = active): DeliveryRule | null {
+  for (const rule of g.rules ?? []) {
+    if (!rule.enabled) continue;
+    const t = rule.target;
+    if (!t.products.length && !t.brands.length && !t.categories.length) continue;
+    if (p.id && t.products.includes(p.id)) return rule;
+    if (p.brand_id && t.brands.includes(p.brand_id)) return rule;
+    if (p.category_id && t.categories.includes(p.category_id)) return rule;
+  }
+  return null;
+}
+
+/**
+ * Merge product override → custom rule → global.
+ * Priority: 1) product's own setting, 2) matching custom rule, 3) global rule.
+ */
 export function resolveDelivery(p: DeliveryConfig, g: DeliverySettings = active): ResolvedDelivery {
   const own = productDeliveryMode(p);
   if (own === "global") {
+    const rule = matchDeliveryRule(p, g);
+    if (rule) {
+      return {
+        source: "rule",
+        ruleName: rule.name,
+        mode: rule.mode,
+        flat: rule.flat,
+        custom: rule.custom,
+        charges: { ...rule.areas },
+      };
+    }
     return {
       source: "global",
       mode: g.mode,
@@ -124,6 +215,7 @@ export function resolveDelivery(p: DeliveryConfig, g: DeliverySettings = active)
       },
     };
   }
+
   const inside = num(p.delivery_inside, 0);
   const outside = num(p.delivery_outside, 0);
   return {
@@ -171,7 +263,7 @@ export function productDeliveryCharge(
 /** Short label like "Free shipping", "Flat ৳80", "৳60 / ৳90 / ৳130". */
 export function deliveryLabel(p: DeliveryConfig, g: DeliverySettings = active): string {
   const r = resolveDelivery(p, g);
-  const suffix = r.source === "global" ? " (global)" : "";
+  const suffix = r.source === "global" ? " (global)" : r.source === "rule" ? ` (${r.ruleName})` : "";
   if (r.mode === "free") return `Free shipping${suffix}`;
   if (r.mode === "flat") return `Flat ৳${r.flat}${suffix}`;
   if (r.mode === "custom") return `Custom ৳${r.custom}${suffix}`;
