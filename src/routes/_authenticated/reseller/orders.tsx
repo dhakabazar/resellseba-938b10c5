@@ -843,7 +843,17 @@ function OrdersPage() {
                             {shipments.filter(s => s.order_id === o.id).map(s => (
                               <div key={s.id} className="inline-flex items-center gap-1 rounded bg-muted/50 px-1.5 py-0.5 text-[9px] font-medium text-muted-foreground ring-1 ring-inset ring-muted-foreground/10">
                                 <CourierLogo provider={s.provider} size={12} />
-                                <span>{courierLabel(s.provider)}</span>
+                                {(() => {
+                                  const u = courierTrackingUrl(s.provider, s, (o as any).customer_phone);
+                                  return u ? (
+                                    <a href={u} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} title="Track on courier website" className="inline-flex items-center gap-0.5 font-bold text-primary hover:underline">
+                                      {courierLabel(s.provider)}
+                                      <ExternalLink className="h-2 w-2" />
+                                    </a>
+                                  ) : (
+                                    <span>{courierLabel(s.provider)}</span>
+                                  );
+                                })()}
                                 {s.consignment_id && (
                                   <>
                                     <span className="opacity-70">({s.consignment_id})</span>
@@ -962,10 +972,21 @@ function OrdersPage() {
                   <div className="min-w-0">
                     {orderShipment ? (
                       <div className="flex flex-col gap-0.5 min-w-0">
-                        <div className="flex items-center gap-1 text-[10px] font-bold text-primary leading-tight">
-                          <CourierLogo provider={orderShipment.provider} size={14} />
-                          <span className="truncate">{courierLabel(orderShipment.provider)}</span>
-                        </div>
+                        {(() => {
+                          const u = courierTrackingUrl(orderShipment.provider, orderShipment, (o as any).customer_phone);
+                          const inner = (
+                            <>
+                              <CourierLogo provider={orderShipment.provider} size={14} />
+                              <span className="truncate">{courierLabel(orderShipment.provider)}</span>
+                              {u && <ExternalLink className="h-2.5 w-2.5 shrink-0 opacity-60" />}
+                            </>
+                          );
+                          return u ? (
+                            <a href={u} target="_blank" rel="noopener noreferrer" title="Track on courier website" className="flex items-center gap-1 text-[10px] font-bold text-primary leading-tight hover:underline">{inner}</a>
+                          ) : (
+                            <div className="flex items-center gap-1 text-[10px] font-bold text-primary leading-tight">{inner}</div>
+                          );
+                        })()}
                         <div className="text-[10px] text-muted-foreground tabular-nums font-medium flex items-center gap-1">
                           <span className="truncate">#{orderShipment.consignment_id || "N/A"}</span>
                           {orderShipment.consignment_id && (
@@ -1519,7 +1540,17 @@ function OrderDrawer({
                             <CourierLogo provider={s.provider} size={24} />
                           </div>
                           <div>
-                            <span className="text-sm font-bold block">{courierLabel(s.provider)}</span>
+                            {(() => {
+                              const trackUrl = courierTrackingUrl(s.provider, s, (order as any).customer_phone);
+                              return trackUrl ? (
+                                <a href={trackUrl} target="_blank" rel="noopener noreferrer" title="Track on courier website" className="text-sm font-bold flex items-center gap-1 text-primary hover:underline">
+                                  {courierLabel(s.provider)}
+                                  <ExternalLink className="h-3 w-3 opacity-70" />
+                                </a>
+                              ) : (
+                                <span className="text-sm font-bold block">{courierLabel(s.provider)}</span>
+                              );
+                            })()}
                             <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">#{s.consignment_id || s.tracking_id}</span>
                           </div>
                         </div>

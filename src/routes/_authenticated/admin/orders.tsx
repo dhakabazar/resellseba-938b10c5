@@ -1095,7 +1095,17 @@ function OrderDrawer({
                             <CourierLogo provider={s.provider} size={24} />
                           </div>
                           <div>
-                            <span className="text-sm font-bold block">{courierLabel(s.provider)}</span>
+                            {(() => {
+                              const trackUrl = courierTrackingUrl(s.provider, s, (order as any).customer_phone);
+                              return trackUrl ? (
+                                <a href={trackUrl} target="_blank" rel="noopener noreferrer" title="Track on courier website" className="text-sm font-bold flex items-center gap-1 text-primary hover:underline">
+                                  {courierLabel(s.provider)}
+                                  <ExternalLink className="h-3 w-3 opacity-70" />
+                                </a>
+                              ) : (
+                                <span className="text-sm font-bold block">{courierLabel(s.provider)}</span>
+                              );
+                            })()}
                             <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">#{s.consignment_id || s.tracking_id}</span>
                           </div>
                         </div>
