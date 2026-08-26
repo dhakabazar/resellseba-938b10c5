@@ -151,7 +151,6 @@ function AdminNoticesPage() {
         </div>
       ) : rows.length === 0 ? (
         <EmptyState
-          icon={<Megaphone className="h-6 w-6" />}
           title="No notices yet"
           description="Create your first notice — resellers will see it as a popup on their dashboard."
         />
