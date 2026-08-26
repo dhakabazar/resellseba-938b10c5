@@ -2501,6 +2501,7 @@ export type Database = {
         Args: { _order_id: string }
         Returns: undefined
       }
+      reseller_auto_approve: { Args: never; Returns: boolean }
       reseller_can_note: { Args: { _order_id: string }; Returns: boolean }
       reseller_deposit_balance: {
         Args: { _reseller_id: string }
