@@ -1,7 +1,7 @@
 // Server-only shared plumbing for the automatic payment gateways.
 // Never imported by client code (filename is server-guarded).
 import { getRequest } from "@tanstack/react-start/server";
-import { gatewayBase, gatewayByProvider } from "./registry";
+import { gatewayBase } from "./registry";
 
 export type GatewayCreds = {
   provider: string;
@@ -145,18 +145,43 @@ export async function jsonPost(url: string, body: unknown, headers: Record<strin
   return parseBody(res);
 }
 
+/**
+ * A gateway host that does not resolve (wrong/renamed API URL) surfaces as a
+ * bare "fetch failed", which tells nobody anything. Turn it into an actionable
+ * message naming the host so the admin can correct the API base URL.
+ */
+async function callGateway<T>(url: string, run: () => Promise<T>): Promise<T> {
+  try {
+    return await run();
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (/abort|timeout|timed out/i.test(msg)) throw err;
+    let host = url;
+    try {
+      host = new URL(url).host;
+    } catch {
+      /* keep raw url */
+    }
+    throw new Error(
+      `Could not reach the payment gateway at ${host}. Check the gateway's API base URL in Payment methods.`,
+    );
+  }
+}
+
 export async function formPost(url: string, body: URLSearchParams, signal?: AbortSignal) {
-  const res = await fetch(url, {
+  const res = await callGateway(url, () => fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded", accept: "application/json" },
     body: body.toString(),
     signal,
-  });
+  }));
   return parseBody(res);
 }
 
 export async function getJson(url: string, headers: Record<string, string> = {}, signal?: AbortSignal) {
-  const res = await fetch(url, { headers: { accept: "application/json", ...headers }, signal });
+  const res = await callGateway(url, () =>
+    fetch(url, { headers: { accept: "application/json", ...headers }, signal }),
+  );
   return parseBody(res);
 }
 
