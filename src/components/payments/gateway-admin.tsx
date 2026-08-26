@@ -266,14 +266,28 @@ function GatewayCard({
           ))}
         </div>
 
-        <div className="rounded-lg border p-3">
-          <div className="mb-1.5 text-[11px] font-semibold">Set these URLs in the {spec.label} panel</div>
-          <div className="space-y-1.5">
-            {spec.callbacks.map((path) => (
-              <CallbackRow key={path} path={path} />
-            ))}
+        {spec.callbacks.some((c) => c.manual) ? (
+          <div className="rounded-lg border p-3">
+            <div className="mb-1.5 text-[11px] font-semibold">Set these URLs in the {spec.label} panel</div>
+            <div className="space-y-1.5">
+              {spec.callbacks
+                .filter((c) => c.manual)
+                .map((c) => (
+                  <CallbackRow key={c.path} path={c.path} label={c.label} />
+                ))}
+            </div>
+            <p className="mt-2 text-[10px] text-muted-foreground">
+              Other callback URLs are sent automatically with each payment request — nothing else to configure. URLs
+              always follow the site you are on, so a domain or server change needs no edit here.
+            </p>
           </div>
-        </div>
+        ) : (
+          <div className="rounded-lg border border-dashed p-3 text-[10px] leading-relaxed text-muted-foreground">
+            {spec.label} needs no URL setup in its panel — the return/callback URL is generated from the live site
+            address and sent with every payment request, so it keeps working after a domain or server change.
+          </div>
+        )}
+
 
         {result && (
           <div
