@@ -55,7 +55,7 @@ export function DepositPayPanel({
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [gateways, setGateways] = useState<{ provider: string; label: string }[]>([]);
-  const loadGateways = useServerFn(listDepositGateways);
+  
   const startOnline = useServerFn(startDepositPayment);
 
   useEffect(() => {
