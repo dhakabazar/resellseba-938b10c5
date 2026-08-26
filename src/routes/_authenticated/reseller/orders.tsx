@@ -35,7 +35,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { NewOrderModal } from "@/components/NewOrderModal";
 import { OrderEditModal } from "@/components/OrderEditModal";
 import { type StripItem, ImageLightbox, OrderItemsList, OrderProductCell } from "@/components/order-items-strip";
-import { Pencil, ExternalLink, MapPin } from "lucide-react";
+import { Pencil, ExternalLink } from "lucide-react";
 import { courierTrackingUrl } from "@/lib/courier-tracking";
 import { toast } from "sonner";
 import { useDepositStatus } from "@/lib/deposit";
