@@ -1388,8 +1388,8 @@ function OrderDrawer({
   const canAct = allowedNext.length > 0;
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="h-full w-full max-w-2xl overflow-y-auto bg-background p-6 shadow-2xl animate-in slide-in-from-right duration-300 sm:p-8">
+    <div className="fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-sm animate-in fade-in duration-200" onClick={onClose}>
+      <div className="h-full w-full max-w-2xl overflow-y-auto bg-background p-6 shadow-2xl animate-in slide-in-from-right duration-300 sm:p-8" onClick={(e) => e.stopPropagation()}>
         <div className="mb-8 flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2 mb-1">
