@@ -34,7 +34,13 @@ export type GatewaySpec = {
   docs: string;
   /** payment_method enum value stored on the order */
   method: string;
-  hosts: { sandbox: string; live: string };
+  /**
+   * Production API host. Only live endpoints are kept in code (no sandbox
+   * switch); an admin can still point a gateway at a different host by
+   * filling in the optional "API base URL" field, which is stored in
+   * `config.base_url`.
+   */
+  hosts: { live: string };
   fields: GatewayFieldSpec[];
   /**
    * Callback URLs this gateway uses. All are sent automatically with every
