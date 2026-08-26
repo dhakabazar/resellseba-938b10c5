@@ -675,8 +675,7 @@ function AdminOrdersPage() {
                           <Copy className="h-3 w-3" />
                         </button>
                       </div>
-                      <div className="mt-0.5 flex items-start justify-center gap-1 text-[11px] leading-snug text-muted-foreground">
-                        <MapPin className="mt-[1px] h-3 w-3 shrink-0 opacity-70" />
+                      <div className="mt-0.5 text-center text-[11px] leading-snug text-muted-foreground">
                         <span className="line-clamp-2">
                           {o.address_line}
                           {o.area ? `, ${o.area.replace("_", " ")}` : ""}
