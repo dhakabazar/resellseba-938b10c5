@@ -10,7 +10,6 @@ import {
   FolderTree,
   Users,
   Contact,
-  Store as StoreIcon,
   Settings,
   Truck,
   Wallet,
