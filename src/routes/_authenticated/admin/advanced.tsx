@@ -35,7 +35,7 @@ export const Route = createFileRoute("/_authenticated/admin/advanced")({
   }),
 });
 
-type TabKey = "delivery" | "orders" | "resellers" | "verification";
+type TabKey = "delivery" | "orders" | "resellers";
 
 type Group = {
   tab: TabKey;
@@ -55,7 +55,6 @@ const TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
   { key: "delivery", label: "Delivery", icon: <Truck className="h-4 w-4" /> },
   { key: "orders", label: "Orders", icon: <Boxes className="h-4 w-4" /> },
   { key: "resellers", label: "Resellers", icon: <UserCheck className="h-4 w-4" /> },
-  { key: "verification", label: "Verification", icon: <ShieldCheck className="h-4 w-4" /> },
 ];
 
 const GROUPS: Group[] = [
@@ -103,7 +102,7 @@ const GROUPS: Group[] = [
   },
 
   {
-    tab: "verification",
+    tab: "resellers",
     title: "Reseller registration verification",
     hint: "Master switch off thakle verify na korei registration complete hoye jabe.",
     icon: <ShieldCheck className="h-4 w-4" />,
