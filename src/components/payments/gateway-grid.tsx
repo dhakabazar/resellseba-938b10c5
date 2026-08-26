@@ -7,6 +7,7 @@ import { AppModal } from "@/components/ui-kit/AppModal";
 import { GATEWAYS, type GatewayFieldSpec, type GatewaySpec } from "@/lib/gateways/registry";
 import { testGatewayConnection } from "@/lib/gateways.functions";
 import { Label, SecretInput, StatusDot, Switch, UrlRow, field } from "./shared";
+import { PaymentLogo, paymentLogo } from "./payment-brand";
 
 /**
  * Automatic (redirect) gateways. Every supported provider is a card in a grid:
