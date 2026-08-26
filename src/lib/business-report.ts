@@ -69,11 +69,35 @@ export const EXPENSE_CATEGORIES = [
 export const ADMIN_PROFIT_HINT =
   "Admin profit = money received for the order − what the reseller finally earns − admin buying price of the products the customer kept. Advance already collected counts as received (the same way the transaction report does it). Delivery charge and packaging are not deducted twice here — record them once in Expenses and the net profit takes them out.";
 
-/** Quantity of an item the customer actually kept (returns go back to stock). */
+/**
+ * Quantity of an item the customer actually kept.
+ * Fully failed statuses keep nothing; an in-flight order still counts the full
+ * quantity, otherwise a pending order would look like it had zero product cost.
+ */
 export function keptQty(item: BizItem, status: string) {
-  if (status === "partial_delivery" || !isRealizedStatus(status)) return 0;
+  if (status === "cancelled" || status === "returned" || status === "pending_return" || status === "partial_delivery")
+    return 0;
   return Math.max(Number(item.quantity) - Number(item.returned_qty ?? 0), 0);
 }
+
+/**
+ * Reseller-side product cost of the kept items, mirroring the SQL
+ * `order_kept_product_cost` (proportional share of sa_cost_total) so client math
+ * and the DB-stored profit never disagree on `partial_item` orders.
+ */
+export function keptProductCost(o: BizOrder | ProfitOrder, items: BizItem[]) {
+  const full = items.reduce((s, it) => s + n(it.sa_price) * Number(it.quantity), 0);
+  const kept = items.reduce((s, it) => s + n(it.sa_price) * keptQty(it, String(o.status ?? "")), 0);
+  const productCost = Math.max(n(o.sa_cost_total) - n(o.packaging_total), 0);
+  if (full <= 0) return productCost;
+  return Math.round(productCost * (kept / full) * 100) / 100;
+}
+
+/** Order object with the kept-product cost attached, ready for orderProfit(). */
+export function withKeptCost<T extends BizOrder | ProfitOrder>(o: T, items: BizItem[]): T {
+  return { ...o, kept_product_cost: keptProductCost(o, items) };
+}
+
 
 
 /**
