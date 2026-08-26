@@ -52,13 +52,17 @@ const sslcommerz: Adapter = {
       cus_phone: order.customer_phone,
       cus_add1: order.address_line,
       cus_city: order.city || "Dhaka",
+      cus_postcode: "1000",
       cus_country: "Bangladesh",
       shipping_method: "Courier",
+      num_of_item: "1",
+      emi_option: "0",
       product_name: `Order ${order.order_number}`,
       product_category: "General",
       product_profile: "general",
       value_a: order.order_number,
     });
+
     const res = await withTimeout((signal) => formPost(`${c.base}/gwprocess/v4/api.php`, body, signal));
     if (res.status !== "SUCCESS" || !res.GatewayPageURL)
       fail(res.failedreason || res.__raw || "SSLCommerz session failed");
