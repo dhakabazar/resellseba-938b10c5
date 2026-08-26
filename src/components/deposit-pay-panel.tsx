@@ -58,17 +58,22 @@ export function DepositPayPanel({
 
   useEffect(() => {
     void (async () => {
-      const list = await fetchDepositMethods();
+      // Manual wallets and automatic gateways live in two tables — load both.
+      const [list, gw] = await Promise.all([
+        fetchDepositMethods(),
+        supabase.rpc("get_active_payment_gateways"),
+      ]);
       setMethods(list);
+      setGateways(
+        (gw.data ?? []).map((g) => ({
+          provider: g.provider,
+          label: g.label || gatewayLabel(g.provider),
+        })),
+      );
       setLoading(false);
-      try {
-        const gw = await loadGateways();
-        setGateways(gw);
-      } catch {
-        /* gateways unavailable */
-      }
     })();
-  }, [loadGateways]);
+  }, []);
+
 
   /** Unified, deduplicated list — manual first, then online gateways. */
   const unified = useMemo<UnifiedMethod[]>(() => {
