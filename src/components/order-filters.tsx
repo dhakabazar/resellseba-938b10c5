@@ -340,18 +340,6 @@ export function OrderFilterBar({
             ))}
           </Select>
           <Select
-            label="Sort"
-            value={value.sort}
-            className={isReport ? "lg:w-[130px]" : "lg:w-[150px]"}
-            onChange={(v) => set({ sort: v as OrderFilterState["sort"] })}
-          >
-            {SORT_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </Select>
-          <Select
             label="Area"
             value={value.area}
             className={isReport ? "lg:w-[130px]" : "lg:w-[150px]"}
@@ -375,6 +363,19 @@ export function OrderFilterBar({
               </option>
             ))}
           </Select>
+          <Select
+            label="Sort"
+            value={value.sort}
+            className={isReport ? "lg:w-[130px]" : "lg:w-[150px]"}
+            onChange={(v) => set({ sort: v as OrderFilterState["sort"] })}
+          >
+            {SORT_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </Select>
+          {trailing}
           {showPerPage && (
             <Select
               label="Per page"
