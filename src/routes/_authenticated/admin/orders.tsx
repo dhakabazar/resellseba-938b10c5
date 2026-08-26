@@ -541,6 +541,19 @@ function AdminOrdersPage() {
               <option value="high">Amount: high → low</option>
               <option value="low">Amount: low → high</option>
             </select>
+            {/* Mobile: status filter — last cell, after Sort, light highlight */}
+            <div className="sm:hidden">
+              <OrderTabs
+                tab={tab}
+                onChange={setTab}
+                highlight
+                count={(key) => {
+                  const sts = ORDER_TABS.find((t) => t.key === key)?.statuses ?? [];
+                  return sts.length === 0 ? allOrders.length : allOrders.filter((o) => (sts as string[]).includes(o.status)).length;
+                }}
+                className="w-full min-w-0"
+              />
+            </div>
             {activeFilterCount(filters) > 0 && (
               <button
                 type="button"
