@@ -37,7 +37,17 @@ type Row = {
 const inp = "w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring";
 
 function blank(provider: string): Row {
-  return { id: "", provider, label: null, api_key: "", api_secret: "", merchant_id: "", config: {}, is_active: false };
+  const spec = GATEWAYS.find((g) => g.provider === provider);
+  return {
+    id: "",
+    provider,
+    label: spec?.label ?? provider,
+    api_key: "",
+    api_secret: "",
+    merchant_id: "",
+    config: {},
+    is_active: false,
+  };
 }
 
 function readField(row: Row, spec: GatewayFieldSpec): string {
