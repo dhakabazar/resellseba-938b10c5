@@ -314,7 +314,7 @@ export function OrderFilterBar({
               onChange={(v) => set({ reseller: v })}
               placeholder="All resellers"
               searchPlaceholder="Search reseller…"
-              className={isReport ? "lg:w-[170px]" : "lg:w-[190px]"}
+              className={isReport ? "lg:w-[130px]" : "lg:w-[150px]"}
             />
           )}
 
