@@ -358,11 +358,13 @@ export function buildPnL(
   let delivery = 0;
   let packaging = 0;
   for (const o of orders) {
-    const buy = orderBuyingCost(itemsByOrder.get(o.id) ?? [], o.status, products);
+    const myItems = itemsByOrder.get(o.id) ?? [];
+    const ord = withKeptCost(o, myItems);
+    const buy = orderBuyingCost(myItems, o.status, products);
     value += n(o.total);
-    received += orderReceived(o);
+    received += orderReceived(ord);
     advance += Math.max(n(o.advance_amount), 0);
-    resellerPayout += orderProfit(o);
+    resellerPayout += orderProfit(ord);
     buyCost += buy;
     delivery += orderDeliveryCost(o);
     packaging += orderPackaging(o);
