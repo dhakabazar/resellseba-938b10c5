@@ -561,193 +561,200 @@ function AdminOrdersPage() {
                 className={`overflow-hidden rounded-xl border bg-card shadow-sm transition-all hover:shadow-md hover:border-primary/40 ${marked.includes(o.id) ? "border-primary ring-1 ring-primary/30" : ""}`}
               >
                 {/* Mobile / tablet card */}
-                <div className="p-3 lg:hidden">
-                  <div className="flex items-start gap-2.5">
-                    <div className="flex shrink-0 flex-col items-center gap-1.5 pt-0.5">
-                      <input
-                        type="checkbox"
-                        className="h-4 w-4 accent-[hsl(var(--primary))]"
-                        checked={marked.includes(o.id)}
-                        onChange={(e) => setMarked(prev => e.target.checked ? [...prev, o.id] : prev.filter(x => x !== o.id))}
-                      />
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <button className="rounded-md border p-0.5 transition-colors hover:bg-accent">
-                            <MoreVertical className="h-4 w-4" />
-                          </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start">
-                          <DropdownMenuItem onClick={() => setSelected(o)}>
-                            <Eye className="mr-2 h-4 w-4" /> View Details
-                          </DropdownMenuItem>
-                          {canEdit && (
-                            <DropdownMenuItem onClick={() => setEditId(o.id)}>
-                              <Pencil className="mr-2 h-4 w-4" /> Edit Order
-                            </DropdownMenuItem>
-                          )}
-                          {canStatus && (
-                            <DropdownMenuItem
-                              onClick={() =>
-                                o.status === "pending_partial"
-                                  ? setSettleModal({ orderId: o.id, status: "partial_full", pickKind: true })
-                                  : setStatusModal({ open: true, orderId: o.id, currentStatus: o.status })
-                              }
-                            >
-                              <Settings2 className="mr-2 h-4 w-4" /> Change Status
-                            </DropdownMenuItem>
-                          )}
-                          {canShip && !shipments.some(s => s.order_id === o.id && (s.consignment_id || s.tracking_id)) && (
-                            <DropdownMenuItem onClick={() => setBookingModal({ open: true, orderIds: [o.id] })}>
-                              <Truck className="mr-2 h-4 w-4" /> {activeProviderLabel ? `Book ${activeProviderLabel}` : "Book Courier"}
-                            </DropdownMenuItem>
-                          )}
-                          {canDelete && (
-                            <DropdownMenuItem
-                              onClick={() => removeOrder(o.id)}
-                              className="text-destructive focus:bg-destructive/10 focus:text-destructive"
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" /> Delete Order
-                            </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                      <button
-                        onClick={() => setExpandedOrders(prev => prev.includes(o.id) ? prev.filter(id => id !== o.id) : [...prev, o.id])}
-                        className="rounded-full p-1 transition-colors hover:bg-muted"
-                      >
-                        <ChevronDown className={`h-4 w-4 transition-transform ${expandedOrders.includes(o.id) ? "rotate-180" : ""}`} />
-                      </button>
+                <div className="space-y-2.5 p-3 lg:hidden">
+                  {/* Header: checkbox + order + status + actions + chevron */}
+                  <div className="flex items-start gap-2">
+                    <input
+                      type="checkbox"
+                      className="mt-1 h-4 w-4 shrink-0 accent-[hsl(var(--primary))]"
+                      checked={marked.includes(o.id)}
+                      onChange={(e) => setMarked(prev => e.target.checked ? [...prev, o.id] : prev.filter(x => x !== o.id))}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-bold tracking-tight">#{o.order_number}</div>
+                      <div className="text-[10px] uppercase tracking-wide text-muted-foreground tabular-nums">
+                        {new Date(o.created_at).toLocaleString([], { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                      </div>
                     </div>
-
-                    <div className="min-w-0 flex-1 space-y-2.5">
-                      {/* Header: order no + date + status */}
-                      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
-                        <div className="min-w-0">
-                          <div className="truncate text-sm font-bold tracking-tight">#{o.order_number}</div>
-                          <div className="text-[10px] uppercase tracking-wide text-muted-foreground tabular-nums">
-                            {new Date(o.created_at).toLocaleString([], { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
-                          </div>
-                        </div>
-                        {canStatus ? (
-                          <button
-                            type="button"
-                            title="Change status"
+                    {canStatus ? (
+                      <button
+                        type="button"
+                        title="Change status"
+                        onClick={() =>
+                          o.status === "pending_partial"
+                            ? setSettleModal({ orderId: o.id, status: "partial_full", pickKind: true })
+                            : setStatusModal({ open: true, orderId: o.id, currentStatus: o.status })
+                        }
+                        className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] transition-shadow hover:ring-2 hover:ring-primary/30 ${orderStatusTone(o.status)}`}
+                      >
+                        {orderStatusLabel(o.status)}
+                      </button>
+                    ) : (
+                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] ${orderStatusTone(o.status)}`}>{orderStatusLabel(o.status)}</span>
+                    )}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="shrink-0 rounded-md border p-0.5 transition-colors hover:bg-accent">
+                          <MoreVertical className="h-4 w-4" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => setSelected(o)}>
+                          <Eye className="mr-2 h-4 w-4" /> View Details
+                        </DropdownMenuItem>
+                        {canEdit && (
+                          <DropdownMenuItem onClick={() => setEditId(o.id)}>
+                            <Pencil className="mr-2 h-4 w-4" /> Edit Order
+                          </DropdownMenuItem>
+                        )}
+                        {canStatus && (
+                          <DropdownMenuItem
                             onClick={() =>
                               o.status === "pending_partial"
                                 ? setSettleModal({ orderId: o.id, status: "partial_full", pickKind: true })
                                 : setStatusModal({ open: true, orderId: o.id, currentStatus: o.status })
                             }
-                            className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] transition-shadow hover:ring-2 hover:ring-primary/30 ${orderStatusTone(o.status)}`}
                           >
-                            {orderStatusLabel(o.status)}
-                          </button>
-                        ) : (
-                          <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] ${orderStatusTone(o.status)}`}>{orderStatusLabel(o.status)}</span>
+                            <Settings2 className="mr-2 h-4 w-4" /> Change Status
+                          </DropdownMenuItem>
                         )}
-                      </div>
-
-                      {/* Customer + Reseller/Agent — 2 column on wider phones */}
-                      <div className="grid grid-cols-1 gap-2 rounded-lg bg-muted/30 p-2 sm:grid-cols-2">
-                        <div className="min-w-0 space-y-0.5">
-                          <div className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70">Customer</div>
-                          <div className="flex min-w-0 items-center gap-1.5 text-xs font-medium">
-                            <span className="truncate">{o.customer_name}</span>
-                            <a href={`tel:${o.customer_phone}`} className="shrink-0 text-primary hover:text-primary/80">
-                              <Phone className="h-3.5 w-3.5" />
-                            </a>
-                            <button
-                              onClick={() => { navigator.clipboard.writeText(o.customer_phone); toast.success("Copied"); }}
-                              className="shrink-0 text-muted-foreground hover:text-foreground"
-                            >
-                              <Copy className="h-3 w-3" />
-                            </button>
-                          </div>
-                          <div className="text-[11px] tabular-nums text-muted-foreground">{o.customer_phone}</div>
-                          <div className="line-clamp-2 text-[11px] leading-snug text-muted-foreground">
-                            {o.address_line}
-                            {o.area ? `, ${o.area.replace("_", " ")}` : ""}
-                            {o.city ? `, ${o.city}` : ""}
-                          </div>
-                        </div>
-                        <div className="min-w-0 space-y-0.5 border-t pt-2 sm:border-l sm:border-t-0 sm:pl-2 sm:pt-0">
-                          <div className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70">Reseller</div>
-                          <div className="truncate text-xs font-medium">{o.resellers?.business_name || "Direct"}</div>
-                          <div className="flex min-w-0 items-center gap-1 text-[11px] text-muted-foreground">
-                            <UserCircle className="h-3 w-3 shrink-0" />
-                            <span className="truncate">{o.resellers?.agents?.display_name || "No agent"}</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Products */}
-                      <div className="space-y-0.5">
-                        <div className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70">Products</div>
-                        <div className="text-[11px] text-muted-foreground">
-                          {(() => {
-                            const its = stripItems(o.id);
-                            if (its.length === 0) return <span className="italic opacity-70">No items</span>;
-                            const qty = its.reduce((s, i) => s + Number(i.quantity || 0), 0);
-                            return (
-                              <span className="line-clamp-3">
-                                {its.map((i) => `${i.product_name} ×${i.quantity}`).join(", ")}
-                                {qty > 0 && <span className="ml-1 opacity-70">({qty} pcs)</span>}
-                              </span>
-                            );
-                          })()}
-                        </div>
-                      </div>
-
-                      {/* Courier */}
-                      <div className="space-y-0.5">
-                        <div className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70">Courier</div>
-                        {shipments.filter(s => s.order_id === o.id).length > 0 ? (
-                          <div className="flex flex-wrap gap-1">
-                            {shipments.filter(s => s.order_id === o.id).map(s => {
-                              const url = courierTrackingUrl(s.provider, s, (o as any).customer_phone);
-                              return (
-                                <div key={s.id} className="inline-flex items-center gap-1 rounded bg-muted/50 px-1.5 py-0.5 text-[10px] font-medium ring-1 ring-inset ring-muted-foreground/10">
-                                  <CourierLogo provider={s.provider} size={12} />
-                                  {url ? (
-                                    <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-0.5 font-bold text-primary hover:underline">
-                                      {courierLabel(s.provider)}<ExternalLink className="h-2 w-2" />
-                                    </a>
-                                  ) : (
-                                    <span className="font-bold text-primary">{courierLabel(s.provider)}</span>
-                                  )}
-                                  {s.consignment_id && (
-                                    <>
-                                      <span className="text-muted-foreground">#{s.consignment_id}</span>
-                                      <button onClick={() => { navigator.clipboard.writeText(s.consignment_id || ""); toast.success("Booking ID copied"); }} className="opacity-50 hover:opacity-100">
-                                        <Copy className="h-2.5 w-2.5" />
-                                      </button>
-                                    </>
-                                  )}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        ) : (
-                          <span className="text-[10px] italic text-muted-foreground/60">Not booked yet</span>
+                        {canShip && !shipments.some(s => s.order_id === o.id && (s.consignment_id || s.tracking_id)) && (
+                          <DropdownMenuItem onClick={() => setBookingModal({ open: true, orderIds: [o.id] })}>
+                            <Truck className="mr-2 h-4 w-4" /> {activeProviderLabel ? `Book ${activeProviderLabel}` : "Book Courier"}
+                          </DropdownMenuItem>
                         )}
-                      </div>
+                        {canDelete && (
+                          <DropdownMenuItem
+                            onClick={() => removeOrder(o.id)}
+                            className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" /> Delete Order
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    <button
+                      onClick={() => setExpandedOrders(prev => prev.includes(o.id) ? prev.filter(id => id !== o.id) : [...prev, o.id])}
+                      className="shrink-0 rounded-full p-1 transition-colors hover:bg-muted"
+                    >
+                      <ChevronDown className={`h-4 w-4 transition-transform ${expandedOrders.includes(o.id) ? "rotate-180" : ""}`} />
+                    </button>
+                  </div>
 
-                      {/* Money */}
-                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                        <ResellerTotalCell order={o as any} />
-                        <AdminTotalCell order={o as any} buyingCost={buyingCostFor(o.id, o.status)} />
+                  {/* Customer + Reseller — always 2 columns */}
+                  <div className="grid grid-cols-2 gap-2 rounded-lg bg-muted/30 p-2">
+                    <div className="min-w-0 space-y-0.5">
+                      <div className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70">Customer</div>
+                      <div className="flex min-w-0 items-center gap-1.5 text-xs font-medium">
+                        <span className="truncate">{o.customer_name}</span>
+                        <a href={`tel:${o.customer_phone}`} className="shrink-0 text-primary hover:text-primary/80">
+                          <Phone className="h-3.5 w-3.5" />
+                        </a>
+                        <button
+                          onClick={() => { navigator.clipboard.writeText(o.customer_phone); toast.success("Copied"); }}
+                          className="shrink-0 text-muted-foreground hover:text-foreground"
+                        >
+                          <Copy className="h-3 w-3" />
+                        </button>
                       </div>
-
-                      <div className="space-y-0.5 border-t pt-2">
-                        <div className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70">Last update</div>
-                        <LastUpdateCell
-                          meta={orderMeta[o.id]}
-                          fallbackAt={o.created_at}
-                          onOpenNotes={() => setNotesModal({ orderId: o.id, orderNumber: o.order_number })}
-                        />
+                      <div className="text-[11px] tabular-nums text-muted-foreground">{o.customer_phone}</div>
+                      <div className="line-clamp-2 text-[11px] leading-snug text-muted-foreground">
+                        {o.address_line}
+                        {o.area ? `, ${o.area.replace("_", " ")}` : ""}
+                        {o.city ? `, ${o.city}` : ""}
+                      </div>
+                    </div>
+                    <div className="min-w-0 space-y-0.5 border-l pl-2">
+                      <div className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70">Reseller</div>
+                      <div className="truncate text-xs font-medium">{o.resellers?.business_name || "Direct"}</div>
+                      {o.resellers?.contact_phone && (
+                        <div className="flex min-w-0 items-center gap-1 text-[11px] tabular-nums text-muted-foreground">
+                          <span className="truncate">{o.resellers.contact_phone}</span>
+                          <a href={`tel:${o.resellers.contact_phone}`} className="shrink-0 text-primary hover:text-primary/80">
+                            <Phone className="h-3 w-3" />
+                          </a>
+                        </div>
+                      )}
+                      <div className="flex min-w-0 items-center gap-1 text-[11px] text-muted-foreground">
+                        <UserCircle className="h-3 w-3 shrink-0" />
+                        <span className="truncate">{o.resellers?.agents?.display_name || "No agent"}</span>
                       </div>
                     </div>
                   </div>
+
+                  {/* Products — with images + more option (same as desktop) */}
+                  <div className="space-y-0.5">
+                    <div className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70">Products</div>
+                    <OrderProductCell
+                      items={stripItems(o.id)}
+                      expanded={expandedOrders.includes(o.id)}
+                      onZoom={setZoomImage}
+                      onToggle={() => setExpandedOrders(prev => prev.includes(o.id) ? prev.filter(id => id !== o.id) : [...prev, o.id])}
+                    />
+                  </div>
+
+                  {/* Courier + Last update — 2 columns */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="min-w-0 space-y-0.5">
+                      <div className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70">Courier</div>
+                      {shipments.filter(s => s.order_id === o.id).length > 0 ? (
+                        <div className="flex flex-wrap gap-1">
+                          {shipments.filter(s => s.order_id === o.id).map(s => {
+                            const url = courierTrackingUrl(s.provider, s, (o as any).customer_phone);
+                            return (
+                              <div key={s.id} className="inline-flex max-w-full items-center gap-1 rounded bg-muted/50 px-1.5 py-0.5 text-[10px] font-medium ring-1 ring-inset ring-muted-foreground/10">
+                                <CourierLogo provider={s.provider} size={12} />
+                                {url ? (
+                                  <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-0.5 font-bold text-primary hover:underline">
+                                    {courierLabel(s.provider)}<ExternalLink className="h-2 w-2" />
+                                  </a>
+                                ) : (
+                                  <span className="font-bold text-primary">{courierLabel(s.provider)}</span>
+                                )}
+                                {s.consignment_id && (
+                                  <>
+                                    <span className="truncate text-muted-foreground">#{s.consignment_id}</span>
+                                    <button onClick={() => { navigator.clipboard.writeText(s.consignment_id || ""); toast.success("Booking ID copied"); }} className="shrink-0 opacity-50 hover:opacity-100">
+                                      <Copy className="h-2.5 w-2.5" />
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <span className="text-[10px] italic text-muted-foreground/60">Not booked yet</span>
+                      )}
+                    </div>
+                    <div className="min-w-0 space-y-0.5 border-l pl-2">
+                      <div className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70">Last update</div>
+                      <LastUpdateCell
+                        meta={orderMeta[o.id]}
+                        fallbackAt={o.created_at}
+                        hideNote
+                        onOpenNotes={() => setNotesModal({ orderId: o.id, orderNumber: o.order_number })}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Money — 2 columns */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <ResellerTotalCell order={o as any} />
+                    <AdminTotalCell order={o as any} buyingCost={buyingCostFor(o.id, o.status)} />
+                  </div>
+
+                  {/* Note — full width */}
+                  <div className="space-y-0.5 border-t pt-2">
+                    <div className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70">Note</div>
+                    <OrderNotePreview
+                      meta={orderMeta[o.id]}
+                      align="left"
+                      onOpenNotes={() => setNotesModal({ orderId: o.id, orderNumber: o.order_number })}
+                    />
+                  </div>
                 </div>
+
 
                 {/* Desktop row */}
                 <div className="hidden grid-cols-[44px_minmax(66px,0.6fr)_minmax(110px,0.9fr)_minmax(110px,0.9fr)_minmax(110px,1fr)_96px_104px_124px_minmax(112px,0.9fr)] items-start gap-2 border-b bg-muted/30 px-4 py-3 text-sm lg:grid">
