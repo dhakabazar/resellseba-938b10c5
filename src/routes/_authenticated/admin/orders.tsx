@@ -465,6 +465,38 @@ function AdminOrdersPage() {
               searchPlaceholder="Search reseller…"
               className="min-w-[220px]"
             />
+            <select
+              value={filters.area}
+              onChange={(e) => setFilters({ ...filters, area: e.target.value })}
+              className="h-10 rounded-md border bg-background px-2 text-xs font-medium outline-none focus:ring-1 focus:ring-primary"
+              title="Delivery area"
+            >
+              {AREA_FILTER_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+            <select
+              value={filters.courier}
+              onChange={(e) => setFilters({ ...filters, courier: e.target.value })}
+              className="h-10 rounded-md border bg-background px-2 text-xs font-medium outline-none focus:ring-1 focus:ring-primary"
+              title="Courier"
+            >
+              {COURIER_FILTER_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+            <select
+              value={filters.sort}
+              onChange={(e) => setFilters({ ...filters, sort: e.target.value as OrderFilterState["sort"] })}
+              className="h-10 rounded-md border bg-background px-2 text-xs font-medium outline-none focus:ring-1 focus:ring-primary"
+              title="Sort"
+            >
+              <option value="newest">Newest first</option>
+              <option value="oldest">Oldest first</option>
+              <option value="updated">Last updated</option>
+              <option value="high">Amount: high → low</option>
+              <option value="low">Amount: low → high</option>
+            </select>
             <div className="ml-auto flex items-center gap-2">
               <select
                 value={filters.perPage}
