@@ -25,8 +25,6 @@ export type GatewayCallback = {
   /** path relative to the current site origin */
   path: string;
   label: string;
-  /** true = must be whitelisted/entered in the provider panel by hand */
-  manual: boolean;
 };
 
 export type GatewaySpec = {
@@ -39,10 +37,10 @@ export type GatewaySpec = {
   hosts: { sandbox: string; live: string };
   fields: GatewayFieldSpec[];
   /**
-   * Callback URLs this gateway uses. `manual: true` means the URL must be
-   * pasted into the provider's merchant panel; otherwise it is sent
-   * automatically with every payment request, so nothing to configure.
-   * Paths are relative to the live site origin — never hardcode a domain.
+   * Callback URLs this gateway uses. All are sent automatically with every
+   * payment request (return / ipn / webhook params), so nothing is pasted
+   * into a provider panel. Paths are relative to the live site origin —
+   * never hardcode a domain.
    */
   callbacks: GatewayCallback[];
   /** flag appended on the storefront return URL, e.g. ?sslcommerz=1 */
@@ -62,8 +60,8 @@ export const GATEWAYS: GatewaySpec[] = [
       { path: "api_secret", label: "Store password", placeholder: "yourstore0live@ssl", secret: true, required: true },
     ],
     callbacks: [
-      { path: "/api/public/payment/sslcommerz/return", label: "Return URL (success / fail / cancel)", manual: false },
-      { path: "/api/public/payment/sslcommerz-ipn", label: "IPN URL", manual: true },
+      { path: "/api/public/payment/sslcommerz/return", label: "Return URL (success / fail / cancel)" },
+      { path: "/api/public/payment/sslcommerz-ipn", label: "IPN URL" },
     ],
     returnFlag: "sslcommerz",
   },
@@ -81,7 +79,7 @@ export const GATEWAYS: GatewaySpec[] = [
       { path: "config.password", label: "Merchant password", secret: true, required: true },
     ],
     callbacks: [
-      { path: "/api/public/payment/bkash/return", label: "Callback URL", manual: false },
+      { path: "/api/public/payment/bkash/return", label: "Callback URL" },
     ],
     returnFlag: "bkash",
   },
@@ -113,7 +111,7 @@ export const GATEWAYS: GatewaySpec[] = [
       },
     ],
     callbacks: [
-      { path: "/api/public/payment/nagad/return", label: "Callback URL", manual: false },
+      { path: "/api/public/payment/nagad/return", label: "Callback URL" },
     ],
     returnFlag: "nagad",
   },
@@ -130,7 +128,7 @@ export const GATEWAYS: GatewaySpec[] = [
       { path: "merchant_id", label: "Prefix", placeholder: "sp", required: true },
     ],
     callbacks: [
-      { path: "/api/public/payment/shurjopay/return", label: "Return URL", manual: false },
+      { path: "/api/public/payment/shurjopay/return", label: "Return URL" },
     ],
     returnFlag: "shurjopay",
   },
@@ -148,7 +146,7 @@ export const GATEWAYS: GatewaySpec[] = [
       { path: "config.store_id", label: "Store ID (UUID)", required: true },
     ],
     callbacks: [
-      { path: "/api/public/payment/eps/return", label: "Success / fail / cancel URL", manual: false },
+      { path: "/api/public/payment/eps/return", label: "Success / fail / cancel URL" },
     ],
     returnFlag: "eps",
   },
@@ -164,7 +162,7 @@ export const GATEWAYS: GatewaySpec[] = [
       { path: "api_secret", label: "Signature key", secret: true, required: true },
     ],
     callbacks: [
-      { path: "/api/public/payment/aamarpay/return", label: "Success / fail / cancel URL", manual: false },
+      { path: "/api/public/payment/aamarpay/return", label: "Success / fail / cancel URL" },
     ],
     returnFlag: "aamarpay",
   },
@@ -181,8 +179,8 @@ export const GATEWAYS: GatewaySpec[] = [
       { path: "merchant_id", label: "Brand key", required: true },
     ],
     callbacks: [
-      { path: "/api/public/payment/epayseba/return", label: "Return URL", manual: false },
-      { path: "/api/public/payment/epayseba-webhook", label: "Webhook URL", manual: true },
+      { path: "/api/public/payment/epayseba/return", label: "Return URL" },
+      { path: "/api/public/payment/epayseba-webhook", label: "Webhook URL" },
     ],
     returnFlag: "epayseba",
   },

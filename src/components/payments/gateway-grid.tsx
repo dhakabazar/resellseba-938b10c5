@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AppModal } from "@/components/ui-kit/AppModal";
 import { GATEWAYS, type GatewayFieldSpec, type GatewaySpec } from "@/lib/gateways/registry";
 import { testGatewayConnection } from "@/lib/gateways.functions";
-import { Label, SecretInput, StatusDot, Switch, UrlRow, field } from "./shared";
+import { Label, SecretInput, StatusDot, Switch, field } from "./shared";
 import { PaymentLogo, paymentLogo } from "./payment-brand";
 
 /**
@@ -246,7 +246,7 @@ function GatewayModal({
   const runTest = useServerFn(testGatewayConnection);
   const sandbox = row.config?.is_sandbox !== false;
   const missing = missingFields(spec, row);
-  const manualUrls = spec.callbacks.filter((c) => c.manual);
+
 
   async function save() {
     if (row.is_active && missing.length) return toast.error(`Fill in: ${missing.map((f) => f.label).join(", ")}`);
@@ -370,14 +370,6 @@ function GatewayModal({
           </div>
         ))}
 
-        {manualUrls.length > 0 && (
-          <div className="sm:col-span-2 space-y-1.5 rounded-xl border p-3">
-            <div className="text-[11px] font-semibold">Paste these URLs in the {spec.label} panel</div>
-            {manualUrls.map((c) => (
-              <UrlRow key={c.path} path={c.path} label={c.label} />
-            ))}
-          </div>
-        )}
 
         <label className="sm:col-span-2 flex items-center justify-between gap-3 rounded-xl border p-3">
           <span>

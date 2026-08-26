@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Check, Copy, Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 
 /** Small shared primitives for the payment settings screens. */
 
@@ -118,31 +118,3 @@ export function SecretInput({
   );
 }
 
-/** Copyable URL row — always built from the live origin, never hardcoded. */
-export function UrlRow({ path, label }: { path: string; label: string }) {
-  const [origin, setOrigin] = React.useState("");
-  const [copied, setCopied] = React.useState(false);
-  React.useEffect(() => setOrigin(window.location.origin), []);
-  const url = origin + path;
-
-  return (
-    <div className="flex items-center gap-2 rounded-lg border bg-muted/30 px-2.5 py-1.5">
-      <div className="min-w-0 flex-1">
-        <div className="text-[10px] font-semibold">{label}</div>
-        <code className="block truncate text-[10px] text-muted-foreground">{url}</code>
-      </div>
-      <button
-        type="button"
-        onClick={() => {
-          void navigator.clipboard.writeText(url);
-          setCopied(true);
-          window.setTimeout(() => setCopied(false), 1200);
-        }}
-        className="rounded-md border bg-background p-1.5 hover:bg-muted"
-        aria-label={`Copy ${label}`}
-      >
-        {copied ? <Check className="h-3 w-3 text-success" /> : <Copy className="h-3 w-3" />}
-      </button>
-    </div>
-  );
-}
