@@ -414,8 +414,7 @@ function AdminTutorialsPage() {
             </Field>
             <Toggle label="Active" checked={topicDraft.is_active} onChange={(v) => setTopicDraft({ ...topicDraft, is_active: v })} />
           </div>
-          <ModalActions saving={saving} onCancel={() => setTopicDraft(null)} onSave={() => void saveTopic()} />
-        </Modal>
+        </AppModal>
       ) : null}
     </div>
   );
