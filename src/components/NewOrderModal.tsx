@@ -633,10 +633,10 @@ export function NewOrderModal({
                       {isAdmin && (
                         <MoneyField
                           label="Courier Cost (Admin cost)"
-                          hint={`Default ৳${totals.shipping.toFixed(0)}`}
+                          hint={`Default ৳${totals.autoShipping.toFixed(0)}`}
                           value={deliveryCostOverride}
                           onChange={setDeliveryCostOverride}
-                          placeholder={totals.shipping.toFixed(0)}
+                          placeholder={totals.autoShipping.toFixed(0)}
                         />
                       )}
                     </div>
