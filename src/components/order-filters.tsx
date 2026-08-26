@@ -256,6 +256,7 @@ export function OrderFilterBar({
   shown,
   right,
   showPerPage = false,
+  hideSearch = false,
   variant = "default",
 }: {
   value: OrderFilterState;
@@ -267,19 +268,15 @@ export function OrderFilterBar({
   right?: React.ReactNode;
   /** Show the per-page selector inline (report pages that have no separate one). */
   showPerPage?: boolean;
+  /** Hide the built-in search box when the page already renders its own. */
+  hideSearch?: boolean;
   /** Report layout: search takes 40%, filters take 60% and are more compact. */
   variant?: "default" | "report";
 }) {
   const set = (patch: Partial<OrderFilterState>) => onChange({ ...value, ...patch });
   const dirty = useMemo(
-    () =>
-      value.q !== "" ||
-      value.reseller !== "" ||
-      value.datePreset !== "lifetime" ||
-      value.sort !== "newest" ||
-      value.area !== "" ||
-      value.courier !== "",
-    [value],
+    () => activeFilterCount(value) > 0 || (!hideSearch && value.q !== ""),
+    [value, hideSearch],
   );
 
   const isReport = variant === "report";
@@ -287,6 +284,7 @@ export function OrderFilterBar({
   return (
     <div className="surface-card mb-4 space-y-3 p-3 sm:p-4">
       <div className="flex flex-col gap-2 lg:flex-row lg:items-end">
+        {!hideSearch && (
         <div className={`relative min-w-0 lg:pb-[1px] ${isReport ? "lg:w-[40%]" : "flex-1"}`}>
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
@@ -305,8 +303,9 @@ export function OrderFilterBar({
             </button>
           )}
         </div>
+        )}
 
-        <div className={`grid grid-cols-2 gap-2 sm:grid-cols-3 lg:flex lg:shrink-0 lg:items-end ${isReport ? "lg:w-[60%]" : ""}`}>
+        <div className={`grid grid-cols-2 gap-2 sm:grid-cols-3 lg:flex lg:shrink-0 lg:items-end ${isReport ? "lg:w-[60%]" : "lg:flex-1 lg:justify-end"} ${hideSearch ? "w-full" : ""}`}>
           {resellerOptions && (
             <SearchableSelect
               label="Reseller"
