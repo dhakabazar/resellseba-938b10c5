@@ -122,10 +122,8 @@ export function AdminTotalCell({ order, buyingCost }: { order: ProfitOrder; buyi
   const delivery = orderDeliveryCost(order);
   const packaging = orderPackaging(order);
   const profit = revenue - buyingCost - delivery - packaging;
-  // Admin-held advance stays with admin → positive; reseller-held → neutral.
-  const advanceTone: Tone | undefined = advance > 0
-    ? order.advance_by === "admin" ? "profit" : "advance"
-    : undefined;
+  // Show the advance chip only when the admin held it (stays with admin).
+  const adminHeld = advance > 0 && order.advance_by === "admin";
   return (
     <Summary
       headLabel="rev"
@@ -135,8 +133,8 @@ export function AdminTotalCell({ order, buyingCost }: { order: ProfitOrder; buyi
       delivery={delivery}
       packaging={packaging}
       profit={profit}
-      advance={advance}
-      advanceTone={advanceTone}
+      advance={adminHeld ? advance : undefined}
+      advanceTone={adminHeld ? "profit" : undefined}
     />
   );
 }
