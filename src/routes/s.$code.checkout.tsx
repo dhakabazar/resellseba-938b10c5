@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { listActiveGateways, startGatewayPayment } from "@/lib/gateways.functions";
+import { PaymentLogo } from "@/components/payments/payment-brand";
 import { areaOptions, productDeliveryCharge, type DeliveryArea } from "@/lib/delivery";
 import { useAdvancedSettings } from "@/lib/advanced-settings";
 import { addressError, nameError, normalizePhone, phoneError, sanitizeName } from "@/lib/checkout-validate";
@@ -334,7 +335,10 @@ function Checkout() {
                         : borderc,
                     )}
                   >
-                    <div className="font-medium capitalize">{m.label}</div>
+                    <div className="flex items-center gap-2">
+                      <PaymentLogo method={("provider" in m ? m.provider : m.method) as string} size={24} />
+                      <span className="font-medium capitalize">{m.label}</span>
+                    </div>
                     {m.instructions && <div className={cx("text-xs", muted)}>{m.instructions}</div>}
                   </button>
                 ))}

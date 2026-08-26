@@ -7,6 +7,7 @@ import { AppModal } from "@/components/ui-kit/AppModal";
 import { GATEWAYS, type GatewayFieldSpec, type GatewaySpec } from "@/lib/gateways/registry";
 import { testGatewayConnection } from "@/lib/gateways.functions";
 import { Label, SecretInput, StatusDot, Switch, UrlRow, field } from "./shared";
+import { PaymentLogo, paymentLogo } from "./payment-brand";
 
 /**
  * Automatic (redirect) gateways. Every supported provider is a card in a grid:
@@ -149,11 +150,15 @@ export function GatewayGrid({ onCountChange }: { onCountChange?: (active: number
               <div className="flex items-start gap-3">
                 <span
                   className={
-                    "grid h-9 w-9 shrink-0 place-items-center rounded-lg " +
-                    (row.is_active ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground")
+                    "grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-lg border bg-background p-1 " +
+                    (row.is_active ? "border-primary/30" : "border-border")
                   }
                 >
-                  <Zap className="h-4 w-4" />
+                  {paymentLogo(spec.provider) ? (
+                    <PaymentLogo method={spec.provider} size={32} alt={`${spec.label} logo`} />
+                  ) : (
+                    <Zap className="h-4 w-4 text-muted-foreground" />
+                  )}
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm font-semibold">{row.label || spec.label}</div>
@@ -279,7 +284,12 @@ function GatewayModal({
 
   return (
     <AppModal
-      title={spec.label}
+      title={
+        <span className="flex items-center gap-2">
+          <PaymentLogo method={spec.provider} size={24} />
+          <span>{spec.label}</span>
+        </span>
+      }
       subtitle={spec.tagline}
       size="md"
       onClose={onClose}

@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { BadgeCheck, Clock, Copy, Loader2, Send, XCircle } from "lucide-react";
 import { cfgString, fetchDepositMethods, type PaymentConfigRow } from "@/lib/payment-methods";
+import { PaymentLogo } from "@/components/payments/payment-brand";
 
 type RequestRow = {
   id: string;
@@ -111,8 +112,11 @@ export function DepositPayPanel({ resellerId, onSubmitted }: { resellerId: strin
                     (active ? "border-primary bg-primary/5" : "hover:bg-muted")
                   }
                 >
-                  <div className="flex items-center justify-between font-semibold">
-                    <span>{m.label}</span>
+                  <div className="flex items-center justify-between gap-2 font-semibold">
+                    <span className="flex min-w-0 items-center gap-2">
+                      <PaymentLogo method={m.method} size={22} />
+                      <span className="truncate">{m.label}</span>
+                    </span>
                     {active && <BadgeCheck className="h-4 w-4 text-primary" />}
                   </div>
                   {cfgString(m.config, "account") && (
