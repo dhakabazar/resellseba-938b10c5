@@ -36,7 +36,7 @@ export function DepositPayPanel({
   const [methods, setMethods] = useState<PaymentConfigRow[]>([]);
   const [requests, setRequests] = useState<RequestRow[]>([]);
   const [configId, setConfigId] = useState("");
-  const [amount, setAmount] = useState("");
+  const [amount, setAmount] = useState(due && due > 0 ? String(due) : "");
   const [reference, setReference] = useState("");
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
@@ -44,7 +44,7 @@ export function DepositPayPanel({
   const [mode, setMode] = useState<"manual" | "online">("manual");
   const [gateways, setGateways] = useState<{ provider: string; label: string }[]>([]);
   const [gateway, setGateway] = useState("");
-  const [onlineAmount, setOnlineAmount] = useState("");
+  const [onlineAmount, setOnlineAmount] = useState(due && due > 0 ? String(due) : "");
   const loadGateways = useServerFn(listDepositGateways);
   const startOnline = useServerFn(startDepositPayment);
 
