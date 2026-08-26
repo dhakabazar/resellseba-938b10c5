@@ -109,7 +109,7 @@ const NAV: NavEntry[] = [
       { label: "Deposit transactions", to: "/admin/deposit-transactions", icon: <ShieldCheck className="h-4 w-4" /> },
     ],
   },
-  { label: "Resellers", to: "/admin/resellers", icon: <StoreIcon className="h-4 w-4" /> },
+  { label: "Resellers", to: "/admin/resellers", icon: <ShoppingBag className="h-4 w-4" /> },
   {
     label: "Agents",
     icon: <UserCheck className="h-4 w-4" />,
