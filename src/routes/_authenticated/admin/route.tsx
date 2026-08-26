@@ -66,6 +66,7 @@ const ROUTE_PERMISSIONS: Record<string, string[]> = {
   "/admin/marketing": ["marketing.manage"],
   "/admin/notifications": ["notifications.manage"],
   "/admin/notices": ["notifications.manage", "settings.manage"],
+  "/admin/tutorials": ["settings.manage", "landing.manage"],
   "/admin/landing": ["landing.manage"],
   "/admin/couriers": ["couriers.manage"],
   "/admin/payments": ["payments.manage"],
@@ -125,6 +126,7 @@ const NAV: NavEntry[] = [
       { label: "Marketing", to: "/admin/marketing", icon: <Megaphone className="h-4 w-4" /> },
       { label: "Notifications", to: "/admin/notifications", icon: <Bell className="h-4 w-4" /> },
       { label: "Reseller notices", to: "/admin/notices", icon: <Megaphone className="h-4 w-4" /> },
+      { label: "Video tutorials", to: "/admin/tutorials", icon: <GraduationCap className="h-4 w-4" /> },
     ],
   },
   {
