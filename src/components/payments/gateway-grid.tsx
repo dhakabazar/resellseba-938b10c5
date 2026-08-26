@@ -63,7 +63,7 @@ async function persist(spec: GatewaySpec, row: Row, is_active: boolean) {
     api_key: row.api_key || null,
     api_secret: row.api_secret || null,
     merchant_id: row.merchant_id || null,
-    config: { ...(row.config ?? {}), is_sandbox: row.config?.is_sandbox !== false } as never,
+    config: { ...(row.config ?? {}), base_url: (row.config?.base_url ?? "").trim() || null } as never,
     is_active,
     reseller_id: null,
   };
@@ -134,7 +134,6 @@ export function GatewayGrid({ onCountChange }: { onCountChange?: (active: number
         {GATEWAYS.map((spec) => {
           const row = rows[spec.provider] ?? blank(spec);
           const missing = missingFields(spec, row);
-          const sandbox = row.config?.is_sandbox !== false;
           return (
             <div
               key={spec.provider}
@@ -159,9 +158,7 @@ export function GatewayGrid({ onCountChange }: { onCountChange?: (active: number
                     <StatusDot on={row.is_active} />
                     {row.is_active ? "active" : row.id ? "off" : "not set up"}
                     <span>·</span>
-                    <span className={sandbox ? "text-amber-600 dark:text-amber-400" : "text-success"}>
-                      {sandbox ? "sandbox" : "live"}
-                    </span>
+                    <span className="text-success">live</span>
                   </div>
                 </div>
                 <Switch
@@ -237,7 +234,6 @@ function GatewayModal({
   const [testing, setTesting] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
   const runTest = useServerFn(testGatewayConnection);
-  const sandbox = row.config?.is_sandbox !== false;
   const missing = missingFields(spec, row);
 
 
@@ -261,7 +257,7 @@ function GatewayModal({
           api_key: row.api_key ?? "",
           api_secret: row.api_secret ?? "",
           merchant_id: row.merchant_id ?? "",
-          config: { ...(row.config ?? {}), is_sandbox: sandbox } as Record<string, unknown>,
+          config: { ...(row.config ?? {}) } as Record<string, unknown>,
         },
       });
       setResult(
@@ -335,17 +331,17 @@ function GatewayModal({
           />
         </div>
         <div>
-          <Label>Environment</Label>
-          <select
-            value={sandbox ? "sandbox" : "live"}
-            onChange={(e) =>
-              setRow({ ...row, config: { ...(row.config ?? {}), is_sandbox: e.target.value === "sandbox" } })
-            }
+          <Label>API base URL</Label>
+          <input
+            value={(row.config?.base_url as string | undefined) ?? ""}
+            onChange={(e) => setRow({ ...row, config: { ...(row.config ?? {}), base_url: e.target.value } })}
             className={field}
-          >
-            <option value="sandbox">Sandbox (testing)</option>
-            <option value="live">Live (real money)</option>
-          </select>
+            placeholder={spec.hosts.live}
+          />
+          <p className="mt-1 text-[10px] text-muted-foreground">
+            Leave empty to use the provider's standard live API. Fill it in only if your merchant panel gives a
+            different API address.
+          </p>
         </div>
 
         <div className="sm:col-span-2 mt-1 text-[11px] font-semibold">Credentials</div>
