@@ -3,7 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { BadgeCheck, Clock, Copy, Loader2, Send, XCircle, Zap } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
-import { listDepositGateways, startDepositPayment } from "@/lib/gateways.functions";
+import { startDepositPayment } from "@/lib/gateways.functions";
+import { gatewayLabel } from "@/lib/gateways/registry";
+
 import { cfgString, fetchDepositMethods, type PaymentConfigRow } from "@/lib/payment-methods";
 import { PaymentLogo } from "@/components/payments/payment-brand";
 
@@ -53,22 +55,27 @@ export function DepositPayPanel({
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [gateways, setGateways] = useState<{ provider: string; label: string }[]>([]);
-  const loadGateways = useServerFn(listDepositGateways);
+  
   const startOnline = useServerFn(startDepositPayment);
 
   useEffect(() => {
     void (async () => {
-      const list = await fetchDepositMethods();
+      // Manual wallets and automatic gateways live in two tables — load both.
+      const [list, gw] = await Promise.all([
+        fetchDepositMethods(),
+        supabase.rpc("get_active_payment_gateways"),
+      ]);
       setMethods(list);
+      setGateways(
+        (gw.data ?? []).map((g) => ({
+          provider: g.provider,
+          label: g.label || gatewayLabel(g.provider),
+        })),
+      );
       setLoading(false);
-      try {
-        const gw = await loadGateways();
-        setGateways(gw);
-      } catch {
-        /* gateways unavailable */
-      }
     })();
-  }, [loadGateways]);
+  }, []);
+
 
   /** Unified, deduplicated list — manual first, then online gateways. */
   const unified = useMemo<UnifiedMethod[]>(() => {
@@ -170,10 +177,7 @@ export function DepositPayPanel({
 
   return (
     <div className="space-y-4">
-      <p className="text-[11px] text-muted-foreground">
-        Pick a method below to pay your security deposit. Manual methods need a TrxID and are credited after admin
-        verification; automatic gateways credit instantly once payment is confirmed.
-      </p>
+
 
       {/* Unified method grid — manual + automatic together */}
       <div className="grid gap-2 sm:grid-cols-2">
@@ -239,12 +243,8 @@ export function DepositPayPanel({
         })}
       </div>
 
-      {/* Selected method instructions (manual only) */}
-      {selected?.kind === "manual" && selected.instructions && (
-        <p className="whitespace-pre-line rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-[11px] leading-relaxed text-amber-700 dark:text-amber-300">
-          {selected.instructions}
-        </p>
-      )}
+
+
 
       {/* Amount is shared */}
       <div className="rounded-xl border p-4">
