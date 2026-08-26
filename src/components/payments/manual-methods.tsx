@@ -12,6 +12,7 @@ import {
   type PaymentConfigRow,
 } from "@/lib/payment-methods";
 import { Label, StatusDot, Switch, field } from "./shared";
+import { PaymentLogo, paymentLogo } from "./payment-brand";
 
 /**
  * Manual (human verified) payment methods: wallet / bank / cash.
@@ -111,8 +112,12 @@ export function ManualMethods({ onCountChange }: { onCountChange?: (n: number) =
           {rows.map((row) => (
             <div key={row.id} className="surface-card flex flex-col p-4">
               <div className="flex items-start gap-3">
-                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400">
-                  <Wallet className="h-4 w-4" />
+                <span className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-lg border bg-background p-1">
+                  {paymentLogo(row.method) ? (
+                    <PaymentLogo method={row.method} size={32} alt={`${methodLabel(row.method)} logo`} />
+                  ) : (
+                    <Wallet className="h-4 w-4 text-muted-foreground" />
+                  )}
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm font-semibold">{row.label}</div>
