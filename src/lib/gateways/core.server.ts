@@ -136,12 +136,14 @@ export async function withTimeout<T>(fn: (signal: AbortSignal) => Promise<T>, ms
 }
 
 export async function jsonPost(url: string, body: unknown, headers: Record<string, string> = {}, signal?: AbortSignal) {
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", accept: "application/json", ...headers },
-    body: JSON.stringify(body),
-    signal,
-  });
+  const res = await callGateway(url, () =>
+    fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", accept: "application/json", ...headers },
+      body: JSON.stringify(body),
+      signal,
+    }),
+  );
   return parseBody(res);
 }
 
