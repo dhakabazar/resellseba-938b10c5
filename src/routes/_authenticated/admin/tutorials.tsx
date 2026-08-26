@@ -318,7 +318,11 @@ function AdminTutorialsPage() {
       )}
 
       {videoDraft ? (
-        <Modal title={videoDraft.id ? "Edit tutorial" : "Add tutorial"} onClose={() => setVideoDraft(null)}>
+        <AppModal
+          title={videoDraft.id ? "Edit tutorial" : "Add tutorial"}
+          onClose={() => setVideoDraft(null)}
+          footer={<ModalActions saving={saving} onCancel={() => setVideoDraft(null)} onSave={() => void saveVideo()} />}
+        >
           <div className="space-y-3">
             <Field label="Title">
               <input className={inp} value={videoDraft.title} onChange={(e) => setVideoDraft({ ...videoDraft, title: e.target.value })} />
