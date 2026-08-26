@@ -599,7 +599,14 @@ function AdminOrdersPage() {
                          </>
                        )}
                      </div>
-                  </div>
+                     <div className="text-[10px] text-muted-foreground/70 truncate">
+                       {o.resellers?.agents?.display_name ? (
+                         <span className="inline-flex items-center gap-1"><UserCircle className="h-2.5 w-2.5" />{o.resellers.agents.display_name}</span>
+                       ) : (
+                         <span className="italic">no agent</span>
+                       )}
+                     </div>
+                   </div>
                   <OrderProductCell
                     items={stripItems(o.id)}
                     expanded={expandedOrders.includes(o.id)}
@@ -1072,6 +1079,10 @@ function OrderDrawer({
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Phone className="h-4 w-4 text-primary" />
                     <span>{order.resellers.contact_phone || "—"}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <UserCircle className="h-3.5 w-3.5 text-primary" />
+                    <span className="font-medium">{order.resellers.agents?.display_name || <span className="italic text-muted-foreground/60">No agent assigned</span>}</span>
                   </div>
                 </div>
               ) : (
