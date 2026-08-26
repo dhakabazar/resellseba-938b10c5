@@ -283,7 +283,12 @@ function GatewayModal({
 
   return (
     <AppModal
-      title={spec.label}
+      title={
+        <span className="flex items-center gap-2">
+          <PaymentLogo method={spec.provider} size={24} />
+          <span>{spec.label}</span>
+        </span>
+      }
       subtitle={spec.tagline}
       size="md"
       onClose={onClose}
