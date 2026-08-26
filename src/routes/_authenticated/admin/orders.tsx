@@ -3,7 +3,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Pagination, usePaginated, type FilterOption } from "@/components/data-list";
 import {
   applyOrderFilters,
+  filterByCourier,
   DEFAULT_ORDER_FILTERS,
+  AREA_FILTER_OPTIONS,
+  COURIER_FILTER_OPTIONS,
   type OrderFilterState,
 } from "@/components/order-filters";
 import { SearchableSelect } from "@/components/searchable-select";
@@ -89,6 +92,7 @@ type OrderRow = {
   payment_method: string;
   forwarded_to_admin: boolean;
   created_at: string;
+  updated_at: string;
   reseller_note: string | null;
   admin_note: string | null;
   resellers: { business_name: string; code: string; contact_phone: string | null; agents: { display_name: string } | null } | null;
@@ -192,7 +196,7 @@ function AdminOrdersPage() {
   const [resellerOptions, setResellerOptions] = useState<FilterOption[]>([]);
 
   const ORDER_SELECT =
-    "id,reseller_id,order_number,customer_name,customer_phone,address_line,area,city,subtotal,discount,shipping_cost,sa_cost_total,packaging_total,delivery_cost,received_amount,advance_amount,advance_by,total,status,payment_status,payment_method,forwarded_to_admin,created_at,reseller_note,admin_note,resellers(business_name,code,contact_phone,agents(display_name))";
+    "id,reseller_id,order_number,customer_name,customer_phone,address_line,area,city,subtotal,discount,shipping_cost,sa_cost_total,packaging_total,delivery_cost,received_amount,advance_amount,advance_by,total,status,payment_status,payment_method,forwarded_to_admin,created_at,updated_at,reseller_note,admin_note,resellers(business_name,code,contact_phone,agents(display_name))";
   const ITEM_SELECT = "order_id,product_id,product_name,product_image,quantity,returned_qty,reseller_price,line_total";
   const SHIPMENT_SELECT = "id,order_id,provider,tracking_id,consignment_id";
 
@@ -413,7 +417,8 @@ function AdminOrdersPage() {
   );
 
   const filtered = useMemo(() => {
-    const base = applyOrderFilters(orders, { ...filters, q: "" });
+    const courierFiltered = filterByCourier(orders, filters.courier, shipments);
+    const base = applyOrderFilters(courierFiltered, { ...filters, q: "" });
     const q = filters.q.trim().toLowerCase();
     if (!q) return base;
     return base.filter((o) => {
@@ -421,7 +426,7 @@ function AdminOrdersPage() {
         const has = (v?: string | null) => (v ?? "").toLowerCase().includes(q);
         return has(o.order_number) || has(o.customer_name) || has(o.customer_phone);
     });
-  }, [orders, filters, itemsByOrder, searchMode]);
+  }, [orders, filters, itemsByOrder, searchMode, shipments]);
 
   const paged = usePaginated(filtered, page, filters.perPage);
   const { meta: orderMeta, refresh: refreshMeta } = useOrderMeta(paged.map((o) => o.id));
@@ -460,6 +465,38 @@ function AdminOrdersPage() {
               searchPlaceholder="Search reseller…"
               className="min-w-[220px]"
             />
+            <select
+              value={filters.area}
+              onChange={(e) => setFilters({ ...filters, area: e.target.value })}
+              className="h-10 rounded-md border bg-background px-2 text-xs font-medium outline-none focus:ring-1 focus:ring-primary"
+              title="Delivery area"
+            >
+              {AREA_FILTER_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+            <select
+              value={filters.courier}
+              onChange={(e) => setFilters({ ...filters, courier: e.target.value })}
+              className="h-10 rounded-md border bg-background px-2 text-xs font-medium outline-none focus:ring-1 focus:ring-primary"
+              title="Courier"
+            >
+              {COURIER_FILTER_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+            <select
+              value={filters.sort}
+              onChange={(e) => setFilters({ ...filters, sort: e.target.value as OrderFilterState["sort"] })}
+              className="h-10 rounded-md border bg-background px-2 text-xs font-medium outline-none focus:ring-1 focus:ring-primary"
+              title="Sort"
+            >
+              <option value="newest">Newest first</option>
+              <option value="oldest">Oldest first</option>
+              <option value="updated">Last updated</option>
+              <option value="high">Amount: high → low</option>
+              <option value="low">Amount: low → high</option>
+            </select>
             <div className="ml-auto flex items-center gap-2">
               <select
                 value={filters.perPage}

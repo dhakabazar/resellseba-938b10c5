@@ -55,6 +55,7 @@ import { Pagination, usePaginated } from "@/components/data-list";
 import {
   OrderFilterBar,
   applyOrderFilters,
+  filterByCourier,
   DEFAULT_ORDER_FILTERS,
   type OrderFilterState,
 } from "@/components/order-filters";
@@ -111,6 +112,7 @@ type OrderRow = {
   notes: string | null;
   reseller_note: string | null;
   created_at: string;
+  updated_at: string;
   received_amount?: number | null;
   packaging_total?: number | null;
   delivery_cost?: number | null;
@@ -130,7 +132,7 @@ export const Route = createFileRoute("/_authenticated/reseller/orders")({
 });
 
 const ORDER_COLUMNS =
-  "id,order_number,customer_name,customer_phone,address_line,city,area,subtotal,shipping_cost,discount,total,sa_cost_total,reseller_profit,received_amount,packaging_total,delivery_cost,advance_amount,advance_by,payment_method,status,payment_status,forwarded_to_admin,notes,reseller_note,created_at";
+  "id,order_number,customer_name,customer_phone,address_line,city,area,subtotal,shipping_cost,discount,total,sa_cost_total,reseller_profit,received_amount,packaging_total,delivery_cost,advance_amount,advance_by,payment_method,status,payment_status,forwarded_to_admin,notes,reseller_note,created_at,updated_at";
 
 type OrderItemLite = {
   order_id: string;
@@ -348,7 +350,8 @@ function OrdersPage() {
 
   /** One search box, mode decides target: order fields or product name. */
   const visible = useMemo(() => {
-    const base = applyOrderFilters(inTab, { ...filters, q: "" });
+    const courierFiltered = filterByCourier(inTab, filters.courier, shipments);
+    const base = applyOrderFilters(courierFiltered, { ...filters, q: "" });
     const q = filters.q.trim().toLowerCase();
     if (!q) return base;
     return base.filter((o) => {
@@ -360,7 +363,7 @@ function OrdersPage() {
       const has = (v?: string | null) => (v ?? "").toLowerCase().includes(q);
       return has(o.order_number) || has(o.customer_name) || has(o.customer_phone);
     });
-  }, [inTab, filters, searchMode, itemsByOrder]);
+  }, [inTab, filters, searchMode, itemsByOrder, shipments]);
 
   const markedOrders = useMemo(
     () => visible.filter((o) => marked.includes(o.id)),

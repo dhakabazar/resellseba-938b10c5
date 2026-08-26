@@ -22,7 +22,9 @@ export type OrderFilterState = {
   datePreset: DatePreset;
   from: string;
   to: string;
-  sort: "newest" | "oldest" | "high" | "low";
+  sort: "newest" | "oldest" | "updated" | "high" | "low";
+  area: string;
+  courier: string;
   perPage: number;
 };
 
@@ -33,8 +35,25 @@ export const DEFAULT_ORDER_FILTERS: OrderFilterState = {
   from: "",
   to: "",
   sort: "newest",
+  area: "",
+  courier: "",
   perPage: 20,
 };
+
+export const AREA_FILTER_OPTIONS: { value: string; label: string }[] = [
+  { value: "", label: "All areas" },
+  { value: "inside_dhaka", label: "Inside Dhaka" },
+  { value: "sub_dhaka", label: "Sub Dhaka" },
+  { value: "outside_dhaka", label: "Outside Dhaka" },
+];
+
+export const COURIER_FILTER_OPTIONS: { value: string; label: string }[] = [
+  { value: "", label: "All couriers" },
+  { value: "steadfast", label: "Steadfast" },
+  { value: "pathao", label: "Pathao" },
+  { value: "carrybee", label: "Carrybee" },
+  { value: "none", label: "Not booked" },
+];
 
 export const DATE_PRESET_OPTIONS: { value: DatePreset; label: string }[] = [
   { value: "today", label: "Today" },
@@ -52,6 +71,7 @@ export const DATE_PRESET_OPTIONS: { value: DatePreset; label: string }[] = [
 const SORT_OPTIONS: { value: OrderFilterState["sort"]; label: string }[] = [
   { value: "newest", label: "Newest first" },
   { value: "oldest", label: "Oldest first" },
+  { value: "updated", label: "Last updated" },
   { value: "high", label: "Amount: high → low" },
   { value: "low", label: "Amount: low → high" },
 ];
@@ -113,8 +133,10 @@ type FilterableOrder = {
   customer_name: string;
   customer_phone: string;
   address_line?: string | null;
+  area?: string | null;
   total: number | string;
   created_at: string;
+  updated_at?: string;
   reseller_id?: string | null;
   resellers?: { business_name: string; code: string } | null;
 };
@@ -139,6 +161,7 @@ export function applyOrderFilters<T extends FilterableOrder>(rows: T[], f: Order
       if (!hay.includes(q)) return false;
     }
     if (f.reseller && o.reseller_id !== f.reseller) return false;
+    if (f.area && o.area !== f.area) return false;
     const ts = new Date(o.created_at).getTime();
     if (fromTs != null && ts < fromTs) return false;
     if (toTs != null && ts > toTs) return false;
@@ -150,8 +173,38 @@ export function applyOrderFilters<T extends FilterableOrder>(rows: T[], f: Order
       const diff = Number(a.total) - Number(b.total);
       return f.sort === "high" ? -diff : diff;
     }
+    if (f.sort === "updated") {
+      const au = new Date(a.updated_at ?? a.created_at).getTime();
+      const bu = new Date(b.updated_at ?? b.created_at).getTime();
+      return bu - au;
+    }
     const diff = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
     return f.sort === "oldest" ? diff : -diff;
+  });
+}
+
+/** Keep only orders whose shipment matches the courier filter (or has none). */
+export function filterByCourier<T extends { id: string }>(
+  rows: T[],
+  courier: string,
+  shipments: { order_id: string; provider?: string | null }[],
+): T[] {
+  if (!courier) return rows;
+  const byOrder = new Map<string, Set<string>>();
+  const noneIds = new Set<string>(rows.map((r) => r.id));
+  for (const s of shipments) {
+    if (!s.provider) continue;
+    let set = byOrder.get(s.order_id);
+    if (!set) {
+      set = new Set();
+      byOrder.set(s.order_id, set);
+    }
+    set.add(s.provider);
+    noneIds.delete(s.order_id);
+  }
+  return rows.filter((o) => {
+    if (courier === "none") return !byOrder.has(o.id);
+    return byOrder.get(o.id)?.has(courier) ?? false;
   });
 }
 
@@ -214,7 +267,9 @@ export function OrderFilterBar({
       value.q !== "" ||
       value.reseller !== "" ||
       value.datePreset !== "lifetime" ||
-      value.sort !== "newest",
+      value.sort !== "newest" ||
+      value.area !== "" ||
+      value.courier !== "",
     [value],
   );
 
@@ -280,6 +335,30 @@ export function OrderFilterBar({
             onChange={(v) => set({ sort: v as OrderFilterState["sort"] })}
           >
             {SORT_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </Select>
+          <Select
+            label="Area"
+            value={value.area}
+            className={isReport ? "lg:w-[120px]" : "lg:w-[150px]"}
+            onChange={(v) => set({ area: v })}
+          >
+            {AREA_FILTER_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </Select>
+          <Select
+            label="Courier"
+            value={value.courier}
+            className={isReport ? "lg:w-[120px]" : "lg:w-[150px]"}
+            onChange={(v) => set({ courier: v })}
+          >
+            {COURIER_FILTER_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>
                 {o.label}
               </option>
