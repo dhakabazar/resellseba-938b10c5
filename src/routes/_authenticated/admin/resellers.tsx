@@ -252,10 +252,22 @@ function ResellersPage() {
     }
   }, [searchParams.status]);
 
+  /** Verification truth for one reseller: profiles first, auth confirm as fallback. */
+  const verifyFor = (r: Reseller): VerifyFlags => ({
+    emailVerified: Boolean(profileVerify[r.user_id]?.email || emailStatus[r.user_id]?.verified),
+    phoneVerified: Boolean(profileVerify[r.user_id]?.phone),
+    hasPhone: Boolean(r.contact_phone),
+    requireEmail: advanced.verifyEnabled && advanced.verifyEmail,
+    requirePhone: advanced.verifyEnabled && advanced.verifySms,
+  });
+
   const filtered = useMemo(() => {
     let out = items;
     if (filter === "email_unverified")
-      out = out.filter((r) => !emailStatus[r.user_id]?.verified);
+      out = out.filter((r) => {
+        const f = verifyFor(r);
+        return verifyPending(f) || !f.emailVerified;
+      });
     else if (filter !== "all") out = out.filter((r) => r.status === filter);
     if (agentFilter) out = out.filter((r) => (agentFilter === "none" ? !r.agent_id : r.agent_id === agentFilter));
     const q = query.trim().toLowerCase();
@@ -268,7 +280,7 @@ function ResellersPage() {
           (emailStatus[r.user_id]?.email ?? "").toLowerCase().includes(q),
       );
     return out;
-  }, [items, filter, query, emailStatus, agentFilter]);
+  }, [items, filter, query, emailStatus, profileVerify, advanced, agentFilter]);
 
   const counts = useMemo(() => {
     return {
@@ -276,10 +288,13 @@ function ResellersPage() {
       active: items.filter((r) => r.status === "active").length,
       suspended: items.filter((r) => r.status === "suspended").length,
       rejected: items.filter((r) => r.status === "rejected").length,
-      email_unverified: items.filter((r) => !emailStatus[r.user_id]?.verified).length,
+      email_unverified: items.filter((r) => {
+        const f = verifyFor(r);
+        return verifyPending(f) || !f.emailVerified;
+      }).length,
       all: items.length,
     } as Record<Filter, number>;
-  }, [items, emailStatus]);
+  }, [items, emailStatus, profileVerify, advanced]);
 
   /**
    * Single entry point for every status change. Panel access (role + store
