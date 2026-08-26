@@ -282,25 +282,16 @@ function ResellersPage() {
   }
 
 
-  async function resetPassword(r: Reseller) {
-    if (
-      !(await confirmAction({
-        title: "Reset password",
-        description: "A new simple password will be generated and copied to your clipboard.",
-        detail: r.business_name,
-        confirmText: "Reset password",
-        variant: "warning",
-      }))
-    )
-      return;
+  async function applyPasswordReset(r: Reseller, password: string) {
     try {
-      const res = await resetPasswordFn({ data: { userId: r.user_id } });
-      await navigator.clipboard.writeText(res.password).catch(() => {});
-      toast.success(`New password: ${res.password} (copied)`, { duration: 15000 });
+      await resetPasswordFn({ data: { userId: r.user_id, password } });
+      toast.success(`Password updated for ${r.business_name}`);
+      setResetFor(null);
     } catch (e: any) {
       toast.error(e?.message ?? "Failed to reset password");
     }
   }
+
 
   async function loginAsReseller(r: Reseller) {
     try {
