@@ -544,7 +544,7 @@ function AdminOrdersPage() {
         
         {loading ? <div className="py-12 text-center"><Loader2 className="mx-auto h-6 w-6 animate-spin" /></div> : (
           <div className="space-y-3">
-            <div className="hidden grid-cols-[36px_minmax(66px,0.6fr)_minmax(110px,0.9fr)_minmax(110px,0.9fr)_minmax(110px,1fr)_96px_104px_124px_minmax(112px,0.9fr)_40px] items-start gap-2 rounded-lg border bg-muted/40 px-4 py-2.5 text-xs font-medium text-muted-foreground md:grid">
+            <div className="hidden grid-cols-[44px_minmax(66px,0.6fr)_minmax(110px,0.9fr)_minmax(110px,0.9fr)_minmax(110px,1fr)_96px_104px_124px_minmax(112px,0.9fr)] items-start gap-2 rounded-lg border bg-muted/40 px-4 py-2.5 text-xs font-medium text-muted-foreground md:grid">
                <div className="flex justify-center">
                  <input
                    type="checkbox"
@@ -553,14 +553,14 @@ function AdminOrdersPage() {
                    onChange={(e) => setMarked(e.target.checked ? paged.map(x => x.id) : [])}
                  />
                </div>
-               <div className="text-center">Order</div> <div className="text-center">Reseller</div> <div className="text-center">Products</div> <div className="text-center">Customer</div> <div className="text-center">Reseller total</div> <div className="text-center">Admin total</div> <div className="text-center">Status</div> <div className="text-center">Last update</div> <div />
+               <div className="text-center">Order</div> <div className="text-center">Reseller</div> <div className="text-center">Products</div> <div className="text-center">Customer</div> <div className="text-center">Reseller total</div> <div className="text-center">Admin total</div> <div className="text-center">Status</div> <div className="text-center">Last update</div>
             </div>
             {paged.map((o) => (
               <div
                 key={o.id}
                 className={`overflow-hidden rounded-xl border bg-card shadow-sm transition-all hover:shadow-md hover:border-primary/40 ${marked.includes(o.id) ? "border-primary ring-1 ring-primary/30" : ""}`}
               >
-                <div className="hidden grid-cols-[36px_minmax(66px,0.6fr)_minmax(110px,0.9fr)_minmax(110px,0.9fr)_minmax(110px,1fr)_96px_104px_124px_minmax(112px,0.9fr)_40px] items-start gap-2 border-b bg-muted/30 px-4 py-3 text-sm md:grid">
+                <div className="hidden grid-cols-[44px_minmax(66px,0.6fr)_minmax(110px,0.9fr)_minmax(110px,0.9fr)_minmax(110px,1fr)_96px_104px_124px_minmax(112px,0.9fr)] items-start gap-2 border-b bg-muted/30 px-4 py-3 text-sm md:grid">
                   <div className="flex flex-col items-center gap-1.5">
                     <input
                       type="checkbox"
@@ -568,6 +568,56 @@ function AdminOrdersPage() {
                       checked={marked.includes(o.id)}
                       onChange={(e) => setMarked(prev => e.target.checked ? [...prev, o.id] : prev.filter(x => x !== o.id))}
                     />
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="rounded-md border p-0.5 hover:bg-accent transition-colors">
+                          <MoreVertical className="h-4 w-4" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start">
+                           <DropdownMenuItem onClick={() => setSelected(o)}>
+                             <Eye className="mr-2 h-4 w-4" /> View Details
+                           </DropdownMenuItem>
+                           {canEdit && (
+                           <DropdownMenuItem onClick={() => setEditId(o.id)}>
+                             <Pencil className="mr-2 h-4 w-4" /> Edit Order
+                           </DropdownMenuItem>
+                           )}
+                           {canStatus && (
+                           <DropdownMenuItem
+                             onClick={() =>
+                               o.status === "pending_partial"
+                                 ? setSettleModal({ orderId: o.id, status: "partial_full", pickKind: true })
+                                 : setStatusModal({ open: true, orderId: o.id, currentStatus: o.status })
+                             }
+                           >
+                             <Settings2 className="mr-2 h-4 w-4" /> Change Status
+                           </DropdownMenuItem>
+                           )}
+                           {canShip && (() => {
+                             const isBooked = shipments.some(s => s.order_id === o.id && (s.consignment_id || s.tracking_id));
+                             if (!isBooked) {
+                               return (
+                                 <DropdownMenuItem onClick={() => setBookingModal({ open: true, orderIds: [o.id] })}>
+                                   <Truck className="mr-2 h-4 w-4" /> {activeProviderLabel ? `Book ${activeProviderLabel}` : "Book Courier"}
+                                 </DropdownMenuItem>
+                               );
+                             }
+                             return null;
+                           })()}
+                           {canDelete && (() => {
+                             const isBooked = shipments.some(s => s.order_id === o.id && (s.consignment_id || s.tracking_id));
+                             return (
+                               <DropdownMenuItem
+                                 onClick={() => removeOrder(o.id)}
+                                 className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+                               >
+                                 <Trash2 className="mr-2 h-4 w-4" /> Delete Order
+                               </DropdownMenuItem>
+                             );
+                           })()}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     <button
                       onClick={() => setExpandedOrders(prev => prev.includes(o.id) ? prev.filter(id => id !== o.id) : [...prev, o.id])}
                       className="rounded-full p-1 hover:bg-muted transition-colors shrink-0"
@@ -677,54 +727,6 @@ function AdminOrdersPage() {
                      fallbackAt={o.created_at}
                      onOpenNotes={() => setNotesModal({ orderId: o.id, orderNumber: o.order_number })}
                    />
-                   <div className="flex justify-center">
-                      <DropdownMenu>
-                       <DropdownMenuTrigger><MoreVertical className="h-4 w-4" /></DropdownMenuTrigger>
-                       <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => setSelected(o)}>
-                            <Eye className="mr-2 h-4 w-4" /> View Details
-                          </DropdownMenuItem>
-                          {canEdit && (
-                          <DropdownMenuItem onClick={() => setEditId(o.id)}>
-                            <Pencil className="mr-2 h-4 w-4" /> Edit Order
-                          </DropdownMenuItem>
-                          )}
-                          {canStatus && (
-                          <DropdownMenuItem
-                            onClick={() =>
-                              o.status === "pending_partial"
-                                ? setSettleModal({ orderId: o.id, status: "partial_full", pickKind: true })
-                                : setStatusModal({ open: true, orderId: o.id, currentStatus: o.status })
-                            }
-                          >
-                            <Settings2 className="mr-2 h-4 w-4" /> Change Status
-                          </DropdownMenuItem>
-                          )}
-                          {canShip && (() => {
-                            const isBooked = shipments.some(s => s.order_id === o.id && (s.consignment_id || s.tracking_id));
-                            if (!isBooked) {
-                              return (
-                                <DropdownMenuItem onClick={() => setBookingModal({ open: true, orderIds: [o.id] })}>
-                                  <Truck className="mr-2 h-4 w-4" /> {activeProviderLabel ? `Book ${activeProviderLabel}` : "Book Courier"}
-                                </DropdownMenuItem>
-                              );
-                            }
-                            return null;
-                          })()}
-                          {canDelete && (() => {
-                            const isBooked = shipments.some(s => s.order_id === o.id && (s.consignment_id || s.tracking_id));
-                            return (
-                              <DropdownMenuItem
-                                onClick={() => removeOrder(o.id)}
-                                className="text-destructive focus:bg-destructive/10 focus:text-destructive"
-                              >
-                                <Trash2 className="mr-2 h-4 w-4" /> Delete Order
-                              </DropdownMenuItem>
-                            );
-                          })()}
-                       </DropdownMenuContent>
-                     </DropdownMenu>
-                  </div>
                 </div>
                 {expandedOrders.includes(o.id) && (
                   <div className="bg-muted/30 px-4 py-5 md:px-8">

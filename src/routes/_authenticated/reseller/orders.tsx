@@ -725,7 +725,7 @@ function OrdersPage() {
       ) : (
         <>
         <div className="space-y-3">
-          <div className="hidden grid-cols-[30px_minmax(60px,0.7fr)_minmax(120px,1fr)_minmax(100px,1fr)_minmax(100px,1.2fr)_124px_minmax(112px,0.9fr)_40px] items-start gap-2 rounded-lg border bg-muted/40 px-4 py-2.5 text-xs font-medium text-muted-foreground md:grid">
+          <div className="hidden grid-cols-[38px_minmax(60px,0.7fr)_minmax(120px,1fr)_minmax(100px,1fr)_minmax(100px,1.2fr)_124px_minmax(112px,0.9fr)] items-start gap-2 rounded-lg border bg-muted/40 px-4 py-2.5 text-xs font-medium text-muted-foreground md:grid">
             <div className="flex items-center justify-center">
               <input
                 type="checkbox"
@@ -748,7 +748,6 @@ function OrdersPage() {
             <div className="text-center">Reseller total</div>
             <div className="text-center">Status</div>
             <div className="text-center">Last update</div>
-            <div />
           </div>
           {paged.map((o) => {
             const items = itemsByOrder.get(o.id) ?? [];
@@ -966,7 +965,7 @@ function OrdersPage() {
                 </div>
 
                 {/* Desktop row */}
-                <div className="hidden grid-cols-[30px_minmax(60px,0.7fr)_minmax(120px,1fr)_minmax(100px,1fr)_minmax(100px,1.2fr)_124px_minmax(112px,0.9fr)_40px] items-start gap-2 border-b bg-muted/30 px-4 py-3 text-sm md:grid">
+                <div className="hidden grid-cols-[38px_minmax(60px,0.7fr)_minmax(120px,1fr)_minmax(100px,1fr)_minmax(100px,1.2fr)_124px_minmax(112px,0.9fr)] items-start gap-2 border-b bg-muted/30 px-4 py-3 text-sm md:grid">
                   <div className="flex flex-col items-center gap-1.5">
                     <input
                       type="checkbox"
@@ -974,6 +973,7 @@ function OrdersPage() {
                       checked={isMarked}
                       onChange={(e) => mark(e.target.checked)}
                     />
+                    {actions}
                     <button
                       onClick={() => setExpandedOrders(prev => prev.includes(o.id) ? prev.filter(id => id !== o.id) : [...prev, o.id])}
                       className="rounded-full p-1 hover:bg-muted transition-colors shrink-0"
@@ -1087,7 +1087,7 @@ function OrdersPage() {
                        setNotesModal({ orderId: o.id, orderNumber: o.order_number, canWrite: resellerCanAct(o.status) })
                      }
                    />
-                   <div className="flex justify-center">{actions}</div>
+                   
                 </div>
 
                 {/* Collapsible content section */}
