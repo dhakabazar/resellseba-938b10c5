@@ -328,7 +328,7 @@ function MethodCard({
             className="w-full rounded-md border bg-background px-2 py-1 text-sm font-semibold"
           />
           <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">
-            <span>{methodLabel(row.method)}</span>
+            <span>{isManual ? methodLabel(row.method) : gatewaySpec(row.method, cfgString(config, "gateway")).label}</span>
             <span>·</span>
             <span>{isManual ? "manual" : "api"}</span>
             {isManual && cfgBool(config, "allow_deposit") && (
