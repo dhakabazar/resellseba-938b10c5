@@ -106,8 +106,21 @@ function Onboarding() {
         : await supabase.from("resellers").insert({ user_id: user.id, ...payload });
       if (error) throw error;
 
-      setStatus("pending");
-      toast.success("Application submitted! Admin will review and approve it.");
+      // Auto approval (Advanced settings) flips the row to active inside the
+      // database, so read back what actually happened.
+      const { data: saved } = await supabase
+        .from("resellers")
+        .select("status")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      const next = saved?.status ?? "pending";
+      setStatus(next);
+      if (next === "active") {
+        toast.success("Your store is approved — welcome!");
+        nav({ to: "/reseller", replace: true });
+      } else {
+        toast.success("Application submitted! Admin will review and approve it.");
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed");
     } finally {
