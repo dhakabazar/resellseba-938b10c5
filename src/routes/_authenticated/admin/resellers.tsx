@@ -806,11 +806,13 @@ function EditModal({
   agents,
   others,
   email,
+  verify,
   onClose,
   onSaved,
 }: {
   reseller: Reseller;
   email?: { email: string | null; verified: boolean };
+  verify?: VerifyFlags;
   agents: Array<{ id: string; display_name: string }>;
   others: Reseller[];
   onClose: () => void;
