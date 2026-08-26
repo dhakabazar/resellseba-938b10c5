@@ -599,6 +599,14 @@ function AdminOrdersPage() {
                          <Copy className="h-3 w-3" />
                        </button>
                      </div>
+                     <div className="mt-0.5 flex items-start gap-1 text-[11px] leading-snug text-muted-foreground">
+                       <MapPin className="mt-[1px] h-3 w-3 shrink-0 opacity-70" />
+                       <span className="line-clamp-2">
+                         {o.address_line}
+                         {o.area ? `, ${o.area.replace("_", " ")}` : ""}
+                         {o.city ? `, ${o.city}` : ""}
+                       </span>
+                     </div>
                   </div>
                   <div className="min-w-0">
                      {shipments.filter(s => s.order_id === o.id).length > 0 ? (
