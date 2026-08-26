@@ -10,10 +10,12 @@ import { useStore } from "@/components/store/store-context";
 import { cx, Heading, muted, PrimaryButton } from "@/components/store/ui";
 
 export const Route = createFileRoute("/s/$code/thanks")({
-  validateSearch: (s: Record<string, unknown>) => ({
+  validateSearch: (
+    s: Record<string, unknown>,
+  ): { n: string; pay?: string; txn?: string } => ({
     n: typeof s.n === "string" ? s.n : "",
-    pay: typeof s.pay === "string" ? s.pay : undefined,
-    txn: typeof s.txn === "string" ? s.txn : undefined,
+    ...(typeof s.pay === "string" ? { pay: s.pay } : {}),
+    ...(typeof s.txn === "string" ? { txn: s.txn } : {}),
   }),
   component: Thanks,
 });
