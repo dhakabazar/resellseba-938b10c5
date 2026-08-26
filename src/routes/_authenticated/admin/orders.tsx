@@ -628,37 +628,39 @@ function AdminOrdersPage() {
                    <AdminTotalCell order={o as any} buyingCost={buyingCostFor(o.id, o.status)} />
                    <div className="min-w-0">
                       <span className={`px-2 py-0.5 rounded-full text-[11px] ${orderStatusTone(o.status)}`}>{orderStatusLabel(o.status)}</span>
-                      {shipments.filter(s => s.order_id === o.id).length > 0 ? (
-                        <div className="mt-1 space-y-0.5">
-                          {shipments.filter(s => s.order_id === o.id).map(s => (
-                            <div key={s.id} className="flex flex-col gap-0.5 min-w-0">
-                              {(() => {
-                                const url = courierTrackingUrl(s.provider, s, (o as any).customer_phone);
-                                const inner = (
-                                  <>
-                                    <CourierLogo provider={s.provider} size={12} />
-                                    <span className="truncate">{courierLabel(s.provider)}</span>
-                                    {url && <ExternalLink className="h-2.5 w-2.5 shrink-0 opacity-60" />}
-                                  </>
-                                );
-                                return url ? (
-                                  <a href={url} target="_blank" rel="noopener noreferrer" title="Track on courier website" className="flex items-center gap-1 text-[10px] font-bold text-primary leading-tight hover:underline">{inner}</a>
-                                ) : (
-                                  <div className="flex items-center gap-1 text-[10px] font-bold text-primary leading-tight">{inner}</div>
-                                );
-                              })()}
-                              <div className="text-[10px] text-muted-foreground tabular-nums font-medium flex items-center gap-1">
-                                <span className="truncate">#{s.consignment_id || "N/A"}</span>
-                                {s.consignment_id && (
-                                  <button onClick={() => { navigator.clipboard.writeText(s.consignment_id); toast.success("Booking ID copied"); }} className="opacity-50 hover:opacity-100 transition-opacity">
-                                    <Copy className="h-2.5 w-2.5" />
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : null}
+                       {shipments.filter(s => s.order_id === o.id).length > 0 ? (
+                         <div className="mt-1 space-y-0.5">
+                           {shipments.filter(s => s.order_id === o.id).map(s => (
+                             <div key={s.id} className="flex flex-col gap-0.5 min-w-0">
+                               {(() => {
+                                 const url = courierTrackingUrl(s.provider, s, (o as any).customer_phone);
+                                 const inner = (
+                                   <>
+                                     <CourierLogo provider={s.provider} size={12} />
+                                     <span className="truncate">{courierLabel(s.provider)}</span>
+                                     {url && <ExternalLink className="h-2.5 w-2.5 shrink-0 opacity-60" />}
+                                   </>
+                                 );
+                                 return url ? (
+                                   <a href={url} target="_blank" rel="noopener noreferrer" title="Track on courier website" className="flex items-center gap-1 text-[10px] font-bold text-primary leading-tight hover:underline">{inner}</a>
+                                 ) : (
+                                   <div className="flex items-center gap-1 text-[10px] font-bold text-primary leading-tight">{inner}</div>
+                                 );
+                               })()}
+                               <div className="text-[10px] text-muted-foreground tabular-nums font-medium flex items-center gap-1">
+                                 <span className="truncate">#{s.consignment_id || "N/A"}</span>
+                                 {s.consignment_id && (
+                                   <button onClick={() => { navigator.clipboard.writeText(s.consignment_id); toast.success("Booking ID copied"); }} className="opacity-50 hover:opacity-100 transition-opacity">
+                                     <Copy className="h-2.5 w-2.5" />
+                                   </button>
+                                 )}
+                               </div>
+                             </div>
+                           ))}
+                         </div>
+                       ) : (
+                         <span className="mt-1 inline-block text-[10px] italic text-muted-foreground/60">Not booked yet</span>
+                       )}
                    </div>
                   <div className="flex justify-end">
                      <DropdownMenu>
