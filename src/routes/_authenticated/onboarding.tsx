@@ -48,15 +48,34 @@ function Onboarding() {
 
   useEffect(() => {
     if (!user) return;
-    supabase
-      .from("resellers")
-      .select("status")
-      .eq("user_id", user.id)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data) setStatus(data.status);
-      });
+    (async () => {
+      const { data } = await supabase
+        .from("resellers")
+        .select("status")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (!data) return;
+      // Auto approval may have been switched on after this application was
+      // filed — promote the pending row so access matches the current setting.
+      if (data.status === "pending") {
+        const { data: auto } = await supabase.rpc("reseller_auto_approve");
+        if (auto === true) {
+          const { data: promoted } = await supabase
+            .from("resellers")
+            .update({ status: "active", approved_at: new Date().toISOString() })
+            .eq("user_id", user.id)
+            .select("status")
+            .maybeSingle();
+          if (promoted?.status === "active") {
+            setStatus("active");
+            return;
+          }
+        }
+      }
+      setStatus(data.status);
+    })();
   }, [user]);
+
 
   useEffect(() => {
     if (loading) return;
