@@ -1,24 +1,42 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useRef } from "react";
-import { CheckCircle2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { AlertTriangle, CheckCircle2, Loader2, XCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { trackPurchase } from "@/lib/tracking";
 import { useServerFn } from "@tanstack/react-start";
 import { trackPurchaseServer } from "@/lib/capi.functions";
+import { verifyGatewayPayment } from "@/lib/gateways.functions";
 import { useStore } from "@/components/store/store-context";
 import { cx, Heading, muted, PrimaryButton } from "@/components/store/ui";
 
 export const Route = createFileRoute("/s/$code/thanks")({
-  validateSearch: (s: Record<string, unknown>) => ({ n: typeof s.n === "string" ? s.n : "" }),
+  validateSearch: (s: Record<string, unknown>) => ({
+    n: typeof s.n === "string" ? s.n : "",
+    pay: typeof s.pay === "string" ? s.pay : undefined,
+    txn: typeof s.txn === "string" ? s.txn : undefined,
+  }),
   component: Thanks,
 });
 
 function Thanks() {
   const { code } = Route.useParams();
-  const { n } = Route.useSearch();
+  const { n, pay, txn } = Route.useSearch();
   const fired = useRef(false);
   const { content } = useStore();
   const capi = useServerFn(trackPurchaseServer);
+  const verifyPayment = useServerFn(verifyGatewayPayment);
+  const [payState, setPayState] = useState<"idle" | "checking" | "paid" | "failed" | "cancelled" | "mismatch">(
+    pay ? "checking" : "idle",
+  );
+
+  /** An online payment came back — re-confirm with the gateway, never trust the URL. */
+  useEffect(() => {
+    if (!pay || !n) return;
+    if (pay === "cancelled") return setPayState("cancelled");
+    verifyPayment({ data: { orderNumber: n } })
+      .then((r) => setPayState(r.status === "paid" ? "paid" : r.status === "mismatch" ? "mismatch" : pay === "paid" ? "paid" : "failed"))
+      .catch(() => setPayState(pay === "paid" ? "paid" : "failed"));
+  }, [pay, n, verifyPayment]);
 
   useEffect(() => {
     if (!n || fired.current) return;
@@ -59,6 +77,7 @@ function Thanks() {
       <p className={cx("mt-3 text-sm", muted)}>
         Order number: <span className="font-mono font-semibold text-[var(--st-fg)]">{n}</span>
       </p>
+      {payState !== "idle" && <PaymentBanner state={payState} txn={txn} />}
       <p className={cx("mt-2 text-sm leading-relaxed", muted)}>{content.text("co_success_note")}</p>
       <div className="mt-7 flex justify-center">
         <Link to="/s/$code" params={{ code }}>
@@ -68,4 +87,29 @@ function Thanks() {
     </div>
   );
 
+}
+
+/** Online-payment outcome, shown only when the customer returns from a gateway. */
+function PaymentBanner({
+  state,
+  txn,
+}: {
+  state: "checking" | "paid" | "failed" | "cancelled" | "mismatch";
+  txn?: string;
+}) {
+  const map = {
+    checking: { icon: <Loader2 className="h-4 w-4 animate-spin" />, title: "Confirming your payment…", tone: "border-[var(--st-border)] text-[var(--st-fg)]" },
+    paid: { icon: <CheckCircle2 className="h-4 w-4" />, title: "Payment received", tone: "border-emerald-500/40 bg-emerald-500/10 text-emerald-600" },
+    failed: { icon: <XCircle className="h-4 w-4" />, title: "Payment was not completed — the order is saved as unpaid", tone: "border-red-500/40 bg-red-500/10 text-red-600" },
+    cancelled: { icon: <XCircle className="h-4 w-4" />, title: "Payment cancelled — the order is saved as unpaid", tone: "border-amber-500/40 bg-amber-500/10 text-amber-600" },
+    mismatch: { icon: <AlertTriangle className="h-4 w-4" />, title: "Payment amount did not match — our team will contact you", tone: "border-amber-500/40 bg-amber-500/10 text-amber-600" },
+  } as const;
+  const m = map[state];
+  return (
+    <div className={cx("mx-auto mt-5 flex items-center justify-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold", m.tone)}>
+      {m.icon}
+      <span>{m.title}</span>
+      {txn && state === "paid" && <span className="font-mono font-normal opacity-80">#{txn}</span>}
+    </div>
+  );
 }
