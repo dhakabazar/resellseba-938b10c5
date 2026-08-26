@@ -459,8 +459,28 @@ function AdminOrdersPage() {
                 </div>
             }
         />
-        <div className="mb-4 flex flex-wrap items-center gap-2">
-            <OrderSearch mode={searchMode} onMode={setSearchMode} value={filters.q} onChange={(v) => setFilters({ ...filters, q: v })} />
+        <div className="mb-4 space-y-2">
+          <div className="flex items-center gap-2">
+            <OrderSearch
+              mode={searchMode}
+              onMode={setSearchMode}
+              value={filters.q}
+              onChange={(v) => setFilters({ ...filters, q: v })}
+              className="min-w-0 flex-1"
+            />
+            <select
+              value={filters.perPage}
+              onChange={(e) => setFilters({ ...filters, perPage: Number(e.target.value) })}
+              className="h-10 w-[76px] shrink-0 rounded-md border bg-background px-1 text-xs font-medium outline-none focus:ring-1 focus:ring-primary"
+              title="Per page"
+            >
+              {[10, 20, 50, 100].map((n) => (
+                <option key={n} value={n}>{n}</option>
+              ))}
+              <option value={-1}>All</option>
+            </select>
+          </div>
+          <div className="grid grid-cols-2 gap-2 lg:flex lg:flex-wrap lg:items-center">
             <SearchableSelect
               options={resellerOptions.map((r) => ({ value: r.value, label: r.label }))}
               value={filters.reseller}
@@ -470,12 +490,12 @@ function AdminOrdersPage() {
               }}
               placeholder="All resellers"
               searchPlaceholder="Search reseller…"
-              className="min-w-[220px]"
+              className="w-full lg:w-[150px]"
             />
             <select
               value={filters.area}
               onChange={(e) => setFilters({ ...filters, area: e.target.value })}
-              className="h-10 rounded-md border bg-background px-2 text-xs font-medium outline-none focus:ring-1 focus:ring-primary"
+              className="h-10 w-full rounded-md border bg-background px-2 text-xs font-medium outline-none focus:ring-1 focus:ring-primary lg:w-[150px]"
               title="Delivery area"
             >
               {AREA_FILTER_OPTIONS.map((o) => (
@@ -485,7 +505,7 @@ function AdminOrdersPage() {
             <select
               value={filters.courier}
               onChange={(e) => setFilters({ ...filters, courier: e.target.value })}
-              className="h-10 rounded-md border bg-background px-2 text-xs font-medium outline-none focus:ring-1 focus:ring-primary"
+              className="h-10 w-full rounded-md border bg-background px-2 text-xs font-medium outline-none focus:ring-1 focus:ring-primary lg:w-[150px]"
               title="Courier"
             >
               {COURIER_FILTER_OPTIONS.map((o) => (
@@ -502,7 +522,7 @@ function AdminOrdersPage() {
                     : { ...filters, datePreset: v, from: "", to: "" },
                 );
               }}
-              className="h-10 rounded-md border bg-background px-2 text-xs font-medium outline-none focus:ring-1 focus:ring-primary"
+              className="h-10 w-full rounded-md border bg-background px-2 text-xs font-medium outline-none focus:ring-1 focus:ring-primary lg:w-[150px]"
               title="Date range"
             >
               {DATE_PRESET_OPTIONS.map((o) => (
@@ -512,7 +532,7 @@ function AdminOrdersPage() {
             <select
               value={filters.sort}
               onChange={(e) => setFilters({ ...filters, sort: e.target.value as OrderFilterState["sort"] })}
-              className="h-10 rounded-md border bg-background px-2 text-xs font-medium outline-none focus:ring-1 focus:ring-primary"
+              className="h-10 w-full rounded-md border bg-background px-2 text-xs font-medium outline-none focus:ring-1 focus:ring-primary lg:w-[150px]"
               title="Sort"
             >
               <option value="newest">Newest first</option>
@@ -527,25 +547,13 @@ function AdminOrdersPage() {
                 onClick={() =>
                   setFilters({ ...DEFAULT_ORDER_FILTERS, perPage: filters.perPage, q: filters.q })
                 }
-                className="inline-flex h-10 items-center gap-1.5 rounded-md border border-primary/40 bg-primary/5 px-3 text-xs font-medium hover:bg-accent"
+                className="col-span-2 inline-flex h-10 items-center justify-center gap-1.5 rounded-md border border-primary/40 bg-primary/5 px-3 text-xs font-medium hover:bg-accent lg:col-span-1 lg:w-auto"
                 title="Reset filters"
               >
                 <X className="h-3.5 w-3.5" /> Reset ({activeFilterCount(filters)})
               </button>
             )}
-            <div className="ml-auto flex items-center gap-2">
-              <select
-                value={filters.perPage}
-                onChange={(e) => setFilters({ ...filters, perPage: Number(e.target.value) })}
-                className="h-10 rounded-md border bg-background px-2 text-xs font-medium outline-none focus:ring-1 focus:ring-primary"
-                title="Per page"
-              >
-                {[10, 20, 50, 100].map((n) => (
-                  <option key={n} value={n}>{n} / page</option>
-                ))}
-                <option value={-1}>All</option>
-              </select>
-            </div>
+          </div>
         </div>
         {filters.datePreset === "custom" && (
           <div className="mb-4 grid grid-cols-2 gap-2 rounded-md border border-dashed p-2 sm:max-w-md">
