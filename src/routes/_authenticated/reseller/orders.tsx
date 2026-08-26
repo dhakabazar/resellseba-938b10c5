@@ -35,7 +35,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { NewOrderModal } from "@/components/NewOrderModal";
 import { OrderEditModal } from "@/components/OrderEditModal";
 import { type StripItem, ImageLightbox, OrderItemsList, OrderProductCell } from "@/components/order-items-strip";
-import { Pencil, ExternalLink, MapPin } from "lucide-react";
+import { Pencil, ExternalLink } from "lucide-react";
 import { courierTrackingUrl } from "@/lib/courier-tracking";
 import { toast } from "sonner";
 import { useDepositStatus } from "@/lib/deposit";
@@ -891,8 +891,7 @@ function OrdersPage() {
                             </button>
                           </div>
                         </div>
-                        <div className="flex items-start gap-1 text-[11px] leading-snug text-muted-foreground">
-                          <MapPin className="mt-[1px] h-3 w-3 shrink-0 opacity-70" />
+                        <div className="text-[11px] leading-snug text-muted-foreground">
                           <span className="line-clamp-2">
                             {o.address_line}
                             {o.area ? `, ${o.area.replace("_", " ")}` : ""}
@@ -1034,8 +1033,7 @@ function OrdersPage() {
                         <Copy className="h-3 w-3" />
                       </button>
                     </div>
-                    <div className="mt-0.5 flex items-start justify-center gap-1 text-[11px] leading-snug text-muted-foreground">
-                      <MapPin className="mt-[1px] h-3 w-3 shrink-0 opacity-70" />
+                    <div className="mt-0.5 text-center text-[11px] leading-snug text-muted-foreground">
                       <span className="line-clamp-2">
                         {o.address_line}
                         {o.area ? `, ${o.area.replace("_", " ")}` : ""}
