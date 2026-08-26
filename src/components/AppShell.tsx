@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LogOut, ChevronRight, ChevronDown, Menu, X, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { LogOut, ChevronRight, ChevronDown, Menu, X, PanelLeftClose, PanelLeftOpen, ExternalLink } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ResellerAvatar } from "@/components/reseller-avatar";
@@ -12,6 +12,8 @@ export interface NavItem {
   to: string;
   icon: ReactNode;
   end?: boolean;
+  /** Open in a new browser tab instead of client-side navigation. */
+  external?: boolean;
 }
 
 export interface NavGroup {
@@ -254,6 +256,29 @@ export function AppShell({
 }
 
 function LeafLink({ item, nested = false, collapsed = false }: { item: NavItem; nested?: boolean; collapsed?: boolean }) {
+  if (item.external) {
+    return (
+      <a
+        href={item.to}
+        target="_blank"
+        rel="noreferrer"
+        title={item.label}
+        className={cn(
+          "group mb-1 flex items-center rounded-md text-sidebar-foreground/90 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+          collapsed ? "justify-center p-2" : "gap-3 px-3 py-2 text-[13px] font-medium",
+          !collapsed && nested && "py-1.5",
+        )}
+      >
+        <span className="text-current">{item.icon}</span>
+        {collapsed ? null : (
+          <>
+            <span className="flex-1">{item.label}</span>
+            <ExternalLink className="h-3.5 w-3.5 opacity-40 group-hover:opacity-70" />
+          </>
+        )}
+      </a>
+    );
+  }
   if (collapsed) {
     return (
       <Link
