@@ -53,7 +53,6 @@ export function DepositRequestsAdmin({ onChanged }: { onChanged?: () => void }) 
         ? `${bdt(row.amount)} will be added to ${row.resellers?.business_name ?? "this reseller"}'s deposit balance.`
         : `This ${bdt(row.amount)} submission will be removed everywhere. No balance change.`,
       confirmText: approve ? "Approve" : "Reject & delete",
-      tone: approve ? "default" : "danger",
     });
     if (!ok) return;
     setBusyId(row.id);
