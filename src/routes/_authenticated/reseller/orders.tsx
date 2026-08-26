@@ -909,7 +909,7 @@ function OrdersPage() {
                   <div className="space-y-0.5">
                     <div className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70">Products</div>
                     <OrderProductCell
-                      items={strip}
+                      items={stripItems(o.id)}
                       expanded={expandedOrders.includes(o.id)}
                       onZoom={setZoomImage}
                       onToggle={() => setExpandedOrders(prev => prev.includes(o.id) ? prev.filter(id => id !== o.id) : [...prev, o.id])}
