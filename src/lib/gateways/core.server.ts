@@ -286,6 +286,27 @@ export function newDepositCode(): string {
   return `DEP${Date.now().toString(36).toUpperCase().slice(-5)}${rnd}`;
 }
 
+/** Adapters speak "order"; a deposit is presented to them as a 1-line order. */
+export function depositAsOrder(intent: DepositIntent, reseller?: { name?: string; phone?: string }): GatewayOrder {
+  return {
+    id: intent.id,
+    order_number: intent.code,
+    total: Number(intent.amount || 0),
+    customer_name: reseller?.name || "Security deposit",
+    customer_phone: reseller?.phone || "01700000000",
+    customer_email: null,
+    address_line: "Security deposit",
+    city: "Dhaka",
+    reseller_id: intent.reseller_id,
+    payment_status: intent.status === "approved" ? "paid" : "unpaid",
+    payment_provider: intent.provider,
+    paid_amount: null,
+    transaction_id: intent.txn_id,
+    advance_amount: null,
+    advance_by: null,
+  };
+}
+
 export async function loadDepositIntent(code: string): Promise<DepositIntent | null> {
   const db = await admin();
   const { data } = await db
