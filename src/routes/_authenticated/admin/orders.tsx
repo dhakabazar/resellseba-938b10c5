@@ -424,7 +424,7 @@ function AdminOrdersPage() {
   }, [orders, filters, itemsByOrder, searchMode]);
 
   const paged = usePaginated(filtered, page, filters.perPage);
-  const { meta: orderMeta } = useOrderMeta(paged.map((o) => o.id));
+  const { meta: orderMeta, refresh: refreshMeta } = useOrderMeta(paged.map((o) => o.id));
 
   return (
     <div>
