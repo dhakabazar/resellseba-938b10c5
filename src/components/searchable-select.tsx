@@ -51,8 +51,11 @@ export function SearchableSelect({
   }, [open]);
 
   const filtered = useMemo(() => {
+    // The "clear" row at the top already represents the empty value, so an
+    // empty-valued option passed in by the caller would show up twice.
+    const list = options.filter((o) => o.value !== "");
     const t = q.trim().toLowerCase();
-    return t ? options.filter((o) => o.label.toLowerCase().includes(t)) : options;
+    return t ? list.filter((o) => o.label.toLowerCase().includes(t)) : list;
   }, [options, q]);
 
   const selected = options.find((o) => o.value === value);

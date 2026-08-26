@@ -9,6 +9,8 @@ import {
   Tag,
   FolderTree,
   Users,
+  Contact,
+  Store as StoreIcon,
   Settings,
   Truck,
   Wallet,
@@ -94,7 +96,7 @@ const NAV: NavEntry[] = [
     ],
   },
   { label: "Orders", to: "/admin/orders", icon: <ShoppingCart className="h-4 w-4" /> },
-  { label: "Customers", to: "/admin/customers", icon: <Users className="h-4 w-4" /> },
+  { label: "Customers", to: "/admin/customers", icon: <Contact className="h-4 w-4" /> },
 
   {
     label: "Finance",
@@ -108,7 +110,7 @@ const NAV: NavEntry[] = [
       { label: "Deposit transactions", to: "/admin/deposit-transactions", icon: <ShieldCheck className="h-4 w-4" /> },
     ],
   },
-  { label: "Resellers", to: "/admin/resellers", icon: <Users className="h-4 w-4" /> },
+  { label: "Resellers", to: "/admin/resellers", icon: <StoreIcon className="h-4 w-4" /> },
   {
     label: "Agents",
     icon: <UserCheck className="h-4 w-4" />,
