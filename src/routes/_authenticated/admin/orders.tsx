@@ -163,6 +163,10 @@ function AdminOrdersPage() {
   const [pickOpen, setPickOpen] = useState(false);
   const [marked, setMarked] = useState<string[]>([]);
   const [page, setPage] = useState(1);
+  // Any filter/tab/search change starts from page 1 so results never look empty.
+  useEffect(() => {
+    setPage(1);
+  }, [filters, tab, searchMode]);
   const [editId, setEditId] = useState<string | null>(null);
   const [statusModal, setStatusModal] = useState<{ open: boolean; orderId: string; currentStatus: string; isBulk?: boolean } | null>(null);
   const [settleModal, setSettleModal] = useState<{ orderId: string; status: string; pickKind?: boolean } | null>(
