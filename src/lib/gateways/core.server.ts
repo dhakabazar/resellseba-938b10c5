@@ -69,6 +69,7 @@ export async function getCredentials(
     config,
     is_sandbox,
     base: is_sandbox ? (spec?.hosts.sandbox ?? "") : (spec?.hosts.live ?? ""),
+    owner: row.reseller_id ? "reseller" : "platform",
   };
 }
 
@@ -85,7 +86,13 @@ export function credsFromRaw(provider: string, raw: Record<string, any>): Gatewa
     config,
     is_sandbox,
     base: is_sandbox ? (spec?.hosts.sandbox ?? "") : (spec?.hosts.live ?? ""),
+    owner: raw.reseller_id ? "reseller" : "platform",
   };
+}
+
+/** Platform-level (admin) credentials only — used for security deposit payments. */
+export async function getPlatformCredentials(provider: string): Promise<GatewayCreds | null> {
+  return getCredentials(provider, null);
 }
 
 export async function loadOrder(orderNumber: string): Promise<GatewayOrder> {
