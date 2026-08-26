@@ -124,6 +124,7 @@ function AdminOrdersPage() {
   const [orderItems, setOrderItems] = useState<OrderItemLite[]>([]);
   const [shipments, setShipments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
 
   const [tab, setTab] = useState<OrderTabKey>(tabParam ?? ((resellerParam || qParam) ? "all" : "forwarded"));
 
@@ -273,16 +274,16 @@ function AdminOrdersPage() {
         : "Are you sure you want to delete this order? This action cannot be undone.",
       variant: isBooked ? "warning" : "danger",
       onConfirm: async () => {
-        setLoading(true);
+        setBusy(true);
         const { data: deleted, error } = await supabase.from("orders").delete().eq("id", id).select("id");
         if (error) toast.error(error.message);
         else if (!deleted || deleted.length === 0) toast.error("Delete failed: you do not have permission to delete this order.");
         else {
           toast.success("Order deleted");
-          await load();
+          await dropOrders([id]);
         }
         setConfirmModal(prev => ({ ...prev, open: false }));
-        setLoading(false);
+        setBusy(false);
       }
     });
   }
@@ -304,7 +305,8 @@ function AdminOrdersPage() {
       description: `Update ${marked.length} orders to ${orderStatusLabel(newStatus)}?`,
       variant: "warning",
       onConfirm: async () => {
-        setLoading(true);
+        setBusy(true);
+        const targetIds = [...marked];
         let error: { message: string } | null = null;
         if (newStatus === "delivered") {
           // Full delivery = full order total collected.
@@ -325,12 +327,12 @@ function AdminOrdersPage() {
         }
         if (error) toast.error(error.message);
         else {
-          toast.success(`${marked.length} orders updated`);
+          toast.success(`${targetIds.length} orders updated`);
           setMarked([]);
-          load();
+          await syncOrders(targetIds);
         }
         setConfirmModal(prev => ({ ...prev, open: false }));
-        setLoading(false);
+        setBusy(false);
       }
     });
   }
@@ -347,18 +349,17 @@ function AdminOrdersPage() {
         : `Delete ${marked.length} selected orders? This action cannot be undone.`,
       variant: bookedCount > 0 ? "warning" : "danger",
       onConfirm: async () => {
-        setLoading(true);
+        setBusy(true);
         const { data: deleted, error } = await supabase.from("orders").delete().in("id", marked).select("id");
         if (error) toast.error(error.message);
         else if (!deleted || deleted.length === 0) toast.error("Delete failed: you do not have permission to delete these orders.");
         else {
           if (deleted.length < marked.length) toast.warning(`${deleted.length} of ${marked.length} orders deleted, the rest were not permitted.`);
           else toast.success(`${deleted.length} orders deleted`);
-          setMarked([]);
-          await load();
+          await dropOrders(deleted.map((d: any) => d.id));
         }
         setConfirmModal(prev => ({ ...prev, open: false }));
-        setLoading(false);
+        setBusy(false);
       }
     });
   }
@@ -414,7 +415,7 @@ function AdminOrdersPage() {
             actions={
                 <div className="flex items-center gap-2">
                   {!isPartialStatus(tab) && canStatus && (
-                    <BulkScanButton mode={tab === "pending_return" ? "return" : "handover"} onDone={() => load()} />
+                    <BulkScanButton mode={tab === "pending_return" ? "return" : "handover"} onDone={() => void load({ silent: true })} />
                   )}
                   {canCreate && (
                   <button
@@ -801,7 +802,7 @@ function AdminOrdersPage() {
                   })().map((s) => (
                     <button
                       key={s}
-                      disabled={loading}
+                      disabled={loading || busy}
                       onClick={async () => {
                         if (statusModal.isBulk) {
                           await bulkUpdateStatus(s);
@@ -813,8 +814,9 @@ function AdminOrdersPage() {
                           setStatusModal(null);
                           return;
                         }
-                        setLoading(true);
-                        const curr = orders.find((o) => o.id === statusModal.orderId);
+                        setBusy(true);
+                        const targetId = statusModal.orderId;
+                        const curr = orders.find((o) => o.id === targetId);
                         const patch: Record<string, unknown> = { status: s as any };
                         if (s === "delivered") patch.received_amount = Number(curr?.total ?? 0);
                         const { error } = await supabase
@@ -827,9 +829,9 @@ function AdminOrdersPage() {
                         } else {
                           toast.success(`Status updated to ${orderStatusLabel(s)}`);
                           setStatusModal(null);
-                          await load();
+                          await syncOrders([targetId]);
                         }
-                        setLoading(false);
+                        setBusy(false);
                       }}
                       className={`group flex items-center gap-3 rounded-lg border px-3 py-2.5 text-left text-xs transition-all hover:bg-accent disabled:opacity-50 ${
                         statusModal.currentStatus === s ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "border-transparent"
@@ -861,15 +863,19 @@ function AdminOrdersPage() {
           targetStatus={settleModal?.status ?? "delivered"}
           allowKindSwitch={!!settleModal?.pickKind}
           onClose={() => setSettleModal(null)}
-          onSaved={() => void load()}
+          onSaved={() => {
+            const id = settleModal?.orderId;
+            if (id) void syncOrders([id]);
+          }}
         />
         <ShipmentBookingModal
           isOpen={bookingModal.open}
           onClose={() => setBookingModal({ open: false, orderIds: [] })}
           orderIds={bookingModal.orderIds}
           onSuccess={() => {
+            const ids = [...bookingModal.orderIds];
             setMarked([]);
-            load();
+            void syncOrders(ids);
           }}
         />
 
@@ -882,7 +888,7 @@ function AdminOrdersPage() {
             onClose={() => setOpen(false)}
             onCreated={() => {
               setOpen(false);
-              load();
+              void load({ silent: true });
             }}
           />
         )}
@@ -894,8 +900,9 @@ function AdminOrdersPage() {
             isAdmin
             onClose={() => setEditId(null)}
             onSaved={() => {
+              const id = editId;
               setEditId(null);
-              load();
+              if (id) void syncOrders([id]);
             }}
           />
         )}
