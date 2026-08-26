@@ -58,6 +58,9 @@ function ResellerProfilePage() {
         if (l) leaderName = `${l.business_name} (#${l.code})`;
       }
 
+      const { data: vs } = await supabase.rpc("verify_state");
+      const v = Array.isArray(vs) ? (vs as any[])[0] : (vs as any);
+
       setData({
         ...r,
         commission_rate: Number(r.commission_rate),
@@ -65,6 +68,8 @@ function ResellerProfilePage() {
         frozen_amount: Number(r.frozen_amount),
         leader_name: leaderName,
         email: user.email ?? null,
+        email_verified: Boolean(v?.email_verified_at),
+        phone_verified: Boolean(v?.phone_verified_at),
       });
 
       const [sumRes, countRes] = await Promise.all([
