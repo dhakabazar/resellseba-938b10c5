@@ -382,12 +382,16 @@ function AdminTutorialsPage() {
               onChange={(v) => setVideoDraft({ ...videoDraft, reseller_only: v })}
             />
           </div>
-          <ModalActions saving={saving} onCancel={() => setVideoDraft(null)} onSave={() => void saveVideo()} />
-        </Modal>
+        </AppModal>
       ) : null}
 
       {topicDraft ? (
-        <Modal title={topicDraft.id ? "Edit topic" : "Add topic"} onClose={() => setTopicDraft(null)}>
+        <AppModal
+          title={topicDraft.id ? "Edit topic" : "Add topic"}
+          size="sm"
+          onClose={() => setTopicDraft(null)}
+          footer={<ModalActions saving={saving} onCancel={() => setTopicDraft(null)} onSave={() => void saveTopic()} />}
+        >
           <div className="space-y-3">
             <Field label="Topic name">
               <input className={inp} value={topicDraft.name} onChange={(e) => setTopicDraft({ ...topicDraft, name: e.target.value })} />
