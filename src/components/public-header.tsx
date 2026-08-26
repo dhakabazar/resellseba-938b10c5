@@ -91,12 +91,16 @@ export function PublicHeader({
   const isCatalog = pathname === "/catalog" || pathname.startsWith("/catalog/");
 
   const navLinks: Array<{ href?: string; to?: string; label?: string; icon?: ReactNode }> = isCatalog
-    ? [{ to: "/", label: "হোমে ফিরুন", icon: <Home className="h-4 w-4" /> }]
+    ? [
+        { to: "/tutorials", label: "টিউটোরিয়াল" },
+        { to: "/", label: "হোমে ফিরুন", icon: <Home className="h-4 w-4" /> },
+      ]
     : [
         { href: "#features", label: c.nav.features },
         { href: "#about", label: c.nav.how },
         { href: "#categories", label: c.nav.categories || "ক্যাটাগরি" },
         { to: "/catalog", label: "প্রোডাক্টস" },
+        { to: "/tutorials", label: "টিউটোরিয়াল" },
         { href: "#faq", label: c.nav.faq || "FAQ" },
       ];
 

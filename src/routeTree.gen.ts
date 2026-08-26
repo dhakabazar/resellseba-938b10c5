@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TutorialsRouteImport } from './routes/tutorials'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as CatalogRouteImport } from './routes/catalog'
@@ -29,6 +30,7 @@ import { Route as SCodeThanksRouteImport } from './routes/s.$code.thanks'
 import { Route as SCodeCheckoutRouteImport } from './routes/s.$code.checkout'
 import { Route as ApiPublicRobotsRouteImport } from './routes/api/public/robots'
 import { Route as AuthenticatedResellerVisitorsRouteImport } from './routes/_authenticated/reseller/visitors'
+import { Route as AuthenticatedResellerTutorialsRouteImport } from './routes/_authenticated/reseller/tutorials'
 import { Route as AuthenticatedResellerTransactionsRouteImport } from './routes/_authenticated/reseller/transactions'
 import { Route as AuthenticatedResellerThemeRouteImport } from './routes/_authenticated/reseller/theme'
 import { Route as AuthenticatedResellerSupportRouteImport } from './routes/_authenticated/reseller/support'
@@ -44,6 +46,7 @@ import { Route as AuthenticatedResellerCustomersRouteImport } from './routes/_au
 import { Route as AuthenticatedResellerCommissionsRouteImport } from './routes/_authenticated/reseller/commissions'
 import { Route as AuthenticatedResellerCatalogRouteImport } from './routes/_authenticated/reseller/catalog'
 import { Route as AuthenticatedAdminVisitorsRouteImport } from './routes/_authenticated/admin/visitors'
+import { Route as AuthenticatedAdminTutorialsRouteImport } from './routes/_authenticated/admin/tutorials'
 import { Route as AuthenticatedAdminTransactionsRouteImport } from './routes/_authenticated/admin/transactions'
 import { Route as AuthenticatedAdminStaffRouteImport } from './routes/_authenticated/admin/staff'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin/settings'
@@ -84,6 +87,11 @@ import { Route as AuthenticatedAdminProductsNewRouteImport } from './routes/_aut
 import { Route as AuthenticatedResellerOrdersIdInvoiceRouteImport } from './routes/_authenticated/reseller/orders.$id.invoice'
 import { Route as AuthenticatedAdminProductsIdEditRouteImport } from './routes/_authenticated/admin/products.$id.edit'
 
+const TutorialsRoute = TutorialsRouteImport.update({
+  id: '/tutorials',
+  path: '/tutorials',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
@@ -186,6 +194,12 @@ const AuthenticatedResellerVisitorsRoute =
     path: '/visitors',
     getParentRoute: () => AuthenticatedResellerRouteRoute,
   } as any)
+const AuthenticatedResellerTutorialsRoute =
+  AuthenticatedResellerTutorialsRouteImport.update({
+    id: '/tutorials',
+    path: '/tutorials',
+    getParentRoute: () => AuthenticatedResellerRouteRoute,
+  } as any)
 const AuthenticatedResellerTransactionsRoute =
   AuthenticatedResellerTransactionsRouteImport.update({
     id: '/transactions',
@@ -274,6 +288,12 @@ const AuthenticatedAdminVisitorsRoute =
   AuthenticatedAdminVisitorsRouteImport.update({
     id: '/visitors',
     path: '/visitors',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAdminTutorialsRoute =
+  AuthenticatedAdminTutorialsRouteImport.update({
+    id: '/tutorials',
+    path: '/tutorials',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
 const AuthenticatedAdminTransactionsRoute =
@@ -511,6 +531,7 @@ export interface FileRoutesByFullPath {
   '/catalog': typeof CatalogRouteWithChildren
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
+  '/tutorials': typeof TutorialsRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/reseller': typeof AuthenticatedResellerRouteRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -546,6 +567,7 @@ export interface FileRoutesByFullPath {
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/staff': typeof AuthenticatedAdminStaffRoute
   '/admin/transactions': typeof AuthenticatedAdminTransactionsRoute
+  '/admin/tutorials': typeof AuthenticatedAdminTutorialsRoute
   '/admin/visitors': typeof AuthenticatedAdminVisitorsRoute
   '/reseller/catalog': typeof AuthenticatedResellerCatalogRoute
   '/reseller/commissions': typeof AuthenticatedResellerCommissionsRoute
@@ -561,6 +583,7 @@ export interface FileRoutesByFullPath {
   '/reseller/support': typeof AuthenticatedResellerSupportRoute
   '/reseller/theme': typeof AuthenticatedResellerThemeRoute
   '/reseller/transactions': typeof AuthenticatedResellerTransactionsRoute
+  '/reseller/tutorials': typeof AuthenticatedResellerTutorialsRoute
   '/reseller/visitors': typeof AuthenticatedResellerVisitorsRoute
   '/api/public/robots': typeof ApiPublicRobotsRoute
   '/s/$code/checkout': typeof SCodeCheckoutRoute
@@ -585,6 +608,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
+  '/tutorials': typeof TutorialsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/verify': typeof AuthenticatedVerifyRoute
@@ -617,6 +641,7 @@ export interface FileRoutesByTo {
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/staff': typeof AuthenticatedAdminStaffRoute
   '/admin/transactions': typeof AuthenticatedAdminTransactionsRoute
+  '/admin/tutorials': typeof AuthenticatedAdminTutorialsRoute
   '/admin/visitors': typeof AuthenticatedAdminVisitorsRoute
   '/reseller/catalog': typeof AuthenticatedResellerCatalogRoute
   '/reseller/commissions': typeof AuthenticatedResellerCommissionsRoute
@@ -632,6 +657,7 @@ export interface FileRoutesByTo {
   '/reseller/support': typeof AuthenticatedResellerSupportRoute
   '/reseller/theme': typeof AuthenticatedResellerThemeRoute
   '/reseller/transactions': typeof AuthenticatedResellerTransactionsRoute
+  '/reseller/tutorials': typeof AuthenticatedResellerTutorialsRoute
   '/reseller/visitors': typeof AuthenticatedResellerVisitorsRoute
   '/api/public/robots': typeof ApiPublicRobotsRoute
   '/s/$code/checkout': typeof SCodeCheckoutRoute
@@ -659,6 +685,7 @@ export interface FileRoutesById {
   '/catalog': typeof CatalogRouteWithChildren
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
+  '/tutorials': typeof TutorialsRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/_authenticated/reseller': typeof AuthenticatedResellerRouteRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
@@ -694,6 +721,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/_authenticated/admin/staff': typeof AuthenticatedAdminStaffRoute
   '/_authenticated/admin/transactions': typeof AuthenticatedAdminTransactionsRoute
+  '/_authenticated/admin/tutorials': typeof AuthenticatedAdminTutorialsRoute
   '/_authenticated/admin/visitors': typeof AuthenticatedAdminVisitorsRoute
   '/_authenticated/reseller/catalog': typeof AuthenticatedResellerCatalogRoute
   '/_authenticated/reseller/commissions': typeof AuthenticatedResellerCommissionsRoute
@@ -709,6 +737,7 @@ export interface FileRoutesById {
   '/_authenticated/reseller/support': typeof AuthenticatedResellerSupportRoute
   '/_authenticated/reseller/theme': typeof AuthenticatedResellerThemeRoute
   '/_authenticated/reseller/transactions': typeof AuthenticatedResellerTransactionsRoute
+  '/_authenticated/reseller/tutorials': typeof AuthenticatedResellerTutorialsRoute
   '/_authenticated/reseller/visitors': typeof AuthenticatedResellerVisitorsRoute
   '/api/public/robots': typeof ApiPublicRobotsRoute
   '/s/$code/checkout': typeof SCodeCheckoutRoute
@@ -736,6 +765,7 @@ export interface FileRouteTypes {
     | '/catalog'
     | '/login'
     | '/privacy'
+    | '/tutorials'
     | '/admin'
     | '/reseller'
     | '/dashboard'
@@ -771,6 +801,7 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/staff'
     | '/admin/transactions'
+    | '/admin/tutorials'
     | '/admin/visitors'
     | '/reseller/catalog'
     | '/reseller/commissions'
@@ -786,6 +817,7 @@ export interface FileRouteTypes {
     | '/reseller/support'
     | '/reseller/theme'
     | '/reseller/transactions'
+    | '/reseller/tutorials'
     | '/reseller/visitors'
     | '/api/public/robots'
     | '/s/$code/checkout'
@@ -810,6 +842,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/privacy'
+    | '/tutorials'
     | '/dashboard'
     | '/onboarding'
     | '/verify'
@@ -842,6 +875,7 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/staff'
     | '/admin/transactions'
+    | '/admin/tutorials'
     | '/admin/visitors'
     | '/reseller/catalog'
     | '/reseller/commissions'
@@ -857,6 +891,7 @@ export interface FileRouteTypes {
     | '/reseller/support'
     | '/reseller/theme'
     | '/reseller/transactions'
+    | '/reseller/tutorials'
     | '/reseller/visitors'
     | '/api/public/robots'
     | '/s/$code/checkout'
@@ -883,6 +918,7 @@ export interface FileRouteTypes {
     | '/catalog'
     | '/login'
     | '/privacy'
+    | '/tutorials'
     | '/_authenticated/admin'
     | '/_authenticated/reseller'
     | '/_authenticated/dashboard'
@@ -918,6 +954,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/settings'
     | '/_authenticated/admin/staff'
     | '/_authenticated/admin/transactions'
+    | '/_authenticated/admin/tutorials'
     | '/_authenticated/admin/visitors'
     | '/_authenticated/reseller/catalog'
     | '/_authenticated/reseller/commissions'
@@ -933,6 +970,7 @@ export interface FileRouteTypes {
     | '/_authenticated/reseller/support'
     | '/_authenticated/reseller/theme'
     | '/_authenticated/reseller/transactions'
+    | '/_authenticated/reseller/tutorials'
     | '/_authenticated/reseller/visitors'
     | '/api/public/robots'
     | '/s/$code/checkout'
@@ -960,6 +998,7 @@ export interface RootRouteChildren {
   CatalogRoute: typeof CatalogRouteWithChildren
   LoginRoute: typeof LoginRoute
   PrivacyRoute: typeof PrivacyRoute
+  TutorialsRoute: typeof TutorialsRoute
   SCodeRoute: typeof SCodeRouteWithChildren
   ApiPublicRobotsRoute: typeof ApiPublicRobotsRoute
   ApiPublicCourierCarrybeeRoute: typeof ApiPublicCourierCarrybeeRoute
@@ -972,6 +1011,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/tutorials': {
+      id: '/tutorials'
+      path: '/tutorials'
+      fullPath: '/tutorials'
+      preLoaderRoute: typeof TutorialsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/privacy': {
       id: '/privacy'
       path: '/privacy'
@@ -1112,6 +1158,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedResellerVisitorsRouteImport
       parentRoute: typeof AuthenticatedResellerRouteRoute
     }
+    '/_authenticated/reseller/tutorials': {
+      id: '/_authenticated/reseller/tutorials'
+      path: '/tutorials'
+      fullPath: '/reseller/tutorials'
+      preLoaderRoute: typeof AuthenticatedResellerTutorialsRouteImport
+      parentRoute: typeof AuthenticatedResellerRouteRoute
+    }
     '/_authenticated/reseller/transactions': {
       id: '/_authenticated/reseller/transactions'
       path: '/transactions'
@@ -1215,6 +1268,13 @@ declare module '@tanstack/react-router' {
       path: '/visitors'
       fullPath: '/admin/visitors'
       preLoaderRoute: typeof AuthenticatedAdminVisitorsRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/tutorials': {
+      id: '/_authenticated/admin/tutorials'
+      path: '/tutorials'
+      fullPath: '/admin/tutorials'
+      preLoaderRoute: typeof AuthenticatedAdminTutorialsRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
     '/_authenticated/admin/transactions': {
@@ -1521,6 +1581,7 @@ interface AuthenticatedAdminRouteRouteChildren {
   AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
   AuthenticatedAdminStaffRoute: typeof AuthenticatedAdminStaffRoute
   AuthenticatedAdminTransactionsRoute: typeof AuthenticatedAdminTransactionsRoute
+  AuthenticatedAdminTutorialsRoute: typeof AuthenticatedAdminTutorialsRoute
   AuthenticatedAdminVisitorsRoute: typeof AuthenticatedAdminVisitorsRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
   AuthenticatedAdminProductsNewRoute: typeof AuthenticatedAdminProductsNewRoute
@@ -1559,6 +1620,7 @@ const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren
     AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
     AuthenticatedAdminStaffRoute: AuthenticatedAdminStaffRoute,
     AuthenticatedAdminTransactionsRoute: AuthenticatedAdminTransactionsRoute,
+    AuthenticatedAdminTutorialsRoute: AuthenticatedAdminTutorialsRoute,
     AuthenticatedAdminVisitorsRoute: AuthenticatedAdminVisitorsRoute,
     AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
     AuthenticatedAdminProductsNewRoute: AuthenticatedAdminProductsNewRoute,
@@ -1602,6 +1664,7 @@ interface AuthenticatedResellerRouteRouteChildren {
   AuthenticatedResellerSupportRoute: typeof AuthenticatedResellerSupportRoute
   AuthenticatedResellerThemeRoute: typeof AuthenticatedResellerThemeRoute
   AuthenticatedResellerTransactionsRoute: typeof AuthenticatedResellerTransactionsRoute
+  AuthenticatedResellerTutorialsRoute: typeof AuthenticatedResellerTutorialsRoute
   AuthenticatedResellerVisitorsRoute: typeof AuthenticatedResellerVisitorsRoute
   AuthenticatedResellerIndexRoute: typeof AuthenticatedResellerIndexRoute
 }
@@ -1625,6 +1688,7 @@ const AuthenticatedResellerRouteRouteChildren: AuthenticatedResellerRouteRouteCh
     AuthenticatedResellerThemeRoute: AuthenticatedResellerThemeRoute,
     AuthenticatedResellerTransactionsRoute:
       AuthenticatedResellerTransactionsRoute,
+    AuthenticatedResellerTutorialsRoute: AuthenticatedResellerTutorialsRoute,
     AuthenticatedResellerVisitorsRoute: AuthenticatedResellerVisitorsRoute,
     AuthenticatedResellerIndexRoute: AuthenticatedResellerIndexRoute,
   }
@@ -1690,6 +1754,7 @@ const rootRouteChildren: RootRouteChildren = {
   CatalogRoute: CatalogRouteWithChildren,
   LoginRoute: LoginRoute,
   PrivacyRoute: PrivacyRoute,
+  TutorialsRoute: TutorialsRoute,
   SCodeRoute: SCodeRouteWithChildren,
   ApiPublicRobotsRoute: ApiPublicRobotsRoute,
   ApiPublicCourierCarrybeeRoute: ApiPublicCourierCarrybeeRoute,

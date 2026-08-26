@@ -12,6 +12,7 @@ import {
   Package,
   Award,
   Megaphone,
+  GraduationCap,
   Loader2,
   ExternalLink,
   Store,
@@ -63,6 +64,7 @@ const NAV: NavEntry[] = [
     icon: <Rocket className="h-4 w-4" />,
     items: [
       { label: "Marketing", to: "/reseller/marketing", icon: <Megaphone className="h-4 w-4" /> },
+      { label: "Video tutorials", to: "/reseller/tutorials", icon: <GraduationCap className="h-4 w-4" /> },
     ],
   },
   {
