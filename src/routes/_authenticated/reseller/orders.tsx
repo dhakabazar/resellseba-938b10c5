@@ -112,6 +112,7 @@ type OrderRow = {
   notes: string | null;
   reseller_note: string | null;
   created_at: string;
+  updated_at: string;
   received_amount?: number | null;
   packaging_total?: number | null;
   delivery_cost?: number | null;
