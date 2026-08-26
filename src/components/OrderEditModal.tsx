@@ -81,15 +81,27 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
       setName(o.customer_name ?? "");
       setPhone(o.customer_phone ?? "");
       setAddress(o.address_line ?? "");
-      setArea((o.area === "inside_dhaka" ? "inside_dhaka" : "outside_dhaka") as any);
+      const savedArea = areaOptions().some((a) => a.value === o.area) ? (o.area as DeliveryArea) : "outside_dhaka";
+      setArea(savedArea);
       setPaymentMethod(o.payment_method ?? "cod");
       setPaymentStatus(o.payment_status ?? "unpaid");
       setNote((isAdmin ? o.admin_note : o.reseller_note) ?? "");
-      setShipInput(Number(o.shipping_cost ?? 0) ? String(Number(o.shipping_cost)) : "");
+      /** Saved delivery charge that matches the product rule stays "auto" so area changes keep updating it. */
+      const savedShip = Number(o.shipping_cost ?? 0);
+      const autoShip = (its ?? []).reduce((max: number, it: any) => {
+        const p = allProducts.find((x) => x.id === it.product_id);
+        return p ? Math.max(max, productDeliveryCharge(p, savedArea)) : max;
+      }, 0);
+      const shipIsCustom = savedShip !== autoShip;
+      setShipInput(shipIsCustom ? String(savedShip) : "");
+      setShipTouched(shipIsCustom);
       setReceived(o.received_amount == null ? "" : String(Number(o.received_amount)));
       setDiscount(Number(o.discount ?? 0) ? String(Number(o.discount)) : "");
       setPackagingInput(o.packaging_total == null ? "" : String(Number(o.packaging_total)));
-      setDeliveryCostInput(Number(o.delivery_cost ?? 0) ? String(Number(o.delivery_cost)) : "");
+      const savedCourierCost = Number(o.delivery_cost ?? 0);
+      const courierIsCustom = savedCourierCost !== savedShip;
+      setDeliveryCostInput(courierIsCustom ? String(savedCourierCost) : "");
+      setDeliveryCostTouched(courierIsCustom);
       setAdvance(Number((o as any).advance_amount ?? 0) ? String(Number((o as any).advance_amount)) : "");
       setAdvanceBy(((o as any).advance_by === "admin" ? "admin" : "reseller") as any);
 
