@@ -225,7 +225,7 @@ function AdminOrdersPage() {
   async function syncOrders(ids: string[]) {
     const list = ids.filter(Boolean);
     if (list.length === 0) return;
-    const statuses = ORDER_TABS.find((t) => t.key === tab)?.statuses ?? [];
+    const statuses = (ORDER_TABS.find((t) => t.key === tab)?.statuses ?? []) as string[];
     const inTab = (s: string) => statuses.length === 0 || statuses.includes(s);
     const [{ data: rows }, { data: its }, { data: sh }, { data: allStats }] = await Promise.all([
       supabase.from("orders").select(ORDER_SELECT).in("id", list),
