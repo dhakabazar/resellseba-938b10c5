@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { loadTutorialLibrary, youtubeEmbed, youtubeThumb, type Tutorial, type TutorialTopic } from "@/lib/tutorials";
-import { Loader2, PlayCircle, Search, X, Youtube } from "lucide-react";
+import { Loader2, PlayCircle, Search, Youtube } from "lucide-react";
+import { AppModal } from "@/components/ui-kit/AppModal";
 
 export function TutorialLibrary({ compact = false }: { compact?: boolean }) {
   const [loading, setLoading] = useState(true);
