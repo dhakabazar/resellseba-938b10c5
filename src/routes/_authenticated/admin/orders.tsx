@@ -489,6 +489,23 @@ function AdminOrdersPage() {
               ))}
             </select>
             <select
+              value={filters.datePreset}
+              onChange={(e) => {
+                const v = e.target.value as DatePreset;
+                setFilters(
+                  v === "custom"
+                    ? { ...filters, datePreset: "custom" }
+                    : { ...filters, datePreset: v, from: "", to: "" },
+                );
+              }}
+              className="h-10 rounded-md border bg-background px-2 text-xs font-medium outline-none focus:ring-1 focus:ring-primary"
+              title="Date range"
+            >
+              {DATE_PRESET_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+            <select
               value={filters.sort}
               onChange={(e) => setFilters({ ...filters, sort: e.target.value as OrderFilterState["sort"] })}
               className="h-10 rounded-md border bg-background px-2 text-xs font-medium outline-none focus:ring-1 focus:ring-primary"
@@ -500,6 +517,18 @@ function AdminOrdersPage() {
               <option value="high">Amount: high → low</option>
               <option value="low">Amount: low → high</option>
             </select>
+            {activeFilterCount(filters) > 0 && (
+              <button
+                type="button"
+                onClick={() =>
+                  setFilters({ ...DEFAULT_ORDER_FILTERS, perPage: filters.perPage, q: filters.q })
+                }
+                className="inline-flex h-10 items-center gap-1.5 rounded-md border border-primary/40 bg-primary/5 px-3 text-xs font-medium hover:bg-accent"
+                title="Reset filters"
+              >
+                <X className="h-3.5 w-3.5" /> Reset ({activeFilterCount(filters)})
+              </button>
+            )}
             <div className="ml-auto flex items-center gap-2">
               <select
                 value={filters.perPage}
@@ -514,6 +543,30 @@ function AdminOrdersPage() {
               </select>
             </div>
         </div>
+        {filters.datePreset === "custom" && (
+          <div className="mb-4 grid grid-cols-2 gap-2 rounded-md border border-dashed p-2 sm:max-w-md">
+            <label className="flex min-w-0 flex-col gap-1">
+              <span className="text-[11px] font-medium text-muted-foreground">From</span>
+              <input
+                type="date"
+                value={filters.from}
+                max={filters.to || undefined}
+                onChange={(e) => setFilters({ ...filters, from: e.target.value })}
+                className="h-9 w-full rounded-md border bg-background px-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+              />
+            </label>
+            <label className="flex min-w-0 flex-col gap-1">
+              <span className="text-[11px] font-medium text-muted-foreground">To</span>
+              <input
+                type="date"
+                value={filters.to}
+                min={filters.from || undefined}
+                onChange={(e) => setFilters({ ...filters, to: e.target.value })}
+                className="h-9 w-full rounded-md border bg-background px-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+              />
+            </label>
+          </div>
+        )}
 
         {marked.length > 0 && (
           <div className="mb-4 flex flex-wrap items-center gap-2 rounded-md border border-primary/40 bg-primary/5 px-3 py-2">
