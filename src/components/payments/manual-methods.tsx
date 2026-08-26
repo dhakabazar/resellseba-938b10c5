@@ -6,11 +6,11 @@ import { AppModal } from "@/components/ui-kit/AppModal";
 import { confirmAction } from "@/lib/confirm";
 import {
   MANUAL_METHODS,
-  cfgBool,
   cfgString,
   methodLabel,
   type PaymentConfigRow,
 } from "@/lib/payment-methods";
+import { clearAdvancedSettingsCache, fetchAdvancedSettings } from "@/lib/advanced-settings";
 import { Label, StatusDot, Switch, field } from "./shared";
 import { PaymentLogo, paymentLogo } from "./payment-brand";
 
@@ -28,13 +28,32 @@ const emptyDraft = (): Draft => ({
   mode: "manual",
   is_active: true,
   instructions: null,
-  config: { account: "", account_type: "", allow_deposit: false },
+  config: { account: "", account_type: "" },
 });
 
 export function ManualMethods({ onCountChange }: { onCountChange?: (n: number) => void }) {
   const [rows, setRows] = useState<PaymentConfigRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [draft, setDraft] = useState<Draft | null>(null);
+  const [depositOn, setDepositOn] = useState(true);
+
+  async function saveDepositSwitch(next: boolean) {
+    setDepositOn(next);
+    const current = await fetchAdvancedSettings();
+    const { error } = await supabase
+      .from("global_settings")
+      .update({ advanced_settings: { ...current, depositPayEnabled: next } as any } as any)
+      .eq("id", 1);
+    clearAdvancedSettingsCache();
+    if (error) {
+      toast.error(error.message);
+      setDepositOn(!next);
+      return;
+    }
+    toast.success(next ? "Deposit payments enabled" : "Deposit payments turned off");
+  }
+
+
 
   async function load() {
     const { data, error } = await supabase
@@ -47,6 +66,7 @@ export function ManualMethods({ onCountChange }: { onCountChange?: (n: number) =
     const list = (data ?? []) as unknown as PaymentConfigRow[];
     setRows(list);
     onCountChange?.(list.length);
+    setDepositOn((await fetchAdvancedSettings()).depositPayEnabled);
     setLoading(false);
   }
 
@@ -88,10 +108,11 @@ export function ManualMethods({ onCountChange }: { onCountChange?: (n: number) =
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-muted/20 p-3">
         <p className="max-w-[62ch] text-[11px] leading-relaxed text-muted-foreground">
-          The customer sends money to your number and types the transaction ID. Mark a method as{" "}
-          <strong>deposit friendly</strong> to let resellers pay their security deposit with it — those payments wait for
-          your approval in Finance → Deposit transactions.
+          The customer sends money to your number and types the transaction ID. Use the single{" "}
+          <strong>security deposit</strong> switch below to let resellers pay their deposit with every active method —
+          those payments wait for your approval in Finance → Deposit transactions.
         </p>
+
         <button
           type="button"
           onClick={() => setDraft(emptyDraft())}
@@ -100,6 +121,25 @@ export function ManualMethods({ onCountChange }: { onCountChange?: (n: number) =
           <Plus className="h-3.5 w-3.5" /> Add method
         </button>
       </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3">
+        <div>
+          <div className="flex items-center gap-1.5 text-xs font-semibold">
+            <ShieldCheck className="h-3.5 w-3.5 text-success" /> Reseller security deposit
+          </div>
+          <p className="mt-0.5 max-w-[70ch] text-[11px] text-muted-foreground">
+            One switch for all cards: when on, resellers can pay their security deposit with every{" "}
+            <strong>active</strong> method here. When off, no method accepts deposits.
+          </p>
+        </div>
+        <Switch
+          checked={depositOn}
+          onChange={(v) => void saveDepositSwitch(v)}
+          label="Toggle reseller security deposit"
+        />
+      </div>
+
+
 
       {rows.length === 0 ? (
         <div className="rounded-xl border border-dashed p-12 text-center">
@@ -144,11 +184,13 @@ export function ManualMethods({ onCountChange }: { onCountChange?: (n: number) =
                 </div>
               </dl>
 
-              {cfgBool(row.config, "allow_deposit") && (
+              {depositOn && row.is_active && (
                 <span className="mt-2 inline-flex w-fit items-center gap-1 rounded-full bg-success/15 px-2 py-0.5 text-[10px] font-semibold text-success">
-                  <ShieldCheck className="h-3 w-3" /> Deposit friendly
+                  <ShieldCheck className="h-3 w-3" /> Deposit enabled
                 </span>
               )}
+
+
 
               <div className="mt-auto flex gap-2 pt-3">
                 <button
@@ -296,22 +338,8 @@ function MethodModal({
           />
         </div>
 
-        <label className="flex items-start gap-2.5 rounded-xl border p-3 text-[11px] sm:col-span-2">
-          <input
-            type="checkbox"
-            className="mt-0.5"
-            checked={cfgBool(row.config, "allow_deposit")}
-            onChange={(e) => setConfig("allow_deposit", e.target.checked)}
-          />
-          <span>
-            <span className="flex items-center gap-1 text-xs font-semibold">
-              <ShieldCheck className="h-3.5 w-3.5 text-success" /> Reseller security deposit
-            </span>
-            <span className="text-muted-foreground">
-              Resellers can pay their security deposit with this method and submit the TrxID for approval.
-            </span>
-          </span>
-        </label>
+
+
 
         <label className="flex items-center justify-between gap-3 rounded-xl border p-3 sm:col-span-2">
           <span>
