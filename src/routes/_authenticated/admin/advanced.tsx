@@ -35,7 +35,10 @@ export const Route = createFileRoute("/_authenticated/admin/advanced")({
   }),
 });
 
+type TabKey = "delivery" | "orders" | "resellers" | "verification";
+
 type Group = {
+  tab: TabKey;
   title: string;
   hint: string;
   icon: React.ReactNode;
@@ -48,8 +51,31 @@ type Group = {
   }[];
 };
 
+const TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
+  { key: "delivery", label: "Delivery", icon: <Truck className="h-4 w-4" /> },
+  { key: "orders", label: "Orders", icon: <Boxes className="h-4 w-4" /> },
+  { key: "resellers", label: "Resellers", icon: <UserCheck className="h-4 w-4" /> },
+  { key: "verification", label: "Verification", icon: <ShieldCheck className="h-4 w-4" /> },
+];
+
 const GROUPS: Group[] = [
   {
+    tab: "resellers",
+    title: "New reseller approval",
+    hint: "Manual approval na automatic — ekhan theke niyontron.",
+    icon: <UserCheck className="h-4 w-4" />,
+    rows: [
+      {
+        key: "resellerAutoApprove",
+        label: "Automatic approval",
+        help:
+          "ON = notun registration sathe sathe active hoye jabe, 3 dot theke approve korte hobe na. OFF = manual process, admin approve dile access pabe. Dui khetrei admin chaile pore deactivate / reject korte parbe.",
+        master: true,
+      },
+    ],
+  },
+  {
+    tab: "resellers",
     title: "Reseller catalog",
     hint: "What resellers can see on the catalog grid.",
     icon: <Package className="h-4 w-4" />,
@@ -62,6 +88,7 @@ const GROUPS: Group[] = [
     ],
   },
   {
+    tab: "orders",
     title: "Order packaging charge",
     hint: "Ek parcel e ekadhik product hole packaging charge kivabe hisab hobe.",
     icon: <Boxes className="h-4 w-4" />,
@@ -76,6 +103,7 @@ const GROUPS: Group[] = [
   },
 
   {
+    tab: "verification",
     title: "Reseller registration verification",
     hint: "Master switch off thakle verify na korei registration complete hoye jabe.",
     icon: <ShieldCheck className="h-4 w-4" />,
@@ -105,6 +133,7 @@ const GROUPS: Group[] = [
 function AdvancedSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [tab, setTab] = useState<TabKey>("delivery");
   const [settings, setSettings] = useState<AdvancedSettings>(DEFAULT_ADVANCED_SETTINGS);
 
   useEffect(() => {
@@ -142,6 +171,8 @@ function AdvancedSettingsPage() {
     );
   }
 
+  const groups = GROUPS.filter((g) => g.tab === tab);
+
   return (
     <div className="space-y-5">
       <PageHeader
@@ -158,6 +189,25 @@ function AdvancedSettingsPage() {
         }
       />
 
+      <div className="no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1">
+        {TABS.map((t) => (
+          <button
+            key={t.key}
+            type="button"
+            onClick={() => setTab(t.key)}
+            aria-pressed={tab === t.key}
+            className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition ${
+              tab === t.key
+                ? "border-primary bg-primary/10 text-primary"
+                : "text-muted-foreground hover:bg-muted/50"
+            }`}
+          >
+            {t.icon}
+            {t.label}
+          </button>
+        ))}
+      </div>
+
       <div className="flex items-start gap-2 rounded-lg border bg-muted/40 p-3 text-xs text-muted-foreground">
         <Info className="mt-0.5 h-4 w-4 shrink-0" />
         <span>
@@ -165,61 +215,66 @@ function AdvancedSettingsPage() {
         </span>
       </div>
 
-      <DeliveryCard
-        value={settings.delivery}
-        onChange={(delivery) => setSettings((s) => ({ ...s, delivery }))}
-      />
+      {tab === "delivery" && (
+        <div className="space-y-5">
+          <DeliveryCard
+            value={settings.delivery}
+            onChange={(delivery) => setSettings((s) => ({ ...s, delivery }))}
+          />
+          <DeliveryRulesCard
+            value={settings.delivery}
+            onChange={(delivery) => setSettings((s) => ({ ...s, delivery }))}
+          />
+        </div>
+      )}
 
-      <DeliveryRulesCard
-        value={settings.delivery}
-        onChange={(delivery) => setSettings((s) => ({ ...s, delivery }))}
-      />
-
-      <div className="grid gap-5 lg:grid-cols-2">
-        {GROUPS.map((group) => (
-          <section key={group.title} className="surface-card overflow-hidden">
-            <header className="flex items-center gap-2 border-b bg-muted/30 px-4 py-3">
-              <span className="grid h-8 w-8 place-items-center rounded-md bg-primary/10 text-primary">{group.icon}</span>
-              <div>
-                <h2 className="text-sm font-semibold">{group.title}</h2>
-                <p className="text-xs text-muted-foreground">{group.hint}</p>
-              </div>
-            </header>
-            <div className="divide-y">
-              {group.rows.map((row) => {
-                const disabled = row.dependsOn ? !settings[row.dependsOn] : false;
-                return (
-                  <label
-                    key={row.key}
-                    className={`flex items-start justify-between gap-4 px-4 py-3.5 transition ${
-                      disabled ? "opacity-50" : "hover:bg-muted/30"
-                    } ${row.master ? "bg-primary/5" : ""}`}
-                  >
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 text-sm font-medium">
-                        {row.key === "verifyEmail" && <Mail className="h-3.5 w-3.5 text-muted-foreground" />}
-                        {row.key === "verifySms" && <Smartphone className="h-3.5 w-3.5 text-muted-foreground" />}
-                        {row.label}
-                        {row.master && (
-                          <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
-                            master
-                          </span>
-                        )}
+      {groups.length > 0 && (
+        <div className="grid gap-5 lg:grid-cols-2">
+          {groups.map((group) => (
+            <section key={group.title} className="surface-card overflow-hidden">
+              <header className="flex items-center gap-2 border-b bg-muted/30 px-4 py-3">
+                <span className="grid h-8 w-8 place-items-center rounded-md bg-primary/10 text-primary">{group.icon}</span>
+                <div>
+                  <h2 className="text-sm font-semibold">{group.title}</h2>
+                  <p className="text-xs text-muted-foreground">{group.hint}</p>
+                </div>
+              </header>
+              <div className="divide-y">
+                {group.rows.map((row) => {
+                  const disabled = row.dependsOn ? !settings[row.dependsOn] : false;
+                  return (
+                    <label
+                      key={row.key}
+                      className={`flex items-start justify-between gap-4 px-4 py-3.5 transition ${
+                        disabled ? "opacity-50" : "hover:bg-muted/30"
+                      } ${row.master ? "bg-primary/5" : ""}`}
+                    >
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 text-sm font-medium">
+                          {row.key === "verifyEmail" && <Mail className="h-3.5 w-3.5 text-muted-foreground" />}
+                          {row.key === "verifySms" && <Smartphone className="h-3.5 w-3.5 text-muted-foreground" />}
+                          {row.label}
+                          {row.master && (
+                            <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
+                              master
+                            </span>
+                          )}
+                        </div>
+                        <p className="mt-0.5 text-xs text-muted-foreground">{row.help}</p>
                       </div>
-                      <p className="mt-0.5 text-xs text-muted-foreground">{row.help}</p>
-                    </div>
-                    <Toggle
-                      checked={Boolean(settings[row.key])}
-                      disabled={disabled}
-                      onChange={(v) => setSettings((s) => ({ ...s, [row.key]: v }))}
-                    />
-                  </label>
-                );
-              })}
-            </div>
-          </section>
-        ))}
-      </div>
+                      <Toggle
+                        checked={Boolean(settings[row.key])}
+                        disabled={disabled}
+                        onChange={(v) => setSettings((s) => ({ ...s, [row.key]: v }))}
+                      />
+                    </label>
+                  );
+                })}
+              </div>
+            </section>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
