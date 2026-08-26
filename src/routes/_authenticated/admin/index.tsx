@@ -293,8 +293,8 @@ function AdminDashboard() {
         </div>
         <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4">
           <MiniCard to="/admin/resellers" search={{ status: "active" }} label="Selling resellers" value={resellerReport.withStore} hint="With at least 1 order" tone="violet" />
-          <MiniCard to="/admin/deposits" label="Deposit balance" value={bdt(resellerReport.depositBalance)} />
-          <MiniCard to="/admin/deposits" label="Frozen" value={bdt(resellerReport.frozen)} tone="amber" />
+          <MiniCard to="/admin/advanced" label="Deposit balance" value={bdt(resellerReport.depositBalance)} />
+          <MiniCard to="/admin/advanced" label="Frozen" value={bdt(resellerReport.frozen)} tone="amber" />
           <MiniCard to="/admin/payouts" label="Withdrawable" value={bdt(resellerReport.withdrawable)} tone="emerald" />
         </div>
       </section>

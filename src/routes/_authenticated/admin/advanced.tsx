@@ -20,6 +20,7 @@ import {
   type DeliverySettings,
 } from "@/lib/delivery";
 import { DeliveryRulesCard } from "@/components/delivery-rules-card";
+import { DepositSettingsPanel } from "@/components/deposit-settings-panel";
 
 export const Route = createFileRoute("/_authenticated/admin/advanced")({
   component: AdvancedSettingsPage,
@@ -35,7 +36,7 @@ export const Route = createFileRoute("/_authenticated/admin/advanced")({
   }),
 });
 
-type TabKey = "delivery" | "orders" | "resellers";
+type TabKey = "delivery" | "orders" | "resellers" | "deposit";
 
 type Group = {
   tab: TabKey;
@@ -55,6 +56,7 @@ const TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
   { key: "delivery", label: "Delivery", icon: <Truck className="h-4 w-4" /> },
   { key: "orders", label: "Orders", icon: <Boxes className="h-4 w-4" /> },
   { key: "resellers", label: "Resellers", icon: <UserCheck className="h-4 w-4" /> },
+  { key: "deposit", label: "Security deposit", icon: <ShieldCheck className="h-4 w-4" /> },
 ];
 
 const GROUPS: Group[] = [
@@ -178,13 +180,15 @@ function AdvancedSettingsPage() {
         title="Advanced settings"
         description="Platform logic switches — notun logic ekhane jog hote thakbe."
         actions={
-          <button
-            onClick={save}
-            disabled={busy}
-            className="btn-brand inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium disabled:opacity-50"
-          >
-            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save changes
-          </button>
+          tab === "deposit" ? undefined : (
+            <button
+              onClick={save}
+              disabled={busy}
+              className="btn-brand inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium disabled:opacity-50"
+            >
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save changes
+            </button>
+          )
         }
       />
 
@@ -210,9 +214,13 @@ function AdvancedSettingsPage() {
       <div className="flex items-start gap-2 rounded-lg border bg-muted/40 p-3 text-xs text-muted-foreground">
         <Info className="mt-0.5 h-4 w-4 shrink-0" />
         <span>
-          Ei switch gulo sathe sathe sob jaigai apply hoy — reseller panel, registration, login o dashboard.
+          {tab === "deposit"
+            ? "Deposit rule o reseller-facing text ekhan theke change korle sathe sathe reseller panel e apply hobe. Ei tab er nijer Save button ache."
+            : "Ei switch gulo sathe sathe sob jaigai apply hoy — reseller panel, registration, login o dashboard."}
         </span>
       </div>
+
+      {tab === "deposit" && <DepositSettingsPanel />}
 
       {tab === "delivery" && (
         <div className="space-y-5">
