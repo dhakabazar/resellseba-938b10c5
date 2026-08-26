@@ -122,13 +122,14 @@ const FILTERS = [
 type Filter = (typeof FILTERS)[number];
 
 const FILTER_LABELS: Record<Filter, string> = {
-  pending: "Approval pending",
-  active: "Active",
-  suspended: "Deactivated",
-  rejected: "Rejected",
+  pending: resellerStatusLabel("pending"),
+  active: resellerStatusLabel("active"),
+  suspended: resellerStatusLabel("suspended"),
+  rejected: resellerStatusLabel("rejected"),
   email_unverified: "Email unverified",
   all: "All",
 };
+
 
 function ResellersPage() {
   const nav = useNavigate();
