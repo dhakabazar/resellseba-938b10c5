@@ -1029,52 +1029,52 @@ function OrdersPage() {
                   </div>
                    
                     <div className="flex justify-center"><ResellerTotalCell order={o as any} /></div>
-                   <div className="min-w-0">
-                     <span
-                       className={`inline-block rounded-full px-2 py-0.5 text-[11px] capitalize whitespace-nowrap ${orderStatusTone(o.status)}`}
-                     >
-                       {orderStatusLabel(o.status)}
-                     </span>
-                     {o.status === "forwarded" && o.forwarded_to_admin && (
-                       <div className="mt-0.5 text-[9px] text-success font-medium">
-                         Sent to admin
-                       </div>
-                     )}
-                     {orderShipment ? (
-                       <div className="mt-1 flex flex-col gap-0.5 min-w-0">
-                         {(() => {
-                           const u = courierTrackingUrl(orderShipment.provider, orderShipment, (o as any).customer_phone);
-                           const inner = (
-                             <>
-                               <CourierLogo provider={orderShipment.provider} size={12} />
-                               <span className="truncate">{courierLabel(orderShipment.provider)}</span>
-                               {u && <ExternalLink className="h-2.5 w-2.5 shrink-0 opacity-60" />}
-                             </>
-                           );
-                           return u ? (
-                             <a href={u} target="_blank" rel="noopener noreferrer" title="Track on courier website" className="flex items-center gap-1 text-[10px] font-bold text-primary leading-tight hover:underline">{inner}</a>
-                           ) : (
-                             <div className="flex items-center gap-1 text-[10px] font-bold text-primary leading-tight">{inner}</div>
-                           );
-                         })()}
-                         <div className="text-[10px] text-muted-foreground tabular-nums font-medium flex items-center gap-1">
-                           <span className="truncate">#{orderShipment.consignment_id || "N/A"}</span>
-                           {orderShipment.consignment_id && (
-                             <button 
-                               onClick={() => {
-                                 navigator.clipboard.writeText(orderShipment.consignment_id || "");
-                                 toast.success("Booking ID copied");
-                               }}
-                               className="opacity-50 hover:opacity-100 transition-opacity"
-                             >
-                               <Copy className="h-2.5 w-2.5" />
-                             </button>
-                           )}
-                         </div>
-                       </div>
-                     ) : null}
-                   </div>
-                  <div className="flex justify-end">{actions}</div>
+                    <div className="min-w-0 text-center">
+                      <span
+                        className={`inline-block rounded-full px-2 py-0.5 text-[11px] capitalize whitespace-nowrap ${orderStatusTone(o.status)}`}
+                      >
+                        {orderStatusLabel(o.status)}
+                      </span>
+                      {o.status === "forwarded" && o.forwarded_to_admin && (
+                        <div className="mt-0.5 text-[9px] text-success font-medium">
+                          Sent to admin
+                        </div>
+                      )}
+                      {orderShipment ? (
+                        <div className="mt-1 flex flex-col items-center gap-0.5 min-w-0">
+                          {(() => {
+                            const u = courierTrackingUrl(orderShipment.provider, orderShipment, (o as any).customer_phone);
+                            const inner = (
+                              <>
+                                <CourierLogo provider={orderShipment.provider} size={12} />
+                                <span className="truncate">{courierLabel(orderShipment.provider)}</span>
+                                {u && <ExternalLink className="h-2.5 w-2.5 shrink-0 opacity-60" />}
+                              </>
+                            );
+                            return u ? (
+                              <a href={u} target="_blank" rel="noopener noreferrer" title="Track on courier website" className="flex items-center justify-center gap-1 text-[10px] font-bold text-primary leading-tight hover:underline">{inner}</a>
+                            ) : (
+                              <div className="flex items-center justify-center gap-1 text-[10px] font-bold text-primary leading-tight">{inner}</div>
+                            );
+                          })()}
+                          <div className="text-[10px] text-muted-foreground tabular-nums font-medium flex items-center justify-center gap-1">
+                            <span className="truncate">#{orderShipment.consignment_id || "N/A"}</span>
+                            {orderShipment.consignment_id && (
+                              <button 
+                                onClick={() => {
+                                  navigator.clipboard.writeText(orderShipment.consignment_id || "");
+                                  toast.success("Booking ID copied");
+                                }}
+                                className="opacity-50 hover:opacity-100 transition-opacity"
+                              >
+                                <Copy className="h-2.5 w-2.5" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                   <div className="flex justify-center">{actions}</div>
                 </div>
 
                 {/* Collapsible content section */}
