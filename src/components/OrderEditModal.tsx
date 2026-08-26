@@ -597,7 +597,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                       hint={deliveryCostTouched ? `Custom · default ৳${autoShipping.toFixed(0)}` : `Auto ৳${autoShipping.toFixed(0)}`}
                       value={deliveryCostInput}
                       onChange={changeDeliveryCost}
-                      placeholder={totals.shipping.toFixed(0)}
+                      placeholder={autoShipping.toFixed(0)}
                     />
                   )}
                 </div>
