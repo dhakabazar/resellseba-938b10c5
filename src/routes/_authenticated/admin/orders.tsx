@@ -973,8 +973,8 @@ function OrderDrawer({
 
   if (isLoading) {
     return (
-      <div className="fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-sm">
-        <div className="h-full w-full max-w-2xl bg-background p-8 flex items-center justify-center">
+      <div className="fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-sm" onClick={onClose}>
+        <div className="h-full w-full max-w-2xl bg-background p-8 flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       </div>
