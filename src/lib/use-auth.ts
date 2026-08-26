@@ -11,6 +11,8 @@ export interface AuthState {
   roles: Role[];
   permissions: string[];
   loading: boolean;
+  /** true when the role/permission lookup failed — do NOT treat as "no roles". */
+  accessError: boolean;
 }
 
 const listeners = new Set<(state: AuthState) => void>();
@@ -23,6 +25,7 @@ let authState: AuthState = {
   roles: [],
   permissions: [],
   loading: true,
+  accessError: false,
 };
 
 function publish(next: AuthState) {
@@ -30,7 +33,9 @@ function publish(next: AuthState) {
   listeners.forEach((listener) => listener(authState));
 }
 
-async function loadAccess(userId: string): Promise<{ roles: Role[]; permissions: string[] }> {
+async function loadAccessOnce(
+  userId: string,
+): Promise<{ roles: Role[]; permissions: string[]; error: boolean }> {
   // Hard timeout: metadata fetching must never keep the panel on a spinner.
   const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), 10000));
   try {
@@ -42,7 +47,7 @@ async function loadAccess(userId: string): Promise<{ roles: Role[]; permissions:
     const res = await Promise.race([work, timeout]);
     if (!res) {
       console.error("Access lookup timed out");
-      return { roles: [], permissions: [] };
+      return { roles: [], permissions: [], error: true };
     }
     const [rolesRes, permsRes] = res;
 
@@ -52,18 +57,38 @@ async function loadAccess(userId: string): Promise<{ roles: Role[]; permissions:
     const roles = rolesRes.error ? [] : (rolesRes.data ?? []).map((row: any) => row.role as Role);
     const permissions = permsRes.error ? [] : ((permsRes.data as string[] | null) ?? []);
 
-    return { roles, permissions };
+    return { roles, permissions, error: Boolean(rolesRes.error) };
   } catch (err) {
     console.error("Failed to load access data:", err);
-    return { roles: [], permissions: [] };
+    return { roles: [], permissions: [], error: true };
   }
 }
+
+/**
+ * Roles decide where a signed-in user lands. A transient failure (network blip,
+ * token not attached yet) used to look like "this user has no roles", which sent
+ * an existing reseller to the "Become a reseller" form. Retry before believing it.
+ */
+async function loadAccess(
+  userId: string,
+): Promise<{ roles: Role[]; permissions: string[]; error: boolean }> {
+  let last = await loadAccessOnce(userId);
+  for (let attempt = 0; attempt < 2; attempt++) {
+    if (!last.error && last.roles.length > 0) return last;
+    await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
+    const next = await loadAccessOnce(userId);
+    if (!next.error && next.roles.length > 0) return next;
+    if (!next.error) last = next;
+  }
+  return last;
+}
+
 
 function applySession(session: Session | null) {
   if (!session?.user) {
     clearAppDataCache();
     authVersion++;
-    publish({ session: null, user: null, roles: [], permissions: [], loading: false });
+    publish({ session: null, user: null, roles: [], permissions: [], loading: false, accessError: false });
     return;
   }
 
@@ -87,17 +112,18 @@ function applySession(session: Session | null) {
   clearAppDataCache("reseller");
   const version = ++authVersion;
 
-  publish({ session, user: session.user, roles: [], permissions: [], loading: true });
+  publish({ session, user: session.user, roles: [], permissions: [], loading: true, accessError: false });
 
   void loadAccess(session.user.id)
-    .then(({ roles, permissions }) => {
+    .then(({ roles, permissions, error }) => {
       if (version !== authVersion) return;
-      publish({ session, user: session.user, roles, permissions, loading: false });
+      publish({ session, user: session.user, roles, permissions, loading: false, accessError: error });
     })
-    .catch((err) => {
+    .catch(() => {
       if (version !== authVersion) return;
-      publish({ session, user: session.user, roles: [], permissions: [], loading: false });
+      publish({ session, user: session.user, roles: [], permissions: [], loading: false, accessError: true });
     });
+
 }
 
 function initAuth() {
