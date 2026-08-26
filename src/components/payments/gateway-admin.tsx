@@ -244,13 +244,25 @@ function GatewayCard({
 
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
-            <label className="mb-1 block text-xs font-medium">Display label</label>
+            <div className="mb-1 flex items-center justify-between">
+              <label className="block text-xs font-medium">Display label</label>
+              {(row.label ?? "") !== spec.label && (
+                <button
+                  type="button"
+                  onClick={() => setRow({ ...row, label: spec.label })}
+                  className="text-[10px] font-medium text-primary hover:underline"
+                >
+                  Use default
+                </button>
+              )}
+            </div>
             <input
               value={row.label ?? ""}
               onChange={(e) => setRow({ ...row, label: e.target.value })}
               className={inp}
               placeholder={spec.label}
             />
+            <p className="mt-1 text-[10px] text-muted-foreground">Shown to customers at checkout. Defaults to {spec.label}.</p>
           </div>
           <div>
             <label className="mb-1 block text-xs font-medium">Environment</label>
