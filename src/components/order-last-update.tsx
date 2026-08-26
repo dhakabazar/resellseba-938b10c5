@@ -117,16 +117,11 @@ export function LastUpdateCell({
       >
         {meta?.noteBody ? (
           <>
-            <span className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide text-primary">
-              <StickyNote className="h-2.5 w-2.5" />
-              {roleTag(meta.noteRole)}
-              {meta.noteName && (
-                <span className="font-semibold normal-case text-foreground/70">{meta.noteName}</span>
-              )}
-              {meta.noteCount > 1 && <span className="text-muted-foreground">+{meta.noteCount - 1}</span>}
+            <span className="mt-0.5 block line-clamp-2 text-[10px] leading-snug text-foreground/80">
+              {meta.noteBody}
             </span>
             {meta.noteAt && (
-              <span className="block text-[9px] tabular-nums text-muted-foreground/70">
+              <span className="mt-0.5 block text-[9px] tabular-nums text-muted-foreground/70">
                 {new Date(meta.noteAt).toLocaleString([], {
                   day: "2-digit",
                   month: "short",
@@ -135,8 +130,14 @@ export function LastUpdateCell({
                 })}
               </span>
             )}
-            <span className="mt-0.5 block line-clamp-2 text-[10px] leading-snug text-foreground/80">
-              {meta.noteBody}
+            <span className="flex items-center gap-1 text-[9px] text-muted-foreground/80">
+              <span>by</span>
+              {meta.noteName ? (
+                <span className="font-semibold text-foreground/70">{meta.noteName}</span>
+              ) : (
+                <span className="font-medium">{roleTag(meta.noteRole) || "Unknown"}</span>
+              )}
+              {meta.noteCount > 1 && <span className="text-muted-foreground">+{meta.noteCount - 1}</span>}
             </span>
           </>
         ) : (
