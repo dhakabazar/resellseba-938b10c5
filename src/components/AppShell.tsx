@@ -12,6 +12,8 @@ export interface NavItem {
   to: string;
   icon: ReactNode;
   end?: boolean;
+  /** Open in a new browser tab instead of client-side navigation. */
+  external?: boolean;
 }
 
 export interface NavGroup {
