@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { BadgeCheck, Clock, Copy, Loader2, Send, XCircle } from "lucide-react";
+import { BadgeCheck, Clock, Copy, Hand, Loader2, Send, XCircle, Zap } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { listDepositGateways, startDepositPayment } from "@/lib/gateways.functions";
 import { cfgString, fetchDepositMethods, type PaymentConfigRow } from "@/lib/payment-methods";
 import { PaymentLogo } from "@/components/payments/payment-brand";
 
@@ -30,6 +32,12 @@ export function DepositPayPanel({ resellerId, onSubmitted }: { resellerId: strin
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [mode, setMode] = useState<"manual" | "online">("manual");
+  const [gateways, setGateways] = useState<{ provider: string; label: string }[]>([]);
+  const [gateway, setGateway] = useState("");
+  const [onlineAmount, setOnlineAmount] = useState("");
+  const loadGateways = useServerFn(listDepositGateways);
+  const startOnline = useServerFn(startDepositPayment);
 
   useEffect(() => {
     void (async () => {
@@ -37,8 +45,32 @@ export function DepositPayPanel({ resellerId, onSubmitted }: { resellerId: strin
       setMethods(list);
       if (list[0]) setConfigId(list[0].id);
       setLoading(false);
+      try {
+        const gw = await loadGateways();
+        setGateways(gw);
+        if (gw[0]) setGateway(gw[0].provider);
+        if (list.length === 0 && gw.length > 0) setMode("online");
+      } catch {
+        /* gateways unavailable */
+      }
     })();
-  }, []);
+  }, [loadGateways]);
+
+  async function payOnline() {
+    const amt = Number(onlineAmount);
+    if (!(amt > 0)) return toast.error("Enter a valid amount");
+    if (!gateway) return toast.error("Select a gateway");
+    setBusy(true);
+    try {
+      const res = await startOnline({ data: { provider: gateway, amount: amt } });
+      if (res?.redirectUrl) window.location.href = res.redirectUrl;
+      else toast.error("Could not start the payment");
+    } catch (err: any) {
+      toast.error(typeof err?.message === "string" ? err.message : "Could not start the payment");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   useEffect(() => {
     if (resellerId) void loadRequests();
@@ -91,7 +123,90 @@ export function DepositPayPanel({ resellerId, onSubmitted }: { resellerId: strin
 
   return (
     <div className="space-y-4">
-      {methods.length === 0 ? (
+      {(methods.length > 0 || gateways.length > 0) && (
+        <div className="inline-flex rounded-xl border bg-muted/30 p-1">
+          <button
+            type="button"
+            onClick={() => setMode("manual")}
+            className={
+              "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors " +
+              (mode === "manual" ? "bg-card shadow-sm" : "text-muted-foreground hover:text-foreground")
+            }
+          >
+            <Hand className="h-3.5 w-3.5" /> Manual
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode("online")}
+            className={
+              "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors " +
+              (mode === "online" ? "bg-card shadow-sm" : "text-muted-foreground hover:text-foreground")
+            }
+          >
+            <Zap className="h-3.5 w-3.5" /> Automatic
+          </button>
+        </div>
+      )}
+
+      {mode === "online" ? (
+        gateways.length === 0 ? (
+          <div className="rounded-lg border border-dashed p-6 text-center text-xs text-muted-foreground">
+            No automatic gateway is enabled yet. Please use a manual method.
+          </div>
+        ) : (
+          <div className="rounded-xl border p-4">
+            <div className="mb-1 text-sm font-semibold">Pay online</div>
+            <p className="mb-3 text-[11px] text-muted-foreground">
+              You will be taken to the gateway. Once the payment is confirmed, the deposit is credited automatically —
+              no admin approval needed.
+            </p>
+            <div className="mb-3 grid gap-2 sm:grid-cols-2">
+              {gateways.map((g) => {
+                const active = g.provider === gateway;
+                return (
+                  <button
+                    type="button"
+                    key={g.provider}
+                    onClick={() => setGateway(g.provider)}
+                    className={
+                      "flex items-center justify-between gap-2 rounded-lg border p-3 text-left text-xs font-semibold transition-colors " +
+                      (active ? "border-primary bg-primary/5" : "hover:bg-muted")
+                    }
+                  >
+                    <span className="flex min-w-0 items-center gap-2">
+                      <PaymentLogo method={g.provider} size={22} />
+                      <span className="truncate">{g.label}</span>
+                    </span>
+                    {active && <BadgeCheck className="h-4 w-4 text-primary" />}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-xs font-medium">Amount *</label>
+                <input
+                  value={onlineAmount}
+                  onChange={(e) => setOnlineAmount(e.target.value)}
+                  className={inp}
+                  inputMode="decimal"
+                  placeholder="5000"
+                />
+              </div>
+              <div className="flex items-end justify-end">
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => void payOnline()}
+                  className="btn-brand inline-flex items-center gap-1.5 rounded-md px-4 py-2 text-xs font-semibold disabled:opacity-50"
+                >
+                  {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Zap className="h-3.5 w-3.5" />} Pay now
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      ) : methods.length === 0 ? (
         <div className="rounded-lg border border-dashed p-6 text-center text-xs text-muted-foreground">
           No deposit payment method is enabled yet. Please contact support.
         </div>
