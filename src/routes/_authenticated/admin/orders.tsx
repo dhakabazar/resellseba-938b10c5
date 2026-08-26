@@ -124,6 +124,7 @@ function AdminOrdersPage() {
   const [orderItems, setOrderItems] = useState<OrderItemLite[]>([]);
   const [shipments, setShipments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
 
   const [tab, setTab] = useState<OrderTabKey>(tabParam ?? ((resellerParam || qParam) ? "all" : "forwarded"));
 
@@ -185,12 +186,17 @@ function AdminOrdersPage() {
   });
   const [resellerOptions, setResellerOptions] = useState<FilterOption[]>([]);
 
-  async function load() {
-    setLoading(true);
+  const ORDER_SELECT =
+    "id,reseller_id,order_number,customer_name,customer_phone,address_line,area,city,subtotal,discount,shipping_cost,sa_cost_total,packaging_total,delivery_cost,received_amount,advance_amount,advance_by,total,status,payment_status,payment_method,forwarded_to_admin,created_at,reseller_note,admin_note,resellers(business_name,code,contact_phone)";
+  const ITEM_SELECT = "order_id,product_id,product_name,product_image,quantity,reseller_price,line_total";
+  const SHIPMENT_SELECT = "id,order_id,provider,tracking_id,consignment_id";
+
+  async function load(opts?: { silent?: boolean }) {
+    if (!opts?.silent) setLoading(true);
     const statuses = ORDER_TABS.find((t) => t.key === tab)?.statuses ?? [];
     let q = supabase
       .from("orders")
-      .select("id,reseller_id,order_number,customer_name,customer_phone,address_line,area,city,subtotal,discount,shipping_cost,sa_cost_total,packaging_total,delivery_cost,received_amount,advance_amount,advance_by,total,status,payment_status,payment_method,forwarded_to_admin,created_at,reseller_note,admin_note,resellers(business_name,code,contact_phone)")
+      .select(ORDER_SELECT)
       .order("created_at", { ascending: false });
     if (statuses.length > 0) q = q.in("status", statuses);
     const [{ data }, { data: allStats }, { data: rs }, { data: p }] = await Promise.all([
@@ -204,8 +210,8 @@ function AdminOrdersPage() {
     setAllOrders(allStats ?? []);
     if (rows.length > 0) {
       const [{ data: its }, { data: s }] = await Promise.all([
-        supabase.from("order_items").select("order_id,product_id,product_name,product_image,quantity,reseller_price,line_total").in("order_id", rows.map((r) => r.id)),
-        supabase.from("shipments").select("id,order_id,provider,tracking_id,consignment_id").in("order_id", rows.map(r => r.id)),
+        supabase.from("order_items").select(ITEM_SELECT).in("order_id", rows.map((r) => r.id)),
+        supabase.from("shipments").select(SHIPMENT_SELECT).in("order_id", rows.map(r => r.id)),
       ]);
       setOrderItems((its ?? []) as OrderItemLite[]);
       setShipments(s ?? []);
@@ -213,8 +219,46 @@ function AdminOrdersPage() {
     setResellerOptions((rs ?? []).map((r: any) => ({ value: r.id, label: `${r.business_name} (/${r.code})` })));
     setResellers(rs ?? []);
     setAllProducts((p ?? []) as any[]);
-    setLoading(false);
+    if (!opts?.silent) setLoading(false);
   }
+
+  // Refresh only the touched order rows — keeps scroll position, page and filters intact.
+  async function syncOrders(ids: string[]) {
+    const list = ids.filter(Boolean);
+    if (list.length === 0) return;
+    const statuses = (ORDER_TABS.find((t) => t.key === tab)?.statuses ?? []) as string[];
+    const inTab = (s: string) => statuses.length === 0 || statuses.includes(s);
+    const [{ data: rows }, { data: its }, { data: sh }, { data: allStats }] = await Promise.all([
+      supabase.from("orders").select(ORDER_SELECT).in("id", list),
+      supabase.from("order_items").select(ITEM_SELECT).in("order_id", list),
+      supabase.from("shipments").select(SHIPMENT_SELECT).in("order_id", list),
+      supabase.from("orders").select("status"),
+    ]);
+    const fetched = ((rows ?? []) as unknown) as OrderRow[];
+    setAllOrders(allStats ?? []);
+    setOrders((prev) => {
+      let next = prev
+        .map((o) => fetched.find((f) => f.id === o.id) ?? o)
+        .filter((o) => !list.includes(o.id) || inTab(o.status));
+      for (const f of fetched) {
+        if (!next.some((o) => o.id === f.id) && inTab(f.status)) next = [f, ...next];
+      }
+      return next;
+    });
+    setOrderItems((prev) => [...prev.filter((i) => !list.includes(i.order_id)), ...((its ?? []) as OrderItemLite[])]);
+    setShipments((prev) => [...prev.filter((s) => !list.includes(s.order_id)), ...((sh ?? []) as any[])]);
+  }
+
+  async function dropOrders(ids: string[]) {
+    setOrders((prev) => prev.filter((o) => !ids.includes(o.id)));
+    setOrderItems((prev) => prev.filter((i) => !ids.includes(i.order_id)));
+    setShipments((prev) => prev.filter((s) => !ids.includes(s.order_id)));
+    setMarked((prev) => prev.filter((id) => !ids.includes(id)));
+    setExpandedOrders((prev) => prev.filter((id) => !ids.includes(id)));
+    const { data: allStats } = await supabase.from("orders").select("status");
+    setAllOrders(allStats ?? []);
+  }
+
 
   async function removeOrder(id: string) {
     const order = orders.find(o => o.id === id);
@@ -230,16 +274,16 @@ function AdminOrdersPage() {
         : "Are you sure you want to delete this order? This action cannot be undone.",
       variant: isBooked ? "warning" : "danger",
       onConfirm: async () => {
-        setLoading(true);
+        setBusy(true);
         const { data: deleted, error } = await supabase.from("orders").delete().eq("id", id).select("id");
         if (error) toast.error(error.message);
         else if (!deleted || deleted.length === 0) toast.error("Delete failed: you do not have permission to delete this order.");
         else {
           toast.success("Order deleted");
-          await load();
+          await dropOrders([id]);
         }
         setConfirmModal(prev => ({ ...prev, open: false }));
-        setLoading(false);
+        setBusy(false);
       }
     });
   }
@@ -261,7 +305,8 @@ function AdminOrdersPage() {
       description: `Update ${marked.length} orders to ${orderStatusLabel(newStatus)}?`,
       variant: "warning",
       onConfirm: async () => {
-        setLoading(true);
+        setBusy(true);
+        const targetIds = [...marked];
         let error: { message: string } | null = null;
         if (newStatus === "delivered") {
           // Full delivery = full order total collected.
@@ -282,12 +327,12 @@ function AdminOrdersPage() {
         }
         if (error) toast.error(error.message);
         else {
-          toast.success(`${marked.length} orders updated`);
+          toast.success(`${targetIds.length} orders updated`);
           setMarked([]);
-          load();
+          await syncOrders(targetIds);
         }
         setConfirmModal(prev => ({ ...prev, open: false }));
-        setLoading(false);
+        setBusy(false);
       }
     });
   }
@@ -304,18 +349,17 @@ function AdminOrdersPage() {
         : `Delete ${marked.length} selected orders? This action cannot be undone.`,
       variant: bookedCount > 0 ? "warning" : "danger",
       onConfirm: async () => {
-        setLoading(true);
+        setBusy(true);
         const { data: deleted, error } = await supabase.from("orders").delete().in("id", marked).select("id");
         if (error) toast.error(error.message);
         else if (!deleted || deleted.length === 0) toast.error("Delete failed: you do not have permission to delete these orders.");
         else {
           if (deleted.length < marked.length) toast.warning(`${deleted.length} of ${marked.length} orders deleted, the rest were not permitted.`);
           else toast.success(`${deleted.length} orders deleted`);
-          setMarked([]);
-          await load();
+          await dropOrders(deleted.map((d: any) => d.id));
         }
         setConfirmModal(prev => ({ ...prev, open: false }));
-        setLoading(false);
+        setBusy(false);
       }
     });
   }
@@ -371,7 +415,7 @@ function AdminOrdersPage() {
             actions={
                 <div className="flex items-center gap-2">
                   {!isPartialStatus(tab) && canStatus && (
-                    <BulkScanButton mode={tab === "pending_return" ? "return" : "handover"} onDone={() => load()} />
+                    <BulkScanButton mode={tab === "pending_return" ? "return" : "handover"} onDone={() => void load({ silent: true })} />
                   )}
                   {canCreate && (
                   <button
@@ -758,7 +802,7 @@ function AdminOrdersPage() {
                   })().map((s) => (
                     <button
                       key={s}
-                      disabled={loading}
+                      disabled={loading || busy}
                       onClick={async () => {
                         if (statusModal.isBulk) {
                           await bulkUpdateStatus(s);
@@ -770,8 +814,9 @@ function AdminOrdersPage() {
                           setStatusModal(null);
                           return;
                         }
-                        setLoading(true);
-                        const curr = orders.find((o) => o.id === statusModal.orderId);
+                        setBusy(true);
+                        const targetId = statusModal.orderId;
+                        const curr = orders.find((o) => o.id === targetId);
                         const patch: Record<string, unknown> = { status: s as any };
                         if (s === "delivered") patch.received_amount = Number(curr?.total ?? 0);
                         const { error } = await supabase
@@ -784,9 +829,9 @@ function AdminOrdersPage() {
                         } else {
                           toast.success(`Status updated to ${orderStatusLabel(s)}`);
                           setStatusModal(null);
-                          await load();
+                          await syncOrders([targetId]);
                         }
-                        setLoading(false);
+                        setBusy(false);
                       }}
                       className={`group flex items-center gap-3 rounded-lg border px-3 py-2.5 text-left text-xs transition-all hover:bg-accent disabled:opacity-50 ${
                         statusModal.currentStatus === s ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "border-transparent"
@@ -818,15 +863,19 @@ function AdminOrdersPage() {
           targetStatus={settleModal?.status ?? "delivered"}
           allowKindSwitch={!!settleModal?.pickKind}
           onClose={() => setSettleModal(null)}
-          onSaved={() => void load()}
+          onSaved={() => {
+            const id = settleModal?.orderId;
+            if (id) void syncOrders([id]);
+          }}
         />
         <ShipmentBookingModal
           isOpen={bookingModal.open}
           onClose={() => setBookingModal({ open: false, orderIds: [] })}
           orderIds={bookingModal.orderIds}
           onSuccess={() => {
+            const ids = [...bookingModal.orderIds];
             setMarked([]);
-            load();
+            void syncOrders(ids);
           }}
         />
 
@@ -839,7 +888,7 @@ function AdminOrdersPage() {
             onClose={() => setOpen(false)}
             onCreated={() => {
               setOpen(false);
-              load();
+              void load({ silent: true });
             }}
           />
         )}
@@ -851,8 +900,9 @@ function AdminOrdersPage() {
             isAdmin
             onClose={() => setEditId(null)}
             onSaved={() => {
+              const id = editId;
               setEditId(null);
-              load();
+              if (id) void syncOrders([id]);
             }}
           />
         )}
