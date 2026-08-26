@@ -54,18 +54,20 @@ export const cfgBool = (config: PaymentConfigRow["config"], key: string): boolea
 
 /**
  * Manual methods a reseller may use to pay the security deposit.
- * Any active platform-level manual method qualifies; the `allow_deposit`
- * flag only decides ordering so admin favourites appear first.
+ * One global switch (Advanced settings → `depositPayEnabled`) decides this for
+ * every card at once; when it is on, every ACTIVE manual method qualifies.
  */
 export async function fetchDepositMethods(): Promise<PaymentConfigRow[]> {
+  const { fetchAdvancedSettings } = await import("@/lib/advanced-settings");
+  const settings = await fetchAdvancedSettings();
+  if (!settings.depositPayEnabled) return [];
   const { data } = await supabase
     .from("payment_configs")
     .select("id,method,label,mode,is_active,instructions,config")
     .is("reseller_id", null)
     .eq("is_active", true)
     .order("created_at");
-  return ((data ?? []) as unknown as PaymentConfigRow[])
-    .filter((r) => r.mode === "manual")
-    .sort((a, b) => Number(cfgBool(b.config, "allow_deposit")) - Number(cfgBool(a.config, "allow_deposit")));
+  return ((data ?? []) as unknown as PaymentConfigRow[]).filter((r) => r.mode === "manual");
 }
+
 
