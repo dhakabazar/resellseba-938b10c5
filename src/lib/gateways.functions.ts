@@ -112,3 +112,31 @@ export const testGatewayConnection = createServerFn({ method: "POST" })
       return { success: false as const, error: extractGatewayError(err) };
     }
   });
+
+/** Public: which automatic gateways a storefront may show (no credentials leak). */
+export const listActiveGateways = createServerFn({ method: "GET" })
+  .inputValidator((d) => z.object({ code: z.string().min(1) }).parse(d))
+  .handler(async ({ data }) => {
+    const core = await import("@/lib/gateways/core.server");
+    const { GATEWAYS } = await import("@/lib/gateways/registry");
+    const db = await core.admin();
+    const { data: reseller } = await db
+      .from("resellers")
+      .select("id")
+      .eq("code", data.code)
+      .maybeSingle();
+    const resellerId = (reseller?.id as string | undefined) ?? null;
+    const { data: rows } = await db
+      .from("payment_gateway_configs")
+      .select("provider,label,is_active,reseller_id")
+      .eq("is_active", true);
+    const out: { provider: string; label: string; method: string }[] = [];
+    for (const spec of GATEWAYS) {
+      const matches = (rows ?? []).filter((r: any) => r.provider === spec.provider);
+      const row =
+        matches.find((r: any) => resellerId && r.reseller_id === resellerId) ??
+        matches.find((r: any) => r.reseller_id === null);
+      if (row) out.push({ provider: spec.provider, label: (row as any).label || spec.label, method: spec.method });
+    }
+    return out;
+  });
