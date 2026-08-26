@@ -278,6 +278,31 @@ function ResellersPage() {
   }
 
 
+  async function resetPassword(r: Reseller) {
+    if (!confirm(`Reset password for "${r.business_name}"? A new simple password will be generated.`)) return;
+    try {
+      const res = await resetPasswordFn({ data: { userId: r.user_id } });
+      await navigator.clipboard.writeText(res.password).catch(() => {});
+      toast.success(`New password: ${res.password} (copied)`, { duration: 15000 });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to reset password");
+    }
+  }
+
+  async function loginAsReseller(r: Reseller) {
+    try {
+      const res = await impersonateFn({ data: { userId: r.user_id } });
+      await startImpersonation({
+        tokenHash: res.tokenHash,
+        label: r.business_name,
+        returnTo: window.location.pathname + window.location.search,
+      });
+      window.location.assign("/reseller");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not log in as reseller");
+    }
+  }
+
   async function confirmEmail(r: Reseller) {
     try {
       const res = await confirmEmailFn({ data: { userId: r.user_id } });
