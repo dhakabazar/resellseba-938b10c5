@@ -38,7 +38,7 @@ function Chip({
   );
 }
 
-export function ResellerTotalCell({ order }: { order: ProfitOrder }) {
+export function ResellerTotalCell({ order, showProfit = true }: { order: ProfitOrder; showProfit?: boolean }) {
   const total = Number(order.total ?? 0) || 0;
   const delivery = Number(order.shipping_cost ?? 0) || 0;
   const profit = orderProfit(order);
@@ -47,7 +47,9 @@ export function ResellerTotalCell({ order }: { order: ProfitOrder }) {
       <span className="text-sm font-black tabular-nums text-foreground">{bdt(total)}</span>
       <div className="flex flex-wrap gap-1">
         <Chip label="del" value={bdt(delivery)} tone="delivery" />
-        <Chip label={profit < 0 ? "loss" : "pft"} value={bdt(profit)} tone={profit < 0 ? "loss" : "profit"} />
+        {showProfit && (
+          <Chip label={profit < 0 ? "loss" : "pft"} value={bdt(profit)} tone={profit < 0 ? "loss" : "profit"} />
+        )}
       </div>
     </div>
   );
