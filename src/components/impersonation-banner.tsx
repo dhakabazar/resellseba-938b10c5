@@ -21,7 +21,9 @@ export function ImpersonationBanner() {
     try {
       const to = await stopImpersonation();
       setSnapshot(null);
-      await nav({ to, replace: true });
+      // Full reload so the restored admin session is used everywhere, and the
+      // exact page (with its query string) the admin left is reopened.
+      window.location.replace(to);
     } catch (e: any) {
       setBusy(false);
       toast.error(e?.message ?? "Could not return to admin");
