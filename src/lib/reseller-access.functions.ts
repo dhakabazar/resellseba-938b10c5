@@ -6,12 +6,14 @@ import { assertPermission } from "@/lib/admin-users.server";
 /** Sets an easy, readable password for a reseller and returns it once to the admin. */
 export const resetResellerPassword = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ userId: z.string().uuid() }).parse(d))
+  .inputValidator((d) =>
+    z.object({ userId: z.string().uuid(), password: z.string().min(6).max(64).optional() }).parse(d),
+  )
   .handler(async ({ data, context }) => {
     await assertPermission(context.supabase, context.userId, "resellers.manage");
     const { setPassword } = await import("@/lib/auth-admin.server");
     const { easyPassword } = await import("@/lib/reseller-access.server");
-    const password = easyPassword();
+    const password = data.password ?? easyPassword();
     await setPassword(context.supabase, data.userId, password);
     return { ok: true, password };
   });

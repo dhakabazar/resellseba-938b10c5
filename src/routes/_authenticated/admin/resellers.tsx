@@ -54,6 +54,7 @@ import {
 import { ResellerProfile, type ResellerProfileData } from "@/components/ResellerProfile";
 import { DepositLedger } from "@/components/deposit-ledger";
 import { confirmAction } from "@/lib/confirm";
+import { PasswordResetModal } from "@/components/password-reset-modal";
 
 type Status = "pending" | "active" | "suspended" | "rejected";
 
@@ -143,6 +144,7 @@ function ResellersPage() {
   const [editing, setEditing] = useState<Reseller | null>(null);
   const [depositFor, setDepositFor] = useState<Reseller | null>(null);
   const [profileFor, setProfileFor] = useState<Reseller | null>(null);
+  const [resetFor, setResetFor] = useState<Reseller | null>(null);
   const [agents, setAgents] = useState<Array<{ id: string; display_name: string }>>([]);
   const [agentFilter, setAgentFilter] = useState("");
 
@@ -282,25 +284,16 @@ function ResellersPage() {
   }
 
 
-  async function resetPassword(r: Reseller) {
-    if (
-      !(await confirmAction({
-        title: "Reset password",
-        description: "A new simple password will be generated and copied to your clipboard.",
-        detail: r.business_name,
-        confirmText: "Reset password",
-        variant: "warning",
-      }))
-    )
-      return;
+  async function applyPasswordReset(r: Reseller, password: string) {
     try {
-      const res = await resetPasswordFn({ data: { userId: r.user_id } });
-      await navigator.clipboard.writeText(res.password).catch(() => {});
-      toast.success(`New password: ${res.password} (copied)`, { duration: 15000 });
+      await resetPasswordFn({ data: { userId: r.user_id, password } });
+      toast.success(`Password updated for ${r.business_name}`);
+      setResetFor(null);
     } catch (e: any) {
       toast.error(e?.message ?? "Failed to reset password");
     }
   }
+
 
   async function loginAsReseller(r: Reseller) {
     try {
@@ -588,7 +581,7 @@ function ResellersPage() {
                       <DropdownMenuItem onClick={() => setDepositFor(r)}>
                         <Wallet className="mr-2 h-4 w-4" /> Deposit & freeze
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => void resetPassword(r)}>
+                      <DropdownMenuItem onClick={() => setResetFor(r)}>
                         <KeyRound className="mr-2 h-4 w-4" /> Reset password
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => void loginAsReseller(r)}>
@@ -674,6 +667,14 @@ function ResellersPage() {
               : null
           }
           onClose={() => setProfileFor(null)}
+        />
+      )}
+
+      {resetFor && (
+        <PasswordResetModal
+          label={resetFor.business_name}
+          onClose={() => setResetFor(null)}
+          onReset={(pw) => applyPasswordReset(resetFor, pw)}
         />
       )}
 
