@@ -758,12 +758,6 @@ function OrdersPage() {
               setMarked((prev) => (checked ? [...prev, o.id] : prev.filter((id) => id !== o.id)));
                 const actions = (
                   <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setSelected(o)}
-                      className="rounded-md border px-2.5 py-1 text-xs hover:bg-accent"
-                    >
-                      Details
-                    </button>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <button className="rounded-md border p-1 hover:bg-accent">
