@@ -701,6 +701,7 @@ function ResellersPage() {
           reseller={editing}
           agents={agents}
           email={emailStatus[editing.user_id]}
+          verify={verifyFor(editing)}
           others={items.filter((i) => i.id !== editing.id && i.status === "active")}
           onClose={() => setEditing(null)}
           onSaved={() => {
