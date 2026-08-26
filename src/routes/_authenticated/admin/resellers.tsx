@@ -818,6 +818,7 @@ function EditModal({
   others,
   email,
   verify,
+  onSetPhoneVerified,
   onClose,
   onSaved,
 }: {
@@ -826,12 +827,15 @@ function EditModal({
   verify?: VerifyFlags;
   agents: Array<{ id: string; display_name: string }>;
   others: Reseller[];
+  onSetPhoneVerified: (verified: boolean) => Promise<boolean>;
   onClose: () => void;
   onSaved: () => void;
 }) {
   const [businessName, setBusinessName] = useState(reseller.business_name);
   const [code, setCode] = useState(reseller.code);
   const [phone, setPhone] = useState(reseller.contact_phone ?? "");
+  const [phoneVerified, setPhoneVerified] = useState(Boolean(verify?.phoneVerified));
+  const [phoneBusy, setPhoneBusy] = useState(false);
   const [address, setAddress] = useState(reseller.address ?? "");
   const [commission, setCommission] = useState(String(reseller.commission_rate));
   const [leaderId, setLeaderId] = useState(reseller.leader_id ?? "");
