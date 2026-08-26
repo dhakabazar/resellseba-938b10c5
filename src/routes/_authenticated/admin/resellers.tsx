@@ -55,8 +55,16 @@ import { ResellerProfile, type ResellerProfileData } from "@/components/Reseller
 import { DepositLedger } from "@/components/deposit-ledger";
 import { confirmAction } from "@/lib/confirm";
 import { PasswordResetModal } from "@/components/password-reset-modal";
+import { useAdvancedSettings } from "@/lib/advanced-settings";
+import {
+  resellerStatusActions,
+  resellerStatusClass,
+  resellerStatusLabel,
+  type ResellerStatus,
+} from "@/lib/reseller-status";
 
-type Status = "pending" | "active" | "suspended" | "rejected";
+type Status = ResellerStatus;
+
 
 type Reseller = {
   id: string;
