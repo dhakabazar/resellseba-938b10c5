@@ -255,7 +255,10 @@ export function OrderNotes({
           </div>
         ) : notes.length === 0 ? (
 
-          <p className="text-xs text-muted-foreground">No notes yet.</p>
+          <p className="text-xs text-muted-foreground">
+            {orderNotes.length > 0 ? "No timeline notes yet." : "No notes yet."}
+          </p>
+
         ) : (
           <ol className="relative space-y-4 border-l pl-4">
             {notes.map((n) => (
