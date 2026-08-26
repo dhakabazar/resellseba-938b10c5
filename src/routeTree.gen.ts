@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TutorialsRouteImport } from './routes/tutorials'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as CatalogRouteImport } from './routes/catalog'
@@ -85,6 +86,11 @@ import { Route as AuthenticatedAdminProductsNewRouteImport } from './routes/_aut
 import { Route as AuthenticatedResellerOrdersIdInvoiceRouteImport } from './routes/_authenticated/reseller/orders.$id.invoice'
 import { Route as AuthenticatedAdminProductsIdEditRouteImport } from './routes/_authenticated/admin/products.$id.edit'
 
+const TutorialsRoute = TutorialsRouteImport.update({
+  id: '/tutorials',
+  path: '/tutorials',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
@@ -518,6 +524,7 @@ export interface FileRoutesByFullPath {
   '/catalog': typeof CatalogRouteWithChildren
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
+  '/tutorials': typeof TutorialsRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/reseller': typeof AuthenticatedResellerRouteRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -593,6 +600,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
+  '/tutorials': typeof TutorialsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/verify': typeof AuthenticatedVerifyRoute
@@ -668,6 +676,7 @@ export interface FileRoutesById {
   '/catalog': typeof CatalogRouteWithChildren
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
+  '/tutorials': typeof TutorialsRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/_authenticated/reseller': typeof AuthenticatedResellerRouteRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
@@ -746,6 +755,7 @@ export interface FileRouteTypes {
     | '/catalog'
     | '/login'
     | '/privacy'
+    | '/tutorials'
     | '/admin'
     | '/reseller'
     | '/dashboard'
@@ -821,6 +831,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/privacy'
+    | '/tutorials'
     | '/dashboard'
     | '/onboarding'
     | '/verify'
@@ -895,6 +906,7 @@ export interface FileRouteTypes {
     | '/catalog'
     | '/login'
     | '/privacy'
+    | '/tutorials'
     | '/_authenticated/admin'
     | '/_authenticated/reseller'
     | '/_authenticated/dashboard'
@@ -973,6 +985,7 @@ export interface RootRouteChildren {
   CatalogRoute: typeof CatalogRouteWithChildren
   LoginRoute: typeof LoginRoute
   PrivacyRoute: typeof PrivacyRoute
+  TutorialsRoute: typeof TutorialsRoute
   SCodeRoute: typeof SCodeRouteWithChildren
   ApiPublicRobotsRoute: typeof ApiPublicRobotsRoute
   ApiPublicCourierCarrybeeRoute: typeof ApiPublicCourierCarrybeeRoute
@@ -985,6 +998,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/tutorials': {
+      id: '/tutorials'
+      path: '/tutorials'
+      fullPath: '/tutorials'
+      preLoaderRoute: typeof TutorialsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/privacy': {
       id: '/privacy'
       path: '/privacy'
@@ -1712,6 +1732,7 @@ const rootRouteChildren: RootRouteChildren = {
   CatalogRoute: CatalogRouteWithChildren,
   LoginRoute: LoginRoute,
   PrivacyRoute: PrivacyRoute,
+  TutorialsRoute: TutorialsRoute,
   SCodeRoute: SCodeRouteWithChildren,
   ApiPublicRobotsRoute: ApiPublicRobotsRoute,
   ApiPublicCourierCarrybeeRoute: ApiPublicCourierCarrybeeRoute,
