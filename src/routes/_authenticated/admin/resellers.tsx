@@ -127,7 +127,7 @@ const FILTER_LABELS: Record<Filter, string> = {
   active: resellerStatusLabel("active"),
   suspended: resellerStatusLabel("suspended"),
   rejected: resellerStatusLabel("rejected"),
-  email_unverified: "Email unverified",
+  email_unverified: "Unverified",
   all: "All",
 };
 
