@@ -236,12 +236,8 @@ export function DepositPayPanel({
         })}
       </div>
 
-      {/* Selected method instructions (manual only) */}
-      {selected?.kind === "manual" && selected.instructions && (
-        <p className="whitespace-pre-line rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-[11px] leading-relaxed text-amber-700 dark:text-amber-300">
-          {selected.instructions}
-        </p>
-      )}
+
+
 
       {/* Amount is shared */}
       <div className="rounded-xl border p-4">
