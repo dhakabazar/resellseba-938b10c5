@@ -30,6 +30,7 @@ import { useVerification } from "@/lib/use-verification";
 import { useBrandingTheme } from "@/lib/branding";
 import { supabase } from "@/integrations/supabase/client";
 import { getGlobalSettings, getMyReseller } from "@/lib/app-data";
+import { consumeImpersonationReturnTarget } from "@/lib/impersonation";
 
 export const Route = createFileRoute("/_authenticated/reseller")({
   component: ResellerLayout,
@@ -99,7 +100,7 @@ function ResellerLayout() {
       return;
     }
     if (roles.includes("super_admin") || roles.includes("staff")) {
-      nav({ to: "/admin", replace: true });
+      nav({ to: (consumeImpersonationReturnTarget() ?? "/admin") as never, replace: true });
       return;
     }
     if (approved === null) return;

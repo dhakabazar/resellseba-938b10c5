@@ -1,6 +1,8 @@
 import { supabase } from "@/integrations/supabase/client";
+import { refreshAuthState } from "@/lib/use-auth";
 
 const KEY = "impersonation:admin-session";
+const RETURN_KEY = "impersonation:return-to";
 
 export type ImpersonationSnapshot = {
   access_token: string;
@@ -21,6 +23,13 @@ export function readImpersonation(): ImpersonationSnapshot | null {
 
 export function clearImpersonation() {
   if (typeof window !== "undefined") localStorage.removeItem(KEY);
+}
+
+export function consumeImpersonationReturnTarget() {
+  if (typeof window === "undefined") return null;
+  const target = sessionStorage.getItem(RETURN_KEY);
+  if (target) sessionStorage.removeItem(RETURN_KEY);
+  return target;
 }
 
 /**
@@ -45,17 +54,22 @@ export async function startImpersonation(opts: { tokenHash: string; label: strin
     clearImpersonation();
     throw new Error(error.message);
   }
+  await refreshAuthState();
 }
 
 /** Restores the stored admin session and returns the page the admin left. */
 export async function stopImpersonation(): Promise<string> {
   const snapshot = readImpersonation();
   if (!snapshot) return "/admin";
+  if (typeof window !== "undefined") {
+    sessionStorage.setItem(RETURN_KEY, snapshot.returnTo || "/admin");
+  }
   const { error } = await supabase.auth.setSession({
     access_token: snapshot.access_token,
     refresh_token: snapshot.refresh_token,
   });
   clearImpersonation();
   if (error) throw new Error(error.message);
+  await refreshAuthState();
   return snapshot.returnTo || "/admin";
 }
