@@ -727,54 +727,6 @@ function AdminOrdersPage() {
                      fallbackAt={o.created_at}
                      onOpenNotes={() => setNotesModal({ orderId: o.id, orderNumber: o.order_number })}
                    />
-                   <div className="flex justify-center">
-                      <DropdownMenu>
-                       <DropdownMenuTrigger><MoreVertical className="h-4 w-4" /></DropdownMenuTrigger>
-                       <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => setSelected(o)}>
-                            <Eye className="mr-2 h-4 w-4" /> View Details
-                          </DropdownMenuItem>
-                          {canEdit && (
-                          <DropdownMenuItem onClick={() => setEditId(o.id)}>
-                            <Pencil className="mr-2 h-4 w-4" /> Edit Order
-                          </DropdownMenuItem>
-                          )}
-                          {canStatus && (
-                          <DropdownMenuItem
-                            onClick={() =>
-                              o.status === "pending_partial"
-                                ? setSettleModal({ orderId: o.id, status: "partial_full", pickKind: true })
-                                : setStatusModal({ open: true, orderId: o.id, currentStatus: o.status })
-                            }
-                          >
-                            <Settings2 className="mr-2 h-4 w-4" /> Change Status
-                          </DropdownMenuItem>
-                          )}
-                          {canShip && (() => {
-                            const isBooked = shipments.some(s => s.order_id === o.id && (s.consignment_id || s.tracking_id));
-                            if (!isBooked) {
-                              return (
-                                <DropdownMenuItem onClick={() => setBookingModal({ open: true, orderIds: [o.id] })}>
-                                  <Truck className="mr-2 h-4 w-4" /> {activeProviderLabel ? `Book ${activeProviderLabel}` : "Book Courier"}
-                                </DropdownMenuItem>
-                              );
-                            }
-                            return null;
-                          })()}
-                          {canDelete && (() => {
-                            const isBooked = shipments.some(s => s.order_id === o.id && (s.consignment_id || s.tracking_id));
-                            return (
-                              <DropdownMenuItem
-                                onClick={() => removeOrder(o.id)}
-                                className="text-destructive focus:bg-destructive/10 focus:text-destructive"
-                              >
-                                <Trash2 className="mr-2 h-4 w-4" /> Delete Order
-                              </DropdownMenuItem>
-                            );
-                          })()}
-                       </DropdownMenuContent>
-                     </DropdownMenu>
-                  </div>
                 </div>
                 {expandedOrders.includes(o.id) && (
                   <div className="bg-muted/30 px-4 py-5 md:px-8">
