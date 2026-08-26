@@ -33,12 +33,16 @@ import {
   Phone,
   PhoneCall,
   MessageCircle,
+  KeyRound,
+  LogIn,
 
 } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
 import { useServerFn } from "@tanstack/react-start";
 import { confirmUserEmail, listResellerEmailStatus, deleteAuthUser } from "@/lib/admin-users.functions";
+import { impersonateReseller, resetResellerPassword } from "@/lib/reseller-access.functions";
+import { startImpersonation } from "@/lib/impersonation";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -120,6 +124,8 @@ function ResellersPage() {
   const confirmEmailFn = useServerFn(confirmUserEmail);
   const listEmailStatusFn = useServerFn(listResellerEmailStatus);
   const deleteAuthUserFn = useServerFn(deleteAuthUser);
+  const resetPasswordFn = useServerFn(resetResellerPassword);
+  const impersonateFn = useServerFn(impersonateReseller);
   const searchParams = Route.useSearch();
   const [items, setItems] = useState<Reseller[]>([]);
   const [emailStatus, setEmailStatus] = useState<Record<string, { email: string | null; verified: boolean }>>({});
@@ -273,6 +279,31 @@ function ResellersPage() {
     load();
   }
 
+
+  async function resetPassword(r: Reseller) {
+    if (!confirm(`Reset password for "${r.business_name}"? A new simple password will be generated.`)) return;
+    try {
+      const res = await resetPasswordFn({ data: { userId: r.user_id } });
+      await navigator.clipboard.writeText(res.password).catch(() => {});
+      toast.success(`New password: ${res.password} (copied)`, { duration: 15000 });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to reset password");
+    }
+  }
+
+  async function loginAsReseller(r: Reseller) {
+    try {
+      const res = await impersonateFn({ data: { userId: r.user_id } });
+      await startImpersonation({
+        tokenHash: res.tokenHash,
+        label: r.business_name,
+        returnTo: window.location.pathname + window.location.search,
+      });
+      window.location.assign("/reseller");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not log in as reseller");
+    }
+  }
 
   async function confirmEmail(r: Reseller) {
     try {
@@ -541,6 +572,12 @@ function ResellersPage() {
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => setDepositFor(r)}>
                         <Wallet className="mr-2 h-4 w-4" /> Deposit & freeze
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => void resetPassword(r)}>
+                        <KeyRound className="mr-2 h-4 w-4" /> Reset password
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => void loginAsReseller(r)}>
+                        <LogIn className="mr-2 h-4 w-4" /> Login as reseller
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => copyStoreLink(r)}>
                         <Copy className="mr-2 h-4 w-4" /> Copy store link
