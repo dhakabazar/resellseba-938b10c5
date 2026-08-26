@@ -170,10 +170,7 @@ export function DepositPayPanel({
 
   return (
     <div className="space-y-4">
-      <p className="text-[11px] text-muted-foreground">
-        Pick a method below to pay your security deposit. Manual methods need a TrxID and are credited after admin
-        verification; automatic gateways credit instantly once payment is confirmed.
-      </p>
+
 
       {/* Unified method grid — manual + automatic together */}
       <div className="grid gap-2 sm:grid-cols-2">
