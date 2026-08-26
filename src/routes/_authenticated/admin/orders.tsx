@@ -426,7 +426,12 @@ function AdminOrdersPage() {
                       toast.error("Partial orders can't be changed in bulk — settle each order individually.");
                       return;
                     }
-                    setStatusModal({ open: true, orderId: marked[0], currentStatus: orders.find(x => x.id === marked[0])?.status || "confirmed" });
+                    setStatusModal({
+                      open: true,
+                      orderId: marked[0],
+                      currentStatus: orders.find((x) => x.id === marked[0])?.status || "confirmed",
+                      isBulk: true,
+                    });
                   }}
                   className="inline-flex h-9 items-center gap-2 rounded-md border bg-background px-3 text-xs font-medium hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
                 >
