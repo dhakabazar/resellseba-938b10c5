@@ -173,7 +173,13 @@ function Onboarding() {
               {status === "pending" ? <Loader2 className="h-6 w-6 animate-spin" /> : <Store className="h-6 w-6 opacity-40" />}
             </div>
             <h1 className="text-2xl font-bold tracking-tight">{info.title}</h1>
+            <div className="mt-2 flex justify-center">
+              <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${resellerStatusClass(status)}`}>
+                {resellerStatusLabel(status)}
+              </span>
+            </div>
             <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{info.text}</p>
+
             
             <div className="mt-8 grid grid-cols-2 gap-3">
               <ContactButton variant="whatsapp" />
