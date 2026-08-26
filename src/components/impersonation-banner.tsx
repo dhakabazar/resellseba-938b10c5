@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, Loader2, UserCog } from "lucide-react";
 import { toast } from "sonner";
 import { readImpersonation, stopImpersonation, type ImpersonationSnapshot } from "@/lib/impersonation";
@@ -8,7 +7,6 @@ import { readImpersonation, stopImpersonation, type ImpersonationSnapshot } from
 export function ImpersonationBanner() {
   const [snapshot, setSnapshot] = useState<ImpersonationSnapshot | null>(null);
   const [busy, setBusy] = useState(false);
-  const nav = useNavigate();
 
   useEffect(() => {
     setSnapshot(readImpersonation());
@@ -21,7 +19,9 @@ export function ImpersonationBanner() {
     try {
       const to = await stopImpersonation();
       setSnapshot(null);
-      await nav({ to, replace: true });
+      // Full reload so the restored admin session is used everywhere, and the
+      // exact page (with its query string) the admin left is reopened.
+      window.location.replace(to);
     } catch (e: any) {
       setBusy(false);
       toast.error(e?.message ?? "Could not return to admin");
