@@ -209,6 +209,9 @@ function ListingsPage() {
                   <DropdownMenuItem onSelect={() => setDetailId(l.id)}>
                     <Eye className="mr-2 h-4 w-4" /> View Details
                   </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => setPricingId(l.id)}>
+                    <Tag className="mr-2 h-4 w-4" /> Pricing
+                  </DropdownMenuItem>
                   <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => remove(l.id)}>
                     <Trash2 className="mr-2 h-4 w-4" /> Delete Listing
                   </DropdownMenuItem>
