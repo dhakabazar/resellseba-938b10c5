@@ -3,7 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { BadgeCheck, Clock, Copy, Loader2, Send, XCircle, Zap } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
-import { listDepositGateways, startDepositPayment } from "@/lib/gateways.functions";
+import { startDepositPayment } from "@/lib/gateways.functions";
+import { gatewayLabel } from "@/lib/gateways/registry";
+
 import { cfgString, fetchDepositMethods, type PaymentConfigRow } from "@/lib/payment-methods";
 import { PaymentLogo } from "@/components/payments/payment-brand";
 
