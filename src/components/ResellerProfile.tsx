@@ -152,9 +152,10 @@ export function ResellerProfile({
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="truncate text-lg font-semibold">{r.business_name}</h2>
-              <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium capitalize text-muted-foreground">
-                {r.status === "suspended" ? "deactivated" : r.status}
+              <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${resellerStatusClass(r.status)}`}>
+                {resellerStatusLabel(r.status)}
               </span>
+
               {r.email_verified != null &&
                 (r.email_verified ? (
                   <span className="rounded-full bg-success/15 px-2 py-0.5 text-[10px] font-medium text-success">
