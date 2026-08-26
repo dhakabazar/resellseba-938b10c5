@@ -339,7 +339,7 @@ export function OrderFilterBar({
           <Select
             label="Sort"
             value={value.sort}
-            className={isReport ? "lg:w-[140px]" : "lg:w-[170px]"}
+            className={isReport ? "lg:w-[130px]" : "lg:w-[150px]"}
             onChange={(v) => set({ sort: v as OrderFilterState["sort"] })}
           >
             {SORT_OPTIONS.map((o) => (
