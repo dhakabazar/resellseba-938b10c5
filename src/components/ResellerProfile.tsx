@@ -13,6 +13,7 @@ export type ResellerProfileData = {
   nid_number?: string | null;
   commission_rate: number;
   leader_name?: string | null;
+  agent_name?: string | null;
   notes?: string | null;
   created_at: string;
   approved_at: string | null;
@@ -270,6 +271,15 @@ export function ResellerProfile({
           {r.nid_number !== undefined && <Row label="NID" value={r.nid_number ?? "—"} />}
           <Row label="Commission rate" value={`${r.commission_rate}%`} />
           {r.leader_name !== undefined && <Row label="Leader" value={r.leader_name ?? "No leader"} />}
+          {r.agent_name !== undefined && <Row label="Commission agent" value={r.agent_name ?? "No agent assigned"} />}
+          <Row label="Status" value={<span className="capitalize">{r.status === "suspended" ? "deactivated" : r.status}</span>} />
+          <Row label="Security deposit" value={r.deposit_required ? `Required ${money(Number(r.deposit_required_amount ?? 0))}` : "Not required"} />
+          <Row label="Frozen amount" value={money(Number(r.frozen_amount ?? 0))} />
+          <Row
+            label="Store link"
+            value={<span className="font-mono text-xs break-all">{storeUrl}</span>}
+            action={<IconBtn title="Copy store link" onClick={() => copy(storeUrl, "Store link")}><Copy className="h-3 w-3" /></IconBtn>}
+          />
           <Row label="Joined" value={date(r.created_at)} />
           <Row label="Approved" value={date(r.approved_at)} />
           {r.notes ? <Row label="Notes" value={r.notes} /> : null}
