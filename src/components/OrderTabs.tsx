@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { ChevronDown } from "lucide-react";
 import { ORDER_TABS, orderTabClasses, orderTabGroup, type OrderTabKey } from "@/lib/courier-status";
 
@@ -32,8 +33,35 @@ export function OrderTabs({
   highlight?: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const [menuPosition, setMenuPosition] = useState<{
+    top: number;
+    left: number;
+    width: number;
+    maxHeight: number;
+  } | null>(null);
   const ref = useRef<HTMLDivElement>(null);
   const active = ORDER_TABS.find((t) => t.key === tab);
+
+  const updateMenuPosition = () => {
+    const trigger = ref.current?.getBoundingClientRect();
+    if (!trigger || typeof window === "undefined") return;
+
+    const margin = 16;
+    const gap = 6;
+    const desiredWidth = Math.min(window.innerWidth - margin * 2, 360);
+    const width = Math.max(trigger.width, desiredWidth);
+    const left = Math.min(
+      Math.max(margin, trigger.right - width),
+      window.innerWidth - width - margin,
+    );
+    const availableBelow = window.innerHeight - trigger.bottom - margin;
+    const availableAbove = trigger.top - margin;
+    const openUp = availableBelow < 260 && availableAbove > availableBelow;
+    const maxHeight = Math.max(180, Math.min(360, openUp ? availableAbove - gap : availableBelow - gap));
+    const top = openUp ? trigger.top - gap - maxHeight : trigger.bottom + gap;
+
+    setMenuPosition({ top, left, width, maxHeight });
+  };
 
   useEffect(() => {
     function onDoc(e: MouseEvent) {
@@ -49,6 +77,21 @@ export function OrderTabs({
       document.removeEventListener("keydown", onKey);
     };
   }, []);
+
+  useEffect(() => {
+    if (!open) {
+      setMenuPosition(null);
+      return;
+    }
+
+    updateMenuPosition();
+    window.addEventListener("resize", updateMenuPosition);
+    window.addEventListener("scroll", updateMenuPosition, true);
+    return () => {
+      window.removeEventListener("resize", updateMenuPosition);
+      window.removeEventListener("scroll", updateMenuPosition, true);
+    };
+  }, [open]);
 
   return (
     <div className={className}>
@@ -66,9 +109,19 @@ export function OrderTabs({
           </span>
           <ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
         </button>
-        {open && (
-          <div className="absolute right-0 z-40 mt-1 w-[min(100vw-2rem,360px)] min-w-full rounded-md border bg-popover p-2 shadow-lg">
-            <div className="grid max-h-[60vh] grid-cols-2 gap-1.5 overflow-y-auto overscroll-contain">
+        {open && menuPosition && createPortal(
+          <div
+            className="fixed z-[100] rounded-md border bg-popover p-2 shadow-lg"
+            style={{
+              top: menuPosition.top,
+              left: menuPosition.left,
+              width: menuPosition.width,
+            }}
+          >
+            <div
+              className="grid grid-cols-2 gap-1.5 overflow-y-auto overscroll-contain"
+              style={{ maxHeight: menuPosition.maxHeight }}
+            >
               {ORDER_TABS.map((t) => {
                 const isActive = tab === t.key;
                 return (
@@ -87,7 +140,8 @@ export function OrderTabs({
                 );
               })}
             </div>
-          </div>
+          </div>,
+          document.body,
         )}
       </div>
 
