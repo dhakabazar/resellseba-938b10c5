@@ -303,10 +303,82 @@ function assertNotBlocked(html: string, host: string) {
 }
 
 
+/** Product-page URL shapes used by this platform (panel catalog + storefronts). */
+const PANEL_PATHS: RegExp[] = [
+  /^\/catalog\/([^/]+)\/?$/i, // admin/public master catalog
+  /^\/s\/[^/]+\/p\/([^/]+)\/?$/i, // reseller storefront on the shared domain
+  /^\/p\/([^/]+)\/?$/i, // reseller storefront on a custom domain
+];
+
+/**
+ * Fast path: the link belongs to another (or this) instance of this platform,
+ * so read the structured public product feed instead of scraping HTML.
+ * Returns null when the link is not a panel product link.
+ */
+async function tryPanelImport(url: URL): Promise<ImportedProduct | null> {
+  let query: string | null = null;
+  for (const re of PANEL_PATHS) {
+    const m = url.pathname.match(re);
+    if (m?.[1]) {
+      query = `slug=${encodeURIComponent(decodeURIComponent(m[1]))}`;
+      break;
+    }
+  }
+  const code = url.searchParams.get("code") ?? url.searchParams.get("product_code");
+  if (!query && code) query = `code=${encodeURIComponent(code)}`;
+  if (!query && url.pathname.replace(/\/$/, "") === "/api/public/product") query = url.searchParams.toString();
+  if (!query) return null;
+
+  const api = `${url.origin}/api/public/product?${query}`;
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
+  try {
+    const res = await fetch(api, { signal: ctrl.signal, headers: { accept: "application/json" } });
+    if (!res.ok) return null;
+    const body = (await res.json()) as { ok?: boolean; product?: Record<string, unknown> };
+    const p = body?.product;
+    if (!body?.ok || !p || typeof p.name !== "string") return null;
+
+    // Panel descriptions are our own sanitized rich text — keep the markup,
+    // only scripts/styles are removed for safety.
+    const description = String(p.description ?? "")
+      .replace(/<script[\s\S]*?<\/script>/gi, " ")
+      .replace(/<style[\s\S]*?<\/style>/gi, " ")
+      .slice(0, 20_000)
+      .trim();
+    const shortDescription = toPlainText(String(p.shortDescription ?? ""), 400) || toPlainText(description, 200);
+    const priceNum = num(p.price);
+    return {
+      source: `Panel (${url.hostname.replace(/^www\./, "")})`,
+      url: url.href,
+      name: toPlainText(p.name, 200),
+      description,
+      shortDescription,
+      price: priceNum,
+      currency: typeof p.currency === "string" ? p.currency.slice(0, 6) : "BDT",
+      sku: typeof p.sku === "string" ? toPlainText(p.sku, 60) : null,
+      brand: typeof p.brand === "string" ? toPlainText(p.brand, 80) : null,
+      category: typeof p.category === "string" ? toPlainText(p.category, 80) : null,
+      images: cleanImages(Array.isArray(p.images) ? p.images : [], url),
+      metaTitle: toPlainText(String(p.metaTitle || p.name), 60),
+      metaDescription: toPlainText(String(p.metaDescription || ""), 160) || toPlainText(description, 160),
+    };
+  } catch {
+    return null; // fall back to the HTML scraper
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export async function scrapeProduct(rawUrl: string): Promise<ImportedProduct> {
   const url = assertSafeUrl(rawUrl);
+
+  const panel = await tryPanelImport(url);
+  if (panel) return panel;
+
   const html = await fetchText(url.href);
   assertNotBlocked(html, url.hostname);
+
 
   const blocks = jsonLdBlocks(html);
   const product =

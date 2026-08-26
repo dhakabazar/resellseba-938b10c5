@@ -29,6 +29,7 @@ import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authentic
 import { Route as SCodeThanksRouteImport } from './routes/s.$code.thanks'
 import { Route as SCodeCheckoutRouteImport } from './routes/s.$code.checkout'
 import { Route as ApiPublicRobotsRouteImport } from './routes/api/public/robots'
+import { Route as ApiPublicProductRouteImport } from './routes/api/public/product'
 import { Route as AuthenticatedResellerVisitorsRouteImport } from './routes/_authenticated/reseller/visitors'
 import { Route as AuthenticatedResellerTutorialsRouteImport } from './routes/_authenticated/reseller/tutorials'
 import { Route as AuthenticatedResellerTransactionsRouteImport } from './routes/_authenticated/reseller/transactions'
@@ -186,6 +187,11 @@ const SCodeCheckoutRoute = SCodeCheckoutRouteImport.update({
 const ApiPublicRobotsRoute = ApiPublicRobotsRouteImport.update({
   id: '/api/public/robots',
   path: '/api/public/robots',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicProductRoute = ApiPublicProductRouteImport.update({
+  id: '/api/public/product',
+  path: '/api/public/product',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedResellerVisitorsRoute =
@@ -585,6 +591,7 @@ export interface FileRoutesByFullPath {
   '/reseller/transactions': typeof AuthenticatedResellerTransactionsRoute
   '/reseller/tutorials': typeof AuthenticatedResellerTutorialsRoute
   '/reseller/visitors': typeof AuthenticatedResellerVisitorsRoute
+  '/api/public/product': typeof ApiPublicProductRoute
   '/api/public/robots': typeof ApiPublicRobotsRoute
   '/s/$code/checkout': typeof SCodeCheckoutRoute
   '/s/$code/thanks': typeof SCodeThanksRoute
@@ -659,6 +666,7 @@ export interface FileRoutesByTo {
   '/reseller/transactions': typeof AuthenticatedResellerTransactionsRoute
   '/reseller/tutorials': typeof AuthenticatedResellerTutorialsRoute
   '/reseller/visitors': typeof AuthenticatedResellerVisitorsRoute
+  '/api/public/product': typeof ApiPublicProductRoute
   '/api/public/robots': typeof ApiPublicRobotsRoute
   '/s/$code/checkout': typeof SCodeCheckoutRoute
   '/s/$code/thanks': typeof SCodeThanksRoute
@@ -739,6 +747,7 @@ export interface FileRoutesById {
   '/_authenticated/reseller/transactions': typeof AuthenticatedResellerTransactionsRoute
   '/_authenticated/reseller/tutorials': typeof AuthenticatedResellerTutorialsRoute
   '/_authenticated/reseller/visitors': typeof AuthenticatedResellerVisitorsRoute
+  '/api/public/product': typeof ApiPublicProductRoute
   '/api/public/robots': typeof ApiPublicRobotsRoute
   '/s/$code/checkout': typeof SCodeCheckoutRoute
   '/s/$code/thanks': typeof SCodeThanksRoute
@@ -819,6 +828,7 @@ export interface FileRouteTypes {
     | '/reseller/transactions'
     | '/reseller/tutorials'
     | '/reseller/visitors'
+    | '/api/public/product'
     | '/api/public/robots'
     | '/s/$code/checkout'
     | '/s/$code/thanks'
@@ -893,6 +903,7 @@ export interface FileRouteTypes {
     | '/reseller/transactions'
     | '/reseller/tutorials'
     | '/reseller/visitors'
+    | '/api/public/product'
     | '/api/public/robots'
     | '/s/$code/checkout'
     | '/s/$code/thanks'
@@ -972,6 +983,7 @@ export interface FileRouteTypes {
     | '/_authenticated/reseller/transactions'
     | '/_authenticated/reseller/tutorials'
     | '/_authenticated/reseller/visitors'
+    | '/api/public/product'
     | '/api/public/robots'
     | '/s/$code/checkout'
     | '/s/$code/thanks'
@@ -1000,6 +1012,7 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   TutorialsRoute: typeof TutorialsRoute
   SCodeRoute: typeof SCodeRouteWithChildren
+  ApiPublicProductRoute: typeof ApiPublicProductRoute
   ApiPublicRobotsRoute: typeof ApiPublicRobotsRoute
   ApiPublicCourierCarrybeeRoute: typeof ApiPublicCourierCarrybeeRoute
   ApiPublicCourierPathaoRoute: typeof ApiPublicCourierPathaoRoute
@@ -1149,6 +1162,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/robots'
       fullPath: '/api/public/robots'
       preLoaderRoute: typeof ApiPublicRobotsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/product': {
+      id: '/api/public/product'
+      path: '/api/public/product'
+      fullPath: '/api/public/product'
+      preLoaderRoute: typeof ApiPublicProductRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/reseller/visitors': {
@@ -1756,6 +1776,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   TutorialsRoute: TutorialsRoute,
   SCodeRoute: SCodeRouteWithChildren,
+  ApiPublicProductRoute: ApiPublicProductRoute,
   ApiPublicRobotsRoute: ApiPublicRobotsRoute,
   ApiPublicCourierCarrybeeRoute: ApiPublicCourierCarrybeeRoute,
   ApiPublicCourierPathaoRoute: ApiPublicCourierPathaoRoute,
