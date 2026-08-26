@@ -348,7 +348,7 @@ function MethodCard({
         </button>
       </div>
 
-      <div className="grid gap-3 p-4 md:grid-cols-2">
+      <div className={"grid gap-3 p-4 " + (isManual ? "md:grid-cols-2" : "")}>
         {isManual ? (
           <>
             <div className="grid gap-3 sm:grid-cols-2">
