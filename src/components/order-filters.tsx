@@ -363,7 +363,7 @@ export function OrderFilterBar({
           <Select
             label="Courier"
             value={value.courier}
-            className={isReport ? "lg:w-[120px]" : "lg:w-[150px]"}
+            className={isReport ? "lg:w-[130px]" : "lg:w-[150px]"}
             onChange={(v) => set({ courier: v })}
           >
             {COURIER_FILTER_OPTIONS.map((o) => (
