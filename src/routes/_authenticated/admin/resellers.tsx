@@ -53,6 +53,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ResellerProfile, type ResellerProfileData } from "@/components/ResellerProfile";
 import { DepositLedger } from "@/components/deposit-ledger";
+import { confirmAction } from "@/lib/confirm";
 
 type Status = "pending" | "active" | "suspended" | "rejected";
 
@@ -281,7 +282,16 @@ function ResellersPage() {
 
 
   async function resetPassword(r: Reseller) {
-    if (!confirm(`Reset password for "${r.business_name}"? A new simple password will be generated.`)) return;
+    if (
+      !(await confirmAction({
+        title: "Reset password",
+        description: "A new simple password will be generated and copied to your clipboard.",
+        detail: r.business_name,
+        confirmText: "Reset password",
+        variant: "warning",
+      }))
+    )
+      return;
     try {
       const res = await resetPasswordFn({ data: { userId: r.user_id } });
       await navigator.clipboard.writeText(res.password).catch(() => {});
@@ -318,9 +328,13 @@ function ResellersPage() {
 
   async function remove(r: Reseller) {
     if (
-      !confirm(
-        `Delete reseller "${r.business_name}"? This also deletes the auth account and may remove related listings/orders.`,
-      )
+      !(await confirmAction({
+        title: "Delete reseller",
+        description:
+          "This also deletes the login account and may remove related listings/orders.",
+        detail: r.business_name,
+        confirmText: "Delete reseller",
+      }))
     )
       return;
     const { error } = await supabase.from("resellers").delete().eq("id", r.id);

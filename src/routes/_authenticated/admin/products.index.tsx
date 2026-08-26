@@ -14,6 +14,7 @@ import {
 import { DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { CopyButton, ImageDownloadTools, stripHtml } from "@/components/store/reseller-tools";
 import { ProductImportModal } from "@/components/ProductImportModal";
+import { confirmAction } from "@/lib/confirm";
 
 type Row = {
   id: string;
@@ -97,7 +98,7 @@ function ProductsPage() {
     setItems((s) => s.map((i) => (i.id === p.id ? { ...i, is_active: !p.is_active } : i)));
   }
   async function remove(p: Row) {
-    if (!confirm(`Delete "${p.name}"?`)) return;
+    if (!(await confirmAction({ title: "Delete product", description: "This product will be permanently deleted.", detail: p.name, confirmText: "Delete" }))) return;
     const { error } = await supabase.from("products").delete().eq("id", p.id);
     if (error) return toast.error(error.message);
     toast.success("Deleted");
@@ -123,7 +124,7 @@ function ProductsPage() {
   async function bulkDelete() {
     const ids = Array.from(selected);
     if (!ids.length) return;
-    if (!confirm(`Delete ${ids.length} product? Products used in orders are protected.`)) return;
+    if (!(await confirmAction({ title: "Delete products", description: "Products used in orders are protected.", detail: `${ids.length} selected`, confirmText: "Delete" }))) return;
     setBulkBusy(true);
     const { error } = await supabase.from("products").delete().in("id", ids);
     setBulkBusy(false);

@@ -5,6 +5,7 @@ import { PageHeader, EmptyState } from "@/components/ui-kit";
 import { Plus, Loader2, Trash2, Pencil, X } from "lucide-react";
 import { toast } from "sonner";
 import { ImageUploader, type UploadedImage } from "@/components/ImageUploader";
+import { confirmAction } from "@/lib/confirm";
 
 type EditBrand = {
   id: string;
@@ -125,7 +126,7 @@ function BrandsPage() {
     load();
   }
   async function remove(b: Brand) {
-    if (!confirm(`Delete "${b.name}"?`)) return;
+    if (!(await confirmAction({ title: "Delete brand", description: "This brand will be permanently deleted.", detail: b.name, confirmText: "Delete" }))) return;
     const { error } = await supabase.from("brands").delete().eq("id", b.id);
     if (error) toast.error(error.message);
     else load();

@@ -5,6 +5,7 @@ import { PageHeader, EmptyState } from "@/components/ui-kit";
 import { Plus, Loader2, Trash2, ChevronRight, Pencil, X } from "lucide-react";
 import { toast } from "sonner";
 import { ImageUploader, type UploadedImage } from "@/components/ImageUploader";
+import { confirmAction } from "@/lib/confirm";
 
 type EditCat = {
   id: string;
@@ -118,7 +119,7 @@ function CatsPage() {
     else load();
   }
   async function remove(c: Cat) {
-    if (!confirm(`Delete "${c.name}"?`)) return;
+    if (!(await confirmAction({ title: "Delete category", description: "This category will be permanently deleted.", detail: c.name, confirmText: "Delete" }))) return;
     const { error } = await supabase.from("categories").delete().eq("id", c.id);
     if (error) toast.error(error.message);
     else load();
