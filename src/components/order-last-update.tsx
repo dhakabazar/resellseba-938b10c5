@@ -7,16 +7,25 @@ export type OrderMeta = {
   statusAt: string | null;
   noteBody: string | null;
   noteRole: string | null;
+  noteName: string | null;
+  noteAt: string | null;
   noteCount: number;
 };
 
-const empty = (): OrderMeta => ({ statusAt: null, noteBody: null, noteRole: null, noteCount: 0 });
+const empty = (): OrderMeta => ({
+  statusAt: null,
+  noteBody: null,
+  noteRole: null,
+  noteName: null,
+  noteAt: null,
+  noteCount: 0,
+});
 
 /** Latest status-change time + latest note for a batch of orders (2 queries total). */
 export async function fetchOrderMeta(ids: string[]): Promise<Record<string, OrderMeta>> {
   const list = ids.filter(Boolean);
   if (list.length === 0) return {};
-  const [{ data: hist }, { data: notes }] = await Promise.all([
+  const [{ data: hist }, { data: notes }, { data: ords }] = await Promise.all([
     supabase
       .from("order_status_history")
       .select("order_id,created_at")
@@ -24,9 +33,13 @@ export async function fetchOrderMeta(ids: string[]): Promise<Record<string, Orde
       .order("created_at", { ascending: false }),
     supabase
       .from("order_notes")
-      .select("order_id,body,author_role,created_at")
+      .select("order_id,body,author_role,author_name,created_at")
       .in("order_id", list)
       .order("created_at", { ascending: false }),
+    supabase
+      .from("orders")
+      .select("id,reseller_note,admin_note,notes,created_at,updated_at")
+      .in("id", list),
   ]);
   const out: Record<string, OrderMeta> = {};
   for (const id of list) out[id] = empty();
@@ -41,6 +54,22 @@ export async function fetchOrderMeta(ids: string[]): Promise<Record<string, Orde
     if (!m.noteBody) {
       m.noteBody = n.body;
       m.noteRole = n.author_role;
+      m.noteName = n.author_name ?? null;
+      m.noteAt = n.created_at;
+    }
+  }
+  for (const o of (ords ?? []) as any[]) {
+    const m = out[o.id];
+    if (!m) continue;
+    const form: { role: string; body: string }[] = [];
+    if (o.reseller_note) form.push({ role: "reseller", body: o.reseller_note });
+    if (o.admin_note) form.push({ role: "admin", body: o.admin_note });
+    if (o.notes) form.push({ role: "staff", body: o.notes });
+    m.noteCount += form.length;
+    if (!m.noteBody && form[0]) {
+      m.noteBody = form[0].body;
+      m.noteRole = form[0].role;
+      m.noteAt = o.updated_at ?? o.created_at;
     }
   }
   return out;
@@ -91,8 +120,21 @@ export function LastUpdateCell({
             <span className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide text-primary">
               <StickyNote className="h-2.5 w-2.5" />
               {roleTag(meta.noteRole)}
+              {meta.noteName && (
+                <span className="font-semibold normal-case text-foreground/70">{meta.noteName}</span>
+              )}
               {meta.noteCount > 1 && <span className="text-muted-foreground">+{meta.noteCount - 1}</span>}
             </span>
+            {meta.noteAt && (
+              <span className="block text-[9px] tabular-nums text-muted-foreground/70">
+                {new Date(meta.noteAt).toLocaleString([], {
+                  day: "2-digit",
+                  month: "short",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </span>
+            )}
             <span className="mt-0.5 block line-clamp-2 text-[10px] leading-snug text-foreground/80">
               {meta.noteBody}
             </span>
