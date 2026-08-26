@@ -34,8 +34,11 @@ export const startGatewayPayment = createServerFn({ method: "POST" })
       ipnUrl:
         data.provider === "sslcommerz"
           ? `${origin}/api/public/payment/sslcommerz-ipn`
-          : `${origin}/api/public/payment/epayseba-webhook`,
+          : data.provider === "epayseba"
+            ? `${origin}/api/public/payment/epayseba-webhook`
+            : core.returnUrl(origin, data.provider, { ...params, t: "ipn" }),
     };
+
 
     try {
       const res = await adapterFor(data.provider).create(creds, order, urls);
@@ -216,8 +219,11 @@ export const startDepositPayment = createServerFn({ method: "POST" })
       ipnUrl:
         data.provider === "sslcommerz"
           ? `${origin}/api/public/payment/sslcommerz-ipn`
-          : `${origin}/api/public/payment/epayseba-webhook`,
+          : data.provider === "epayseba"
+            ? `${origin}/api/public/payment/epayseba-webhook`
+            : core.returnUrl(origin, data.provider, { ...params, t: "ipn" }),
     };
+
 
     const pseudo = core.depositAsOrder(intentRow as any, {
       name: reseller.business_name ?? undefined,
