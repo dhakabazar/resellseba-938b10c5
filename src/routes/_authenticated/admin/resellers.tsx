@@ -33,6 +33,8 @@ import {
   Phone,
   PhoneCall,
   MessageCircle,
+  KeyRound,
+  LogIn,
 
 } from "lucide-react";
 import { toast } from "sonner";
