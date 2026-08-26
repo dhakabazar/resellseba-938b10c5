@@ -37,7 +37,17 @@ type Row = {
 const inp = "w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring";
 
 function blank(provider: string): Row {
-  return { id: "", provider, label: null, api_key: "", api_secret: "", merchant_id: "", config: {}, is_active: false };
+  const spec = GATEWAYS.find((g) => g.provider === provider);
+  return {
+    id: "",
+    provider,
+    label: spec?.label ?? provider,
+    api_key: "",
+    api_secret: "",
+    merchant_id: "",
+    config: {},
+    is_active: false,
+  };
 }
 
 function readField(row: Row, spec: GatewayFieldSpec): string {
@@ -188,7 +198,7 @@ function GatewayCard({
           <CreditCard className="h-4 w-4" />
         </span>
         <div className="min-w-[150px] flex-1">
-          <div className="text-sm font-semibold">{spec.label}</div>
+          <div className="text-sm font-semibold">{row.label || spec.label}</div>
           <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">
             <span>{row.id ? (row.is_active ? "Active" : "Saved · off") : "Not configured"}</span>
             <span>·</span>
@@ -234,13 +244,25 @@ function GatewayCard({
 
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
-            <label className="mb-1 block text-xs font-medium">Display label</label>
+            <div className="mb-1 flex items-center justify-between">
+              <label className="block text-xs font-medium">Display label</label>
+              {(row.label ?? "") !== spec.label && (
+                <button
+                  type="button"
+                  onClick={() => setRow({ ...row, label: spec.label })}
+                  className="text-[10px] font-medium text-primary hover:underline"
+                >
+                  Use default
+                </button>
+              )}
+            </div>
             <input
               value={row.label ?? ""}
               onChange={(e) => setRow({ ...row, label: e.target.value })}
               className={inp}
               placeholder={spec.label}
             />
+            <p className="mt-1 text-[10px] text-muted-foreground">Shown to customers at checkout. Defaults to {spec.label}.</p>
           </div>
           <div>
             <label className="mb-1 block text-xs font-medium">Environment</label>
