@@ -560,7 +560,7 @@ function AdminOrdersPage() {
                 key={o.id}
                 className={`overflow-hidden rounded-xl border bg-card shadow-sm transition-all hover:shadow-md hover:border-primary/40 ${marked.includes(o.id) ? "border-primary ring-1 ring-primary/30" : ""}`}
               >
-                <div className="hidden grid-cols-[36px_minmax(66px,0.6fr)_minmax(110px,0.9fr)_minmax(110px,0.9fr)_minmax(110px,1fr)_96px_104px_124px_minmax(112px,0.9fr)_40px] items-start gap-2 border-b bg-muted/30 px-4 py-3 text-sm md:grid">
+                <div className="hidden grid-cols-[44px_minmax(66px,0.6fr)_minmax(110px,0.9fr)_minmax(110px,0.9fr)_minmax(110px,1fr)_96px_104px_124px_minmax(112px,0.9fr)] items-start gap-2 border-b bg-muted/30 px-4 py-3 text-sm md:grid">
                   <div className="flex flex-col items-center gap-1.5">
                     <input
                       type="checkbox"
@@ -568,6 +568,56 @@ function AdminOrdersPage() {
                       checked={marked.includes(o.id)}
                       onChange={(e) => setMarked(prev => e.target.checked ? [...prev, o.id] : prev.filter(x => x !== o.id))}
                     />
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="rounded-md border p-0.5 hover:bg-accent transition-colors">
+                          <MoreVertical className="h-4 w-4" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start">
+                           <DropdownMenuItem onClick={() => setSelected(o)}>
+                             <Eye className="mr-2 h-4 w-4" /> View Details
+                           </DropdownMenuItem>
+                           {canEdit && (
+                           <DropdownMenuItem onClick={() => setEditId(o.id)}>
+                             <Pencil className="mr-2 h-4 w-4" /> Edit Order
+                           </DropdownMenuItem>
+                           )}
+                           {canStatus && (
+                           <DropdownMenuItem
+                             onClick={() =>
+                               o.status === "pending_partial"
+                                 ? setSettleModal({ orderId: o.id, status: "partial_full", pickKind: true })
+                                 : setStatusModal({ open: true, orderId: o.id, currentStatus: o.status })
+                             }
+                           >
+                             <Settings2 className="mr-2 h-4 w-4" /> Change Status
+                           </DropdownMenuItem>
+                           )}
+                           {canShip && (() => {
+                             const isBooked = shipments.some(s => s.order_id === o.id && (s.consignment_id || s.tracking_id));
+                             if (!isBooked) {
+                               return (
+                                 <DropdownMenuItem onClick={() => setBookingModal({ open: true, orderIds: [o.id] })}>
+                                   <Truck className="mr-2 h-4 w-4" /> {activeProviderLabel ? `Book ${activeProviderLabel}` : "Book Courier"}
+                                 </DropdownMenuItem>
+                               );
+                             }
+                             return null;
+                           })()}
+                           {canDelete && (() => {
+                             const isBooked = shipments.some(s => s.order_id === o.id && (s.consignment_id || s.tracking_id));
+                             return (
+                               <DropdownMenuItem
+                                 onClick={() => removeOrder(o.id)}
+                                 className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+                               >
+                                 <Trash2 className="mr-2 h-4 w-4" /> Delete Order
+                               </DropdownMenuItem>
+                             );
+                           })()}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     <button
                       onClick={() => setExpandedOrders(prev => prev.includes(o.id) ? prev.filter(id => id !== o.id) : [...prev, o.id])}
                       className="rounded-full p-1 hover:bg-muted transition-colors shrink-0"
