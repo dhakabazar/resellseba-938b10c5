@@ -23,11 +23,20 @@ const inp = "w-full rounded-md border bg-background px-3 py-2 text-sm outline-no
 const bdt = (v: number) => `৳${Number(v || 0).toLocaleString("en-US")}`;
 
 /** Reseller-facing: pay the security deposit with an admin-approved manual method. */
-export function DepositPayPanel({ resellerId, onSubmitted }: { resellerId: string | null; onSubmitted?: () => void }) {
+export function DepositPayPanel({
+  resellerId,
+  due,
+  onSubmitted,
+}: {
+  resellerId: string | null;
+  /** Outstanding deposit, used to prefill the amount fields. */
+  due?: number;
+  onSubmitted?: () => void;
+}) {
   const [methods, setMethods] = useState<PaymentConfigRow[]>([]);
   const [requests, setRequests] = useState<RequestRow[]>([]);
   const [configId, setConfigId] = useState("");
-  const [amount, setAmount] = useState("");
+  const [amount, setAmount] = useState(due && due > 0 ? String(due) : "");
   const [reference, setReference] = useState("");
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
@@ -35,7 +44,7 @@ export function DepositPayPanel({ resellerId, onSubmitted }: { resellerId: strin
   const [mode, setMode] = useState<"manual" | "online">("manual");
   const [gateways, setGateways] = useState<{ provider: string; label: string }[]>([]);
   const [gateway, setGateway] = useState("");
-  const [onlineAmount, setOnlineAmount] = useState("");
+  const [onlineAmount, setOnlineAmount] = useState(due && due > 0 ? String(due) : "");
   const loadGateways = useServerFn(listDepositGateways);
   const startOnline = useServerFn(startDepositPayment);
 
@@ -109,7 +118,7 @@ export function DepositPayPanel({ resellerId, onSubmitted }: { resellerId: strin
     setAmount("");
     setReference("");
     setNote("");
-    toast.success("Deposit submitted — waiting for admin approval");
+    toast.success("Deposit submitted — waiting for admin verification");
     void loadRequests();
     onSubmitted?.();
   }
@@ -148,10 +157,19 @@ export function DepositPayPanel({ resellerId, onSubmitted }: { resellerId: strin
         </div>
       )}
 
+      {(methods.length > 0 || gateways.length > 0) && (
+        <p className="text-[11px] text-muted-foreground">
+          {mode === "manual"
+            ? "Manual payment: send the money, submit the TrxID — the deposit is credited after admin verification."
+            : "Automatic gateway: the deposit is credited the moment the gateway confirms your payment. No approval needed."}
+        </p>
+      )}
+
+
       {mode === "online" ? (
         gateways.length === 0 ? (
           <div className="rounded-lg border border-dashed p-6 text-center text-xs text-muted-foreground">
-            No automatic gateway is enabled yet. Please use a manual method.
+            No automatic gateway is active yet. Please use a manual method.
           </div>
         ) : (
           <div className="rounded-xl border p-4">
@@ -208,7 +226,7 @@ export function DepositPayPanel({ resellerId, onSubmitted }: { resellerId: strin
         )
       ) : methods.length === 0 ? (
         <div className="rounded-lg border border-dashed p-6 text-center text-xs text-muted-foreground">
-          No deposit payment method is enabled yet. Please contact support.
+          No manual payment method is active yet. Try an automatic gateway or contact support.
         </div>
       ) : (
         <form onSubmit={submit} className="rounded-xl border p-4">
@@ -314,7 +332,7 @@ export function DepositPayPanel({ resellerId, onSubmitted }: { resellerId: strin
 
 export function StatusChip({ status }: { status: string }) {
   const map: Record<string, { cls: string; icon: React.ReactNode; label: string }> = {
-    pending: { cls: "bg-amber-500/15 text-amber-600 dark:text-amber-400", icon: <Clock className="h-3 w-3" />, label: "Pending" },
+    pending: { cls: "bg-amber-500/15 text-amber-600 dark:text-amber-400", icon: <Clock className="h-3 w-3" />, label: "Pending verification" },
     approved: { cls: "bg-success/15 text-success", icon: <BadgeCheck className="h-3 w-3" />, label: "Approved" },
     rejected: { cls: "bg-destructive/15 text-destructive", icon: <XCircle className="h-3 w-3" />, label: "Rejected" },
   };

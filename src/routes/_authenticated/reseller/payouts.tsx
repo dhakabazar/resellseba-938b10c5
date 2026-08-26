@@ -199,7 +199,7 @@ function PayoutsPage() {
           </ul>
 
           <div className="mb-4">
-            <DepositPayPanel resellerId={rid} onSubmitted={load} />
+            <DepositPayPanel resellerId={rid} due={deposit.due} onSubmitted={load} />
           </div>
 
 
