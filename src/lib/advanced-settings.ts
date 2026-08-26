@@ -25,6 +25,8 @@ export type AdvancedSettings = {
   verifyEmail: boolean;
   /** Require the SMS code (only used when the master switch is on). */
   verifySms: boolean;
+  /** ON = resellers can pay the security deposit with any ACTIVE payment method. */
+  depositPayEnabled: boolean;
   /** Platform-wide delivery charge rule (products can override it). */
   delivery: DeliverySettings;
 };
@@ -36,8 +38,10 @@ export const DEFAULT_ADVANCED_SETTINGS: AdvancedSettings = {
   verifyEnabled: false,
   verifyEmail: true,
   verifySms: false,
+  depositPayEnabled: true,
   delivery: DEFAULT_DELIVERY_SETTINGS,
 };
+
 
 
 export function mergeAdvanced(raw: unknown): AdvancedSettings {
