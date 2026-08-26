@@ -1072,7 +1072,9 @@ function OrdersPage() {
                             )}
                           </div>
                         </div>
-                      ) : null}
+                      ) : (
+                        <span className="mt-1 inline-block text-[10px] italic text-muted-foreground/60">Not booked yet</span>
+                      )}
                     </div>
                    <div className="flex justify-center">{actions}</div>
                 </div>
