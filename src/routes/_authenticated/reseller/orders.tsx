@@ -722,7 +722,7 @@ function OrdersPage() {
       ) : (
         <>
         <div className="space-y-3">
-          <div className="hidden grid-cols-[30px_minmax(60px,0.7fr)_minmax(120px,1fr)_minmax(100px,1fr)_minmax(100px,1.2fr)_60px_80px_100px_60px] gap-2 rounded-lg border bg-muted/40 px-4 py-2.5 text-xs font-medium text-muted-foreground md:grid">
+          <div className="hidden grid-cols-[30px_minmax(60px,0.7fr)_minmax(120px,1fr)_minmax(100px,1fr)_minmax(100px,1.2fr)_minmax(120px,1fr)_100px_60px] gap-2 rounded-lg border bg-muted/40 px-4 py-2.5 text-xs font-medium text-muted-foreground md:grid">
             <div className="flex items-center justify-center">
               <input
                 type="checkbox"
@@ -744,7 +744,6 @@ function OrdersPage() {
             <div>Customer</div>
             <div>Courier</div>
             <div>Reseller total</div>
-            <div>Profit</div>
             <div>Status</div>
             <div className="text-right">Actions</div>
           </div>
@@ -962,7 +961,7 @@ function OrdersPage() {
                 </div>
 
                 {/* Desktop row */}
-                <div className="hidden grid-cols-[30px_minmax(60px,0.7fr)_minmax(120px,1fr)_minmax(100px,1fr)_minmax(100px,1.2fr)_60px_80px_100px_60px] items-center gap-2 border-b bg-muted/30 px-4 py-3 text-sm md:grid">
+                <div className="hidden grid-cols-[30px_minmax(60px,0.7fr)_minmax(120px,1fr)_minmax(100px,1fr)_minmax(100px,1.2fr)_minmax(120px,1fr)_100px_60px] items-center gap-2 border-b bg-muted/30 px-4 py-3 text-sm md:grid">
                   <div className="flex flex-col items-center gap-1.5">
                     <input
                       type="checkbox"
@@ -1066,15 +1065,7 @@ function OrdersPage() {
                     )}
                   </div>
 
-                  <ResellerTotalCell order={o as any} showProfit={false} />
-                  <div
-                    className={
-                      "min-w-0 text-[11px] font-medium whitespace-nowrap " +
-                      (orderProfit(o) < 0 ? "text-destructive" : "text-success")
-                    }
-                  >
-                    ৳{orderProfit(o).toFixed(0)}
-                  </div>
+                  <ResellerTotalCell order={o as any} />
                   <div className="min-w-0">
                     <span
                       className={`inline-block rounded-full px-2 py-0.5 text-[11px] capitalize whitespace-nowrap ${orderStatusTone(o.status)}`}
