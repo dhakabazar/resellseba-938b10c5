@@ -722,7 +722,7 @@ function OrdersPage() {
       ) : (
         <>
         <div className="space-y-3">
-          <div className="hidden grid-cols-[30px_minmax(60px,0.7fr)_minmax(120px,1fr)_minmax(100px,1fr)_minmax(100px,1.2fr)_100px_130px_60px] gap-2 rounded-lg border bg-muted/40 px-4 py-2.5 text-xs font-medium text-muted-foreground md:grid">
+          <div className="hidden grid-cols-[30px_minmax(60px,0.7fr)_minmax(120px,1fr)_minmax(100px,1fr)_minmax(100px,1.2fr)_100px_130px_60px] items-start gap-2 rounded-lg border bg-muted/40 px-4 py-2.5 text-xs font-medium text-muted-foreground md:grid">
             <div className="flex items-center justify-center">
               <input
                 type="checkbox"
@@ -739,12 +739,12 @@ function OrdersPage() {
                 title="Mark all on this page"
               />
             </div>
-            <div>Order</div>
-            <div>Products</div>
-            <div>Customer</div>
-            <div>Reseller total</div>
-            <div>Status</div>
-            <div className="text-right">Actions</div>
+            <div className="text-center">Order</div>
+            <div className="text-center">Products</div>
+            <div className="text-center">Customer</div>
+            <div className="text-center">Reseller total</div>
+            <div className="text-center">Status</div>
+            <div className="text-center">Actions</div>
           </div>
           {paged.map((o) => {
             const items = itemsByOrder.get(o.id) ?? [];
