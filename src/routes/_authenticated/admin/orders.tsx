@@ -572,7 +572,7 @@ function AdminOrdersPage() {
                       <ChevronDown className={`h-4 w-4 transition-transform ${expandedOrders.includes(o.id) ? "rotate-180" : ""}`} />
                     </button>
                   </div>
-                  <div className="min-w-0">
+                  <div className="min-w-0 text-center">
                     <div className="font-medium truncate">{o.order_number}</div>
                     <div className="text-[11px] text-muted-foreground">
                       {new Date(o.created_at).toLocaleDateString()}
@@ -581,9 +581,9 @@ function AdminOrdersPage() {
                       {new Date(o.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                     </div>
                   </div>
-                  <div className="min-w-0">
+                  <div className="min-w-0 text-center">
                      <div className="font-medium truncate">{o.resellers?.business_name || "Direct"}</div>
-                     <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                     <div className="flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground">
                        {o.resellers?.contact_phone || "—"}
                        {o.resellers?.contact_phone && (
                          <>
