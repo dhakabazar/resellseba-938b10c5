@@ -484,7 +484,8 @@ function ResellersPage() {
           {usePaginated(filtered, page, perPage).map((r) => {
             const s = summaries[r.id];
             const em = emailStatus[r.user_id];
-            const emailVerified = !!em?.verified;
+            const vf = verifyFor(r);
+            const emailVerified = vf.emailVerified;
             const phone = (r.contact_phone ?? "").trim();
             const waPhone = phone.replace(/[^0-9]/g, "").replace(/^0/, "880");
             return (
@@ -496,15 +497,7 @@ function ResellersPage() {
                     <div className="flex flex-wrap items-center gap-1.5">
                       <span className="truncate font-medium">{r.business_name}</span>
                       <StatusBadge status={r.status} />
-                      {emailVerified ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
-                          <MailCheck className="h-3 w-3" /> Email verified
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-400">
-                          <MailX className="h-3 w-3" /> Email unverified
-                        </span>
-                      )}
+                      <VerifyBadges {...vf} />
                       {r.deposit_required && Number(r.deposit_required_amount) > 0 && (
                         (s?.deposit_balance ?? 0) >= Number(r.deposit_required_amount) ? (
                           <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-2 py-0.5 text-[10px] font-medium text-success">
