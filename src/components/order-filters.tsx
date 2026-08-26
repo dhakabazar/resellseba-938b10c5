@@ -71,6 +71,7 @@ export const DATE_PRESET_OPTIONS: { value: DatePreset; label: string }[] = [
 const SORT_OPTIONS: { value: OrderFilterState["sort"]; label: string }[] = [
   { value: "newest", label: "Newest first" },
   { value: "oldest", label: "Oldest first" },
+  { value: "updated", label: "Last updated" },
   { value: "high", label: "Amount: high → low" },
   { value: "low", label: "Amount: low → high" },
 ];
