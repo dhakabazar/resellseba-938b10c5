@@ -17,6 +17,8 @@ export type AdvancedSettings = {
   resellerCatalogShowStock: boolean;
   /** ON = add up every product's packaging cost. OFF = charge only the highest one. */
   packagingChargeSum: boolean;
+  /** ON = new reseller applications become active instantly (no manual approve). */
+  resellerAutoApprove: boolean;
   /** Master switch: when off, no verification is required at signup. */
   verifyEnabled: boolean;
   /** Require the email code (only used when the master switch is on). */
@@ -30,6 +32,7 @@ export type AdvancedSettings = {
 export const DEFAULT_ADVANCED_SETTINGS: AdvancedSettings = {
   resellerCatalogShowStock: true,
   packagingChargeSum: true,
+  resellerAutoApprove: false,
   verifyEnabled: false,
   verifyEmail: true,
   verifySms: false,
