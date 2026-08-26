@@ -257,40 +257,33 @@ function ResellersPage() {
     } as Record<Filter, number>;
   }, [items, emailStatus]);
 
-  async function approve(r: Reseller) {
-    const { error } = await supabase
-      .from("resellers")
-      .update({ status: "active", approved_at: new Date().toISOString() })
-      .eq("id", r.id);
+  /**
+   * Single entry point for every status change. Panel access (role + store
+   * settings) is synced by the database, so the UI only writes the status.
+   */
+  async function setStatus(r: Reseller, status: Status) {
+    if (status === r.status) return;
+    if (status !== "active") {
+      const ok = await confirmAction({
+        title: status === "rejected" ? "Reject reseller" : "Deactivate reseller",
+        description: "They lose access to the reseller panel until you activate them again.",
+        detail: r.business_name,
+        confirmText: status === "rejected" ? "Reject" : "Deactivate",
+      });
+      if (!ok) return;
+    }
+    const patch: Record<string, unknown> = { status };
+    if (status === "active" && !r.approved_at) patch.approved_at = new Date().toISOString();
+    const { error } = await supabase.from("resellers").update(patch).eq("id", r.id);
     if (error) return toast.error(error.message);
-    await supabase
-      .from("user_roles")
-      .upsert({ user_id: r.user_id, role: "reseller" }, { onConflict: "user_id,role" });
-    await supabase
-      .from("reseller_settings")
-      .upsert({ reseller_id: r.id, store_name: r.business_name }, { onConflict: "reseller_id" });
-    toast.success(`${r.business_name} approved`);
+    toast.success(
+      status === "active"
+        ? `${r.business_name} is now active`
+        : `Status set to ${resellerStatusLabel(status)}`,
+    );
     load();
   }
 
-  async function setStatus(r: Reseller, status: Status) {
-    const { error } = await supabase.from("resellers").update({ status }).eq("id", r.id);
-    if (error) return toast.error(error.message);
-    if (status === "active") {
-      await supabase
-        .from("user_roles")
-        .upsert({ user_id: r.user_id, role: "reseller" }, { onConflict: "user_id,role" });
-    } else {
-      // Not approved → revoke panel access
-      await supabase
-        .from("user_roles")
-        .delete()
-        .eq("user_id", r.user_id)
-        .eq("role", "reseller");
-    }
-    toast.success("Status updated");
-    load();
-  }
 
 
   async function applyPasswordReset(r: Reseller, password: string) {
