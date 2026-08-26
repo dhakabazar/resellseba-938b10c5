@@ -16,10 +16,11 @@ import {
 import { toast } from "sonner";
 import { confirmAction } from "@/lib/confirm";
 import {
-  API_METHODS,
+  GATEWAYS,
   MANUAL_METHODS,
   cfgBool,
   cfgString,
+  gatewaySpec,
   methodLabel,
   type PaymentConfigRow,
   type PaymentMode,
