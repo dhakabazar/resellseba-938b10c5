@@ -469,23 +469,9 @@ function Toggle({ label, checked, onChange }: { label: string; checked: boolean;
   );
 }
 
-function Modal({ title, children, onClose }: { title: string; children: React.ReactNode; onClose: () => void }) {
-  return (
-    <div className="fixed inset-0 z-[100] grid place-items-center bg-black/60 p-3 sm:p-6" onClick={onClose}>
-      <div
-        className="max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-2xl border bg-card p-4 shadow-2xl sm:p-5"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h2 className="mb-3 text-base font-bold">{title}</h2>
-        {children}
-      </div>
-    </div>
-  );
-}
-
 function ModalActions({ saving, onCancel, onSave }: { saving: boolean; onCancel: () => void; onSave: () => void }) {
   return (
-    <div className="mt-4 flex justify-end gap-2">
+    <div className="flex justify-end gap-2">
       <button type="button" onClick={onCancel} className="rounded-lg border px-3.5 py-2 text-sm font-bold hover:bg-muted">
         Cancel
       </button>
