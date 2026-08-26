@@ -1,5 +1,3 @@
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
-
 const WORDS = ["shop", "sell", "store", "order", "reseller", "market"];
 
 /** Easy to type/read temporary password, e.g. "shop4821". */
@@ -9,11 +7,15 @@ export function easyPassword(): string {
   return `${word}${digits}`;
 }
 
+type DbClient = {
+  from: (table: string) => any;
+};
+
 /** Keeps legacy/edge-case active reseller accounts from landing on onboarding. */
-export async function ensureActiveResellerRole(userId: string) {
-  const { data: reseller, error: resellerError } = await supabaseAdmin
+export async function ensureActiveResellerRole(supabase: DbClient, userId: string) {
+  const { data: reseller, error: resellerError } = await supabase
     .from("resellers")
-    .select("id,status")
+    .select("id,status,business_name")
     .eq("user_id", userId)
     .maybeSingle();
   if (resellerError) throw new Response(resellerError.message, { status: 400 });
@@ -22,25 +24,24 @@ export async function ensureActiveResellerRole(userId: string) {
     throw new Response("Only active resellers can be opened", { status: 400 });
   }
 
-  const { error } = await supabaseAdmin
+  const { error } = await supabase
     .from("user_roles")
     .upsert({ user_id: userId, role: "reseller" }, { onConflict: "user_id,role" });
   if (error) throw new Response(error.message, { status: 400 });
+
+  return reseller as { id: string; status: string; business_name: string | null };
 }
 
-/** Creates a one-time token hash that the browser can exchange for the reseller session. */
-export async function mintImpersonationToken(userId: string) {
-  const { data: userRes, error: userErr } = await supabaseAdmin.auth.admin.getUserById(userId);
-  if (userErr || !userRes?.user?.email) {
-    throw new Response(userErr?.message ?? "Reseller account has no email", { status: 400 });
-  }
-  const email = userRes.user.email;
+/** Creates temporary email/password credentials the browser can exchange for a reseller session. */
+export async function createImpersonationLogin(supabase: DbClient, userId: string) {
+  await ensureActiveResellerRole(supabase, userId);
+  const { confirmEmail, loadAuthUsers, setPassword } = await import("@/lib/auth-admin.server");
+  const account = (await loadAuthUsers(supabase)).find((u) => u.user_id === userId);
+  if (!account?.email) throw new Response("Reseller account has no email", { status: 400 });
 
-  const { data, error } = await supabaseAdmin.auth.admin.generateLink({ type: "magiclink", email });
-  if (error) throw new Response(error.message, { status: 400 });
+  const password = easyPassword();
+  await confirmEmail(supabase, userId);
+  await setPassword(supabase, userId, password);
 
-  const tokenHash = (data as any)?.properties?.hashed_token as string | undefined;
-  if (!tokenHash) throw new Response("Could not create login token", { status: 400 });
-
-  return { ok: true as const, email, tokenHash };
+  return { ok: true as const, email: account.email, password };
 }
