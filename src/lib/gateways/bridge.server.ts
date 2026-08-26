@@ -10,6 +10,7 @@
 // hosted origin. That origin is configuration (global_settings.callback_base_url),
 // never hardcoded.
 import { createClient } from "@supabase/supabase-js";
+import { getRequest } from "@tanstack/react-start/server";
 import { getRuntimeEnv } from "@/lib/env-bridge";
 
 /** True when this request runs somewhere the privileged backend key exists. */
