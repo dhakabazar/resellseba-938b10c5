@@ -14,6 +14,89 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_notice_dismissals: {
+        Row: {
+          created_at: string
+          id: string
+          notice_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notice_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notice_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_notice_dismissals_notice_id_fkey"
+            columns: ["notice_id"]
+            isOneToOne: false
+            referencedRelation: "admin_notices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      admin_notices: {
+        Row: {
+          body: string
+          created_at: string
+          created_by: string | null
+          cta_label: string | null
+          cta_url: string | null
+          ends_at: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          is_dismissible: boolean
+          level: string
+          starts_at: string | null
+          target_reseller_ids: string[]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          body?: string
+          created_at?: string
+          created_by?: string | null
+          cta_label?: string | null
+          cta_url?: string | null
+          ends_at?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          is_dismissible?: boolean
+          level?: string
+          starts_at?: string | null
+          target_reseller_ids?: string[]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          created_by?: string | null
+          cta_label?: string | null
+          cta_url?: string | null
+          ends_at?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          is_dismissible?: boolean
+          level?: string
+          starts_at?: string | null
+          target_reseller_ids?: string[]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       agent_payouts: {
         Row: {
           admin_note: string | null
