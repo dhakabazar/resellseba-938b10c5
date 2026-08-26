@@ -198,7 +198,7 @@ function GatewayCard({
           <CreditCard className="h-4 w-4" />
         </span>
         <div className="min-w-[150px] flex-1">
-          <div className="text-sm font-semibold">{spec.label}</div>
+          <div className="text-sm font-semibold">{row.label || spec.label}</div>
           <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">
             <span>{row.id ? (row.is_active ? "Active" : "Saved · off") : "Not configured"}</span>
             <span>·</span>
