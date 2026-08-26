@@ -39,8 +39,8 @@ export type GatewayOrder = {
 };
 
 export async function admin() {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  return supabaseAdmin;
+  const { gatewayDatabase } = await import("@/lib/gateway-database.server");
+  return gatewayDatabase();
 }
 
 /** Credential loader — reseller row wins over the platform row. */
