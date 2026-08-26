@@ -35,6 +35,25 @@ export function ManualMethods({ onCountChange }: { onCountChange?: (n: number) =
   const [rows, setRows] = useState<PaymentConfigRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [draft, setDraft] = useState<Draft | null>(null);
+  const [depositOn, setDepositOn] = useState(true);
+
+  async function saveDepositSwitch(next: boolean) {
+    setDepositOn(next);
+    const current = await fetchAdvancedSettings();
+    const { error } = await supabase
+      .from("global_settings")
+      .update({ advanced_settings: { ...current, depositPayEnabled: next } as any } as any)
+      .eq("id", 1);
+    clearAdvancedSettingsCache();
+    if (error) {
+      toast.error(error.message);
+      setDepositOn(!next);
+      return;
+    }
+    toast.success(next ? "Deposit payments enabled" : "Deposit payments turned off");
+  }
+
+
 
   async function load() {
     const { data, error } = await supabase
