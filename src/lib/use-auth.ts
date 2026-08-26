@@ -88,7 +88,7 @@ function applySession(session: Session | null) {
   if (!session?.user) {
     clearAppDataCache();
     authVersion++;
-    publish({ session: null, user: null, roles: [], permissions: [], loading: false });
+    publish({ session: null, user: null, roles: [], permissions: [], loading: false, accessError: false });
     return;
   }
 
@@ -112,17 +112,18 @@ function applySession(session: Session | null) {
   clearAppDataCache("reseller");
   const version = ++authVersion;
 
-  publish({ session, user: session.user, roles: [], permissions: [], loading: true });
+  publish({ session, user: session.user, roles: [], permissions: [], loading: true, accessError: false });
 
   void loadAccess(session.user.id)
-    .then(({ roles, permissions }) => {
+    .then(({ roles, permissions, error }) => {
       if (version !== authVersion) return;
-      publish({ session, user: session.user, roles, permissions, loading: false });
+      publish({ session, user: session.user, roles, permissions, loading: false, accessError: error });
     })
-    .catch((err) => {
+    .catch(() => {
       if (version !== authVersion) return;
-      publish({ session, user: session.user, roles: [], permissions: [], loading: false });
+      publish({ session, user: session.user, roles: [], permissions: [], loading: false, accessError: true });
     });
+
 }
 
 function initAuth() {
