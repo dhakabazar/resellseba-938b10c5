@@ -616,11 +616,11 @@ function OrdersPage() {
         </button>
 
         <div className="ml-auto flex items-center gap-2">
-          <span className="text-xs font-medium text-muted-foreground hidden sm:inline">Per page:</span>
-          <select 
+          <span className="hidden text-xs font-medium text-muted-foreground sm:inline">Per page:</span>
+          <select
             value={filters.perPage}
             onChange={(e) => setFilters({ ...filters, perPage: Number(e.target.value) })}
-            className="h-9 rounded-md border bg-background px-2 text-xs font-medium outline-none focus:ring-1 focus:ring-primary"
+            className="h-9 w-[68px] shrink-0 rounded-md border bg-background px-1 text-xs font-medium outline-none focus:ring-1 focus:ring-primary"
           >
             {[10, 20, 50, 100].map((n) => (
               <option key={n} value={n}>{n}</option>
