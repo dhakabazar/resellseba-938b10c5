@@ -35,7 +35,7 @@ export const Route = createFileRoute("/_authenticated/admin/advanced")({
   }),
 });
 
-type TabKey = "delivery" | "orders" | "resellers";
+type TabKey = "delivery" | "orders" | "resellers" | "deposit";
 
 type Group = {
   tab: TabKey;
@@ -55,6 +55,7 @@ const TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
   { key: "delivery", label: "Delivery", icon: <Truck className="h-4 w-4" /> },
   { key: "orders", label: "Orders", icon: <Boxes className="h-4 w-4" /> },
   { key: "resellers", label: "Resellers", icon: <UserCheck className="h-4 w-4" /> },
+  { key: "deposit", label: "Security deposit", icon: <ShieldCheck className="h-4 w-4" /> },
 ];
 
 const GROUPS: Group[] = [
