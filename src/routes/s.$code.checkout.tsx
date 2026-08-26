@@ -5,7 +5,6 @@ import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { listActiveGateways, startGatewayPayment } from "@/lib/gateways.functions";
-import { isAutomaticGateway } from "@/lib/gateways/registry";
 import { areaOptions, productDeliveryCharge, type DeliveryArea } from "@/lib/delivery";
 import { useAdvancedSettings } from "@/lib/advanced-settings";
 import { addressError, nameError, normalizePhone, phoneError, sanitizeName } from "@/lib/checkout-validate";
@@ -17,6 +16,16 @@ type Search = { l?: string; q?: number };
 
 export const Route = createFileRoute("/s/$code/checkout")({
   component: Checkout,
+  head: () => ({
+    meta: [
+      { title: "Checkout · Reseller Store" },
+      { name: "description", content: "Complete your reseller store order with delivery area and payment method selection." },
+      { property: "og:title", content: "Checkout · Reseller Store" },
+      { property: "og:description", content: "Complete your order securely through COD, manual wallet, or verified gateway payment." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   validateSearch: (s: Record<string, unknown>): Search => ({
     l: typeof s.l === "string" ? s.l : undefined,
     q: s.q ? Number(s.q) : undefined,
@@ -24,6 +33,7 @@ export const Route = createFileRoute("/s/$code/checkout")({
 });
 
 type PayMethod = { method: string; label: string; instructions: string | null };
+type GatewayOption = { value: string; method: string; label: string; instructions: null; provider: string };
 
 /** Area names come from Admin → Advanced settings → Delivery charge. */
 function useAreas() {
@@ -125,8 +135,14 @@ function Checkout() {
   const valid = !errors.name && !errors.phone && !errors.address;
 
   /** Extra payment options only render when the reseller actually enabled one. */
-  const extraMethods = methods.filter((m) => m.method !== "cod" && !isAutomaticGateway(m.method));
-  const gatewayOptions = gateways.map((g) => ({ method: g.method, label: g.label, instructions: null, provider: g.provider }));
+  const extraMethods = methods.filter((m) => m.method !== "cod");
+  const gatewayOptions: GatewayOption[] = gateways.map((g) => ({
+    value: `api:${g.provider}`,
+    method: g.method,
+    label: g.label,
+    instructions: null,
+    provider: g.provider,
+  }));
   const codMeta = methods.find((m) => m.method === "cod");
 
   async function submit(e: React.FormEvent) {
@@ -138,6 +154,7 @@ function Checkout() {
       return;
     }
     setBusy(true);
+    const gateway = gatewayOptions.find((g) => g.value === payMethod);
     const { data, error } = await supabase.rpc("create_public_order", {
       _reseller_code: code,
       _customer_name: sanitizeName(form.name).trim(),
@@ -147,7 +164,7 @@ function Checkout() {
       _city: null as never,
       _area: form.area,
       _landmark: null as never,
-      _payment_method: payMethod as never,
+      _payment_method: (gateway ? gateway.method : payMethod) as never,
       _notes: form.notes.trim() || (null as never),
       _items: lines.map((x) => ({ listing_id: x.listing.id, quantity: x.line.qty })) as never,
     });
@@ -163,7 +180,6 @@ function Checkout() {
       return;
     }
 
-    const gateway = gatewayOptions.find((g) => g.method === payMethod);
     if (gateway) {
       try {
         const r = await startPayment({
@@ -302,14 +318,18 @@ function Checkout() {
             <div>
               <div className="mb-2 text-xs font-semibold uppercase tracking-[0.14em]">Payment method</div>
               <div className="grid gap-2 sm:grid-cols-2">
-                {[{ method: "cod", label: "Cash on Delivery", instructions: codMeta?.instructions ?? null }, ...extraMethods, ...gatewayOptions].map((m) => (
+                {[
+                  { value: "cod", method: "cod", label: "Cash on Delivery", instructions: codMeta?.instructions ?? null },
+                  ...extraMethods.map((m) => ({ ...m, value: m.method })),
+                  ...gatewayOptions,
+                ].map((m) => (
                   <button
                     type="button"
-                    key={m.method}
-                    onClick={() => setPayMethod(m.method)}
+                    key={m.value}
+                    onClick={() => setPayMethod(m.value)}
                     className={cx(
                       "rounded-[var(--st-radius-sm)] border px-3 py-2.5 text-left text-sm",
-                      payMethod === m.method
+                      payMethod === m.value
                         ? "border-[var(--st-primary)] bg-[var(--st-primary)]/10 text-[var(--st-fg)]"
                         : borderc,
                     )}
