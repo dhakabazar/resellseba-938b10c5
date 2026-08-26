@@ -151,7 +151,7 @@ function PaymentsPage() {
 
       <AddMethodForm mode={tab} onAdded={load} />
 
-      <div className="grid gap-3">
+      <div className={"grid gap-4 " + (tab === "api" ? "lg:grid-cols-2" : "")}>
         {list.map((row) => (
           <MethodCard
             key={row.id}
