@@ -272,10 +272,11 @@ function ResellersPage() {
       });
       if (!ok) return;
     }
-    const patch: Record<string, unknown> = { status };
+    const patch: { status: Status; approved_at?: string } = { status };
     if (status === "active" && !r.approved_at) patch.approved_at = new Date().toISOString();
     const { error } = await supabase.from("resellers").update(patch).eq("id", r.id);
     if (error) return toast.error(error.message);
+
     toast.success(
       status === "active"
         ? `${r.business_name} is now active`
