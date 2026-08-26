@@ -2589,6 +2589,10 @@ export type Database = {
           reseller_id: string
         }[]
       }
+      admin_set_phone_verified: {
+        Args: { _user_id: string; _verified?: boolean }
+        Returns: string
+      }
       admin_set_user_password: {
         Args: { _password: string; _user_id: string }
         Returns: undefined
