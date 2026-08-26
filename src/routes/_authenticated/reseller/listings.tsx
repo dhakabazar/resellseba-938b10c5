@@ -6,12 +6,13 @@ import { deliveryLabel } from "@/lib/delivery";
 import { useAuth } from "@/lib/use-auth";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
 import { DataToolbar, Pagination, usePaginated, type FilterDef, ActionMenu } from "@/components/data-list";
-import { Loader2, Trash2, Eye, X } from "lucide-react";
+import { Loader2, Trash2, Eye, X, Tag } from "lucide-react";
 import { toast } from "sonner";
 import { CopyButton, ImageDownloadTools, stripHtml } from "@/components/store/reseller-tools";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { ProductCodeChip } from "@/components/product-code";
 import { confirmAction } from "@/lib/confirm";
+import { ListingPricingModal } from "@/components/listing-pricing-modal";
 
 type L = {
   id: string;
@@ -46,6 +47,7 @@ function ListingsPage() {
   const [perPage, setPerPage] = useState(20);
   const [page, setPage] = useState(1);
   const [detailId, setDetailId] = useState<string | null>(null);
+  const [pricingId, setPricingId] = useState<string | null>(null);
 
 
   async function load() {
@@ -207,6 +209,9 @@ function ListingsPage() {
                   <DropdownMenuItem onSelect={() => setDetailId(l.id)}>
                     <Eye className="mr-2 h-4 w-4" /> View Details
                   </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => setPricingId(l.id)}>
+                    <Tag className="mr-2 h-4 w-4" /> Pricing
+                  </DropdownMenuItem>
                   <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => remove(l.id)}>
                     <Trash2 className="mr-2 h-4 w-4" /> Delete Listing
                   </DropdownMenuItem>
@@ -220,6 +225,13 @@ function ListingsPage() {
       )}
       {detailId && (
         <ListingDetailModal id={detailId} onClose={() => setDetailId(null)} />
+      )}
+      {pricingId && (
+        <ListingPricingModal
+          id={pricingId}
+          onClose={() => setPricingId(null)}
+          onSaved={load}
+        />
       )}
     </div>
   );
