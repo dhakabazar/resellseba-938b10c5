@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, X, Save, TrendingUp } from "lucide-react";
 import { ProductCodeChip } from "@/components/product-code";
+import { getGlobalSettings } from "@/lib/app-data";
 import {
   DELIVERY_AREAS,
   areaLabel,
@@ -102,7 +103,7 @@ export function ListingPricingModal({
         }))
       : [];
     return { productCost, packaging, cost, sell, valid, profit, margin, delivery };
-  }, [p, price, g]);
+  }, [p, price, g, settingsTick]);
 
   async function save() {
     if (!row || !p) return;
