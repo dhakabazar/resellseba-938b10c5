@@ -711,14 +711,30 @@ function OrdersPage() {
         />
       )}
 
-      <OrderTabs 
-        tab={tab} 
-        onChange={setTab} 
-        count={(key) => {
-          const sts = ORDER_TABS.find((t) => t.key === key)?.statuses ?? [];
-          return sts.length === 0 ? orders.length : orders.filter((o) => (sts as string[]).includes(o.status)).length;
-        }} 
-      />
+      {/* Mobile: status filter inline with other filters */}
+      <div className="sm:hidden">
+        <OrderTabs
+          tab={tab}
+          onChange={setTab}
+          count={(key) => {
+            const sts = ORDER_TABS.find((t) => t.key === key)?.statuses ?? [];
+            return sts.length === 0 ? orders.length : orders.filter((o) => (sts as string[]).includes(o.status)).length;
+          }}
+          className="mb-3 w-full min-w-0"
+        />
+      </div>
+
+      {/* Desktop: status tabs below filters */}
+      <div className="hidden sm:block">
+        <OrderTabs
+          tab={tab}
+          onChange={setTab}
+          count={(key) => {
+            const sts = ORDER_TABS.find((t) => t.key === key)?.statuses ?? [];
+            return sts.length === 0 ? orders.length : orders.filter((o) => (sts as string[]).includes(o.status)).length;
+          }}
+        />
+      </div>
 
       {/* Removed stats cards per user request to match dashboard style (or just remove if duplicate) */}
 

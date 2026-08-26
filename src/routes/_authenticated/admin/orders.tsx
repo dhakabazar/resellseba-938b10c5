@@ -481,6 +481,18 @@ function AdminOrdersPage() {
             </select>
           </div>
           <div className="grid grid-cols-2 gap-2 lg:flex lg:flex-wrap lg:items-center">
+            {/* Mobile: status filter inline with other filters */}
+            <div className="col-span-2 sm:hidden">
+              <OrderTabs
+                tab={tab}
+                onChange={setTab}
+                count={(key) => {
+                  const sts = ORDER_TABS.find((t) => t.key === key)?.statuses ?? [];
+                  return sts.length === 0 ? allOrders.length : allOrders.filter((o) => (sts as string[]).includes(o.status)).length;
+                }}
+                className="w-full min-w-0"
+              />
+            </div>
             <SearchableSelect
               options={resellerOptions.map((r) => ({ value: r.value, label: r.label }))}
               value={filters.reseller}
@@ -638,14 +650,17 @@ function AdminOrdersPage() {
           </div>
         )}
 
-        <OrderTabs 
-          tab={tab} 
-          onChange={setTab} 
-          count={(key) => {
-            const sts = ORDER_TABS.find((t) => t.key === key)?.statuses ?? [];
-            return sts.length === 0 ? allOrders.length : allOrders.filter((o) => (sts as string[]).includes(o.status)).length;
-          }} 
-        />
+        {/* Desktop: status tabs below filters */}
+        <div className="hidden sm:block">
+          <OrderTabs
+            tab={tab}
+            onChange={setTab}
+            count={(key) => {
+              const sts = ORDER_TABS.find((t) => t.key === key)?.statuses ?? [];
+              return sts.length === 0 ? allOrders.length : allOrders.filter((o) => (sts as string[]).includes(o.status)).length;
+            }}
+          />
+        </div>
         
         {loading ? <div className="py-12 text-center"><Loader2 className="mx-auto h-6 w-6 animate-spin" /></div> : (
           <div className="space-y-3">
