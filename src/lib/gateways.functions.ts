@@ -187,7 +187,9 @@ export const startDepositPayment = createServerFn({ method: "POST" })
     const creds = await core.getPlatformCredentials(data.provider);
     if (!creds) throw new Response("This payment gateway is not available", { status: 400 });
 
-    const db = await core.admin();
+    // Uses the caller's own (RLS-scoped) client so starting a payment never
+    // depends on elevated server credentials.
+    const db = context.supabase;
     const code = core.newDepositCode();
     const { data: intentRow, error } = await db
       .from("deposit_requests")
