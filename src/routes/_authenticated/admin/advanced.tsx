@@ -20,6 +20,7 @@ import {
   type DeliverySettings,
 } from "@/lib/delivery";
 import { DeliveryRulesCard } from "@/components/delivery-rules-card";
+import { DepositSettingsPanel } from "@/components/deposit-settings-panel";
 
 export const Route = createFileRoute("/_authenticated/admin/advanced")({
   component: AdvancedSettingsPage,
