@@ -114,7 +114,7 @@ export function ProductImportModal({ open, onClose, onSaved }: { open: boolean; 
           <div className="min-w-0 flex-1">
             <h3 className="text-base font-semibold">Import product from URL</h3>
             <p className="text-xs text-muted-foreground">
-              Daraz, Alibaba, AliExpress, Amazon, WooCommerce — automated details & media extractor
+              Panel/store product link, or Daraz, Alibaba, AliExpress, Amazon, WooCommerce — auto details & media
             </p>
           </div>
           <button type="button" onClick={onClose} aria-label="Close" className="rounded p-1 hover:bg-muted">
@@ -132,13 +132,13 @@ export function ProductImportModal({ open, onClose, onSaved }: { open: boolean; 
                 type="url"
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
-                placeholder="https://www.daraz.com.bd/products/..."
+                placeholder="https://your-panel.com/catalog/product-slug"
                 className="w-full bg-transparent py-2.5 text-sm outline-none"
               />
             </div>
             <p className="mt-1.5 flex items-center gap-1 text-[11px] text-muted-foreground">
               <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
-              https only, scripts stripped, images re-encoded to ≤200KB WebP before saving.
+              Panel links (…/catalog/slug, …/s/CODE/p/slug, …/p/slug) import instantly. https only, scripts stripped, images re-encoded to ≤200KB WebP.
             </p>
           </div>
 
