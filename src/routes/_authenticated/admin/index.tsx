@@ -83,7 +83,7 @@ function AdminDashboard() {
     const [allOrders, payoutsRes, prods, cats, brandRows, resellerRows, metricsRes] = await Promise.all([
       supabase
         .from("orders")
-        .select("id,order_number,reseller_id,status,created_at,subtotal,shipping_cost,discount,total,sa_cost_total,reseller_profit,received_amount,packaging_total")
+        .select("id,order_number,reseller_id,status,created_at,subtotal,shipping_cost,discount,total,sa_cost_total,reseller_profit,received_amount,packaging_total,delivery_cost,advance_amount,advance_by")
         .limit(20000),
       supabase.from("payouts").select("amount,status").limit(20000),
       supabase.from("products").select("is_active,is_featured,stock").limit(20000),
