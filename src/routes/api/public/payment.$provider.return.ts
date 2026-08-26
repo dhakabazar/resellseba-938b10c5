@@ -3,10 +3,14 @@ import { createFileRoute } from "@tanstack/react-router";
 /**
  * Single return endpoint every automatic gateway is pointed at.
  * Gateways may GET or form-POST here, so both verbs are handled and the final
- * hop back to the storefront is an HTML redirect (a 302 breaks POST returns).
+ * hop back to the app is an HTML redirect (a 302 breaks POST returns).
  *
  * Nothing in the query string is trusted: the outcome is always re-verified
- * against the gateway API before the order is marked paid.
+ * against the gateway API before anything is marked paid.
+ *
+ * Two kinds of payments come back here:
+ * - `k=order` (default) → a storefront order
+ * - `k=deposit`         → a reseller security deposit
  */
 async function handle(request: Request, provider: string): Promise<Response> {
   const core = await import("@/lib/gateways/core.server");
@@ -21,16 +25,42 @@ async function handle(request: Request, provider: string): Promise<Response> {
     new URLSearchParams(body).forEach((v, k) => (params[k] = v));
   }
 
-  const orderNumber = params.on ?? params.tran_id ?? params.order_id ?? "";
+  const ref = params.on ?? params.tran_id ?? params.order_id ?? "";
   const origin = core.siteOrigin();
   const success = core.safeReturnTarget(params.su, origin);
   const cancel = core.safeReturnTarget(params.cu, success);
   const flag = gatewayByProvider(provider)?.returnFlag ?? provider;
 
-  if (!orderNumber) return core.htmlRedirect(core.appendFlag(cancel, flag, "failed"));
+  if (!ref) return core.htmlRedirect(core.appendFlag(cancel, flag, "failed"));
+
+  if (params.k === "deposit") {
+    try {
+      const intent = await core.loadDepositIntent(ref);
+      if (!intent) return core.htmlRedirect(core.appendFlag(cancel, flag, "failed"));
+      if (intent.status === "approved") return core.htmlRedirect(core.appendFlag(success, flag, "paid"));
+      if (params.t === "cancel") return core.htmlRedirect(core.appendFlag(cancel, flag, "cancelled"));
+
+      const creds = await core.getPlatformCredentials(provider);
+      if (!creds) return core.htmlRedirect(core.appendFlag(cancel, flag, "failed"));
+      const pseudo = core.depositAsOrder(intent);
+      const v = await adapterFor(provider).verifyReturn(creds, pseudo, params);
+      const outcome = await core.settleDeposit({
+        intent,
+        provider,
+        paid: v.paid,
+        amount: v.amount,
+        txnId: v.txnId,
+      });
+      const ok = outcome === "paid" || outcome === "already";
+      const status = ok ? "paid" : v.cancelled ? "cancelled" : "failed";
+      return core.htmlRedirect(core.appendFlag(ok ? success : cancel, flag, status, v.txnId));
+    } catch {
+      return core.htmlRedirect(core.appendFlag(cancel, flag, "failed"));
+    }
+  }
 
   try {
-    const order = await core.loadOrder(orderNumber);
+    const order = await core.loadOrder(ref);
     if (order.payment_status === "paid") return core.htmlRedirect(core.appendFlag(success, flag, "paid"));
 
     if (params.t === "cancel") return core.htmlRedirect(core.appendFlag(cancel, flag, "cancelled"));
@@ -45,16 +75,17 @@ async function handle(request: Request, provider: string): Promise<Response> {
       paid: v.paid,
       amount: v.amount,
       txnId: v.txnId,
+      owner: creds.owner,
     });
     const status =
       outcome === "paid" || outcome === "already"
         ? "paid"
-        : outcome === "mismatch"
-          ? "mismatch"
+        : outcome === "partial"
+          ? "partial"
           : v.cancelled
             ? "cancelled"
             : "failed";
-    const target = status === "paid" ? success : cancel;
+    const target = status === "failed" || status === "cancelled" ? cancel : success;
     return core.htmlRedirect(core.appendFlag(target, flag, status, v.txnId));
   } catch {
     return core.htmlRedirect(core.appendFlag(cancel, flag, "failed"));

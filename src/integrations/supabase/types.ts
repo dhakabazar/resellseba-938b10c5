@@ -495,49 +495,61 @@ export type Database = {
         Row: {
           admin_note: string | null
           amount: number
+          code: string | null
           created_at: string
           deposit_id: string | null
           id: string
           method: string | null
           note: string | null
+          paid_at: string | null
           payment_config_id: string | null
+          provider: string | null
           reference: string | null
           reseller_id: string
           reviewed_at: string | null
           reviewed_by: string | null
           status: string
+          txn_id: string | null
           updated_at: string
         }
         Insert: {
           admin_note?: string | null
           amount: number
+          code?: string | null
           created_at?: string
           deposit_id?: string | null
           id?: string
           method?: string | null
           note?: string | null
+          paid_at?: string | null
           payment_config_id?: string | null
+          provider?: string | null
           reference?: string | null
           reseller_id: string
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: string
+          txn_id?: string | null
           updated_at?: string
         }
         Update: {
           admin_note?: string | null
           amount?: number
+          code?: string | null
           created_at?: string
           deposit_id?: string | null
           id?: string
           method?: string | null
           note?: string | null
+          paid_at?: string | null
           payment_config_id?: string | null
+          provider?: string | null
           reference?: string | null
           reseller_id?: string
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: string
+          txn_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -2731,17 +2743,21 @@ export type Database = {
         Returns: {
           admin_note: string | null
           amount: number
+          code: string | null
           created_at: string
           deposit_id: string | null
           id: string
           method: string | null
           note: string | null
+          paid_at: string | null
           payment_config_id: string | null
+          provider: string | null
           reference: string | null
           reseller_id: string
           reviewed_at: string | null
           reviewed_by: string | null
           status: string
+          txn_id: string | null
           updated_at: string
         }
         SetofOptions: {
