@@ -7,6 +7,7 @@ import { Loader2, Wallet, TrendingUp, Clock, CheckCircle2, Pencil, Save, ShieldC
 import { toast } from "sonner";
 import { useDepositStatus } from "@/lib/deposit";
 import { DepositNotice } from "@/components/deposit-notice";
+import { DepositPayPanel } from "@/components/deposit-pay-panel";
 import { fillText, useDepositSettings } from "@/lib/deposit-settings";
 import { LedgerTimeline, type LedgerRow } from "@/components/ledger-timeline";
 import { ReportCard } from "@/components/report-blocks";
