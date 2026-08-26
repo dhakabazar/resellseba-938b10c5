@@ -471,7 +471,14 @@ const epayseba: Adapter = {
       ),
     );
     const url = r.payment_url || r.checkout_url || r.data?.payment_url;
-    if (!url) fail(r.message || r.error || "ePaySeba checkout failed");
+    if (!url)
+      fail(
+        r.message ||
+          r.error ||
+          (r.__raw
+            ? `ePaySeba did not accept the request (HTTP ${r.__status}). Check the API base URL and keys.`
+            : "ePaySeba checkout failed"),
+      );
     return { paymentUrl: String(url), ref: String(r.transaction_id ?? r.data?.transaction_id ?? "") };
   },
   async verifyReturn(c, order, p) {
