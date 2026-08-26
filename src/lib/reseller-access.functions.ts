@@ -27,7 +27,6 @@ export const impersonateReseller = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({ userId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertPermission(context.supabase, context.userId, "resellers.manage");
-    const { ensureActiveResellerRole, mintImpersonationToken } = await import("@/lib/reseller-access.server");
-    await ensureActiveResellerRole(data.userId);
-    return mintImpersonationToken(data.userId);
+    const { createImpersonationLogin } = await import("@/lib/reseller-access.server");
+    return createImpersonationLogin(context.supabase, data.userId);
   });
