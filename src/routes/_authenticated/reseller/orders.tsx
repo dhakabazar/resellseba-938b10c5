@@ -1264,6 +1264,21 @@ function OrdersPage() {
       />
 
       {zoomImage && <ImageLightbox src={zoomImage} onClose={() => setZoomImage(null)} />}
+
+      {notesModal && (
+        <OrderNotesModal
+          orderId={notesModal.orderId}
+          orderNumber={notesModal.orderNumber}
+          authorRole="reseller"
+          canWrite={notesModal.canWrite}
+          lockedHint="Notes can only be added or edited while the order is New Order, Send To admin or Cancelled."
+          onClose={() => {
+            const id = notesModal.orderId;
+            setNotesModal(null);
+            void refreshMeta([id]);
+          }}
+        />
+      )}
     </div>
 
   );
