@@ -713,6 +713,7 @@ function ResellersPage() {
           agents={agents}
           email={emailStatus[editing.user_id]}
           verify={verifyFor(editing)}
+          onSetPhoneVerified={(v) => setPhoneVerified(editing, v)}
           others={items.filter((i) => i.id !== editing.id && i.status === "active")}
           onClose={() => setEditing(null)}
           onSaved={() => {
