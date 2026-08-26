@@ -117,13 +117,21 @@ export function DataToolbar({
 
 function pageWindow(page: number, pages: number): (number | "…")[] {
   if (pages <= 7) return Array.from({ length: pages }, (_, i) => i + 1);
-  const out: (number | "…")[] = [1];
-  const start = Math.max(2, page - 1);
-  const end = Math.min(pages - 1, page + 1);
+  // Show a 5-page window centered on the current page.
+  const half = 2; // 2 on each side + current = 5
+  let start = Math.max(1, page - half);
+  let end = Math.min(pages, page + half);
+  // Keep the window 5 wide when not near the edges.
+  if (end - start + 1 < 5) {
+    if (start === 1) end = Math.min(pages, start + 4);
+    else if (end === pages) start = Math.max(1, end - 4);
+  }
+  const out: (number | "…")[] = [];
+  if (start > 1) out.push(1);
   if (start > 2) out.push("…");
   for (let i = start; i <= end; i++) out.push(i);
   if (end < pages - 1) out.push("…");
-  out.push(pages);
+  if (end < pages) out.push(pages);
   return out;
 }
 
