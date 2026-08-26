@@ -33,30 +33,41 @@ export function paymentLogo(key?: string | null): string | null {
   return PAYMENT_LOGOS[k] ?? null;
 }
 
-/** Square logo tile. Falls back to `null` so callers can render their own icon. */
+/** Logo tile. Falls back to `null` so callers can render their own icon.
+ *  Brand logos are wide (landscape) content painted onto square canvases with
+ *  heavy vertical padding, so `fit="cover"` in a landscape box shows the actual
+ *  mark much larger than the old square `contain` tile. */
 export function PaymentLogo({
   method,
   size = 36,
+  width,
+  height,
+  fit = "contain",
   className,
   alt,
 }: {
   method?: string | null;
   size?: number;
+  width?: number;
+  height?: number;
+  fit?: "contain" | "cover";
   className?: string;
   alt?: string;
 }) {
   const src = paymentLogo(method);
   if (!src) return null;
+  const w = width ?? size;
+  const h = height ?? size;
   return (
     <img
       src={src}
       alt={alt ?? `${method} logo`}
       loading="eager"
       decoding="async"
-      width={size}
-      height={size}
-      className={className ?? "shrink-0 rounded-lg object-contain"}
-      style={{ width: size, height: size }}
+      width={w}
+      height={h}
+      className={className ?? "shrink-0 rounded-lg"}
+      style={{ width: w, height: h, objectFit: fit }}
     />
   );
 }
