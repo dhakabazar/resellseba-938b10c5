@@ -102,7 +102,7 @@ const GROUPS: Group[] = [
   },
 
   {
-    tab: "verification",
+    tab: "resellers",
     title: "Reseller registration verification",
     hint: "Master switch off thakle verify na korei registration complete hoye jabe.",
     icon: <ShieldCheck className="h-4 w-4" />,
