@@ -571,6 +571,12 @@ function ResellersPage() {
                       <DropdownMenuItem onClick={() => setDepositFor(r)}>
                         <Wallet className="mr-2 h-4 w-4" /> Deposit & freeze
                       </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => void resetPassword(r)}>
+                        <KeyRound className="mr-2 h-4 w-4" /> Reset password
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => void loginAsReseller(r)}>
+                        <LogIn className="mr-2 h-4 w-4" /> Login as reseller
+                      </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => copyStoreLink(r)}>
                         <Copy className="mr-2 h-4 w-4" /> Copy store link
                       </DropdownMenuItem>
