@@ -37,7 +37,7 @@ function Thanks() {
   const { content } = useStore();
   const capi = useServerFn(trackPurchaseServer);
   const verifyPayment = useServerFn(verifyGatewayPayment);
-  const [payState, setPayState] = useState<"idle" | "checking" | "paid" | "failed" | "cancelled" | "mismatch">(
+  const [payState, setPayState] = useState<"idle" | "checking" | "paid" | "partial" | "failed" | "cancelled">(
     pay ? "checking" : "idle",
   );
 
@@ -50,7 +50,7 @@ function Thanks() {
     }
     setPayState("checking");
     verifyPayment({ data: { orderNumber: n } })
-      .then((r) => setPayState(r.status === "paid" ? "paid" : r.status === "mismatch" ? "mismatch" : "failed"))
+      .then((r) => setPayState(r.status === "paid" ? "paid" : r.status === "partial" ? "partial" : "failed"))
       .catch(() => setPayState("failed"));
   }, [pay, n, verifyPayment]);
 
@@ -110,7 +110,7 @@ function PaymentBanner({
   state,
   txn,
 }: {
-  state: "checking" | "paid" | "failed" | "cancelled" | "mismatch";
+  state: "checking" | "paid" | "partial" | "failed" | "cancelled";
   txn?: string;
 }) {
   const map = {
@@ -118,7 +118,7 @@ function PaymentBanner({
     paid: { icon: <CheckCircle2 className="h-4 w-4" />, title: "Payment received", tone: "border-emerald-500/40 bg-emerald-500/10 text-emerald-600" },
     failed: { icon: <XCircle className="h-4 w-4" />, title: "Payment was not completed — the order is saved as unpaid", tone: "border-red-500/40 bg-red-500/10 text-red-600" },
     cancelled: { icon: <XCircle className="h-4 w-4" />, title: "Payment cancelled — the order is saved as unpaid", tone: "border-amber-500/40 bg-amber-500/10 text-amber-600" },
-    mismatch: { icon: <AlertTriangle className="h-4 w-4" />, title: "Payment amount did not match — our team will contact you", tone: "border-amber-500/40 bg-amber-500/10 text-amber-600" },
+    partial: { icon: <AlertTriangle className="h-4 w-4" />, title: "Part of the bill is paid — the rest is due on delivery", tone: "border-amber-500/40 bg-amber-500/10 text-amber-600" },
   } as const;
   const m = map[state];
   return (
