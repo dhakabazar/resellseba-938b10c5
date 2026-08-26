@@ -573,7 +573,7 @@ function AdminOrdersPage() {
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-sm font-bold tracking-tight">#{o.order_number}</div>
                       <div className="text-[10px] uppercase tracking-wide text-muted-foreground tabular-nums">
-                        {new Date(o.created_at).toLocaleString([], { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                        {new Date(o.created_at).toLocaleString([], { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
                       </div>
                     </div>
                     {canStatus ? (
