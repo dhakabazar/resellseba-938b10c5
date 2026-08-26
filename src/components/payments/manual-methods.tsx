@@ -88,10 +88,11 @@ export function ManualMethods({ onCountChange }: { onCountChange?: (n: number) =
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-muted/20 p-3">
         <p className="max-w-[62ch] text-[11px] leading-relaxed text-muted-foreground">
-          The customer sends money to your number and types the transaction ID. Mark a method as{" "}
-          <strong>deposit friendly</strong> to let resellers pay their security deposit with it — those payments wait for
-          your approval in Finance → Deposit transactions.
+          The customer sends money to your number and types the transaction ID. Use the single{" "}
+          <strong>security deposit</strong> switch below to let resellers pay their deposit with every active method —
+          those payments wait for your approval in Finance → Deposit transactions.
         </p>
+
         <button
           type="button"
           onClick={() => setDraft(emptyDraft())}
