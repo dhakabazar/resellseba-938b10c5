@@ -119,7 +119,7 @@ export function OrderTabs({
             }}
           >
             <div
-              className="grid grid-cols-2 gap-1.5 overflow-y-auto overscroll-contain"
+              className="no-scrollbar grid grid-cols-2 gap-1.5 overflow-y-auto overscroll-contain"
               style={{ maxHeight: menuPosition.maxHeight }}
             >
               {ORDER_TABS.map((t) => {
