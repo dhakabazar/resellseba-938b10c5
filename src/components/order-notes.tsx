@@ -76,18 +76,44 @@ export function OrderNotes({
   const [draft, setDraft] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState("");
+  const [orderNotes, setOrderNotes] = useState<
+    { role: string; name: string | null; body: string; at: string }[]
+  >([]);
 
   const load = useCallback(async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("order_notes")
-      .select("*")
-      .eq("order_id", orderId)
-      .order("created_at", { ascending: false });
+    const [{ data, error }, { data: ord }] = await Promise.all([
+      supabase
+        .from("order_notes")
+        .select("*")
+        .eq("order_id", orderId)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("orders")
+        .select("reseller_note,admin_note,notes,created_at,updated_at,reseller:resellers(business_name)")
+        .eq("id", orderId)
+        .maybeSingle(),
+    ]);
     if (error) console.error("[order_notes]", error);
     setNotes((data as OrderNote[]) ?? []);
+    const o = ord as any;
+    const pinned: { role: string; name: string | null; body: string; at: string }[] = [];
+    if (o) {
+      const at = o.updated_at ?? o.created_at;
+      if (o.reseller_note)
+        pinned.push({
+          role: "reseller",
+          name: o.reseller?.business_name ?? null,
+          body: o.reseller_note,
+          at,
+        });
+      if (o.admin_note) pinned.push({ role: "admin", name: null, body: o.admin_note, at });
+      if (o.notes) pinned.push({ role: "staff", name: null, body: o.notes, at });
+    }
+    setOrderNotes(pinned);
     setLoading(false);
   }, [orderId]);
+
 
   useEffect(() => {
     void load();
