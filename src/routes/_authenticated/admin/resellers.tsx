@@ -924,7 +924,22 @@ function EditModal({
         {verify && (
           <div className="rounded-lg border bg-muted/30 p-3">
             <div className="mb-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">Verification</div>
-            <VerifyBadges {...verify} />
+            <VerifyBadges {...verify} phoneVerified={phoneVerified} />
+            <button
+              type="button"
+              disabled={phoneBusy}
+              onClick={async () => {
+                setPhoneBusy(true);
+                const next = !phoneVerified;
+                const ok = await onSetPhoneVerified(next);
+                if (ok) setPhoneVerified(next);
+                setPhoneBusy(false);
+              }}
+              className="mt-2 inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-[11px] font-medium hover:bg-muted disabled:opacity-60"
+            >
+              <SmartphoneNfc className="h-3.5 w-3.5" />
+              {phoneVerified ? "Clear mobile verification" : "Mark mobile verified"}
+            </button>
           </div>
         )}
         <div>
