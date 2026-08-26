@@ -474,7 +474,13 @@ const epayseba: Adapter = {
         signal,
       ),
     );
-    const url = r.payment_url || r.checkout_url || r.data?.payment_url;
+    const redirectedUrl =
+      r.__redirected &&
+      typeof r.__url === "string" &&
+      /^https:\/\/([a-z0-9-]+\.)*epayseba\.com\//i.test(r.__url)
+        ? r.__url
+        : null;
+    const url = r.payment_url || r.checkout_url || r.data?.payment_url || redirectedUrl;
     if (!url)
       fail(
         r.message ||
