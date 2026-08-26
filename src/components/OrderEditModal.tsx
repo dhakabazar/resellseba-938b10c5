@@ -123,16 +123,34 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId]);
 
-  const autoShipping = useMemo(() => {
-    let ship = 0;
-    for (const it of items) {
-      const p = allProducts.find((x) => x.id === it.product_id);
-      if (!p) continue;
-      const dc = productDeliveryCharge(p, area);
-      if (dc > ship) ship = dc;
-    }
-    return ship;
-  }, [items, allProducts, area]);
+  /** Products of the current lines that exist in the catalog — used for delivery rules. */
+  const lineProducts = useMemo(
+    () => items.map((it) => allProducts.find((x) => x.id === it.product_id)).filter(Boolean) as any[],
+    [items, allProducts],
+  );
+
+  /** Highest product delivery charge for the selected area wins. */
+  const autoShipping = useMemo(
+    () => lineProducts.reduce((max, p) => Math.max(max, productDeliveryCharge(p, area)), 0),
+    [lineProducts, area],
+  );
+
+  /** Area picker only matters when charges actually vary by area (same rule as the Add Order modal). */
+  const showAreaPicker = useMemo(() => {
+    if (lineProducts.length === 0) return false;
+    const modes = lineProducts.map((p) => deliveryMode(p));
+    return !modes.every((m) => m === "free") && !modes.every((m) => m === "flat");
+  }, [lineProducts]);
+
+  /** Empty input = follow the area rule; any typed value = explicit custom charge. */
+  function changeShip(v: string) {
+    setShipInput(v);
+    setShipTouched(v.trim() !== "");
+  }
+  function changeDeliveryCost(v: string) {
+    setDeliveryCostInput(v);
+    setDeliveryCostTouched(v.trim() !== "");
+  }
 
   const totals = useMemo(() => {
     const subtotal = items.reduce((s, it) => s + it.reseller_price * it.quantity, 0);
