@@ -1362,8 +1362,8 @@ function OrderDrawer({
 
   if (!data?.order) {
     return (
-      <div className="fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-sm">
-        <div className="h-full w-full max-w-2xl bg-background p-8">
+      <div className="fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-sm" onClick={onClose}>
+        <div className="h-full w-full max-w-2xl bg-background p-8" onClick={(e) => e.stopPropagation()}>
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-2xl font-bold">Order Not Found</h2>
             <button onClick={onClose} className="rounded-full p-2 hover:bg-muted transition-colors">
