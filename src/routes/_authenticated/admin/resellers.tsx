@@ -548,27 +548,26 @@ function ResellersPage() {
                     <DropdownMenuContent align="end" className="w-56">
                       <DropdownMenuLabel>{r.business_name}</DropdownMenuLabel>
                       <DropdownMenuSeparator />
-                      {r.status === "pending" && (
-                        <>
-                          <DropdownMenuItem onClick={() => approve(r)}>
-                            <Check className="mr-2 h-4 w-4" /> Approve access
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => setStatus(r, "rejected")}>
-                            <X className="mr-2 h-4 w-4" /> Reject
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                        </>
-                      )}
-                      {r.status === "active" && (
-                        <DropdownMenuItem onClick={() => setStatus(r, "suspended")}>
-                          <ShieldOff className="mr-2 h-4 w-4" /> Deactivate access
+                      {resellerStatusActions(r.status, autoApprove).map((a) => (
+                        <DropdownMenuItem
+                          key={a.status}
+                          onClick={() => setStatus(r, a.status)}
+                          className={a.tone === "danger" ? "text-destructive focus:text-destructive" : ""}
+                        >
+                          {a.status === "active" ? (
+                            <Play className="mr-2 h-4 w-4" />
+                          ) : a.status === "rejected" ? (
+                            <X className="mr-2 h-4 w-4" />
+                          ) : a.status === "suspended" ? (
+                            <ShieldOff className="mr-2 h-4 w-4" />
+                          ) : (
+                            <Check className="mr-2 h-4 w-4" />
+                          )}
+                          {a.label}
                         </DropdownMenuItem>
-                      )}
-                      {(r.status === "suspended" || r.status === "rejected") && (
-                        <DropdownMenuItem onClick={() => setStatus(r, "active")}>
-                          <Play className="mr-2 h-4 w-4" /> Activate
-                        </DropdownMenuItem>
-                      )}
+                      ))}
+                      <DropdownMenuSeparator />
+
                       {!emailVerified && (
                         <DropdownMenuItem onClick={() => confirmEmail(r)}>
                           <MailCheck className="mr-2 h-4 w-4" /> Confirm email
