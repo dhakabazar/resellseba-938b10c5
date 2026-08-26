@@ -409,11 +409,6 @@ function ResellersPage() {
         >
           {autoApprove ? "Auto activated" : "Manual approval"}
         </span>
-        <span className="text-muted-foreground">
-          {autoApprove
-            ? "Resellers get panel access as soon as they sign up. You can still deactivate or reject anyone."
-            : "Resellers stay pending until you approve them from the 3-dot menu."}
-        </span>
         <Link to="/admin/advanced" className="ml-auto font-medium text-primary hover:underline">
           Change in Advanced settings
         </Link>
