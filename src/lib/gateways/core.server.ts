@@ -61,16 +61,13 @@ export async function getCredentials(
     rows.find((r: any) => r.reseller_id === resellerId) ?? rows.find((r: any) => r.reseller_id === null);
   if (!row) return null;
   const config = (row.config ?? {}) as Record<string, any>;
-  const is_sandbox = config.is_sandbox !== false;
-  const spec = gatewayByProvider(provider);
   return {
     provider,
     api_key: row.api_key ?? "",
     api_secret: row.api_secret ?? "",
     merchant_id: row.merchant_id ?? "",
     config,
-    is_sandbox,
-    base: is_sandbox ? (spec?.hosts.sandbox ?? "") : (spec?.hosts.live ?? ""),
+    base: gatewayBase(provider, config),
     owner: row.reseller_id ? "reseller" : "platform",
   };
 }
@@ -78,16 +75,13 @@ export async function getCredentials(
 /** Same shape from a raw admin form, for the "Test connection" action. */
 export function credsFromRaw(provider: string, raw: Record<string, any>): GatewayCreds {
   const config = (raw.config ?? {}) as Record<string, any>;
-  const is_sandbox = config.is_sandbox !== false;
-  const spec = gatewayByProvider(provider);
   return {
     provider,
     api_key: String(raw.api_key ?? ""),
     api_secret: String(raw.api_secret ?? ""),
     merchant_id: String(raw.merchant_id ?? ""),
     config,
-    is_sandbox,
-    base: is_sandbox ? (spec?.hosts.sandbox ?? "") : (spec?.hosts.live ?? ""),
+    base: gatewayBase(provider, config),
     owner: raw.reseller_id ? "reseller" : "platform",
   };
 }
