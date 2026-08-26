@@ -11,6 +11,13 @@ export type GatewayCreds = {
   config: Record<string, any>;
   is_sandbox: boolean;
   base: string;
+  /**
+   * Who owns the merchant account the money lands in:
+   * - "platform" → the admin's global gateway (admin receives the money)
+   * - "reseller" → the reseller's own gateway (reseller receives the money)
+   * This decides `orders.advance_by`, so profit math credits the right side.
+   */
+  owner: "platform" | "reseller";
 };
 
 export type GatewayOrder = {
