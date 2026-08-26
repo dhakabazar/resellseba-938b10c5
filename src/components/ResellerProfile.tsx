@@ -146,9 +146,10 @@ export function ResellerProfile({
     admin ? { to: "/admin/payouts", search: { reseller: r.id, ...(status ? { status } : {}) } } : {};
   const earningLink = () => (admin ? { to: "/admin/transactions", search: { reseller: r.id } } : {});
   const storeUrl = typeof window !== "undefined" ? `${window.location.origin}/s/${r.code}` : `/s/${r.code}`;
-  const depositDue = r.deposit_required
-    ? Math.max(Number(r.deposit_required_amount ?? 0) - (s?.deposit_balance ?? 0), 0)
-    : 0;
+  /** A deposit only exists when it is switched on AND an amount is set. */
+  const depositAmount = Number(r.deposit_required_amount ?? 0);
+  const depositActive = Boolean(r.deposit_required) && depositAmount > 0;
+  const depositDue = depositActive ? Math.max(depositAmount - (s?.deposit_balance ?? 0), 0) : 0;
 
   return (
     <div className="space-y-4">
