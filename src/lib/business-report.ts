@@ -304,14 +304,16 @@ export function buildCourierRows(
         courierBill: 0,
         adminProfit: 0,
       } as CourierRow);
-    const buy = orderBuyingCost(itemsByOrder.get(o.id) ?? [], o.status, products);
+    const myItems = itemsByOrder.get(o.id) ?? [];
+    const ord = withKeptCost(o, myItems);
+    const buy = orderBuyingCost(myItems, o.status, products);
     row.parcels += 1;
     if (isRealizedStatus(o.status)) row.delivered += 1;
     if (isFailedOrder(o)) row.returned += 1;
     row.value += n(o.total);
-    row.received += orderReceived(o);
+    row.received += orderReceived(ord);
     row.courierBill += sh ? sh.cost || orderDeliveryCost(o) : 0;
-    row.adminProfit += adminOrderProfit(o, buy);
+    row.adminProfit += adminOrderProfit(ord, buy);
     map.set(key, row);
   }
   return Array.from(map.values()).sort((a, b) => b.parcels - a.parcels);
