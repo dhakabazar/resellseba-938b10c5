@@ -2088,6 +2088,95 @@ export type Database = {
           },
         ]
       }
+      tutorial_topics: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      tutorials: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          details: string | null
+          duration_label: string | null
+          id: string
+          is_active: boolean
+          reseller_only: boolean
+          sort_order: number
+          thumbnail_url: string | null
+          title: string
+          topic_id: string | null
+          updated_at: string
+          youtube_url: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          details?: string | null
+          duration_label?: string | null
+          id?: string
+          is_active?: boolean
+          reseller_only?: boolean
+          sort_order?: number
+          thumbnail_url?: string | null
+          title: string
+          topic_id?: string | null
+          updated_at?: string
+          youtube_url: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          details?: string | null
+          duration_label?: string | null
+          id?: string
+          is_active?: boolean
+          reseller_only?: boolean
+          sort_order?: number
+          thumbnail_url?: string | null
+          title?: string
+          topic_id?: string | null
+          updated_at?: string
+          youtube_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tutorials_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "tutorial_topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
