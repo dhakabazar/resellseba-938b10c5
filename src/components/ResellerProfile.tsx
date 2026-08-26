@@ -3,6 +3,7 @@ import { Copy, ExternalLink, Phone, Mail, MapPin, IdCard, Lock, ShieldCheck, Ale
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { resellerStatusClass, resellerStatusLabel } from "@/lib/reseller-status";
+import { VerifyBadges } from "@/components/verify-badges";
 
 
 export type ResellerProfileData = {
@@ -31,6 +32,10 @@ export type ResellerProfileData = {
   avatar_url?: string | null;
   email?: string | null;
   email_verified?: boolean | null;
+  phone_verified?: boolean | null;
+  /** Advanced settings → verification switches, so chips can say "required" */
+  require_email_verify?: boolean;
+  require_phone_verify?: boolean;
 };
 
 export type ResellerProfileSummary = {
@@ -141,9 +146,10 @@ export function ResellerProfile({
     admin ? { to: "/admin/payouts", search: { reseller: r.id, ...(status ? { status } : {}) } } : {};
   const earningLink = () => (admin ? { to: "/admin/transactions", search: { reseller: r.id } } : {});
   const storeUrl = typeof window !== "undefined" ? `${window.location.origin}/s/${r.code}` : `/s/${r.code}`;
-  const depositDue = r.deposit_required
-    ? Math.max(Number(r.deposit_required_amount ?? 0) - (s?.deposit_balance ?? 0), 0)
-    : 0;
+  /** A deposit only exists when it is switched on AND an amount is set. */
+  const depositAmount = Number(r.deposit_required_amount ?? 0);
+  const depositActive = Boolean(r.deposit_required) && depositAmount > 0;
+  const depositDue = depositActive ? Math.max(depositAmount - (s?.deposit_balance ?? 0), 0) : 0;
 
   return (
     <div className="space-y-4">
@@ -158,16 +164,15 @@ export function ResellerProfile({
                 {resellerStatusLabel(r.status)}
               </span>
 
-              {r.email_verified != null &&
-                (r.email_verified ? (
-                  <span className="rounded-full bg-success/15 px-2 py-0.5 text-[10px] font-medium text-success">
-                    Email verified
-                  </span>
-                ) : (
-                  <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-400">
-                    Email unverified
-                  </span>
-                ))}
+              {r.email_verified != null && (
+                <VerifyBadges
+                  emailVerified={Boolean(r.email_verified)}
+                  phoneVerified={Boolean(r.phone_verified)}
+                  hasPhone={Boolean(r.contact_phone)}
+                  requireEmail={Boolean(r.require_email_verify)}
+                  requirePhone={Boolean(r.require_phone_verify)}
+                />
+              )}
             </div>
 
             <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -209,8 +214,8 @@ export function ResellerProfile({
           <Stat label="Frozen" value={money(Number(r.frozen_amount ?? 0))} tone="muted" {...payoutsLink()} />
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
-          {r.deposit_required &&
-            (depositDue > 0 ? (
+          {depositActive ? (
+            depositDue > 0 ? (
               <span className="inline-flex items-center gap-1 rounded-full bg-destructive/15 px-2 py-0.5 text-[11px] font-medium text-destructive">
                 <AlertTriangle className="h-3 w-3" /> Deposit due {money(depositDue)}
               </span>
@@ -218,7 +223,12 @@ export function ResellerProfile({
               <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-2 py-0.5 text-[11px] font-medium text-success">
                 <ShieldCheck className="h-3 w-3" /> Deposit complete
               </span>
-            ))}
+            )
+          ) : (
+            <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+              <ShieldCheck className="h-3 w-3" /> No security deposit required
+            </span>
+          )}
           {Number(r.frozen_amount ?? 0) > 0 && (
             <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
               <Lock className="h-3 w-3" /> {money(Number(r.frozen_amount))} frozen — not withdrawable

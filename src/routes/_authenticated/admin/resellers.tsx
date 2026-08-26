@@ -19,7 +19,7 @@ import {
   ExternalLink,
   Copy,
   MailCheck,
-  MailX,
+  
   ShieldCheck,
   AlertTriangle,
   Lock,
@@ -56,6 +56,7 @@ import { DepositLedger } from "@/components/deposit-ledger";
 import { confirmAction } from "@/lib/confirm";
 import { PasswordResetModal } from "@/components/password-reset-modal";
 import { useAdvancedSettings } from "@/lib/advanced-settings";
+import { VerifyBadges, verifyPending, type VerifyFlags } from "@/components/verify-badges";
 import {
   resellerStatusActions,
   resellerStatusClass,
@@ -126,7 +127,7 @@ const FILTER_LABELS: Record<Filter, string> = {
   active: resellerStatusLabel("active"),
   suspended: resellerStatusLabel("suspended"),
   rejected: resellerStatusLabel("rejected"),
-  email_unverified: "Email unverified",
+  email_unverified: "Unverified",
   all: "All",
 };
 
@@ -141,6 +142,8 @@ function ResellersPage() {
   const searchParams = Route.useSearch();
   const [items, setItems] = useState<Reseller[]>([]);
   const [emailStatus, setEmailStatus] = useState<Record<string, { email: string | null; verified: boolean }>>({});
+  /** profiles.email_verified_at / phone_verified_at keyed by user_id */
+  const [profileVerify, setProfileVerify] = useState<Record<string, { email: boolean; phone: boolean }>>({});
   const [summaries, setSummaries] = useState<Record<string, Summary>>({});
   const [orderCounts, setOrderCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
@@ -172,7 +175,25 @@ function ResellersPage() {
       supabase.rpc("admin_reseller_metrics"),
     ]);
 
-    setItems((listRes.data ?? []) as Reseller[]);
+    const rows = (listRes.data ?? []) as Reseller[];
+    setItems(rows);
+
+    // App-level verification lives on profiles (auth email confirm is separate).
+    const ids = rows.map((r) => r.user_id);
+    if (ids.length) {
+      const { data: profRows } = await supabase
+        .from("profiles")
+        .select("id,email_verified_at,phone_verified_at")
+        .in("id", ids);
+      setProfileVerify(
+        Object.fromEntries(
+          (profRows ?? []).map((p: any) => [
+            p.id,
+            { email: Boolean(p.email_verified_at), phone: Boolean(p.phone_verified_at) },
+          ]),
+        ),
+      );
+    }
 
     const { data: agentRows } = await supabase.from("agents").select("id,display_name").order("display_name");
     setAgents((agentRows ?? []) as Array<{ id: string; display_name: string }>);
@@ -231,10 +252,22 @@ function ResellersPage() {
     }
   }, [searchParams.status]);
 
+  /** Verification truth for one reseller: profiles first, auth confirm as fallback. */
+  const verifyFor = (r: Reseller): VerifyFlags => ({
+    emailVerified: Boolean(profileVerify[r.user_id]?.email || emailStatus[r.user_id]?.verified),
+    phoneVerified: Boolean(profileVerify[r.user_id]?.phone),
+    hasPhone: Boolean(r.contact_phone),
+    requireEmail: advanced.verifyEnabled && advanced.verifyEmail,
+    requirePhone: advanced.verifyEnabled && advanced.verifySms,
+  });
+
   const filtered = useMemo(() => {
     let out = items;
     if (filter === "email_unverified")
-      out = out.filter((r) => !emailStatus[r.user_id]?.verified);
+      out = out.filter((r) => {
+        const f = verifyFor(r);
+        return verifyPending(f) || !f.emailVerified;
+      });
     else if (filter !== "all") out = out.filter((r) => r.status === filter);
     if (agentFilter) out = out.filter((r) => (agentFilter === "none" ? !r.agent_id : r.agent_id === agentFilter));
     const q = query.trim().toLowerCase();
@@ -247,7 +280,7 @@ function ResellersPage() {
           (emailStatus[r.user_id]?.email ?? "").toLowerCase().includes(q),
       );
     return out;
-  }, [items, filter, query, emailStatus, agentFilter]);
+  }, [items, filter, query, emailStatus, profileVerify, advanced, agentFilter]);
 
   const counts = useMemo(() => {
     return {
@@ -255,10 +288,13 @@ function ResellersPage() {
       active: items.filter((r) => r.status === "active").length,
       suspended: items.filter((r) => r.status === "suspended").length,
       rejected: items.filter((r) => r.status === "rejected").length,
-      email_unverified: items.filter((r) => !emailStatus[r.user_id]?.verified).length,
+      email_unverified: items.filter((r) => {
+        const f = verifyFor(r);
+        return verifyPending(f) || !f.emailVerified;
+      }).length,
       all: items.length,
     } as Record<Filter, number>;
-  }, [items, emailStatus]);
+  }, [items, emailStatus, profileVerify, advanced]);
 
   /**
    * Single entry point for every status change. Panel access (role + store
@@ -448,7 +484,8 @@ function ResellersPage() {
           {usePaginated(filtered, page, perPage).map((r) => {
             const s = summaries[r.id];
             const em = emailStatus[r.user_id];
-            const emailVerified = !!em?.verified;
+            const vf = verifyFor(r);
+            const emailVerified = vf.emailVerified;
             const phone = (r.contact_phone ?? "").trim();
             const waPhone = phone.replace(/[^0-9]/g, "").replace(/^0/, "880");
             return (
@@ -460,15 +497,7 @@ function ResellersPage() {
                     <div className="flex flex-wrap items-center gap-1.5">
                       <span className="truncate font-medium">{r.business_name}</span>
                       <StatusBadge status={r.status} />
-                      {emailVerified ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
-                          <MailCheck className="h-3 w-3" /> Email verified
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-400">
-                          <MailX className="h-3 w-3" /> Email unverified
-                        </span>
-                      )}
+                      <VerifyBadges {...vf} />
                       {r.deposit_required && Number(r.deposit_required_amount) > 0 && (
                         (s?.deposit_balance ?? 0) >= Number(r.deposit_required_amount) ? (
                           <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-2 py-0.5 text-[10px] font-medium text-success">
@@ -672,6 +701,7 @@ function ResellersPage() {
           reseller={editing}
           agents={agents}
           email={emailStatus[editing.user_id]}
+          verify={verifyFor(editing)}
           others={items.filter((i) => i.id !== editing.id && i.status === "active")}
           onClose={() => setEditing(null)}
           onSaved={() => {
@@ -687,6 +717,7 @@ function ResellersPage() {
           summary={summaries[profileFor.id] ?? null}
           orders={orderCounts[profileFor.id]}
           email={emailStatus[profileFor.user_id]}
+          verify={verifyFor(profileFor)}
           agentName={agents.find((a) => a.id === profileFor.agent_id)?.display_name ?? null}
           leaderName={
             profileFor.leader_id
@@ -775,11 +806,13 @@ function EditModal({
   agents,
   others,
   email,
+  verify,
   onClose,
   onSaved,
 }: {
   reseller: Reseller;
   email?: { email: string | null; verified: boolean };
+  verify?: VerifyFlags;
   agents: Array<{ id: string; display_name: string }>;
   others: Reseller[];
   onClose: () => void;
@@ -868,12 +901,21 @@ function EditModal({
           />
           <ReadOnlyBit
             label="Security deposit"
-            value={reseller.deposit_required ? `৳${Number(reseller.deposit_required_amount).toLocaleString()}` : "Not required"}
+            value={
+              reseller.deposit_required && Number(reseller.deposit_required_amount) > 0
+                ? `৳${Number(reseller.deposit_required_amount).toLocaleString()}`
+                : "Not required"
+            }
           />
           <ReadOnlyBit label="Frozen" value={`৳${Number(reseller.frozen_amount ?? 0).toLocaleString()}`} />
           <ReadOnlyBit label="Approved" value={reseller.approved_at ? new Date(reseller.approved_at).toLocaleDateString() : "—"} />
-          <ReadOnlyBit label="Email verified" value={email ? (email.verified ? "Yes" : "No") : "—"} />
         </div>
+        {verify && (
+          <div className="rounded-lg border bg-muted/30 p-3">
+            <div className="mb-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">Verification</div>
+            <VerifyBadges {...verify} />
+          </div>
+        )}
         <div>
           <label className="mb-1 block text-xs font-medium">Business name</label>
           <input required value={businessName} onChange={(e) => setBusinessName(e.target.value)} className={cls} />
@@ -1224,6 +1266,7 @@ function ProfileModal({
   summary,
   orders,
   email,
+  verify,
   leaderName,
   agentName,
   onClose,
@@ -1232,6 +1275,7 @@ function ProfileModal({
   summary: Summary | null;
   orders?: number;
   email?: { email: string | null; verified: boolean };
+  verify?: VerifyFlags;
   leaderName: string | null;
   agentName: string | null;
   onClose: () => void;
@@ -1244,7 +1288,10 @@ function ProfileModal({
     leader_name: leaderName,
     agent_name: agentName,
     email: email?.email ?? null,
-    email_verified: email ? email.verified : null,
+    email_verified: verify ? verify.emailVerified : email ? email.verified : null,
+    phone_verified: verify?.phoneVerified ?? null,
+    require_email_verify: verify?.requireEmail,
+    require_phone_verify: verify?.requirePhone,
   };
   return (
     <div
