@@ -2,6 +2,8 @@ import { ResellerAvatar } from "@/components/reseller-avatar";
 import { Copy, ExternalLink, Phone, Mail, MapPin, IdCard, Lock, ShieldCheck, AlertTriangle, ArrowUpRight } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { resellerStatusClass, resellerStatusLabel } from "@/lib/reseller-status";
+
 
 export type ResellerProfileData = {
   id: string;
