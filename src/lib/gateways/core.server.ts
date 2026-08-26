@@ -207,8 +207,16 @@ export function returnUrl(
 }
 
 /**
- * Marks an order paid. Idempotent, and refuses to trust the gateway redirect:
- * the caller must pass a server-verified amount.
+ * Records the verified result of an online payment on the order.
+ *
+ * - Never trusts the redirect: the caller must pass a server-verified amount.
+ * - Follows the normal payment-method logic: full amount → `paid`,
+ *   part of the bill → `partial`, nothing → `unpaid`.
+ * - The money is an advance the customer already paid, so it is stored as
+ *   `advance_amount` with `advance_by` set from the merchant account owner:
+ *   the admin's global gateway → "admin", the reseller's own gateway →
+ *   "reseller". Profit math then credits the right side automatically.
+ * - `received_amount` (courier COD collection) is deliberately untouched.
  */
 export async function settlePayment(opts: {
   order: GatewayOrder;
@@ -216,39 +224,120 @@ export async function settlePayment(opts: {
   paid: boolean;
   amount: number;
   txnId: string;
-}): Promise<"paid" | "mismatch" | "unpaid" | "already"> {
+  owner?: "platform" | "reseller";
+}): Promise<"paid" | "partial" | "unpaid" | "already"> {
   const db = await admin();
   if (opts.order.payment_status === "paid") return "already";
-  if (!opts.paid) {
-    await db.from("orders").update({ payment_provider: opts.provider, transaction_id: opts.txnId || null }).eq("id", opts.order.id);
-    return "unpaid";
-  }
-  const expected = Number(opts.order.total);
-  const mismatch = Math.abs(opts.amount - expected) >= 1;
-  if (mismatch) {
+  if (!opts.paid || !(opts.amount > 0)) {
     await db
       .from("orders")
-      .update({
-        payment_status: "unpaid",
-        payment_provider: opts.provider,
-        transaction_id: opts.txnId || null,
-        paid_amount: opts.amount,
-        admin_note: `AMOUNT MISMATCH: gateway ${opts.provider} reported ${opts.amount}, order total ${expected} (txn ${opts.txnId || "-"})`,
-      })
+      .update({ payment_provider: opts.provider, transaction_id: opts.txnId || null })
       .eq("id", opts.order.id);
-    return "mismatch";
+    return "unpaid";
   }
+
+  const expected = Number(opts.order.total || 0);
+  const already = Math.max(Number(opts.order.paid_amount ?? 0), 0);
+  const totalPaid = Math.round((already + opts.amount) * 100) / 100;
+  const full = totalPaid >= expected - 0.5;
+
+  const prevAdvance = Math.max(Number(opts.order.advance_amount ?? 0), 0);
+  const holder = opts.owner === "reseller" ? "reseller" : "admin";
+  const advanceBy = prevAdvance > 0 ? (opts.order.advance_by ?? holder) : holder;
+  const advanceAmount = Math.round((prevAdvance + opts.amount) * 100) / 100;
+
+  const overpaid = totalPaid > expected + 1;
   await db
     .from("orders")
     .update({
-      payment_status: "paid",
+      payment_status: full ? "paid" : "partial",
       payment_provider: opts.provider,
       transaction_id: opts.txnId || null,
-      paid_amount: opts.amount,
-      paid_at: new Date().toISOString(),
-      received_amount: opts.amount,
+      paid_amount: totalPaid,
+      paid_at: full ? new Date().toISOString() : null,
+      advance_amount: advanceAmount,
+      advance_by: advanceBy,
+      ...(overpaid
+        ? {
+            admin_note: `OVERPAID: gateway ${opts.provider} reported ${totalPaid}, order total ${expected} (txn ${opts.txnId || "-"})`,
+          }
+        : {}),
     })
     .eq("id", opts.order.id);
+  return full ? "paid" : "partial";
+}
+
+/* ------------------------------------------------------------ security deposit */
+
+export type DepositIntent = {
+  id: string;
+  code: string;
+  reseller_id: string;
+  amount: number;
+  status: string;
+  provider: string | null;
+  txn_id: string | null;
+};
+
+export function newDepositCode(): string {
+  const rnd = Math.random().toString(36).slice(2, 8).toUpperCase();
+  return `DEP${Date.now().toString(36).toUpperCase().slice(-5)}${rnd}`;
+}
+
+export async function loadDepositIntent(code: string): Promise<DepositIntent | null> {
+  const db = await admin();
+  const { data } = await db
+    .from("deposit_requests")
+    .select("id,code,reseller_id,amount,status,provider,txn_id")
+    .eq("code", code)
+    .maybeSingle();
+  return (data as unknown as DepositIntent) ?? null;
+}
+
+/**
+ * Confirms a gateway-paid security deposit: credits the reseller ledger once
+ * and marks the request approved. Idempotent on the deposit request status.
+ */
+export async function settleDeposit(opts: {
+  intent: DepositIntent;
+  provider: string;
+  paid: boolean;
+  amount: number;
+  txnId: string;
+}): Promise<"paid" | "already" | "unpaid"> {
+  const db = await admin();
+  if (opts.intent.status === "approved") return "already";
+  if (!opts.paid || !(opts.amount > 0)) {
+    await db
+      .from("deposit_requests")
+      .update({ provider: opts.provider, txn_id: opts.txnId || null })
+      .eq("id", opts.intent.id);
+    return "unpaid";
+  }
+  const { data: deposit } = await db
+    .from("reseller_deposits")
+    .insert({
+      reseller_id: opts.intent.reseller_id,
+      amount: opts.amount,
+      method: opts.provider,
+      reference: opts.txnId || opts.intent.code,
+      note: `Online security deposit via ${opts.provider}`,
+    })
+    .select("id")
+    .single();
+  await db
+    .from("deposit_requests")
+    .update({
+      status: "approved",
+      provider: opts.provider,
+      txn_id: opts.txnId || null,
+      amount: opts.amount,
+      paid_at: new Date().toISOString(),
+      reviewed_at: new Date().toISOString(),
+      admin_note: "Auto-approved: verified online payment",
+      deposit_id: (deposit as { id: string } | null)?.id ?? null,
+    })
+    .eq("id", opts.intent.id);
   return "paid";
 }
 
