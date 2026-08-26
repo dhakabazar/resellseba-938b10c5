@@ -15,75 +15,27 @@ export const startGatewayPayment = createServerFn({ method: "POST" })
     z.object({ orderNumber: z.string().min(3), code: z.string().min(1), provider: z.string().min(2) }).parse(d),
   )
   .handler(async ({ data }) => {
-    const { adapterFor } = await import("@/lib/gateways/adapters.server");
-    const core = await import("@/lib/gateways/core.server");
-    const { extractGatewayError } = await import("@/lib/gateways/registry");
-
-    const order = await core.loadOrder(data.orderNumber);
-    if (order.payment_status === "paid") throw new Response("This order is already paid", { status: 400 });
-    const creds = await core.getCredentials(data.provider, order.reseller_id);
-    if (!creds) throw new Response("This payment gateway is not available", { status: 400 });
-
-    const origin = core.siteOrigin();
-    const spa = core.spaUrls(origin, data.code, order.order_number);
-    const params = { on: order.order_number, su: spa.success, cu: spa.cancel, code: data.code };
-    const urls = {
-      returnUrl: core.returnUrl(origin, data.provider, { ...params, t: "success" }),
-      failUrl: core.returnUrl(origin, data.provider, { ...params, t: "fail" }),
-      cancelUrl: core.returnUrl(origin, data.provider, { ...params, t: "cancel" }),
-      ipnUrl:
-        data.provider === "sslcommerz"
-          ? `${origin}/api/public/payment/sslcommerz-ipn`
-          : data.provider === "epayseba"
-            ? `${origin}/api/public/payment/epayseba-webhook`
-            : core.returnUrl(origin, data.provider, { ...params, t: "ipn" }),
-    };
-
-
-    try {
-      const res = await adapterFor(data.provider).create(creds, order, urls);
-      const db = await core.admin();
-      await db
-        .from("orders")
-        .update({ payment_provider: data.provider, transaction_id: res.ref || order.transaction_id || null })
-        .eq("id", order.id);
-      return { redirectUrl: res.paymentUrl };
-    } catch (err) {
-      throw new Response(extractGatewayError(err), { status: 502 });
+    const bridge = await import("@/lib/gateways/bridge.server");
+    if (!bridge.hasPrivilegedDb()) {
+      return await bridge.forwardToPlatform<{ redirectUrl: string }>("order-start", data);
     }
+    const flows = await import("@/lib/gateways/flows.server");
+    return await flows.startOrderPaymentFlow(data);
   });
 
 /** Called by the storefront success page after the browser comes back. */
 export const verifyGatewayPayment = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({ orderNumber: z.string().min(3) }).parse(d))
   .handler(async ({ data }) => {
-    const { adapterFor } = await import("@/lib/gateways/adapters.server");
-    const core = await import("@/lib/gateways/core.server");
-
-    const order = await core.loadOrder(data.orderNumber);
-    if (order.payment_status === "paid")
-      return { status: "paid" as const, amount: Number(order.paid_amount ?? order.total) };
-    const provider = order.payment_provider;
-    if (!provider) return { status: "unpaid" as const, amount: 0 };
-    const creds = await core.getCredentials(provider, order.reseller_id);
-    if (!creds) return { status: "unpaid" as const, amount: 0 };
-    try {
-      const v = await adapterFor(provider).verifyReturn(creds, order, {});
-      const outcome = await core.settlePayment({
-        order,
-        provider,
-        paid: v.paid,
-        amount: v.amount,
-        txnId: v.txnId,
-        owner: creds.owner,
-      });
-      return {
-        status: outcome === "already" ? ("paid" as const) : (outcome as "paid" | "partial" | "unpaid"),
-        amount: v.amount,
-      };
-    } catch {
-      return { status: "unpaid" as const, amount: 0 };
+    const bridge = await import("@/lib/gateways/bridge.server");
+    if (!bridge.hasPrivilegedDb()) {
+      return await bridge.forwardToPlatform<{ status: "paid" | "partial" | "unpaid"; amount: number }>(
+        "order-verify",
+        data,
+      );
     }
+    const flows = await import("@/lib/gateways/flows.server");
+    return await flows.verifyOrderPaymentFlow(data);
   });
 
 export const testGatewayConnection = createServerFn({ method: "POST" })
