@@ -19,6 +19,7 @@ import {
   ExternalLink,
   Copy,
   MailCheck,
+  SmartphoneNfc,
   
   ShieldCheck,
   AlertTriangle,
