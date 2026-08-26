@@ -1176,7 +1176,7 @@ function AdminOrdersPage() {
                   <X className="h-4 w-4" />
                 </button>
               </div>
-              <div className="max-h-[70vh] overflow-y-auto p-4">
+              <div className="max-h-[70vh] modal-scroll p-4">
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
                   {(() => {
                     const recommended = statusModal.isBulk

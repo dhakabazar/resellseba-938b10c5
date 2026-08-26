@@ -331,3 +331,49 @@
   display: none;
 }
 
+
+/* ---------------------------------------------------------------
+   Global scrollbar design — one consistent look for modals, drawers,
+   tables and any scrollable panel (replaces the OS default bar).
+   --------------------------------------------------------------- */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklab, var(--color-foreground) 22%, transparent) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  background-clip: padding-box;
+  border-radius: 9999px;
+  background-color: color-mix(in oklab, var(--color-foreground) 20%, transparent);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(in oklab, var(--color-primary) 55%, transparent);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Opt-out helper keeps working. */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+/* Scroll panes inside overlays: soft padding so the bar never hugs content. */
+@utility modal-scroll {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
+  scrollbar-gutter: stable;
+}

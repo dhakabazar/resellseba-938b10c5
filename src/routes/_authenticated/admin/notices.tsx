@@ -252,7 +252,7 @@ function AdminNoticesPage() {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-2xl border bg-card p-6 shadow-elegant"
+            className="max-h-[90vh] w-full max-w-xl modal-scroll rounded-2xl border bg-card p-6 shadow-elegant"
           >
             <h2 className="mb-4 text-lg font-extrabold">{draft.id ? "Edit notice" : "New notice"}</h2>
             <div className="space-y-3">
