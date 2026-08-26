@@ -4,7 +4,8 @@ import { ChevronDown, Loader2, Minus, Plus, ShieldCheck, Trash2, Truck } from "l
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
-import { initBkash, initSslcommerz } from "@/lib/payments.functions";
+import { listActiveGateways, startGatewayPayment } from "@/lib/gateways.functions";
+import { isAutomaticGateway } from "@/lib/gateways/registry";
 import { areaOptions, productDeliveryCharge, type DeliveryArea } from "@/lib/delivery";
 import { useAdvancedSettings } from "@/lib/advanced-settings";
 import { addressError, nameError, normalizePhone, phoneError, sanitizeName } from "@/lib/checkout-validate";
@@ -41,8 +42,9 @@ function Checkout() {
   const [busy, setBusy] = useState(false);
   const [noteOpen, setNoteOpen] = useState(false);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
-  const runSsl = useServerFn(initSslcommerz);
-  const runBkash = useServerFn(initBkash);
+  const [gateways, setGateways] = useState<{ provider: string; label: string; method: string }[]>([]);
+  const loadGateways = useServerFn(listActiveGateways);
+  const startPayment = useServerFn(startGatewayPayment);
 
   const [form, setForm] = useState({
     name: "",
@@ -76,6 +78,13 @@ function Checkout() {
       setMethods(Array.from(byMethod.values()));
     })();
   }, [store.resellerId]);
+
+  /** Automatic gateways come from the server (credentials never reach the browser). */
+  useEffect(() => {
+    loadGateways({ data: { code } })
+      .then((rows) => setGateways(rows))
+      .catch(() => setGateways([]));
+  }, [code, loadGateways]);
 
   const lines = useMemo(
     () =>
@@ -116,7 +125,8 @@ function Checkout() {
   const valid = !errors.name && !errors.phone && !errors.address;
 
   /** Extra payment options only render when the reseller actually enabled one. */
-  const extraMethods = methods.filter((m) => m.method !== "cod");
+  const extraMethods = methods.filter((m) => m.method !== "cod" && !isAutomaticGateway(m.method));
+  const gatewayOptions = gateways.map((g) => ({ method: g.method, label: g.label, instructions: null, provider: g.provider }));
   const codMeta = methods.find((m) => m.method === "cod");
 
   async function submit(e: React.FormEvent) {
@@ -153,23 +163,20 @@ function Checkout() {
       return;
     }
 
-    try {
-      if (payMethod === "sslcommerz") {
-        const r = await runSsl({ data: { orderNumber: row.order_number, code } });
+    const gateway = gatewayOptions.find((g) => g.method === payMethod);
+    if (gateway) {
+      try {
+        const r = await startPayment({
+          data: { orderNumber: row.order_number, code, provider: gateway.provider },
+        });
         clearCart(code);
         window.location.href = r.redirectUrl;
         return;
-      }
-      if (payMethod === "bkash") {
-        const r = await runBkash({ data: { orderNumber: row.order_number, code } });
-        clearCart(code);
-        window.location.href = r.redirectUrl;
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Payment could not be started");
+        setBusy(false);
         return;
       }
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Payment init failed");
-      setBusy(false);
-      return;
     }
 
     clearCart(code);
@@ -291,11 +298,11 @@ function Checkout() {
             )}
           </div>
 
-          {extraMethods.length > 0 && (
+          {extraMethods.length + gatewayOptions.length > 0 && (
             <div>
               <div className="mb-2 text-xs font-semibold uppercase tracking-[0.14em]">Payment method</div>
               <div className="grid gap-2 sm:grid-cols-2">
-                {[{ method: "cod", label: "Cash on Delivery", instructions: codMeta?.instructions ?? null }, ...extraMethods].map((m) => (
+                {[{ method: "cod", label: "Cash on Delivery", instructions: codMeta?.instructions ?? null }, ...extraMethods, ...gatewayOptions].map((m) => (
                   <button
                     type="button"
                     key={m.method}
@@ -315,7 +322,7 @@ function Checkout() {
             </div>
           )}
 
-          {extraMethods.length === 0 && (
+          {extraMethods.length + gatewayOptions.length === 0 && (
             <div className={cx("flex items-start gap-2 rounded-[var(--st-radius-sm)] border border-dashed p-3 text-xs", borderc, muted)}>
               <Truck className="mt-0.5 h-4 w-4 shrink-0 text-[var(--st-primary)]" />
               <span>Cash on Delivery — pay the courier when your parcel arrives.</span>

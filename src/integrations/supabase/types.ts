@@ -1110,7 +1110,10 @@ export type Database = {
           notes: string | null
           order_number: string
           packaging_total: number
+          paid_amount: number
+          paid_at: string | null
           payment_method: Database["public"]["Enums"]["payment_method"]
+          payment_provider: string | null
           payment_status: Database["public"]["Enums"]["payment_status"]
           received_amount: number | null
           reseller_id: string | null
@@ -1125,6 +1128,7 @@ export type Database = {
           stock_restored: boolean
           subtotal: number
           total: number
+          transaction_id: string | null
           updated_at: string
         }
         Insert: {
@@ -1148,7 +1152,10 @@ export type Database = {
           notes?: string | null
           order_number?: string
           packaging_total?: number
+          paid_amount?: number
+          paid_at?: string | null
           payment_method?: Database["public"]["Enums"]["payment_method"]
+          payment_provider?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status"]
           received_amount?: number | null
           reseller_id?: string | null
@@ -1163,6 +1170,7 @@ export type Database = {
           stock_restored?: boolean
           subtotal?: number
           total?: number
+          transaction_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -1186,7 +1194,10 @@ export type Database = {
           notes?: string | null
           order_number?: string
           packaging_total?: number
+          paid_amount?: number
+          paid_at?: string | null
           payment_method?: Database["public"]["Enums"]["payment_method"]
+          payment_provider?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status"]
           received_amount?: number | null
           reseller_id?: string | null
@@ -1201,6 +1212,7 @@ export type Database = {
           stock_restored?: boolean
           subtotal?: number
           total?: number
+          transaction_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -1267,6 +1279,63 @@ export type Database = {
           },
           {
             foreignKeyName: "payment_configs_reseller_id_fkey"
+            columns: ["reseller_id"]
+            isOneToOne: false
+            referencedRelation: "resellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_gateway_configs: {
+        Row: {
+          api_key: string | null
+          api_secret: string | null
+          config: Json
+          created_at: string
+          id: string
+          is_active: boolean
+          label: string | null
+          merchant_id: string | null
+          provider: string
+          reseller_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          api_key?: string | null
+          api_secret?: string | null
+          config?: Json
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label?: string | null
+          merchant_id?: string | null
+          provider: string
+          reseller_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          api_key?: string | null
+          api_secret?: string | null
+          config?: Json
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label?: string | null
+          merchant_id?: string | null
+          provider?: string
+          reseller_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_gateway_configs_reseller_id_fkey"
+            columns: ["reseller_id"]
+            isOneToOne: false
+            referencedRelation: "public_stores"
+            referencedColumns: ["reseller_id"]
+          },
+          {
+            foreignKeyName: "payment_gateway_configs_reseller_id_fkey"
             columns: ["reseller_id"]
             isOneToOne: false
             referencedRelation: "resellers"
@@ -2684,6 +2753,14 @@ export type Database = {
       }
       generate_product_code: { Args: never; Returns: string }
       generate_reseller_code: { Args: { _seed: string }; Returns: string }
+      get_active_payment_gateways: {
+        Args: { _reseller_id?: string }
+        Returns: {
+          is_sandbox: boolean
+          label: string
+          provider: string
+        }[]
+      }
       has_any_permission: {
         Args: { _permissions: string[]; _user_id: string }
         Returns: boolean
@@ -2907,6 +2984,9 @@ export type Database = {
         | "sslcommerz"
         | "eps"
         | "other"
+        | "shurjopay"
+        | "aamarpay"
+        | "epayseba"
       payment_status: "unpaid" | "partial" | "paid" | "refunded"
       payout_status: "pending" | "approved" | "paid" | "rejected"
       reseller_status: "pending" | "active" | "suspended" | "rejected"
@@ -3084,6 +3164,9 @@ export const Constants = {
         "sslcommerz",
         "eps",
         "other",
+        "shurjopay",
+        "aamarpay",
+        "epayseba",
       ],
       payment_status: ["unpaid", "partial", "paid", "refunded"],
       payout_status: ["pending", "approved", "paid", "rejected"],
