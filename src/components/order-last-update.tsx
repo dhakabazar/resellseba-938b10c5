@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { StickyNote, X, Clock } from "lucide-react";
+import { StickyNote, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { OrderNotes } from "@/components/order-notes";
 
