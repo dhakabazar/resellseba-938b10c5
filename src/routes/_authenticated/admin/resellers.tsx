@@ -724,18 +724,13 @@ function Metric({
 }
 
 function StatusBadge({ status }: { status: Status }) {
-  const map: Record<Status, string> = {
-    active: "bg-success/15 text-success",
-    pending: "bg-warning/20 text-warning-foreground",
-    suspended: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
-    rejected: "bg-destructive/15 text-destructive",
-  };
   return (
-    <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium capitalize ${map[status]}`}>
-      {status === "suspended" ? "deactivated" : status}
+    <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${resellerStatusClass(status)}`}>
+      {resellerStatusLabel(status)}
     </span>
   );
 }
+
 
 function ReadOnlyBit({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
