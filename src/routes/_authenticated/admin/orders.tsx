@@ -91,7 +91,7 @@ type OrderRow = {
   created_at: string;
   reseller_note: string | null;
   admin_note: string | null;
-  resellers: { business_name: string; code: string; contact_phone: string | null } | null;
+  resellers: { business_name: string; code: string; contact_phone: string | null; agents: { display_name: string } | null } | null;
 };
 
 type OrderItemLite = {
@@ -192,7 +192,7 @@ function AdminOrdersPage() {
   const [resellerOptions, setResellerOptions] = useState<FilterOption[]>([]);
 
   const ORDER_SELECT =
-    "id,reseller_id,order_number,customer_name,customer_phone,address_line,area,city,subtotal,discount,shipping_cost,sa_cost_total,packaging_total,delivery_cost,received_amount,advance_amount,advance_by,total,status,payment_status,payment_method,forwarded_to_admin,created_at,reseller_note,admin_note,resellers(business_name,code,contact_phone)";
+    "id,reseller_id,order_number,customer_name,customer_phone,address_line,area,city,subtotal,discount,shipping_cost,sa_cost_total,packaging_total,delivery_cost,received_amount,advance_amount,advance_by,total,status,payment_status,payment_method,forwarded_to_admin,created_at,reseller_note,admin_note,resellers(business_name,code,contact_phone,agents(display_name))";
   const ITEM_SELECT = "order_id,product_id,product_name,product_image,quantity,returned_qty,reseller_price,line_total";
   const SHIPMENT_SELECT = "id,order_id,provider,tracking_id,consignment_id";
 
