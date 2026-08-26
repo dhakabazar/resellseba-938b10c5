@@ -305,7 +305,7 @@ export function OrderFilterBar({
         </div>
         )}
 
-        <div className={`grid grid-cols-2 gap-2 sm:grid-cols-3 lg:flex lg:shrink-0 lg:items-end ${isReport ? "lg:w-[60%]" : "lg:flex-1 lg:justify-end"} ${hideSearch ? "w-full" : ""}`}>
+        <div className={`grid grid-cols-2 gap-2 lg:flex lg:shrink-0 lg:items-end ${isReport ? "lg:w-[60%]" : "lg:flex-1 lg:justify-end"} ${hideSearch ? "w-full" : ""}`}>
           {resellerOptions && (
             <SearchableSelect
               label="Reseller"
