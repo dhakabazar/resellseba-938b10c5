@@ -826,20 +826,28 @@ function OrdersPage() {
 
 
                 <div className="p-3 md:hidden">
-                  <div className="flex items-start gap-3">
-                    <input
-                      type="checkbox"
-                      className="mt-1 h-4 w-4 shrink-0 accent-[hsl(var(--primary))]"
-                      checked={isMarked}
-                      onChange={(e) => mark(e.target.checked)}
-                    />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-start gap-2.5">
+                    <div className="flex shrink-0 flex-col items-center gap-1.5 pt-0.5">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 accent-[hsl(var(--primary))]"
+                        checked={isMarked}
+                        onChange={(e) => mark(e.target.checked)}
+                      />
+                      {actions}
+                      <button
+                        onClick={() => setExpandedOrders(prev => prev.includes(o.id) ? prev.filter(id => id !== o.id) : [...prev, o.id])}
+                        className="rounded-full p-1 transition-colors hover:bg-muted"
+                      >
+                        <ChevronDown className={`h-4 w-4 transition-transform ${expandedOrders.includes(o.id) ? "rotate-180" : ""}`} />
+                      </button>
+                    </div>
+                    <div className="min-w-0 flex-1 space-y-2.5">
+                      {/* Header */}
+                      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
                         <div className="min-w-0">
-                          <div className="truncate text-sm font-semibold">{o.order_number}</div>
-
-
-                          <div className="text-[11px] text-muted-foreground">
+                          <div className="truncate text-sm font-bold tracking-tight">#{o.order_number}</div>
+                          <div className="text-[10px] uppercase tracking-wide text-muted-foreground tabular-nums">
                             {new Date(o.created_at).toLocaleString([], {
                               day: "2-digit",
                               month: "short",
@@ -867,93 +875,92 @@ function OrdersPage() {
                         })()}
                       </div>
 
-                      <div className="mt-2 space-y-0.5 text-xs">
-                        <div className="flex items-center gap-1.5 font-medium">
-                          <span className="truncate">{o.customer_name}</span>
-                          <div className="flex items-center gap-1 shrink-0">
-                            <a 
-                              href={`tel:${o.customer_phone}`}
-                              className="text-primary hover:text-primary/80 transition-colors"
-                            >
+                      {/* Customer + payment */}
+                      <div className="grid grid-cols-1 gap-2 rounded-lg bg-muted/30 p-2 sm:grid-cols-2">
+                        <div className="min-w-0 space-y-0.5">
+                          <div className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70">Customer</div>
+                          <div className="flex min-w-0 items-center gap-1.5 text-xs font-medium">
+                            <span className="truncate">{o.customer_name}</span>
+                            <a href={`tel:${o.customer_phone}`} className="shrink-0 text-primary transition-colors hover:text-primary/80">
                               <Phone className="h-3.5 w-3.5" />
                             </a>
-                            <button 
-                              onClick={() => {
-                                navigator.clipboard.writeText(o.customer_phone);
-                                toast.success("Phone number copied");
-                              }}
-                              className="text-muted-foreground hover:text-foreground transition-colors"
+                            <button
+                              onClick={() => { navigator.clipboard.writeText(o.customer_phone); toast.success("Phone number copied"); }}
+                              className="shrink-0 text-muted-foreground transition-colors hover:text-foreground"
                             >
                               <Copy className="h-3 w-3" />
                             </button>
                           </div>
-                        </div>
-                        <div className="text-[11px] leading-snug text-muted-foreground">
-                          <span className="line-clamp-2">
+                          <div className="text-[11px] tabular-nums text-muted-foreground">{o.customer_phone}</div>
+                          <div className="line-clamp-2 text-[11px] leading-snug text-muted-foreground">
                             {o.address_line}
                             {o.area ? `, ${o.area.replace("_", " ")}` : ""}
                             {o.city ? `, ${o.city}` : ""}
-                          </span>
+                          </div>
                         </div>
-                         {shipments.some(s => s.order_id === o.id) ? (
-                           <div className="flex flex-wrap gap-1">
-                             {shipments.filter(s => s.order_id === o.id).map(s => (
-                               <div key={s.id} className="inline-flex items-center gap-1 rounded bg-muted/50 px-1.5 py-0.5 text-[9px] font-medium text-muted-foreground ring-1 ring-inset ring-muted-foreground/10">
-                                 <CourierLogo provider={s.provider} size={12} />
-                                 {(() => {
-                                   const u = courierTrackingUrl(s.provider, s, (o as any).customer_phone);
-                                   return u ? (
-                                     <a href={u} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} title="Track on courier website" className="inline-flex items-center gap-0.5 font-bold text-primary hover:underline">
-                                       {courierLabel(s.provider)}
-                                       <ExternalLink className="h-2 w-2" />
-                                     </a>
-                                   ) : (
-                                     <span>{courierLabel(s.provider)}</span>
-                                   );
-                                 })()}
-                                 {s.consignment_id && (
-                                   <>
-                                     <span className="opacity-70">({s.consignment_id})</span>
-                                     <button 
-                                       onClick={(e) => {
-                                         e.stopPropagation();
-                                         navigator.clipboard.writeText(s.consignment_id || "");
-                                         toast.success("Booking ID copied");
-                                       }}
-                                       className="ml-0.5 opacity-50 hover:opacity-100"
-                                     >
-                                       <Copy className="h-2 w-2" />
-                                     </button>
-                                   </>
-                                 )}
-                               </div>
-                             ))}
-                           </div>
-                         ) : (
-                           <span className="text-[10px] italic text-muted-foreground/60">Not booked yet</span>
-                         )}
-
+                        <div className="min-w-0 space-y-1 border-t pt-2 sm:border-l sm:border-t-0 sm:pl-2 sm:pt-0">
+                          <div className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70">Payment</div>
+                          <div className="flex flex-wrap items-center gap-1 text-[11px]">
+                            <span className="rounded border px-1.5 py-0.5 uppercase text-muted-foreground">{o.payment_method}</span>
+                            {o.status === "forwarded" && o.forwarded_to_admin && (
+                              <span className="rounded bg-success/10 px-1.5 py-0.5 text-success">Sent to admin</span>
+                            )}
+                          </div>
+                        </div>
                       </div>
 
-                      <div className="mt-2 truncate text-xs text-muted-foreground">
-                        {itemText}
-                        {qty > 0 && <span className="ml-1">({qty} pcs)</span>}
+                      {/* Products */}
+                      <div className="space-y-0.5">
+                        <div className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70">Products</div>
+                        <div className="line-clamp-3 text-[11px] text-muted-foreground">
+                          {itemText}
+                          {qty > 0 && <span className="ml-1 opacity-70">({qty} pcs)</span>}
+                        </div>
                       </div>
 
-                      <div className="mt-2">
-                        <ResellerTotalCell order={o as any} />
-                      </div>
-
-                      <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px]">
-                        <span className="rounded border px-1.5 py-0.5 uppercase text-muted-foreground">
-                          {o.payment_method}
-                        </span>
-                        {o.status === "forwarded" && o.forwarded_to_admin && (
-                          <span className="rounded bg-success/10 px-1.5 py-0.5 text-success">Sent to admin</span>
+                      {/* Courier */}
+                      <div className="space-y-0.5">
+                        <div className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70">Courier</div>
+                        {shipments.some(s => s.order_id === o.id) ? (
+                          <div className="flex flex-wrap gap-1">
+                            {shipments.filter(s => s.order_id === o.id).map(s => (
+                              <div key={s.id} className="inline-flex items-center gap-1 rounded bg-muted/50 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground ring-1 ring-inset ring-muted-foreground/10">
+                                <CourierLogo provider={s.provider} size={12} />
+                                {(() => {
+                                  const u = courierTrackingUrl(s.provider, s, (o as any).customer_phone);
+                                  return u ? (
+                                    <a href={u} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} title="Track on courier website" className="inline-flex items-center gap-0.5 font-bold text-primary hover:underline">
+                                      {courierLabel(s.provider)}
+                                      <ExternalLink className="h-2 w-2" />
+                                    </a>
+                                  ) : (
+                                    <span>{courierLabel(s.provider)}</span>
+                                  );
+                                })()}
+                                {s.consignment_id && (
+                                  <>
+                                    <span className="opacity-70">#{s.consignment_id}</span>
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(s.consignment_id || ""); toast.success("Booking ID copied"); }}
+                                      className="ml-0.5 opacity-50 hover:opacity-100"
+                                    >
+                                      <Copy className="h-2.5 w-2.5" />
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-[10px] italic text-muted-foreground/60">Not booked yet</span>
                         )}
                       </div>
 
-                      <div className="mt-2 border-t pt-2">
+                      {/* Money */}
+                      <ResellerTotalCell order={o as any} />
+
+                      <div className="space-y-0.5 border-t pt-2">
+                        <div className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70">Last update</div>
                         <LastUpdateCell
                           meta={orderMeta[o.id]}
                           fallbackAt={o.created_at}
@@ -962,9 +969,6 @@ function OrdersPage() {
                           }
                         />
                       </div>
-
-
-                      <div className="mt-3 flex flex-wrap items-center gap-2">{actions}</div>
                     </div>
                   </div>
                 </div>
