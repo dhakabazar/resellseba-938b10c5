@@ -429,7 +429,13 @@ export function OrderFilterBar({
         {dirty && (
           <button
             type="button"
-            onClick={() => onChange({ ...DEFAULT_ORDER_FILTERS, perPage: value.perPage })}
+            onClick={() =>
+              onChange({
+                ...DEFAULT_ORDER_FILTERS,
+                perPage: value.perPage,
+                q: hideSearch ? value.q : "",
+              })
+            }
             className="rounded-md border px-2 py-1 hover:bg-accent"
           >
             Reset filters
