@@ -204,14 +204,17 @@ function TabButton({
 }
 
 function AddMethodForm({ mode, onAdded }: { mode: PaymentMode; onAdded: () => void }) {
-  const options = mode === "manual" ? MANUAL_METHODS : API_METHODS;
-  const [method, setMethod] = useState(options[0]!.value);
+  const manualOptions = MANUAL_METHODS;
+  const firstKey = mode === "manual" ? manualOptions[0]!.value : GATEWAYS[0]!.key;
+  const [choice, setChoice] = useState(firstKey);
   const [label, setLabel] = useState("");
   const [account, setAccount] = useState("");
   const [busy, setBusy] = useState(false);
 
+  const spec = mode === "api" ? GATEWAYS.find((g) => g.key === choice) : undefined;
+
   useEffect(() => {
-    setMethod(options[0]!.value);
+    setChoice(mode === "manual" ? manualOptions[0]!.value : GATEWAYS[0]!.key);
     setLabel("");
     setAccount("");
   }, [mode]);
@@ -221,12 +224,14 @@ function AddMethodForm({ mode, onAdded }: { mode: PaymentMode; onAdded: () => vo
     if (!label.trim()) return;
     setBusy(true);
     const { error } = await supabase.from("payment_configs").insert({
-      method: method as never,
+      method: (mode === "manual" ? choice : spec!.method) as never,
       label: label.trim(),
       mode,
       is_active: true,
       instructions: null,
-      config: (mode === "manual" ? { account: account.trim(), allow_deposit: false } : {}) as never,
+      config: (mode === "manual"
+        ? { account: account.trim(), allow_deposit: false }
+        : { gateway: spec!.key }) as never,
     });
     setBusy(false);
     if (error) return toast.error(error.message);
@@ -240,15 +245,21 @@ function AddMethodForm({ mode, onAdded }: { mode: PaymentMode; onAdded: () => vo
     <form onSubmit={add} className="surface-card mb-5 grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-4">
       <div>
         <label className="mb-1 block text-xs font-medium">Provider</label>
-        <select value={method} onChange={(e) => setMethod(e.target.value)} className={inp}>
-          {options.map((m) => (
-            <option key={`${m.value}-${m.label}`} value={m.value}>
-              {m.label}
-            </option>
-          ))}
+        <select value={choice} onChange={(e) => setChoice(e.target.value)} className={inp}>
+          {mode === "manual"
+            ? manualOptions.map((m) => (
+                <option key={m.value} value={m.value}>
+                  {m.label}
+                </option>
+              ))
+            : GATEWAYS.map((g) => (
+                <option key={g.key} value={g.key}>
+                  {g.label}
+                </option>
+              ))}
         </select>
         <p className="mt-1 text-[10px] text-muted-foreground">
-          {options.find((m) => m.value === method)?.hint}
+          {mode === "manual" ? manualOptions.find((m) => m.value === choice)?.hint : spec?.tagline}
         </p>
       </div>
       <div>
