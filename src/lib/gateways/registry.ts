@@ -21,6 +21,14 @@ export type GatewayFieldSpec = {
   required?: boolean;
 };
 
+export type GatewayCallback = {
+  /** path relative to the current site origin */
+  path: string;
+  label: string;
+  /** true = must be whitelisted/entered in the provider panel by hand */
+  manual: boolean;
+};
+
 export type GatewaySpec = {
   provider: string;
   label: string;
@@ -30,8 +38,13 @@ export type GatewaySpec = {
   method: string;
   hosts: { sandbox: string; live: string };
   fields: GatewayFieldSpec[];
-  /** paths the provider panel must be pointed at (relative to site origin) */
-  callbacks: string[];
+  /**
+   * Callback URLs this gateway uses. `manual: true` means the URL must be
+   * pasted into the provider's merchant panel; otherwise it is sent
+   * automatically with every payment request, so nothing to configure.
+   * Paths are relative to the live site origin — never hardcode a domain.
+   */
+  callbacks: GatewayCallback[];
   /** flag appended on the storefront return URL, e.g. ?sslcommerz=1 */
   returnFlag: string;
 };
@@ -48,7 +61,10 @@ export const GATEWAYS: GatewaySpec[] = [
       { path: "api_key", label: "Store ID", placeholder: "yourstore0live", required: true, hint: "Merchant panel → API / Integration" },
       { path: "api_secret", label: "Store password", placeholder: "yourstore0live@ssl", secret: true, required: true },
     ],
-    callbacks: ["/api/public/payment/sslcommerz/return", "/api/public/payment/sslcommerz-ipn"],
+    callbacks: [
+      { path: "/api/public/payment/sslcommerz/return", label: "Return URL (success / fail / cancel)", manual: false },
+      { path: "/api/public/payment/sslcommerz-ipn", label: "IPN URL", manual: true },
+    ],
     returnFlag: "sslcommerz",
   },
   {
@@ -64,7 +80,9 @@ export const GATEWAYS: GatewaySpec[] = [
       { path: "merchant_id", label: "Merchant username", placeholder: "01700000000", required: true },
       { path: "config.password", label: "Merchant password", secret: true, required: true },
     ],
-    callbacks: ["/api/public/payment/bkash/return"],
+    callbacks: [
+      { path: "/api/public/payment/bkash/return", label: "Callback URL", manual: false },
+    ],
     returnFlag: "bkash",
   },
   {
@@ -94,7 +112,9 @@ export const GATEWAYS: GatewaySpec[] = [
         hint: "Raw base64 only — no PEM header/footer and no line breaks",
       },
     ],
-    callbacks: ["/api/public/payment/nagad/return"],
+    callbacks: [
+      { path: "/api/public/payment/nagad/return", label: "Callback URL", manual: false },
+    ],
     returnFlag: "nagad",
   },
   {
@@ -109,7 +129,9 @@ export const GATEWAYS: GatewaySpec[] = [
       { path: "api_secret", label: "Password", secret: true, required: true },
       { path: "merchant_id", label: "Prefix", placeholder: "sp", required: true },
     ],
-    callbacks: ["/api/public/payment/shurjopay/return"],
+    callbacks: [
+      { path: "/api/public/payment/shurjopay/return", label: "Return URL", manual: false },
+    ],
     returnFlag: "shurjopay",
   },
   {
@@ -125,7 +147,9 @@ export const GATEWAYS: GatewaySpec[] = [
       { path: "merchant_id", label: "Merchant ID (UUID)", required: true },
       { path: "config.store_id", label: "Store ID (UUID)", required: true },
     ],
-    callbacks: ["/api/public/payment/eps/return"],
+    callbacks: [
+      { path: "/api/public/payment/eps/return", label: "Success / fail / cancel URL", manual: false },
+    ],
     returnFlag: "eps",
   },
   {
@@ -139,7 +163,9 @@ export const GATEWAYS: GatewaySpec[] = [
       { path: "api_key", label: "Store ID", placeholder: "aamarpaytest", required: true },
       { path: "api_secret", label: "Signature key", secret: true, required: true },
     ],
-    callbacks: ["/api/public/payment/aamarpay/return"],
+    callbacks: [
+      { path: "/api/public/payment/aamarpay/return", label: "Success / fail / cancel URL", manual: false },
+    ],
     returnFlag: "aamarpay",
   },
   {
@@ -154,7 +180,10 @@ export const GATEWAYS: GatewaySpec[] = [
       { path: "api_secret", label: "Secret key (webhook signature)", secret: true, hint: "Optional — used to verify webhooks" },
       { path: "merchant_id", label: "Brand key", required: true },
     ],
-    callbacks: ["/api/public/payment/epayseba/return", "/api/public/payment/epayseba-webhook"],
+    callbacks: [
+      { path: "/api/public/payment/epayseba/return", label: "Return URL", manual: false },
+      { path: "/api/public/payment/epayseba-webhook", label: "Webhook URL", manual: true },
+    ],
     returnFlag: "epayseba",
   },
 ];
