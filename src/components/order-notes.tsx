@@ -154,6 +154,7 @@ export function OrderNotes({
 
   const words = countWords(draft);
 
+
   return (
     <div className="surface-card overflow-hidden">
       <div className="flex items-center justify-between border-b bg-muted/30 px-4 py-3">
