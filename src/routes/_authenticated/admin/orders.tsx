@@ -110,6 +110,10 @@ type OrderItemLite = {
   returned_qty?: number | null;
   reseller_price: number | null;
   line_total: number | null;
+  /** Cost snapshots frozen when the line was created — never re-read from the product. */
+  sa_price?: number | null;
+  buying_price?: number | null;
+  packaging_cost?: number | null;
 };
 
 export const Route = createFileRoute("/_authenticated/admin/orders")({
