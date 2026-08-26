@@ -115,6 +115,18 @@ export function DataToolbar({
   );
 }
 
+function pageWindow(page: number, pages: number): (number | "…")[] {
+  if (pages <= 7) return Array.from({ length: pages }, (_, i) => i + 1);
+  const out: (number | "…")[] = [1];
+  const start = Math.max(2, page - 1);
+  const end = Math.min(pages - 1, page + 1);
+  if (start > 2) out.push("…");
+  for (let i = start; i <= end; i++) out.push(i);
+  if (end < pages - 1) out.push("…");
+  out.push(pages);
+  return out;
+}
+
 export function Pagination({
   page,
   perPage,
@@ -131,35 +143,92 @@ export function Pagination({
   const pages = Math.max(1, Math.ceil(total / effectivePer));
   const from = total === 0 ? 0 : showAll ? 1 : (page - 1) * perPage + 1;
   const to = showAll ? total : Math.min(page * perPage, total);
+  const [goTo, setGoTo] = useState("");
+  const current = Math.min(Math.max(1, page), pages);
+
+  const go = (p: number) => onPage(Math.min(pages, Math.max(1, p)));
+  const submitGoTo = () => {
+    const n = Number.parseInt(goTo, 10);
+    if (Number.isFinite(n)) go(n);
+    setGoTo("");
+  };
+
   return (
-    <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
+    <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
       <span>
         {from}–{to} of {total}
       </span>
-      {!showAll && (
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => onPage(Math.max(1, page - 1))}
-            disabled={page <= 1}
-            className="inline-flex items-center rounded-md border px-2 py-1 disabled:opacity-40"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-          <span className="px-2">
-            {page} / {pages}
-          </span>
-          <button
-            onClick={() => onPage(Math.min(pages, page + 1))}
-            disabled={page >= pages}
-            className="inline-flex items-center rounded-md border px-2 py-1 disabled:opacity-40"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </button>
+      {!showAll && pages > 1 && (
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => go(current - 1)}
+              disabled={current <= 1}
+              title="Previous"
+              className="inline-flex h-8 items-center rounded-md border px-2 disabled:opacity-40"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            {pageWindow(current, pages).map((p, i) =>
+              p === "…" ? (
+                <span key={`gap-${i}`} className="px-1 text-muted-foreground">
+                  …
+                </span>
+              ) : (
+                <button
+                  key={p}
+                  onClick={() => go(p)}
+                  aria-current={p === current ? "page" : undefined}
+                  className={
+                    p === current
+                      ? "inline-flex h-8 min-w-8 items-center justify-center rounded-md border border-primary bg-primary px-2 font-medium text-primary-foreground"
+                      : "inline-flex h-8 min-w-8 items-center justify-center rounded-md border px-2 hover:bg-muted"
+                  }
+                >
+                  {p}
+                </button>
+              ),
+            )}
+            <button
+              onClick={() => go(current + 1)}
+              disabled={current >= pages}
+              title="Next"
+              className="inline-flex h-8 items-center rounded-md border px-2 disabled:opacity-40"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="whitespace-nowrap">Go to</span>
+            <input
+              type="number"
+              min={1}
+              max={pages}
+              value={goTo}
+              onChange={(e) => setGoTo(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  submitGoTo();
+                }
+              }}
+              placeholder={String(current)}
+              className="h-8 w-16 rounded-md border bg-background px-2 text-center text-foreground"
+            />
+            <button
+              onClick={submitGoTo}
+              disabled={!goTo}
+              className="inline-flex h-8 items-center rounded-md border px-2 hover:bg-muted disabled:opacity-40"
+            >
+              Go
+            </button>
+          </div>
         </div>
       )}
     </div>
   );
 }
+
 
 export function ActionMenu({ children }: { children: ReactNode }) {
   return (
