@@ -389,6 +389,8 @@ function OrdersPage() {
   // Re-read file to find where to add the chevron toggle and grid columns
   // (The previous AI message mentioned reconstructing the grid)
   const paged = usePaginated(visible, page, filters.perPage);
+  const { meta: orderMeta, refresh: refreshMeta } = useOrderMeta(paged.map((o: any) => o.id));
+  const [notesModal, setNotesModal] = useState<{ orderId: string; orderNumber?: string | null; canWrite: boolean } | null>(null);
   const stats = useMemo(
     () =>
       visible.reduce(
