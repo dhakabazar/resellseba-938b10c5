@@ -47,6 +47,7 @@ function ListingsPage() {
   const [perPage, setPerPage] = useState(20);
   const [page, setPage] = useState(1);
   const [detailId, setDetailId] = useState<string | null>(null);
+  const [pricingId, setPricingId] = useState<string | null>(null);
 
 
   async function load() {
