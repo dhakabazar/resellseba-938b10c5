@@ -792,7 +792,7 @@ function AdminOrdersPage() {
                         </button>
                       </div>
                       <div className="text-[11px] tabular-nums text-muted-foreground">{o.customer_phone}</div>
-                      <div className="line-clamp-2 text-[11px] leading-snug text-muted-foreground">
+                      <div className="text-[11px] leading-snug text-muted-foreground break-words">
                         {o.address_line}
                         {o.area ? `, ${o.area.replace("_", " ")}` : ""}
                         {o.city ? `, ${o.city}` : ""}
@@ -1007,12 +1007,10 @@ function AdminOrdersPage() {
                           <Copy className="h-3 w-3" />
                         </button>
                       </div>
-                      <div className="mt-0.5 text-center text-[11px] leading-snug text-muted-foreground">
-                        <span className="line-clamp-2">
-                          {o.address_line}
-                          {o.area ? `, ${o.area.replace("_", " ")}` : ""}
-                          {o.city ? `, ${o.city}` : ""}
-                        </span>
+                      <div className="mt-0.5 text-center text-[11px] leading-snug text-muted-foreground break-words">
+                        {o.address_line}
+                        {o.area ? `, ${o.area.replace("_", " ")}` : ""}
+                        {o.city ? `, ${o.city}` : ""}
                       </div>
                    </div>
                     <div className="flex justify-center"><ResellerTotalCell order={o as any} /></div>
