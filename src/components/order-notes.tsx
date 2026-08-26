@@ -76,18 +76,44 @@ export function OrderNotes({
   const [draft, setDraft] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState("");
+  const [orderNotes, setOrderNotes] = useState<
+    { role: string; name: string | null; body: string; at: string }[]
+  >([]);
 
   const load = useCallback(async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("order_notes")
-      .select("*")
-      .eq("order_id", orderId)
-      .order("created_at", { ascending: false });
+    const [{ data, error }, { data: ord }] = await Promise.all([
+      supabase
+        .from("order_notes")
+        .select("*")
+        .eq("order_id", orderId)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("orders")
+        .select("reseller_note,admin_note,notes,created_at,updated_at,reseller:resellers(business_name)")
+        .eq("id", orderId)
+        .maybeSingle(),
+    ]);
     if (error) console.error("[order_notes]", error);
     setNotes((data as OrderNote[]) ?? []);
+    const o = ord as any;
+    const pinned: { role: string; name: string | null; body: string; at: string }[] = [];
+    if (o) {
+      const at = o.updated_at ?? o.created_at;
+      if (o.reseller_note)
+        pinned.push({
+          role: "reseller",
+          name: o.reseller?.business_name ?? null,
+          body: o.reseller_note,
+          at,
+        });
+      if (o.admin_note) pinned.push({ role: "admin", name: null, body: o.admin_note, at });
+      if (o.notes) pinned.push({ role: "staff", name: null, body: o.notes, at });
+    }
+    setOrderNotes(pinned);
     setLoading(false);
   }, [orderId]);
+
 
   useEffect(() => {
     void load();
@@ -154,6 +180,7 @@ export function OrderNotes({
 
   const words = countWords(draft);
 
+
   return (
     <div className="surface-card overflow-hidden">
       <div className="flex items-center justify-between border-b bg-muted/30 px-4 py-3">
@@ -201,12 +228,37 @@ export function OrderNotes({
           </p>
         )}
 
+        {orderNotes.length > 0 && (
+          <div className="space-y-2">
+            {orderNotes.map((p, i) => (
+              <div key={i} className="rounded-lg border border-dashed bg-muted/20 px-3 py-2">
+                <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
+                  <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${roleBadge(p.role)}`}>
+                    {roleLabel(p.role)}
+                  </span>
+                  {p.name && <span className="font-semibold text-foreground/70">{p.name}</span>}
+                  <span>·</span>
+                  <span>{new Date(p.at).toLocaleString()}</span>
+                  <span className="rounded bg-background px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide">
+                    Order form
+                  </span>
+                </div>
+                <p className="mt-0.5 text-sm text-foreground/90">{p.body}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
         {loading ? (
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading notes…
           </div>
         ) : notes.length === 0 ? (
-          <p className="text-xs text-muted-foreground">No notes yet.</p>
+
+          <p className="text-xs text-muted-foreground">
+            {orderNotes.length > 0 ? "No timeline notes yet." : "No notes yet."}
+          </p>
+
         ) : (
           <ol className="relative space-y-4 border-l pl-4">
             {notes.map((n) => (
