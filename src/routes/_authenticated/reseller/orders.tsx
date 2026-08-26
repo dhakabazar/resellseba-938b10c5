@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ResellerTotalCell } from "@/components/order-total-cell";
+import { withKeptCost } from "@/lib/business-report";
 import { getMyReseller } from "@/lib/app-data";
 import { productDeliveryCharge, deliveryLabel } from "@/lib/delivery";
 import { addressError, nameError, normalizePhone, phoneError, sanitizeName } from "@/lib/checkout-validate";
@@ -141,8 +142,11 @@ type OrderItemLite = {
   product_name: string;
   product_image: string | null;
   quantity: number;
+  returned_qty?: number | null;
   reseller_price: number | null;
   line_total: number | null;
+  /** Cost snapshot frozen on the line — used for partial (item) money math. */
+  sa_price?: number | null;
 };
 
 function exportCsv(rows: OrderRow[]) {
@@ -247,7 +251,7 @@ function OrdersPage() {
       const [{ data: its }, { data: s }, { data: ev }] = await Promise.all([
         supabase
           .from("order_items")
-          .select("order_id,product_id,product_name,product_image,quantity,reseller_price,line_total")
+          .select("order_id,product_id,product_name,product_image,quantity,returned_qty,reseller_price,line_total,sa_price")
           .in("order_id", rows.map((x) => x.id)),
         supabase
           .from("shipments")
@@ -279,7 +283,7 @@ function OrdersPage() {
       supabase.from("orders").select(ORDER_COLUMNS).in("id", list),
       supabase
         .from("order_items")
-        .select("order_id,product_id,product_name,product_image,quantity,reseller_price,line_total")
+        .select("order_id,product_id,product_name,product_image,quantity,returned_qty,reseller_price,line_total,sa_price")
         .in("order_id", list),
       supabase
         .from("shipments")
@@ -1010,7 +1014,7 @@ function OrdersPage() {
                   </div>
 
                   {/* Money */}
-                  <ResellerTotalCell order={o as any} />
+                  <ResellerTotalCell order={withKeptCost(o as any, (itemsByOrder.get(o.id) ?? []) as any)} />
 
                   {/* Note — full width */}
                   <div className="space-y-0.5 border-t pt-2">
@@ -1091,7 +1095,7 @@ function OrdersPage() {
                     </div>
                   </div>
                    
-                    <div className="flex justify-center"><ResellerTotalCell order={o as any} /></div>
+                    <div className="flex justify-center"><ResellerTotalCell order={withKeptCost(o as any, (itemsByOrder.get(o.id) ?? []) as any)} /></div>
                     <div className="min-w-0 text-center">
                       {(() => {
                         const isBooked = shipments.some(s => s.order_id === o.id && (s.consignment_id || s.tracking_id));
