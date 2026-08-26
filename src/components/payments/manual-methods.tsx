@@ -144,11 +144,13 @@ export function ManualMethods({ onCountChange }: { onCountChange?: (n: number) =
                 </div>
               </dl>
 
-              {cfgBool(row.config, "allow_deposit") && (
+              {depositOn && row.is_active && (
                 <span className="mt-2 inline-flex w-fit items-center gap-1 rounded-full bg-success/15 px-2 py-0.5 text-[10px] font-semibold text-success">
-                  <ShieldCheck className="h-3 w-3" /> Deposit friendly
+                  <ShieldCheck className="h-3 w-3" /> Deposit enabled
                 </span>
               )}
+
+
 
               <div className="mt-auto flex gap-2 pt-3">
                 <button
