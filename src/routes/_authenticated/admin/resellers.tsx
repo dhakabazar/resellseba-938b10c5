@@ -122,6 +122,8 @@ function ResellersPage() {
   const confirmEmailFn = useServerFn(confirmUserEmail);
   const listEmailStatusFn = useServerFn(listResellerEmailStatus);
   const deleteAuthUserFn = useServerFn(deleteAuthUser);
+  const resetPasswordFn = useServerFn(resetResellerPassword);
+  const impersonateFn = useServerFn(impersonateReseller);
   const searchParams = Route.useSearch();
   const [items, setItems] = useState<Reseller[]>([]);
   const [emailStatus, setEmailStatus] = useState<Record<string, { email: string | null; verified: boolean }>>({});
