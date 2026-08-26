@@ -901,12 +901,21 @@ function EditModal({
           />
           <ReadOnlyBit
             label="Security deposit"
-            value={reseller.deposit_required ? `৳${Number(reseller.deposit_required_amount).toLocaleString()}` : "Not required"}
+            value={
+              reseller.deposit_required && Number(reseller.deposit_required_amount) > 0
+                ? `৳${Number(reseller.deposit_required_amount).toLocaleString()}`
+                : "Not required"
+            }
           />
           <ReadOnlyBit label="Frozen" value={`৳${Number(reseller.frozen_amount ?? 0).toLocaleString()}`} />
           <ReadOnlyBit label="Approved" value={reseller.approved_at ? new Date(reseller.approved_at).toLocaleDateString() : "—"} />
-          <ReadOnlyBit label="Email verified" value={email ? (email.verified ? "Yes" : "No") : "—"} />
         </div>
+        {verify && (
+          <div className="rounded-lg border bg-muted/30 p-3">
+            <div className="mb-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">Verification</div>
+            <VerifyBadges {...verify} />
+          </div>
+        )}
         <div>
           <label className="mb-1 block text-xs font-medium">Business name</label>
           <input required value={businessName} onChange={(e) => setBusinessName(e.target.value)} className={cls} />
