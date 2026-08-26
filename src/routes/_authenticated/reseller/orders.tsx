@@ -639,6 +639,7 @@ function OrdersPage() {
           onChange={setFilters}
           total={orders.length}
           shown={visible.length}
+          hideSearch
         />
       )}
 
