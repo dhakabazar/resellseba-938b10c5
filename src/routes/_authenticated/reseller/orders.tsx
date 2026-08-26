@@ -178,6 +178,7 @@ function OrdersPage() {
   const [allProducts, setAllProducts] = useState<any[]>([]);
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<OrderTabKey>(tabParam ?? (qParam ? "all" : "new"));
   const [selected, setSelected] = useState<OrderRow | null>(null);
@@ -209,9 +210,9 @@ function OrdersPage() {
   });
 
 
-  async function load() {
+  async function load(opts?: { silent?: boolean }) {
     if (!user) return;
-    setLoading(true);
+    if (!opts?.silent) setLoading(true);
     const r = await getMyReseller(user.id);
     if (!r) return setLoading(false);
     setResellerId(r.id);
@@ -260,7 +261,52 @@ function OrdersPage() {
       setShipments([]);
       setEvents([]);
     }
-    setLoading(false);
+    if (!opts?.silent) setLoading(false);
+  }
+
+  // Refresh only the touched rows so the current page/filters stay put.
+  async function syncOrders(ids: string[]) {
+    const list = ids.filter(Boolean);
+    if (list.length === 0) return;
+    const statuses = (ORDER_TABS.find((t) => t.key === tab)?.statuses ?? []) as string[];
+    const inTab = (st: string) => statuses.length === 0 || statuses.includes(st);
+    const [{ data: rows }, { data: its }, { data: sh }, { data: ev }] = await Promise.all([
+      supabase.from("orders").select(ORDER_COLUMNS).in("id", list),
+      supabase
+        .from("order_items")
+        .select("order_id,product_id,product_name,product_image,quantity,reseller_price,line_total")
+        .in("order_id", list),
+      supabase
+        .from("shipments")
+        .select("id,order_id,provider,tracking_id,consignment_id,status,courier_status,last_event_at")
+        .in("order_id", list),
+      supabase
+        .from("courier_events")
+        .select("order_id,provider,courier_status,note,event_at")
+        .in("order_id", list),
+    ]);
+    const fetched = ((rows ?? []) as unknown) as OrderRow[];
+    setOrders((prev) => {
+      let next = prev
+        .map((x) => fetched.find((f) => f.id === x.id) ?? x)
+        .filter((x) => !list.includes(x.id) || inTab(x.status));
+      for (const f of fetched) {
+        if (!next.some((x) => x.id === f.id) && inTab(f.status)) next = [f, ...next];
+      }
+      return next;
+    });
+    setOrderItems((prev) => [...prev.filter((i) => !list.includes(i.order_id)), ...((its ?? []) as OrderItemLite[])]);
+    setShipments((prev) => [...prev.filter((x: any) => !list.includes(x.order_id)), ...((sh ?? []) as any[])]);
+    setEvents((prev) => [...prev.filter((x: any) => !list.includes(x.order_id)), ...((ev ?? []) as any[])]);
+  }
+
+  function dropOrders(ids: string[]) {
+    setOrders((prev) => prev.filter((x) => !ids.includes(x.id)));
+    setOrderItems((prev) => prev.filter((i) => !ids.includes(i.order_id)));
+    setShipments((prev) => prev.filter((x: any) => !ids.includes(x.order_id)));
+    setEvents((prev) => prev.filter((x: any) => !ids.includes(x.order_id)));
+    setMarked((prev) => prev.filter((id) => !ids.includes(id)));
+    setExpandedOrders((prev) => prev.filter((id) => !ids.includes(id)));
   }
   useEffect(() => {
     load();
@@ -383,21 +429,22 @@ function OrdersPage() {
       description: `Are you sure you want to update ${marked.length} orders to ${newStatus}?`,
       variant: "warning",
       onConfirm: async () => {
-        setLoading(true);
+        setBusy(true);
+        const targetIds = [...marked];
         const { error } = await supabase
           .from("orders")
           .update({ status: newStatus as any })
-          .in("id", marked);
-        
+          .in("id", targetIds);
+
         if (error) {
           toast.error(error.message);
         } else {
-          toast.success(`${marked.length} orders updated successfully`);
+          toast.success(`${targetIds.length} orders updated successfully`);
           setMarked([]);
-          await load();
+          await syncOrders(targetIds);
         }
         setConfirmModal(prev => ({ ...prev, open: false }));
-        setLoading(false);
+        setBusy(false);
       }
     });
   };
@@ -421,7 +468,7 @@ function OrdersPage() {
       description: `Delete ${marked.length} selected orders? This action cannot be undone.`,
       variant: "danger",
       onConfirm: async () => {
-        setLoading(true);
+        setBusy(true);
         const { data: gone, error } = await supabase
           .from("orders")
           .delete()
@@ -438,12 +485,11 @@ function OrdersPage() {
           } else {
             toast.success(`${gone.length} orders deleted`);
           }
-          setMarked([]);
-          await load();
+          dropOrders(gone.map((g: any) => g.id));
         }
 
         setConfirmModal(prev => ({ ...prev, open: false }));
-        setLoading(false);
+        setBusy(false);
       }
     });
   };
@@ -473,8 +519,7 @@ function OrdersPage() {
       description: "Are you sure you want to delete this order? This action cannot be undone.",
       variant: "danger",
       onConfirm: async () => {
-        setLoading(true);
-        await supabase.from("order_items").delete().eq("order_id", id);
+        setBusy(true);
         const { data: gone, error } = await supabase
           .from("orders")
           .delete()
@@ -485,11 +530,11 @@ function OrdersPage() {
           toast.error("Delete failed: you do not have permission to delete this order.");
         } else {
           toast.success("Order deleted");
-          load();
+          dropOrders([id]);
         }
 
         setConfirmModal(prev => ({ ...prev, open: false }));
-        setLoading(false);
+        setBusy(false);
       }
     });
   }
@@ -1090,8 +1135,9 @@ function OrdersPage() {
           orderId={selected.id}
           onClose={() => setSelected(null)}
           onChanged={() => {
+            const id = selected.id;
             setSelected(null);
-            load();
+            void syncOrders([id]);
           }}
           allProducts={allProducts}
           depositBlocked={deposit.blocked}
@@ -1109,7 +1155,7 @@ function OrdersPage() {
           onClose={() => setOpen(false)}
           onCreated={() => {
             setOpen(false);
-            load();
+            void load({ silent: true });
           }}
         />
       )}
@@ -1120,8 +1166,9 @@ function OrdersPage() {
           allProducts={allProducts}
           onClose={() => setEditId(null)}
           onSaved={() => {
+            const id = editId;
             setEditId(null);
-            load();
+            if (id) void syncOrders([id]);
           }}
         />
       )}
@@ -1143,7 +1190,7 @@ function OrdersPage() {
                 {(nextStatuses(statusModal.currentStatus, "reseller") as string[]).map((s) => (
                   <button
                     key={s}
-                    disabled={loading}
+                    disabled={loading || busy}
                     onClick={async () => {
                       if (s === "forwarded" && deposit.blocked) {
                         toast.error(fillText(depositTexts.orderBlockToast, { due: deposit.due, required: deposit.requiredAmount, balance: deposit.balance, frozen: deposit.frozenAmount }));
@@ -1154,20 +1201,21 @@ function OrdersPage() {
                         setStatusModal(null);
                         return;
                       }
-                      setLoading(true);
+                      setBusy(true);
+                      const targetId = statusModal.orderId;
                       const { error } = await supabase
                         .from("orders")
                         .update({ status: s as any })
-                        .eq("id", statusModal.orderId);
-                      
+                        .eq("id", targetId);
+
                       if (error) {
                         toast.error(error.message);
                       } else {
                         toast.success(`Status updated to ${orderStatusLabel(s)}`);
                         setStatusModal(null);
-                        await load();
+                        await syncOrders([targetId]);
                       }
-                      setLoading(false);
+                      setBusy(false);
                     }}
                     className={`group flex items-center gap-3 rounded-lg border px-3 py-2.5 text-left text-xs transition-all hover:bg-accent disabled:opacity-50 ${
                       statusModal.currentStatus === s ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "border-transparent"
