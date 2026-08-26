@@ -19,7 +19,7 @@ import {
   ExternalLink,
   Copy,
   MailCheck,
-  MailX,
+  
   ShieldCheck,
   AlertTriangle,
   Lock,
