@@ -604,28 +604,28 @@ function AdminOrdersPage() {
                     onToggle={() => setExpandedOrders(prev => prev.includes(o.id) ? prev.filter(id => id !== o.id) : [...prev, o.id])}
                   />
 
-                  <div className="min-w-0">
-                     <div className="font-medium truncate">{o.customer_name}</div>
-                     <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                       {o.customer_phone}
-                       <a href={`tel:${o.customer_phone}`} className="text-primary hover:text-primary/80">
-                         <Phone className="h-3 w-3" />
-                       </a>
-                       <button onClick={() => { navigator.clipboard.writeText(o.customer_phone); toast.success("Copied"); }} className="hover:text-foreground">
-                         <Copy className="h-3 w-3" />
-                       </button>
-                     </div>
-                     <div className="mt-0.5 flex items-start gap-1 text-[11px] leading-snug text-muted-foreground">
-                       <MapPin className="mt-[1px] h-3 w-3 shrink-0 opacity-70" />
-                       <span className="line-clamp-2">
-                         {o.address_line}
-                         {o.area ? `, ${o.area.replace("_", " ")}` : ""}
-                         {o.city ? `, ${o.city}` : ""}
-                       </span>
-                     </div>
-                  </div>
-                   <ResellerTotalCell order={o as any} />
-                   <AdminTotalCell order={o as any} buyingCost={buyingCostFor(o.id, o.status)} />
+                   <div className="min-w-0 text-center">
+                      <div className="font-medium truncate">{o.customer_name}</div>
+                      <div className="flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground">
+                        {o.customer_phone}
+                        <a href={`tel:${o.customer_phone}`} className="text-primary hover:text-primary/80">
+                          <Phone className="h-3 w-3" />
+                        </a>
+                        <button onClick={() => { navigator.clipboard.writeText(o.customer_phone); toast.success("Copied"); }} className="hover:text-foreground">
+                          <Copy className="h-3 w-3" />
+                        </button>
+                      </div>
+                      <div className="mt-0.5 flex items-start justify-center gap-1 text-[11px] leading-snug text-muted-foreground">
+                        <MapPin className="mt-[1px] h-3 w-3 shrink-0 opacity-70" />
+                        <span className="line-clamp-2">
+                          {o.address_line}
+                          {o.area ? `, ${o.area.replace("_", " ")}` : ""}
+                          {o.city ? `, ${o.city}` : ""}
+                        </span>
+                      </div>
+                   </div>
+                    <div className="flex justify-center"><ResellerTotalCell order={o as any} /></div>
+                    <div className="flex justify-center"><AdminTotalCell order={o as any} buyingCost={buyingCostFor(o.id, o.status)} /></div>
                    <div className="min-w-0">
                       <span className={`px-2 py-0.5 rounded-full text-[11px] ${orderStatusTone(o.status)}`}>{orderStatusLabel(o.status)}</span>
                        {shipments.filter(s => s.order_id === o.id).length > 0 ? (
