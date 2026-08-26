@@ -234,15 +234,17 @@ export function buildResellerRows(
         resellerProfit: 0,
         adminProfit: 0,
       } as ResellerRow);
-    const buy = orderBuyingCost(itemsByOrder.get(o.id) ?? [], o.status, products);
+    const myItems = itemsByOrder.get(o.id) ?? [];
+    const ord = withKeptCost(o, myItems);
+    const buy = orderBuyingCost(myItems, o.status, products);
     row.orders += 1;
     if (isRealizedStatus(o.status)) row.delivered += 1;
     if (isFailedOrder(o)) row.failed += 1;
     row.value += n(o.total);
-    row.received += orderReceived(o);
+    row.received += orderReceived(ord);
     row.advance += Math.max(n(o.advance_amount), 0);
-    row.resellerProfit += orderProfit(o);
-    row.adminProfit += adminOrderProfit(o, buy);
+    row.resellerProfit += orderProfit(ord);
+    row.adminProfit += adminOrderProfit(ord, buy);
     map.set(key, row);
   }
   return Array.from(map.values()).sort((a, b) => b.orders - a.orders);
