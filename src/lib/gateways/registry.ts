@@ -25,8 +25,6 @@ export type GatewayCallback = {
   /** path relative to the current site origin */
   path: string;
   label: string;
-  /** true = must be whitelisted/entered in the provider panel by hand */
-  manual: boolean;
 };
 
 export type GatewaySpec = {
@@ -39,10 +37,10 @@ export type GatewaySpec = {
   hosts: { sandbox: string; live: string };
   fields: GatewayFieldSpec[];
   /**
-   * Callback URLs this gateway uses. `manual: true` means the URL must be
-   * pasted into the provider's merchant panel; otherwise it is sent
-   * automatically with every payment request, so nothing to configure.
-   * Paths are relative to the live site origin — never hardcode a domain.
+   * Callback URLs this gateway uses. All are sent automatically with every
+   * payment request (return / ipn / webhook params), so nothing is pasted
+   * into a provider panel. Paths are relative to the live site origin —
+   * never hardcode a domain.
    */
   callbacks: GatewayCallback[];
   /** flag appended on the storefront return URL, e.g. ?sslcommerz=1 */
