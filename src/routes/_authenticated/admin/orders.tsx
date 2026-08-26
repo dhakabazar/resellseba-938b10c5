@@ -687,7 +687,22 @@ function AdminOrdersPage() {
                     <div className="flex justify-center"><ResellerTotalCell order={o as any} /></div>
                     <div className="flex justify-center"><AdminTotalCell order={o as any} buyingCost={buyingCostFor(o.id, o.status)} /></div>
                    <div className="min-w-0 text-center">
-                       <span className={`px-2 py-0.5 rounded-full text-[11px] ${orderStatusTone(o.status)}`}>{orderStatusLabel(o.status)}</span>
+                        {canStatus ? (
+                          <button
+                            type="button"
+                            title="Change status"
+                            onClick={() =>
+                              o.status === "pending_partial"
+                                ? setSettleModal({ orderId: o.id, status: "partial_full", pickKind: true })
+                                : setStatusModal({ open: true, orderId: o.id, currentStatus: o.status })
+                            }
+                            className={`px-2 py-0.5 rounded-full text-[11px] transition-shadow hover:ring-2 hover:ring-primary/30 ${orderStatusTone(o.status)}`}
+                          >
+                            {orderStatusLabel(o.status)}
+                          </button>
+                        ) : (
+                          <span className={`px-2 py-0.5 rounded-full text-[11px] ${orderStatusTone(o.status)}`}>{orderStatusLabel(o.status)}</span>
+                        )}
                         {shipments.filter(s => s.order_id === o.id).length > 0 ? (
                           <div className="mt-1 space-y-0.5">
                             {shipments.filter(s => s.order_id === o.id).map(s => (
