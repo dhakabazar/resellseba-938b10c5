@@ -1,5 +1,7 @@
 import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { canAccessResellerPanel } from "@/lib/reseller-status";
+
 import {
   Activity,
   LayoutDashboard,
