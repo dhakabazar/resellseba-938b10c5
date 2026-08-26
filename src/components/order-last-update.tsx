@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { StickyNote, X, Clock } from "lucide-react";
+import { StickyNote, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { OrderNotes } from "@/components/order-notes";
 
@@ -155,8 +155,7 @@ export function LastUpdateCell({
     <div className="min-w-0 text-center">
       {d ? (
         <>
-          <div className="flex items-center justify-center gap-1 text-[11px] font-medium text-foreground">
-            <Clock className="h-3 w-3 opacity-60" />
+          <div className="text-[11px] font-medium text-foreground">
             {d.toLocaleDateString()}
           </div>
           <div className="text-[10px] tabular-nums text-muted-foreground/80">
