@@ -162,7 +162,7 @@ export function NewOrderModal({
     const total = subtotal + shipping - disc;
     const saCost = productCost + packaging;
     const deliveryCost =
-      deliveryCostOverride.trim() === "" ? shipping : Math.max(Number(deliveryCostOverride) || 0, 0);
+      deliveryCostOverride.trim() === "" ? autoShipping : Math.max(Number(deliveryCostOverride) || 0, 0);
     const adv = Math.min(Math.max(Number(advance) || 0, 0), total);
     const resellerAdvance = advanceBy === "reseller" ? adv : 0;
     const grossProfit = total - deliveryCost - saCost;
