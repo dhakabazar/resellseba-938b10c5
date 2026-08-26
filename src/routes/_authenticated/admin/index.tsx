@@ -69,7 +69,7 @@ function AdminDashboard() {
     const { fromTs, toTs } = resolveRange(r);
     let oq = supabase
       .from("orders")
-      .select("total,shipping_cost,reseller_profit,sa_cost_total,received_amount,packaging_total,created_at,status,resellers(business_name)");
+      .select("total,shipping_cost,reseller_profit,sa_cost_total,received_amount,packaging_total,delivery_cost,advance_amount,advance_by,created_at,status,resellers(business_name)");
     if (fromTs != null) oq = oq.gte("created_at", new Date(fromTs).toISOString());
     if (toTs != null) oq = oq.lte("created_at", new Date(toTs).toISOString());
 
