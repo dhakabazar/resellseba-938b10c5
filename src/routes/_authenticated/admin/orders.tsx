@@ -521,6 +521,22 @@ function AdminOrdersPage() {
                       {new Date(o.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                     </div>
                   </div>
+                  <div className="min-w-0">
+                     <div className="font-medium truncate">{o.resellers?.business_name || "Direct"}</div>
+                     <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                       {o.resellers?.contact_phone || "—"}
+                       {o.resellers?.contact_phone && (
+                         <>
+                           <a href={`tel:${o.resellers.contact_phone}`} className="text-primary hover:text-primary/80">
+                             <Phone className="h-3 w-3" />
+                           </a>
+                           <button onClick={() => { navigator.clipboard.writeText(o.resellers?.contact_phone || ""); toast.success("Copied"); }} className="hover:text-foreground">
+                             <Copy className="h-3 w-3" />
+                           </button>
+                         </>
+                       )}
+                     </div>
+                  </div>
                   <OrderProductCell
                     items={stripItems(o.id)}
                     expanded={expandedOrders.includes(o.id)}
@@ -539,22 +555,6 @@ function AdminOrdersPage() {
                          <Copy className="h-3 w-3" />
                        </button>
                      </div>
-                  </div>
-                  <div className="min-w-0">
-                    <div className="font-medium truncate">{o.resellers?.business_name || "Direct"}</div>
-                    <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                      {o.resellers?.contact_phone || "—"}
-                      {o.resellers?.contact_phone && (
-                        <>
-                          <a href={`tel:${o.resellers.contact_phone}`} className="text-primary hover:text-primary/80">
-                            <Phone className="h-3 w-3" />
-                          </a>
-                          <button onClick={() => { navigator.clipboard.writeText(o.resellers?.contact_phone || ""); toast.success("Copied"); }} className="hover:text-foreground">
-                            <Copy className="h-3 w-3" />
-                          </button>
-                        </>
-                      )}
-                    </div>
                   </div>
                   <div className="min-w-0">
                      {shipments.filter(s => s.order_id === o.id).length > 0 ? (
