@@ -55,6 +55,7 @@ import { Pagination, usePaginated } from "@/components/data-list";
 import {
   OrderFilterBar,
   applyOrderFilters,
+  filterByCourier,
   DEFAULT_ORDER_FILTERS,
   type OrderFilterState,
 } from "@/components/order-filters";
