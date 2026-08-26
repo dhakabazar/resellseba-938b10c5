@@ -85,6 +85,7 @@ import { Route as ApiPublicCourierSteadfastRouteImport } from './routes/api/publ
 import { Route as ApiPublicCourierPathaoRouteImport } from './routes/api/public/courier.pathao'
 import { Route as ApiPublicCourierCarrybeeRouteImport } from './routes/api/public/courier.carrybee'
 import { Route as AuthenticatedAdminProductsNewRouteImport } from './routes/_authenticated/admin/products.new'
+import { Route as ApiPublicPaymentProviderReturnRouteImport } from './routes/api/public/payment.$provider.return'
 import { Route as AuthenticatedResellerOrdersIdInvoiceRouteImport } from './routes/_authenticated/reseller/orders.$id.invoice'
 import { Route as AuthenticatedAdminProductsIdEditRouteImport } from './routes/_authenticated/admin/products.$id.edit'
 
@@ -519,6 +520,12 @@ const AuthenticatedAdminProductsNewRoute =
     path: '/products/new',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
+const ApiPublicPaymentProviderReturnRoute =
+  ApiPublicPaymentProviderReturnRouteImport.update({
+    id: '/api/public/payment/$provider/return',
+    path: '/api/public/payment/$provider/return',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedResellerOrdersIdInvoiceRoute =
   AuthenticatedResellerOrdersIdInvoiceRouteImport.update({
     id: '/$id/invoice',
@@ -610,6 +617,7 @@ export interface FileRoutesByFullPath {
   '/admin/products/': typeof AuthenticatedAdminProductsIndexRoute
   '/admin/products/$id/edit': typeof AuthenticatedAdminProductsIdEditRoute
   '/reseller/orders/$id/invoice': typeof AuthenticatedResellerOrdersIdInvoiceRoute
+  '/api/public/payment/$provider/return': typeof ApiPublicPaymentProviderReturnRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -685,6 +693,7 @@ export interface FileRoutesByTo {
   '/admin/products': typeof AuthenticatedAdminProductsIndexRoute
   '/admin/products/$id/edit': typeof AuthenticatedAdminProductsIdEditRoute
   '/reseller/orders/$id/invoice': typeof AuthenticatedResellerOrdersIdInvoiceRoute
+  '/api/public/payment/$provider/return': typeof ApiPublicPaymentProviderReturnRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -766,6 +775,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/products/': typeof AuthenticatedAdminProductsIndexRoute
   '/_authenticated/admin/products/$id/edit': typeof AuthenticatedAdminProductsIdEditRoute
   '/_authenticated/reseller/orders/$id/invoice': typeof AuthenticatedResellerOrdersIdInvoiceRoute
+  '/api/public/payment/$provider/return': typeof ApiPublicPaymentProviderReturnRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -847,6 +857,7 @@ export interface FileRouteTypes {
     | '/admin/products/'
     | '/admin/products/$id/edit'
     | '/reseller/orders/$id/invoice'
+    | '/api/public/payment/$provider/return'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -922,6 +933,7 @@ export interface FileRouteTypes {
     | '/admin/products'
     | '/admin/products/$id/edit'
     | '/reseller/orders/$id/invoice'
+    | '/api/public/payment/$provider/return'
   id:
     | '__root__'
     | '/'
@@ -1002,6 +1014,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/products/'
     | '/_authenticated/admin/products/$id/edit'
     | '/_authenticated/reseller/orders/$id/invoice'
+    | '/api/public/payment/$provider/return'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1020,6 +1033,7 @@ export interface RootRouteChildren {
   ApiPublicPaymentBkashCallbackRoute: typeof ApiPublicPaymentBkashCallbackRoute
   ApiPublicPaymentSslcommerzIpnRoute: typeof ApiPublicPaymentSslcommerzIpnRoute
   ApiPublicSitemapCodeRoute: typeof ApiPublicSitemapCodeRoute
+  ApiPublicPaymentProviderReturnRoute: typeof ApiPublicPaymentProviderReturnRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1556,6 +1570,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminProductsNewRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/api/public/payment/$provider/return': {
+      id: '/api/public/payment/$provider/return'
+      path: '/api/public/payment/$provider/return'
+      fullPath: '/api/public/payment/$provider/return'
+      preLoaderRoute: typeof ApiPublicPaymentProviderReturnRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/reseller/orders/$id/invoice': {
       id: '/_authenticated/reseller/orders/$id/invoice'
       path: '/$id/invoice'
@@ -1784,6 +1805,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicPaymentBkashCallbackRoute: ApiPublicPaymentBkashCallbackRoute,
   ApiPublicPaymentSslcommerzIpnRoute: ApiPublicPaymentSslcommerzIpnRoute,
   ApiPublicSitemapCodeRoute: ApiPublicSitemapCodeRoute,
+  ApiPublicPaymentProviderReturnRoute: ApiPublicPaymentProviderReturnRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
