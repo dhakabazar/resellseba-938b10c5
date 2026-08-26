@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { areaOptions, productDeliveryCharge, type DeliveryArea } from "@/lib/delivery";
+import { areaOptions, productDeliveryCharge, deliveryMode, type DeliveryArea } from "@/lib/delivery";
 import { addressError, nameError, normalizePhone, phoneError, sanitizeName } from "@/lib/checkout-validate";
 import { Loader2, Minus, Plus, Search, ShoppingCart, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
@@ -44,12 +44,15 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [paymentStatus, setPaymentStatus] = useState("unpaid");
   const [note, setNote] = useState("");
-  /** Delivery charge override — "" means use the product default. */
+  /** Delivery charge override — "" means use the product default for the picked area. */
   const [shipInput, setShipInput] = useState("");
+  /** True once the user types a custom delivery charge; auto value follows the area otherwise. */
+  const [shipTouched, setShipTouched] = useState(false);
   /** Order level adjustments — "" means keep the default value. */
   const [discount, setDiscount] = useState("");
   const [packagingInput, setPackagingInput] = useState("");
   const [deliveryCostInput, setDeliveryCostInput] = useState("");
+  const [deliveryCostTouched, setDeliveryCostTouched] = useState(false);
   /** Advance already collected + who is holding that cash. */
   const [advance, setAdvance] = useState("");
   const [advanceBy, setAdvanceBy] = useState<"admin" | "reseller">("reseller");
@@ -78,15 +81,27 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
       setName(o.customer_name ?? "");
       setPhone(o.customer_phone ?? "");
       setAddress(o.address_line ?? "");
-      setArea((o.area === "inside_dhaka" ? "inside_dhaka" : "outside_dhaka") as any);
+      const savedArea = areaOptions().some((a) => a.value === o.area) ? (o.area as DeliveryArea) : "outside_dhaka";
+      setArea(savedArea);
       setPaymentMethod(o.payment_method ?? "cod");
       setPaymentStatus(o.payment_status ?? "unpaid");
       setNote((isAdmin ? o.admin_note : o.reseller_note) ?? "");
-      setShipInput(Number(o.shipping_cost ?? 0) ? String(Number(o.shipping_cost)) : "");
+      /** Saved delivery charge that matches the product rule stays "auto" so area changes keep updating it. */
+      const savedShip = Number(o.shipping_cost ?? 0);
+      const autoShip = (its ?? []).reduce((max: number, it: any) => {
+        const p = allProducts.find((x) => x.id === it.product_id);
+        return p ? Math.max(max, productDeliveryCharge(p, savedArea)) : max;
+      }, 0);
+      const shipIsCustom = savedShip !== autoShip;
+      setShipInput(shipIsCustom ? String(savedShip) : "");
+      setShipTouched(shipIsCustom);
       setReceived(o.received_amount == null ? "" : String(Number(o.received_amount)));
       setDiscount(Number(o.discount ?? 0) ? String(Number(o.discount)) : "");
       setPackagingInput(o.packaging_total == null ? "" : String(Number(o.packaging_total)));
-      setDeliveryCostInput(Number(o.delivery_cost ?? 0) ? String(Number(o.delivery_cost)) : "");
+      const savedCourierCost = Number(o.delivery_cost ?? 0);
+      const courierIsCustom = savedCourierCost !== savedShip;
+      setDeliveryCostInput(courierIsCustom ? String(savedCourierCost) : "");
+      setDeliveryCostTouched(courierIsCustom);
       setAdvance(Number((o as any).advance_amount ?? 0) ? String(Number((o as any).advance_amount)) : "");
       setAdvanceBy(((o as any).advance_by === "admin" ? "admin" : "reseller") as any);
 
@@ -108,16 +123,34 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId]);
 
-  const autoShipping = useMemo(() => {
-    let ship = 0;
-    for (const it of items) {
-      const p = allProducts.find((x) => x.id === it.product_id);
-      if (!p) continue;
-      const dc = productDeliveryCharge(p, area);
-      if (dc > ship) ship = dc;
-    }
-    return ship;
-  }, [items, allProducts, area]);
+  /** Products of the current lines that exist in the catalog — used for delivery rules. */
+  const lineProducts = useMemo(
+    () => items.map((it) => allProducts.find((x) => x.id === it.product_id)).filter(Boolean) as any[],
+    [items, allProducts],
+  );
+
+  /** Highest product delivery charge for the selected area wins. */
+  const autoShipping = useMemo(
+    () => lineProducts.reduce((max, p) => Math.max(max, productDeliveryCharge(p, area)), 0),
+    [lineProducts, area],
+  );
+
+  /** Area picker only matters when charges actually vary by area (same rule as the Add Order modal). */
+  const showAreaPicker = useMemo(() => {
+    if (lineProducts.length === 0) return false;
+    const modes = lineProducts.map((p) => deliveryMode(p));
+    return !modes.every((m) => m === "free") && !modes.every((m) => m === "flat");
+  }, [lineProducts]);
+
+  /** Empty input = follow the area rule; any typed value = explicit custom charge. */
+  function changeShip(v: string) {
+    setShipInput(v);
+    setShipTouched(v.trim() !== "");
+  }
+  function changeDeliveryCost(v: string) {
+    setDeliveryCostInput(v);
+    setDeliveryCostTouched(v.trim() !== "");
+  }
 
   const totals = useMemo(() => {
     const subtotal = items.reduce((s, it) => s + it.reseller_price * it.quantity, 0);
@@ -349,16 +382,35 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                     <span className="text-[13px] font-semibold text-foreground/80">Address</span>
                     <textarea rows={2} className={inp} value={address} onChange={(e) => setAddress(e.target.value)} />
                   </label>
-                  <label className="space-y-1">
+                  <div className="space-y-1 sm:col-span-2">
                     <span className="text-[13px] font-semibold text-foreground/80">Delivery area</span>
-                    <select className={inp} value={area} onChange={(e) => setArea(e.target.value as any)}>
-                      {areaOptions().map((a) => (
-                        <option key={a.value} value={a.value}>
-                          {a.label}
-                        </option>
+                    <div className="grid grid-cols-3 gap-2">
+                      {areaOptions().map(({ value: v, label }) => (
+                        <button
+                          key={v}
+                          type="button"
+                          onClick={() => setArea(v)}
+                          className={`flex items-center justify-between rounded-2xl border-2 px-4 py-3 transition-all duration-300 ${
+                            area === v
+                              ? "scale-[1.02] border-primary bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+                              : "border-muted bg-background text-muted-foreground hover:border-primary/30"
+                          }`}
+                        >
+                          <span className="text-[11px] font-black uppercase tracking-tight">{label}</span>
+                          {showAreaPicker && (
+                            <span className={`text-[10px] font-bold ${area === v ? "text-primary-foreground/90" : "text-primary"}`}>
+                              ৳{lineProducts.reduce((max, p) => Math.max(max, productDeliveryCharge(p, v)), 0)}
+                            </span>
+                          )}
+                        </button>
                       ))}
-                    </select>
-                  </label>
+                    </div>
+                    {!shipTouched && (
+                      <p className="text-[11px] text-muted-foreground">
+                        এরিয়া বদলালে ডেলিভারি চার্জ অটো আপডেট হবে (৳{autoShipping.toFixed(0)})।
+                      </p>
+                    )}
+                  </div>
                   {isAdmin && (
                     <label className="space-y-1">
                       <span className="text-[13px] font-semibold text-foreground/80">Payment status</span>
@@ -525,9 +577,9 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                 <div className="grid gap-3 rounded-2xl border bg-muted/20 p-4 sm:grid-cols-2">
                   <MoneyField
                     label="Delivery Charge (Customer pays)"
-                    hint={`Default ৳${autoShipping.toFixed(0)}`}
+                    hint={shipTouched ? `Custom · default ৳${autoShipping.toFixed(0)}` : `Auto ৳${autoShipping.toFixed(0)}`}
                     value={shipInput}
-                    onChange={setShipInput}
+                    onChange={changeShip}
                     placeholder={autoShipping.toFixed(0)}
                   />
                   <MoneyField label="Discount" value={discount} onChange={setDiscount} placeholder="0" />
@@ -542,9 +594,9 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                   {isAdmin && (
                     <MoneyField
                       label="Courier Cost (Admin cost)"
-                      hint={`Default ৳${totals.shipping.toFixed(0)}`}
+                      hint={deliveryCostTouched ? `Custom · default ৳${totals.shipping.toFixed(0)}` : `Auto ৳${totals.shipping.toFixed(0)}`}
                       value={deliveryCostInput}
-                      onChange={setDeliveryCostInput}
+                      onChange={changeDeliveryCost}
                       placeholder={totals.shipping.toFixed(0)}
                     />
                   )}
