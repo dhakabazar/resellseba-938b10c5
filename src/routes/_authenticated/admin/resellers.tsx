@@ -717,6 +717,7 @@ function ResellersPage() {
           summary={summaries[profileFor.id] ?? null}
           orders={orderCounts[profileFor.id]}
           email={emailStatus[profileFor.user_id]}
+          verify={verifyFor(profileFor)}
           agentName={agents.find((a) => a.id === profileFor.agent_id)?.display_name ?? null}
           leaderName={
             profileFor.leader_id
