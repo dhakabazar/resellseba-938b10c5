@@ -503,8 +503,7 @@ const epayseba: Adapter = {
     const url = r.payment_url || r.data?.payment_url || r.checkout_url || redirectedUrl;
     if (!url)
       fail(
-        r.message ||
-          r.error ||
+        epaysebaError(r) ||
           (r.__raw
             ? `ePaySeba did not accept the request (HTTP ${r.__status}). Check the API key and base URL.`
             : "ePaySeba checkout failed"),
@@ -549,6 +548,8 @@ const epayseba: Adapter = {
       fail(
         `ePaySeba API not found at ${c.base} (HTTP ${r.__status}). Copy the exact API base URL from your ePaySeba merchant panel.`,
       );
+    const err = epaysebaError(r);
+    if (err && !/transaction/i.test(err)) fail(err);
   },
 };
 
