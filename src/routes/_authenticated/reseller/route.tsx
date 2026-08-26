@@ -24,6 +24,7 @@ import {
 
 } from "lucide-react";
 import { AppShell, type NavEntry } from "@/components/AppShell";
+import { ImpersonationBanner } from "@/components/impersonation-banner";
 import { useAuth } from "@/lib/use-auth";
 import { useVerification } from "@/lib/use-verification";
 import { useBrandingTheme } from "@/lib/branding";
