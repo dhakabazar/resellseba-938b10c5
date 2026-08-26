@@ -19,6 +19,8 @@ type EditItem = {
   quantity: number;
   sa_price: number;
   reseller_price: number;
+  /** Packaging cost frozen when this line was created — never re-read from the product. */
+  packaging_cost: number;
 };
 
 interface Props {
@@ -116,6 +118,9 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
           quantity: Number(it.quantity ?? 1),
           sa_price: Number(it.sa_price ?? 0),
           reseller_price: Number(it.reseller_price ?? 0),
+          packaging_cost: Number(
+            it.packaging_cost ?? allProducts.find((x) => x.id === it.product_id)?.packaging_cost ?? 0,
+          ),
         })),
       );
       setLoading(false);
@@ -155,10 +160,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
   const totals = useMemo(() => {
     const subtotal = items.reduce((s, it) => s + it.reseller_price * it.quantity, 0);
     /** Product cost = item base cost minus its packaging part; packaging is tracked order-level. */
-    const packagingLines = items.map((it) => {
-      const p = allProducts.find((x) => x.id === it.product_id);
-      return { packaging: Number(p?.packaging_cost ?? 0), qty: it.quantity };
-    });
+    const packagingLines = items.map((it) => ({ packaging: Number(it.packaging_cost ?? 0), qty: it.quantity }));
     /** Always the per-item sum — sa_price already carries each item's packaging. */
     const packagingInItems = packagingTotal(packagingLines, true);
     const packagingDefault = packagingTotal(packagingLines, packagingSum);
@@ -215,8 +217,14 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
 
 
 
-  /** Minimum sell price per line = SA base cost of that item. */
+  /**
+   * Minimum sell price per line = the cost frozen on that line.
+   * Existing lines keep their own snapshot, so a later product price change
+   * never invalidates or re-prices an old order. Only newly added lines use
+   * today's catalog price.
+   */
   function minFor(it: EditItem) {
+    if (it.id) return Number(it.sa_price ?? 0);
     const p = allProducts.find((x) => x.id === it.product_id);
     const fromProduct = p ? Number(p.reseller_price ?? 0) + Number(p.packaging_cost ?? 0) : 0;
     return Math.max(fromProduct, Number(it.sa_price ?? 0));
@@ -251,6 +259,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
           quantity: 1,
           sa_price: sa,
           reseller_price: Number(p.suggested_price ?? sa),
+          packaging_cost: Number(p.packaging_cost ?? 0),
         },
       ];
     });
@@ -284,6 +293,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
           reseller_price: it.reseller_price,
           line_total: it.reseller_price * it.quantity,
           profit: (it.reseller_price - it.sa_price) * it.quantity,
+          packaging_cost: it.packaging_cost,
         };
         if (it.id) {
           const { error } = await supabase.from("order_items").update(payload).eq("id", it.id);
@@ -294,7 +304,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
         }
       }
 
-      // Item writes trigger a packaging recalc from product defaults, so order meta is saved last.
+      // Item writes trigger a packaging recalc from the frozen line values, so order meta is saved last.
       const { error: oe } = await supabase
         .from("orders")
         .update({

@@ -29,6 +29,9 @@ export type BizItem = {
   sa_price: number | string;
   line_total: number | string;
   profit: number | string;
+  /** Cost snapshot frozen when the line was created (see snapshotCost). */
+  buying_price?: number | string | null;
+  packaging_cost?: number | string | null;
 };
 
 export type BizProduct = {
@@ -73,13 +76,22 @@ export function keptQty(item: BizItem, status: string) {
 }
 
 
+/**
+ * Buying price used for reporting: always the value frozen on the order line, so
+ * changing a product's price later never rewrites past orders. Only very old
+ * lines with no snapshot fall back to the product record.
+ */
+export function lineBuyingPrice(it: BizItem, products: Map<string, BizProduct>) {
+  const snap = n(it.buying_price);
+  if (snap > 0) return snap;
+  const p = it.product_id ? products.get(it.product_id) : undefined;
+  return n(p?.buying_price);
+}
+
 /** Admin buying cost of the kept items of one order. */
 export function orderBuyingCost(items: BizItem[], status: string, products: Map<string, BizProduct>) {
   let cost = 0;
-  for (const it of items) {
-    const p = it.product_id ? products.get(it.product_id) : undefined;
-    cost += n(p?.buying_price) * keptQty(it, status);
-  }
+  for (const it of items) cost += lineBuyingPrice(it, products) * keptQty(it, status);
   return cost;
 }
 
@@ -145,7 +157,7 @@ export function buildProductRows(
     row.returnedQty += Math.max(Number(it.quantity) - kept, 0);
     row.sellValue += n(it.line_total);
     row.adminRevenue += n(it.sa_price) * kept;
-    row.buyCost += n(p?.buying_price) * kept;
+    row.buyCost += lineBuyingPrice(it, products) * kept;
     if (kept > 0) row.resellerProfit += (n(it.profit) / Math.max(Number(it.quantity), 1)) * kept;
   }
   return Array.from(map.values())

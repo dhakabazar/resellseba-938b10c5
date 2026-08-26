@@ -953,11 +953,13 @@ export type Database = {
       }
       order_items: {
         Row: {
+          buying_price: number
           created_at: string
           id: string
           line_total: number
           listing_id: string | null
           order_id: string
+          packaging_cost: number
           product_id: string | null
           product_image: string | null
           product_name: string
@@ -969,11 +971,13 @@ export type Database = {
           sku: string | null
         }
         Insert: {
+          buying_price?: number
           created_at?: string
           id?: string
           line_total?: number
           listing_id?: string | null
           order_id: string
+          packaging_cost?: number
           product_id?: string | null
           product_image?: string | null
           product_name: string
@@ -985,11 +989,13 @@ export type Database = {
           sku?: string | null
         }
         Update: {
+          buying_price?: number
           created_at?: string
           id?: string
           line_total?: number
           listing_id?: string | null
           order_id?: string
+          packaging_cost?: number
           product_id?: string | null
           product_image?: string | null
           product_name?: string
