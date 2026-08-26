@@ -458,6 +458,14 @@ function epaysebaHeaders(c: GatewayCreds) {
 }
 
 /** ePaySeba returns `?transactionId=...&paymentMethod=...&status=...` */
+function epaysebaError(r: Record<string, unknown> & { message?: unknown; error?: unknown }): string {
+  const msg = String((r.message ?? r.error ?? "") || "");
+  if (!msg) return "";
+  if (/invalid api request/i.test(msg))
+    return "ePaySeba: Invalid API Request — API key ভুল বা inactive. মার্চেন্ট প্যানেলের API credentials থেকে live App key কপি করে বসান।";
+  return msg;
+}
+
 function epaysebaTxn(p: Record<string, string>, order: { transaction_id?: string | null; order_number: string }) {
   return (
     p.transactionId ||
