@@ -444,6 +444,11 @@ const aamarpay: Adapter = {
 };
 
 /* ---------------------------------------------------------------- ePaySeba */
+/**
+ * Docs: https://epayseba.com/developers/docs (section 2 & 3)
+ * Only API-KEY is required; SECRET-KEY / BRAND-KEY are optional extras that are
+ * sent when the merchant filled them in.
+ */
 function epaysebaHeaders(c: GatewayCreds) {
   return {
     "API-KEY": c.api_key,
@@ -452,24 +457,38 @@ function epaysebaHeaders(c: GatewayCreds) {
   };
 }
 
+/** ePaySeba returns `?transactionId=...&paymentMethod=...&status=...` */
+function epaysebaTxn(p: Record<string, string>, order: { transaction_id?: string | null; order_number: string }) {
+  return (
+    p.transactionId ||
+    p.transaction_id ||
+    p.trxId ||
+    p.trx_id ||
+    order.transaction_id ||
+    order.order_number
+  );
+}
+
 const epayseba: Adapter = {
   async create(c, order, urls) {
-    if (!c.api_key || !c.api_secret || !c.merchant_id)
-      fail("ePaySeba API key, secret key, and brand key are required");
+    if (!c.api_key) fail("ePaySeba API key is required");
+    const meta = {
+      order_id: order.order_number,
+      name: order.customer_name,
+      phone: order.customer_phone,
+    };
     const r = await withTimeout((signal) =>
       jsonPost(
         `${c.base}/api/payment/create`,
         {
-          amount: Number(order.total).toFixed(2),
+          cus_name: order.customer_name || "Customer",
+          cus_email: order.customer_email || "noreply@example.com",
+          amount: String(Number(order.total)),
           success_url: urls.returnUrl,
           cancel_url: urls.cancelUrl,
           webhook_url: urls.ipnUrl,
-          metadata: {
-            order_id: order.order_number,
-            name: order.customer_name,
-            phone: order.customer_phone,
-            email: order.customer_email || "noreply@example.com",
-          },
+          metadata: meta,
+          meta_data: meta,
         },
         epaysebaHeaders(c),
         signal,
@@ -481,19 +500,19 @@ const epayseba: Adapter = {
       /^https:\/\/([a-z0-9-]+\.)*epayseba\.com\//i.test(r.__url)
         ? r.__url
         : null;
-    const url = r.payment_url || r.checkout_url || r.data?.payment_url || redirectedUrl;
+    const url = r.payment_url || r.data?.payment_url || r.checkout_url || redirectedUrl;
     if (!url)
       fail(
         r.message ||
           r.error ||
           (r.__raw
-            ? `ePaySeba did not accept the request (HTTP ${r.__status}). Check the API base URL and keys.`
+            ? `ePaySeba did not accept the request (HTTP ${r.__status}). Check the API key and base URL.`
             : "ePaySeba checkout failed"),
       );
     return { paymentUrl: String(url), ref: String(r.transaction_id ?? r.data?.transaction_id ?? "") };
   },
   async verifyReturn(c, order, p) {
-    const id = p.transaction_id || p.trx_id || order.transaction_id || order.order_number;
+    const id = epaysebaTxn(p, order);
     const r = await jsonPost(
       `${c.base}/api/payment/verify`,
       { transaction_id: id },
@@ -501,17 +520,21 @@ const epayseba: Adapter = {
     );
     const row = r.data ?? r;
     const status = String(row?.status ?? "").toLowerCase();
+    const returned = String(p.status ?? "").toLowerCase();
     return {
-      paid: status === "success" || status === "paid" || status === "completed",
+      paid: status === "completed" || status === "success" || status === "paid",
       amount: num(row?.amount),
       txnId: String(row?.transaction_id ?? id),
-      cancelled: status.includes("cancel"),
+      cancelled:
+        status.includes("cancel") ||
+        status === "failed" ||
+        returned.includes("cancel") ||
+        returned === "failed",
       note: row?.message,
     };
   },
   async test(c) {
-    if (!c.api_key || !c.api_secret || !c.merchant_id)
-      fail("ePaySeba API key, secret key, and brand key are required");
+    if (!c.api_key) fail("ePaySeba API key is required");
     const r = await withTimeout((signal) =>
       jsonPost(
         `${c.base}/api/payment/verify`,
