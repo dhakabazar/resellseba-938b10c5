@@ -22,8 +22,9 @@ async function handle(request: Request, provider: string): Promise<Response> {
   }
 
   const orderNumber = params.on ?? params.tran_id ?? params.order_id ?? "";
-  const success = params.su || core.siteOrigin();
-  const cancel = params.cu || success;
+  const origin = core.siteOrigin();
+  const success = core.safeReturnTarget(params.su, origin);
+  const cancel = core.safeReturnTarget(params.cu, success);
   const flag = gatewayByProvider(provider)?.returnFlag ?? provider;
 
   if (!orderNumber) return core.htmlRedirect(core.appendFlag(cancel, flag, "failed"));

@@ -200,9 +200,7 @@ function GatewayCard({
         <button
           type="button"
           onClick={() => {
-            const next = !row.is_active;
-            setRow({ ...row, is_active: next });
-            void save(next);
+            void save(!row.is_active);
           }}
           aria-label={row.is_active ? "Deactivate gateway" : "Activate gateway"}
           className={

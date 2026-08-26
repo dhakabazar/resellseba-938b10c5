@@ -108,7 +108,7 @@ export function siteOrigin(): string {
   } catch {
     /* no request context */
   }
-  return process.env.SITE_URL || "";
+  return process.env["SITE_URL"] || "";
 }
 
 /** Every outbound create call is capped so a slow gateway can't hang checkout. */
@@ -165,6 +165,21 @@ export function spaUrls(origin: string, code: string, orderNumber: string) {
     success: `${origin}/s/${encodeURIComponent(code)}/thanks?n=${encodeURIComponent(orderNumber)}`,
     cancel: `${origin}/s/${encodeURIComponent(code)}/thanks?n=${encodeURIComponent(orderNumber)}`,
   };
+}
+
+/** Gateway return params are user-controlled, so only redirect inside this same storefront origin. */
+export function safeReturnTarget(raw: string | undefined, origin: string): string {
+  const fallback = origin || "/";
+  if (!raw) return fallback;
+  if (!origin) return raw.startsWith("/") && !raw.startsWith("//") ? raw : fallback;
+  try {
+    const base = new URL(origin);
+    const target = new URL(raw, base);
+    if (target.origin === base.origin) return target.toString();
+  } catch {
+    /* invalid redirect target */
+  }
+  return fallback;
 }
 
 /** Return-URL base every gateway is pointed at (never the SPA directly). */
@@ -225,7 +240,7 @@ export async function settlePayment(opts: {
 
 /** Gateways form-POST the return URL, so redirect with HTML, not a 302. */
 export function htmlRedirect(target: string): Response {
-  const safe = target.replace(/"/g, "&quot;");
+  const safe = target.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
   return new Response(
     `<!doctype html><meta http-equiv="refresh" content="0;url=${safe}">` +
       `<script>location.replace(${JSON.stringify(target)})</script>` +

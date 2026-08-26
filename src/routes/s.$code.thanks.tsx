@@ -10,6 +10,16 @@ import { useStore } from "@/components/store/store-context";
 import { cx, Heading, muted, PrimaryButton } from "@/components/store/ui";
 
 export const Route = createFileRoute("/s/$code/thanks")({
+  head: () => ({
+    meta: [
+      { title: "Order received · Reseller Store" },
+      { name: "description", content: "Order confirmation and verified payment result for reseller store customers." },
+      { property: "og:title", content: "Order received · Reseller Store" },
+      { property: "og:description", content: "View your order number and confirmed payment status after checkout." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   validateSearch: (
     s: Record<string, unknown>,
   ): { n: string; pay?: string; txn?: string } => ({
@@ -34,10 +44,14 @@ function Thanks() {
   /** An online payment came back — re-confirm with the gateway, never trust the URL. */
   useEffect(() => {
     if (!pay || !n) return;
-    if (pay === "cancelled") return setPayState("cancelled");
+    if (pay === "cancelled") {
+      setPayState("cancelled");
+      return;
+    }
+    setPayState("checking");
     verifyPayment({ data: { orderNumber: n } })
-      .then((r) => setPayState(r.status === "paid" ? "paid" : r.status === "mismatch" ? "mismatch" : pay === "paid" ? "paid" : "failed"))
-      .catch(() => setPayState(pay === "paid" ? "paid" : "failed"));
+      .then((r) => setPayState(r.status === "paid" ? "paid" : r.status === "mismatch" ? "mismatch" : "failed"))
+      .catch(() => setPayState("failed"));
   }, [pay, n, verifyPayment]);
 
   useEffect(() => {
