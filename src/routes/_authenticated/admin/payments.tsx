@@ -5,7 +5,11 @@ import { PageHeader } from "@/components/ui-kit";
 import {
   BadgeCheck,
   Banknote,
+  Copy,
   CreditCard,
+  Eye,
+  EyeOff,
+  ExternalLink,
   Hand,
   Loader2,
   Plug,
@@ -408,6 +412,132 @@ function MethodCard({
           Save changes
         </button>
       </div>
+    </div>
+  );
+}
+
+function GatewayFields({
+  row,
+  config,
+  setConfig,
+  onPatch,
+}: {
+  row: PaymentConfigRow;
+  config: Record<string, unknown>;
+  setConfig: (key: string, value: unknown) => void;
+  onPatch: (next: Partial<PaymentConfigRow>) => void;
+}) {
+  const spec = gatewaySpec(row.method, cfgString(config, "gateway"));
+  const origin = typeof window === "undefined" ? "" : window.location.origin;
+
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-start justify-between gap-2 rounded-lg border border-primary/20 bg-primary/5 p-3">
+        <p className="max-w-[36ch] text-[11px] leading-relaxed text-muted-foreground">{spec.tagline}</p>
+        {spec.docs && (
+          <a
+            href={spec.docs}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1 rounded-md border bg-background px-2 py-1 text-[11px] font-semibold hover:bg-muted"
+          >
+            <ExternalLink className="h-3 w-3" /> {spec.label} docs
+          </a>
+        )}
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        {spec.fields.map((f) => (
+          <div key={f.key} className={f.secret && f.key.endsWith("_key") && f.label.includes("key") ? "sm:col-span-2" : ""}>
+            <label className="mb-1 block text-xs font-medium">{f.label}</label>
+            <CredentialInput
+              value={cfgString(config, f.key)}
+              onChange={(v) => setConfig(f.key, v)}
+              placeholder={f.placeholder}
+              secret={f.secret}
+            />
+            {f.hint && <p className="mt-1 text-[10px] text-muted-foreground">{f.hint}</p>}
+          </div>
+        ))}
+      </div>
+
+      {spec.callbacks && spec.callbacks.length > 0 && (
+        <div className="rounded-lg border p-3">
+          <div className="mb-1.5 text-[11px] font-semibold">Set these URLs in the {spec.label} panel</div>
+          <div className="space-y-1.5">
+            {spec.callbacks.map((path) => {
+              const url = origin + path;
+              return (
+                <div key={path} className="flex items-center gap-2 rounded-md bg-muted/40 px-2 py-1">
+                  <code className="flex-1 truncate text-[10px]">{url}</code>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void navigator.clipboard.writeText(url);
+                      toast.success("URL copied");
+                    }}
+                    className="rounded p-1 hover:bg-background"
+                    aria-label="Copy URL"
+                  >
+                    <Copy className="h-3 w-3" />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      <div>
+        <label className="mb-1 block text-xs font-medium">Checkout note (optional)</label>
+        <textarea
+          rows={2}
+          className={inp}
+          value={row.instructions ?? ""}
+          onChange={(e) => onPatch({ instructions: e.target.value })}
+          placeholder="Shown under the gateway button at checkout."
+        />
+      </div>
+
+      <p className="text-[10px] text-muted-foreground">
+        Credentials are stored server-side and never rendered on storefronts. Use production keys only.
+      </p>
+    </div>
+  );
+}
+
+function CredentialInput({
+  value,
+  onChange,
+  placeholder,
+  secret,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  secret?: boolean;
+}) {
+  const [show, setShow] = useState(false);
+  if (!secret)
+    return <input value={value} onChange={(e) => onChange(e.target.value)} className={inp} placeholder={placeholder} />;
+  return (
+    <div className="relative">
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        type={show ? "text" : "password"}
+        autoComplete="off"
+        className={inp + " pr-9 font-mono"}
+        placeholder={placeholder ?? "••••••••"}
+      />
+      <button
+        type="button"
+        onClick={() => setShow((s) => !s)}
+        className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-1.5 text-muted-foreground hover:bg-muted"
+        aria-label={show ? "Hide value" : "Show value"}
+      >
+        {show ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+      </button>
     </div>
   );
 }
