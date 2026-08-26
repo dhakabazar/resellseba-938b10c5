@@ -69,7 +69,7 @@ function AdminDashboard() {
     const { fromTs, toTs } = resolveRange(r);
     let oq = supabase
       .from("orders")
-      .select("total,shipping_cost,reseller_profit,sa_cost_total,received_amount,packaging_total,created_at,status,resellers(business_name)");
+      .select("total,shipping_cost,reseller_profit,sa_cost_total,received_amount,packaging_total,delivery_cost,advance_amount,advance_by,created_at,status,resellers(business_name)");
     if (fromTs != null) oq = oq.gte("created_at", new Date(fromTs).toISOString());
     if (toTs != null) oq = oq.lte("created_at", new Date(toTs).toISOString());
 
@@ -83,7 +83,7 @@ function AdminDashboard() {
     const [allOrders, payoutsRes, prods, cats, brandRows, resellerRows, metricsRes] = await Promise.all([
       supabase
         .from("orders")
-        .select("id,order_number,reseller_id,status,created_at,subtotal,shipping_cost,discount,total,sa_cost_total,reseller_profit,received_amount,packaging_total")
+        .select("id,order_number,reseller_id,status,created_at,subtotal,shipping_cost,discount,total,sa_cost_total,reseller_profit,received_amount,packaging_total,delivery_cost,advance_amount,advance_by")
         .limit(20000),
       supabase.from("payouts").select("amount,status").limit(20000),
       supabase.from("products").select("is_active,is_featured,stock").limit(20000),

@@ -19,6 +19,7 @@ import {
   buildCourierRows,
   buildPnL,
   buildProductRows,
+  withKeptCost,
   buildResellerRows,
   orderBuyingCost,
   sortRows,
@@ -179,9 +180,11 @@ function BusinessReportPage() {
       let base = 0;
       let adminProfit = 0;
       for (const o of mineOrders) {
-        sales += orderReceived(o);
-        base += orderProfit(o);
-        adminProfit += orderReceived(o) - orderProfit(o) - orderBuyingCost(itemsByOrder.get(o.id) ?? [], o.status, productMap);
+        const myItems = itemsByOrder.get(o.id) ?? [];
+        const ord = withKeptCost(o, myItems);
+        sales += orderReceived(ord);
+        base += orderProfit(ord);
+        adminProfit += orderReceived(ord) - orderProfit(ord) - orderBuyingCost(myItems, o.status, productMap);
       }
       const target = Number(ag.sale_target ?? 0) || 0;
       const rate = Number(ag.commission_rate ?? 0) || 0;

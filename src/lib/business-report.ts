@@ -69,11 +69,35 @@ export const EXPENSE_CATEGORIES = [
 export const ADMIN_PROFIT_HINT =
   "Admin profit = money received for the order − what the reseller finally earns − admin buying price of the products the customer kept. Advance already collected counts as received (the same way the transaction report does it). Delivery charge and packaging are not deducted twice here — record them once in Expenses and the net profit takes them out.";
 
-/** Quantity of an item the customer actually kept (returns go back to stock). */
+/**
+ * Quantity of an item the customer actually kept.
+ * Fully failed statuses keep nothing; an in-flight order still counts the full
+ * quantity, otherwise a pending order would look like it had zero product cost.
+ */
 export function keptQty(item: BizItem, status: string) {
-  if (status === "partial_delivery" || !isRealizedStatus(status)) return 0;
+  if (status === "cancelled" || status === "returned" || status === "pending_return" || status === "partial_delivery")
+    return 0;
   return Math.max(Number(item.quantity) - Number(item.returned_qty ?? 0), 0);
 }
+
+/**
+ * Reseller-side product cost of the kept items, mirroring the SQL
+ * `order_kept_product_cost` (proportional share of sa_cost_total) so client math
+ * and the DB-stored profit never disagree on `partial_item` orders.
+ */
+export function keptProductCost(o: BizOrder | ProfitOrder, items: BizItem[]) {
+  const full = items.reduce((s, it) => s + n(it.sa_price) * Number(it.quantity), 0);
+  const kept = items.reduce((s, it) => s + n(it.sa_price) * keptQty(it, String(o.status ?? "")), 0);
+  const productCost = Math.max(n(o.sa_cost_total) - n(o.packaging_total), 0);
+  if (full <= 0) return productCost;
+  return Math.round(productCost * (kept / full) * 100) / 100;
+}
+
+/** Order object with the kept-product cost attached, ready for orderProfit(). */
+export function withKeptCost<T extends BizOrder | ProfitOrder>(o: T, items: BizItem[]): T {
+  return { ...o, kept_product_cost: keptProductCost(o, items) };
+}
+
 
 
 /**
@@ -210,15 +234,17 @@ export function buildResellerRows(
         resellerProfit: 0,
         adminProfit: 0,
       } as ResellerRow);
-    const buy = orderBuyingCost(itemsByOrder.get(o.id) ?? [], o.status, products);
+    const myItems = itemsByOrder.get(o.id) ?? [];
+    const ord = withKeptCost(o, myItems);
+    const buy = orderBuyingCost(myItems, o.status, products);
     row.orders += 1;
     if (isRealizedStatus(o.status)) row.delivered += 1;
     if (isFailedOrder(o)) row.failed += 1;
     row.value += n(o.total);
-    row.received += orderReceived(o);
+    row.received += orderReceived(ord);
     row.advance += Math.max(n(o.advance_amount), 0);
-    row.resellerProfit += orderProfit(o);
-    row.adminProfit += adminOrderProfit(o, buy);
+    row.resellerProfit += orderProfit(ord);
+    row.adminProfit += adminOrderProfit(ord, buy);
     map.set(key, row);
   }
   return Array.from(map.values()).sort((a, b) => b.orders - a.orders);
@@ -278,14 +304,16 @@ export function buildCourierRows(
         courierBill: 0,
         adminProfit: 0,
       } as CourierRow);
-    const buy = orderBuyingCost(itemsByOrder.get(o.id) ?? [], o.status, products);
+    const myItems = itemsByOrder.get(o.id) ?? [];
+    const ord = withKeptCost(o, myItems);
+    const buy = orderBuyingCost(myItems, o.status, products);
     row.parcels += 1;
     if (isRealizedStatus(o.status)) row.delivered += 1;
     if (isFailedOrder(o)) row.returned += 1;
     row.value += n(o.total);
-    row.received += orderReceived(o);
+    row.received += orderReceived(ord);
     row.courierBill += sh ? sh.cost || orderDeliveryCost(o) : 0;
-    row.adminProfit += adminOrderProfit(o, buy);
+    row.adminProfit += adminOrderProfit(ord, buy);
     map.set(key, row);
   }
   return Array.from(map.values()).sort((a, b) => b.parcels - a.parcels);
@@ -330,11 +358,13 @@ export function buildPnL(
   let delivery = 0;
   let packaging = 0;
   for (const o of orders) {
-    const buy = orderBuyingCost(itemsByOrder.get(o.id) ?? [], o.status, products);
+    const myItems = itemsByOrder.get(o.id) ?? [];
+    const ord = withKeptCost(o, myItems);
+    const buy = orderBuyingCost(myItems, o.status, products);
     value += n(o.total);
-    received += orderReceived(o);
+    received += orderReceived(ord);
     advance += Math.max(n(o.advance_amount), 0);
-    resellerPayout += orderProfit(o);
+    resellerPayout += orderProfit(ord);
     buyCost += buy;
     delivery += orderDeliveryCost(o);
     packaging += orderPackaging(o);
