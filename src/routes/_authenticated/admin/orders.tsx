@@ -619,11 +619,12 @@ function AdminOrdersPage() {
                       </button>
                     </div>
 
-                    <div className="min-w-0 flex-1 space-y-2">
+                    <div className="min-w-0 flex-1 space-y-2.5">
+                      {/* Header: order no + date + status */}
                       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
                         <div className="min-w-0">
-                          <div className="truncate text-sm font-semibold">{o.order_number}</div>
-                          <div className="text-[11px] text-muted-foreground tabular-nums">
+                          <div className="truncate text-sm font-bold tracking-tight">#{o.order_number}</div>
+                          <div className="text-[10px] uppercase tracking-wide text-muted-foreground tabular-nums">
                             {new Date(o.created_at).toLocaleString([], { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
                           </div>
                         </div>
@@ -645,84 +646,99 @@ function AdminOrdersPage() {
                         )}
                       </div>
 
-                      <div className="space-y-0.5 text-xs">
-                        <div className="flex min-w-0 items-center gap-1.5 font-medium">
-                          <span className="truncate">{o.customer_name}</span>
-                          <a href={`tel:${o.customer_phone}`} className="shrink-0 text-primary hover:text-primary/80">
-                            <Phone className="h-3.5 w-3.5" />
-                          </a>
-                          <button
-                            onClick={() => { navigator.clipboard.writeText(o.customer_phone); toast.success("Copied"); }}
-                            className="shrink-0 text-muted-foreground hover:text-foreground"
-                          >
-                            <Copy className="h-3 w-3" />
-                          </button>
-                        </div>
-                        <div className="text-[11px] leading-snug text-muted-foreground">
-                          <span className="line-clamp-2">
+                      {/* Customer + Reseller/Agent — 2 column on wider phones */}
+                      <div className="grid grid-cols-1 gap-2 rounded-lg bg-muted/30 p-2 sm:grid-cols-2">
+                        <div className="min-w-0 space-y-0.5">
+                          <div className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70">Customer</div>
+                          <div className="flex min-w-0 items-center gap-1.5 text-xs font-medium">
+                            <span className="truncate">{o.customer_name}</span>
+                            <a href={`tel:${o.customer_phone}`} className="shrink-0 text-primary hover:text-primary/80">
+                              <Phone className="h-3.5 w-3.5" />
+                            </a>
+                            <button
+                              onClick={() => { navigator.clipboard.writeText(o.customer_phone); toast.success("Copied"); }}
+                              className="shrink-0 text-muted-foreground hover:text-foreground"
+                            >
+                              <Copy className="h-3 w-3" />
+                            </button>
+                          </div>
+                          <div className="text-[11px] tabular-nums text-muted-foreground">{o.customer_phone}</div>
+                          <div className="line-clamp-2 text-[11px] leading-snug text-muted-foreground">
                             {o.address_line}
                             {o.area ? `, ${o.area.replace("_", " ")}` : ""}
                             {o.city ? `, ${o.city}` : ""}
-                          </span>
+                          </div>
                         </div>
-                        <div className="flex min-w-0 flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
-                          <span className="font-medium text-foreground/80">{o.resellers?.business_name || "Direct"}</span>
-                          {o.resellers?.agents?.display_name && (
-                            <span className="inline-flex items-center gap-1"><UserCircle className="h-3 w-3" />{o.resellers.agents.display_name}</span>
-                          )}
+                        <div className="min-w-0 space-y-0.5 border-t pt-2 sm:border-l sm:border-t-0 sm:pl-2 sm:pt-0">
+                          <div className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70">Reseller</div>
+                          <div className="truncate text-xs font-medium">{o.resellers?.business_name || "Direct"}</div>
+                          <div className="flex min-w-0 items-center gap-1 text-[11px] text-muted-foreground">
+                            <UserCircle className="h-3 w-3 shrink-0" />
+                            <span className="truncate">{o.resellers?.agents?.display_name || "No agent"}</span>
+                          </div>
                         </div>
                       </div>
 
-                      <div className="text-[11px] text-muted-foreground">
-                        {(() => {
-                          const its = stripItems(o.id);
-                          if (its.length === 0) return <span className="italic opacity-70">No items</span>;
-                          const qty = its.reduce((s, i) => s + Number(i.quantity || 0), 0);
-                          return (
-                            <span className="line-clamp-2">
-                              {its.map((i) => `${i.product_name} ×${i.quantity}`).join(", ")}
-                              {qty > 0 && <span className="ml-1 opacity-70">({qty} pcs)</span>}
-                            </span>
-                          );
-                        })()}
-                      </div>
-
-                      {shipments.filter(s => s.order_id === o.id).length > 0 ? (
-                        <div className="flex flex-wrap gap-1">
-                          {shipments.filter(s => s.order_id === o.id).map(s => {
-                            const url = courierTrackingUrl(s.provider, s, (o as any).customer_phone);
+                      {/* Products */}
+                      <div className="space-y-0.5">
+                        <div className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70">Products</div>
+                        <div className="text-[11px] text-muted-foreground">
+                          {(() => {
+                            const its = stripItems(o.id);
+                            if (its.length === 0) return <span className="italic opacity-70">No items</span>;
+                            const qty = its.reduce((s, i) => s + Number(i.quantity || 0), 0);
                             return (
-                              <div key={s.id} className="inline-flex items-center gap-1 rounded bg-muted/50 px-1.5 py-0.5 text-[10px] font-medium ring-1 ring-inset ring-muted-foreground/10">
-                                <CourierLogo provider={s.provider} size={12} />
-                                {url ? (
-                                  <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-0.5 font-bold text-primary hover:underline">
-                                    {courierLabel(s.provider)}<ExternalLink className="h-2 w-2" />
-                                  </a>
-                                ) : (
-                                  <span className="font-bold text-primary">{courierLabel(s.provider)}</span>
-                                )}
-                                {s.consignment_id && (
-                                  <>
-                                    <span className="text-muted-foreground">#{s.consignment_id}</span>
-                                    <button onClick={() => { navigator.clipboard.writeText(s.consignment_id || ""); toast.success("Booking ID copied"); }} className="opacity-50 hover:opacity-100">
-                                      <Copy className="h-2.5 w-2.5" />
-                                    </button>
-                                  </>
-                                )}
-                              </div>
+                              <span className="line-clamp-3">
+                                {its.map((i) => `${i.product_name} ×${i.quantity}`).join(", ")}
+                                {qty > 0 && <span className="ml-1 opacity-70">({qty} pcs)</span>}
+                              </span>
                             );
-                          })}
+                          })()}
                         </div>
-                      ) : (
-                        <span className="text-[10px] italic text-muted-foreground/60">Not booked yet</span>
-                      )}
+                      </div>
 
+                      {/* Courier */}
+                      <div className="space-y-0.5">
+                        <div className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70">Courier</div>
+                        {shipments.filter(s => s.order_id === o.id).length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {shipments.filter(s => s.order_id === o.id).map(s => {
+                              const url = courierTrackingUrl(s.provider, s, (o as any).customer_phone);
+                              return (
+                                <div key={s.id} className="inline-flex items-center gap-1 rounded bg-muted/50 px-1.5 py-0.5 text-[10px] font-medium ring-1 ring-inset ring-muted-foreground/10">
+                                  <CourierLogo provider={s.provider} size={12} />
+                                  {url ? (
+                                    <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-0.5 font-bold text-primary hover:underline">
+                                      {courierLabel(s.provider)}<ExternalLink className="h-2 w-2" />
+                                    </a>
+                                  ) : (
+                                    <span className="font-bold text-primary">{courierLabel(s.provider)}</span>
+                                  )}
+                                  {s.consignment_id && (
+                                    <>
+                                      <span className="text-muted-foreground">#{s.consignment_id}</span>
+                                      <button onClick={() => { navigator.clipboard.writeText(s.consignment_id || ""); toast.success("Booking ID copied"); }} className="opacity-50 hover:opacity-100">
+                                        <Copy className="h-2.5 w-2.5" />
+                                      </button>
+                                    </>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <span className="text-[10px] italic text-muted-foreground/60">Not booked yet</span>
+                        )}
+                      </div>
+
+                      {/* Money */}
                       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                         <ResellerTotalCell order={o as any} />
                         <AdminTotalCell order={o as any} buyingCost={buyingCostFor(o.id, o.status)} />
                       </div>
 
-                      <div className="border-t pt-2">
+                      <div className="space-y-0.5 border-t pt-2">
+                        <div className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70">Last update</div>
                         <LastUpdateCell
                           meta={orderMeta[o.id]}
                           fallbackAt={o.created_at}
