@@ -1,7 +1,7 @@
 // Server-only shared plumbing for the automatic payment gateways.
 // Never imported by client code (filename is server-guarded).
 import { getRequest } from "@tanstack/react-start/server";
-import { gatewayByProvider } from "./registry";
+import { gatewayBase, gatewayByProvider } from "./registry";
 
 export type GatewayCreds = {
   provider: string;
@@ -9,7 +9,7 @@ export type GatewayCreds = {
   api_secret: string;
   merchant_id: string;
   config: Record<string, any>;
-  is_sandbox: boolean;
+  /** Resolved API base URL (registry production host, or the admin override). */
   base: string;
   /**
    * Who owns the merchant account the money lands in:
