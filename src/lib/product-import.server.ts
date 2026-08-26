@@ -339,8 +339,14 @@ async function tryPanelImport(url: URL): Promise<ImportedProduct | null> {
     const p = body?.product;
     if (!body?.ok || !p || typeof p.name !== "string") return null;
 
-    const description = toPlainText(String(p.description ?? ""), 6000);
-    const shortDescription = toPlainText(String(p.shortDescription ?? ""), 400) || description.slice(0, 200);
+    // Panel descriptions are our own sanitized rich text — keep the markup,
+    // only scripts/styles are removed for safety.
+    const description = String(p.description ?? "")
+      .replace(/<script[\s\S]*?<\/script>/gi, " ")
+      .replace(/<style[\s\S]*?<\/style>/gi, " ")
+      .slice(0, 20_000)
+      .trim();
+    const shortDescription = toPlainText(String(p.shortDescription ?? ""), 400) || toPlainText(description, 200);
     const priceNum = num(p.price);
     return {
       source: `Panel (${url.hostname.replace(/^www\./, "")})`,
@@ -355,7 +361,7 @@ async function tryPanelImport(url: URL): Promise<ImportedProduct | null> {
       category: typeof p.category === "string" ? toPlainText(p.category, 80) : null,
       images: cleanImages(Array.isArray(p.images) ? p.images : [], url),
       metaTitle: toPlainText(String(p.metaTitle || p.name), 60),
-      metaDescription: toPlainText(String(p.metaDescription || description), 160),
+      metaDescription: toPlainText(String(p.metaDescription || ""), 160) || toPlainText(description, 160),
     };
   } catch {
     return null; // fall back to the HTML scraper
