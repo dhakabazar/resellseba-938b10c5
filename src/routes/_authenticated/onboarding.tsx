@@ -6,6 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { getGlobalSettings } from "@/lib/app-data";
 import { clearImpersonation } from "@/lib/impersonation";
 import { toast } from "sonner";
+import { resellerStatusClass, resellerStatusLabel } from "@/lib/reseller-status";
+
 import { Loader2, Store, Mail } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
