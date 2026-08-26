@@ -76,7 +76,6 @@ function PaymentsPage() {
 
   const manual = useMemo(() => rows.filter((r) => r.mode === "manual"), [rows]);
   const api = useMemo(() => rows.filter((r) => r.mode === "api"), [rows]);
-  const list = tab === "manual" ? manual : api;
 
   function patch(id: string, next: Partial<PaymentConfigRow>) {
     setRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...next } : r)));
@@ -117,6 +116,8 @@ function PaymentsPage() {
       </div>
     );
 
+  const activeApi = api.filter((r) => r.is_active).length;
+
   return (
     <div>
       <PageHeader
@@ -137,7 +138,7 @@ function PaymentsPage() {
           onClick={() => setTab("api")}
           icon={<Plug className="h-3.5 w-3.5" />}
           label="Automatic (API)"
-          count={api.length}
+          count={activeApi}
         />
       </div>
 
@@ -151,32 +152,164 @@ function PaymentsPage() {
       >
         {tab === "manual"
           ? "Customer sends money to your number and types the TrxID. Turn on “Reseller security deposit” to let resellers pay their deposit with that method — the payment then needs your approval in Finance → Deposit transactions."
-          : "Gateway credentials are stored per method. Keys are never shown on storefronts; only the checkout button is."}
+          : "Every supported gateway is listed below. Fill in the credentials you have and switch the gateway on — inactive gateways never appear at checkout. Keys are stored server-side only."}
       </div>
 
-      <AddMethodForm mode={tab} onAdded={load} />
-
-      <div className={"grid gap-4 " + (tab === "api" ? "lg:grid-cols-2" : "")}>
-        {list.map((row) => (
-          <MethodCard
-            key={row.id}
-            row={row}
-            onPatch={(next) => patch(row.id, next)}
-            onSave={() => save(row)}
-            onDelete={() => remove(row)}
-          />
-        ))}
-        {list.length === 0 && (
-          <div className="rounded-xl border border-dashed p-10 text-center text-sm text-muted-foreground">
-            {tab === "manual"
-              ? "No manual method yet — add bKash, Nagad, Rocket or a bank account above."
-              : "No automatic gateway configured yet."}
+      {tab === "manual" ? (
+        <>
+          <AddMethodForm mode="manual" onAdded={load} />
+          <div className="grid gap-4">
+            {manual.map((row) => (
+              <MethodCard
+                key={row.id}
+                row={row}
+                onPatch={(next) => patch(row.id, next)}
+                onSave={() => save(row)}
+                onDelete={() => remove(row)}
+              />
+            ))}
+            {manual.length === 0 && (
+              <div className="rounded-xl border border-dashed p-10 text-center text-sm text-muted-foreground">
+                No manual method yet — add bKash, Nagad, Rocket or a bank account above.
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </>
+      ) : (
+        <GatewayGrid rows={api} onReload={load} />
+      )}
     </div>
   );
 }
+
+/** All supported gateways as an always-visible grid with an on/off switch each. */
+function GatewayGrid({ rows, onReload }: { rows: PaymentConfigRow[]; onReload: () => void }) {
+  const [drafts, setDrafts] = useState<Record<string, PaymentConfigRow>>({});
+  const [busy, setBusy] = useState<string | null>(null);
+
+  function rowFor(spec: (typeof GATEWAYS)[number]): PaymentConfigRow {
+    const found =
+      rows.find((r) => cfgString(r.config, "gateway") === spec.key) ??
+      rows.find((r) => !cfgString(r.config, "gateway") && r.method === spec.method);
+    if (found) return found;
+    return (
+      drafts[spec.key] ?? {
+        id: "",
+        method: spec.method,
+        label: spec.label,
+        mode: "api" as const,
+        is_active: false,
+        instructions: null,
+        config: { gateway: spec.key },
+      }
+    );
+  }
+
+  const [edits, setEdits] = useState<Record<string, Partial<PaymentConfigRow>>>({});
+  const merged = (spec: (typeof GATEWAYS)[number]): PaymentConfigRow => ({
+    ...rowFor(spec),
+    ...(edits[spec.key] ?? {}),
+  });
+
+  function patch(specKey: string, next: Partial<PaymentConfigRow>) {
+    setEdits((prev) => ({ ...prev, [specKey]: { ...(prev[specKey] ?? {}), ...next } }));
+  }
+
+  async function save(spec: (typeof GATEWAYS)[number]) {
+    const row = merged(spec);
+    setBusy(spec.key);
+    const payload = {
+      label: row.label || spec.label,
+      is_active: row.is_active,
+      instructions: row.instructions,
+      config: { ...(row.config ?? {}), gateway: spec.key } as never,
+    };
+    const { error } = row.id
+      ? await supabase.from("payment_configs").update(payload).eq("id", row.id)
+      : await supabase
+          .from("payment_configs")
+          .insert({ ...payload, method: spec.method as never, mode: "api" });
+    setBusy(null);
+    if (error) return toast.error(error.message);
+    setDrafts((prev) => ({ ...prev, [spec.key]: { ...row, ...payload, config: row.config } }));
+    setEdits((prev) => ({ ...prev, [spec.key]: {} }));
+    toast.success(`${payload.label} saved`);
+    onReload();
+  }
+
+  return (
+    <div className="grid gap-4 lg:grid-cols-2">
+      {GATEWAYS.map((spec) => {
+        const row = merged(spec);
+        return (
+          <div key={spec.key} className={"surface-card overflow-hidden " + (row.is_active ? "ring-1 ring-primary/30" : "")}>
+            <div className="flex flex-wrap items-center gap-3 border-b bg-muted/30 px-4 py-3">
+              <span
+                className={
+                  "grid h-9 w-9 shrink-0 place-items-center rounded-lg " +
+                  (row.is_active ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground")
+                }
+              >
+                <CreditCard className="h-4 w-4" />
+              </span>
+              <div className="min-w-[160px] flex-1">
+                <div className="text-sm font-semibold">{spec.label}</div>
+                <div className="mt-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
+                  {row.id ? (row.is_active ? "Active · configured" : "Saved · off") : "Not configured"}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => patch(spec.key, { is_active: !row.is_active })}
+                aria-label={row.is_active ? "Deactivate gateway" : "Activate gateway"}
+                className={
+                  "relative h-6 w-11 shrink-0 rounded-full transition-colors " +
+                  (row.is_active ? "bg-primary" : "bg-muted-foreground/30")
+                }
+              >
+                <span
+                  className={
+                    "absolute top-0.5 h-5 w-5 rounded-full bg-background shadow transition-all " +
+                    (row.is_active ? "left-[22px]" : "left-0.5")
+                  }
+                />
+              </button>
+            </div>
+
+            <div className="p-4">
+              <div className="mb-3">
+                <label className="mb-1 block text-xs font-medium">Display label</label>
+                <input
+                  value={row.label}
+                  onChange={(e) => patch(spec.key, { label: e.target.value })}
+                  className={inp}
+                  placeholder={spec.label}
+                />
+              </div>
+              <GatewayFields
+                row={row}
+                config={row.config ?? {}}
+                setConfig={(key, value) => patch(spec.key, { config: { ...(row.config ?? {}), [key]: value } })}
+                onPatch={(next) => patch(spec.key, next)}
+              />
+            </div>
+
+            <div className="flex justify-end border-t bg-muted/20 px-4 py-2.5">
+              <button
+                onClick={() => void save(spec)}
+                disabled={busy === spec.key}
+                className="btn-brand inline-flex items-center gap-1.5 rounded-md px-4 py-1.5 text-xs font-semibold disabled:opacity-50"
+              >
+                {busy === spec.key && <Loader2 className="h-3.5 w-3.5 animate-spin" />} Save changes
+              </button>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 
 function TabButton({
   active,
