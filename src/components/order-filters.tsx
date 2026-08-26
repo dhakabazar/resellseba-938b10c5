@@ -305,7 +305,7 @@ export function OrderFilterBar({
         </div>
         )}
 
-        <div className={`grid grid-cols-2 gap-2 sm:grid-cols-3 lg:flex lg:shrink-0 lg:items-end ${isReport ? "lg:w-[60%]" : "lg:flex-1 lg:justify-end"} ${hideSearch ? "w-full" : ""}`}>
+        <div className={`grid grid-cols-2 gap-2 lg:flex lg:shrink-0 lg:items-end ${isReport ? "lg:w-[60%]" : "lg:flex-1 lg:justify-end"} ${hideSearch ? "w-full" : ""}`}>
           {resellerOptions && (
             <SearchableSelect
               label="Reseller"
@@ -314,14 +314,14 @@ export function OrderFilterBar({
               onChange={(v) => set({ reseller: v })}
               placeholder="All resellers"
               searchPlaceholder="Search reseller…"
-              className={isReport ? "lg:w-[170px]" : "lg:w-[190px]"}
+              className={isReport ? "lg:w-[130px]" : "lg:w-[150px]"}
             />
           )}
 
           <Select
             label="Date"
             value={value.datePreset}
-            className={isReport ? "lg:w-[120px]" : "lg:w-[150px]"}
+            className={isReport ? "lg:w-[130px]" : "lg:w-[150px]"}
             onChange={(v) =>
               set(
                 v === "custom"
@@ -339,7 +339,7 @@ export function OrderFilterBar({
           <Select
             label="Sort"
             value={value.sort}
-            className={isReport ? "lg:w-[140px]" : "lg:w-[170px]"}
+            className={isReport ? "lg:w-[130px]" : "lg:w-[150px]"}
             onChange={(v) => set({ sort: v as OrderFilterState["sort"] })}
           >
             {SORT_OPTIONS.map((o) => (
@@ -351,7 +351,7 @@ export function OrderFilterBar({
           <Select
             label="Area"
             value={value.area}
-            className={isReport ? "lg:w-[120px]" : "lg:w-[150px]"}
+            className={isReport ? "lg:w-[130px]" : "lg:w-[150px]"}
             onChange={(v) => set({ area: v })}
           >
             {AREA_FILTER_OPTIONS.map((o) => (
@@ -363,7 +363,7 @@ export function OrderFilterBar({
           <Select
             label="Courier"
             value={value.courier}
-            className={isReport ? "lg:w-[120px]" : "lg:w-[150px]"}
+            className={isReport ? "lg:w-[130px]" : "lg:w-[150px]"}
             onChange={(v) => set({ courier: v })}
           >
             {COURIER_FILTER_OPTIONS.map((o) => (
@@ -376,7 +376,7 @@ export function OrderFilterBar({
             <Select
               label="Per page"
               value={String(value.perPage)}
-              className={isReport ? "lg:w-[80px]" : "lg:w-[92px]"}
+              className={isReport ? "lg:w-[70px]" : "lg:w-[80px]"}
               onChange={(v) => set({ perPage: Number(v) })}
             >
               {[10, 20, 50, 100].map((n) => (
