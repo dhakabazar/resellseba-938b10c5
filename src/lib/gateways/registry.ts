@@ -180,10 +180,17 @@ export const GATEWAYS: GatewaySpec[] = [
     method: "epayseba",
     hosts: { live: "https://pay.epayseba.com" },
     fields: [
-      { path: "api_key", label: "API key", secret: true, required: true, hint: "API credentials থেকে App key — শুধু এটাই লাগে" },
-      { path: "api_secret", label: "Secret key (optional)", secret: true, hint: "শুধু যদি আপনার প্যানেল secret key দেয়" },
-      { path: "merchant_id", label: "Brand key (optional)", hint: "Brands সেকশনে multiple brand থাকলে" },
+      {
+        path: "api_key",
+        label: "API key (Brand key)",
+        secret: true,
+        required: true,
+        hint: "ePaySeba প্যানেল → Brand Setting → আপনার ব্র্যান্ডের Brand Key কপি করে বসান",
+      },
+      { path: "merchant_id", label: "Account Api Key (optional)", hint: "প্যানেলের Api Key — না দিলেও চলবে" },
+      { path: "api_secret", label: "Secret key (optional)", secret: true, hint: "শুধু webhook signature-এর জন্য" },
     ],
+
     callbacks: [
       { path: "/api/public/payment/epayseba/return", label: "Return URL" },
       { path: "/api/public/payment/epayseba-webhook", label: "Webhook URL" },

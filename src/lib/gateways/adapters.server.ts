@@ -446,23 +446,46 @@ const aamarpay: Adapter = {
 /* ---------------------------------------------------------------- ePaySeba */
 /**
  * Docs: https://epayseba.com/developers/docs (section 2 & 3)
- * Only API-KEY is required; SECRET-KEY / BRAND-KEY are optional extras that are
- * sent when the merchant filled them in.
+ * Live base: https://pay.epayseba.com
+ *
+ * Verified against the live API: the value the merchant panel accepts in the
+ * `API-KEY` header is the **Brand key** (the account "Api Key" shown on the
+ * brand card is rejected with `{"status":0,"message":"Invalid API Request."}`).
+ * So every call tries each saved key in turn — brand key first — and uses the
+ * first one the gateway accepts. That way it works no matter which field the
+ * admin pasted the value into.
  */
-function epaysebaHeaders(c: GatewayCreds) {
-  return {
-    "API-KEY": c.api_key,
-    ...(c.api_secret ? { "SECRET-KEY": c.api_secret } : {}),
-    ...(c.merchant_id ? { "BRAND-KEY": c.merchant_id } : {}),
-  };
+function epaysebaKeys(c: GatewayCreds): string[] {
+  const raw = [c.merchant_id, String(c.config.brand_key ?? ""), c.api_key, c.api_secret]
+    .map((v) => String(v ?? "").trim())
+    .filter(Boolean);
+  return [...new Set(raw)];
 }
 
-/** ePaySeba returns `?transactionId=...&paymentMethod=...&status=...` */
-function epaysebaError(r: Record<string, unknown> & { message?: unknown; error?: unknown }): string {
+const epaysebaRejected = (r: Record<string, any>) =>
+  r.__status === 404 || r.__status === 401 || r.__status === 403 || /invalid api request/i.test(String(r.message ?? ""));
+
+/** Calls an ePaySeba endpoint with each saved key until one is accepted. */
+async function epaysebaCall(
+  c: GatewayCreds,
+  path: string,
+  body: Record<string, unknown>,
+  signal?: AbortSignal,
+): Promise<Record<string, any>> {
+  const keys = epaysebaKeys(c);
+  if (keys.length === 0) fail("ePaySeba API key (Brand key) is required");
+  let last: Record<string, any> = {};
+  for (const key of keys) {
+    last = await jsonPost(`${c.base}${path}`, body, { "API-KEY": key }, signal);
+    if (!epaysebaRejected(last)) return last;
+  }
+  return last;
+}
+
+function epaysebaError(r: Record<string, any>): string {
   const msg = String((r.message ?? r.error ?? "") || "");
-  if (!msg) return "";
-  if (/invalid api request/i.test(msg))
-    return "ePaySeba: Invalid API Request — API key ভুল বা inactive. মার্চেন্ট প্যানেলের API credentials থেকে live App key কপি করে বসান।";
+  if (/invalid api request/i.test(msg) || r.__status === 404)
+    return "ePaySeba: Invalid API Request — ePaySeba প্যানেলের Brand Setting থেকে ব্র্যান্ডের **Brand Key** কপি করে API key ফিল্ডে বসান (account Api Key কাজ করে না)।";
   return msg;
 }
 
@@ -479,15 +502,15 @@ function epaysebaTxn(p: Record<string, string>, order: { transaction_id?: string
 
 const epayseba: Adapter = {
   async create(c, order, urls) {
-    if (!c.api_key) fail("ePaySeba API key is required");
     const meta = {
       order_id: order.order_number,
       name: order.customer_name,
       phone: order.customer_phone,
     };
     const r = await withTimeout((signal) =>
-      jsonPost(
-        `${c.base}/api/payment/create`,
+      epaysebaCall(
+        c,
+        "/api/payment/create",
         {
           cus_name: order.customer_name || "Customer",
           cus_email: order.customer_email || "noreply@example.com",
@@ -498,17 +521,10 @@ const epayseba: Adapter = {
           metadata: meta,
           meta_data: meta,
         },
-        epaysebaHeaders(c),
         signal,
       ),
     );
-    const redirectedUrl =
-      r.__redirected &&
-      typeof r.__url === "string" &&
-      /^https:\/\/([a-z0-9-]+\.)*epayseba\.com\//i.test(r.__url)
-        ? r.__url
-        : null;
-    const url = r.payment_url || r.data?.payment_url || r.checkout_url || redirectedUrl;
+    const url = r.payment_url || r.data?.payment_url || r.checkout_url;
     if (!url)
       fail(
         epaysebaError(r) ||
@@ -520,17 +536,13 @@ const epayseba: Adapter = {
   },
   async verifyReturn(c, order, p) {
     const id = epaysebaTxn(p, order);
-    const r = await jsonPost(
-      `${c.base}/api/payment/verify`,
-      { transaction_id: id },
-      epaysebaHeaders(c),
-    );
+    const r = await epaysebaCall(c, "/api/payment/verify", { transaction_id: id });
     const row = r.data ?? r;
     const status = String(row?.status ?? "").toLowerCase();
     const returned = String(p.status ?? "").toLowerCase();
     return {
       paid: status === "completed" || status === "success" || status === "paid",
-      amount: num(row?.amount),
+      amount: num(row?.amount ?? row?.paymentAmount ?? p.paymentAmount),
       txnId: String(row?.transaction_id ?? id),
       cancelled:
         status.includes("cancel") ||
@@ -541,25 +553,17 @@ const epayseba: Adapter = {
     };
   },
   async test(c) {
-    if (!c.api_key) fail("ePaySeba API key is required");
     const r = await withTimeout((signal) =>
-      jsonPost(
-        `${c.base}/api/payment/verify`,
-        { transaction_id: "test-connection" },
-        epaysebaHeaders(c),
-        signal,
-      ),
+      epaysebaCall(c, "/api/payment/verify", { transaction_id: "test-connection" }, signal),
     );
-    if (r.__status === 401 || r.__status === 403) fail("ePaySeba rejected the API key");
-    // A hosted HTML page instead of JSON means the API address is wrong.
+    if (epaysebaRejected(r)) fail(epaysebaError(r) || "ePaySeba rejected the API key");
     if (r.__raw)
       fail(
         `ePaySeba API not found at ${c.base} (HTTP ${r.__status}). Copy the exact API base URL from your ePaySeba merchant panel.`,
       );
-    const err = epaysebaError(r);
-    if (err && !/transaction/i.test(err)) fail(err);
   },
 };
+
 
 export const ADAPTERS: Record<string, Adapter> = {
   sslcommerz,
