@@ -503,6 +503,11 @@ const epayseba: Adapter = {
       getJson(`${c.base}/api/v1/payment/status/test-connection`, epaysebaHeaders(c), signal),
     );
     if (r.__status === 401 || r.__status === 403) fail("ePaySeba rejected the API key");
+    // A hosted HTML page instead of JSON means the API address is wrong.
+    if (r.__raw)
+      fail(
+        `ePaySeba API not found at ${c.base} (HTTP ${r.__status}). Copy the exact API base URL from your ePaySeba merchant panel.`,
+      );
   },
 };
 
