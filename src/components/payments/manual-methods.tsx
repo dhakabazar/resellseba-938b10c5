@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Loader2, Plus, ShieldCheck, Trash2, Wallet } from "lucide-react";
+import { Loader2, Plus, Trash2, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { AppModal } from "@/components/ui-kit/AppModal";
@@ -10,7 +10,6 @@ import {
   methodLabel,
   type PaymentConfigRow,
 } from "@/lib/payment-methods";
-import { clearAdvancedSettingsCache, fetchAdvancedSettings } from "@/lib/advanced-settings";
 import { Label, StatusDot, Switch, field } from "./shared";
 import { PaymentLogo, paymentLogo } from "./payment-brand";
 
