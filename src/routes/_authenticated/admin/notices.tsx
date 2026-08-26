@@ -118,8 +118,8 @@ function AdminNoticesPage() {
     const ok = await confirmAction({
       title: "Delete notice?",
       description: `"${n.title}" will disappear from every reseller dashboard.`,
-      confirmLabel: "Delete",
-      tone: "danger",
+      confirmText: "Delete",
+      variant: "danger",
     });
     if (!ok) return;
     const { error } = await supabase.from("admin_notices").delete().eq("id", n.id);
