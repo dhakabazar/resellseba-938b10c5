@@ -351,7 +351,7 @@ export function OrderFilterBar({
           <Select
             label="Area"
             value={value.area}
-            className={isReport ? "lg:w-[120px]" : "lg:w-[150px]"}
+            className={isReport ? "lg:w-[130px]" : "lg:w-[150px]"}
             onChange={(v) => set({ area: v })}
           >
             {AREA_FILTER_OPTIONS.map((o) => (
