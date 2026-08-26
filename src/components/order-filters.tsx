@@ -338,6 +338,30 @@ export function OrderFilterBar({
               </option>
             ))}
           </Select>
+          <Select
+            label="Area"
+            value={value.area}
+            className={isReport ? "lg:w-[120px]" : "lg:w-[150px]"}
+            onChange={(v) => set({ area: v })}
+          >
+            {AREA_FILTER_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </Select>
+          <Select
+            label="Courier"
+            value={value.courier}
+            className={isReport ? "lg:w-[120px]" : "lg:w-[150px]"}
+            onChange={(v) => set({ courier: v })}
+          >
+            {COURIER_FILTER_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </Select>
           {showPerPage && (
             <Select
               label="Per page"
