@@ -197,6 +197,11 @@ function PayoutsPage() {
             <li>• {depositTexts.withdrawWarning}</li>
           </ul>
 
+          <div className="mb-4">
+            <DepositPayPanel resellerId={rid} onSubmitted={load} />
+          </div>
+
+
           {deposit.rows.length === 0 ? (
             <div className="rounded-lg border border-dashed p-6 text-center text-xs text-muted-foreground">No deposit records yet.</div>
           ) : (
