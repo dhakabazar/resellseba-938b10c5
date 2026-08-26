@@ -179,13 +179,15 @@ function AdvancedSettingsPage() {
         title="Advanced settings"
         description="Platform logic switches — notun logic ekhane jog hote thakbe."
         actions={
-          <button
-            onClick={save}
-            disabled={busy}
-            className="btn-brand inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium disabled:opacity-50"
-          >
-            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save changes
-          </button>
+          tab === "deposit" ? undefined : (
+            <button
+              onClick={save}
+              disabled={busy}
+              className="btn-brand inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium disabled:opacity-50"
+            >
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save changes
+            </button>
+          )
         }
       />
 
