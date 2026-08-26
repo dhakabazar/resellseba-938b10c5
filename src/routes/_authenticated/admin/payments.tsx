@@ -5,11 +5,6 @@ import { PageHeader } from "@/components/ui-kit";
 import {
   BadgeCheck,
   Banknote,
-  Copy,
-  CreditCard,
-  Eye,
-  EyeOff,
-  ExternalLink,
   Hand,
   Loader2,
   Plug,
@@ -20,15 +15,14 @@ import {
 import { toast } from "sonner";
 import { confirmAction } from "@/lib/confirm";
 import {
-  GATEWAYS,
   MANUAL_METHODS,
   cfgBool,
   cfgString,
-  gatewaySpec,
   methodLabel,
   type PaymentConfigRow,
   type PaymentMode,
 } from "@/lib/payment-methods";
+import { GatewayAdmin } from "@/components/payments/gateway-admin";
 
 export const Route = createFileRoute("/_authenticated/admin/payments")({
   component: PaymentsPage,
@@ -57,6 +51,7 @@ function PaymentsPage() {
   const [rows, setRows] = useState<PaymentConfigRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<PaymentMode>("manual");
+  const [activeGateways, setActiveGateways] = useState(0);
 
   useEffect(() => {
     void load();
@@ -75,7 +70,6 @@ function PaymentsPage() {
   }
 
   const manual = useMemo(() => rows.filter((r) => r.mode === "manual"), [rows]);
-  const api = useMemo(() => rows.filter((r) => r.mode === "api"), [rows]);
 
   function patch(id: string, next: Partial<PaymentConfigRow>) {
     setRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...next } : r)));
@@ -116,7 +110,6 @@ function PaymentsPage() {
       </div>
     );
 
-  const activeApi = api.filter((r) => r.is_active).length;
 
   return (
     <div>
@@ -138,7 +131,7 @@ function PaymentsPage() {
           onClick={() => setTab("api")}
           icon={<Plug className="h-3.5 w-3.5" />}
           label="Automatic (API)"
-          count={activeApi}
+          count={activeGateways}
         />
       </div>
 
@@ -176,140 +169,11 @@ function PaymentsPage() {
           </div>
         </>
       ) : (
-        <GatewayGrid rows={api} onReload={load} />
+        <GatewayAdmin onCountChange={setActiveGateways} />
       )}
     </div>
   );
 }
-
-/** All supported gateways as an always-visible grid with an on/off switch each. */
-function GatewayGrid({ rows, onReload }: { rows: PaymentConfigRow[]; onReload: () => void }) {
-  const [drafts, setDrafts] = useState<Record<string, PaymentConfigRow>>({});
-  const [busy, setBusy] = useState<string | null>(null);
-
-  function rowFor(spec: (typeof GATEWAYS)[number]): PaymentConfigRow {
-    const found =
-      rows.find((r) => cfgString(r.config, "gateway") === spec.key) ??
-      rows.find((r) => !cfgString(r.config, "gateway") && r.method === spec.method);
-    if (found) return found;
-    return (
-      drafts[spec.key] ?? {
-        id: "",
-        method: spec.method,
-        label: spec.label,
-        mode: "api" as const,
-        is_active: false,
-        instructions: null,
-        config: { gateway: spec.key },
-      }
-    );
-  }
-
-  const [edits, setEdits] = useState<Record<string, Partial<PaymentConfigRow>>>({});
-  const merged = (spec: (typeof GATEWAYS)[number]): PaymentConfigRow => ({
-    ...rowFor(spec),
-    ...(edits[spec.key] ?? {}),
-  });
-
-  function patch(specKey: string, next: Partial<PaymentConfigRow>) {
-    setEdits((prev) => ({ ...prev, [specKey]: { ...(prev[specKey] ?? {}), ...next } }));
-  }
-
-  async function save(spec: (typeof GATEWAYS)[number]) {
-    const row = merged(spec);
-    setBusy(spec.key);
-    const payload = {
-      label: row.label || spec.label,
-      is_active: row.is_active,
-      instructions: row.instructions,
-      config: { ...(row.config ?? {}), gateway: spec.key } as never,
-    };
-    const { error } = row.id
-      ? await supabase.from("payment_configs").update(payload).eq("id", row.id)
-      : await supabase
-          .from("payment_configs")
-          .insert({ ...payload, method: spec.method as never, mode: "api" });
-    setBusy(null);
-    if (error) return toast.error(error.message);
-    setDrafts((prev) => ({ ...prev, [spec.key]: { ...row, ...payload, config: row.config } }));
-    setEdits((prev) => ({ ...prev, [spec.key]: {} }));
-    toast.success(`${payload.label} saved`);
-    onReload();
-  }
-
-  return (
-    <div className="grid gap-4 lg:grid-cols-2">
-      {GATEWAYS.map((spec) => {
-        const row = merged(spec);
-        return (
-          <div key={spec.key} className={"surface-card overflow-hidden " + (row.is_active ? "ring-1 ring-primary/30" : "")}>
-            <div className="flex flex-wrap items-center gap-3 border-b bg-muted/30 px-4 py-3">
-              <span
-                className={
-                  "grid h-9 w-9 shrink-0 place-items-center rounded-lg " +
-                  (row.is_active ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground")
-                }
-              >
-                <CreditCard className="h-4 w-4" />
-              </span>
-              <div className="min-w-[160px] flex-1">
-                <div className="text-sm font-semibold">{spec.label}</div>
-                <div className="mt-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
-                  {row.id ? (row.is_active ? "Active · configured" : "Saved · off") : "Not configured"}
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => patch(spec.key, { is_active: !row.is_active })}
-                aria-label={row.is_active ? "Deactivate gateway" : "Activate gateway"}
-                className={
-                  "relative h-6 w-11 shrink-0 rounded-full transition-colors " +
-                  (row.is_active ? "bg-primary" : "bg-muted-foreground/30")
-                }
-              >
-                <span
-                  className={
-                    "absolute top-0.5 h-5 w-5 rounded-full bg-background shadow transition-all " +
-                    (row.is_active ? "left-[22px]" : "left-0.5")
-                  }
-                />
-              </button>
-            </div>
-
-            <div className="p-4">
-              <div className="mb-3">
-                <label className="mb-1 block text-xs font-medium">Display label</label>
-                <input
-                  value={row.label}
-                  onChange={(e) => patch(spec.key, { label: e.target.value })}
-                  className={inp}
-                  placeholder={spec.label}
-                />
-              </div>
-              <GatewayFields
-                row={row}
-                config={row.config ?? {}}
-                setConfig={(key, value) => patch(spec.key, { config: { ...(row.config ?? {}), [key]: value } })}
-                onPatch={(next) => patch(spec.key, next)}
-              />
-            </div>
-
-            <div className="flex justify-end border-t bg-muted/20 px-4 py-2.5">
-              <button
-                onClick={() => void save(spec)}
-                disabled={busy === spec.key}
-                className="btn-brand inline-flex items-center gap-1.5 rounded-md px-4 py-1.5 text-xs font-semibold disabled:opacity-50"
-              >
-                {busy === spec.key && <Loader2 className="h-3.5 w-3.5 animate-spin" />} Save changes
-              </button>
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
 
 function TabButton({
   active,
@@ -343,16 +207,14 @@ function TabButton({
 
 function AddMethodForm({ mode, onAdded }: { mode: PaymentMode; onAdded: () => void }) {
   const manualOptions = MANUAL_METHODS;
-  const firstKey = mode === "manual" ? manualOptions[0]!.value : GATEWAYS[0]!.key;
+  const firstKey = manualOptions[0]!.value;
   const [choice, setChoice] = useState(firstKey);
   const [label, setLabel] = useState("");
   const [account, setAccount] = useState("");
   const [busy, setBusy] = useState(false);
 
-  const spec = mode === "api" ? GATEWAYS.find((g) => g.key === choice) : undefined;
-
   useEffect(() => {
-    setChoice(mode === "manual" ? manualOptions[0]!.value : GATEWAYS[0]!.key);
+    setChoice(manualOptions[0]!.value);
     setLabel("");
     setAccount("");
   }, [mode]);
@@ -362,14 +224,12 @@ function AddMethodForm({ mode, onAdded }: { mode: PaymentMode; onAdded: () => vo
     if (!label.trim()) return;
     setBusy(true);
     const { error } = await supabase.from("payment_configs").insert({
-      method: (mode === "manual" ? choice : spec!.method) as never,
+      method: choice as never,
       label: label.trim(),
       mode,
       is_active: true,
       instructions: null,
-      config: (mode === "manual"
-        ? { account: account.trim(), allow_deposit: false }
-        : { gateway: spec!.key }) as never,
+      config: { account: account.trim(), allow_deposit: false } as never,
     });
     setBusy(false);
     if (error) return toast.error(error.message);
