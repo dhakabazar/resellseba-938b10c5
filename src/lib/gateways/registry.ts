@@ -181,7 +181,7 @@ export const GATEWAYS: GatewaySpec[] = [
     hosts: { live: "https://pay.epayseba.com" },
     fields: [
       { path: "api_key", label: "API key", secret: true, required: true },
-      { path: "api_secret", label: "Secret key (webhook signature)", secret: true, hint: "Optional — used to verify webhooks" },
+      { path: "api_secret", label: "Secret key", secret: true, required: true, hint: "Required by ePaySeba for payment creation and verification" },
       { path: "merchant_id", label: "Brand key", required: true },
     ],
     callbacks: [

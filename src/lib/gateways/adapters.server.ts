@@ -445,32 +445,43 @@ const aamarpay: Adapter = {
 
 /* ---------------------------------------------------------------- ePaySeba */
 function epaysebaHeaders(c: GatewayCreds) {
-  return { "api-key": c.api_key, authorization: `Bearer ${c.api_key}` };
+  return {
+    "API-KEY": c.api_key,
+    ...(c.api_secret ? { "SECRET-KEY": c.api_secret } : {}),
+    ...(c.merchant_id ? { "BRAND-KEY": c.merchant_id } : {}),
+  };
 }
 
 const epayseba: Adapter = {
   async create(c, order, urls) {
-    if (!c.api_key || !c.merchant_id) fail("ePaySeba API key / brand key missing");
+    if (!c.api_key || !c.api_secret || !c.merchant_id)
+      fail("ePaySeba API key, secret key, and brand key are required");
     const r = await withTimeout((signal) =>
       jsonPost(
-        `${c.base}/api/v1/payment/create`,
+        `${c.base}/api/payment/create`,
         {
-          brand_key: c.merchant_id,
           amount: Number(order.total).toFixed(2),
-          currency: "BDT",
-          order_id: order.order_number,
-          customer_name: order.customer_name,
-          customer_phone: order.customer_phone,
-          customer_email: order.customer_email || "noreply@example.com",
-          redirect_url: urls.returnUrl,
+          success_url: urls.returnUrl,
           cancel_url: urls.cancelUrl,
           webhook_url: urls.ipnUrl,
+          metadata: {
+            order_id: order.order_number,
+            name: order.customer_name,
+            phone: order.customer_phone,
+            email: order.customer_email || "noreply@example.com",
+          },
         },
         epaysebaHeaders(c),
         signal,
       ),
     );
-    const url = r.payment_url || r.checkout_url || r.data?.payment_url;
+    const redirectedUrl =
+      r.__redirected &&
+      typeof r.__url === "string" &&
+      /^https:\/\/([a-z0-9-]+\.)*epayseba\.com\//i.test(r.__url)
+        ? r.__url
+        : null;
+    const url = r.payment_url || r.checkout_url || r.data?.payment_url || redirectedUrl;
     if (!url)
       fail(
         r.message ||
@@ -483,8 +494,9 @@ const epayseba: Adapter = {
   },
   async verifyReturn(c, order, p) {
     const id = p.transaction_id || p.trx_id || order.transaction_id || order.order_number;
-    const r = await getJson(
-      `${c.base}/api/v1/payment/status/${encodeURIComponent(id)}`,
+    const r = await jsonPost(
+      `${c.base}/api/payment/verify`,
+      { transaction_id: id },
       epaysebaHeaders(c),
     );
     const row = r.data ?? r;
@@ -498,9 +510,15 @@ const epayseba: Adapter = {
     };
   },
   async test(c) {
-    if (!c.api_key || !c.merchant_id) fail("ePaySeba API key / brand key missing");
+    if (!c.api_key || !c.api_secret || !c.merchant_id)
+      fail("ePaySeba API key, secret key, and brand key are required");
     const r = await withTimeout((signal) =>
-      getJson(`${c.base}/api/v1/payment/status/test-connection`, epaysebaHeaders(c), signal),
+      jsonPost(
+        `${c.base}/api/payment/verify`,
+        { transaction_id: "test-connection" },
+        epaysebaHeaders(c),
+        signal,
+      ),
     );
     if (r.__status === 401 || r.__status === 403) fail("ePaySeba rejected the API key");
     // A hosted HTML page instead of JSON means the API address is wrong.

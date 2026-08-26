@@ -192,7 +192,7 @@ async function parseBody(res: Response): Promise<any> {
   try {
     return JSON.parse(text);
   } catch {
-    return { __raw: text, __status: res.status };
+    return { __raw: text, __status: res.status, __url: res.url, __redirected: res.redirected };
   }
 }
 
