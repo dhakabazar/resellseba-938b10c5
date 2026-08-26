@@ -40,6 +40,7 @@ export function OrderTabs({
     maxHeight: number;
   } | null>(null);
   const ref = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const active = ORDER_TABS.find((t) => t.key === tab);
 
   const updateMenuPosition = () => {
@@ -65,7 +66,9 @@ export function OrderTabs({
 
   useEffect(() => {
     function onDoc(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      const target = e.target as Node;
+      if (ref.current?.contains(target) || menuRef.current?.contains(target)) return;
+      setOpen(false);
     }
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") setOpen(false);
@@ -111,6 +114,7 @@ export function OrderTabs({
         </button>
         {open && menuPosition && createPortal(
           <div
+            ref={menuRef}
             className="fixed z-[100] rounded-md border bg-popover p-2 shadow-lg"
             style={{
               top: menuPosition.top,
