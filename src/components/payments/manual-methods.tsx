@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Loader2, Plus, ShieldCheck, Trash2, Wallet } from "lucide-react";
+import { Loader2, Plus, Trash2, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { AppModal } from "@/components/ui-kit/AppModal";
@@ -10,7 +10,6 @@ import {
   methodLabel,
   type PaymentConfigRow,
 } from "@/lib/payment-methods";
-import { clearAdvancedSettingsCache, fetchAdvancedSettings } from "@/lib/advanced-settings";
 import { Label, StatusDot, Switch, field } from "./shared";
 import { PaymentLogo, paymentLogo } from "./payment-brand";
 
@@ -35,25 +34,6 @@ export function ManualMethods({ onCountChange }: { onCountChange?: (n: number) =
   const [rows, setRows] = useState<PaymentConfigRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [draft, setDraft] = useState<Draft | null>(null);
-  const [depositOn, setDepositOn] = useState(true);
-
-  async function saveDepositSwitch(next: boolean) {
-    setDepositOn(next);
-    const current = await fetchAdvancedSettings();
-    const { error } = await supabase
-      .from("global_settings")
-      .update({ advanced_settings: { ...current, depositPayEnabled: next } as any } as any)
-      .eq("id", 1);
-    clearAdvancedSettingsCache();
-    if (error) {
-      toast.error(error.message);
-      setDepositOn(!next);
-      return;
-    }
-    toast.success(next ? "Deposit payments enabled" : "Deposit payments turned off");
-  }
-
-
 
   async function load() {
     const { data, error } = await supabase
@@ -66,7 +46,6 @@ export function ManualMethods({ onCountChange }: { onCountChange?: (n: number) =
     const list = (data ?? []) as unknown as PaymentConfigRow[];
     setRows(list);
     onCountChange?.(list.length);
-    setDepositOn((await fetchAdvancedSettings()).depositPayEnabled);
     setLoading(false);
   }
 
@@ -108,9 +87,9 @@ export function ManualMethods({ onCountChange }: { onCountChange?: (n: number) =
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-muted/20 p-3">
         <p className="max-w-[62ch] text-[11px] leading-relaxed text-muted-foreground">
-          The customer sends money to your number and types the transaction ID. Use the single{" "}
-          <strong>security deposit</strong> switch below to let resellers pay their deposit with every active method —
-          those payments wait for your approval in Finance → Deposit transactions.
+          The customer sends money to your number and types the transaction ID. Every{" "}
+          <strong>active</strong> method here also accepts reseller security-deposit payments —
+          those wait for your approval in Finance → Deposit transactions.
         </p>
 
         <button
@@ -122,22 +101,6 @@ export function ManualMethods({ onCountChange }: { onCountChange?: (n: number) =
         </button>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3">
-        <div>
-          <div className="flex items-center gap-1.5 text-xs font-semibold">
-            <ShieldCheck className="h-3.5 w-3.5 text-success" /> Reseller security deposit
-          </div>
-          <p className="mt-0.5 max-w-[70ch] text-[11px] text-muted-foreground">
-            One switch for all cards: when on, resellers can pay their security deposit with every{" "}
-            <strong>active</strong> method here. When off, no method accepts deposits.
-          </p>
-        </div>
-        <Switch
-          checked={depositOn}
-          onChange={(v) => void saveDepositSwitch(v)}
-          label="Toggle reseller security deposit"
-        />
-      </div>
 
 
 
@@ -184,9 +147,9 @@ export function ManualMethods({ onCountChange }: { onCountChange?: (n: number) =
                 </div>
               </dl>
 
-              {depositOn && row.is_active && (
+              {row.is_active && (
                 <span className="mt-2 inline-flex w-fit items-center gap-1 rounded-full bg-success/15 px-2 py-0.5 text-[10px] font-semibold text-success">
-                  <ShieldCheck className="h-3 w-3" /> Deposit enabled
+                  Accepts deposits
                 </span>
               )}
 
