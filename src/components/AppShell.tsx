@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ResellerAvatar } from "@/components/reseller-avatar";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { clearImpersonation } from "@/lib/impersonation";
 
 export interface NavItem {
   label: string;
@@ -175,6 +176,7 @@ export function AppShell({
           variant="ghost"
           title="Sign out"
           onClick={async () => {
+            clearImpersonation();
             await supabase.auth.signOut();
             window.location.href = "/login";
           }}
