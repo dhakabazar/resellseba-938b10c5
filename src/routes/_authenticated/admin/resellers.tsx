@@ -627,6 +627,17 @@ function ResellersPage() {
                           <MailCheck className="mr-2 h-4 w-4" /> Confirm email
                         </DropdownMenuItem>
                       )}
+                      <DropdownMenuItem onClick={() => void setPhoneVerified(r, !vf.phoneVerified)}>
+                        {vf.phoneVerified ? (
+                          <>
+                            <SmartphoneNfc className="mr-2 h-4 w-4" /> Clear mobile verification
+                          </>
+                        ) : (
+                          <>
+                            <SmartphoneNfc className="mr-2 h-4 w-4" /> Mark mobile verified
+                          </>
+                        )}
+                      </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={() => setProfileFor(r)}>
                         <UserCircle className="mr-2 h-4 w-4" /> View profile
