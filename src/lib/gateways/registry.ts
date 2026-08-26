@@ -176,13 +176,13 @@ export const GATEWAYS: GatewaySpec[] = [
     provider: "epayseba",
     label: "ePaySeba",
     tagline: "ePaySeba hosted checkout with webhook confirmation.",
-    docs: "https://epayseba.com/",
+    docs: "https://epayseba.com/developers/docs",
     method: "epayseba",
     hosts: { live: "https://pay.epayseba.com" },
     fields: [
-      { path: "api_key", label: "API key", secret: true, required: true },
-      { path: "api_secret", label: "Secret key", secret: true, required: true, hint: "Required by ePaySeba for payment creation and verification" },
-      { path: "merchant_id", label: "Brand key", required: true },
+      { path: "api_key", label: "API key", secret: true, required: true, hint: "API credentials থেকে App key — শুধু এটাই লাগে" },
+      { path: "api_secret", label: "Secret key (optional)", secret: true, hint: "শুধু যদি আপনার প্যানেল secret key দেয়" },
+      { path: "merchant_id", label: "Brand key (optional)", hint: "Brands সেকশনে multiple brand থাকলে" },
     ],
     callbacks: [
       { path: "/api/public/payment/epayseba/return", label: "Return URL" },
