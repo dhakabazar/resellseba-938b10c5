@@ -382,16 +382,35 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                     <span className="text-[13px] font-semibold text-foreground/80">Address</span>
                     <textarea rows={2} className={inp} value={address} onChange={(e) => setAddress(e.target.value)} />
                   </label>
-                  <label className="space-y-1">
+                  <div className="space-y-1 sm:col-span-2">
                     <span className="text-[13px] font-semibold text-foreground/80">Delivery area</span>
-                    <select className={inp} value={area} onChange={(e) => setArea(e.target.value as any)}>
-                      {areaOptions().map((a) => (
-                        <option key={a.value} value={a.value}>
-                          {a.label}
-                        </option>
+                    <div className="grid grid-cols-3 gap-2">
+                      {areaOptions().map(({ value: v, label }) => (
+                        <button
+                          key={v}
+                          type="button"
+                          onClick={() => setArea(v)}
+                          className={`flex items-center justify-between rounded-2xl border-2 px-4 py-3 transition-all duration-300 ${
+                            area === v
+                              ? "scale-[1.02] border-primary bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+                              : "border-muted bg-background text-muted-foreground hover:border-primary/30"
+                          }`}
+                        >
+                          <span className="text-[11px] font-black uppercase tracking-tight">{label}</span>
+                          {showAreaPicker && (
+                            <span className={`text-[10px] font-bold ${area === v ? "text-primary-foreground/90" : "text-primary"}`}>
+                              ৳{lineProducts.reduce((max, p) => Math.max(max, productDeliveryCharge(p, v)), 0)}
+                            </span>
+                          )}
+                        </button>
                       ))}
-                    </select>
-                  </label>
+                    </div>
+                    {!shipTouched && (
+                      <p className="text-[11px] text-muted-foreground">
+                        এরিয়া বদলালে ডেলিভারি চার্জ অটো আপডেট হবে (৳{autoShipping.toFixed(0)})।
+                      </p>
+                    )}
+                  </div>
                   {isAdmin && (
                     <label className="space-y-1">
                       <span className="text-[13px] font-semibold text-foreground/80">Payment status</span>
