@@ -856,7 +856,7 @@ function EditModal({
           <ReadOnlyBit label="Login email" value={email?.email ?? "—"} />
           <ReadOnlyBit
             label="Status"
-            value={reseller.status === "suspended" ? "deactivated" : reseller.status}
+            value={resellerStatusLabel(reseller.status)}
           />
           <ReadOnlyBit
             label="Joined"
