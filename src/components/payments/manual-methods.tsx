@@ -11,6 +11,7 @@ import {
   methodLabel,
   type PaymentConfigRow,
 } from "@/lib/payment-methods";
+import { clearAdvancedSettingsCache, fetchAdvancedSettings } from "@/lib/advanced-settings";
 import { Label, StatusDot, Switch, field } from "./shared";
 import { PaymentLogo, paymentLogo } from "./payment-brand";
 
@@ -28,7 +29,7 @@ const emptyDraft = (): Draft => ({
   mode: "manual",
   is_active: true,
   instructions: null,
-  config: { account: "", account_type: "", allow_deposit: false },
+  config: { account: "", account_type: "" },
 });
 
 export function ManualMethods({ onCountChange }: { onCountChange?: (n: number) => void }) {
@@ -66,6 +67,7 @@ export function ManualMethods({ onCountChange }: { onCountChange?: (n: number) =
     const list = (data ?? []) as unknown as PaymentConfigRow[];
     setRows(list);
     onCountChange?.(list.length);
+    setDepositOn((await fetchAdvancedSettings()).depositPayEnabled);
     setLoading(false);
   }
 
