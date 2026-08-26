@@ -87,10 +87,6 @@ export async function forwardToPlatform<T>(
 /** The caller's bearer token, so a forwarded request keeps the same identity. */
 export function incomingAuthorization(): string | null {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { getRequest } = require("@tanstack/react-start/server") as {
-      getRequest: () => Request | undefined;
-    };
     return getRequest()?.headers.get("authorization") ?? null;
   } catch {
     return null;
