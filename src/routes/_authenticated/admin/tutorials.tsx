@@ -136,8 +136,8 @@ function AdminTutorialsPage() {
     const ok = await confirmAction({
       title: "Delete tutorial?",
       description: `"${v.title}" delete hoye jabe. Ei kaj undo kora jabe na.`,
-      confirmLabel: "Delete",
-      tone: "danger",
+      confirmText: "Delete",
+      variant: "danger",
     });
     if (!ok) return;
     const { error } = await supabase.from("tutorials").delete().eq("id", v.id);
@@ -150,8 +150,8 @@ function AdminTutorialsPage() {
     const ok = await confirmAction({
       title: "Delete topic?",
       description: `"${t.name}" delete hobe. Er video gulo "General" e chole jabe.`,
-      confirmLabel: "Delete",
-      tone: "danger",
+      confirmText: "Delete",
+      variant: "danger",
     });
     if (!ok) return;
     const { error } = await supabase.from("tutorial_topics").delete().eq("id", t.id);
