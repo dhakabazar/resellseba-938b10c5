@@ -34,6 +34,8 @@ export type GatewayOrder = {
   payment_provider: string | null;
   paid_amount: number | null;
   transaction_id: string | null;
+  advance_amount: number | null;
+  advance_by: string | null;
 };
 
 export async function admin() {
@@ -100,7 +102,7 @@ export async function loadOrder(orderNumber: string): Promise<GatewayOrder> {
   const { data } = await db
     .from("orders")
     .select(
-      "id,order_number,total,customer_name,customer_phone,customer_email,address_line,city,reseller_id,payment_status,payment_provider,paid_amount,transaction_id",
+      "id,order_number,total,customer_name,customer_phone,customer_email,address_line,city,reseller_id,payment_status,payment_provider,paid_amount,transaction_id,advance_amount,advance_by",
     )
     .eq("order_number", orderNumber)
     .maybeSingle();
