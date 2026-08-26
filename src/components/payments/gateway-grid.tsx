@@ -122,15 +122,8 @@ export function GatewayGrid({ onCountChange }: { onCountChange?: (active: number
     void load();
   }
 
-  if (loading)
-    return (
-      <div className="grid place-items-center py-14">
-        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-      </div>
-    );
-
   return (
-    <div className="space-y-4">
+    <div className={"space-y-4 " + (loading ? "animate-pulse" : "")}>
       <div className="rounded-xl border bg-muted/20 p-3 text-[11px] leading-relaxed text-muted-foreground">
         Fill in the credentials from your merchant panel, then switch the gateway on — only enabled gateways appear at
         checkout. Payments are always re-verified with the provider on the server before an order is marked paid, and

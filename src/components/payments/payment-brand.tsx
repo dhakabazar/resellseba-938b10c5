@@ -51,7 +51,8 @@ export function PaymentLogo({
     <img
       src={src}
       alt={alt ?? `${method} logo`}
-      loading="lazy"
+      loading="eager"
+      decoding="async"
       width={size}
       height={size}
       className={className ?? "shrink-0 rounded-lg object-contain"}
