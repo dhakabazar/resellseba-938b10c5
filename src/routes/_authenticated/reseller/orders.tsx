@@ -56,6 +56,7 @@ import {
   OrderFilterBar,
   applyOrderFilters,
   filterByCourier,
+  activeFilterCount,
   DEFAULT_ORDER_FILTERS,
   type OrderFilterState,
 } from "@/components/order-filters";
@@ -591,10 +592,15 @@ function OrdersPage() {
         <button
           type="button"
           onClick={() => setShowFilters((v) => !v)}
-          className="inline-flex h-10 items-center gap-2 rounded-md border px-3 text-sm hover:bg-accent"
+          className={`inline-flex h-10 items-center gap-2 rounded-md border px-3 text-sm hover:bg-accent ${activeFilterCount(filters) > 0 ? "border-primary/50 bg-primary/5" : ""}`}
         >
           <SlidersHorizontal className="h-4 w-4" />
           Filters
+          {activeFilterCount(filters) > 0 && (
+            <span className="rounded-full bg-primary px-1.5 text-[10px] font-bold leading-4 text-primary-foreground">
+              {activeFilterCount(filters)}
+            </span>
+          )}
           <ChevronDown className={`h-4 w-4 transition-transform ${showFilters ? "rotate-180" : ""}`} />
         </button>
         <button
@@ -633,6 +639,7 @@ function OrdersPage() {
           onChange={setFilters}
           total={orders.length}
           shown={visible.length}
+          hideSearch
         />
       )}
 
