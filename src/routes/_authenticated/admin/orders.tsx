@@ -595,6 +595,19 @@ function AdminOrdersPage() {
         {marked.length > 0 && (
           <div className="mb-4 flex flex-wrap items-center gap-2 rounded-md border border-primary/40 bg-primary/5 px-3 py-2">
             <span className="mr-2 text-sm font-medium">{marked.length} marked</span>
+            <button
+              type="button"
+              onClick={() =>
+                setMarked(
+                  marked.length === paged.length ? [] : paged.map((x) => x.id),
+                )
+              }
+              className="inline-flex h-9 items-center gap-1.5 rounded-md border bg-background px-3 text-xs font-medium hover:bg-accent"
+              title={marked.length === paged.length ? "Deselect all" : "Select all on this page"}
+            >
+              <CheckSquare className="h-3.5 w-3.5" />
+              {marked.length === paged.length ? "Unselect all" : "Select all"}
+            </button>
             {canStatus && (() => {
               const partialMarked = marked.some((id) => isPartialStatus(orders.find((o) => o.id === id)?.status || ""));
               return (
