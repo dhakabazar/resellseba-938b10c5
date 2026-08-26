@@ -198,6 +198,17 @@ export function gatewayByProvider(provider: string): GatewaySpec | undefined {
   return GATEWAYS.find((g) => g.provider === provider);
 }
 
+/**
+ * API base URL for a gateway: the admin override from `config.base_url` when
+ * present, otherwise the production host from the registry. Trailing slashes
+ * are trimmed so adapters can always append a path.
+ */
+export function gatewayBase(provider: string, config?: Record<string, unknown> | null): string {
+  const override = typeof config?.base_url === "string" ? config.base_url.trim() : "";
+  const base = override || gatewayByProvider(provider)?.hosts.live || "";
+  return base.replace(/\/+$/, "");
+}
+
 export function isAutomaticGateway(method: string | null | undefined): boolean {
   if (!method) return false;
   return GATEWAYS.some((g) => g.method === method);
