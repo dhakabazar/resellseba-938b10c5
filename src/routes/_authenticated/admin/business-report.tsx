@@ -114,7 +114,7 @@ function BusinessReportPage() {
           .order("created_at", { ascending: false }),
         supabase
           .from("order_items")
-          .select("order_id,product_id,product_name,quantity,returned_qty,sa_price,line_total,profit"),
+          .select("order_id,product_id,product_name,quantity,returned_qty,sa_price,line_total,profit,buying_price,packaging_cost"),
         supabase.from("products").select("id,name,product_code,buying_price,packaging_cost,og_image_url"),
         supabase.from("shipments").select("order_id,provider,cost"),
         supabase.from("resellers").select("id,business_name,code,agent_id,avatar_url"),
