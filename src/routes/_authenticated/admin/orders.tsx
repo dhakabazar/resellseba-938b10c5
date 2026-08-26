@@ -490,14 +490,14 @@ function AdminOrdersPage() {
                    onChange={(e) => setMarked(e.target.checked ? paged.map(x => x.id) : [])}
                  />
                </div>
-               <div>Order</div> <div>Products</div> <div>Customer</div> <div>Reseller</div> <div>Courier</div> <div>Total</div> <div>Status</div> <div className="text-right">Actions</div>
+               <div>Order</div> <div>Reseller</div> <div>Products</div> <div>Customer</div> <div>Courier</div> <div>Total</div> <div>Status</div> <div className="text-right">Actions</div>
             </div>
             {paged.map((o) => (
               <div
                 key={o.id}
                 className={`overflow-hidden rounded-xl border bg-card shadow-sm transition-all hover:shadow-md hover:border-primary/40 ${marked.includes(o.id) ? "border-primary ring-1 ring-primary/30" : ""}`}
               >
-                <div className="hidden grid-cols-[40px_minmax(70px,0.7fr)_minmax(140px,1fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(120px,1fr)_70px_90px_60px] items-center gap-1 border-b bg-muted/30 px-4 py-3 text-sm md:grid">
+                <div className="hidden grid-cols-[40px_minmax(70px,0.7fr)_minmax(120px,1fr)_minmax(140px,1fr)_minmax(120px,1fr)_minmax(120px,1fr)_70px_90px_60px] items-center gap-1 border-b bg-muted/30 px-4 py-3 text-sm md:grid">
                   <div className="flex flex-col items-center gap-1.5">
                     <input
                       type="checkbox"
@@ -517,6 +517,25 @@ function AdminOrdersPage() {
                     <div className="text-[11px] text-muted-foreground">
                       {new Date(o.created_at).toLocaleDateString()}
                     </div>
+                    <div className="text-[10px] text-muted-foreground/70 tabular-nums">
+                      {new Date(o.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                    </div>
+                  </div>
+                  <div className="min-w-0">
+                     <div className="font-medium truncate">{o.resellers?.business_name || "Direct"}</div>
+                     <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                       {o.resellers?.contact_phone || "—"}
+                       {o.resellers?.contact_phone && (
+                         <>
+                           <a href={`tel:${o.resellers.contact_phone}`} className="text-primary hover:text-primary/80">
+                             <Phone className="h-3 w-3" />
+                           </a>
+                           <button onClick={() => { navigator.clipboard.writeText(o.resellers?.contact_phone || ""); toast.success("Copied"); }} className="hover:text-foreground">
+                             <Copy className="h-3 w-3" />
+                           </button>
+                         </>
+                       )}
+                     </div>
                   </div>
                   <OrderProductCell
                     items={stripItems(o.id)}
@@ -536,22 +555,6 @@ function AdminOrdersPage() {
                          <Copy className="h-3 w-3" />
                        </button>
                      </div>
-                  </div>
-                  <div className="min-w-0">
-                    <div className="font-medium truncate">{o.resellers?.business_name || "Direct"}</div>
-                    <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                      {o.resellers?.contact_phone || "—"}
-                      {o.resellers?.contact_phone && (
-                        <>
-                          <a href={`tel:${o.resellers.contact_phone}`} className="text-primary hover:text-primary/80">
-                            <Phone className="h-3 w-3" />
-                          </a>
-                          <button onClick={() => { navigator.clipboard.writeText(o.resellers?.contact_phone || ""); toast.success("Copied"); }} className="hover:text-foreground">
-                            <Copy className="h-3 w-3" />
-                          </button>
-                        </>
-                      )}
-                    </div>
                   </div>
                   <div className="min-w-0">
                      {shipments.filter(s => s.order_id === o.id).length > 0 ? (

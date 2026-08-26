@@ -934,6 +934,9 @@ function OrdersPage() {
                     <div className="text-[11px] text-muted-foreground">
                       {new Date(o.created_at).toLocaleDateString()}
                     </div>
+                    <div className="text-[10px] text-muted-foreground/70 tabular-nums">
+                      {new Date(o.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                    </div>
                   </div>
 
                   <div className="min-w-0">
