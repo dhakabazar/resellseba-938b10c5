@@ -350,7 +350,8 @@ function OrdersPage() {
 
   /** One search box, mode decides target: order fields or product name. */
   const visible = useMemo(() => {
-    const base = applyOrderFilters(inTab, { ...filters, q: "" });
+    const courierFiltered = filterByCourier(inTab, filters.courier, shipments);
+    const base = applyOrderFilters(courierFiltered, { ...filters, q: "" });
     const q = filters.q.trim().toLowerCase();
     if (!q) return base;
     return base.filter((o) => {
@@ -362,7 +363,7 @@ function OrdersPage() {
       const has = (v?: string | null) => (v ?? "").toLowerCase().includes(q);
       return has(o.order_number) || has(o.customer_name) || has(o.customer_phone);
     });
-  }, [inTab, filters, searchMode, itemsByOrder]);
+  }, [inTab, filters, searchMode, itemsByOrder, shipments]);
 
   const markedOrders = useMemo(
     () => visible.filter((o) => marked.includes(o.id)),
