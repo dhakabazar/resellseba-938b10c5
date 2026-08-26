@@ -53,7 +53,22 @@ async function handle(request: Request): Promise<Response> {
     return json({ error: "Invalid request" }, 400);
   }
 
+  const bridge = await import("@/lib/gateways/bridge.server");
+  // Safety net: if this endpoint is itself reached on a domain without the
+  // privileged binding, pass the request along instead of failing.
+  if (!bridge.hasPrivilegedDb()) {
+    try {
+      const { op, ...rest } = input;
+      const out = await bridge.forwardToPlatform<unknown>(op, rest, request.headers.get("authorization"));
+      return json(out);
+    } catch (err) {
+      if (err instanceof Response) return json({ error: await err.text() }, err.status || 500);
+      return json({ error: "Payment backend unavailable" }, 503);
+    }
+  }
+
   const flows = await import("@/lib/gateways/flows.server");
+
 
   try {
     switch (input.op) {
