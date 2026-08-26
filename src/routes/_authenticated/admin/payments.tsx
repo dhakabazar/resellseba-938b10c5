@@ -399,37 +399,7 @@ function MethodCard({
             </div>
           </>
         ) : (
-          <>
-            <div>
-              <label className="mb-1 block text-xs font-medium">Gateway credentials (JSON)</label>
-              <textarea
-                rows={6}
-                className={inp + " font-mono text-[11px]"}
-                defaultValue={JSON.stringify(config, null, 2)}
-                onBlur={(e) => {
-                  try {
-                    onPatch({ config: JSON.parse(e.target.value || "{}") });
-                  } catch {
-                    toast.error("Invalid JSON — credentials not updated");
-                  }
-                }}
-                placeholder={'{\n  "store_id": "…",\n  "store_password": "…"\n}'}
-              />
-              <p className="mt-1 text-[10px] text-muted-foreground">
-                Keys stay server-side. Paste production credentials only.
-              </p>
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-medium">Checkout note (optional)</label>
-              <textarea
-                rows={6}
-                className={inp}
-                value={row.instructions ?? ""}
-                onChange={(e) => onPatch({ instructions: e.target.value })}
-                placeholder="Shown under the gateway button at checkout."
-              />
-            </div>
-          </>
+          <GatewayFields row={row} config={config} setConfig={setConfig} onPatch={onPatch} />
         )}
       </div>
 
