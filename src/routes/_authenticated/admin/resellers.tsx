@@ -175,7 +175,25 @@ function ResellersPage() {
       supabase.rpc("admin_reseller_metrics"),
     ]);
 
-    setItems((listRes.data ?? []) as Reseller[]);
+    const rows = (listRes.data ?? []) as Reseller[];
+    setItems(rows);
+
+    // App-level verification lives on profiles (auth email confirm is separate).
+    const ids = rows.map((r) => r.user_id);
+    if (ids.length) {
+      const { data: profRows } = await supabase
+        .from("profiles")
+        .select("id,email_verified_at,phone_verified_at")
+        .in("id", ids);
+      setProfileVerify(
+        Object.fromEntries(
+          (profRows ?? []).map((p: any) => [
+            p.id,
+            { email: Boolean(p.email_verified_at), phone: Boolean(p.phone_verified_at) },
+          ]),
+        ),
+      );
+    }
 
     const { data: agentRows } = await supabase.from("agents").select("id,display_name").order("display_name");
     setAgents((agentRows ?? []) as Array<{ id: string; display_name: string }>);
