@@ -360,7 +360,10 @@ function ResellersPage() {
       loadEmailStatus();
     } catch (e: any) {
       toast.error(e?.message ?? "Failed to confirm email");
+    }
   }
+
+
 
   /** Manual mobile verification (no OTP) — admin vouches for the number. */
   async function setPhoneVerified(r: Reseller, verified: boolean) {
