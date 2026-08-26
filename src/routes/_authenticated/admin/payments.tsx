@@ -295,7 +295,6 @@ function MethodCard({
 }) {
   const config = row.config ?? {};
   const setConfig = (key: string, value: unknown) => onPatch({ config: { ...config, [key]: value } });
-  const isManual = row.mode === "manual";
 
   return (
     <div className="surface-card overflow-hidden">
