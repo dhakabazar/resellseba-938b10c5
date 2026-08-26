@@ -156,6 +156,9 @@ function ResellersPage() {
   const [resetFor, setResetFor] = useState<Reseller | null>(null);
   const [agents, setAgents] = useState<Array<{ id: string; display_name: string }>>([]);
   const [agentFilter, setAgentFilter] = useState("");
+  const { settings: advanced } = useAdvancedSettings();
+  const autoApprove = advanced.resellerAutoApprove;
+
 
   async function load() {
     setLoading(true);
