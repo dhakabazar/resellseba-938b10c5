@@ -402,7 +402,10 @@ const aamarpay: Adapter = {
           cus_phone: order.customer_phone,
           cus_add1: order.address_line,
           cus_city: order.city || "Dhaka",
+          cus_state: order.city || "Dhaka",
+          cus_postcode: "1000",
           cus_country: "Bangladesh",
+
           success_url: urls.returnUrl,
           fail_url: urls.failUrl,
           cancel_url: urls.cancelUrl,
