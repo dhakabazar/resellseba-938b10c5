@@ -4,18 +4,28 @@
  *
  * `ResellerTotalCell` = money received + reseller buy / delivery / packaging / profit.
  * `AdminTotalCell`    = admin revenue + admin buy / delivery / packaging / profit.
+ *
+ * Chips render in a fixed 2-column grid. When an advance was collected for the
+ * order, an `adv` chip appears on both sides following the holder logic:
+ *  · Reseller side — reseller-held advance is deducted from their profit
+ *    (shown as a cost / danger tone); admin-held advance doesn't touch the
+ *    reseller (neutral).
+ *  · Admin side — admin-held advance stays with admin (profit tone);
+ *    reseller-held advance doesn't reach admin (neutral).
  */
 import {
   bdt,
+  orderAdvance,
   orderDeliveryCost,
   orderKeptProductCost,
   orderPackaging,
   orderProfit,
   orderReceived,
+  resellerHeldAdvance,
   type ProfitOrder,
 } from "@/lib/finance-report";
 
-type Tone = "delivery" | "profit" | "loss" | "cost" | "pack";
+type Tone = "delivery" | "profit" | "loss" | "cost" | "pack" | "advance";
 
 function Chip({ label, value, tone }: { label: string; value: string; tone: Tone }) {
   const cls =
@@ -27,7 +37,9 @@ function Chip({ label, value, tone }: { label: string; value: string; tone: Tone
           ? "border-destructive/30 bg-destructive/10 text-destructive"
           : tone === "pack"
             ? "border-violet-500/30 bg-violet-500/10 text-violet-600"
-            : "border-amber-500/30 bg-amber-500/10 text-amber-600";
+            : tone === "advance"
+              ? "border-slate-400/30 bg-slate-400/10 text-slate-500"
+              : "border-amber-500/30 bg-amber-500/10 text-amber-600";
   return (
     <span
       className={`inline-flex items-center gap-0.5 rounded-full border px-1.5 py-[1px] text-[9px] font-bold leading-tight tabular-nums ${cls}`}
@@ -46,6 +58,8 @@ function Summary({
   delivery,
   packaging,
   profit,
+  advance,
+  advanceTone,
 }: {
   headLabel: string;
   headValue: number;
@@ -54,6 +68,8 @@ function Summary({
   delivery: number;
   packaging: number;
   profit: number;
+  advance?: number;
+  advanceTone?: Tone;
 }) {
   return (
     <div className="flex min-w-0 flex-col items-start gap-1">
@@ -67,11 +83,14 @@ function Summary({
           {bdt(headValue)}
         </span>
       </span>
-      <div className="flex flex-wrap gap-1">
+      <div className="grid grid-cols-2 gap-1">
         <Chip label="buy" value={bdt(buy)} tone="cost" />
         <Chip label="del" value={bdt(delivery)} tone="delivery" />
         <Chip label="pac" value={bdt(packaging)} tone="pack" />
         <Chip label={profit < 0 ? "loss" : "pft"} value={bdt(profit)} tone={profit < 0 ? "loss" : "profit"} />
+        {advance != null && advance > 0 && (
+          <Chip label="adv" value={bdt(advance)} tone={advanceTone ?? "advance"} />
+        )}
       </div>
     </div>
   );
@@ -79,6 +98,11 @@ function Summary({
 
 /** Reseller side: money received from the customer vs what the order cost them. */
 export function ResellerTotalCell({ order }: { order: ProfitOrder; showProfit?: boolean }) {
+  const advance = orderAdvance(order);
+  // Reseller-held advance is already deducted from their profit → flag as a cost.
+  const advanceTone: Tone | undefined = advance > 0
+    ? resellerHeldAdvance(order) > 0 ? "loss" : "advance"
+    : undefined;
   return (
     <Summary
       headLabel="sell"
@@ -87,16 +111,23 @@ export function ResellerTotalCell({ order }: { order: ProfitOrder; showProfit?: 
       delivery={orderDeliveryCost(order)}
       packaging={orderPackaging(order)}
       profit={orderProfit(order)}
+      advance={advance}
+      advanceTone={advanceTone}
     />
   );
 }
 
 /** Admin side: revenue = money received − what the reseller finally earns. */
 export function AdminTotalCell({ order, buyingCost }: { order: ProfitOrder; buyingCost: number }) {
+  const advance = orderAdvance(order);
   const revenue = orderReceived(order) - orderProfit(order);
   const delivery = orderDeliveryCost(order);
   const packaging = orderPackaging(order);
   const profit = revenue - buyingCost - delivery - packaging;
+  // Admin-held advance stays with admin → positive; reseller-held → neutral.
+  const advanceTone: Tone | undefined = advance > 0
+    ? order.advance_by === "admin" ? "profit" : "advance"
+    : undefined;
   return (
     <Summary
       headLabel="rev"
@@ -106,6 +137,8 @@ export function AdminTotalCell({ order, buyingCost }: { order: ProfitOrder; buyi
       delivery={delivery}
       packaging={packaging}
       profit={profit}
+      advance={advance}
+      advanceTone={advanceTone}
     />
   );
 }
