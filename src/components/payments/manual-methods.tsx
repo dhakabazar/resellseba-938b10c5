@@ -102,6 +102,25 @@ export function ManualMethods({ onCountChange }: { onCountChange?: (n: number) =
         </button>
       </div>
 
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3">
+        <div>
+          <div className="flex items-center gap-1.5 text-xs font-semibold">
+            <ShieldCheck className="h-3.5 w-3.5 text-success" /> Reseller security deposit
+          </div>
+          <p className="mt-0.5 max-w-[70ch] text-[11px] text-muted-foreground">
+            One switch for all cards: when on, resellers can pay their security deposit with every{" "}
+            <strong>active</strong> method here. When off, no method accepts deposits.
+          </p>
+        </div>
+        <Switch
+          checked={depositOn}
+          onChange={(v) => void saveDepositSwitch(v)}
+          label="Toggle reseller security deposit"
+        />
+      </div>
+
+
+
       {rows.length === 0 ? (
         <div className="rounded-xl border border-dashed p-12 text-center">
           <Wallet className="mx-auto mb-2 h-6 w-6 text-muted-foreground" />
