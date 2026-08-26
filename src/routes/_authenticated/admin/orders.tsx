@@ -1135,6 +1135,13 @@ function AdminOrdersPage() {
             ))}
           </div>
         )}
+        <Pagination
+          page={page}
+          perPage={filters.perPage}
+          total={filtered.length}
+          onPage={setPage}
+        />
+
         <ConfirmModal
           isOpen={confirmModal.open}
           onClose={() => setConfirmModal(prev => ({ ...prev, open: false }))}
