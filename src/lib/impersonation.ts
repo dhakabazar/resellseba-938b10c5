@@ -32,6 +32,10 @@ export function consumeImpersonationReturnTarget() {
   return target;
 }
 
+export function rememberImpersonationReturnTarget(target: string) {
+  if (typeof window !== "undefined") sessionStorage.setItem(RETURN_KEY, target);
+}
+
 /**
  * Swaps the current admin session for the reseller session created from a
  * one-time token, remembering where the admin came from.
@@ -61,9 +65,7 @@ export async function startImpersonation(opts: { tokenHash: string; label: strin
 export async function stopImpersonation(): Promise<string> {
   const snapshot = readImpersonation();
   if (!snapshot) return "/admin";
-  if (typeof window !== "undefined") {
-    sessionStorage.setItem(RETURN_KEY, snapshot.returnTo || "/admin");
-  }
+  rememberImpersonationReturnTarget(snapshot.returnTo || "/admin");
   const { error } = await supabase.auth.setSession({
     access_token: snapshot.access_token,
     refresh_token: snapshot.refresh_token,

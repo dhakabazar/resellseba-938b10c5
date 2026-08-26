@@ -2,7 +2,12 @@ import { useEffect, useState } from "react";
 import { useRouter } from "@tanstack/react-router";
 import { ArrowLeft, Loader2, UserCog } from "lucide-react";
 import { toast } from "sonner";
-import { readImpersonation, stopImpersonation, type ImpersonationSnapshot } from "@/lib/impersonation";
+import {
+  readImpersonation,
+  rememberImpersonationReturnTarget,
+  stopImpersonation,
+  type ImpersonationSnapshot,
+} from "@/lib/impersonation";
 
 /** Shown while an admin is browsing a reseller panel through "Login as reseller". */
 export function ImpersonationBanner() {
@@ -20,6 +25,7 @@ export function ImpersonationBanner() {
     setBusy(true);
     try {
       const to = await stopImpersonation();
+      rememberImpersonationReturnTarget(to);
       setSnapshot(null);
       await router.invalidate();
       await router.navigate({ to: to as never, replace: true });
