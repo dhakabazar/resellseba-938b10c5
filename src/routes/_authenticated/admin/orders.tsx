@@ -26,6 +26,8 @@ import {
   isFailedOrder,
 } from "@/lib/finance-report";
 import { OrderMoneyPanel, AdvanceChip } from "@/components/order-money";
+import { ResellerTotalCell, AdminTotalCell } from "@/components/order-total-cell";
+import { keptQty } from "@/lib/business-report";
 
 
 import {
@@ -97,6 +99,7 @@ type OrderItemLite = {
   product_name: string;
   product_image: string | null;
   quantity: number;
+  returned_qty?: number | null;
   reseller_price: number | null;
   line_total: number | null;
 };
@@ -188,7 +191,7 @@ function AdminOrdersPage() {
 
   const ORDER_SELECT =
     "id,reseller_id,order_number,customer_name,customer_phone,address_line,area,city,subtotal,discount,shipping_cost,sa_cost_total,packaging_total,delivery_cost,received_amount,advance_amount,advance_by,total,status,payment_status,payment_method,forwarded_to_admin,created_at,reseller_note,admin_note,resellers(business_name,code,contact_phone)";
-  const ITEM_SELECT = "order_id,product_id,product_name,product_image,quantity,reseller_price,line_total";
+  const ITEM_SELECT = "order_id,product_id,product_name,product_image,quantity,returned_qty,reseller_price,line_total";
   const SHIPMENT_SELECT = "id,order_id,provider,tracking_id,consignment_id";
 
   async function load(opts?: { silent?: boolean }) {
@@ -203,7 +206,7 @@ function AdminOrdersPage() {
       q,
       supabase.from("orders").select("status"),
       supabase.from("resellers").select("id,business_name,code,contact_phone").order("business_name"),
-      supabase.from("products").select("id,brand_id,category_id,name,slug,product_code,og_image_url,suggested_price,reseller_price,packaging_cost,delivery_mode,delivery_flat,delivery_inside,delivery_outside").eq("is_active", true),
+      supabase.from("products").select("id,brand_id,category_id,name,slug,product_code,og_image_url,suggested_price,reseller_price,buying_price,packaging_cost,delivery_mode,delivery_flat,delivery_inside,delivery_outside").eq("is_active", true),
     ]);
     const rows = (data ?? []) as OrderRow[];
     setOrders(rows);
@@ -394,6 +397,19 @@ function AdminOrdersPage() {
     [itemsByOrder, allProducts],
   );
 
+  /** Admin buying cost of the items the customer actually kept. */
+  const buyingCostFor = useCallback(
+    (orderId: string, status: string) => {
+      let cost = 0;
+      for (const it of itemsByOrder.get(orderId) ?? []) {
+        const p = allProducts.find((x) => x.id === it.product_id);
+        cost += (Number(p?.buying_price) || 0) * keptQty({ ...it, returned_qty: it.returned_qty ?? 0 } as any, status);
+      }
+      return cost;
+    },
+    [itemsByOrder, allProducts],
+  );
+
   const filtered = useMemo(() => {
     const base = applyOrderFilters(orders, { ...filters, q: "" });
     const q = filters.q.trim().toLowerCase();
@@ -525,7 +541,7 @@ function AdminOrdersPage() {
         
         {loading ? <div className="py-12 text-center"><Loader2 className="mx-auto h-6 w-6 animate-spin" /></div> : (
           <div className="space-y-3">
-            <div className="hidden grid-cols-[40px_minmax(70px,0.7fr)_minmax(140px,1fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(120px,1fr)_70px_90px_60px] gap-1 rounded-lg border bg-muted/40 px-4 py-2.5 text-xs font-medium text-muted-foreground md:grid">
+            <div className="hidden grid-cols-[36px_minmax(66px,0.6fr)_minmax(120px,0.9fr)_minmax(110px,0.9fr)_minmax(120px,1fr)_minmax(104px,0.8fr)_96px_104px_86px_50px] gap-1 rounded-lg border bg-muted/40 px-4 py-2.5 text-xs font-medium text-muted-foreground md:grid">
                <div className="flex justify-center">
                  <input
                    type="checkbox"
@@ -534,14 +550,14 @@ function AdminOrdersPage() {
                    onChange={(e) => setMarked(e.target.checked ? paged.map(x => x.id) : [])}
                  />
                </div>
-               <div>Order</div> <div>Reseller</div> <div>Products</div> <div>Customer</div> <div>Courier</div> <div>Total</div> <div>Status</div> <div className="text-right">Actions</div>
+               <div>Order</div> <div>Reseller</div> <div>Products</div> <div>Customer</div> <div>Courier</div> <div>Reseller total</div> <div>Admin total</div> <div>Status</div> <div className="text-right">Actions</div>
             </div>
             {paged.map((o) => (
               <div
                 key={o.id}
                 className={`overflow-hidden rounded-xl border bg-card shadow-sm transition-all hover:shadow-md hover:border-primary/40 ${marked.includes(o.id) ? "border-primary ring-1 ring-primary/30" : ""}`}
               >
-                <div className="hidden grid-cols-[40px_minmax(70px,0.7fr)_minmax(120px,1fr)_minmax(140px,1fr)_minmax(120px,1fr)_minmax(120px,1fr)_70px_90px_60px] items-center gap-1 border-b bg-muted/30 px-4 py-3 text-sm md:grid">
+                <div className="hidden grid-cols-[36px_minmax(66px,0.6fr)_minmax(120px,0.9fr)_minmax(110px,0.9fr)_minmax(120px,1fr)_minmax(104px,0.8fr)_96px_104px_86px_50px] items-center gap-1 border-b bg-muted/30 px-4 py-3 text-sm md:grid">
                   <div className="flex flex-col items-center gap-1.5">
                     <input
                       type="checkbox"
@@ -656,7 +672,8 @@ function AdminOrdersPage() {
                        <span className="text-[10px] text-muted-foreground/60 italic">No courier booking</span>
                      )}
                   </div>
-                  <div className="font-semibold">৳{Number(o.total).toFixed(0)}</div>
+                  <ResellerTotalCell order={o as any} />
+                  <AdminTotalCell order={o as any} buyingCost={buyingCostFor(o.id, o.status)} />
                   <div><span className={`px-2 py-0.5 rounded-full text-[11px] ${orderStatusTone(o.status)}`}>{orderStatusLabel(o.status)}</span></div>
                   <div className="flex justify-end">
                      <DropdownMenu>

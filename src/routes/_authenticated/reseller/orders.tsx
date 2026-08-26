@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { ResellerTotalCell } from "@/components/order-total-cell";
 import { getMyReseller } from "@/lib/app-data";
 import { productDeliveryCharge, deliveryLabel } from "@/lib/delivery";
 import { addressError, nameError, normalizePhone, phoneError, sanitizeName } from "@/lib/checkout-validate";
@@ -742,7 +743,7 @@ function OrdersPage() {
             <div>Products</div>
             <div>Customer</div>
             <div>Courier</div>
-            <div>Total</div>
+            <div>Reseller total</div>
             <div>Profit</div>
             <div>Status</div>
             <div className="text-right">Actions</div>
@@ -1065,7 +1066,7 @@ function OrdersPage() {
                     )}
                   </div>
 
-                  <div className="min-w-0 font-semibold whitespace-nowrap">৳{Number(o.total).toFixed(0)}</div>
+                  <ResellerTotalCell order={o as any} showProfit={false} />
                   <div
                     className={
                       "min-w-0 text-[11px] font-medium whitespace-nowrap " +
