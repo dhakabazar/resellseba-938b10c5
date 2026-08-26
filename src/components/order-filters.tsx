@@ -258,6 +258,7 @@ export function OrderFilterBar({
   showPerPage = false,
   hideSearch = false,
   variant = "default",
+  trailing,
 }: {
   value: OrderFilterState;
   onChange: (next: OrderFilterState) => void;
@@ -272,6 +273,8 @@ export function OrderFilterBar({
   hideSearch?: boolean;
   /** Report layout: search takes 40%, filters take 60% and are more compact. */
   variant?: "default" | "report";
+  /** Extra node rendered as the last filter cell (after Sort) — e.g. the mobile status dropdown. */
+  trailing?: React.ReactNode;
 }) {
   const set = (patch: Partial<OrderFilterState>) => onChange({ ...value, ...patch });
   const dirty = useMemo(
