@@ -67,7 +67,7 @@ export function OrderTabs({
           <ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
         </button>
         {open && (
-          <div className="absolute left-0 z-40 mt-1 w-[min(100vw-2rem,360px)] min-w-full rounded-md border bg-popover p-2 shadow-lg">
+          <div className="absolute right-0 z-40 mt-1 w-[min(100vw-2rem,360px)] min-w-full rounded-md border bg-popover p-2 shadow-lg">
             <div className="grid max-h-[60vh] grid-cols-2 gap-1.5 overflow-y-auto overscroll-contain">
               {ORDER_TABS.map((t) => {
                 const isActive = tab === t.key;
