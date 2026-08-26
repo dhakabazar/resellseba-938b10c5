@@ -541,7 +541,7 @@ function AdminOrdersPage() {
         
         {loading ? <div className="py-12 text-center"><Loader2 className="mx-auto h-6 w-6 animate-spin" /></div> : (
           <div className="space-y-3">
-            <div className="hidden grid-cols-[36px_minmax(66px,0.6fr)_minmax(120px,0.9fr)_minmax(110px,0.9fr)_minmax(120px,1fr)_96px_104px_130px_50px] gap-1 rounded-lg border bg-muted/40 px-4 py-2.5 text-xs font-medium text-muted-foreground md:grid">
+            <div className="hidden grid-cols-[36px_minmax(66px,0.6fr)_minmax(120px,0.9fr)_minmax(110px,0.9fr)_minmax(120px,1fr)_96px_104px_130px_50px] items-start gap-2 rounded-lg border bg-muted/40 px-4 py-2.5 text-xs font-medium text-muted-foreground md:grid">
                <div className="flex justify-center">
                  <input
                    type="checkbox"
@@ -550,14 +550,14 @@ function AdminOrdersPage() {
                    onChange={(e) => setMarked(e.target.checked ? paged.map(x => x.id) : [])}
                  />
                </div>
-               <div>Order</div> <div>Reseller</div> <div>Products</div> <div>Customer</div> <div>Reseller total</div> <div>Admin total</div> <div>Status</div> <div className="text-right">Actions</div>
+               <div className="text-center">Order</div> <div className="text-center">Reseller</div> <div className="text-center">Products</div> <div className="text-center">Customer</div> <div className="text-center">Reseller total</div> <div className="text-center">Admin total</div> <div className="text-center">Status</div> <div className="text-center">Actions</div>
             </div>
             {paged.map((o) => (
               <div
                 key={o.id}
                 className={`overflow-hidden rounded-xl border bg-card shadow-sm transition-all hover:shadow-md hover:border-primary/40 ${marked.includes(o.id) ? "border-primary ring-1 ring-primary/30" : ""}`}
               >
-                <div className="hidden grid-cols-[36px_minmax(66px,0.6fr)_minmax(120px,0.9fr)_minmax(110px,0.9fr)_minmax(120px,1fr)_96px_104px_130px_50px] items-center gap-1 border-b bg-muted/30 px-4 py-3 text-sm md:grid">
+                <div className="hidden grid-cols-[36px_minmax(66px,0.6fr)_minmax(120px,0.9fr)_minmax(110px,0.9fr)_minmax(120px,1fr)_96px_104px_130px_50px] items-start gap-2 border-b bg-muted/30 px-4 py-3 text-sm md:grid">
                   <div className="flex flex-col items-center gap-1.5">
                     <input
                       type="checkbox"
@@ -572,7 +572,7 @@ function AdminOrdersPage() {
                       <ChevronDown className={`h-4 w-4 transition-transform ${expandedOrders.includes(o.id) ? "rotate-180" : ""}`} />
                     </button>
                   </div>
-                  <div className="min-w-0">
+                  <div className="min-w-0 text-center">
                     <div className="font-medium truncate">{o.order_number}</div>
                     <div className="text-[11px] text-muted-foreground">
                       {new Date(o.created_at).toLocaleDateString()}
@@ -581,9 +581,9 @@ function AdminOrdersPage() {
                       {new Date(o.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                     </div>
                   </div>
-                  <div className="min-w-0">
+                  <div className="min-w-0 text-center">
                      <div className="font-medium truncate">{o.resellers?.business_name || "Direct"}</div>
-                     <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                     <div className="flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground">
                        {o.resellers?.contact_phone || "—"}
                        {o.resellers?.contact_phone && (
                          <>
@@ -604,66 +604,66 @@ function AdminOrdersPage() {
                     onToggle={() => setExpandedOrders(prev => prev.includes(o.id) ? prev.filter(id => id !== o.id) : [...prev, o.id])}
                   />
 
-                  <div className="min-w-0">
-                     <div className="font-medium truncate">{o.customer_name}</div>
-                     <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                       {o.customer_phone}
-                       <a href={`tel:${o.customer_phone}`} className="text-primary hover:text-primary/80">
-                         <Phone className="h-3 w-3" />
-                       </a>
-                       <button onClick={() => { navigator.clipboard.writeText(o.customer_phone); toast.success("Copied"); }} className="hover:text-foreground">
-                         <Copy className="h-3 w-3" />
-                       </button>
-                     </div>
-                     <div className="mt-0.5 flex items-start gap-1 text-[11px] leading-snug text-muted-foreground">
-                       <MapPin className="mt-[1px] h-3 w-3 shrink-0 opacity-70" />
-                       <span className="line-clamp-2">
-                         {o.address_line}
-                         {o.area ? `, ${o.area.replace("_", " ")}` : ""}
-                         {o.city ? `, ${o.city}` : ""}
-                       </span>
-                     </div>
-                  </div>
-                   <ResellerTotalCell order={o as any} />
-                   <AdminTotalCell order={o as any} buyingCost={buyingCostFor(o.id, o.status)} />
-                   <div className="min-w-0">
-                      <span className={`px-2 py-0.5 rounded-full text-[11px] ${orderStatusTone(o.status)}`}>{orderStatusLabel(o.status)}</span>
-                       {shipments.filter(s => s.order_id === o.id).length > 0 ? (
-                         <div className="mt-1 space-y-0.5">
-                           {shipments.filter(s => s.order_id === o.id).map(s => (
-                             <div key={s.id} className="flex flex-col gap-0.5 min-w-0">
-                               {(() => {
-                                 const url = courierTrackingUrl(s.provider, s, (o as any).customer_phone);
-                                 const inner = (
-                                   <>
-                                     <CourierLogo provider={s.provider} size={12} />
-                                     <span className="truncate">{courierLabel(s.provider)}</span>
-                                     {url && <ExternalLink className="h-2.5 w-2.5 shrink-0 opacity-60" />}
-                                   </>
-                                 );
-                                 return url ? (
-                                   <a href={url} target="_blank" rel="noopener noreferrer" title="Track on courier website" className="flex items-center gap-1 text-[10px] font-bold text-primary leading-tight hover:underline">{inner}</a>
-                                 ) : (
-                                   <div className="flex items-center gap-1 text-[10px] font-bold text-primary leading-tight">{inner}</div>
-                                 );
-                               })()}
-                               <div className="text-[10px] text-muted-foreground tabular-nums font-medium flex items-center gap-1">
-                                 <span className="truncate">#{s.consignment_id || "N/A"}</span>
-                                 {s.consignment_id && (
-                                   <button onClick={() => { navigator.clipboard.writeText(s.consignment_id); toast.success("Booking ID copied"); }} className="opacity-50 hover:opacity-100 transition-opacity">
-                                     <Copy className="h-2.5 w-2.5" />
-                                   </button>
-                                 )}
-                               </div>
-                             </div>
-                           ))}
-                         </div>
-                       ) : (
-                         <span className="mt-1 inline-block text-[10px] italic text-muted-foreground/60">Not booked yet</span>
-                       )}
+                   <div className="min-w-0 text-center">
+                      <div className="font-medium truncate">{o.customer_name}</div>
+                      <div className="flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground">
+                        {o.customer_phone}
+                        <a href={`tel:${o.customer_phone}`} className="text-primary hover:text-primary/80">
+                          <Phone className="h-3 w-3" />
+                        </a>
+                        <button onClick={() => { navigator.clipboard.writeText(o.customer_phone); toast.success("Copied"); }} className="hover:text-foreground">
+                          <Copy className="h-3 w-3" />
+                        </button>
+                      </div>
+                      <div className="mt-0.5 flex items-start justify-center gap-1 text-[11px] leading-snug text-muted-foreground">
+                        <MapPin className="mt-[1px] h-3 w-3 shrink-0 opacity-70" />
+                        <span className="line-clamp-2">
+                          {o.address_line}
+                          {o.area ? `, ${o.area.replace("_", " ")}` : ""}
+                          {o.city ? `, ${o.city}` : ""}
+                        </span>
+                      </div>
                    </div>
-                  <div className="flex justify-end">
-                     <DropdownMenu>
+                    <div className="flex justify-center"><ResellerTotalCell order={o as any} /></div>
+                    <div className="flex justify-center"><AdminTotalCell order={o as any} buyingCost={buyingCostFor(o.id, o.status)} /></div>
+                   <div className="min-w-0 text-center">
+                       <span className={`px-2 py-0.5 rounded-full text-[11px] ${orderStatusTone(o.status)}`}>{orderStatusLabel(o.status)}</span>
+                        {shipments.filter(s => s.order_id === o.id).length > 0 ? (
+                          <div className="mt-1 space-y-0.5">
+                            {shipments.filter(s => s.order_id === o.id).map(s => (
+                              <div key={s.id} className="flex flex-col items-center gap-0.5 min-w-0">
+                                {(() => {
+                                  const url = courierTrackingUrl(s.provider, s, (o as any).customer_phone);
+                                  const inner = (
+                                    <>
+                                      <CourierLogo provider={s.provider} size={12} />
+                                      <span className="truncate">{courierLabel(s.provider)}</span>
+                                      {url && <ExternalLink className="h-2.5 w-2.5 shrink-0 opacity-60" />}
+                                    </>
+                                  );
+                                  return url ? (
+                                    <a href={url} target="_blank" rel="noopener noreferrer" title="Track on courier website" className="flex items-center justify-center gap-1 text-[10px] font-bold text-primary leading-tight hover:underline">{inner}</a>
+                                  ) : (
+                                    <div className="flex items-center justify-center gap-1 text-[10px] font-bold text-primary leading-tight">{inner}</div>
+                                  );
+                                })()}
+                                <div className="text-[10px] text-muted-foreground tabular-nums font-medium flex items-center justify-center gap-1">
+                                  <span className="truncate">#{s.consignment_id || "N/A"}</span>
+                                  {s.consignment_id && (
+                                    <button onClick={() => { navigator.clipboard.writeText(s.consignment_id); toast.success("Booking ID copied"); }} className="opacity-50 hover:opacity-100 transition-opacity">
+                                      <Copy className="h-2.5 w-2.5" />
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="mt-1 inline-block text-[10px] italic text-muted-foreground/60">Not booked yet</span>
+                        )}
+                    </div>
+                   <div className="flex justify-center">
+                      <DropdownMenu>
                        <DropdownMenuTrigger><MoreVertical className="h-4 w-4" /></DropdownMenuTrigger>
                        <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => setSelected(o)}>
