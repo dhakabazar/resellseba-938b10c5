@@ -213,9 +213,13 @@ function AdvancedSettingsPage() {
       <div className="flex items-start gap-2 rounded-lg border bg-muted/40 p-3 text-xs text-muted-foreground">
         <Info className="mt-0.5 h-4 w-4 shrink-0" />
         <span>
-          Ei switch gulo sathe sathe sob jaigai apply hoy — reseller panel, registration, login o dashboard.
+          {tab === "deposit"
+            ? "Deposit rule o reseller-facing text ekhan theke change korle sathe sathe reseller panel e apply hobe. Ei tab er nijer Save button ache."
+            : "Ei switch gulo sathe sathe sob jaigai apply hoy — reseller panel, registration, login o dashboard."}
         </span>
       </div>
+
+      {tab === "deposit" && <DepositSettingsPanel />}
 
       {tab === "delivery" && (
         <div className="space-y-5">
