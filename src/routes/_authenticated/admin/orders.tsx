@@ -33,7 +33,7 @@ import {
 } from "@/lib/finance-report";
 import { OrderMoneyPanel, AdvanceChip } from "@/components/order-money";
 import { ResellerTotalCell, AdminTotalCell } from "@/components/order-total-cell";
-import { keptQty } from "@/lib/business-report";
+import { keptQty, withKeptCost } from "@/lib/business-report";
 
 
 import {
@@ -208,7 +208,8 @@ function AdminOrdersPage() {
 
   const ORDER_SELECT =
     "id,reseller_id,order_number,customer_name,customer_phone,address_line,area,city,subtotal,discount,shipping_cost,sa_cost_total,packaging_total,delivery_cost,received_amount,advance_amount,advance_by,total,status,payment_status,payment_method,forwarded_to_admin,created_at,updated_at,reseller_note,admin_note,resellers(business_name,code,contact_phone,agents(display_name))";
-  const ITEM_SELECT = "order_id,product_id,product_name,product_image,quantity,returned_qty,reseller_price,line_total";
+  const ITEM_SELECT =
+    "order_id,product_id,product_name,product_image,quantity,returned_qty,reseller_price,line_total,sa_price,buying_price,packaging_cost";
   const SHIPMENT_SELECT = "id,order_id,provider,tracking_id,consignment_id";
 
   async function load(opts?: { silent?: boolean }) {
@@ -414,17 +415,28 @@ function AdminOrdersPage() {
     [itemsByOrder, allProducts],
   );
 
-  /** Admin buying cost of the items the customer actually kept. */
+  /**
+   * Admin buying cost of the items the customer actually kept. Always the cost
+   * frozen on the order line, so later catalog price edits never rewrite an old
+   * order; only pre-snapshot legacy lines fall back to the product record.
+   */
   const buyingCostFor = useCallback(
     (orderId: string, status: string) => {
       let cost = 0;
       for (const it of itemsByOrder.get(orderId) ?? []) {
-        const p = allProducts.find((x) => x.id === it.product_id);
-        cost += (Number(p?.buying_price) || 0) * keptQty({ ...it, returned_qty: it.returned_qty ?? 0 } as any, status);
+        const snap = Number(it.buying_price) || 0;
+        const unit = snap > 0 ? snap : Number(allProducts.find((x) => x.id === it.product_id)?.buying_price) || 0;
+        cost += unit * keptQty({ ...it, returned_qty: it.returned_qty ?? 0 } as any, status);
       }
       return cost;
     },
     [itemsByOrder, allProducts],
+  );
+
+  /** Order with the kept-item product cost attached so partial_item money matches the DB. */
+  const moneyOrder = useCallback(
+    (o: OrderRow) => withKeptCost(o as any, (itemsByOrder.get(o.id) ?? []) as any),
+    [itemsByOrder],
   );
 
   const filtered = useMemo(() => {
@@ -878,8 +890,8 @@ function AdminOrdersPage() {
 
                   {/* Money — 2 columns */}
                   <div className="grid grid-cols-2 gap-2">
-                    <ResellerTotalCell order={o as any} />
-                    <AdminTotalCell order={o as any} buyingCost={buyingCostFor(o.id, o.status)} />
+                    <ResellerTotalCell order={moneyOrder(o)} />
+                    <AdminTotalCell order={moneyOrder(o)} buyingCost={buyingCostFor(o.id, o.status)} />
                   </div>
 
                   {/* Note — full width */}
@@ -1017,8 +1029,8 @@ function AdminOrdersPage() {
                         {o.city ? `, ${o.city}` : ""}
                       </div>
                    </div>
-                    <div className="flex justify-center"><ResellerTotalCell order={o as any} /></div>
-                    <div className="flex justify-center"><AdminTotalCell order={o as any} buyingCost={buyingCostFor(o.id, o.status)} /></div>
+                    <div className="flex justify-center"><ResellerTotalCell order={moneyOrder(o)} /></div>
+                    <div className="flex justify-center"><AdminTotalCell order={moneyOrder(o)} buyingCost={buyingCostFor(o.id, o.status)} /></div>
                    <div className="min-w-0 text-center">
                         {canStatus ? (
                           <button
