@@ -330,13 +330,16 @@ function GatewayCard({
   );
 }
 
-function CallbackRow({ path }: { path: string }) {
+function CallbackRow({ path, label }: { path: string; label: string }) {
   const [origin, setOrigin] = useState("");
   useEffect(() => setOrigin(window.location.origin), []);
   const url = origin + path;
   return (
     <div className="flex items-center gap-2 rounded-md bg-muted/40 px-2 py-1">
-      <code className="flex-1 truncate text-[10px]">{url}</code>
+      <div className="min-w-0 flex-1">
+        <div className="text-[10px] font-semibold">{label}</div>
+        <code className="block truncate text-[10px] text-muted-foreground">{url}</code>
+      </div>
       <button
         type="button"
         onClick={() => {
