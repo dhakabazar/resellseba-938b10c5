@@ -141,3 +141,92 @@ export const listActiveGateways = createServerFn({ method: "GET" })
     }
     return out;
   });
+
+/** Reseller: which automatic gateways the admin keeps active for deposits. */
+export const listDepositGateways = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    const core = await import("@/lib/gateways/core.server");
+    const { GATEWAYS } = await import("@/lib/gateways/registry");
+    const db = await core.admin();
+    const { data: rows } = await db
+      .from("payment_gateway_configs")
+      .select("provider,label,is_active,reseller_id")
+      .is("reseller_id", null)
+      .eq("is_active", true);
+    const out: { provider: string; label: string }[] = [];
+    for (const spec of GATEWAYS) {
+      const row = (rows ?? []).find((r: any) => r.provider === spec.provider);
+      if (row) out.push({ provider: spec.provider, label: (row as any).label || spec.label });
+    }
+    return out;
+  });
+
+/**
+ * Reseller: start an online security-deposit payment.
+ * The amount is taken from the request, but the payment is only credited after
+ * the gateway itself confirms it on the return endpoint.
+ */
+export const startDepositPayment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({ provider: z.string().min(2), amount: z.number().positive().max(10_000_000) }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { adapterFor } = await import("@/lib/gateways/adapters.server");
+    const core = await import("@/lib/gateways/core.server");
+    const { extractGatewayError } = await import("@/lib/gateways/registry");
+
+    const { data: reseller } = await context.supabase
+      .from("resellers")
+      .select("id,business_name,contact_phone")
+      .eq("user_id", context.userId)
+      .maybeSingle();
+    if (!reseller) throw new Response("Reseller account not found", { status: 400 });
+
+    const creds = await core.getPlatformCredentials(data.provider);
+    if (!creds) throw new Response("This payment gateway is not available", { status: 400 });
+
+    const db = await core.admin();
+    const code = core.newDepositCode();
+    const { data: intentRow, error } = await db
+      .from("deposit_requests")
+      .insert({
+        reseller_id: reseller.id,
+        amount: data.amount,
+        code,
+        provider: data.provider,
+        method: data.provider,
+        status: "pending",
+        note: "Online payment (awaiting gateway confirmation)",
+      })
+      .select("id,code,reseller_id,amount,status,provider,txn_id")
+      .single();
+    if (error || !intentRow) throw new Response("Could not start the payment", { status: 500 });
+
+    const origin = core.siteOrigin();
+    const back = `${origin}/reseller`;
+    const params = { on: code, su: back, cu: back, k: "deposit", code };
+    const urls = {
+      returnUrl: core.returnUrl(origin, data.provider, { ...params, t: "success" }),
+      failUrl: core.returnUrl(origin, data.provider, { ...params, t: "fail" }),
+      cancelUrl: core.returnUrl(origin, data.provider, { ...params, t: "cancel" }),
+      ipnUrl:
+        data.provider === "sslcommerz"
+          ? `${origin}/api/public/payment/sslcommerz-ipn`
+          : `${origin}/api/public/payment/epayseba-webhook`,
+    };
+
+    const pseudo = core.depositAsOrder(intentRow as any, {
+      name: reseller.business_name ?? undefined,
+      phone: reseller.contact_phone ?? undefined,
+    });
+    try {
+      const res = await adapterFor(data.provider).create(creds, pseudo, urls);
+      await db.from("deposit_requests").update({ txn_id: res.ref || null }).eq("id", intentRow.id);
+      return { redirectUrl: res.paymentUrl, code };
+    } catch (err) {
+      await db.from("deposit_requests").delete().eq("id", intentRow.id);
+      throw new Response(extractGatewayError(err), { status: 502 });
+    }
+  });
