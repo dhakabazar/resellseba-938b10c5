@@ -937,6 +937,20 @@ function AdminOrdersPage() {
 
         {zoomImage && <ImageLightbox src={zoomImage} onClose={() => setZoomImage(null)} />}
 
+        {notesModal && (
+          <OrderNotesModal
+            orderId={notesModal.orderId}
+            orderNumber={notesModal.orderNumber}
+            authorRole="admin"
+            canWrite
+            onClose={() => {
+              const id = notesModal.orderId;
+              setNotesModal(null);
+              void refreshMeta([id]);
+            }}
+          />
+        )}
+
     </div>
   );
 }
