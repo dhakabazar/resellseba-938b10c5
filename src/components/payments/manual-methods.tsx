@@ -115,9 +115,15 @@ export function ManualMethods({ onCountChange }: { onCountChange?: (n: number) =
           {rows.map((row) => (
             <div key={row.id} className="surface-card flex flex-col p-4">
               <div className="flex items-start gap-3">
-                <span className="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-lg border bg-background p-1.5">
+                <span className="grid h-11 w-24 shrink-0 place-items-center overflow-hidden rounded-lg border bg-background">
                   {paymentLogo(row.method) ? (
-                    <PaymentLogo method={row.method} size={44} alt={`${methodLabel(row.method)} logo`} />
+                    <PaymentLogo
+                      method={row.method}
+                      width={96}
+                      height={44}
+                      fit="cover"
+                      alt={`${methodLabel(row.method)} logo`}
+                    />
                   ) : (
                     <Wallet className="h-5 w-5 text-muted-foreground" />
                   )}
