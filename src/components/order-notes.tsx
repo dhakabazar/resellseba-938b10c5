@@ -228,11 +228,33 @@ export function OrderNotes({
           </p>
         )}
 
+        {orderNotes.length > 0 && (
+          <div className="space-y-2">
+            {orderNotes.map((p, i) => (
+              <div key={i} className="rounded-lg border border-dashed bg-muted/20 px-3 py-2">
+                <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
+                  <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${roleBadge(p.role)}`}>
+                    {roleLabel(p.role)}
+                  </span>
+                  {p.name && <span className="font-semibold text-foreground/70">{p.name}</span>}
+                  <span>·</span>
+                  <span>{new Date(p.at).toLocaleString()}</span>
+                  <span className="rounded bg-background px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide">
+                    Order form
+                  </span>
+                </div>
+                <p className="mt-0.5 text-sm text-foreground/90">{p.body}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
         {loading ? (
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading notes…
           </div>
         ) : notes.length === 0 ? (
+
           <p className="text-xs text-muted-foreground">No notes yet.</p>
         ) : (
           <ol className="relative space-y-4 border-l pl-4">
