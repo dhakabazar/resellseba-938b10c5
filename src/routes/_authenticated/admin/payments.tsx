@@ -5,7 +5,11 @@ import { PageHeader } from "@/components/ui-kit";
 import {
   BadgeCheck,
   Banknote,
+  Copy,
   CreditCard,
+  Eye,
+  EyeOff,
+  ExternalLink,
   Hand,
   Loader2,
   Plug,
@@ -16,10 +20,11 @@ import {
 import { toast } from "sonner";
 import { confirmAction } from "@/lib/confirm";
 import {
-  API_METHODS,
+  GATEWAYS,
   MANUAL_METHODS,
   cfgBool,
   cfgString,
+  gatewaySpec,
   methodLabel,
   type PaymentConfigRow,
   type PaymentMode,
@@ -151,7 +156,7 @@ function PaymentsPage() {
 
       <AddMethodForm mode={tab} onAdded={load} />
 
-      <div className="grid gap-3">
+      <div className={"grid gap-4 " + (tab === "api" ? "lg:grid-cols-2" : "")}>
         {list.map((row) => (
           <MethodCard
             key={row.id}
@@ -204,14 +209,17 @@ function TabButton({
 }
 
 function AddMethodForm({ mode, onAdded }: { mode: PaymentMode; onAdded: () => void }) {
-  const options = mode === "manual" ? MANUAL_METHODS : API_METHODS;
-  const [method, setMethod] = useState(options[0]!.value);
+  const manualOptions = MANUAL_METHODS;
+  const firstKey = mode === "manual" ? manualOptions[0]!.value : GATEWAYS[0]!.key;
+  const [choice, setChoice] = useState(firstKey);
   const [label, setLabel] = useState("");
   const [account, setAccount] = useState("");
   const [busy, setBusy] = useState(false);
 
+  const spec = mode === "api" ? GATEWAYS.find((g) => g.key === choice) : undefined;
+
   useEffect(() => {
-    setMethod(options[0]!.value);
+    setChoice(mode === "manual" ? manualOptions[0]!.value : GATEWAYS[0]!.key);
     setLabel("");
     setAccount("");
   }, [mode]);
@@ -221,12 +229,14 @@ function AddMethodForm({ mode, onAdded }: { mode: PaymentMode; onAdded: () => vo
     if (!label.trim()) return;
     setBusy(true);
     const { error } = await supabase.from("payment_configs").insert({
-      method: method as never,
+      method: (mode === "manual" ? choice : spec!.method) as never,
       label: label.trim(),
       mode,
       is_active: true,
       instructions: null,
-      config: (mode === "manual" ? { account: account.trim(), allow_deposit: false } : {}) as never,
+      config: (mode === "manual"
+        ? { account: account.trim(), allow_deposit: false }
+        : { gateway: spec!.key }) as never,
     });
     setBusy(false);
     if (error) return toast.error(error.message);
@@ -240,15 +250,21 @@ function AddMethodForm({ mode, onAdded }: { mode: PaymentMode; onAdded: () => vo
     <form onSubmit={add} className="surface-card mb-5 grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-4">
       <div>
         <label className="mb-1 block text-xs font-medium">Provider</label>
-        <select value={method} onChange={(e) => setMethod(e.target.value)} className={inp}>
-          {options.map((m) => (
-            <option key={`${m.value}-${m.label}`} value={m.value}>
-              {m.label}
-            </option>
-          ))}
+        <select value={choice} onChange={(e) => setChoice(e.target.value)} className={inp}>
+          {mode === "manual"
+            ? manualOptions.map((m) => (
+                <option key={m.value} value={m.value}>
+                  {m.label}
+                </option>
+              ))
+            : GATEWAYS.map((g) => (
+                <option key={g.key} value={g.key}>
+                  {g.label}
+                </option>
+              ))}
         </select>
         <p className="mt-1 text-[10px] text-muted-foreground">
-          {options.find((m) => m.value === method)?.hint}
+          {mode === "manual" ? manualOptions.find((m) => m.value === choice)?.hint : spec?.tagline}
         </p>
       </div>
       <div>
@@ -312,7 +328,7 @@ function MethodCard({
             className="w-full rounded-md border bg-background px-2 py-1 text-sm font-semibold"
           />
           <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">
-            <span>{methodLabel(row.method)}</span>
+            <span>{isManual ? methodLabel(row.method) : gatewaySpec(row.method, cfgString(config, "gateway")).label}</span>
             <span>·</span>
             <span>{isManual ? "manual" : "api"}</span>
             {isManual && cfgBool(config, "allow_deposit") && (
@@ -336,7 +352,7 @@ function MethodCard({
         </button>
       </div>
 
-      <div className="grid gap-3 p-4 md:grid-cols-2">
+      <div className={"grid gap-3 p-4 " + (isManual ? "md:grid-cols-2" : "")}>
         {isManual ? (
           <>
             <div className="grid gap-3 sm:grid-cols-2">
@@ -387,37 +403,7 @@ function MethodCard({
             </div>
           </>
         ) : (
-          <>
-            <div>
-              <label className="mb-1 block text-xs font-medium">Gateway credentials (JSON)</label>
-              <textarea
-                rows={6}
-                className={inp + " font-mono text-[11px]"}
-                defaultValue={JSON.stringify(config, null, 2)}
-                onBlur={(e) => {
-                  try {
-                    onPatch({ config: JSON.parse(e.target.value || "{}") });
-                  } catch {
-                    toast.error("Invalid JSON — credentials not updated");
-                  }
-                }}
-                placeholder={'{\n  "store_id": "…",\n  "store_password": "…"\n}'}
-              />
-              <p className="mt-1 text-[10px] text-muted-foreground">
-                Keys stay server-side. Paste production credentials only.
-              </p>
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-medium">Checkout note (optional)</label>
-              <textarea
-                rows={6}
-                className={inp}
-                value={row.instructions ?? ""}
-                onChange={(e) => onPatch({ instructions: e.target.value })}
-                placeholder="Shown under the gateway button at checkout."
-              />
-            </div>
-          </>
+          <GatewayFields row={row} config={config} setConfig={setConfig} onPatch={onPatch} />
         )}
       </div>
 
@@ -426,6 +412,132 @@ function MethodCard({
           Save changes
         </button>
       </div>
+    </div>
+  );
+}
+
+function GatewayFields({
+  row,
+  config,
+  setConfig,
+  onPatch,
+}: {
+  row: PaymentConfigRow;
+  config: Record<string, unknown>;
+  setConfig: (key: string, value: unknown) => void;
+  onPatch: (next: Partial<PaymentConfigRow>) => void;
+}) {
+  const spec = gatewaySpec(row.method, cfgString(config, "gateway"));
+  const origin = typeof window === "undefined" ? "" : window.location.origin;
+
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-start justify-between gap-2 rounded-lg border border-primary/20 bg-primary/5 p-3">
+        <p className="max-w-[36ch] text-[11px] leading-relaxed text-muted-foreground">{spec.tagline}</p>
+        {spec.docs && (
+          <a
+            href={spec.docs}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1 rounded-md border bg-background px-2 py-1 text-[11px] font-semibold hover:bg-muted"
+          >
+            <ExternalLink className="h-3 w-3" /> {spec.label} docs
+          </a>
+        )}
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        {spec.fields.map((f) => (
+          <div key={f.key} className={f.secret && f.key.endsWith("_key") && f.label.includes("key") ? "sm:col-span-2" : ""}>
+            <label className="mb-1 block text-xs font-medium">{f.label}</label>
+            <CredentialInput
+              value={cfgString(config, f.key)}
+              onChange={(v) => setConfig(f.key, v)}
+              placeholder={f.placeholder}
+              secret={f.secret}
+            />
+            {f.hint && <p className="mt-1 text-[10px] text-muted-foreground">{f.hint}</p>}
+          </div>
+        ))}
+      </div>
+
+      {spec.callbacks && spec.callbacks.length > 0 && (
+        <div className="rounded-lg border p-3">
+          <div className="mb-1.5 text-[11px] font-semibold">Set these URLs in the {spec.label} panel</div>
+          <div className="space-y-1.5">
+            {spec.callbacks.map((path) => {
+              const url = origin + path;
+              return (
+                <div key={path} className="flex items-center gap-2 rounded-md bg-muted/40 px-2 py-1">
+                  <code className="flex-1 truncate text-[10px]">{url}</code>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void navigator.clipboard.writeText(url);
+                      toast.success("URL copied");
+                    }}
+                    className="rounded p-1 hover:bg-background"
+                    aria-label="Copy URL"
+                  >
+                    <Copy className="h-3 w-3" />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      <div>
+        <label className="mb-1 block text-xs font-medium">Checkout note (optional)</label>
+        <textarea
+          rows={2}
+          className={inp}
+          value={row.instructions ?? ""}
+          onChange={(e) => onPatch({ instructions: e.target.value })}
+          placeholder="Shown under the gateway button at checkout."
+        />
+      </div>
+
+      <p className="text-[10px] text-muted-foreground">
+        Credentials are stored server-side and never rendered on storefronts. Use production keys only.
+      </p>
+    </div>
+  );
+}
+
+function CredentialInput({
+  value,
+  onChange,
+  placeholder,
+  secret,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  secret?: boolean;
+}) {
+  const [show, setShow] = useState(false);
+  if (!secret)
+    return <input value={value} onChange={(e) => onChange(e.target.value)} className={inp} placeholder={placeholder} />;
+  return (
+    <div className="relative">
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        type={show ? "text" : "password"}
+        autoComplete="off"
+        className={inp + " pr-9 font-mono"}
+        placeholder={placeholder ?? "••••••••"}
+      />
+      <button
+        type="button"
+        onClick={() => setShow((s) => !s)}
+        className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-1.5 text-muted-foreground hover:bg-muted"
+        aria-label={show ? "Hide value" : "Show value"}
+      >
+        {show ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+      </button>
     </div>
   );
 }

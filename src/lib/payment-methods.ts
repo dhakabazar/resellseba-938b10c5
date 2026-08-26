@@ -31,11 +31,128 @@ export const MANUAL_METHODS: PaymentMethodMeta[] = [
 
 export const API_METHODS: PaymentMethodMeta[] = [
   { value: "sslcommerz", label: "SSLCommerz", mode: "api", hint: "Cards + all wallets (hosted checkout)" },
-  { value: "eps", label: "EPS / AamarPay", mode: "api", hint: "Aggregator checkout" },
+  { value: "eps", label: "EPS", mode: "api", hint: "EPS aggregator checkout" },
+  { value: "eps", label: "aamarPay", mode: "api", hint: "aamarPay hosted checkout" },
   { value: "bkash", label: "bKash API", mode: "api", hint: "bKash PGW (tokenized checkout)" },
   { value: "nagad", label: "Nagad API", mode: "api", hint: "Nagad merchant checkout" },
   { value: "card", label: "Card gateway", mode: "api", hint: "Any card processor" },
 ];
+
+/**
+ * Credential schema per gateway, following each provider's own documentation.
+ * The chosen gateway is stored in `config.gateway` because several providers
+ * share the same payment_method enum value.
+ */
+export type GatewayField = {
+  key: string;
+  label: string;
+  placeholder?: string;
+  secret?: boolean;
+  hint?: string;
+};
+
+export type GatewaySpec = {
+  key: string;
+  method: string;
+  label: string;
+  tagline: string;
+  docs: string;
+  fields: GatewayField[];
+  /** Callback/IPN paths the provider must be pointed at. */
+  callbacks?: string[];
+};
+
+export const GATEWAYS: GatewaySpec[] = [
+  {
+    key: "sslcommerz",
+    method: "sslcommerz",
+    label: "SSLCommerz",
+    tagline: "Cards, all mobile wallets and net banking through one hosted checkout.",
+    docs: "https://developer.sslcommerz.com/doc/v4/",
+    fields: [
+      { key: "store_id", label: "Store ID", placeholder: "yourstore0live", hint: "From SSLCommerz merchant panel → API/Integration" },
+      { key: "store_passwd", label: "Store Password (API key)", placeholder: "yourstore0live@ssl", secret: true },
+      { key: "currency", label: "Currency", placeholder: "BDT" },
+    ],
+    callbacks: ["/api/public/payments/sslcommerz/success", "/api/public/payments/sslcommerz/fail", "/api/public/payments/sslcommerz/cancel", "/api/public/payments/sslcommerz/ipn"],
+  },
+  {
+    key: "eps",
+    method: "eps",
+    label: "EPS",
+    tagline: "EPS aggregator — cards and wallets with a merchant hash.",
+    docs: "https://epsdoc.com/",
+    fields: [
+      { key: "merchant_id", label: "Merchant ID", placeholder: "EPS123456" },
+      { key: "username", label: "API username", placeholder: "eps_user" },
+      { key: "password", label: "API password", secret: true },
+      { key: "hash_key", label: "Hash / secret key", secret: true },
+    ],
+    callbacks: ["/api/public/payments/eps/callback"],
+  },
+  {
+    key: "aamarpay",
+    method: "eps",
+    label: "aamarPay",
+    tagline: "aamarPay hosted checkout with signature-key verification.",
+    docs: "https://aamarpay.readme.io/",
+    fields: [
+      { key: "store_id", label: "Store ID", placeholder: "aamarpaytest" },
+      { key: "signature_key", label: "Signature key", secret: true },
+      { key: "currency", label: "Currency", placeholder: "BDT" },
+    ],
+    callbacks: ["/api/public/payments/aamarpay/callback"],
+  },
+  {
+    key: "bkash",
+    method: "bkash",
+    label: "bKash API (PGW)",
+    tagline: "Tokenized checkout — customer pays inside bKash, confirmed automatically.",
+    docs: "https://developer.bka.sh/",
+    fields: [
+      { key: "app_key", label: "App key", secret: false },
+      { key: "app_secret", label: "App secret", secret: true },
+      { key: "username", label: "Merchant username", placeholder: "01700000000" },
+      { key: "password", label: "Merchant password", secret: true },
+    ],
+    callbacks: ["/api/public/payments/bkash/callback"],
+  },
+  {
+    key: "nagad",
+    method: "nagad",
+    label: "Nagad API",
+    tagline: "Nagad merchant checkout signed with your RSA key pair.",
+    docs: "https://nagad.com.bd/",
+    fields: [
+      { key: "merchant_id", label: "Merchant ID", placeholder: "68301111111" },
+      { key: "merchant_number", label: "Merchant number", placeholder: "01700000000" },
+      { key: "public_key", label: "Nagad public key", secret: true },
+      { key: "private_key", label: "Merchant private key", secret: true },
+    ],
+    callbacks: ["/api/public/payments/nagad/callback"],
+  },
+  {
+    key: "card",
+    method: "card",
+    label: "Card gateway",
+    tagline: "Any other processor that takes an API key pair.",
+    docs: "",
+    fields: [
+      { key: "api_key", label: "API key" },
+      { key: "api_secret", label: "API secret", secret: true },
+      { key: "base_url", label: "Base URL", placeholder: "https://api.provider.com" },
+    ],
+  },
+];
+
+export function gatewaySpec(method: string, gateway?: string): GatewaySpec {
+  return (
+    GATEWAYS.find((g) => g.key === (gateway || "")) ??
+    GATEWAYS.find((g) => g.method === method) ??
+    GATEWAYS[GATEWAYS.length - 1]!
+  );
+}
+
 
 export function methodLabel(method: string | null | undefined): string {
   if (!method) return "—";
