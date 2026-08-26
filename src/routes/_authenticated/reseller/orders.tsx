@@ -962,7 +962,7 @@ function OrdersPage() {
                 </div>
 
                 {/* Desktop row */}
-                <div className="hidden grid-cols-[30px_minmax(60px,0.7fr)_minmax(120px,1fr)_minmax(100px,1fr)_minmax(100px,1.2fr)_100px_130px_60px] items-center gap-2 border-b bg-muted/30 px-4 py-3 text-sm md:grid">
+                <div className="hidden grid-cols-[30px_minmax(60px,0.7fr)_minmax(120px,1fr)_minmax(100px,1fr)_minmax(100px,1.2fr)_100px_130px_60px] items-start gap-2 border-b bg-muted/30 px-4 py-3 text-sm md:grid">
                   <div className="flex flex-col items-center gap-1.5">
                     <input
                       type="checkbox"
@@ -977,7 +977,7 @@ function OrdersPage() {
                       <ChevronDown className={`h-4 w-4 transition-transform ${expandedOrders.includes(o.id) ? "rotate-180" : ""}`} />
                     </button>
                   </div>
-                  <div className="min-w-0">
+                  <div className="min-w-0 text-center">
                     <div className="font-medium truncate">{o.order_number}</div>
                     <div className="text-[11px] text-muted-foreground">
                       {new Date(o.created_at).toLocaleDateString()}
@@ -987,7 +987,7 @@ function OrdersPage() {
                     </div>
                   </div>
 
-                  <div className="min-w-0">
+                  <div className="flex justify-center">
                     <OrderProductCell
                       items={stripItems(o.id)}
                       expanded={expandedOrders.includes(o.id)}
@@ -1001,9 +1001,9 @@ function OrdersPage() {
 
                   </div>
 
-                  <div className="min-w-0 text-xs text-muted-foreground">
+                  <div className="min-w-0 text-center text-xs text-muted-foreground">
                     <div className="font-medium text-foreground truncate">{o.customer_name}</div>
-                    <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                    <div className="flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground">
                       {o.customer_phone}
                       <a href={`tel:${o.customer_phone}`} className="text-primary hover:text-primary/80 transition-colors">
                         <Phone className="h-3 w-3" />
@@ -1018,7 +1018,7 @@ function OrdersPage() {
                         <Copy className="h-3 w-3" />
                       </button>
                     </div>
-                    <div className="mt-0.5 flex items-start gap-1 text-[11px] leading-snug text-muted-foreground">
+                    <div className="mt-0.5 flex items-start justify-center gap-1 text-[11px] leading-snug text-muted-foreground">
                       <MapPin className="mt-[1px] h-3 w-3 shrink-0 opacity-70" />
                       <span className="line-clamp-2">
                         {o.address_line}
@@ -1027,8 +1027,8 @@ function OrdersPage() {
                       </span>
                     </div>
                   </div>
-                  
-                   <ResellerTotalCell order={o as any} />
+                   
+                    <div className="flex justify-center"><ResellerTotalCell order={o as any} /></div>
                    <div className="min-w-0">
                      <span
                        className={`inline-block rounded-full px-2 py-0.5 text-[11px] capitalize whitespace-nowrap ${orderStatusTone(o.status)}`}
