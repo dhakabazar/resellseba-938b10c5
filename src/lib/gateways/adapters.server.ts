@@ -471,7 +471,14 @@ const epayseba: Adapter = {
       ),
     );
     const url = r.payment_url || r.checkout_url || r.data?.payment_url;
-    if (!url) fail(r.message || r.error || "ePaySeba checkout failed");
+    if (!url)
+      fail(
+        r.message ||
+          r.error ||
+          (r.__raw
+            ? `ePaySeba did not accept the request (HTTP ${r.__status}). Check the API base URL and keys.`
+            : "ePaySeba checkout failed"),
+      );
     return { paymentUrl: String(url), ref: String(r.transaction_id ?? r.data?.transaction_id ?? "") };
   },
   async verifyReturn(c, order, p) {
@@ -496,6 +503,11 @@ const epayseba: Adapter = {
       getJson(`${c.base}/api/v1/payment/status/test-connection`, epaysebaHeaders(c), signal),
     );
     if (r.__status === 401 || r.__status === 403) fail("ePaySeba rejected the API key");
+    // A hosted HTML page instead of JSON means the API address is wrong.
+    if (r.__raw)
+      fail(
+        `ePaySeba API not found at ${c.base} (HTTP ${r.__status}). Copy the exact API base URL from your ePaySeba merchant panel.`,
+      );
   },
 };
 

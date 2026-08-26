@@ -1,7 +1,7 @@
 // Server-only shared plumbing for the automatic payment gateways.
 // Never imported by client code (filename is server-guarded).
 import { getRequest } from "@tanstack/react-start/server";
-import { gatewayByProvider } from "./registry";
+import { gatewayBase } from "./registry";
 
 export type GatewayCreds = {
   provider: string;
@@ -9,7 +9,7 @@ export type GatewayCreds = {
   api_secret: string;
   merchant_id: string;
   config: Record<string, any>;
-  is_sandbox: boolean;
+  /** Resolved API base URL (registry production host, or the admin override). */
   base: string;
   /**
    * Who owns the merchant account the money lands in:
@@ -61,16 +61,13 @@ export async function getCredentials(
     rows.find((r: any) => r.reseller_id === resellerId) ?? rows.find((r: any) => r.reseller_id === null);
   if (!row) return null;
   const config = (row.config ?? {}) as Record<string, any>;
-  const is_sandbox = config.is_sandbox !== false;
-  const spec = gatewayByProvider(provider);
   return {
     provider,
     api_key: row.api_key ?? "",
     api_secret: row.api_secret ?? "",
     merchant_id: row.merchant_id ?? "",
     config,
-    is_sandbox,
-    base: is_sandbox ? (spec?.hosts.sandbox ?? "") : (spec?.hosts.live ?? ""),
+    base: gatewayBase(provider, config),
     owner: row.reseller_id ? "reseller" : "platform",
   };
 }
@@ -78,16 +75,13 @@ export async function getCredentials(
 /** Same shape from a raw admin form, for the "Test connection" action. */
 export function credsFromRaw(provider: string, raw: Record<string, any>): GatewayCreds {
   const config = (raw.config ?? {}) as Record<string, any>;
-  const is_sandbox = config.is_sandbox !== false;
-  const spec = gatewayByProvider(provider);
   return {
     provider,
     api_key: String(raw.api_key ?? ""),
     api_secret: String(raw.api_secret ?? ""),
     merchant_id: String(raw.merchant_id ?? ""),
     config,
-    is_sandbox,
-    base: is_sandbox ? (spec?.hosts.sandbox ?? "") : (spec?.hosts.live ?? ""),
+    base: gatewayBase(provider, config),
     owner: raw.reseller_id ? "reseller" : "platform",
   };
 }
@@ -142,27 +136,54 @@ export async function withTimeout<T>(fn: (signal: AbortSignal) => Promise<T>, ms
 }
 
 export async function jsonPost(url: string, body: unknown, headers: Record<string, string> = {}, signal?: AbortSignal) {
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", accept: "application/json", ...headers },
-    body: JSON.stringify(body),
-    signal,
-  });
+  const res = await callGateway(url, () =>
+    fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", accept: "application/json", ...headers },
+      body: JSON.stringify(body),
+      signal,
+    }),
+  );
   return parseBody(res);
 }
 
+/**
+ * A gateway host that does not resolve (wrong/renamed API URL) surfaces as a
+ * bare "fetch failed", which tells nobody anything. Turn it into an actionable
+ * message naming the host so the admin can correct the API base URL.
+ */
+async function callGateway<T>(url: string, run: () => Promise<T>): Promise<T> {
+  try {
+    return await run();
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (/abort|timeout|timed out/i.test(msg)) throw err;
+    let host = url;
+    try {
+      host = new URL(url).host;
+    } catch {
+      /* keep raw url */
+    }
+    throw new Error(
+      `Could not reach the payment gateway at ${host}. Check the gateway's API base URL in Payment methods.`,
+    );
+  }
+}
+
 export async function formPost(url: string, body: URLSearchParams, signal?: AbortSignal) {
-  const res = await fetch(url, {
+  const res = await callGateway(url, () => fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded", accept: "application/json" },
     body: body.toString(),
     signal,
-  });
+  }));
   return parseBody(res);
 }
 
 export async function getJson(url: string, headers: Record<string, string> = {}, signal?: AbortSignal) {
-  const res = await fetch(url, { headers: { accept: "application/json", ...headers }, signal });
+  const res = await callGateway(url, () =>
+    fetch(url, { headers: { accept: "application/json", ...headers }, signal }),
+  );
   return parseBody(res);
 }
 

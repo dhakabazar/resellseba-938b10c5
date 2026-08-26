@@ -34,7 +34,13 @@ export type GatewaySpec = {
   docs: string;
   /** payment_method enum value stored on the order */
   method: string;
-  hosts: { sandbox: string; live: string };
+  /**
+   * Production API host. Only live endpoints are kept in code (no sandbox
+   * switch); an admin can still point a gateway at a different host by
+   * filling in the optional "API base URL" field, which is stored in
+   * `config.base_url`.
+   */
+  hosts: { live: string };
   fields: GatewayFieldSpec[];
   /**
    * Callback URLs this gateway uses. All are sent automatically with every
@@ -54,7 +60,7 @@ export const GATEWAYS: GatewaySpec[] = [
     tagline: "Cards, all mobile wallets and net banking in one hosted checkout.",
     docs: "https://developer.sslcommerz.com/doc/v4/",
     method: "sslcommerz",
-    hosts: { sandbox: "https://sandbox.sslcommerz.com", live: "https://securepay.sslcommerz.com" },
+    hosts: { live: "https://securepay.sslcommerz.com" },
     fields: [
       { path: "api_key", label: "Store ID", placeholder: "yourstore0live", required: true, hint: "Merchant panel → API / Integration" },
       { path: "api_secret", label: "Store password", placeholder: "yourstore0live@ssl", secret: true, required: true },
@@ -71,7 +77,7 @@ export const GATEWAYS: GatewaySpec[] = [
     tagline: "Customer pays inside bKash; payment is executed and confirmed automatically.",
     docs: "https://developer.bka.sh/",
     method: "bkash",
-    hosts: { sandbox: "https://tokenized.sandbox.bka.sh/v1.2.0-beta", live: "https://tokenized.pay.bka.sh/v1.2.0-beta" },
+    hosts: { live: "https://tokenized.pay.bka.sh/v1.2.0-beta" },
     fields: [
       { path: "api_key", label: "App key", required: true },
       { path: "api_secret", label: "App secret", secret: true, required: true },
@@ -89,7 +95,7 @@ export const GATEWAYS: GatewaySpec[] = [
     tagline: "Nagad merchant checkout signed and encrypted with your RSA key pair.",
     docs: "https://nagad.com.bd/",
     method: "nagad",
-    hosts: { sandbox: "https://sandbox-ssl.mynagad.com:10443/api/dfs", live: "https://api.mynagad.com/api/dfs" },
+    hosts: { live: "https://api.mynagad.com/api/dfs" },
     fields: [
       { path: "merchant_id", label: "Merchant ID", placeholder: "683002007104225", required: true },
       { path: "api_key", label: "Merchant number", placeholder: "01700000000", required: true },
@@ -121,7 +127,7 @@ export const GATEWAYS: GatewaySpec[] = [
     tagline: "ShurjoPay aggregator — cards and every wallet through one checkout.",
     docs: "https://docs.shurjopay.com.bd/",
     method: "shurjopay",
-    hosts: { sandbox: "https://sandbox.shurjopayment.com/api", live: "https://engine.shurjopayment.com/api" },
+    hosts: { live: "https://engine.shurjopayment.com/api" },
     fields: [
       { path: "api_key", label: "Username", required: true },
       { path: "api_secret", label: "Password", secret: true, required: true },
@@ -138,7 +144,7 @@ export const GATEWAYS: GatewaySpec[] = [
     tagline: "EPS payment engine — token based initialize plus status check.",
     docs: "https://epsbd.com/",
     method: "eps",
-    hosts: { sandbox: "https://sandbox-pgapi.eps.com.bd", live: "https://pgapi.eps.com.bd" },
+    hosts: { live: "https://pgapi.eps.com.bd" },
     fields: [
       { path: "api_key", label: "Username", required: true },
       { path: "api_secret", label: "Password", secret: true, required: true },
@@ -156,7 +162,7 @@ export const GATEWAYS: GatewaySpec[] = [
     tagline: "aamarPay hosted checkout verified with the signature key.",
     docs: "https://aamarpay.readme.io/",
     method: "aamarpay",
-    hosts: { sandbox: "https://sandbox.aamarpay.com", live: "https://secure.aamarpay.com" },
+    hosts: { live: "https://secure.aamarpay.com" },
     fields: [
       { path: "api_key", label: "Store ID", placeholder: "aamarpaytest", required: true },
       { path: "api_secret", label: "Signature key", secret: true, required: true },
@@ -172,7 +178,7 @@ export const GATEWAYS: GatewaySpec[] = [
     tagline: "ePaySeba hosted checkout with webhook confirmation.",
     docs: "https://epayseba.com/",
     method: "epayseba",
-    hosts: { sandbox: "https://sandbox.epayseba.com", live: "https://pay.epayseba.com" },
+    hosts: { live: "https://pay.epayseba.com" },
     fields: [
       { path: "api_key", label: "API key", secret: true, required: true },
       { path: "api_secret", label: "Secret key (webhook signature)", secret: true, hint: "Optional — used to verify webhooks" },
@@ -190,6 +196,17 @@ export const GATEWAY_PROVIDERS = GATEWAYS.map((g) => g.provider);
 
 export function gatewayByProvider(provider: string): GatewaySpec | undefined {
   return GATEWAYS.find((g) => g.provider === provider);
+}
+
+/**
+ * API base URL for a gateway: the admin override from `config.base_url` when
+ * present, otherwise the production host from the registry. Trailing slashes
+ * are trimmed so adapters can always append a path.
+ */
+export function gatewayBase(provider: string, config?: Record<string, unknown> | null): string {
+  const override = typeof config?.base_url === "string" ? config.base_url.trim() : "";
+  const base = override || gatewayByProvider(provider)?.hosts.live || "";
+  return base.replace(/\/+$/, "");
 }
 
 export function isAutomaticGateway(method: string | null | undefined): boolean {
