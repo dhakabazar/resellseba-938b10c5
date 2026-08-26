@@ -6,6 +6,7 @@ import { getMyReseller } from "@/lib/app-data";
 import { productDeliveryCharge, deliveryLabel } from "@/lib/delivery";
 import { addressError, nameError, normalizePhone, phoneError, sanitizeName } from "@/lib/checkout-validate";
 import { OrderNotes } from "@/components/order-notes";
+import { LastUpdateCell, OrderNotesModal, useOrderMeta } from "@/components/order-last-update";
 import { useAuth } from "@/lib/use-auth";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
 import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
@@ -388,6 +389,8 @@ function OrdersPage() {
   // Re-read file to find where to add the chevron toggle and grid columns
   // (The previous AI message mentioned reconstructing the grid)
   const paged = usePaginated(visible, page, filters.perPage);
+  const { meta: orderMeta, refresh: refreshMeta } = useOrderMeta(paged.map((o: any) => o.id));
+  const [notesModal, setNotesModal] = useState<{ orderId: string; orderNumber?: string | null; canWrite: boolean } | null>(null);
   const stats = useMemo(
     () =>
       visible.reduce(
@@ -722,7 +725,7 @@ function OrdersPage() {
       ) : (
         <>
         <div className="space-y-3">
-          <div className="hidden grid-cols-[30px_minmax(60px,0.7fr)_minmax(120px,1fr)_minmax(100px,1fr)_minmax(100px,1.2fr)_100px_130px_60px] items-start gap-2 rounded-lg border bg-muted/40 px-4 py-2.5 text-xs font-medium text-muted-foreground md:grid">
+          <div className="hidden grid-cols-[30px_minmax(60px,0.7fr)_minmax(120px,1fr)_minmax(100px,1fr)_minmax(100px,1.2fr)_124px_minmax(112px,0.9fr)_40px] items-start gap-2 rounded-lg border bg-muted/40 px-4 py-2.5 text-xs font-medium text-muted-foreground md:grid">
             <div className="flex items-center justify-center">
               <input
                 type="checkbox"
@@ -744,7 +747,8 @@ function OrdersPage() {
             <div className="text-center">Customer</div>
             <div className="text-center">Reseller total</div>
             <div className="text-center">Status</div>
-            <div className="text-center">Actions</div>
+            <div className="text-center">Last update</div>
+            <div />
           </div>
           {paged.map((o) => {
             const items = itemsByOrder.get(o.id) ?? [];
@@ -962,7 +966,7 @@ function OrdersPage() {
                 </div>
 
                 {/* Desktop row */}
-                <div className="hidden grid-cols-[30px_minmax(60px,0.7fr)_minmax(120px,1fr)_minmax(100px,1fr)_minmax(100px,1.2fr)_100px_130px_60px] items-start gap-2 border-b bg-muted/30 px-4 py-3 text-sm md:grid">
+                <div className="hidden grid-cols-[30px_minmax(60px,0.7fr)_minmax(120px,1fr)_minmax(100px,1fr)_minmax(100px,1.2fr)_124px_minmax(112px,0.9fr)_40px] items-start gap-2 border-b bg-muted/30 px-4 py-3 text-sm md:grid">
                   <div className="flex flex-col items-center gap-1.5">
                     <input
                       type="checkbox"
@@ -1076,6 +1080,13 @@ function OrdersPage() {
                         <span className="mt-1 inline-block text-[10px] italic text-muted-foreground/60">Not booked yet</span>
                       )}
                     </div>
+                   <LastUpdateCell
+                     meta={orderMeta[o.id]}
+                     fallbackAt={o.created_at}
+                     onOpenNotes={() =>
+                       setNotesModal({ orderId: o.id, orderNumber: o.order_number, canWrite: resellerCanAct(o.status) })
+                     }
+                   />
                    <div className="flex justify-center">{actions}</div>
                 </div>
 
@@ -1253,6 +1264,21 @@ function OrdersPage() {
       />
 
       {zoomImage && <ImageLightbox src={zoomImage} onClose={() => setZoomImage(null)} />}
+
+      {notesModal && (
+        <OrderNotesModal
+          orderId={notesModal.orderId}
+          orderNumber={notesModal.orderNumber}
+          authorRole="reseller"
+          canWrite={notesModal.canWrite}
+          lockedHint="Notes can only be added or edited while the order is New Order, Send To admin or Cancelled."
+          onClose={() => {
+            const id = notesModal.orderId;
+            setNotesModal(null);
+            void refreshMeta([id]);
+          }}
+        />
+      )}
     </div>
 
   );

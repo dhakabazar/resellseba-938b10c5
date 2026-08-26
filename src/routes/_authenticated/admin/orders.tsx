@@ -45,6 +45,7 @@ import { OrderSettleModal } from "@/components/OrderSettleModal";
 import { ShipmentBookingModal } from "@/components/ShipmentBookingModal";
 import { toast } from "sonner";
 import { OrderNotes } from "@/components/order-notes";
+import { LastUpdateCell, OrderNotesModal, useOrderMeta } from "@/components/order-last-update";
 import { CourierTimeline, type CourierEvent } from "@/components/CourierTimeline";
 import { bookSteadfast } from "@/lib/couriers.functions";
 import { OrderTabs } from "@/components/OrderTabs";
@@ -162,6 +163,7 @@ function AdminOrdersPage() {
   );
   const [bookingModal, setBookingModal] = useState<{ open: boolean; orderIds: string[] }>({ open: false, orderIds: [] });
   const [zoomImage, setZoomImage] = useState<string | null>(null);
+  const [notesModal, setNotesModal] = useState<{ orderId: string; orderNumber?: string | null } | null>(null);
   
   const fetchActive = useServerFn(getActiveCouriers);
   const { data: activeProviders = [] } = useQuery({
@@ -422,6 +424,7 @@ function AdminOrdersPage() {
   }, [orders, filters, itemsByOrder, searchMode]);
 
   const paged = usePaginated(filtered, page, filters.perPage);
+  const { meta: orderMeta, refresh: refreshMeta } = useOrderMeta(paged.map((o) => o.id));
 
   return (
     <div>
@@ -541,7 +544,7 @@ function AdminOrdersPage() {
         
         {loading ? <div className="py-12 text-center"><Loader2 className="mx-auto h-6 w-6 animate-spin" /></div> : (
           <div className="space-y-3">
-            <div className="hidden grid-cols-[36px_minmax(66px,0.6fr)_minmax(120px,0.9fr)_minmax(110px,0.9fr)_minmax(120px,1fr)_96px_104px_130px_50px] items-start gap-2 rounded-lg border bg-muted/40 px-4 py-2.5 text-xs font-medium text-muted-foreground md:grid">
+            <div className="hidden grid-cols-[36px_minmax(66px,0.6fr)_minmax(110px,0.9fr)_minmax(110px,0.9fr)_minmax(110px,1fr)_96px_104px_124px_minmax(112px,0.9fr)_40px] items-start gap-2 rounded-lg border bg-muted/40 px-4 py-2.5 text-xs font-medium text-muted-foreground md:grid">
                <div className="flex justify-center">
                  <input
                    type="checkbox"
@@ -550,14 +553,14 @@ function AdminOrdersPage() {
                    onChange={(e) => setMarked(e.target.checked ? paged.map(x => x.id) : [])}
                  />
                </div>
-               <div className="text-center">Order</div> <div className="text-center">Reseller</div> <div className="text-center">Products</div> <div className="text-center">Customer</div> <div className="text-center">Reseller total</div> <div className="text-center">Admin total</div> <div className="text-center">Status</div> <div className="text-center">Actions</div>
+               <div className="text-center">Order</div> <div className="text-center">Reseller</div> <div className="text-center">Products</div> <div className="text-center">Customer</div> <div className="text-center">Reseller total</div> <div className="text-center">Admin total</div> <div className="text-center">Status</div> <div className="text-center">Last update</div> <div />
             </div>
             {paged.map((o) => (
               <div
                 key={o.id}
                 className={`overflow-hidden rounded-xl border bg-card shadow-sm transition-all hover:shadow-md hover:border-primary/40 ${marked.includes(o.id) ? "border-primary ring-1 ring-primary/30" : ""}`}
               >
-                <div className="hidden grid-cols-[36px_minmax(66px,0.6fr)_minmax(120px,0.9fr)_minmax(110px,0.9fr)_minmax(120px,1fr)_96px_104px_130px_50px] items-start gap-2 border-b bg-muted/30 px-4 py-3 text-sm md:grid">
+                <div className="hidden grid-cols-[36px_minmax(66px,0.6fr)_minmax(110px,0.9fr)_minmax(110px,0.9fr)_minmax(110px,1fr)_96px_104px_124px_minmax(112px,0.9fr)_40px] items-start gap-2 border-b bg-muted/30 px-4 py-3 text-sm md:grid">
                   <div className="flex flex-col items-center gap-1.5">
                     <input
                       type="checkbox"
@@ -662,6 +665,11 @@ function AdminOrdersPage() {
                           <span className="mt-1 inline-block text-[10px] italic text-muted-foreground/60">Not booked yet</span>
                         )}
                     </div>
+                   <LastUpdateCell
+                     meta={orderMeta[o.id]}
+                     fallbackAt={o.created_at}
+                     onOpenNotes={() => setNotesModal({ orderId: o.id, orderNumber: o.order_number })}
+                   />
                    <div className="flex justify-center">
                       <DropdownMenu>
                        <DropdownMenuTrigger><MoreVertical className="h-4 w-4" /></DropdownMenuTrigger>
@@ -928,6 +936,20 @@ function AdminOrdersPage() {
         )}
 
         {zoomImage && <ImageLightbox src={zoomImage} onClose={() => setZoomImage(null)} />}
+
+        {notesModal && (
+          <OrderNotesModal
+            orderId={notesModal.orderId}
+            orderNumber={notesModal.orderNumber}
+            authorRole="admin"
+            canWrite
+            onClose={() => {
+              const id = notesModal.orderId;
+              setNotesModal(null);
+              void refreshMeta([id]);
+            }}
+          />
+        )}
 
     </div>
   );
