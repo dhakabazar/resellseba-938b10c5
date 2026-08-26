@@ -640,6 +640,20 @@ function OrdersPage() {
           total={orders.length}
           shown={visible.length}
           hideSearch
+          trailing={
+            <div className="sm:hidden">
+              <OrderTabs
+                tab={tab}
+                onChange={setTab}
+                highlight
+                count={(key) => {
+                  const sts = ORDER_TABS.find((t) => t.key === key)?.statuses ?? [];
+                  return sts.length === 0 ? orders.length : orders.filter((o) => (sts as string[]).includes(o.status)).length;
+                }}
+                className="w-full min-w-0"
+              />
+            </div>
+          }
         />
       )}
 
@@ -724,19 +738,6 @@ function OrdersPage() {
           onClose={() => setPickOpen(false)}
         />
       )}
-
-      {/* Mobile: status filter inline with other filters */}
-      <div className="sm:hidden">
-        <OrderTabs
-          tab={tab}
-          onChange={setTab}
-          count={(key) => {
-            const sts = ORDER_TABS.find((t) => t.key === key)?.statuses ?? [];
-            return sts.length === 0 ? orders.length : orders.filter((o) => (sts as string[]).includes(o.status)).length;
-          }}
-          className="mb-3 w-full min-w-0"
-        />
-      </div>
 
       {/* Desktop: status tabs below filters */}
       <div className="hidden sm:block">

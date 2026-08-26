@@ -481,18 +481,6 @@ function AdminOrdersPage() {
             </select>
           </div>
           <div className="grid grid-cols-2 gap-2 lg:flex lg:flex-wrap lg:items-center">
-            {/* Mobile: status filter inline with other filters */}
-            <div className="col-span-2 sm:hidden">
-              <OrderTabs
-                tab={tab}
-                onChange={setTab}
-                count={(key) => {
-                  const sts = ORDER_TABS.find((t) => t.key === key)?.statuses ?? [];
-                  return sts.length === 0 ? allOrders.length : allOrders.filter((o) => (sts as string[]).includes(o.status)).length;
-                }}
-                className="w-full min-w-0"
-              />
-            </div>
             <SearchableSelect
               options={resellerOptions.map((r) => ({ value: r.value, label: r.label }))}
               value={filters.reseller}
@@ -553,6 +541,19 @@ function AdminOrdersPage() {
               <option value="high">Amount: high → low</option>
               <option value="low">Amount: low → high</option>
             </select>
+            {/* Mobile: status filter — last cell, after Sort, light highlight */}
+            <div className="sm:hidden">
+              <OrderTabs
+                tab={tab}
+                onChange={setTab}
+                highlight
+                count={(key) => {
+                  const sts = ORDER_TABS.find((t) => t.key === key)?.statuses ?? [];
+                  return sts.length === 0 ? allOrders.length : allOrders.filter((o) => (sts as string[]).includes(o.status)).length;
+                }}
+                className="w-full min-w-0"
+              />
+            </div>
             {activeFilterCount(filters) > 0 && (
               <button
                 type="button"

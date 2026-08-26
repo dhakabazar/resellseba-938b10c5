@@ -258,6 +258,7 @@ export function OrderFilterBar({
   showPerPage = false,
   hideSearch = false,
   variant = "default",
+  trailing,
 }: {
   value: OrderFilterState;
   onChange: (next: OrderFilterState) => void;
@@ -272,6 +273,8 @@ export function OrderFilterBar({
   hideSearch?: boolean;
   /** Report layout: search takes 40%, filters take 60% and are more compact. */
   variant?: "default" | "report";
+  /** Extra node rendered as the last filter cell (after Sort) — e.g. the mobile status dropdown. */
+  trailing?: React.ReactNode;
 }) {
   const set = (patch: Partial<OrderFilterState>) => onChange({ ...value, ...patch });
   const dirty = useMemo(
@@ -337,18 +340,6 @@ export function OrderFilterBar({
             ))}
           </Select>
           <Select
-            label="Sort"
-            value={value.sort}
-            className={isReport ? "lg:w-[130px]" : "lg:w-[150px]"}
-            onChange={(v) => set({ sort: v as OrderFilterState["sort"] })}
-          >
-            {SORT_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </Select>
-          <Select
             label="Area"
             value={value.area}
             className={isReport ? "lg:w-[130px]" : "lg:w-[150px]"}
@@ -372,6 +363,19 @@ export function OrderFilterBar({
               </option>
             ))}
           </Select>
+          <Select
+            label="Sort"
+            value={value.sort}
+            className={isReport ? "lg:w-[130px]" : "lg:w-[150px]"}
+            onChange={(v) => set({ sort: v as OrderFilterState["sort"] })}
+          >
+            {SORT_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </Select>
+          {trailing}
           {showPerPage && (
             <Select
               label="Per page"

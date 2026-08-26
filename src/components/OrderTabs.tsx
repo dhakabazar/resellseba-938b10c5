@@ -1,6 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
-import { ORDER_TABS, orderTabClasses, type OrderTabKey } from "@/lib/courier-status";
+import { ORDER_TABS, orderTabClasses, orderTabGroup, type OrderTabKey } from "@/lib/courier-status";
+
+/** Light tint classes for the mobile status dropdown, based on the active tab's group. */
+function tabTint(key: OrderTabKey): string {
+  const group = orderTabGroup(key);
+  if (group === "delivered") return "bg-emerald-50 border-emerald-200 text-emerald-700";
+  if (group === "partial") return "bg-amber-50 border-amber-200 text-amber-700";
+  if (group === "terminal") return "bg-rose-50 border-rose-200 text-rose-700";
+  return "bg-blue-50 border-blue-200 text-blue-700";
+}
 
 /**
  * Responsive order status tabs.
@@ -12,12 +21,15 @@ export function OrderTabs({
   onChange,
   count,
   className = "mb-4 w-full min-w-0",
+  highlight = false,
 }: {
   tab: OrderTabKey;
   onChange: (key: OrderTabKey) => void;
   count: (key: OrderTabKey) => number;
   /** Override the outer wrapper margin when embedding inside a grid. */
   className?: string;
+  /** When true, the mobile dropdown button gets a light tint based on the active tab's group. */
+  highlight?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -46,11 +58,11 @@ export function OrderTabs({
           type="button"
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
-          className="flex h-10 w-full items-center justify-between gap-2 rounded-md border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+          className={`flex h-10 w-full items-center justify-between gap-2 rounded-md border px-3 text-sm outline-none focus:ring-2 focus:ring-ring ${highlight ? tabTint(tab) : "bg-background"}`}
         >
           <span className="min-w-0 truncate font-medium">
             {active?.label ?? "Orders"}
-            <span className="ml-1.5 text-xs text-muted-foreground">{count(tab)}</span>
+            <span className="ml-1.5 text-xs opacity-70">{count(tab)}</span>
           </span>
           <ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
         </button>
