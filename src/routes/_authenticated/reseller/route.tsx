@@ -23,6 +23,7 @@ import {
   Headphones,
   UserCircle,
   ListTree,
+  CreditCard,
 
 
 } from "lucide-react";
