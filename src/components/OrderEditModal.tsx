@@ -540,9 +540,9 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                 <div className="grid gap-3 rounded-2xl border bg-muted/20 p-4 sm:grid-cols-2">
                   <MoneyField
                     label="Delivery Charge (Customer pays)"
-                    hint={`Default ৳${autoShipping.toFixed(0)}`}
+                    hint={shipTouched ? `Custom · default ৳${autoShipping.toFixed(0)}` : `Auto ৳${autoShipping.toFixed(0)}`}
                     value={shipInput}
-                    onChange={setShipInput}
+                    onChange={changeShip}
                     placeholder={autoShipping.toFixed(0)}
                   />
                   <MoneyField label="Discount" value={discount} onChange={setDiscount} placeholder="0" />
@@ -557,9 +557,9 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                   {isAdmin && (
                     <MoneyField
                       label="Courier Cost (Admin cost)"
-                      hint={`Default ৳${totals.shipping.toFixed(0)}`}
+                      hint={deliveryCostTouched ? `Custom · default ৳${totals.shipping.toFixed(0)}` : `Auto ৳${totals.shipping.toFixed(0)}`}
                       value={deliveryCostInput}
-                      onChange={setDeliveryCostInput}
+                      onChange={changeDeliveryCost}
                       placeholder={totals.shipping.toFixed(0)}
                     />
                   )}
