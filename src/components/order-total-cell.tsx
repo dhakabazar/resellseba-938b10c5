@@ -99,10 +99,8 @@ function Summary({
 /** Reseller side: money received from the customer vs what the order cost them. */
 export function ResellerTotalCell({ order }: { order: ProfitOrder; showProfit?: boolean }) {
   const advance = orderAdvance(order);
-  // Reseller-held advance is already deducted from their profit → flag as a cost.
-  const advanceTone: Tone | undefined = advance > 0
-    ? resellerHeldAdvance(order) > 0 ? "loss" : "advance"
-    : undefined;
+  // Show the advance chip only when the reseller held it (deducted from their profit).
+  const resellerHeld = advance > 0 && resellerHeldAdvance(order) > 0;
   return (
     <Summary
       headLabel="sell"
@@ -111,8 +109,8 @@ export function ResellerTotalCell({ order }: { order: ProfitOrder; showProfit?: 
       delivery={orderDeliveryCost(order)}
       packaging={orderPackaging(order)}
       profit={orderProfit(order)}
-      advance={advance}
-      advanceTone={advanceTone}
+      advance={resellerHeld ? advance : undefined}
+      advanceTone={resellerHeld ? "loss" : undefined}
     />
   );
 }
@@ -124,10 +122,8 @@ export function AdminTotalCell({ order, buyingCost }: { order: ProfitOrder; buyi
   const delivery = orderDeliveryCost(order);
   const packaging = orderPackaging(order);
   const profit = revenue - buyingCost - delivery - packaging;
-  // Admin-held advance stays with admin → positive; reseller-held → neutral.
-  const advanceTone: Tone | undefined = advance > 0
-    ? order.advance_by === "admin" ? "profit" : "advance"
-    : undefined;
+  // Show the advance chip only when the admin held it (stays with admin).
+  const adminHeld = advance > 0 && order.advance_by === "admin";
   return (
     <Summary
       headLabel="rev"
@@ -137,8 +133,8 @@ export function AdminTotalCell({ order, buyingCost }: { order: ProfitOrder; buyi
       delivery={delivery}
       packaging={packaging}
       profit={profit}
-      advance={advance}
-      advanceTone={advanceTone}
+      advance={adminHeld ? advance : undefined}
+      advanceTone={adminHeld ? "profit" : undefined}
     />
   );
 }
