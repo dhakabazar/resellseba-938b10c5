@@ -6,7 +6,6 @@ import { AppModal } from "@/components/ui-kit/AppModal";
 import { confirmAction } from "@/lib/confirm";
 import {
   MANUAL_METHODS,
-  cfgBool,
   cfgString,
   methodLabel,
   type PaymentConfigRow,
