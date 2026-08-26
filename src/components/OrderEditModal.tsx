@@ -99,7 +99,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
       setDiscount(Number(o.discount ?? 0) ? String(Number(o.discount)) : "");
       setPackagingInput(o.packaging_total == null ? "" : String(Number(o.packaging_total)));
       const savedCourierCost = Number(o.delivery_cost ?? 0);
-      const courierIsCustom = savedCourierCost !== savedShip;
+      const courierIsCustom = savedCourierCost !== autoShip;
       setDeliveryCostInput(courierIsCustom ? String(savedCourierCost) : "");
       setDeliveryCostTouched(courierIsCustom);
       setAdvance(Number((o as any).advance_amount ?? 0) ? String(Number((o as any).advance_amount)) : "");
@@ -170,7 +170,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
     const shipping = shipInput.trim() === "" ? autoShipping : Math.max(Number(shipInput) || 0, 0);
     const disc = Math.min(Math.max(Number(discount) || 0, 0), subtotal + shipping);
     const total = subtotal + shipping - disc;
-    const deliveryCost = deliveryCostInput.trim() === "" ? shipping : Math.max(Number(deliveryCostInput) || 0, 0);
+    const deliveryCost = deliveryCostInput.trim() === "" ? autoShipping : Math.max(Number(deliveryCostInput) || 0, 0);
     const adv = Math.min(Math.max(Number(advance) || 0, 0), total);
     const resellerAdvance = advanceBy === "reseller" ? adv : 0;
     const codDue = Math.max(total - adv, 0);
@@ -594,7 +594,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                   {isAdmin && (
                     <MoneyField
                       label="Courier Cost (Admin cost)"
-                      hint={deliveryCostTouched ? `Custom · default ৳${totals.shipping.toFixed(0)}` : `Auto ৳${totals.shipping.toFixed(0)}`}
+                      hint={deliveryCostTouched ? `Custom · default ৳${autoShipping.toFixed(0)}` : `Auto ৳${autoShipping.toFixed(0)}`}
                       value={deliveryCostInput}
                       onChange={changeDeliveryCost}
                       placeholder={totals.shipping.toFixed(0)}
