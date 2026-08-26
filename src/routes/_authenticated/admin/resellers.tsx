@@ -55,8 +55,16 @@ import { ResellerProfile, type ResellerProfileData } from "@/components/Reseller
 import { DepositLedger } from "@/components/deposit-ledger";
 import { confirmAction } from "@/lib/confirm";
 import { PasswordResetModal } from "@/components/password-reset-modal";
+import { useAdvancedSettings } from "@/lib/advanced-settings";
+import {
+  resellerStatusActions,
+  resellerStatusClass,
+  resellerStatusLabel,
+  type ResellerStatus,
+} from "@/lib/reseller-status";
 
-type Status = "pending" | "active" | "suspended" | "rejected";
+type Status = ResellerStatus;
+
 
 type Reseller = {
   id: string;
@@ -114,13 +122,14 @@ const FILTERS = [
 type Filter = (typeof FILTERS)[number];
 
 const FILTER_LABELS: Record<Filter, string> = {
-  pending: "Approval pending",
-  active: "Active",
-  suspended: "Deactivated",
-  rejected: "Rejected",
+  pending: resellerStatusLabel("pending"),
+  active: resellerStatusLabel("active"),
+  suspended: resellerStatusLabel("suspended"),
+  rejected: resellerStatusLabel("rejected"),
   email_unverified: "Email unverified",
   all: "All",
 };
+
 
 function ResellersPage() {
   const nav = useNavigate();
@@ -147,6 +156,9 @@ function ResellersPage() {
   const [resetFor, setResetFor] = useState<Reseller | null>(null);
   const [agents, setAgents] = useState<Array<{ id: string; display_name: string }>>([]);
   const [agentFilter, setAgentFilter] = useState("");
+  const { settings: advanced } = useAdvancedSettings();
+  const autoApprove = advanced.resellerAutoApprove;
+
 
   async function load() {
     setLoading(true);
@@ -248,40 +260,34 @@ function ResellersPage() {
     } as Record<Filter, number>;
   }, [items, emailStatus]);
 
-  async function approve(r: Reseller) {
-    const { error } = await supabase
-      .from("resellers")
-      .update({ status: "active", approved_at: new Date().toISOString() })
-      .eq("id", r.id);
+  /**
+   * Single entry point for every status change. Panel access (role + store
+   * settings) is synced by the database, so the UI only writes the status.
+   */
+  async function setStatus(r: Reseller, status: Status) {
+    if (status === r.status) return;
+    if (status !== "active") {
+      const ok = await confirmAction({
+        title: status === "rejected" ? "Reject reseller" : "Deactivate reseller",
+        description: "They lose access to the reseller panel until you activate them again.",
+        detail: r.business_name,
+        confirmText: status === "rejected" ? "Reject" : "Deactivate",
+      });
+      if (!ok) return;
+    }
+    const patch: { status: Status; approved_at?: string } = { status };
+    if (status === "active" && !r.approved_at) patch.approved_at = new Date().toISOString();
+    const { error } = await supabase.from("resellers").update(patch).eq("id", r.id);
     if (error) return toast.error(error.message);
-    await supabase
-      .from("user_roles")
-      .upsert({ user_id: r.user_id, role: "reseller" }, { onConflict: "user_id,role" });
-    await supabase
-      .from("reseller_settings")
-      .upsert({ reseller_id: r.id, store_name: r.business_name }, { onConflict: "reseller_id" });
-    toast.success(`${r.business_name} approved`);
+
+    toast.success(
+      status === "active"
+        ? `${r.business_name} is now active`
+        : `Status set to ${resellerStatusLabel(status)}`,
+    );
     load();
   }
 
-  async function setStatus(r: Reseller, status: Status) {
-    const { error } = await supabase.from("resellers").update({ status }).eq("id", r.id);
-    if (error) return toast.error(error.message);
-    if (status === "active") {
-      await supabase
-        .from("user_roles")
-        .upsert({ user_id: r.user_id, role: "reseller" }, { onConflict: "user_id,role" });
-    } else {
-      // Not approved → revoke panel access
-      await supabase
-        .from("user_roles")
-        .delete()
-        .eq("user_id", r.user_id)
-        .eq("role", "reseller");
-    }
-    toast.success("Status updated");
-    load();
-  }
 
 
   async function applyPasswordReset(r: Reseller, password: string) {
@@ -356,6 +362,28 @@ function ResellersPage() {
         title="Reseller Network"
         description="Monitor and manage all storefront applications, email verifications, and partner status."
       />
+
+      <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border bg-muted/30 px-3 py-2 text-xs">
+        <span className="font-medium">New applications:</span>
+        <span
+          className={
+            "rounded-full px-2 py-0.5 font-medium " +
+            (autoApprove ? "bg-success/15 text-success" : "bg-warning/20 text-warning-foreground")
+          }
+        >
+          {autoApprove ? "Auto activated" : "Manual approval"}
+        </span>
+        <span className="text-muted-foreground">
+          {autoApprove
+            ? "Resellers get panel access as soon as they sign up. You can still deactivate or reject anyone."
+            : "Resellers stay pending until you approve them from the 3-dot menu."}
+        </span>
+        <Link to="/admin/advanced" className="ml-auto font-medium text-primary hover:underline">
+          Change in Advanced settings
+        </Link>
+      </div>
+
+
 
       <div className="mb-3 flex flex-wrap gap-2">
         {FILTERS.map((f) => (
@@ -546,27 +574,26 @@ function ResellersPage() {
                     <DropdownMenuContent align="end" className="w-56">
                       <DropdownMenuLabel>{r.business_name}</DropdownMenuLabel>
                       <DropdownMenuSeparator />
-                      {r.status === "pending" && (
-                        <>
-                          <DropdownMenuItem onClick={() => approve(r)}>
-                            <Check className="mr-2 h-4 w-4" /> Approve access
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => setStatus(r, "rejected")}>
-                            <X className="mr-2 h-4 w-4" /> Reject
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                        </>
-                      )}
-                      {r.status === "active" && (
-                        <DropdownMenuItem onClick={() => setStatus(r, "suspended")}>
-                          <ShieldOff className="mr-2 h-4 w-4" /> Deactivate access
+                      {resellerStatusActions(r.status, autoApprove).map((a) => (
+                        <DropdownMenuItem
+                          key={a.status}
+                          onClick={() => setStatus(r, a.status)}
+                          className={a.tone === "danger" ? "text-destructive focus:text-destructive" : ""}
+                        >
+                          {a.status === "active" ? (
+                            <Play className="mr-2 h-4 w-4" />
+                          ) : a.status === "rejected" ? (
+                            <X className="mr-2 h-4 w-4" />
+                          ) : a.status === "suspended" ? (
+                            <ShieldOff className="mr-2 h-4 w-4" />
+                          ) : (
+                            <Check className="mr-2 h-4 w-4" />
+                          )}
+                          {a.label}
                         </DropdownMenuItem>
-                      )}
-                      {(r.status === "suspended" || r.status === "rejected") && (
-                        <DropdownMenuItem onClick={() => setStatus(r, "active")}>
-                          <Play className="mr-2 h-4 w-4" /> Activate
-                        </DropdownMenuItem>
-                      )}
+                      ))}
+                      <DropdownMenuSeparator />
+
                       {!emailVerified && (
                         <DropdownMenuItem onClick={() => confirmEmail(r)}>
                           <MailCheck className="mr-2 h-4 w-4" /> Confirm email
@@ -724,18 +751,13 @@ function Metric({
 }
 
 function StatusBadge({ status }: { status: Status }) {
-  const map: Record<Status, string> = {
-    active: "bg-success/15 text-success",
-    pending: "bg-warning/20 text-warning-foreground",
-    suspended: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
-    rejected: "bg-destructive/15 text-destructive",
-  };
   return (
-    <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium capitalize ${map[status]}`}>
-      {status === "suspended" ? "deactivated" : status}
+    <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${resellerStatusClass(status)}`}>
+      {resellerStatusLabel(status)}
     </span>
   );
 }
+
 
 function ReadOnlyBit({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
@@ -834,7 +856,7 @@ function EditModal({
           <ReadOnlyBit label="Login email" value={email?.email ?? "—"} />
           <ReadOnlyBit
             label="Status"
-            value={reseller.status === "suspended" ? "deactivated" : reseller.status}
+            value={resellerStatusLabel(reseller.status)}
           />
           <ReadOnlyBit
             label="Joined"

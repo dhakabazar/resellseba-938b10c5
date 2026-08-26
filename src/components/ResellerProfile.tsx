@@ -2,6 +2,8 @@ import { ResellerAvatar } from "@/components/reseller-avatar";
 import { Copy, ExternalLink, Phone, Mail, MapPin, IdCard, Lock, ShieldCheck, AlertTriangle, ArrowUpRight } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { resellerStatusClass, resellerStatusLabel } from "@/lib/reseller-status";
+
 
 export type ResellerProfileData = {
   id: string;
@@ -152,9 +154,10 @@ export function ResellerProfile({
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="truncate text-lg font-semibold">{r.business_name}</h2>
-              <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium capitalize text-muted-foreground">
-                {r.status === "suspended" ? "deactivated" : r.status}
+              <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${resellerStatusClass(r.status)}`}>
+                {resellerStatusLabel(r.status)}
               </span>
+
               {r.email_verified != null &&
                 (r.email_verified ? (
                   <span className="rounded-full bg-success/15 px-2 py-0.5 text-[10px] font-medium text-success">
@@ -272,7 +275,7 @@ export function ResellerProfile({
           <Row label="Commission rate" value={`${r.commission_rate}%`} />
           {r.leader_name !== undefined && <Row label="Leader" value={r.leader_name ?? "No leader"} />}
           {r.agent_name !== undefined && <Row label="Commission agent" value={r.agent_name ?? "No agent assigned"} />}
-          <Row label="Status" value={<span className="capitalize">{r.status === "suspended" ? "deactivated" : r.status}</span>} />
+          <Row label="Status" value={<span>{resellerStatusLabel(r.status)}</span>} />
           <Row label="Security deposit" value={r.deposit_required ? `Required ${money(Number(r.deposit_required_amount ?? 0))}` : "Not required"} />
           <Row label="Frozen amount" value={money(Number(r.frozen_amount ?? 0))} />
           <Row

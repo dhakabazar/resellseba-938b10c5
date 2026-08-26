@@ -6,6 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { getGlobalSettings } from "@/lib/app-data";
 import { clearImpersonation } from "@/lib/impersonation";
 import { toast } from "sonner";
+import { resellerStatusClass, resellerStatusLabel } from "@/lib/reseller-status";
+
 import { Loader2, Store, Mail } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
@@ -48,15 +50,34 @@ function Onboarding() {
 
   useEffect(() => {
     if (!user) return;
-    supabase
-      .from("resellers")
-      .select("status")
-      .eq("user_id", user.id)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data) setStatus(data.status);
-      });
+    (async () => {
+      const { data } = await supabase
+        .from("resellers")
+        .select("status")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (!data) return;
+      // Auto approval may have been switched on after this application was
+      // filed — promote the pending row so access matches the current setting.
+      if (data.status === "pending") {
+        const { data: auto } = await supabase.rpc("reseller_auto_approve");
+        if (auto === true) {
+          const { data: promoted } = await supabase
+            .from("resellers")
+            .update({ status: "active", approved_at: new Date().toISOString() })
+            .eq("user_id", user.id)
+            .select("status")
+            .maybeSingle();
+          if (promoted?.status === "active") {
+            setStatus("active");
+            return;
+          }
+        }
+      }
+      setStatus(data.status);
+    })();
   }, [user]);
+
 
   useEffect(() => {
     if (loading) return;
@@ -154,7 +175,13 @@ function Onboarding() {
               {status === "pending" ? <Loader2 className="h-6 w-6 animate-spin" /> : <Store className="h-6 w-6 opacity-40" />}
             </div>
             <h1 className="text-2xl font-bold tracking-tight">{info.title}</h1>
+            <div className="mt-2 flex justify-center">
+              <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${resellerStatusClass(status)}`}>
+                {resellerStatusLabel(status)}
+              </span>
+            </div>
             <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{info.text}</p>
+
             
             <div className="mt-8 grid grid-cols-2 gap-3">
               <ContactButton variant="whatsapp" />
