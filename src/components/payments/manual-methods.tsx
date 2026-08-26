@@ -296,22 +296,8 @@ function MethodModal({
           />
         </div>
 
-        <label className="flex items-start gap-2.5 rounded-xl border p-3 text-[11px] sm:col-span-2">
-          <input
-            type="checkbox"
-            className="mt-0.5"
-            checked={cfgBool(row.config, "allow_deposit")}
-            onChange={(e) => setConfig("allow_deposit", e.target.checked)}
-          />
-          <span>
-            <span className="flex items-center gap-1 text-xs font-semibold">
-              <ShieldCheck className="h-3.5 w-3.5 text-success" /> Reseller security deposit
-            </span>
-            <span className="text-muted-foreground">
-              Resellers can pay their security deposit with this method and submit the TrxID for approval.
-            </span>
-          </span>
-        </label>
+
+
 
         <label className="flex items-center justify-between gap-3 rounded-xl border p-3 sm:col-span-2">
           <span>
