@@ -10,7 +10,7 @@ export const getOrderDetails = createServerFn({ method: "GET" })
     const { supabase } = context;
     
     const [orderRes, itemsRes, shipmentsRes, eventsRes] = await Promise.all([
-      supabase.from("orders").select("*, resellers(business_name, code, contact_phone)").eq("id", orderId).maybeSingle(),
+      supabase.from("orders").select("*, resellers(business_name, code, contact_phone, agents(display_name))").eq("id", orderId).maybeSingle(),
       supabase.from("order_items").select("*").eq("order_id", orderId),
       supabase.from("shipments").select("*").eq("order_id", orderId),
       supabase.from("courier_events").select("*").eq("order_id", orderId).order("event_at", { ascending: false })

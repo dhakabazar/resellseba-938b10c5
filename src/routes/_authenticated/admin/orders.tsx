@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
 import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
 import { BulkScanButton } from "@/components/BulkScanModal";
-import { Loader2, X, Download, PackageCheck, ChevronDown, Plus, MoreVertical, Eye, Phone, CheckCircle2, Settings2, Trash2, Copy, ShoppingCart, Printer, Truck, RefreshCw, TrendingUp, DollarSign, Wallet, MapPin } from "lucide-react";
+import { Loader2, X, Download, PackageCheck, ChevronDown, Plus, MoreVertical, Eye, Phone, CheckCircle2, Settings2, Trash2, Copy, ShoppingCart, Printer, Truck, RefreshCw, TrendingUp, DollarSign, Wallet, MapPin, UserCircle } from "lucide-react";
 import { CourierLogo, courierLabel, COURIER_BRANDS } from "@/components/courier-brand";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -91,7 +91,7 @@ type OrderRow = {
   created_at: string;
   reseller_note: string | null;
   admin_note: string | null;
-  resellers: { business_name: string; code: string; contact_phone: string | null } | null;
+  resellers: { business_name: string; code: string; contact_phone: string | null; agents: { display_name: string } | null } | null;
 };
 
 type OrderItemLite = {
@@ -192,7 +192,7 @@ function AdminOrdersPage() {
   const [resellerOptions, setResellerOptions] = useState<FilterOption[]>([]);
 
   const ORDER_SELECT =
-    "id,reseller_id,order_number,customer_name,customer_phone,address_line,area,city,subtotal,discount,shipping_cost,sa_cost_total,packaging_total,delivery_cost,received_amount,advance_amount,advance_by,total,status,payment_status,payment_method,forwarded_to_admin,created_at,reseller_note,admin_note,resellers(business_name,code,contact_phone)";
+    "id,reseller_id,order_number,customer_name,customer_phone,address_line,area,city,subtotal,discount,shipping_cost,sa_cost_total,packaging_total,delivery_cost,received_amount,advance_amount,advance_by,total,status,payment_status,payment_method,forwarded_to_admin,created_at,reseller_note,admin_note,resellers(business_name,code,contact_phone,agents(display_name))";
   const ITEM_SELECT = "order_id,product_id,product_name,product_image,quantity,returned_qty,reseller_price,line_total";
   const SHIPMENT_SELECT = "id,order_id,provider,tracking_id,consignment_id";
 
@@ -599,7 +599,14 @@ function AdminOrdersPage() {
                          </>
                        )}
                      </div>
-                  </div>
+                     <div className="text-[10px] text-muted-foreground/70 truncate">
+                       {o.resellers?.agents?.display_name ? (
+                         <span className="inline-flex items-center gap-1"><UserCircle className="h-2.5 w-2.5" />{o.resellers.agents.display_name}</span>
+                       ) : (
+                         <span className="italic">no agent</span>
+                       )}
+                     </div>
+                   </div>
                   <OrderProductCell
                     items={stripItems(o.id)}
                     expanded={expandedOrders.includes(o.id)}
@@ -1072,6 +1079,10 @@ function OrderDrawer({
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Phone className="h-4 w-4 text-primary" />
                     <span>{order.resellers.contact_phone || "—"}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <UserCircle className="h-3.5 w-3.5 text-primary" />
+                    <span className="font-medium">{order.resellers.agents?.display_name || <span className="italic text-muted-foreground/60">No agent assigned</span>}</span>
                   </div>
                 </div>
               ) : (
