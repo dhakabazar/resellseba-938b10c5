@@ -89,6 +89,7 @@ type OrderRow = {
   payment_method: string;
   forwarded_to_admin: boolean;
   created_at: string;
+  updated_at: string;
   reseller_note: string | null;
   admin_note: string | null;
   resellers: { business_name: string; code: string; contact_phone: string | null; agents: { display_name: string } | null } | null;
