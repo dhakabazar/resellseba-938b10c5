@@ -72,9 +72,10 @@ export const verifyGatewayPayment = createServerFn({ method: "POST" })
         paid: v.paid,
         amount: v.amount,
         txnId: v.txnId,
+        owner: creds.owner,
       });
       return {
-        status: outcome === "already" ? ("paid" as const) : (outcome as "paid" | "mismatch" | "unpaid"),
+        status: outcome === "already" ? ("paid" as const) : (outcome as "paid" | "partial" | "unpaid"),
         amount: v.amount,
       };
     } catch {
