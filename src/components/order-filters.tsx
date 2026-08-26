@@ -191,7 +191,6 @@ export function filterByCourier<T extends { id: string }>(
 ): T[] {
   if (!courier) return rows;
   const byOrder = new Map<string, Set<string>>();
-  const noneIds = new Set<string>(rows.map((r) => r.id));
   for (const s of shipments) {
     if (!s.provider) continue;
     let set = byOrder.get(s.order_id);
@@ -200,12 +199,22 @@ export function filterByCourier<T extends { id: string }>(
       byOrder.set(s.order_id, set);
     }
     set.add(s.provider);
-    noneIds.delete(s.order_id);
   }
   return rows.filter((o) => {
     if (courier === "none") return !byOrder.has(o.id);
     return byOrder.get(o.id)?.has(courier) ?? false;
   });
+}
+
+/** How many filters (excluding search & per-page) differ from the defaults. */
+export function activeFilterCount(f: OrderFilterState): number {
+  let n = 0;
+  if (f.reseller) n += 1;
+  if (f.area) n += 1;
+  if (f.courier) n += 1;
+  if (f.datePreset !== "lifetime") n += 1;
+  if (f.sort !== "newest") n += 1;
+  return n;
 }
 
 function Select({
