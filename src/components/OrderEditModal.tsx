@@ -44,12 +44,15 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [paymentStatus, setPaymentStatus] = useState("unpaid");
   const [note, setNote] = useState("");
-  /** Delivery charge override — "" means use the product default. */
+  /** Delivery charge override — "" means use the product default for the picked area. */
   const [shipInput, setShipInput] = useState("");
+  /** True once the user types a custom delivery charge; auto value follows the area otherwise. */
+  const [shipTouched, setShipTouched] = useState(false);
   /** Order level adjustments — "" means keep the default value. */
   const [discount, setDiscount] = useState("");
   const [packagingInput, setPackagingInput] = useState("");
   const [deliveryCostInput, setDeliveryCostInput] = useState("");
+  const [deliveryCostTouched, setDeliveryCostTouched] = useState(false);
   /** Advance already collected + who is holding that cash. */
   const [advance, setAdvance] = useState("");
   const [advanceBy, setAdvanceBy] = useState<"admin" | "reseller">("reseller");
