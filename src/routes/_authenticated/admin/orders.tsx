@@ -417,7 +417,8 @@ function AdminOrdersPage() {
   );
 
   const filtered = useMemo(() => {
-    const base = applyOrderFilters(orders, { ...filters, q: "" });
+    const courierFiltered = filterByCourier(orders, filters.courier, shipments);
+    const base = applyOrderFilters(courierFiltered, { ...filters, q: "" });
     const q = filters.q.trim().toLowerCase();
     if (!q) return base;
     return base.filter((o) => {
@@ -425,7 +426,7 @@ function AdminOrdersPage() {
         const has = (v?: string | null) => (v ?? "").toLowerCase().includes(q);
         return has(o.order_number) || has(o.customer_name) || has(o.customer_phone);
     });
-  }, [orders, filters, itemsByOrder, searchMode]);
+  }, [orders, filters, itemsByOrder, searchMode, shipments]);
 
   const paged = usePaginated(filtered, page, filters.perPage);
   const { meta: orderMeta, refresh: refreshMeta } = useOrderMeta(paged.map((o) => o.id));
