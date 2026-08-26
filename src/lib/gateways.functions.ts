@@ -60,10 +60,7 @@ export const verifyGatewayPayment = createServerFn({ method: "POST" })
     const order = await core.loadOrder(data.orderNumber);
     if (order.payment_status === "paid")
       return { status: "paid" as const, amount: Number(order.paid_amount ?? order.total) };
-    const provider = (await core.admin())
-      ? ((await (await core.admin()).from("orders").select("payment_provider").eq("id", order.id).maybeSingle())
-          .data?.payment_provider as string | null)
-      : null;
+    const provider = order.payment_provider;
     if (!provider) return { status: "unpaid" as const, amount: 0 };
     const creds = await core.getCredentials(provider, order.reseller_id);
     if (!creds) return { status: "unpaid" as const, amount: 0 };
