@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader } from "@/components/ui-kit";
 import { DepositLedger } from "@/components/deposit-ledger";
+import { DepositRequestsAdmin } from "@/components/deposit-requests-admin";
 
 export const Route = createFileRoute("/_authenticated/admin/deposit-transactions")({
   component: DepositTransactionsPage,
