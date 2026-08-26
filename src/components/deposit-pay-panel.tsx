@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { BadgeCheck, Clock, Copy, Hand, Loader2, Send, XCircle, Zap } from "lucide-react";
+import { BadgeCheck, Clock, Copy, Loader2, Send, XCircle, Zap } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { listDepositGateways, startDepositPayment } from "@/lib/gateways.functions";
 import { cfgString, fetchDepositMethods, type PaymentConfigRow } from "@/lib/payment-methods";
@@ -19,10 +19,21 @@ type RequestRow = {
   created_at: string;
 };
 
+/** One unified selectable row — manual wallet OR automatic gateway. */
+type UnifiedMethod = {
+  id: string;
+  label: string;
+  kind: "manual" | "online";
+  method: string;
+  account?: string;
+  accountType?: string;
+  instructions?: string | null;
+};
+
 const inp = "w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring";
 const bdt = (v: number) => `৳${Number(v || 0).toLocaleString("en-US")}`;
 
-/** Reseller-facing: pay the security deposit with an admin-approved manual method. */
+/** Reseller-facing: pay the security deposit with any active method. */
 export function DepositPayPanel({
   resellerId,
   due,
@@ -35,16 +46,13 @@ export function DepositPayPanel({
 }) {
   const [methods, setMethods] = useState<PaymentConfigRow[]>([]);
   const [requests, setRequests] = useState<RequestRow[]>([]);
-  const [configId, setConfigId] = useState("");
+  const [selectedId, setSelectedId] = useState("");
   const [amount, setAmount] = useState(due && due > 0 ? String(due) : "");
   const [reference, setReference] = useState("");
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [mode, setMode] = useState<"manual" | "online">("manual");
   const [gateways, setGateways] = useState<{ provider: string; label: string }[]>([]);
-  const [gateway, setGateway] = useState("");
-  const [onlineAmount, setOnlineAmount] = useState(due && due > 0 ? String(due) : "");
   const loadGateways = useServerFn(listDepositGateways);
   const startOnline = useServerFn(startDepositPayment);
 
@@ -52,34 +60,42 @@ export function DepositPayPanel({
     void (async () => {
       const list = await fetchDepositMethods();
       setMethods(list);
-      if (list[0]) setConfigId(list[0].id);
       setLoading(false);
       try {
         const gw = await loadGateways();
         setGateways(gw);
-        if (gw[0]) setGateway(gw[0].provider);
-        if (list.length === 0 && gw.length > 0) setMode("online");
       } catch {
         /* gateways unavailable */
       }
     })();
   }, [loadGateways]);
 
-  async function payOnline() {
-    const amt = Number(onlineAmount);
-    if (!(amt > 0)) return toast.error("Enter a valid amount");
-    if (!gateway) return toast.error("Select a gateway");
-    setBusy(true);
-    try {
-      const res = await startOnline({ data: { provider: gateway, amount: amt } });
-      if (res?.redirectUrl) window.location.href = res.redirectUrl;
-      else toast.error("Could not start the payment");
-    } catch (err: any) {
-      toast.error(typeof err?.message === "string" ? err.message : "Could not start the payment");
-    } finally {
-      setBusy(false);
-    }
-  }
+  /** Unified, deduplicated list — manual first, then online gateways. */
+  const unified = useMemo<UnifiedMethod[]>(() => {
+    const manual: UnifiedMethod[] = methods.map((m) => ({
+      id: m.id,
+      label: m.label,
+      kind: "manual",
+      method: m.method,
+      account: cfgString(m.config, "account") || undefined,
+      accountType: cfgString(m.config, "account_type") || undefined,
+      instructions: m.instructions,
+    }));
+    const online: UnifiedMethod[] = gateways.map((g) => ({
+      id: `gw:${g.provider}`,
+      label: g.label,
+      kind: "online",
+      method: g.provider,
+    }));
+    return [...manual, ...online];
+  }, [methods, gateways]);
+
+  // Auto-select the first available method once the list loads.
+  useEffect(() => {
+    if (!selectedId && unified.length > 0) setSelectedId(unified[0]!.id);
+  }, [unified, selectedId]);
+
+  const selected = unified.find((m) => m.id === selectedId) ?? null;
 
   useEffect(() => {
     if (resellerId) void loadRequests();
@@ -95,14 +111,29 @@ export function DepositPayPanel({
     setRequests((data ?? []) as RequestRow[]);
   }
 
-  const selected = methods.find((m) => m.id === configId);
+  async function payOnline() {
+    const amt = Number(amount);
+    if (!(amt > 0)) return toast.error("Enter a valid amount");
+    if (!selected || selected.kind !== "online") return toast.error("Select a payment method");
+    const provider = selected.id.replace(/^gw:/, "");
+    setBusy(true);
+    try {
+      const res = await startOnline({ data: { provider, amount: amt } });
+      if (res?.redirectUrl) window.location.href = res.redirectUrl;
+      else toast.error("Could not start the payment");
+    } catch (err: any) {
+      toast.error(typeof err?.message === "string" ? err.message : "Could not start the payment");
+    } finally {
+      setBusy(false);
+    }
+  }
 
-  async function submit(e: React.FormEvent) {
+  async function submitManual(e: React.FormEvent) {
     e.preventDefault();
     if (!resellerId) return;
     const amt = Number(amount);
     if (!(amt > 0)) return toast.error("Enter a valid amount");
-    if (!selected) return toast.error("Select a payment method");
+    if (!selected || selected.kind !== "manual") return toast.error("Select a payment method");
     if (!reference.trim()) return toast.error("Transaction ID (TrxID) is required");
     setBusy(true);
     const { error } = await supabase.from("deposit_requests").insert({
@@ -115,7 +146,6 @@ export function DepositPayPanel({
     });
     setBusy(false);
     if (error) return toast.error(error.message);
-    setAmount("");
     setReference("");
     setNote("");
     toast.success("Deposit submitted — waiting for admin verification");
@@ -130,183 +160,154 @@ export function DepositPayPanel({
       </div>
     );
 
+  if (unified.length === 0) {
+    return (
+      <div className="rounded-lg border border-dashed p-6 text-center text-xs text-muted-foreground">
+        No payment method is active yet. Please contact support.
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
-      {(methods.length > 0 || gateways.length > 0) && (
-        <div className="inline-flex rounded-xl border bg-muted/30 p-1">
-          <button
-            type="button"
-            onClick={() => setMode("manual")}
-            className={
-              "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors " +
-              (mode === "manual" ? "bg-card shadow-sm" : "text-muted-foreground hover:text-foreground")
-            }
-          >
-            <Hand className="h-3.5 w-3.5" /> Manual
-          </button>
-          <button
-            type="button"
-            onClick={() => setMode("online")}
-            className={
-              "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors " +
-              (mode === "online" ? "bg-card shadow-sm" : "text-muted-foreground hover:text-foreground")
-            }
-          >
-            <Zap className="h-3.5 w-3.5" /> Automatic
-          </button>
-        </div>
-      )}
+      <p className="text-[11px] text-muted-foreground">
+        Pick a method below to pay your security deposit. Manual methods need a TrxID and are credited after admin
+        verification; automatic gateways credit instantly once payment is confirmed.
+      </p>
 
-      {(methods.length > 0 || gateways.length > 0) && (
-        <p className="text-[11px] text-muted-foreground">
-          {mode === "manual"
-            ? "Manual payment: send the money, submit the TrxID — the deposit is credited after admin verification."
-            : "Automatic gateway: the deposit is credited the moment the gateway confirms your payment. No approval needed."}
+      {/* Unified method grid — manual + automatic together */}
+      <div className="grid gap-2 sm:grid-cols-2">
+        {unified.map((m) => {
+          const active = m.id === selectedId;
+          return (
+            <button
+              type="button"
+              key={m.id}
+              onClick={() => setSelectedId(m.id)}
+              className={
+                "rounded-xl border p-3 text-left transition-colors " +
+                (active ? "border-primary bg-primary/5 ring-1 ring-primary/30" : "hover:bg-muted")
+              }
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="flex min-w-0 items-center gap-2">
+                  <span className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-lg border bg-background p-1">
+                    <PaymentLogo method={m.method} size={24} />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-semibold">{m.label}</span>
+                    <span
+                      className={
+                        "inline-flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide " +
+                        (m.kind === "online" ? "text-primary" : "text-muted-foreground")
+                      }
+                    >
+                      {m.kind === "online" ? (
+                        <>
+                          <Zap className="h-3 w-3" /> Automatic
+                        </>
+                      ) : (
+                        "Manual"
+                      )}
+                    </span>
+                  </span>
+                </span>
+                {active && <BadgeCheck className="h-4 w-4 shrink-0 text-primary" />}
+              </div>
+
+              {m.account && (
+                <div className="mt-2 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                  <span className="tabular-nums">{m.account}</span>
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void navigator.clipboard.writeText(m.account!);
+                      toast.success("Number copied");
+                    }}
+                    onKeyDown={() => {}}
+                    className="rounded p-0.5 hover:bg-muted"
+                  >
+                    <Copy className="h-3 w-3" />
+                  </span>
+                  {m.accountType && <span>· {m.accountType}</span>}
+                </div>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Selected method instructions (manual only) */}
+      {selected?.kind === "manual" && selected.instructions && (
+        <p className="whitespace-pre-line rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-[11px] leading-relaxed text-amber-700 dark:text-amber-300">
+          {selected.instructions}
         </p>
       )}
 
-
-      {mode === "online" ? (
-        gateways.length === 0 ? (
-          <div className="rounded-lg border border-dashed p-6 text-center text-xs text-muted-foreground">
-            No automatic gateway is active yet. Please use a manual method.
+      {/* Amount is shared */}
+      <div className="rounded-xl border p-4">
+        <div className="mb-3 grid gap-3 sm:grid-cols-3">
+          <div>
+            <label className="mb-1 block text-xs font-medium">Amount *</label>
+            <input
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              className={inp}
+              inputMode="decimal"
+              placeholder="5000"
+            />
           </div>
-        ) : (
-          <div className="rounded-xl border p-4">
-            <div className="mb-1 text-sm font-semibold">Pay online</div>
-            <p className="mb-3 text-[11px] text-muted-foreground">
-              You will be taken to the gateway. Once the payment is confirmed, the deposit is credited automatically —
-              no admin approval needed.
-            </p>
-            <div className="mb-3 grid gap-2 sm:grid-cols-2">
-              {gateways.map((g) => {
-                const active = g.provider === gateway;
-                return (
-                  <button
-                    type="button"
-                    key={g.provider}
-                    onClick={() => setGateway(g.provider)}
-                    className={
-                      "flex items-center justify-between gap-2 rounded-lg border p-3 text-left text-xs font-semibold transition-colors " +
-                      (active ? "border-primary bg-primary/5" : "hover:bg-muted")
-                    }
-                  >
-                    <span className="flex min-w-0 items-center gap-2">
-                      <PaymentLogo method={g.provider} size={22} />
-                      <span className="truncate">{g.label}</span>
-                    </span>
-                    {active && <BadgeCheck className="h-4 w-4 text-primary" />}
-                  </button>
-                );
-              })}
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
+
+          {selected?.kind === "manual" ? (
+            <>
               <div>
-                <label className="mb-1 block text-xs font-medium">Amount *</label>
+                <label className="mb-1 block text-xs font-medium">TrxID / reference *</label>
                 <input
-                  value={onlineAmount}
-                  onChange={(e) => setOnlineAmount(e.target.value)}
+                  value={reference}
+                  onChange={(e) => setReference(e.target.value)}
                   className={inp}
-                  inputMode="decimal"
-                  placeholder="5000"
+                  placeholder="8N7A2K9QX1"
                 />
               </div>
-              <div className="flex items-end justify-end">
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => void payOnline()}
-                  className="btn-brand inline-flex items-center gap-1.5 rounded-md px-4 py-2 text-xs font-semibold disabled:opacity-50"
-                >
-                  {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Zap className="h-3.5 w-3.5" />} Pay now
-                </button>
+              <div>
+                <label className="mb-1 block text-xs font-medium">Note</label>
+                <input value={note} onChange={(e) => setNote(e.target.value)} className={inp} placeholder="Optional" />
               </div>
+            </>
+          ) : (
+            <div className="flex items-end justify-end sm:col-span-2">
+              <p className="text-[11px] text-muted-foreground">
+                You'll be taken to the gateway. The deposit is credited automatically once payment is confirmed — no
+                admin approval needed.
+              </p>
             </div>
-          </div>
-        )
-      ) : methods.length === 0 ? (
-        <div className="rounded-lg border border-dashed p-6 text-center text-xs text-muted-foreground">
-          No manual payment method is active yet. Try an automatic gateway or contact support.
-        </div>
-      ) : (
-        <form onSubmit={submit} className="rounded-xl border p-4">
-          <div className="mb-3 text-sm font-semibold">Pay security deposit</div>
-
-          <div className="mb-3 grid gap-2 sm:grid-cols-2">
-            {methods.map((m) => {
-              const active = m.id === configId;
-              return (
-                <button
-                  type="button"
-                  key={m.id}
-                  onClick={() => setConfigId(m.id)}
-                  className={
-                    "rounded-lg border p-3 text-left text-xs transition-colors " +
-                    (active ? "border-primary bg-primary/5" : "hover:bg-muted")
-                  }
-                >
-                  <div className="flex items-center justify-between gap-2 font-semibold">
-                    <span className="flex min-w-0 items-center gap-2">
-                      <PaymentLogo method={m.method} size={22} />
-                      <span className="truncate">{m.label}</span>
-                    </span>
-                    {active && <BadgeCheck className="h-4 w-4 text-primary" />}
-                  </div>
-                  {cfgString(m.config, "account") && (
-                    <div className="mt-1 flex items-center gap-1.5 text-muted-foreground">
-                      <span className="tabular-nums">{cfgString(m.config, "account")}</span>
-                      <span
-                        role="button"
-                        tabIndex={0}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          void navigator.clipboard.writeText(cfgString(m.config, "account"));
-                          toast.success("Number copied");
-                        }}
-                        onKeyDown={() => {}}
-                        className="rounded p-0.5 hover:bg-muted"
-                      >
-                        <Copy className="h-3 w-3" />
-                      </span>
-                      {cfgString(m.config, "account_type") && <span>· {cfgString(m.config, "account_type")}</span>}
-                    </div>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-
-          {selected?.instructions && (
-            <p className="mb-3 whitespace-pre-line rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-[11px] leading-relaxed text-amber-700 dark:text-amber-300">
-              {selected.instructions}
-            </p>
           )}
+        </div>
 
-          <div className="grid gap-3 sm:grid-cols-3">
-            <div>
-              <label className="mb-1 block text-xs font-medium">Amount *</label>
-              <input value={amount} onChange={(e) => setAmount(e.target.value)} className={inp} inputMode="decimal" placeholder="5000" />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-medium">TrxID / reference *</label>
-              <input value={reference} onChange={(e) => setReference(e.target.value)} className={inp} placeholder="8N7A2K9QX1" />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-medium">Note</label>
-              <input value={note} onChange={(e) => setNote(e.target.value)} className={inp} placeholder="Optional" />
-            </div>
-          </div>
-
-          <div className="mt-3 flex justify-end">
+        <div className="flex justify-end">
+          {selected?.kind === "manual" ? (
             <button
+              type="button"
               disabled={busy}
+              onClick={(e) => void submitManual(e as unknown as React.FormEvent)}
               className="btn-brand inline-flex items-center gap-1.5 rounded-md px-4 py-2 text-xs font-semibold disabled:opacity-50"
             >
               {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />} Submit deposit
             </button>
-          </div>
-        </form>
-      )}
+          ) : (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void payOnline()}
+              className="btn-brand inline-flex items-center gap-1.5 rounded-md px-4 py-2 text-xs font-semibold disabled:opacity-50"
+            >
+              {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Zap className="h-3.5 w-3.5" />} Pay now
+            </button>
+          )}
+        </div>
+      </div>
 
       {requests.length > 0 && (
         <div className="rounded-xl border">
