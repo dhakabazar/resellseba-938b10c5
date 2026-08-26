@@ -837,10 +837,7 @@ function OrdersPage() {
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
                           <div className="truncate text-sm font-semibold">{o.order_number}</div>
-                          <div className="text-[10px] font-medium text-primary uppercase">
-                            {shipments.find((s: any) => s.order_id === o.id)?.provider || "Manual"} 
-                            {shipments.find((s: any) => s.order_id === o.id)?.consignment_id && ` #${shipments.find((s: any) => s.order_id === o.id)?.consignment_id}`}
-                          </div>
+
 
                           <div className="text-[11px] text-muted-foreground">
                             {new Date(o.created_at).toLocaleString([], {
