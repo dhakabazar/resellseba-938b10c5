@@ -53,14 +53,10 @@ export const cfgString = (config: PaymentConfigRow["config"], key: string): stri
 export const cfgBool = (config: PaymentConfigRow["config"], key: string): boolean => Boolean(config?.[key]);
 
 /**
- * Manual methods a reseller may use to pay the security deposit.
- * One global switch (Advanced settings → `depositPayEnabled`) decides this for
- * every card at once; when it is on, every ACTIVE manual method qualifies.
+ * Active manual methods a reseller may use to pay the security deposit.
+ * Every active manual method qualifies — no separate toggle needed.
  */
 export async function fetchDepositMethods(): Promise<PaymentConfigRow[]> {
-  const { fetchAdvancedSettings } = await import("@/lib/advanced-settings");
-  const settings = await fetchAdvancedSettings();
-  if (!settings.depositPayEnabled) return [];
   const { data } = await supabase
     .from("payment_configs")
     .select("id,method,label,mode,is_active,instructions,config")
