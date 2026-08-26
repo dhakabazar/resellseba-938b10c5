@@ -193,10 +193,8 @@ function PayoutsPage() {
             <MiniStat label="Frozen" value={deposit.frozenAmount} />
           </div>
 
-          <ul className="mb-3 space-y-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-[11px] leading-relaxed text-amber-700 dark:text-amber-300">
-            <li>• {depositTexts.howToDeposit}</li>
-            <li>• {depositTexts.withdrawWarning}</li>
-          </ul>
+
+
 
           <div className="mb-4">
             <DepositPayPanel resellerId={rid} due={deposit.due} onSubmitted={load} />
