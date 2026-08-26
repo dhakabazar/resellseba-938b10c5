@@ -48,18 +48,19 @@ export function DepositRequestsAdmin({ onChanged }: { onChanged?: () => void }) 
 
   async function review(row: Row, approve: boolean) {
     const ok = await confirmAction({
-      title: approve ? "Approve deposit" : "Reject deposit",
+      title: approve ? "Approve deposit" : "Reject & delete",
       description: approve
         ? `${bdt(row.amount)} will be added to ${row.resellers?.business_name ?? "this reseller"}'s deposit balance.`
-        : `This ${bdt(row.amount)} submission will be marked rejected. No balance change.`,
-      confirmText: approve ? "Approve" : "Reject",
+        : `This ${bdt(row.amount)} submission will be removed everywhere. No balance change.`,
+      confirmText: approve ? "Approve" : "Reject & delete",
     });
     if (!ok) return;
     setBusyId(row.id);
     const { error } = await supabase.rpc("deposit_request_review", { _id: row.id, _approve: approve });
     setBusyId(null);
     if (error) return toast.error(error.message);
-    toast.success(approve ? "Deposit approved" : "Submission rejected");
+    toast.success(approve ? "Deposit approved" : "Submission deleted");
+
     void load();
     onChanged?.();
   }
