@@ -363,6 +363,28 @@ function ResellersPage() {
         description="Monitor and manage all storefront applications, email verifications, and partner status."
       />
 
+      <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border bg-muted/30 px-3 py-2 text-xs">
+        <span className="font-medium">New applications:</span>
+        <span
+          className={
+            "rounded-full px-2 py-0.5 font-medium " +
+            (autoApprove ? "bg-success/15 text-success" : "bg-warning/20 text-warning-foreground")
+          }
+        >
+          {autoApprove ? "Auto activated" : "Manual approval"}
+        </span>
+        <span className="text-muted-foreground">
+          {autoApprove
+            ? "Resellers get panel access as soon as they sign up. You can still deactivate or reject anyone."
+            : "Resellers stay pending until you approve them from the 3-dot menu."}
+        </span>
+        <Link to="/admin/advanced" className="ml-auto font-medium text-primary hover:underline">
+          Change in Advanced settings
+        </Link>
+      </div>
+
+
+
       <div className="mb-3 flex flex-wrap gap-2">
         {FILTERS.map((f) => (
           <button
