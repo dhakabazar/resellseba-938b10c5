@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { getMyReseller } from "@/lib/app-data";
 import { useDepositStatus } from "@/lib/deposit";
 import { DepositNotice } from "@/components/deposit-notice";
+import { AdminNoticePopup } from "@/components/admin-notice-popup";
+import { useLiveNotices } from "@/lib/admin-notices";
 import { useAuth } from "@/lib/use-auth";
 import { PageHeader, StatCard } from "@/components/ui-kit";
 import { DateRangeBar, DEFAULT_DATE_RANGE, resolveRange, type DateRangeState } from "@/components/date-range-filter";
@@ -71,6 +73,7 @@ function ResellerDashboard() {
   const [commissions, setCommissions] = useState<CommissionRow[]>([]);
   const [lifetime, setLifetime] = useState({ delivered: 0, pendingPayout: 0, paidOut: 0, available: 0 });
   const { status: deposit } = useDepositStatus(rid);
+  const { notices: adminNotices, dismiss: dismissNotice } = useLiveNotices(user?.id, rid);
 
   const uid = user?.id;
 
@@ -247,6 +250,8 @@ function ResellerDashboard() {
       />
 
       <DepositNotice status={deposit} place="dashboard" />
+
+      <AdminNoticePopup notices={adminNotices} onDismiss={dismissNotice} />
 
       <section className="mb-6">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
