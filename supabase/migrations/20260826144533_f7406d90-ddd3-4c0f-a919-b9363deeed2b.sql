@@ -1,0 +1,1 @@
+CREATE POLICY "deposit_requests_reseller_update_pending" ON public.deposit_requests FOR UPDATE TO authenticated USING (reseller_id = current_reseller_id() AND status = 'pending') WITH CHECK (reseller_id = current_reseller_id() AND status = 'pending' AND amount > 0);
