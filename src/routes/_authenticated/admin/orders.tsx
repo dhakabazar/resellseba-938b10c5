@@ -45,7 +45,7 @@ import { OrderSettleModal } from "@/components/OrderSettleModal";
 import { ShipmentBookingModal } from "@/components/ShipmentBookingModal";
 import { toast } from "sonner";
 import { OrderNotes } from "@/components/order-notes";
-import { LastUpdateCell, OrderNotesModal, useOrderMeta } from "@/components/order-last-update";
+import { LastUpdateCell, OrderNotePreview, OrderNotesModal, useOrderMeta } from "@/components/order-last-update";
 import { CourierTimeline, type CourierEvent } from "@/components/CourierTimeline";
 import { bookSteadfast } from "@/lib/couriers.functions";
 import { OrderTabs } from "@/components/OrderTabs";
