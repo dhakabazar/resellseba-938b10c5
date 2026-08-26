@@ -58,11 +58,11 @@ export function OrderTabs({
           type="button"
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
-          className="flex h-10 w-full items-center justify-between gap-2 rounded-md border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+          className={`flex h-10 w-full items-center justify-between gap-2 rounded-md border px-3 text-sm outline-none focus:ring-2 focus:ring-ring ${highlight ? tabTint(tab) : "bg-background"}`}
         >
           <span className="min-w-0 truncate font-medium">
             {active?.label ?? "Orders"}
-            <span className="ml-1.5 text-xs text-muted-foreground">{count(tab)}</span>
+            <span className="ml-1.5 text-xs opacity-70">{count(tab)}</span>
           </span>
           <ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
         </button>
