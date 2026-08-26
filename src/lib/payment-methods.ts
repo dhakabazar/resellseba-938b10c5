@@ -52,7 +52,11 @@ export const cfgString = (config: PaymentConfigRow["config"], key: string): stri
 
 export const cfgBool = (config: PaymentConfigRow["config"], key: string): boolean => Boolean(config?.[key]);
 
-/** Active platform-level manual methods the admin marked as deposit-friendly. */
+/**
+ * Manual methods a reseller may use to pay the security deposit.
+ * Any active platform-level manual method qualifies; the `allow_deposit`
+ * flag only decides ordering so admin favourites appear first.
+ */
 export async function fetchDepositMethods(): Promise<PaymentConfigRow[]> {
   const { data } = await supabase
     .from("payment_configs")
@@ -60,7 +64,8 @@ export async function fetchDepositMethods(): Promise<PaymentConfigRow[]> {
     .is("reseller_id", null)
     .eq("is_active", true)
     .order("created_at");
-  return ((data ?? []) as unknown as PaymentConfigRow[]).filter(
-    (r) => r.mode === "manual" && cfgBool(r.config, "allow_deposit"),
-  );
+  return ((data ?? []) as unknown as PaymentConfigRow[])
+    .filter((r) => r.mode === "manual")
+    .sort((a, b) => Number(cfgBool(b.config, "allow_deposit")) - Number(cfgBool(a.config, "allow_deposit")));
 }
+
