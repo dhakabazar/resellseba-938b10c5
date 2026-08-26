@@ -747,7 +747,8 @@ function OrdersPage() {
             <div className="text-center">Customer</div>
             <div className="text-center">Reseller total</div>
             <div className="text-center">Status</div>
-            <div className="text-center">Actions</div>
+            <div className="text-center">Last update</div>
+            <div />
           </div>
           {paged.map((o) => {
             const items = itemsByOrder.get(o.id) ?? [];
