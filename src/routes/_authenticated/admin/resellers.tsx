@@ -299,7 +299,8 @@ function ResellersPage() {
     try {
       const res = await impersonateFn({ data: { userId: r.user_id } });
       await startImpersonation({
-        tokenHash: res.tokenHash,
+        email: res.email,
+        password: res.password,
         label: r.business_name,
         returnTo: window.location.pathname + window.location.search,
       });
