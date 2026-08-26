@@ -214,8 +214,8 @@ export function ResellerProfile({
           <Stat label="Frozen" value={money(Number(r.frozen_amount ?? 0))} tone="muted" {...payoutsLink()} />
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
-          {r.deposit_required &&
-            (depositDue > 0 ? (
+          {depositActive ? (
+            depositDue > 0 ? (
               <span className="inline-flex items-center gap-1 rounded-full bg-destructive/15 px-2 py-0.5 text-[11px] font-medium text-destructive">
                 <AlertTriangle className="h-3 w-3" /> Deposit due {money(depositDue)}
               </span>
@@ -223,7 +223,12 @@ export function ResellerProfile({
               <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-2 py-0.5 text-[11px] font-medium text-success">
                 <ShieldCheck className="h-3 w-3" /> Deposit complete
               </span>
-            ))}
+            )
+          ) : (
+            <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+              <ShieldCheck className="h-3 w-3" /> No security deposit required
+            </span>
+          )}
           {Number(r.frozen_amount ?? 0) > 0 && (
             <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
               <Lock className="h-3 w-3" /> {money(Number(r.frozen_amount))} frozen — not withdrawable
