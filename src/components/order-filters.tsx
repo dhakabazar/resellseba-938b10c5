@@ -22,7 +22,9 @@ export type OrderFilterState = {
   datePreset: DatePreset;
   from: string;
   to: string;
-  sort: "newest" | "oldest" | "high" | "low";
+  sort: "newest" | "oldest" | "updated" | "high" | "low";
+  area: string;
+  courier: string;
   perPage: number;
 };
 
@@ -33,8 +35,25 @@ export const DEFAULT_ORDER_FILTERS: OrderFilterState = {
   from: "",
   to: "",
   sort: "newest",
+  area: "",
+  courier: "",
   perPage: 20,
 };
+
+export const AREA_FILTER_OPTIONS: { value: string; label: string }[] = [
+  { value: "", label: "All areas" },
+  { value: "inside_dhaka", label: "Inside Dhaka" },
+  { value: "sub_dhaka", label: "Sub Dhaka" },
+  { value: "outside_dhaka", label: "Outside Dhaka" },
+];
+
+export const COURIER_FILTER_OPTIONS: { value: string; label: string }[] = [
+  { value: "", label: "All couriers" },
+  { value: "steadfast", label: "Steadfast" },
+  { value: "pathao", label: "Pathao" },
+  { value: "carrybee", label: "Carrybee" },
+  { value: "none", label: "Not booked" },
+];
 
 export const DATE_PRESET_OPTIONS: { value: DatePreset; label: string }[] = [
   { value: "today", label: "Today" },
