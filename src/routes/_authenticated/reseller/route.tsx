@@ -177,6 +177,7 @@ function ResellerLayout() {
         ) : null
       }
     >
+      <ImpersonationBanner />
       <Outlet />
     </AppShell>
   );
