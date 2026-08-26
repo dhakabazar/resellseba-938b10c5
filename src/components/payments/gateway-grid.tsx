@@ -145,14 +145,14 @@ export function GatewayGrid({ onCountChange }: { onCountChange?: (active: number
               <div className="flex items-start gap-3">
                 <span
                   className={
-                    "grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-lg border bg-background p-1 " +
+                    "grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-lg border bg-background p-1.5 " +
                     (row.is_active ? "border-primary/30" : "border-border")
                   }
                 >
                   {paymentLogo(spec.provider) ? (
-                    <PaymentLogo method={spec.provider} size={32} alt={`${spec.label} logo`} />
+                    <PaymentLogo method={spec.provider} size={44} alt={`${spec.label} logo`} />
                   ) : (
-                    <Zap className="h-4 w-4 text-muted-foreground" />
+                    <Zap className="h-5 w-5 text-muted-foreground" />
                   )}
                 </span>
                 <div className="min-w-0 flex-1">

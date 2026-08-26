@@ -262,11 +262,11 @@ function ResellerPaymentsPage() {
 
 function Logo({ method }: { method: string }) {
   return (
-    <span className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-lg border bg-background p-1">
+    <span className="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-lg border bg-background p-1.5">
       {paymentLogo(method) ? (
-        <PaymentLogo method={method} size={32} alt={`${methodLabel(method)} logo`} />
+        <PaymentLogo method={method} size={44} alt={`${methodLabel(method)} logo`} />
       ) : (
-        <Wallet className="h-4 w-4 text-muted-foreground" />
+        <Wallet className="h-5 w-5 text-muted-foreground" />
       )}
     </span>
   );
