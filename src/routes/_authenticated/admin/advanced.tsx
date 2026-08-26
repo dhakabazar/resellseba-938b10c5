@@ -10,7 +10,7 @@ import {
   clearAdvancedSettingsCache,
   type AdvancedSettings,
 } from "@/lib/advanced-settings";
-import { Loader2, Save, Package, ShieldCheck, Mail, Smartphone, Info, Boxes, Truck } from "lucide-react";
+import { Loader2, Save, Package, ShieldCheck, Mail, Smartphone, Info, Boxes, Truck, UserCheck } from "lucide-react";
 import {
   DELIVERY_AREAS,
   deliverySettingsSummary,
