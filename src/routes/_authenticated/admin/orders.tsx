@@ -557,7 +557,7 @@ function AdminOrdersPage() {
                 key={o.id}
                 className={`overflow-hidden rounded-xl border bg-card shadow-sm transition-all hover:shadow-md hover:border-primary/40 ${marked.includes(o.id) ? "border-primary ring-1 ring-primary/30" : ""}`}
               >
-                <div className="hidden grid-cols-[36px_minmax(66px,0.6fr)_minmax(120px,0.9fr)_minmax(110px,0.9fr)_minmax(120px,1fr)_96px_104px_130px_50px] items-center gap-1 border-b bg-muted/30 px-4 py-3 text-sm md:grid">
+                <div className="hidden grid-cols-[36px_minmax(66px,0.6fr)_minmax(120px,0.9fr)_minmax(110px,0.9fr)_minmax(120px,1fr)_96px_104px_130px_50px] items-start gap-2 border-b bg-muted/30 px-4 py-3 text-sm md:grid">
                   <div className="flex flex-col items-center gap-1.5">
                     <input
                       type="checkbox"
