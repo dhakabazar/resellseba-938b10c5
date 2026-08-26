@@ -367,17 +367,21 @@ function ResellersPage() {
 
 
   /** Manual mobile verification (no OTP) — admin vouches for the number. */
-  async function setPhoneVerified(r: Reseller, verified: boolean) {
+  async function setPhoneVerified(r: Reseller, verified: boolean): Promise<boolean> {
     const { error } = await supabase.rpc("admin_set_phone_verified", {
       _user_id: r.user_id,
       _verified: verified,
     });
-    if (error) return toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      return false;
+    }
     setProfileVerify((prev) => ({
       ...prev,
       [r.user_id]: { email: Boolean(prev[r.user_id]?.email), phone: verified },
     }));
     toast.success(verified ? "Mobile marked verified" : "Mobile verification cleared");
+    return true;
   }
 
 
