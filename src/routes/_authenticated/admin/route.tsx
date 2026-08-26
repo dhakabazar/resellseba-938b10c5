@@ -25,6 +25,7 @@ import {
   ShoppingBag,
   Store,
   Rocket,
+  GraduationCap,
   Cog,
   LineChart,
   PieChart,
