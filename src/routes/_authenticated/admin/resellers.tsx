@@ -19,6 +19,7 @@ import {
   ExternalLink,
   Copy,
   MailCheck,
+  SmartphoneNfc,
   
   ShieldCheck,
   AlertTriangle,
@@ -363,6 +364,28 @@ function ResellersPage() {
     }
   }
 
+
+
+  /** Manual mobile verification (no OTP) — admin vouches for the number. */
+  async function setPhoneVerified(r: Reseller, verified: boolean): Promise<boolean> {
+    const { error } = await supabase.rpc("admin_set_phone_verified", {
+      _user_id: r.user_id,
+      _verified: verified,
+    });
+    if (error) {
+      toast.error(error.message);
+      return false;
+    }
+    setProfileVerify((prev) => ({
+      ...prev,
+      [r.user_id]: { email: Boolean(prev[r.user_id]?.email), phone: verified },
+    }));
+    toast.success(verified ? "Mobile marked verified" : "Mobile verification cleared");
+    return true;
+  }
+
+
+
   async function remove(r: Reseller) {
     if (
       !(await confirmAction({
@@ -609,6 +632,17 @@ function ResellersPage() {
                           <MailCheck className="mr-2 h-4 w-4" /> Confirm email
                         </DropdownMenuItem>
                       )}
+                      <DropdownMenuItem onClick={() => void setPhoneVerified(r, !vf.phoneVerified)}>
+                        {vf.phoneVerified ? (
+                          <>
+                            <SmartphoneNfc className="mr-2 h-4 w-4" /> Clear mobile verification
+                          </>
+                        ) : (
+                          <>
+                            <SmartphoneNfc className="mr-2 h-4 w-4" /> Mark mobile verified
+                          </>
+                        )}
+                      </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={() => setProfileFor(r)}>
                         <UserCircle className="mr-2 h-4 w-4" /> View profile
@@ -683,6 +717,7 @@ function ResellersPage() {
           agents={agents}
           email={emailStatus[editing.user_id]}
           verify={verifyFor(editing)}
+          onSetPhoneVerified={(v) => setPhoneVerified(editing, v)}
           others={items.filter((i) => i.id !== editing.id && i.status === "active")}
           onClose={() => setEditing(null)}
           onSaved={() => {
@@ -788,6 +823,7 @@ function EditModal({
   others,
   email,
   verify,
+  onSetPhoneVerified,
   onClose,
   onSaved,
 }: {
@@ -796,12 +832,15 @@ function EditModal({
   verify?: VerifyFlags;
   agents: Array<{ id: string; display_name: string }>;
   others: Reseller[];
+  onSetPhoneVerified: (verified: boolean) => Promise<boolean>;
   onClose: () => void;
   onSaved: () => void;
 }) {
   const [businessName, setBusinessName] = useState(reseller.business_name);
   const [code, setCode] = useState(reseller.code);
   const [phone, setPhone] = useState(reseller.contact_phone ?? "");
+  const [phoneVerified, setPhoneVerified] = useState(Boolean(verify?.phoneVerified));
+  const [phoneBusy, setPhoneBusy] = useState(false);
   const [address, setAddress] = useState(reseller.address ?? "");
   const [commission, setCommission] = useState(String(reseller.commission_rate));
   const [leaderId, setLeaderId] = useState(reseller.leader_id ?? "");
@@ -894,7 +933,22 @@ function EditModal({
         {verify && (
           <div className="rounded-lg border bg-muted/30 p-3">
             <div className="mb-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">Verification</div>
-            <VerifyBadges {...verify} />
+            <VerifyBadges {...verify} phoneVerified={phoneVerified} />
+            <button
+              type="button"
+              disabled={phoneBusy}
+              onClick={async () => {
+                setPhoneBusy(true);
+                const next = !phoneVerified;
+                const ok = await onSetPhoneVerified(next);
+                if (ok) setPhoneVerified(next);
+                setPhoneBusy(false);
+              }}
+              className="mt-2 inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-[11px] font-medium hover:bg-muted disabled:opacity-60"
+            >
+              <SmartphoneNfc className="h-3.5 w-3.5" />
+              {phoneVerified ? "Clear mobile verification" : "Mark mobile verified"}
+            </button>
           </div>
         )}
         <div>
