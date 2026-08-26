@@ -491,6 +491,93 @@ export type Database = {
           },
         ]
       }
+      deposit_requests: {
+        Row: {
+          admin_note: string | null
+          amount: number
+          created_at: string
+          deposit_id: string | null
+          id: string
+          method: string | null
+          note: string | null
+          payment_config_id: string | null
+          reference: string | null
+          reseller_id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          admin_note?: string | null
+          amount: number
+          created_at?: string
+          deposit_id?: string | null
+          id?: string
+          method?: string | null
+          note?: string | null
+          payment_config_id?: string | null
+          reference?: string | null
+          reseller_id: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_note?: string | null
+          amount?: number
+          created_at?: string
+          deposit_id?: string | null
+          id?: string
+          method?: string | null
+          note?: string | null
+          payment_config_id?: string | null
+          reference?: string | null
+          reseller_id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deposit_requests_deposit_id_fkey"
+            columns: ["deposit_id"]
+            isOneToOne: false
+            referencedRelation: "reseller_deposits"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deposit_requests_payment_config_id_fkey"
+            columns: ["payment_config_id"]
+            isOneToOne: false
+            referencedRelation: "payment_configs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deposit_requests_payment_config_id_fkey"
+            columns: ["payment_config_id"]
+            isOneToOne: false
+            referencedRelation: "public_payment_methods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deposit_requests_reseller_id_fkey"
+            columns: ["reseller_id"]
+            isOneToOne: false
+            referencedRelation: "public_stores"
+            referencedColumns: ["reseller_id"]
+          },
+          {
+            foreignKeyName: "deposit_requests_reseller_id_fkey"
+            columns: ["reseller_id"]
+            isOneToOne: false
+            referencedRelation: "resellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       expenses: {
         Row: {
           amount: number
@@ -1452,6 +1539,7 @@ export type Database = {
           id: string
           method: string | null
           note: string | null
+          payment_config_id: string | null
           reference: string | null
           reseller_id: string
         }
@@ -1462,6 +1550,7 @@ export type Database = {
           id?: string
           method?: string | null
           note?: string | null
+          payment_config_id?: string | null
           reference?: string | null
           reseller_id: string
         }
@@ -1472,10 +1561,25 @@ export type Database = {
           id?: string
           method?: string | null
           note?: string | null
+          payment_config_id?: string | null
           reference?: string | null
           reseller_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "reseller_deposits_payment_config_id_fkey"
+            columns: ["payment_config_id"]
+            isOneToOne: false
+            referencedRelation: "payment_configs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reseller_deposits_payment_config_id_fkey"
+            columns: ["payment_config_id"]
+            isOneToOne: false
+            referencedRelation: "public_payment_methods"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "reseller_deposits_reseller_id_fkey"
             columns: ["reseller_id"]
@@ -2552,6 +2656,31 @@ export type Database = {
       delivery_rule_charge: {
         Args: { _area: string; _product_id: string }
         Returns: number
+      }
+      deposit_request_review: {
+        Args: { _admin_note?: string; _approve: boolean; _id: string }
+        Returns: {
+          admin_note: string | null
+          amount: number
+          created_at: string
+          deposit_id: string | null
+          id: string
+          method: string | null
+          note: string | null
+          payment_config_id: string | null
+          reference: string | null
+          reseller_id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "deposit_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       generate_product_code: { Args: never; Returns: string }
       generate_reseller_code: { Args: { _seed: string }; Returns: string }
