@@ -17,6 +17,16 @@ const KEYS = [
 
 type Key = (typeof KEYS)[number];
 
+type RuntimeEnv = Partial<Record<Key, string>>;
+
+const RUNTIME_ENV = Symbol.for("resellseba.runtime-env");
+
+function runtimeStore(): RuntimeEnv {
+  const root = globalThis as typeof globalThis & { [RUNTIME_ENV]?: RuntimeEnv };
+  root[RUNTIME_ENV] ??= {};
+  return root[RUNTIME_ENV];
+}
+
 // Accepted aliases per key, checked in order.
 const ALIASES: Record<Key, string[]> = {
   SUPABASE_URL: ["SUPABASE_URL", "VITE_SUPABASE_URL", "PUBLIC_SUPABASE_URL"],
@@ -58,34 +68,43 @@ function pick(
 }
 
 export function bridgeWorkerEnv(env: unknown): void {
-  const target = (globalThis as any).process?.env as
-    | Record<string, string>
-    | undefined;
-  if (!target) return;
-
   const binding = (env ?? {}) as Record<string, unknown>;
+  const target = (globalThis as any).process?.env as Record<string, string> | undefined;
   // Build-time inlined public values (never secrets) act as the last fallback.
   const buildTime = import.meta.env as unknown as Record<string, unknown>;
-  const sources = [binding, target as Record<string, unknown>, buildTime];
+  const sources = [binding, target as Record<string, unknown> | undefined, buildTime];
+  const store = runtimeStore();
 
   for (const key of KEYS) {
     const value = pick(sources, ALIASES[key]);
-    if (value) target[key] = value;
+    if (!value) continue;
+    store[key] = value;
+    if (target) target[key] = value;
   }
 
   // Derive whichever half of the URL/project-ref pair is missing.
-  if (!target.SUPABASE_URL && target.SUPABASE_PROJECT_ID) {
-    target.SUPABASE_URL = `https://${target.SUPABASE_PROJECT_ID}.supabase.co`;
+  if (!store.SUPABASE_URL && store.SUPABASE_PROJECT_ID) {
+    store.SUPABASE_URL = `https://${store.SUPABASE_PROJECT_ID}.supabase.co`;
   }
-  if (!target.SUPABASE_PROJECT_ID && target.SUPABASE_URL) {
+  if (!store.SUPABASE_PROJECT_ID && store.SUPABASE_URL) {
     try {
-      const host = new URL(target.SUPABASE_URL).hostname;
+      const host = new URL(store.SUPABASE_URL).hostname;
       const ref = host.split(".")[0];
-      if (ref) target.SUPABASE_PROJECT_ID = ref;
+      if (ref) store.SUPABASE_PROJECT_ID = ref;
     } catch {
       // ignore malformed URL
     }
   }
 
-  for (const key of KEYS) if (!target[key]) delete target[key];
+  if (target) {
+    for (const key of KEYS) {
+      if (store[key]) target[key] = store[key];
+      else delete target[key];
+    }
+  }
+}
+
+/** Read a managed binding without relying on Cloudflare's process.env shim. */
+export function getRuntimeEnv(name: Key): string | undefined {
+  return runtimeStore()[name] ?? (globalThis as any).process?.env?.[name];
 }
