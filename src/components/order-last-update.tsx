@@ -102,21 +102,21 @@ export function OrderNotePreview({
     >
       {meta?.noteBody ? (
         <>
-          <span className="mt-0.5 block line-clamp-2 text-[10px] leading-snug text-foreground/80">
+          <span className="mt-0.5 block line-clamp-4 text-[10px] leading-snug text-foreground/80">
             {meta.noteBody}
           </span>
-          {meta.noteAt && (
-            <span className="mt-0.5 block text-[9px] tabular-nums text-muted-foreground/70">
-              {new Date(meta.noteAt).toLocaleString([], {
-                day: "2-digit",
-                month: "short",
-                year: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </span>
-          )}
-          <span className="flex items-center gap-1 text-[9px] text-muted-foreground/80">
+          <span className="mt-0.5 flex flex-wrap items-center gap-x-1 text-[9px] text-muted-foreground/80">
+            {meta.noteAt && (
+              <span className="tabular-nums text-muted-foreground/70">
+                {new Date(meta.noteAt).toLocaleString([], {
+                  day: "2-digit",
+                  month: "short",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </span>
+            )}
             <span>by</span>
             {meta.noteName ? (
               <span className="font-semibold text-foreground/70">{meta.noteName}</span>
