@@ -11,6 +11,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Toaster } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useBrandingTheme } from "@/lib/branding";
+import { GlobalConfirmHost } from "@/lib/confirm";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -168,6 +169,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <Outlet />
       <Toaster position="top-right" richColors />
+      <GlobalConfirmHost />
     </QueryClientProvider>
   );
 }

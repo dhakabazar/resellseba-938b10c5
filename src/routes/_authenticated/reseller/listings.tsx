@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { CopyButton, ImageDownloadTools, stripHtml } from "@/components/store/reseller-tools";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { ProductCodeChip } from "@/components/product-code";
+import { confirmAction } from "@/lib/confirm";
 
 type L = {
   id: string;
@@ -67,7 +68,7 @@ function ListingsPage() {
   }, [user]);
 
   async function remove(id: string) {
-    if (!confirm("Remove this listing?")) return;
+    if (!(await confirmAction({ title: "Remove listing", description: "Remove this listing from your store?", confirmText: "Remove" }))) return;
     await supabase.from("reseller_listings").delete().eq("id", id);
     toast.success("Removed");
     load();

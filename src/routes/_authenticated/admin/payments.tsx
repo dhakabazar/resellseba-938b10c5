@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/ui-kit";
 import { Loader2, Plus, Trash2, Wallet } from "lucide-react";
 import { toast } from "sonner";
+import { confirmAction } from "@/lib/confirm";
 
 export const Route = createFileRoute("/_authenticated/admin/payments")({
   component: PaymentsPage,
@@ -75,7 +76,7 @@ function PaymentsPage() {
   }
 
   async function remove(id: string) {
-    if (!confirm("Delete this method?")) return;
+    if (!(await confirmAction({ title: "Delete payment method", description: "This payment method will be permanently deleted.", confirmText: "Delete" }))) return;
     await supabase.from("payment_configs").delete().eq("id", id);
     load();
   }

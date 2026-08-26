@@ -10,6 +10,7 @@ import { uniqueProductSlug, slugify } from "@/lib/slug";
 import { Hint } from "@/components/Hint";
 import { AdminProductCalc } from "@/components/price-breakdown";
 import { areaLabel, deliverySettingsSummary, globalDelivery, resolveDelivery, resolvedCharge, type ProductDeliveryMode } from "@/lib/delivery";
+import { confirmAction } from "@/lib/confirm";
 
 export const Route = createFileRoute("/_authenticated/admin/products/$id/edit")({
   component: EditProduct,
@@ -213,7 +214,7 @@ function EditProduct() {
   }
 
   async function remove() {
-    if (!confirm(`Delete "${name}"? All related listings may also be removed.`)) return;
+    if (!(await confirmAction({ title: "Delete product", description: "All related listings may also be removed.", detail: name, confirmText: "Delete" }))) return;
     const { error } = await supabase.from("products").delete().eq("id", id);
     if (error) return toast.error(error.message);
     toast.success("Deleted");
