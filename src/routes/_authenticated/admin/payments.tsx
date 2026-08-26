@@ -301,12 +301,9 @@ function MethodCard({
     <div className="surface-card overflow-hidden">
       <div className="flex flex-wrap items-center gap-3 border-b bg-muted/30 px-4 py-3">
         <span
-          className={
-            "grid h-9 w-9 shrink-0 place-items-center rounded-lg " +
-            (isManual ? "bg-amber-500/15 text-amber-600 dark:text-amber-400" : "bg-primary/10 text-primary")
-          }
+          className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400"
         >
-          {isManual ? <Banknote className="h-4 w-4" /> : <CreditCard className="h-4 w-4" />}
+          <Banknote className="h-4 w-4" />
         </span>
         <div className="min-w-[180px] flex-1">
           <input
@@ -315,10 +312,10 @@ function MethodCard({
             className="w-full rounded-md border bg-background px-2 py-1 text-sm font-semibold"
           />
           <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">
-            <span>{isManual ? methodLabel(row.method) : gatewaySpec(row.method, cfgString(config, "gateway")).label}</span>
+            <span>{methodLabel(row.method)}</span>
             <span>·</span>
-            <span>{isManual ? "manual" : "api"}</span>
-            {isManual && cfgBool(config, "allow_deposit") && (
+            <span>manual</span>
+            {cfgBool(config, "allow_deposit") && (
               <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-1.5 py-0.5 normal-case text-success">
                 <ShieldCheck className="h-3 w-3" /> Deposit enabled
               </span>
