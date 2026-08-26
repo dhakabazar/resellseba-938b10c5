@@ -53,22 +53,29 @@ export function ListingPricingModal({
   const [price, setPrice] = useState("");
   const [busy, setBusy] = useState(false);
 
+  const [settingsTick, setSettingsTick] = useState(0);
+
   useEffect(() => {
     let alive = true;
     (async () => {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("reseller_listings")
-        .select(
-          "id,selling_price,is_active,products(id,name,product_code,og_image_url,reseller_price,packaging_cost,suggested_price,stock,brand_id,category_id,delivery_mode,delivery_flat,delivery_inside,delivery_outside,delivery_sub)",
-        )
-        .eq("id", id)
-        .maybeSingle();
+      // Make sure the platform delivery rule is loaded before we price anything.
+      const [{ data, error }] = await Promise.all([
+        supabase
+          .from("reseller_listings")
+          .select(
+            "id,selling_price,is_active,products(id,name,product_code,og_image_url,reseller_price,packaging_cost,suggested_price,stock,brand_id,category_id,delivery_mode,delivery_flat,delivery_inside,delivery_outside,delivery_sub)",
+          )
+          .eq("id", id)
+          .maybeSingle(),
+        getGlobalSettings().catch(() => null),
+      ]);
       if (!alive) return;
       if (error) toast.error(error.message);
       const l = (data ?? null) as PricingListing | null;
       setRow(l);
       setPrice(l ? String(l.selling_price) : "");
+      setSettingsTick((t) => t + 1);
       setLoading(false);
     })();
     return () => {
