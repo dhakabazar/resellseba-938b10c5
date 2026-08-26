@@ -157,6 +157,15 @@ export function DepositPayPanel({
         </div>
       )}
 
+      {(methods.length > 0 || gateways.length > 0) && (
+        <p className="text-[11px] text-muted-foreground">
+          {mode === "manual"
+            ? "Manual payment: send the money, submit the TrxID — the deposit is credited after admin verification."
+            : "Automatic gateway: the deposit is credited the moment the gateway confirms your payment. No approval needed."}
+        </p>
+      )}
+
+
       {mode === "online" ? (
         gateways.length === 0 ? (
           <div className="rounded-lg border border-dashed p-6 text-center text-xs text-muted-foreground">
