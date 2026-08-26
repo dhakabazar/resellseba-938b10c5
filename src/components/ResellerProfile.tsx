@@ -162,16 +162,15 @@ export function ResellerProfile({
                 {resellerStatusLabel(r.status)}
               </span>
 
-              {r.email_verified != null &&
-                (r.email_verified ? (
-                  <span className="rounded-full bg-success/15 px-2 py-0.5 text-[10px] font-medium text-success">
-                    Email verified
-                  </span>
-                ) : (
-                  <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-400">
-                    Email unverified
-                  </span>
-                ))}
+              {r.email_verified != null && (
+                <VerifyBadges
+                  emailVerified={Boolean(r.email_verified)}
+                  phoneVerified={Boolean(r.phone_verified)}
+                  hasPhone={Boolean(r.contact_phone)}
+                  requireEmail={Boolean(r.require_email_verify)}
+                  requirePhone={Boolean(r.require_phone_verify)}
+                />
+              )}
             </div>
 
             <div className="mt-2 flex flex-wrap items-center gap-2">
