@@ -133,8 +133,10 @@ type FilterableOrder = {
   customer_name: string;
   customer_phone: string;
   address_line?: string | null;
+  area?: string | null;
   total: number | string;
   created_at: string;
+  updated_at?: string;
   reseller_id?: string | null;
   resellers?: { business_name: string; code: string } | null;
 };
@@ -159,6 +161,7 @@ export function applyOrderFilters<T extends FilterableOrder>(rows: T[], f: Order
       if (!hay.includes(q)) return false;
     }
     if (f.reseller && o.reseller_id !== f.reseller) return false;
+    if (f.area && o.area !== f.area) return false;
     const ts = new Date(o.created_at).getTime();
     if (fromTs != null && ts < fromTs) return false;
     if (toTs != null && ts > toTs) return false;
@@ -170,8 +173,38 @@ export function applyOrderFilters<T extends FilterableOrder>(rows: T[], f: Order
       const diff = Number(a.total) - Number(b.total);
       return f.sort === "high" ? -diff : diff;
     }
+    if (f.sort === "updated") {
+      const au = new Date(a.updated_at ?? a.created_at).getTime();
+      const bu = new Date(b.updated_at ?? b.created_at).getTime();
+      return bu - au;
+    }
     const diff = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
     return f.sort === "oldest" ? diff : -diff;
+  });
+}
+
+/** Keep only orders whose shipment matches the courier filter (or has none). */
+export function filterByCourier<T extends { id: string }>(
+  rows: T[],
+  courier: string,
+  shipments: { order_id: string; provider?: string | null }[],
+): T[] {
+  if (!courier) return rows;
+  const byOrder = new Map<string, Set<string>>();
+  const noneIds = new Set<string>(rows.map((r) => r.id));
+  for (const s of shipments) {
+    if (!s.provider) continue;
+    let set = byOrder.get(s.order_id);
+    if (!set) {
+      set = new Set();
+      byOrder.set(s.order_id, set);
+    }
+    set.add(s.provider);
+    noneIds.delete(s.order_id);
+  }
+  return rows.filter((o) => {
+    if (courier === "none") return !byOrder.has(o.id);
+    return byOrder.get(o.id)?.has(courier) ?? false;
   });
 }
 
