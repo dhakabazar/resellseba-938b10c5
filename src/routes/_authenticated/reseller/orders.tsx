@@ -837,10 +837,7 @@ function OrdersPage() {
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
                           <div className="truncate text-sm font-semibold">{o.order_number}</div>
-                          <div className="text-[10px] font-medium text-primary uppercase">
-                            {shipments.find((s: any) => s.order_id === o.id)?.provider || "Manual"} 
-                            {shipments.find((s: any) => s.order_id === o.id)?.consignment_id && ` #${shipments.find((s: any) => s.order_id === o.id)?.consignment_id}`}
-                          </div>
+
 
                           <div className="text-[11px] text-muted-foreground">
                             {new Date(o.created_at).toLocaleString([], {
@@ -936,39 +933,36 @@ function OrdersPage() {
                            <span className="text-[10px] italic text-muted-foreground/60">Not booked yet</span>
                          )}
 
-                        <div className="truncate text-muted-foreground">
-                          {[o.area, o.city].filter(Boolean).join(", ") || "—"}
-                        </div>
                       </div>
-
 
                       <div className="mt-2 truncate text-xs text-muted-foreground">
                         {itemText}
                         {qty > 0 && <span className="ml-1">({qty} pcs)</span>}
                       </div>
 
-                      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
-                        <span className="font-semibold">৳{Number(o.total).toFixed(0)}</span>
-                        <span className="text-muted-foreground">
-                          Delivery ৳{Number(o.shipping_cost).toFixed(0)}
-                        </span>
-                        <span className={"font-medium " + (orderProfit(o) < 0 ? "text-destructive" : "text-success")}>
-                          {orderProfit(o) < 0 ? "Loss" : "Profit"} ৳{orderProfit(o).toFixed(0)}
-                        </span>
-                        {orderShortfall(o) > 0 && (
-                          <span className="font-medium text-destructive">
-                            Not received ৳{orderShortfall(o).toFixed(0)}
-                          </span>
-                        )}
+                      <div className="mt-2">
+                        <ResellerTotalCell order={o as any} />
+                      </div>
+
+                      <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px]">
                         <span className="rounded border px-1.5 py-0.5 uppercase text-muted-foreground">
                           {o.payment_method}
                         </span>
                         {o.status === "forwarded" && o.forwarded_to_admin && (
                           <span className="rounded bg-success/10 px-1.5 py-0.5 text-success">Sent to admin</span>
                         )}
-
-
                       </div>
+
+                      <div className="mt-2 border-t pt-2">
+                        <LastUpdateCell
+                          meta={orderMeta[o.id]}
+                          fallbackAt={o.created_at}
+                          onOpenNotes={() =>
+                            setNotesModal({ orderId: o.id, orderNumber: o.order_number, canWrite: resellerCanAct(o.status) })
+                          }
+                        />
+                      </div>
+
 
                       <div className="mt-3 flex flex-wrap items-center gap-2">{actions}</div>
                     </div>

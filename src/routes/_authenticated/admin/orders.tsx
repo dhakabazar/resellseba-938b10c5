@@ -544,7 +544,7 @@ function AdminOrdersPage() {
         
         {loading ? <div className="py-12 text-center"><Loader2 className="mx-auto h-6 w-6 animate-spin" /></div> : (
           <div className="space-y-3">
-            <div className="hidden grid-cols-[44px_minmax(66px,0.6fr)_minmax(110px,0.9fr)_minmax(110px,0.9fr)_minmax(110px,1fr)_96px_104px_124px_minmax(112px,0.9fr)] items-start gap-2 rounded-lg border bg-muted/40 px-4 py-2.5 text-xs font-medium text-muted-foreground md:grid">
+            <div className="hidden grid-cols-[44px_minmax(66px,0.6fr)_minmax(110px,0.9fr)_minmax(110px,0.9fr)_minmax(110px,1fr)_96px_104px_124px_minmax(112px,0.9fr)] items-start gap-2 rounded-lg border bg-muted/40 px-4 py-2.5 text-xs font-medium text-muted-foreground lg:grid">
                <div className="flex justify-center">
                  <input
                    type="checkbox"
@@ -560,7 +560,182 @@ function AdminOrdersPage() {
                 key={o.id}
                 className={`overflow-hidden rounded-xl border bg-card shadow-sm transition-all hover:shadow-md hover:border-primary/40 ${marked.includes(o.id) ? "border-primary ring-1 ring-primary/30" : ""}`}
               >
-                <div className="hidden grid-cols-[44px_minmax(66px,0.6fr)_minmax(110px,0.9fr)_minmax(110px,0.9fr)_minmax(110px,1fr)_96px_104px_124px_minmax(112px,0.9fr)] items-start gap-2 border-b bg-muted/30 px-4 py-3 text-sm md:grid">
+                {/* Mobile / tablet card */}
+                <div className="p-3 lg:hidden">
+                  <div className="flex items-start gap-2.5">
+                    <div className="flex shrink-0 flex-col items-center gap-1.5 pt-0.5">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 accent-[hsl(var(--primary))]"
+                        checked={marked.includes(o.id)}
+                        onChange={(e) => setMarked(prev => e.target.checked ? [...prev, o.id] : prev.filter(x => x !== o.id))}
+                      />
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button className="rounded-md border p-0.5 transition-colors hover:bg-accent">
+                            <MoreVertical className="h-4 w-4" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start">
+                          <DropdownMenuItem onClick={() => setSelected(o)}>
+                            <Eye className="mr-2 h-4 w-4" /> View Details
+                          </DropdownMenuItem>
+                          {canEdit && (
+                            <DropdownMenuItem onClick={() => setEditId(o.id)}>
+                              <Pencil className="mr-2 h-4 w-4" /> Edit Order
+                            </DropdownMenuItem>
+                          )}
+                          {canStatus && (
+                            <DropdownMenuItem
+                              onClick={() =>
+                                o.status === "pending_partial"
+                                  ? setSettleModal({ orderId: o.id, status: "partial_full", pickKind: true })
+                                  : setStatusModal({ open: true, orderId: o.id, currentStatus: o.status })
+                              }
+                            >
+                              <Settings2 className="mr-2 h-4 w-4" /> Change Status
+                            </DropdownMenuItem>
+                          )}
+                          {canShip && !shipments.some(s => s.order_id === o.id && (s.consignment_id || s.tracking_id)) && (
+                            <DropdownMenuItem onClick={() => setBookingModal({ open: true, orderIds: [o.id] })}>
+                              <Truck className="mr-2 h-4 w-4" /> {activeProviderLabel ? `Book ${activeProviderLabel}` : "Book Courier"}
+                            </DropdownMenuItem>
+                          )}
+                          {canDelete && (
+                            <DropdownMenuItem
+                              onClick={() => removeOrder(o.id)}
+                              className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" /> Delete Order
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                      <button
+                        onClick={() => setExpandedOrders(prev => prev.includes(o.id) ? prev.filter(id => id !== o.id) : [...prev, o.id])}
+                        className="rounded-full p-1 transition-colors hover:bg-muted"
+                      >
+                        <ChevronDown className={`h-4 w-4 transition-transform ${expandedOrders.includes(o.id) ? "rotate-180" : ""}`} />
+                      </button>
+                    </div>
+
+                    <div className="min-w-0 flex-1 space-y-2">
+                      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
+                        <div className="min-w-0">
+                          <div className="truncate text-sm font-semibold">{o.order_number}</div>
+                          <div className="text-[11px] text-muted-foreground tabular-nums">
+                            {new Date(o.created_at).toLocaleString([], { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                          </div>
+                        </div>
+                        {canStatus ? (
+                          <button
+                            type="button"
+                            title="Change status"
+                            onClick={() =>
+                              o.status === "pending_partial"
+                                ? setSettleModal({ orderId: o.id, status: "partial_full", pickKind: true })
+                                : setStatusModal({ open: true, orderId: o.id, currentStatus: o.status })
+                            }
+                            className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] transition-shadow hover:ring-2 hover:ring-primary/30 ${orderStatusTone(o.status)}`}
+                          >
+                            {orderStatusLabel(o.status)}
+                          </button>
+                        ) : (
+                          <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] ${orderStatusTone(o.status)}`}>{orderStatusLabel(o.status)}</span>
+                        )}
+                      </div>
+
+                      <div className="space-y-0.5 text-xs">
+                        <div className="flex min-w-0 items-center gap-1.5 font-medium">
+                          <span className="truncate">{o.customer_name}</span>
+                          <a href={`tel:${o.customer_phone}`} className="shrink-0 text-primary hover:text-primary/80">
+                            <Phone className="h-3.5 w-3.5" />
+                          </a>
+                          <button
+                            onClick={() => { navigator.clipboard.writeText(o.customer_phone); toast.success("Copied"); }}
+                            className="shrink-0 text-muted-foreground hover:text-foreground"
+                          >
+                            <Copy className="h-3 w-3" />
+                          </button>
+                        </div>
+                        <div className="text-[11px] leading-snug text-muted-foreground">
+                          <span className="line-clamp-2">
+                            {o.address_line}
+                            {o.area ? `, ${o.area.replace("_", " ")}` : ""}
+                            {o.city ? `, ${o.city}` : ""}
+                          </span>
+                        </div>
+                        <div className="flex min-w-0 flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
+                          <span className="font-medium text-foreground/80">{o.resellers?.business_name || "Direct"}</span>
+                          {o.resellers?.agents?.display_name && (
+                            <span className="inline-flex items-center gap-1"><UserCircle className="h-3 w-3" />{o.resellers.agents.display_name}</span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="text-[11px] text-muted-foreground">
+                        {(() => {
+                          const its = stripItems(o.id);
+                          if (its.length === 0) return <span className="italic opacity-70">No items</span>;
+                          const qty = its.reduce((s, i) => s + Number(i.quantity || 0), 0);
+                          return (
+                            <span className="line-clamp-2">
+                              {its.map((i) => `${i.product_name} ×${i.quantity}`).join(", ")}
+                              {qty > 0 && <span className="ml-1 opacity-70">({qty} pcs)</span>}
+                            </span>
+                          );
+                        })()}
+                      </div>
+
+                      {shipments.filter(s => s.order_id === o.id).length > 0 ? (
+                        <div className="flex flex-wrap gap-1">
+                          {shipments.filter(s => s.order_id === o.id).map(s => {
+                            const url = courierTrackingUrl(s.provider, s, (o as any).customer_phone);
+                            return (
+                              <div key={s.id} className="inline-flex items-center gap-1 rounded bg-muted/50 px-1.5 py-0.5 text-[10px] font-medium ring-1 ring-inset ring-muted-foreground/10">
+                                <CourierLogo provider={s.provider} size={12} />
+                                {url ? (
+                                  <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-0.5 font-bold text-primary hover:underline">
+                                    {courierLabel(s.provider)}<ExternalLink className="h-2 w-2" />
+                                  </a>
+                                ) : (
+                                  <span className="font-bold text-primary">{courierLabel(s.provider)}</span>
+                                )}
+                                {s.consignment_id && (
+                                  <>
+                                    <span className="text-muted-foreground">#{s.consignment_id}</span>
+                                    <button onClick={() => { navigator.clipboard.writeText(s.consignment_id || ""); toast.success("Booking ID copied"); }} className="opacity-50 hover:opacity-100">
+                                      <Copy className="h-2.5 w-2.5" />
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <span className="text-[10px] italic text-muted-foreground/60">Not booked yet</span>
+                      )}
+
+                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                        <ResellerTotalCell order={o as any} />
+                        <AdminTotalCell order={o as any} buyingCost={buyingCostFor(o.id, o.status)} />
+                      </div>
+
+                      <div className="border-t pt-2">
+                        <LastUpdateCell
+                          meta={orderMeta[o.id]}
+                          fallbackAt={o.created_at}
+                          onOpenNotes={() => setNotesModal({ orderId: o.id, orderNumber: o.order_number })}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Desktop row */}
+                <div className="hidden grid-cols-[44px_minmax(66px,0.6fr)_minmax(110px,0.9fr)_minmax(110px,0.9fr)_minmax(110px,1fr)_96px_104px_124px_minmax(112px,0.9fr)] items-start gap-2 border-b bg-muted/30 px-4 py-3 text-sm lg:grid">
+
                   <div className="flex flex-col items-center gap-1.5">
                     <input
                       type="checkbox"
