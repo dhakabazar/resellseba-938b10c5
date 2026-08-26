@@ -454,7 +454,8 @@ function epaysebaHeaders(c: GatewayCreds) {
 
 const epayseba: Adapter = {
   async create(c, order, urls) {
-    if (!c.api_key || !c.merchant_id) fail("ePaySeba API key / brand key missing");
+    if (!c.api_key || !c.api_secret || !c.merchant_id)
+      fail("ePaySeba API key, secret key, and brand key are required");
     const r = await withTimeout((signal) =>
       jsonPost(
         `${c.base}/api/payment/create`,
@@ -509,7 +510,8 @@ const epayseba: Adapter = {
     };
   },
   async test(c) {
-    if (!c.api_key || !c.merchant_id) fail("ePaySeba API key / brand key missing");
+    if (!c.api_key || !c.api_secret || !c.merchant_id)
+      fail("ePaySeba API key, secret key, and brand key are required");
     const r = await withTimeout((signal) =>
       jsonPost(
         `${c.base}/api/payment/verify`,
