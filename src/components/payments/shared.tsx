@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Check, Copy, Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 
 /** Small shared primitives for the payment settings screens. */
 
