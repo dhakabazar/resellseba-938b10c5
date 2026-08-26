@@ -56,6 +56,7 @@ import {
   OrderFilterBar,
   applyOrderFilters,
   filterByCourier,
+  activeFilterCount,
   DEFAULT_ORDER_FILTERS,
   type OrderFilterState,
 } from "@/components/order-filters";
