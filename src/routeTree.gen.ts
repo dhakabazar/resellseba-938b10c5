@@ -80,6 +80,7 @@ import { Route as SCodePSlugRouteImport } from './routes/s.$code.p.$slug'
 import { Route as SCodeCSlugRouteImport } from './routes/s.$code.c.$slug'
 import { Route as ApiPublicSitemapCodeRouteImport } from './routes/api/public/sitemap.$code'
 import { Route as ApiPublicPaymentSslcommerzIpnRouteImport } from './routes/api/public/payment.sslcommerz-ipn'
+import { Route as ApiPublicPaymentEpaysebaWebhookRouteImport } from './routes/api/public/payment.epayseba-webhook'
 import { Route as ApiPublicPaymentBkashCallbackRouteImport } from './routes/api/public/payment.bkash-callback'
 import { Route as ApiPublicCourierSteadfastRouteImport } from './routes/api/public/courier.steadfast'
 import { Route as ApiPublicCourierPathaoRouteImport } from './routes/api/public/courier.pathao'
@@ -491,6 +492,12 @@ const ApiPublicPaymentSslcommerzIpnRoute =
     path: '/api/public/payment/sslcommerz-ipn',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicPaymentEpaysebaWebhookRoute =
+  ApiPublicPaymentEpaysebaWebhookRouteImport.update({
+    id: '/api/public/payment/epayseba-webhook',
+    path: '/api/public/payment/epayseba-webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicPaymentBkashCallbackRoute =
   ApiPublicPaymentBkashCallbackRouteImport.update({
     id: '/api/public/payment/bkash-callback',
@@ -610,6 +617,7 @@ export interface FileRoutesByFullPath {
   '/api/public/courier/pathao': typeof ApiPublicCourierPathaoRoute
   '/api/public/courier/steadfast': typeof ApiPublicCourierSteadfastRoute
   '/api/public/payment/bkash-callback': typeof ApiPublicPaymentBkashCallbackRoute
+  '/api/public/payment/epayseba-webhook': typeof ApiPublicPaymentEpaysebaWebhookRoute
   '/api/public/payment/sslcommerz-ipn': typeof ApiPublicPaymentSslcommerzIpnRoute
   '/api/public/sitemap/$code': typeof ApiPublicSitemapCodeRoute
   '/s/$code/c/$slug': typeof SCodeCSlugRoute
@@ -686,6 +694,7 @@ export interface FileRoutesByTo {
   '/api/public/courier/pathao': typeof ApiPublicCourierPathaoRoute
   '/api/public/courier/steadfast': typeof ApiPublicCourierSteadfastRoute
   '/api/public/payment/bkash-callback': typeof ApiPublicPaymentBkashCallbackRoute
+  '/api/public/payment/epayseba-webhook': typeof ApiPublicPaymentEpaysebaWebhookRoute
   '/api/public/payment/sslcommerz-ipn': typeof ApiPublicPaymentSslcommerzIpnRoute
   '/api/public/sitemap/$code': typeof ApiPublicSitemapCodeRoute
   '/s/$code/c/$slug': typeof SCodeCSlugRoute
@@ -768,6 +777,7 @@ export interface FileRoutesById {
   '/api/public/courier/pathao': typeof ApiPublicCourierPathaoRoute
   '/api/public/courier/steadfast': typeof ApiPublicCourierSteadfastRoute
   '/api/public/payment/bkash-callback': typeof ApiPublicPaymentBkashCallbackRoute
+  '/api/public/payment/epayseba-webhook': typeof ApiPublicPaymentEpaysebaWebhookRoute
   '/api/public/payment/sslcommerz-ipn': typeof ApiPublicPaymentSslcommerzIpnRoute
   '/api/public/sitemap/$code': typeof ApiPublicSitemapCodeRoute
   '/s/$code/c/$slug': typeof SCodeCSlugRoute
@@ -850,6 +860,7 @@ export interface FileRouteTypes {
     | '/api/public/courier/pathao'
     | '/api/public/courier/steadfast'
     | '/api/public/payment/bkash-callback'
+    | '/api/public/payment/epayseba-webhook'
     | '/api/public/payment/sslcommerz-ipn'
     | '/api/public/sitemap/$code'
     | '/s/$code/c/$slug'
@@ -926,6 +937,7 @@ export interface FileRouteTypes {
     | '/api/public/courier/pathao'
     | '/api/public/courier/steadfast'
     | '/api/public/payment/bkash-callback'
+    | '/api/public/payment/epayseba-webhook'
     | '/api/public/payment/sslcommerz-ipn'
     | '/api/public/sitemap/$code'
     | '/s/$code/c/$slug'
@@ -1007,6 +1019,7 @@ export interface FileRouteTypes {
     | '/api/public/courier/pathao'
     | '/api/public/courier/steadfast'
     | '/api/public/payment/bkash-callback'
+    | '/api/public/payment/epayseba-webhook'
     | '/api/public/payment/sslcommerz-ipn'
     | '/api/public/sitemap/$code'
     | '/s/$code/c/$slug'
@@ -1031,6 +1044,7 @@ export interface RootRouteChildren {
   ApiPublicCourierPathaoRoute: typeof ApiPublicCourierPathaoRoute
   ApiPublicCourierSteadfastRoute: typeof ApiPublicCourierSteadfastRoute
   ApiPublicPaymentBkashCallbackRoute: typeof ApiPublicPaymentBkashCallbackRoute
+  ApiPublicPaymentEpaysebaWebhookRoute: typeof ApiPublicPaymentEpaysebaWebhookRoute
   ApiPublicPaymentSslcommerzIpnRoute: typeof ApiPublicPaymentSslcommerzIpnRoute
   ApiPublicSitemapCodeRoute: typeof ApiPublicSitemapCodeRoute
   ApiPublicPaymentProviderReturnRoute: typeof ApiPublicPaymentProviderReturnRoute
@@ -1535,6 +1549,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPaymentSslcommerzIpnRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/payment/epayseba-webhook': {
+      id: '/api/public/payment/epayseba-webhook'
+      path: '/api/public/payment/epayseba-webhook'
+      fullPath: '/api/public/payment/epayseba-webhook'
+      preLoaderRoute: typeof ApiPublicPaymentEpaysebaWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/payment/bkash-callback': {
       id: '/api/public/payment/bkash-callback'
       path: '/api/public/payment/bkash-callback'
@@ -1803,6 +1824,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicCourierPathaoRoute: ApiPublicCourierPathaoRoute,
   ApiPublicCourierSteadfastRoute: ApiPublicCourierSteadfastRoute,
   ApiPublicPaymentBkashCallbackRoute: ApiPublicPaymentBkashCallbackRoute,
+  ApiPublicPaymentEpaysebaWebhookRoute: ApiPublicPaymentEpaysebaWebhookRoute,
   ApiPublicPaymentSslcommerzIpnRoute: ApiPublicPaymentSslcommerzIpnRoute,
   ApiPublicSitemapCodeRoute: ApiPublicSitemapCodeRoute,
   ApiPublicPaymentProviderReturnRoute: ApiPublicPaymentProviderReturnRoute,
