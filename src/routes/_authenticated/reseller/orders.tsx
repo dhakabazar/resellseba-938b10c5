@@ -6,7 +6,7 @@ import { getMyReseller } from "@/lib/app-data";
 import { productDeliveryCharge, deliveryLabel } from "@/lib/delivery";
 import { addressError, nameError, normalizePhone, phoneError, sanitizeName } from "@/lib/checkout-validate";
 import { OrderNotes } from "@/components/order-notes";
-import { LastUpdateCell, OrderNotesModal, useOrderMeta } from "@/components/order-last-update";
+import { LastUpdateCell, OrderNotePreview, OrderNotesModal, useOrderMeta } from "@/components/order-last-update";
 import { useAuth } from "@/lib/use-auth";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
 import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
@@ -825,153 +825,164 @@ function OrdersPage() {
                 {/* Mobile card */}
 
 
-                <div className="p-3 md:hidden">
-                  <div className="flex items-start gap-2.5">
-                    <div className="flex shrink-0 flex-col items-center gap-1.5 pt-0.5">
-                      <input
-                        type="checkbox"
-                        className="h-4 w-4 accent-[hsl(var(--primary))]"
-                        checked={isMarked}
-                        onChange={(e) => mark(e.target.checked)}
-                      />
-                      {actions}
-                      <button
-                        onClick={() => setExpandedOrders(prev => prev.includes(o.id) ? prev.filter(id => id !== o.id) : [...prev, o.id])}
-                        className="rounded-full p-1 transition-colors hover:bg-muted"
-                      >
-                        <ChevronDown className={`h-4 w-4 transition-transform ${expandedOrders.includes(o.id) ? "rotate-180" : ""}`} />
-                      </button>
+                <div className="space-y-2.5 p-3 md:hidden">
+                  {/* Header: checkbox + order + status + actions + chevron */}
+                  <div className="flex items-start gap-2">
+                    <input
+                      type="checkbox"
+                      className="mt-1 h-4 w-4 shrink-0 accent-[hsl(var(--primary))]"
+                      checked={isMarked}
+                      onChange={(e) => mark(e.target.checked)}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-bold tracking-tight">#{o.order_number}</div>
+                      <div className="text-[10px] uppercase tracking-wide text-muted-foreground tabular-nums">
+                        {new Date(o.created_at).toLocaleString([], {
+                          day: "2-digit",
+                          month: "short",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </div>
                     </div>
-                    <div className="min-w-0 flex-1 space-y-2.5">
-                      {/* Header */}
-                      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
-                        <div className="min-w-0">
-                          <div className="truncate text-sm font-bold tracking-tight">#{o.order_number}</div>
-                          <div className="text-[10px] uppercase tracking-wide text-muted-foreground tabular-nums">
-                            {new Date(o.created_at).toLocaleString([], {
-                              day: "2-digit",
-                              month: "short",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </div>
-                        </div>
-                        {(() => {
-                          const isBooked = shipments.some(s => s.order_id === o.id && (s.consignment_id || s.tracking_id));
-                          const canChange = !isBooked && resellerCanAct(o.status) && nextStatuses(o.status, "reseller").length > 0;
-                          const cls = `shrink-0 rounded-full px-2 py-0.5 text-[11px] capitalize ${orderStatusTone(o.status)}`;
-                          return canChange ? (
-                            <button
-                              type="button"
-                              title="Change status"
-                              onClick={() => setStatusModal({ open: true, orderId: o.id, currentStatus: o.status })}
-                              className={`${cls} transition-shadow hover:ring-2 hover:ring-primary/30`}
-                            >
-                              {orderStatusLabel(o.status)}
-                            </button>
-                          ) : (
-                            <span className={cls}>{orderStatusLabel(o.status)}</span>
-                          );
-                        })()}
-                      </div>
+                    {(() => {
+                      const isBooked = shipments.some(s => s.order_id === o.id && (s.consignment_id || s.tracking_id));
+                      const canChange = !isBooked && resellerCanAct(o.status) && nextStatuses(o.status, "reseller").length > 0;
+                      const cls = `shrink-0 rounded-full px-2 py-0.5 text-[11px] capitalize ${orderStatusTone(o.status)}`;
+                      return canChange ? (
+                        <button
+                          type="button"
+                          title="Change status"
+                          onClick={() => setStatusModal({ open: true, orderId: o.id, currentStatus: o.status })}
+                          className={`${cls} transition-shadow hover:ring-2 hover:ring-primary/30`}
+                        >
+                          {orderStatusLabel(o.status)}
+                        </button>
+                      ) : (
+                        <span className={cls}>{orderStatusLabel(o.status)}</span>
+                      );
+                    })()}
+                    <div className="shrink-0">{actions}</div>
+                    <button
+                      onClick={() => setExpandedOrders(prev => prev.includes(o.id) ? prev.filter(id => id !== o.id) : [...prev, o.id])}
+                      className="shrink-0 rounded-full p-1 transition-colors hover:bg-muted"
+                    >
+                      <ChevronDown className={`h-4 w-4 transition-transform ${expandedOrders.includes(o.id) ? "rotate-180" : ""}`} />
+                    </button>
+                  </div>
 
-                      {/* Customer + payment */}
-                      <div className="grid grid-cols-1 gap-2 rounded-lg bg-muted/30 p-2 sm:grid-cols-2">
-                        <div className="min-w-0 space-y-0.5">
-                          <div className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70">Customer</div>
-                          <div className="flex min-w-0 items-center gap-1.5 text-xs font-medium">
-                            <span className="truncate">{o.customer_name}</span>
-                            <a href={`tel:${o.customer_phone}`} className="shrink-0 text-primary transition-colors hover:text-primary/80">
-                              <Phone className="h-3.5 w-3.5" />
-                            </a>
-                            <button
-                              onClick={() => { navigator.clipboard.writeText(o.customer_phone); toast.success("Phone number copied"); }}
-                              className="shrink-0 text-muted-foreground transition-colors hover:text-foreground"
-                            >
-                              <Copy className="h-3 w-3" />
-                            </button>
-                          </div>
-                          <div className="text-[11px] tabular-nums text-muted-foreground">{o.customer_phone}</div>
-                          <div className="line-clamp-2 text-[11px] leading-snug text-muted-foreground">
-                            {o.address_line}
-                            {o.area ? `, ${o.area.replace("_", " ")}` : ""}
-                            {o.city ? `, ${o.city}` : ""}
-                          </div>
-                        </div>
-                        <div className="min-w-0 space-y-1 border-t pt-2 sm:border-l sm:border-t-0 sm:pl-2 sm:pt-0">
-                          <div className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70">Payment</div>
-                          <div className="flex flex-wrap items-center gap-1 text-[11px]">
-                            <span className="rounded border px-1.5 py-0.5 uppercase text-muted-foreground">{o.payment_method}</span>
-                            {o.status === "forwarded" && o.forwarded_to_admin && (
-                              <span className="rounded bg-success/10 px-1.5 py-0.5 text-success">Sent to admin</span>
-                            )}
-                          </div>
-                        </div>
+                  {/* Customer + Payment — always 2 columns */}
+                  <div className="grid grid-cols-2 gap-2 rounded-lg bg-muted/30 p-2">
+                    <div className="min-w-0 space-y-0.5">
+                      <div className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70">Customer</div>
+                      <div className="flex min-w-0 items-center gap-1.5 text-xs font-medium">
+                        <span className="truncate">{o.customer_name}</span>
+                        <a href={`tel:${o.customer_phone}`} className="shrink-0 text-primary transition-colors hover:text-primary/80">
+                          <Phone className="h-3.5 w-3.5" />
+                        </a>
+                        <button
+                          onClick={() => { navigator.clipboard.writeText(o.customer_phone); toast.success("Phone number copied"); }}
+                          className="shrink-0 text-muted-foreground transition-colors hover:text-foreground"
+                        >
+                          <Copy className="h-3 w-3" />
+                        </button>
                       </div>
-
-                      {/* Products */}
-                      <div className="space-y-0.5">
-                        <div className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70">Products</div>
-                        <div className="line-clamp-3 text-[11px] text-muted-foreground">
-                          {itemText}
-                          {qty > 0 && <span className="ml-1 opacity-70">({qty} pcs)</span>}
-                        </div>
+                      <div className="text-[11px] tabular-nums text-muted-foreground">{o.customer_phone}</div>
+                      <div className="line-clamp-2 text-[11px] leading-snug text-muted-foreground">
+                        {o.address_line}
+                        {o.area ? `, ${o.area.replace("_", " ")}` : ""}
+                        {o.city ? `, ${o.city}` : ""}
                       </div>
-
-                      {/* Courier */}
-                      <div className="space-y-0.5">
-                        <div className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70">Courier</div>
-                        {shipments.some(s => s.order_id === o.id) ? (
-                          <div className="flex flex-wrap gap-1">
-                            {shipments.filter(s => s.order_id === o.id).map(s => (
-                              <div key={s.id} className="inline-flex items-center gap-1 rounded bg-muted/50 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground ring-1 ring-inset ring-muted-foreground/10">
-                                <CourierLogo provider={s.provider} size={12} />
-                                {(() => {
-                                  const u = courierTrackingUrl(s.provider, s, (o as any).customer_phone);
-                                  return u ? (
-                                    <a href={u} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} title="Track on courier website" className="inline-flex items-center gap-0.5 font-bold text-primary hover:underline">
-                                      {courierLabel(s.provider)}
-                                      <ExternalLink className="h-2 w-2" />
-                                    </a>
-                                  ) : (
-                                    <span>{courierLabel(s.provider)}</span>
-                                  );
-                                })()}
-                                {s.consignment_id && (
-                                  <>
-                                    <span className="opacity-70">#{s.consignment_id}</span>
-                                    <button
-                                      onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(s.consignment_id || ""); toast.success("Booking ID copied"); }}
-                                      className="ml-0.5 opacity-50 hover:opacity-100"
-                                    >
-                                      <Copy className="h-2.5 w-2.5" />
-                                    </button>
-                                  </>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <span className="text-[10px] italic text-muted-foreground/60">Not booked yet</span>
+                    </div>
+                    <div className="min-w-0 space-y-1 border-l pl-2">
+                      <div className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70">Payment</div>
+                      <div className="flex flex-wrap items-center gap-1 text-[11px]">
+                        <span className="rounded border px-1.5 py-0.5 uppercase text-muted-foreground">{o.payment_method}</span>
+                        {o.status === "forwarded" && o.forwarded_to_admin && (
+                          <span className="rounded bg-success/10 px-1.5 py-0.5 text-success">Sent to admin</span>
                         )}
-                      </div>
-
-                      {/* Money */}
-                      <ResellerTotalCell order={o as any} />
-
-                      <div className="space-y-0.5 border-t pt-2">
-                        <div className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70">Last update</div>
-                        <LastUpdateCell
-                          meta={orderMeta[o.id]}
-                          fallbackAt={o.created_at}
-                          onOpenNotes={() =>
-                            setNotesModal({ orderId: o.id, orderNumber: o.order_number, canWrite: resellerCanAct(o.status) })
-                          }
-                        />
                       </div>
                     </div>
                   </div>
+
+                  {/* Products — with images + more option (same as desktop) */}
+                  <div className="space-y-0.5">
+                    <div className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70">Products</div>
+                    <OrderProductCell
+                      items={stripItems(o.id)}
+                      expanded={expandedOrders.includes(o.id)}
+                      onZoom={setZoomImage}
+                      onToggle={() => setExpandedOrders(prev => prev.includes(o.id) ? prev.filter(id => id !== o.id) : [...prev, o.id])}
+                    />
+                  </div>
+
+                  {/* Courier + Last update — 2 columns */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="min-w-0 space-y-0.5">
+                      <div className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70">Courier</div>
+                      {shipments.some(s => s.order_id === o.id) ? (
+                        <div className="flex flex-wrap gap-1">
+                          {shipments.filter(s => s.order_id === o.id).map(s => (
+                            <div key={s.id} className="inline-flex max-w-full items-center gap-1 rounded bg-muted/50 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground ring-1 ring-inset ring-muted-foreground/10">
+                              <CourierLogo provider={s.provider} size={12} />
+                              {(() => {
+                                const u = courierTrackingUrl(s.provider, s, (o as any).customer_phone);
+                                return u ? (
+                                  <a href={u} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} title="Track on courier website" className="inline-flex items-center gap-0.5 font-bold text-primary hover:underline">
+                                    {courierLabel(s.provider)}
+                                    <ExternalLink className="h-2 w-2" />
+                                  </a>
+                                ) : (
+                                  <span>{courierLabel(s.provider)}</span>
+                                );
+                              })()}
+                              {s.consignment_id && (
+                                <>
+                                  <span className="truncate opacity-70">#{s.consignment_id}</span>
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(s.consignment_id || ""); toast.success("Booking ID copied"); }}
+                                    className="ml-0.5 shrink-0 opacity-50 hover:opacity-100"
+                                  >
+                                    <Copy className="h-2.5 w-2.5" />
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-[10px] italic text-muted-foreground/60">Not booked yet</span>
+                      )}
+                    </div>
+                    <div className="min-w-0 space-y-0.5 border-l pl-2">
+                      <div className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70">Last update</div>
+                      <LastUpdateCell
+                        meta={orderMeta[o.id]}
+                        fallbackAt={o.created_at}
+                        hideNote
+                        onOpenNotes={() =>
+                          setNotesModal({ orderId: o.id, orderNumber: o.order_number, canWrite: resellerCanAct(o.status) })
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  {/* Money */}
+                  <ResellerTotalCell order={o as any} />
+
+                  {/* Note — full width */}
+                  <div className="space-y-0.5 border-t pt-2">
+                    <div className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70">Note</div>
+                    <OrderNotePreview
+                      meta={orderMeta[o.id]}
+                      align="left"
+                      onOpenNotes={() =>
+                        setNotesModal({ orderId: o.id, orderNumber: o.order_number, canWrite: resellerCanAct(o.status) })
+                      }
+                    />
+                  </div>
                 </div>
+
 
                 {/* Desktop row */}
                 <div className="hidden grid-cols-[38px_minmax(60px,0.7fr)_minmax(120px,1fr)_minmax(100px,1fr)_minmax(100px,1.2fr)_124px_minmax(112px,0.9fr)] items-start gap-2 border-b bg-muted/30 px-4 py-3 text-sm md:grid">

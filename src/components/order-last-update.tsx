@@ -82,15 +82,71 @@ function roleTag(role: string | null) {
   return "";
 }
 
+export function OrderNotePreview({
+  meta,
+  onOpenNotes,
+  className = "",
+  align = "center",
+}: {
+  meta?: OrderMeta;
+  onOpenNotes: () => void;
+  className?: string;
+  align?: "center" | "left";
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onOpenNotes}
+      title="View / add notes"
+      className={`w-full rounded-md border border-dashed bg-background px-1.5 py-1 text-left transition hover:border-primary/50 hover:bg-primary/5 ${className}`}
+    >
+      {meta?.noteBody ? (
+        <>
+          <span className="mt-0.5 block line-clamp-2 text-[10px] leading-snug text-foreground/80">
+            {meta.noteBody}
+          </span>
+          {meta.noteAt && (
+            <span className="mt-0.5 block text-[9px] tabular-nums text-muted-foreground/70">
+              {new Date(meta.noteAt).toLocaleString([], {
+                day: "2-digit",
+                month: "short",
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </span>
+          )}
+          <span className="flex items-center gap-1 text-[9px] text-muted-foreground/80">
+            <span>by</span>
+            {meta.noteName ? (
+              <span className="font-semibold text-foreground/70">{meta.noteName}</span>
+            ) : (
+              <span className="font-medium">{roleTag(meta.noteRole) || "Unknown"}</span>
+            )}
+            {meta.noteCount > 1 && <span className="text-muted-foreground">+{meta.noteCount - 1}</span>}
+          </span>
+        </>
+      ) : (
+        <span
+          className={`flex items-center gap-1 text-[10px] text-muted-foreground ${align === "center" ? "justify-center" : ""}`}
+        >
+          <StickyNote className="h-2.5 w-2.5" /> Add note
+        </span>
+      )}
+    </button>
+  );
+}
+
 export function LastUpdateCell({
   meta,
   fallbackAt,
   onOpenNotes,
+  hideNote = false,
 }: {
   meta?: OrderMeta;
   /** Used when the order has no status history yet (order created / updated at). */
   fallbackAt?: string | null;
   onOpenNotes: () => void;
+  hideNote?: boolean;
 }) {
   const at = meta?.statusAt ?? fallbackAt ?? null;
   const d = at ? new Date(at) : null;
@@ -109,46 +165,11 @@ export function LastUpdateCell({
       ) : (
         <div className="text-[10px] italic text-muted-foreground/60">No update yet</div>
       )}
-      <button
-        type="button"
-        onClick={onOpenNotes}
-        title="View / add notes"
-        className="mt-1 w-full rounded-md border border-dashed bg-background px-1.5 py-1 text-left transition hover:border-primary/50 hover:bg-primary/5"
-      >
-        {meta?.noteBody ? (
-          <>
-            <span className="mt-0.5 block line-clamp-2 text-[10px] leading-snug text-foreground/80">
-              {meta.noteBody}
-            </span>
-            {meta.noteAt && (
-              <span className="mt-0.5 block text-[9px] tabular-nums text-muted-foreground/70">
-                {new Date(meta.noteAt).toLocaleString([], {
-                  day: "2-digit",
-                  month: "short",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </span>
-            )}
-            <span className="flex items-center gap-1 text-[9px] text-muted-foreground/80">
-              <span>by</span>
-              {meta.noteName ? (
-                <span className="font-semibold text-foreground/70">{meta.noteName}</span>
-              ) : (
-                <span className="font-medium">{roleTag(meta.noteRole) || "Unknown"}</span>
-              )}
-              {meta.noteCount > 1 && <span className="text-muted-foreground">+{meta.noteCount - 1}</span>}
-            </span>
-          </>
-        ) : (
-          <span className="flex items-center justify-center gap-1 text-[10px] text-muted-foreground">
-            <StickyNote className="h-2.5 w-2.5" /> Add note
-          </span>
-        )}
-      </button>
+      {!hideNote && <OrderNotePreview meta={meta} onOpenNotes={onOpenNotes} className="mt-1" />}
     </div>
   );
 }
+
 
 export function OrderNotesModal({
   orderId,
