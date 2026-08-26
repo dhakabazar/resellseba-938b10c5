@@ -267,7 +267,9 @@ export function OrderFilterBar({
       value.q !== "" ||
       value.reseller !== "" ||
       value.datePreset !== "lifetime" ||
-      value.sort !== "newest",
+      value.sort !== "newest" ||
+      value.area !== "" ||
+      value.courier !== "",
     [value],
   );
 
