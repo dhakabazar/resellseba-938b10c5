@@ -261,7 +261,7 @@ function BrandsPage() {
           <form
             onSubmit={saveEdit}
             onClick={(e) => e.stopPropagation()}
-            className="max-h-[90vh] w-full max-w-lg space-y-3 overflow-y-auto rounded-xl border bg-card p-5 shadow-xl"
+            className="max-h-[90vh] w-full max-w-lg space-y-3 modal-scroll rounded-xl border bg-card p-5 shadow-xl"
           >
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-bold">Edit brand</h3>

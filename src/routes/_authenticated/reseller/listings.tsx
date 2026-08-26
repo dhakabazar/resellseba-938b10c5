@@ -287,7 +287,7 @@ function ListingDetailModal({ id, onClose }: { id: string; onClose: () => void }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={onClose}>
-      <div className="w-full max-w-4xl surface-card max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+      <div className="w-full max-w-4xl surface-card max-h-[90vh] modal-scroll" onClick={e => e.stopPropagation()}>
         <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-background/80 px-6 py-4 backdrop-blur-md">
           <h3 className="text-lg font-bold">Listing Details</h3>
           <button onClick={onClose} className="rounded-full p-2 hover:bg-muted">

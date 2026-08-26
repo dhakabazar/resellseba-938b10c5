@@ -137,7 +137,7 @@ function ImagePickerModal({
           </button>
         </div>
 
-        <div className="max-h-[55vh] overflow-y-auto p-4">
+        <div className="max-h-[55vh] modal-scroll p-4">
           <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
             {images.map((u, i) => {
               const on = sel.has(i);

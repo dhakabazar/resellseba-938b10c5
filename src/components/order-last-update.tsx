@@ -218,7 +218,7 @@ export function OrderNotesModal({
             <X className="h-3.5 w-3.5" />
           </button>
         </div>
-        <div className="max-h-[70vh] overflow-y-auto p-3">
+        <div className="max-h-[70vh] modal-scroll p-3">
           <OrderNotes
             orderId={orderId}
             canWrite={canWrite}

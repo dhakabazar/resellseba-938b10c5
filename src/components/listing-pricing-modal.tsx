@@ -130,7 +130,7 @@ export function ListingPricingModal({
       onClick={onClose}
     >
       <div
-        className="surface-card max-h-[90vh] w-full max-w-lg overflow-y-auto"
+        className="surface-card max-h-[90vh] w-full max-w-lg modal-scroll"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-background/80 px-5 py-4 backdrop-blur-md">

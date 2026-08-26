@@ -55,7 +55,7 @@ export function PickListModal({
             </button>
           </div>
         </div>
-        <div className="max-h-[60vh] overflow-y-auto">
+        <div className="max-h-[60vh] modal-scroll">
           {rows.length === 0 ? (
             <div className="px-4 py-10 text-center text-sm text-muted-foreground">No products found.</div>
           ) : (
