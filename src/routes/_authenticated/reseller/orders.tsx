@@ -851,11 +851,23 @@ function OrdersPage() {
                             })}
                           </div>
                         </div>
-                        <span
-                          className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] capitalize ${orderStatusTone(o.status)}`}
-                        >
-                          {orderStatusLabel(o.status)}
-                        </span>
+                        {(() => {
+                          const isBooked = shipments.some(s => s.order_id === o.id && (s.consignment_id || s.tracking_id));
+                          const canChange = !isBooked && resellerCanAct(o.status) && nextStatuses(o.status, "reseller").length > 0;
+                          const cls = `shrink-0 rounded-full px-2 py-0.5 text-[11px] capitalize ${orderStatusTone(o.status)}`;
+                          return canChange ? (
+                            <button
+                              type="button"
+                              title="Change status"
+                              onClick={() => setStatusModal({ open: true, orderId: o.id, currentStatus: o.status })}
+                              className={`${cls} transition-shadow hover:ring-2 hover:ring-primary/30`}
+                            >
+                              {orderStatusLabel(o.status)}
+                            </button>
+                          ) : (
+                            <span className={cls}>{orderStatusLabel(o.status)}</span>
+                          );
+                        })()}
                       </div>
 
                       <div className="mt-2 space-y-0.5 text-xs">
