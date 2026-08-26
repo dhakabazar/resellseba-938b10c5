@@ -23,7 +23,7 @@ import {
 
   Bell,
   FileText,
-  ShoppingBag,
+  Handshake,
   Store,
   Rocket,
   GraduationCap,
