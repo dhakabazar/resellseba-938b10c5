@@ -4,6 +4,7 @@ import { useAuth } from "@/lib/use-auth";
 import { useVerification } from "@/lib/use-verification";
 import { supabase } from "@/integrations/supabase/client";
 import { getGlobalSettings } from "@/lib/app-data";
+import { clearImpersonation } from "@/lib/impersonation";
 import { toast } from "sonner";
 import { Loader2, Store, Mail } from "lucide-react";
 
@@ -64,10 +65,16 @@ function Onboarding() {
     
     if (isSuperAdmin || isStaff) {
       nav({ to: "/admin", replace: true });
-    } else if (status === "active" && (roles.includes("reseller") || roles.includes("leader"))) {
+    } else if (status === "active") {
       nav({ to: "/reseller", replace: true });
     }
   }, [loading, roles, permissions, status, nav]);
+
+  async function signOut() {
+    clearImpersonation();
+    await supabase.auth.signOut();
+    nav({ to: "/login", replace: true });
+  }
 
 
   async function submit(e: React.FormEvent) {
@@ -143,7 +150,7 @@ function Onboarding() {
 
             <div className="mt-8 border-t pt-6">
               <button
-                onClick={() => supabase.auth.signOut().then(() => nav({ to: "/login", replace: true }))}
+                onClick={() => void signOut()}
                 className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
               >
                 Sign out from this account
@@ -337,6 +344,16 @@ function ContactButton({ variant }: { variant: "whatsapp" | "email" }) {
             </button>
 
           </form>
+
+          <div className="mt-6 border-t pt-4 text-center">
+            <button
+              type="button"
+              onClick={() => void signOut()}
+              className="text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Sign out from this account
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -3,12 +3,10 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertPermission } from "@/lib/admin-users.server";
 
-const input = z.object({ userId: z.string().uuid() });
-
 /** Sets an easy, readable password for a reseller and returns it once to the admin. */
 export const resetResellerPassword = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => input.parse(d))
+  .inputValidator((d) => z.object({ userId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertPermission(context.supabase, context.userId, "resellers.manage");
     const { setPassword } = await import("@/lib/auth-admin.server");
@@ -24,9 +22,10 @@ export const resetResellerPassword = createServerFn({ method: "POST" })
  */
 export const impersonateReseller = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => input.parse(d))
+  .inputValidator((d) => z.object({ userId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertPermission(context.supabase, context.userId, "resellers.manage");
-    const { mintImpersonationToken } = await import("@/lib/reseller-access.server");
+    const { ensureActiveResellerRole, mintImpersonationToken } = await import("@/lib/reseller-access.server");
+    await ensureActiveResellerRole(data.userId);
     return mintImpersonationToken(data.userId);
   });

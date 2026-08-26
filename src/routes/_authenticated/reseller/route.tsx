@@ -93,7 +93,7 @@ function ResellerLayout() {
   const [approved, setApproved] = useState<boolean | null>(null);
 
   useEffect(() => {
-    if (loading || verifyLoading) return;
+    if (loading || verifyLoading || !user) return;
     if (needsVerify) {
       nav({ to: "/verify", replace: true });
       return;
@@ -102,10 +102,11 @@ function ResellerLayout() {
       nav({ to: "/admin", replace: true });
       return;
     }
-    if (!roles.includes("reseller") && !roles.includes("leader")) {
+    if (approved === null) return;
+    if (approved === false) {
       nav({ to: "/onboarding", replace: true });
     }
-  }, [loading, roles, nav, needsVerify, verifyLoading]);
+  }, [approved, loading, roles, nav, needsVerify, verifyLoading, user]);
 
   useEffect(() => {
     if (approved === false) nav({ to: "/onboarding", replace: true });
@@ -144,8 +145,8 @@ function ResellerLayout() {
   if (
     loading ||
     !user ||
-    approved !== true ||
-    (!roles.includes("reseller") && !roles.includes("leader"))
+    verifyLoading ||
+    approved !== true
   ) {
     return (
       <div className="grid min-h-screen place-items-center">
