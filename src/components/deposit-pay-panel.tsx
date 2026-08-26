@@ -118,7 +118,7 @@ export function DepositPayPanel({
     setAmount("");
     setReference("");
     setNote("");
-    toast.success("Deposit submitted — waiting for admin approval");
+    toast.success("Deposit submitted — waiting for admin verification");
     void loadRequests();
     onSubmitted?.();
   }
@@ -169,7 +169,7 @@ export function DepositPayPanel({
       {mode === "online" ? (
         gateways.length === 0 ? (
           <div className="rounded-lg border border-dashed p-6 text-center text-xs text-muted-foreground">
-            No automatic gateway is enabled yet. Please use a manual method.
+            No automatic gateway is active yet. Please use a manual method.
           </div>
         ) : (
           <div className="rounded-xl border p-4">
@@ -226,7 +226,7 @@ export function DepositPayPanel({
         )
       ) : methods.length === 0 ? (
         <div className="rounded-lg border border-dashed p-6 text-center text-xs text-muted-foreground">
-          No deposit payment method is enabled yet. Please contact support.
+          No manual payment method is active yet. Try an automatic gateway or contact support.
         </div>
       ) : (
         <form onSubmit={submit} className="rounded-xl border p-4">
@@ -332,7 +332,7 @@ export function DepositPayPanel({
 
 export function StatusChip({ status }: { status: string }) {
   const map: Record<string, { cls: string; icon: React.ReactNode; label: string }> = {
-    pending: { cls: "bg-amber-500/15 text-amber-600 dark:text-amber-400", icon: <Clock className="h-3 w-3" />, label: "Pending" },
+    pending: { cls: "bg-amber-500/15 text-amber-600 dark:text-amber-400", icon: <Clock className="h-3 w-3" />, label: "Pending verification" },
     approved: { cls: "bg-success/15 text-success", icon: <BadgeCheck className="h-3 w-3" />, label: "Approved" },
     rejected: { cls: "bg-destructive/15 text-destructive", icon: <XCircle className="h-3 w-3" />, label: "Rejected" },
   };
