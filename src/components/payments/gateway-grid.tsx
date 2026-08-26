@@ -63,7 +63,10 @@ async function persist(spec: GatewaySpec, row: Row, is_active: boolean) {
     api_key: row.api_key || null,
     api_secret: row.api_secret || null,
     merchant_id: row.merchant_id || null,
-    config: { ...(row.config ?? {}), base_url: (row.config?.base_url ?? "").trim() || null } as never,
+    config: {
+      ...(row.config ?? {}),
+      base_url: String(row.config?.base_url ?? "").trim() || null,
+    } as never,
     is_active,
     reseller_id: null,
   };
