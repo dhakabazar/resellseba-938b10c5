@@ -6,12 +6,13 @@ import { deliveryLabel } from "@/lib/delivery";
 import { useAuth } from "@/lib/use-auth";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
 import { DataToolbar, Pagination, usePaginated, type FilterDef, ActionMenu } from "@/components/data-list";
-import { Loader2, Trash2, Eye, X } from "lucide-react";
+import { Loader2, Trash2, Eye, X, Tag } from "lucide-react";
 import { toast } from "sonner";
 import { CopyButton, ImageDownloadTools, stripHtml } from "@/components/store/reseller-tools";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { ProductCodeChip } from "@/components/product-code";
 import { confirmAction } from "@/lib/confirm";
+import { ListingPricingModal } from "@/components/listing-pricing-modal";
 
 type L = {
   id: string;
