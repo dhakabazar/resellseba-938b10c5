@@ -142,6 +142,8 @@ function ResellersPage() {
   const searchParams = Route.useSearch();
   const [items, setItems] = useState<Reseller[]>([]);
   const [emailStatus, setEmailStatus] = useState<Record<string, { email: string | null; verified: boolean }>>({});
+  /** profiles.email_verified_at / phone_verified_at keyed by user_id */
+  const [profileVerify, setProfileVerify] = useState<Record<string, { email: boolean; phone: boolean }>>({});
   const [summaries, setSummaries] = useState<Record<string, Summary>>({});
   const [orderCounts, setOrderCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
