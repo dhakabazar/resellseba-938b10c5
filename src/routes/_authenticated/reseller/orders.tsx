@@ -60,7 +60,7 @@ import {
   DEFAULT_ORDER_FILTERS,
   type OrderFilterState,
 } from "@/components/order-filters";
-import { Check, Ban, Search, ListChecks, SlidersHorizontal, ChevronDown, Printer } from "lucide-react";
+import { Check, Ban, Search, ListChecks, SlidersHorizontal, ChevronDown, Printer, CheckSquare } from "lucide-react";
 import { CourierLogo, courierLabel } from "@/components/courier-brand";
 import { printShippingLabels } from "@/lib/labels";
 
@@ -646,7 +646,21 @@ function OrdersPage() {
       {marked.length > 0 && (
         <div className="mb-3 flex flex-wrap items-center gap-2 rounded-md border border-primary/40 bg-primary/5 px-3 py-2">
           <span className="mr-2 text-sm font-medium">{marked.length} marked</span>
-          
+
+          <button
+            type="button"
+            className="inline-flex h-9 items-center gap-1.5 rounded-md border bg-background px-3 text-xs font-medium hover:bg-accent"
+            onClick={() =>
+              setMarked(
+                marked.length === paged.length ? [] : paged.map((x) => x.id),
+              )
+            }
+            title={marked.length === paged.length ? "Deselect all" : "Select all on this page"}
+          >
+            <CheckSquare className="h-3.5 w-3.5" />
+            {marked.length === paged.length ? "Unselect all" : "Select all"}
+          </button>
+
           <button
             type="button"
             className="inline-flex h-9 items-center gap-2 rounded-md border bg-background px-3 text-xs font-medium hover:bg-accent"

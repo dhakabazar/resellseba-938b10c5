@@ -17,7 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
 import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
 import { BulkScanButton } from "@/components/BulkScanModal";
-import { Loader2, X, Download, PackageCheck, ChevronDown, Plus, MoreVertical, Eye, Phone, CheckCircle2, Settings2, Trash2, Copy, ShoppingCart, Printer, Truck, RefreshCw, TrendingUp, DollarSign, Wallet, UserCircle } from "lucide-react";
+import { Loader2, X, Download, PackageCheck, ChevronDown, Plus, MoreVertical, Eye, Phone, CheckCircle2, Settings2, Trash2, Copy, ShoppingCart, Printer, Truck, RefreshCw, TrendingUp, DollarSign, Wallet, UserCircle, CheckSquare } from "lucide-react";
 import { CourierLogo, courierLabel, COURIER_BRANDS } from "@/components/courier-brand";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -595,6 +595,19 @@ function AdminOrdersPage() {
         {marked.length > 0 && (
           <div className="mb-4 flex flex-wrap items-center gap-2 rounded-md border border-primary/40 bg-primary/5 px-3 py-2">
             <span className="mr-2 text-sm font-medium">{marked.length} marked</span>
+            <button
+              type="button"
+              onClick={() =>
+                setMarked(
+                  marked.length === paged.length ? [] : paged.map((x) => x.id),
+                )
+              }
+              className="inline-flex h-9 items-center gap-1.5 rounded-md border bg-background px-3 text-xs font-medium hover:bg-accent"
+              title={marked.length === paged.length ? "Deselect all" : "Select all on this page"}
+            >
+              <CheckSquare className="h-3.5 w-3.5" />
+              {marked.length === paged.length ? "Unselect all" : "Select all"}
+            </button>
             {canStatus && (() => {
               const partialMarked = marked.some((id) => isPartialStatus(orders.find((o) => o.id === id)?.status || ""));
               return (
