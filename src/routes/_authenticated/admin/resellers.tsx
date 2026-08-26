@@ -56,6 +56,7 @@ import { DepositLedger } from "@/components/deposit-ledger";
 import { confirmAction } from "@/lib/confirm";
 import { PasswordResetModal } from "@/components/password-reset-modal";
 import { useAdvancedSettings } from "@/lib/advanced-settings";
+import { VerifyBadges, verifyPending, type VerifyFlags } from "@/components/verify-badges";
 import {
   resellerStatusActions,
   resellerStatusClass,
