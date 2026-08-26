@@ -226,6 +226,13 @@ function ListingsPage() {
       {detailId && (
         <ListingDetailModal id={detailId} onClose={() => setDetailId(null)} />
       )}
+      {pricingId && (
+        <ListingPricingModal
+          id={pricingId}
+          onClose={() => setPricingId(null)}
+          onSaved={load}
+        />
+      )}
     </div>
   );
 }
