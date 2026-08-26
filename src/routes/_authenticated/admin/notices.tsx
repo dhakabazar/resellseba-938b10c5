@@ -6,7 +6,7 @@ import { AdminNoticePopup } from "@/components/admin-notice-popup";
 import { NOTICE_LEVELS, type AdminNotice, type NoticeLevel } from "@/lib/admin-notices";
 import { confirmAction } from "@/lib/confirm";
 import { toast } from "sonner";
-import { Loader2, Megaphone, Plus, Pencil, Trash2, Eye, Power } from "lucide-react";
+import { Loader2, Plus, Pencil, Trash2, Eye, Power } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/notices")({
   component: AdminNoticesPage,
