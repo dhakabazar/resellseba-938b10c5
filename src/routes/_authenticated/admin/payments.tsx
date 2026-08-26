@@ -1,156 +1,431 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/ui-kit";
-import { Loader2, Plus, Trash2, Wallet } from "lucide-react";
+import {
+  BadgeCheck,
+  Banknote,
+  CreditCard,
+  Hand,
+  Loader2,
+  Plug,
+  Plus,
+  ShieldCheck,
+  Trash2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { confirmAction } from "@/lib/confirm";
+import {
+  API_METHODS,
+  MANUAL_METHODS,
+  cfgBool,
+  cfgString,
+  methodLabel,
+  type PaymentConfigRow,
+  type PaymentMode,
+} from "@/lib/payment-methods";
 
 export const Route = createFileRoute("/_authenticated/admin/payments")({
   component: PaymentsPage,
+  head: () => ({
+    meta: [
+      { title: "Payment methods · Admin" },
+      {
+        name: "description",
+        content:
+          "Manage manual wallet methods (bKash, Nagad, Rocket, bank) and automatic gateway integrations used at checkout and for reseller security deposits.",
+      },
+      { property: "og:title", content: "Payment methods · Admin" },
+      {
+        property: "og:description",
+        content: "Manual wallets and automatic gateways, organised in one place.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
 });
 
-const METHODS = [
-  { value: "bkash", label: "bKash" },
-  { value: "nagad", label: "Nagad" },
-  { value: "rocket", label: "Rocket" },
-  { value: "sslcommerz", label: "SSLCommerz" },
-  { value: "eps", label: "EPS / AamarPay" },
-  { value: "card", label: "Card" },
-  { value: "other", label: "Other" },
-];
-
-type Row = {
-  id: string;
-  method: string;
-  label: string;
-  mode: "manual" | "api";
-  is_active: boolean;
-  instructions: string | null;
-  config: any;
-};
+const inp = "w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring";
 
 function PaymentsPage() {
-  const [rows, setRows] = useState<Row[]>([]);
+  const [rows, setRows] = useState<PaymentConfigRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState(false);
-  const [draft, setDraft] = useState<Partial<Row>>({ method: "bkash", mode: "manual", label: "" });
+  const [tab, setTab] = useState<PaymentMode>("manual");
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    void load();
+  }, []);
+
   async function load() {
     setLoading(true);
-    const { data } = await supabase.from("payment_configs").select("*").is("reseller_id", null).order("created_at");
-    setRows((data ?? []) as any);
+    const { data, error } = await supabase
+      .from("payment_configs")
+      .select("id,method,label,mode,is_active,instructions,config")
+      .is("reseller_id", null)
+      .order("created_at");
+    if (error) toast.error(error.message);
+    setRows((data ?? []) as unknown as PaymentConfigRow[]);
     setLoading(false);
   }
 
-  async function add(e: React.FormEvent) {
-    e.preventDefault();
-    if (!draft.label || !draft.method) return;
-    setBusy(true);
-    const { error } = await supabase.from("payment_configs").insert({
-      method: draft.method as any,
-      label: draft.label,
-      mode: draft.mode || "manual",
-      is_active: true,
-      instructions: null,
-      config: {},
-    });
-    setBusy(false);
+  const manual = useMemo(() => rows.filter((r) => r.mode === "manual"), [rows]);
+  const api = useMemo(() => rows.filter((r) => r.mode === "api"), [rows]);
+  const list = tab === "manual" ? manual : api;
+
+  function patch(id: string, next: Partial<PaymentConfigRow>) {
+    setRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...next } : r)));
+  }
+
+  async function save(row: PaymentConfigRow) {
+    const { error } = await supabase
+      .from("payment_configs")
+      .update({
+        label: row.label,
+        is_active: row.is_active,
+        instructions: row.instructions,
+        config: (row.config ?? {}) as never,
+      })
+      .eq("id", row.id);
     if (error) toast.error(error.message);
-    else {
-      setDraft({ method: "bkash", mode: "manual", label: "" });
-      load();
-    }
+    else toast.success(`${row.label} saved`);
   }
 
-  async function update(r: Row) {
-    const { error } = await supabase.from("payment_configs").update({
-      label: r.label,
-      mode: r.mode,
-      is_active: r.is_active,
-      instructions: r.instructions,
-      config: r.config,
-    }).eq("id", r.id);
-    if (error) toast.error(error.message); else toast.success("Saved");
+  async function remove(row: PaymentConfigRow) {
+    if (
+      !(await confirmAction({
+        title: "Delete payment method",
+        description: `"${row.label}" will be permanently removed from checkout and deposit options.`,
+        confirmText: "Delete",
+      }))
+    )
+      return;
+    const { error } = await supabase.from("payment_configs").delete().eq("id", row.id);
+    if (error) return toast.error(error.message);
+    void load();
   }
 
-  async function remove(id: string) {
-    if (!(await confirmAction({ title: "Delete payment method", description: "This payment method will be permanently deleted.", confirmText: "Delete" }))) return;
-    await supabase.from("payment_configs").delete().eq("id", id);
-    load();
-  }
-
-  if (loading) return <div className="grid place-items-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
+  if (loading)
+    return (
+      <div className="grid place-items-center py-12">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
 
   return (
     <div>
-      <PageHeader title="Payment methods" description="Checkout options customers see on storefronts (bKash, Nagad, SSLCommerz, EPS). Not related to reseller payouts." />
-      <form onSubmit={add} className="surface-card mb-5 flex flex-wrap items-end gap-3 p-4">
-        <div className="min-w-[140px]">
-          <label className="mb-1 block text-xs font-medium">Method</label>
-          <select value={draft.method} onChange={(e) => setDraft({ ...draft, method: e.target.value })} className={inp}>
-            {METHODS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
-          </select>
-        </div>
-        <div className="min-w-[160px]">
-          <label className="mb-1 block text-xs font-medium">Label</label>
-          <input required value={draft.label} onChange={(e) => setDraft({ ...draft, label: e.target.value })} className={inp} placeholder="e.g. bKash Personal (01700...)" />
-        </div>
-        <div>
-          <label className="mb-1 block text-xs font-medium">Mode</label>
-          <select value={draft.mode} onChange={(e) => setDraft({ ...draft, mode: e.target.value as any })} className={inp}>
-            <option value="manual">Manual</option>
-            <option value="api">API</option>
-          </select>
-        </div>
-        <button disabled={busy} className="btn-brand inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-xs font-medium"><Plus className="h-3.5 w-3.5" /> Add</button>
-      </form>
+      <PageHeader
+        title="Payment methods"
+        description="Manual wallets are verified by hand (bKash, Nagad, Rocket, bank, cash). Automatic gateways confirm payments through their own API. Reseller payouts are managed separately."
+      />
+
+      <div className="mb-4 flex flex-wrap gap-2">
+        <TabButton
+          active={tab === "manual"}
+          onClick={() => setTab("manual")}
+          icon={<Hand className="h-3.5 w-3.5" />}
+          label="Manual methods"
+          count={manual.length}
+        />
+        <TabButton
+          active={tab === "api"}
+          onClick={() => setTab("api")}
+          icon={<Plug className="h-3.5 w-3.5" />}
+          label="Automatic (API)"
+          count={api.length}
+        />
+      </div>
+
+      <div
+        className={
+          "mb-5 rounded-xl border p-3 text-[11px] leading-relaxed " +
+          (tab === "manual"
+            ? "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300"
+            : "border-primary/30 bg-primary/5 text-primary")
+        }
+      >
+        {tab === "manual"
+          ? "Customer sends money to your number and types the TrxID. Turn on “Reseller security deposit” to let resellers pay their deposit with that method — the payment then needs your approval in Finance → Deposit transactions."
+          : "Gateway credentials are stored per method. Keys are never shown on storefronts; only the checkout button is."}
+      </div>
+
+      <AddMethodForm mode={tab} onAdded={load} />
 
       <div className="grid gap-3">
-        {rows.map((r, idx) => (
-          <div key={r.id} className="surface-card p-4">
-            <div className="mb-3 flex items-center gap-2">
-              <div className="grid h-8 w-8 place-items-center rounded-md bg-primary-soft text-primary"><Wallet className="h-4 w-4" /></div>
-              <div className="flex-1">
-                <input value={r.label} onChange={(e) => {
-                  const copy = [...rows]; copy[idx] = { ...r, label: e.target.value }; setRows(copy);
-                }} className="w-full rounded-md border bg-background px-2 py-1 text-sm font-semibold" />
-                <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{r.method} · {r.mode}</div>
-              </div>
-              <label className="inline-flex items-center gap-2 text-xs">
-                <input type="checkbox" checked={r.is_active} onChange={(e) => {
-                  const copy = [...rows]; copy[idx] = { ...r, is_active: e.target.checked }; setRows(copy);
-                }} /> Active
-              </label>
-              <button onClick={() => remove(r.id)} className="rounded-md border p-1.5 text-muted-foreground hover:bg-muted"><Trash2 className="h-3.5 w-3.5" /></button>
-            </div>
-            <div className="grid gap-3 md:grid-cols-2">
-              <div>
-                <label className="mb-1 block text-xs font-medium">Customer instructions</label>
-                <textarea rows={3} className={inp} value={r.instructions ?? ""} onChange={(e) => {
-                  const copy = [...rows]; copy[idx] = { ...r, instructions: e.target.value }; setRows(copy);
-                }} placeholder="e.g. Send Money to 01700XXXXXXX (Personal). Reference: order number." />
-              </div>
-              {r.mode === "api" && (
-                <div>
-                  <label className="mb-1 block text-xs font-medium">API config (JSON)</label>
-                  <textarea rows={3} className={inp} value={JSON.stringify(r.config, null, 2)} onChange={(e) => {
-                    try {
-                      const parsed = JSON.parse(e.target.value);
-                      const copy = [...rows]; copy[idx] = { ...r, config: parsed }; setRows(copy);
-                    } catch { /* ignore invalid intermediate */ }
-                  }} />
-                </div>
-              )}
-            </div>
-            <button onClick={() => update(r)} className="btn-brand mt-3 rounded-md px-3 py-1.5 text-xs font-medium">Save</button>
-          </div>
+        {list.map((row) => (
+          <MethodCard
+            key={row.id}
+            row={row}
+            onPatch={(next) => patch(row.id, next)}
+            onSave={() => save(row)}
+            onDelete={() => remove(row)}
+          />
         ))}
-        {rows.length === 0 && <div className="rounded-lg border p-8 text-center text-sm text-muted-foreground">No payment methods yet.</div>}
+        {list.length === 0 && (
+          <div className="rounded-xl border border-dashed p-10 text-center text-sm text-muted-foreground">
+            {tab === "manual"
+              ? "No manual method yet — add bKash, Nagad, Rocket or a bank account above."
+              : "No automatic gateway configured yet."}
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-const inp = "w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring";
+function TabButton({
+  active,
+  onClick,
+  icon,
+  label,
+  count,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+  label: string;
+  count: number;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={
+        "inline-flex items-center gap-1.5 rounded-full border px-4 py-1.5 text-xs font-semibold transition-colors " +
+        (active ? "border-transparent bg-primary text-primary-foreground" : "hover:bg-muted")
+      }
+    >
+      {icon} {label}
+      <span className={"rounded-full px-1.5 text-[10px] " + (active ? "bg-primary-foreground/20" : "bg-muted")}>
+        {count}
+      </span>
+    </button>
+  );
+}
+
+function AddMethodForm({ mode, onAdded }: { mode: PaymentMode; onAdded: () => void }) {
+  const options = mode === "manual" ? MANUAL_METHODS : API_METHODS;
+  const [method, setMethod] = useState(options[0]!.value);
+  const [label, setLabel] = useState("");
+  const [account, setAccount] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    setMethod(options[0]!.value);
+    setLabel("");
+    setAccount("");
+  }, [mode]);
+
+  async function add(e: React.FormEvent) {
+    e.preventDefault();
+    if (!label.trim()) return;
+    setBusy(true);
+    const { error } = await supabase.from("payment_configs").insert({
+      method: method as never,
+      label: label.trim(),
+      mode,
+      is_active: true,
+      instructions: null,
+      config: (mode === "manual" ? { account: account.trim(), allow_deposit: false } : {}) as never,
+    });
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    setLabel("");
+    setAccount("");
+    toast.success("Payment method added");
+    onAdded();
+  }
+
+  return (
+    <form onSubmit={add} className="surface-card mb-5 grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div>
+        <label className="mb-1 block text-xs font-medium">Provider</label>
+        <select value={method} onChange={(e) => setMethod(e.target.value)} className={inp}>
+          {options.map((m) => (
+            <option key={`${m.value}-${m.label}`} value={m.value}>
+              {m.label}
+            </option>
+          ))}
+        </select>
+        <p className="mt-1 text-[10px] text-muted-foreground">
+          {options.find((m) => m.value === method)?.hint}
+        </p>
+      </div>
+      <div>
+        <label className="mb-1 block text-xs font-medium">Display label *</label>
+        <input
+          required
+          value={label}
+          onChange={(e) => setLabel(e.target.value)}
+          className={inp}
+          placeholder={mode === "manual" ? "bKash Personal" : "SSLCommerz live"}
+        />
+      </div>
+      {mode === "manual" && (
+        <div>
+          <label className="mb-1 block text-xs font-medium">Account / number</label>
+          <input value={account} onChange={(e) => setAccount(e.target.value)} className={inp} placeholder="01700000000" />
+        </div>
+      )}
+      <div className="flex items-end">
+        <button
+          disabled={busy}
+          className="btn-brand inline-flex w-full items-center justify-center gap-1.5 rounded-md px-3 py-2 text-xs font-semibold disabled:opacity-50"
+        >
+          {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />} Add method
+        </button>
+      </div>
+    </form>
+  );
+}
+
+function MethodCard({
+  row,
+  onPatch,
+  onSave,
+  onDelete,
+}: {
+  row: PaymentConfigRow;
+  onPatch: (next: Partial<PaymentConfigRow>) => void;
+  onSave: () => void;
+  onDelete: () => void;
+}) {
+  const config = row.config ?? {};
+  const setConfig = (key: string, value: unknown) => onPatch({ config: { ...config, [key]: value } });
+  const isManual = row.mode === "manual";
+
+  return (
+    <div className="surface-card overflow-hidden">
+      <div className="flex flex-wrap items-center gap-3 border-b bg-muted/30 px-4 py-3">
+        <span
+          className={
+            "grid h-9 w-9 shrink-0 place-items-center rounded-lg " +
+            (isManual ? "bg-amber-500/15 text-amber-600 dark:text-amber-400" : "bg-primary/10 text-primary")
+          }
+        >
+          {isManual ? <Banknote className="h-4 w-4" /> : <CreditCard className="h-4 w-4" />}
+        </span>
+        <div className="min-w-[180px] flex-1">
+          <input
+            value={row.label}
+            onChange={(e) => onPatch({ label: e.target.value })}
+            className="w-full rounded-md border bg-background px-2 py-1 text-sm font-semibold"
+          />
+          <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">
+            <span>{methodLabel(row.method)}</span>
+            <span>·</span>
+            <span>{isManual ? "manual" : "api"}</span>
+            {isManual && cfgBool(config, "allow_deposit") && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-1.5 py-0.5 normal-case text-success">
+                <ShieldCheck className="h-3 w-3" /> Deposit enabled
+              </span>
+            )}
+          </div>
+        </div>
+        <label className="inline-flex items-center gap-1.5 text-xs font-medium">
+          <input type="checkbox" checked={row.is_active} onChange={(e) => onPatch({ is_active: e.target.checked })} />
+          Active
+        </label>
+        <button
+          type="button"
+          onClick={onDelete}
+          className="rounded-md border p-1.5 text-destructive hover:bg-destructive/10"
+          aria-label="Delete method"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
+      </div>
+
+      <div className="grid gap-3 p-4 md:grid-cols-2">
+        {isManual ? (
+          <>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-xs font-medium">Account / number</label>
+                <input
+                  value={cfgString(config, "account")}
+                  onChange={(e) => setConfig("account", e.target.value)}
+                  className={inp}
+                  placeholder="01700000000"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium">Account type</label>
+                <input
+                  value={cfgString(config, "account_type")}
+                  onChange={(e) => setConfig("account_type", e.target.value)}
+                  className={inp}
+                  placeholder="Personal / Agent / Merchant"
+                />
+              </div>
+              <label className="flex items-start gap-2 rounded-lg border p-2.5 text-[11px] sm:col-span-2">
+                <input
+                  type="checkbox"
+                  className="mt-0.5"
+                  checked={cfgBool(config, "allow_deposit")}
+                  onChange={(e) => setConfig("allow_deposit", e.target.checked)}
+                />
+                <span>
+                  <span className="flex items-center gap-1 text-xs font-semibold">
+                    <BadgeCheck className="h-3.5 w-3.5 text-success" /> Reseller security deposit
+                  </span>
+                  <span className="text-muted-foreground">
+                    Resellers can pay their security deposit with this method and submit the TrxID for approval.
+                  </span>
+                </span>
+              </label>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium">Payment instructions</label>
+              <textarea
+                rows={5}
+                className={inp}
+                value={row.instructions ?? ""}
+                onChange={(e) => onPatch({ instructions: e.target.value })}
+                placeholder="Send Money to 01700XXXXXXX (Personal). Use the order number as reference, then paste the TrxID."
+              />
+            </div>
+          </>
+        ) : (
+          <>
+            <div>
+              <label className="mb-1 block text-xs font-medium">Gateway credentials (JSON)</label>
+              <textarea
+                rows={6}
+                className={inp + " font-mono text-[11px]"}
+                defaultValue={JSON.stringify(config, null, 2)}
+                onBlur={(e) => {
+                  try {
+                    onPatch({ config: JSON.parse(e.target.value || "{}") });
+                  } catch {
+                    toast.error("Invalid JSON — credentials not updated");
+                  }
+                }}
+                placeholder={'{\n  "store_id": "…",\n  "store_password": "…"\n}'}
+              />
+              <p className="mt-1 text-[10px] text-muted-foreground">
+                Keys stay server-side. Paste production credentials only.
+              </p>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium">Checkout note (optional)</label>
+              <textarea
+                rows={6}
+                className={inp}
+                value={row.instructions ?? ""}
+                onChange={(e) => onPatch({ instructions: e.target.value })}
+                placeholder="Shown under the gateway button at checkout."
+              />
+            </div>
+          </>
+        )}
+      </div>
+
+      <div className="flex justify-end border-t bg-muted/20 px-4 py-2.5">
+        <button onClick={onSave} className="btn-brand rounded-md px-4 py-1.5 text-xs font-semibold">
+          Save changes
+        </button>
+      </div>
+    </div>
+  );
+}

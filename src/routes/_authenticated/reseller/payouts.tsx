@@ -7,6 +7,7 @@ import { Loader2, Wallet, TrendingUp, Clock, CheckCircle2, Pencil, Save, ShieldC
 import { toast } from "sonner";
 import { useDepositStatus } from "@/lib/deposit";
 import { DepositNotice } from "@/components/deposit-notice";
+import { DepositPayPanel } from "@/components/deposit-pay-panel";
 import { fillText, useDepositSettings } from "@/lib/deposit-settings";
 import { LedgerTimeline, type LedgerRow } from "@/components/ledger-timeline";
 import { ReportCard } from "@/components/report-blocks";
@@ -196,6 +197,11 @@ function PayoutsPage() {
             <li>• {depositTexts.howToDeposit}</li>
             <li>• {depositTexts.withdrawWarning}</li>
           </ul>
+
+          <div className="mb-4">
+            <DepositPayPanel resellerId={rid} onSubmitted={load} />
+          </div>
+
 
           {deposit.rows.length === 0 ? (
             <div className="rounded-lg border border-dashed p-6 text-center text-xs text-muted-foreground">No deposit records yet.</div>

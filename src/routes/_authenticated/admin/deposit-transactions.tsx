@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader } from "@/components/ui-kit";
 import { DepositLedger } from "@/components/deposit-ledger";
+import { DepositRequestsAdmin } from "@/components/deposit-requests-admin";
 
 export const Route = createFileRoute("/_authenticated/admin/deposit-transactions")({
   component: DepositTransactionsPage,
@@ -26,6 +27,14 @@ function DepositTransactionsPage() {
         title="Deposit transactions"
         description="Every reseller deposit, refund and adjustment. Edit or delete an entry — balance and due update instantly."
       />
+      <div className="surface-card mb-5 p-6">
+        <div className="mb-1 text-sm font-semibold">Reseller submissions</div>
+        <p className="mb-3 text-xs text-muted-foreground">
+          Deposits resellers paid through a manual payment method. Approving one adds it to their deposit balance.
+        </p>
+        <DepositRequestsAdmin />
+      </div>
+
       <div className="surface-card p-6">
         <DepositLedger />
       </div>
