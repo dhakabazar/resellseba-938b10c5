@@ -31,6 +31,10 @@ export type ResellerProfileData = {
   avatar_url?: string | null;
   email?: string | null;
   email_verified?: boolean | null;
+  phone_verified?: boolean | null;
+  /** Advanced settings → verification switches, so chips can say "required" */
+  require_email_verify?: boolean;
+  require_phone_verify?: boolean;
 };
 
 export type ResellerProfileSummary = {
