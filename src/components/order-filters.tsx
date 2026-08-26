@@ -321,7 +321,7 @@ export function OrderFilterBar({
           <Select
             label="Date"
             value={value.datePreset}
-            className={isReport ? "lg:w-[120px]" : "lg:w-[150px]"}
+            className={isReport ? "lg:w-[130px]" : "lg:w-[150px]"}
             onChange={(v) =>
               set(
                 v === "custom"
