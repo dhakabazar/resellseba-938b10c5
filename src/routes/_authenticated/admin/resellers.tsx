@@ -644,6 +644,7 @@ function ResellersPage() {
         <EditModal
           reseller={editing}
           agents={agents}
+          email={emailStatus[editing.user_id]}
           others={items.filter((i) => i.id !== editing.id && i.status === "active")}
           onClose={() => setEditing(null)}
           onSaved={() => {
@@ -659,6 +660,7 @@ function ResellersPage() {
           summary={summaries[profileFor.id] ?? null}
           orders={orderCounts[profileFor.id]}
           email={emailStatus[profileFor.user_id]}
+          agentName={agents.find((a) => a.id === profileFor.agent_id)?.display_name ?? null}
           leaderName={
             profileFor.leader_id
               ? (() => {
@@ -735,14 +737,27 @@ function StatusBadge({ status }: { status: Status }) {
   );
 }
 
+function ReadOnlyBit({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+  return (
+    <div className="min-w-0">
+      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</div>
+      <div className={"truncate text-xs font-medium capitalize " + (mono ? "font-mono uppercase" : "")} title={value}>
+        {value}
+      </div>
+    </div>
+  );
+}
+
 function EditModal({
   reseller,
   agents,
   others,
+  email,
   onClose,
   onSaved,
 }: {
   reseller: Reseller;
+  email?: { email: string | null; verified: boolean };
   agents: Array<{ id: string; display_name: string }>;
   others: Reseller[];
   onClose: () => void;
@@ -755,6 +770,7 @@ function EditModal({
   const [commission, setCommission] = useState(String(reseller.commission_rate));
   const [leaderId, setLeaderId] = useState(reseller.leader_id ?? "");
   const [agentId, setAgentId] = useState(reseller.agent_id ?? "");
+  const [nid, setNid] = useState(reseller.nid_number ?? "");
   const [notes, setNotes] = useState(reseller.notes ?? "");
   const [payoutMethod, setPayoutMethod] = useState<string>(reseller.payout_method ?? "");
   const [payoutAccountName, setPayoutAccountName] = useState(reseller.payout_account_name ?? "");
@@ -775,6 +791,7 @@ function EditModal({
         code: code.trim(),
         contact_phone: phone || null,
         address: address || null,
+        nid_number: nid || null,
         commission_rate: Number(commission),
         leader_id: leaderId || null,
         agent_id: agentId || null,
@@ -812,6 +829,29 @@ function EditModal({
           </button>
         </div>
         <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4 sm:px-6">
+        <div className="grid grid-cols-2 gap-2 rounded-lg border bg-muted/30 p-3 sm:grid-cols-4">
+          <ReadOnlyBit label="Reseller ID" value={reseller.code} mono />
+          <ReadOnlyBit label="Login email" value={email?.email ?? "—"} />
+          <ReadOnlyBit
+            label="Status"
+            value={reseller.status === "suspended" ? "deactivated" : reseller.status}
+          />
+          <ReadOnlyBit
+            label="Joined"
+            value={new Date(reseller.created_at).toLocaleDateString(undefined, {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            })}
+          />
+          <ReadOnlyBit
+            label="Security deposit"
+            value={reseller.deposit_required ? `৳${Number(reseller.deposit_required_amount).toLocaleString()}` : "Not required"}
+          />
+          <ReadOnlyBit label="Frozen" value={`৳${Number(reseller.frozen_amount ?? 0).toLocaleString()}`} />
+          <ReadOnlyBit label="Approved" value={reseller.approved_at ? new Date(reseller.approved_at).toLocaleDateString() : "—"} />
+          <ReadOnlyBit label="Email verified" value={email ? (email.verified ? "Yes" : "No") : "—"} />
+        </div>
         <div>
           <label className="mb-1 block text-xs font-medium">Business name</label>
           <input required value={businessName} onChange={(e) => setBusinessName(e.target.value)} className={cls} />
@@ -866,9 +906,15 @@ function EditModal({
             The agent follows up with this reseller and sees their orders in the agent report.
           </p>
         </div>
-        <div>
-          <label className="mb-1 block text-xs font-medium">Address</label>
-          <input value={address} onChange={(e) => setAddress(e.target.value)} className={cls} />
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div>
+            <label className="mb-1 block text-xs font-medium">Address</label>
+            <input value={address} onChange={(e) => setAddress(e.target.value)} className={cls} />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium">NID number</label>
+            <input value={nid} onChange={(e) => setNid(e.target.value)} className={cls} />
+          </div>
         </div>
         <div>
           <label className="mb-1 block text-xs font-medium">Internal notes</label>
@@ -1157,6 +1203,7 @@ function ProfileModal({
   orders,
   email,
   leaderName,
+  agentName,
   onClose,
 }: {
   reseller: Reseller;
@@ -1164,6 +1211,7 @@ function ProfileModal({
   orders?: number;
   email?: { email: string | null; verified: boolean };
   leaderName: string | null;
+  agentName: string | null;
   onClose: () => void;
 }) {
   const data: ResellerProfileData = {
@@ -1172,6 +1220,7 @@ function ProfileModal({
     deposit_required_amount: Number(reseller.deposit_required_amount),
     frozen_amount: Number(reseller.frozen_amount),
     leader_name: leaderName,
+    agent_name: agentName,
     email: email?.email ?? null,
     email_verified: email ? email.verified : null,
   };
