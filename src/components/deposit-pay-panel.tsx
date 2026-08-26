@@ -23,7 +23,16 @@ const inp = "w-full rounded-md border bg-background px-3 py-2 text-sm outline-no
 const bdt = (v: number) => `৳${Number(v || 0).toLocaleString("en-US")}`;
 
 /** Reseller-facing: pay the security deposit with an admin-approved manual method. */
-export function DepositPayPanel({ resellerId, onSubmitted }: { resellerId: string | null; onSubmitted?: () => void }) {
+export function DepositPayPanel({
+  resellerId,
+  due,
+  onSubmitted,
+}: {
+  resellerId: string | null;
+  /** Outstanding deposit, used to prefill the amount fields. */
+  due?: number;
+  onSubmitted?: () => void;
+}) {
   const [methods, setMethods] = useState<PaymentConfigRow[]>([]);
   const [requests, setRequests] = useState<RequestRow[]>([]);
   const [configId, setConfigId] = useState("");
