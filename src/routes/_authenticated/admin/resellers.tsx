@@ -1266,6 +1266,7 @@ function ProfileModal({
   summary,
   orders,
   email,
+  verify,
   leaderName,
   agentName,
   onClose,
@@ -1274,6 +1275,7 @@ function ProfileModal({
   summary: Summary | null;
   orders?: number;
   email?: { email: string | null; verified: boolean };
+  verify?: VerifyFlags;
   leaderName: string | null;
   agentName: string | null;
   onClose: () => void;
@@ -1286,7 +1288,10 @@ function ProfileModal({
     leader_name: leaderName,
     agent_name: agentName,
     email: email?.email ?? null,
-    email_verified: email ? email.verified : null,
+    email_verified: verify ? verify.emailVerified : email ? email.verified : null,
+    phone_verified: verify?.phoneVerified ?? null,
+    require_email_verify: verify?.requireEmail,
+    require_phone_verify: verify?.requirePhone,
   };
   return (
     <div
