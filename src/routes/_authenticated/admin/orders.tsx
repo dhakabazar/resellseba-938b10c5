@@ -665,6 +665,11 @@ function AdminOrdersPage() {
                           <span className="mt-1 inline-block text-[10px] italic text-muted-foreground/60">Not booked yet</span>
                         )}
                     </div>
+                   <LastUpdateCell
+                     meta={orderMeta[o.id]}
+                     fallbackAt={o.created_at}
+                     onOpenNotes={() => setNotesModal({ orderId: o.id, orderNumber: o.order_number })}
+                   />
                    <div className="flex justify-center">
                       <DropdownMenu>
                        <DropdownMenuTrigger><MoreVertical className="h-4 w-4" /></DropdownMenuTrigger>
