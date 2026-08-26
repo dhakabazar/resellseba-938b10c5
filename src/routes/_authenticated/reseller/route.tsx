@@ -123,7 +123,8 @@ function ResellerLayout() {
       let color = g?.primary_color ?? null;
 
       if (r) {
-        setApproved(r.status === "active");
+        setApproved(canAccessResellerPanel(r.status));
+
         setStoreName(r.business_name);
         setStoreCode(r.code);
         setAvatarUrl(r.avatar_url ?? null);
