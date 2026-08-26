@@ -553,7 +553,7 @@ function AdminOrdersPage() {
                    onChange={(e) => setMarked(e.target.checked ? paged.map(x => x.id) : [])}
                  />
                </div>
-               <div className="text-center">Order</div> <div className="text-center">Reseller</div> <div className="text-center">Products</div> <div className="text-center">Customer</div> <div className="text-center">Reseller total</div> <div className="text-center">Admin total</div> <div className="text-center">Status</div> <div className="text-center">Actions</div>
+               <div className="text-center">Order</div> <div className="text-center">Reseller</div> <div className="text-center">Products</div> <div className="text-center">Customer</div> <div className="text-center">Reseller total</div> <div className="text-center">Admin total</div> <div className="text-center">Status</div> <div className="text-center">Last update</div> <div />
             </div>
             {paged.map((o) => (
               <div
