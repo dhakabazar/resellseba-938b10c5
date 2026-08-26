@@ -60,8 +60,8 @@ export const GATEWAYS: GatewaySpec[] = [
       { path: "api_secret", label: "Store password", placeholder: "yourstore0live@ssl", secret: true, required: true },
     ],
     callbacks: [
-      { path: "/api/public/payment/sslcommerz/return", label: "Return URL (success / fail / cancel)", manual: false },
-      { path: "/api/public/payment/sslcommerz-ipn", label: "IPN URL", manual: true },
+      { path: "/api/public/payment/sslcommerz/return", label: "Return URL (success / fail / cancel)" },
+      { path: "/api/public/payment/sslcommerz-ipn", label: "IPN URL" },
     ],
     returnFlag: "sslcommerz",
   },
@@ -79,7 +79,7 @@ export const GATEWAYS: GatewaySpec[] = [
       { path: "config.password", label: "Merchant password", secret: true, required: true },
     ],
     callbacks: [
-      { path: "/api/public/payment/bkash/return", label: "Callback URL", manual: false },
+      { path: "/api/public/payment/bkash/return", label: "Callback URL" },
     ],
     returnFlag: "bkash",
   },
@@ -111,7 +111,7 @@ export const GATEWAYS: GatewaySpec[] = [
       },
     ],
     callbacks: [
-      { path: "/api/public/payment/nagad/return", label: "Callback URL", manual: false },
+      { path: "/api/public/payment/nagad/return", label: "Callback URL" },
     ],
     returnFlag: "nagad",
   },
@@ -128,7 +128,7 @@ export const GATEWAYS: GatewaySpec[] = [
       { path: "merchant_id", label: "Prefix", placeholder: "sp", required: true },
     ],
     callbacks: [
-      { path: "/api/public/payment/shurjopay/return", label: "Return URL", manual: false },
+      { path: "/api/public/payment/shurjopay/return", label: "Return URL" },
     ],
     returnFlag: "shurjopay",
   },
@@ -146,7 +146,7 @@ export const GATEWAYS: GatewaySpec[] = [
       { path: "config.store_id", label: "Store ID (UUID)", required: true },
     ],
     callbacks: [
-      { path: "/api/public/payment/eps/return", label: "Success / fail / cancel URL", manual: false },
+      { path: "/api/public/payment/eps/return", label: "Success / fail / cancel URL" },
     ],
     returnFlag: "eps",
   },
@@ -162,7 +162,7 @@ export const GATEWAYS: GatewaySpec[] = [
       { path: "api_secret", label: "Signature key", secret: true, required: true },
     ],
     callbacks: [
-      { path: "/api/public/payment/aamarpay/return", label: "Success / fail / cancel URL", manual: false },
+      { path: "/api/public/payment/aamarpay/return", label: "Success / fail / cancel URL" },
     ],
     returnFlag: "aamarpay",
   },
@@ -179,8 +179,8 @@ export const GATEWAYS: GatewaySpec[] = [
       { path: "merchant_id", label: "Brand key", required: true },
     ],
     callbacks: [
-      { path: "/api/public/payment/epayseba/return", label: "Return URL", manual: false },
-      { path: "/api/public/payment/epayseba-webhook", label: "Webhook URL", manual: true },
+      { path: "/api/public/payment/epayseba/return", label: "Return URL" },
+      { path: "/api/public/payment/epayseba-webhook", label: "Webhook URL" },
     ],
     returnFlag: "epayseba",
   },
