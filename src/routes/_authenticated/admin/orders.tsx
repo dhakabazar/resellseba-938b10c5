@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
 import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
 import { BulkScanButton } from "@/components/BulkScanModal";
-import { Loader2, X, Download, PackageCheck, ChevronDown, Plus, MoreVertical, Eye, Phone, CheckCircle2, Settings2, Trash2, Copy, ShoppingCart, Printer, Truck, RefreshCw, TrendingUp, DollarSign, Wallet } from "lucide-react";
+import { Loader2, X, Download, PackageCheck, ChevronDown, Plus, MoreVertical, Eye, Phone, CheckCircle2, Settings2, Trash2, Copy, ShoppingCart, Printer, Truck, RefreshCw, TrendingUp, DollarSign, Wallet, MapPin } from "lucide-react";
 import { CourierLogo, courierLabel, COURIER_BRANDS } from "@/components/courier-brand";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -598,6 +598,14 @@ function AdminOrdersPage() {
                        <button onClick={() => { navigator.clipboard.writeText(o.customer_phone); toast.success("Copied"); }} className="hover:text-foreground">
                          <Copy className="h-3 w-3" />
                        </button>
+                     </div>
+                     <div className="mt-0.5 flex items-start gap-1 text-[11px] leading-snug text-muted-foreground">
+                       <MapPin className="mt-[1px] h-3 w-3 shrink-0 opacity-70" />
+                       <span className="line-clamp-2">
+                         {o.address_line}
+                         {o.area ? `, ${o.area.replace("_", " ")}` : ""}
+                         {o.city ? `, ${o.city}` : ""}
+                       </span>
                      </div>
                   </div>
                   <div className="min-w-0">
