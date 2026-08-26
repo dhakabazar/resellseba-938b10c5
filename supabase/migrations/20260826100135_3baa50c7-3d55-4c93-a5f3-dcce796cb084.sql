@@ -1,0 +1,2 @@
+REVOKE ALL ON FUNCTION public.deposit_request_review(uuid, boolean, text) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.deposit_request_review(uuid, boolean, text) TO authenticated, service_role;
