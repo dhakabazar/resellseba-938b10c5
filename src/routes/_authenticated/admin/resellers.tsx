@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ResellerAvatar } from "@/components/reseller-avatar";
@@ -122,6 +122,7 @@ const FILTER_LABELS: Record<Filter, string> = {
 };
 
 function ResellersPage() {
+  const nav = useNavigate();
   const confirmEmailFn = useServerFn(confirmUserEmail);
   const listEmailStatusFn = useServerFn(listResellerEmailStatus);
   const deleteAuthUserFn = useServerFn(deleteAuthUser);
@@ -309,7 +310,7 @@ function ResellersPage() {
         label: r.business_name,
         returnTo: window.location.pathname + window.location.search,
       });
-      window.location.assign("/reseller");
+      nav({ to: "/reseller", replace: true });
     } catch (e: any) {
       toast.error(e?.message ?? "Could not log in as reseller");
     }

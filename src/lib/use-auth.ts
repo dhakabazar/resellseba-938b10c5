@@ -84,12 +84,12 @@ async function loadAccess(
 }
 
 
-function applySession(session: Session | null) {
+async function applySession(session: Session | null, opts: { forceAccessReload?: boolean } = {}) {
   if (!session?.user) {
     clearAppDataCache();
     authVersion++;
     publish({ session: null, user: null, roles: [], permissions: [], loading: false, accessError: false });
-    return;
+    return authState;
   }
 
   // Auth can emit INITIAL_SESSION or SIGNED_IN again when a background tab
@@ -97,7 +97,7 @@ function applySession(session: Session | null) {
   // changed in that case, so putting auth back into a loading state would
   // temporarily unmount the protected layout and destroy every open form or
   // modal. Refresh the session object without disturbing the mounted panel.
-  if (authState.user?.id === session.user.id) {
+  if (authState.user?.id === session.user.id && !opts.forceAccessReload) {
     // Keep the SAME user object identity so that `useEffect(..., [user])` in the
     // admin/reseller panels does not re-run and re-fetch (which would wipe
     // unsaved form state and reset open modals).
@@ -105,7 +105,7 @@ function applySession(session: Session | null) {
       ...authState,
       session,
     });
-    return;
+    return authState;
   }
 
 
@@ -114,23 +114,23 @@ function applySession(session: Session | null) {
 
   publish({ session, user: session.user, roles: [], permissions: [], loading: true, accessError: false });
 
-  void loadAccess(session.user.id)
-    .then(({ roles, permissions, error }) => {
-      if (version !== authVersion) return;
-      publish({ session, user: session.user, roles, permissions, loading: false, accessError: error });
-    })
-    .catch(() => {
-      if (version !== authVersion) return;
-      publish({ session, user: session.user, roles: [], permissions: [], loading: false, accessError: true });
-    });
+  try {
+    const { roles, permissions, error } = await loadAccess(session.user.id);
+    if (version !== authVersion) return authState;
+    publish({ session, user: session.user, roles, permissions, loading: false, accessError: error });
+  } catch {
+    if (version !== authVersion) return authState;
+    publish({ session, user: session.user, roles: [], permissions: [], loading: false, accessError: true });
+  }
 
+  return authState;
 }
 
 function initAuth() {
   if (initialized) return;
   initialized = true;
 
-  supabase.auth.getSession().then(({ data }) => applySession(data.session));
+  supabase.auth.getSession().then(({ data }) => void applySession(data.session));
 
   supabase.auth.onAuthStateChange((event, session) => {
     if (event === "TOKEN_REFRESHED") {
@@ -142,8 +142,13 @@ function initAuth() {
     // internal lock while it runs, so any query issued here deadlocks and the
     // panel stays on a loading spinner forever (exactly what happens right
     // after sign-in). Defer the role/permission lookup to a fresh task.
-    setTimeout(() => applySession(session), 0);
+    setTimeout(() => void applySession(session), 0);
   });
+}
+
+export async function refreshAuthState() {
+  const { data } = await supabase.auth.getSession();
+  return applySession(data.session, { forceAccessReload: true });
 }
 
 export function useAuth(): AuthState {
