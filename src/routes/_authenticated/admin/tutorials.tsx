@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
+import { AppModal } from "@/components/ui-kit/AppModal";
 import { confirmAction } from "@/lib/confirm";
 import { slugify, youtubeId, youtubeThumb, type Tutorial, type TutorialTopic } from "@/lib/tutorials";
 import { toast } from "sonner";
@@ -318,7 +319,11 @@ function AdminTutorialsPage() {
       )}
 
       {videoDraft ? (
-        <Modal title={videoDraft.id ? "Edit tutorial" : "Add tutorial"} onClose={() => setVideoDraft(null)}>
+        <AppModal
+          title={videoDraft.id ? "Edit tutorial" : "Add tutorial"}
+          onClose={() => setVideoDraft(null)}
+          footer={<ModalActions saving={saving} onCancel={() => setVideoDraft(null)} onSave={() => void saveVideo()} />}
+        >
           <div className="space-y-3">
             <Field label="Title">
               <input className={inp} value={videoDraft.title} onChange={(e) => setVideoDraft({ ...videoDraft, title: e.target.value })} />
@@ -378,12 +383,16 @@ function AdminTutorialsPage() {
               onChange={(v) => setVideoDraft({ ...videoDraft, reseller_only: v })}
             />
           </div>
-          <ModalActions saving={saving} onCancel={() => setVideoDraft(null)} onSave={() => void saveVideo()} />
-        </Modal>
+        </AppModal>
       ) : null}
 
       {topicDraft ? (
-        <Modal title={topicDraft.id ? "Edit topic" : "Add topic"} onClose={() => setTopicDraft(null)}>
+        <AppModal
+          title={topicDraft.id ? "Edit topic" : "Add topic"}
+          size="sm"
+          onClose={() => setTopicDraft(null)}
+          footer={<ModalActions saving={saving} onCancel={() => setTopicDraft(null)} onSave={() => void saveTopic()} />}
+        >
           <div className="space-y-3">
             <Field label="Topic name">
               <input className={inp} value={topicDraft.name} onChange={(e) => setTopicDraft({ ...topicDraft, name: e.target.value })} />
@@ -406,8 +415,7 @@ function AdminTutorialsPage() {
             </Field>
             <Toggle label="Active" checked={topicDraft.is_active} onChange={(v) => setTopicDraft({ ...topicDraft, is_active: v })} />
           </div>
-          <ModalActions saving={saving} onCancel={() => setTopicDraft(null)} onSave={() => void saveTopic()} />
-        </Modal>
+        </AppModal>
       ) : null}
     </div>
   );
@@ -469,23 +477,9 @@ function Toggle({ label, checked, onChange }: { label: string; checked: boolean;
   );
 }
 
-function Modal({ title, children, onClose }: { title: string; children: React.ReactNode; onClose: () => void }) {
-  return (
-    <div className="fixed inset-0 z-[100] grid place-items-center bg-black/60 p-3 sm:p-6" onClick={onClose}>
-      <div
-        className="max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-2xl border bg-card p-4 shadow-2xl sm:p-5"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h2 className="mb-3 text-base font-bold">{title}</h2>
-        {children}
-      </div>
-    </div>
-  );
-}
-
 function ModalActions({ saving, onCancel, onSave }: { saving: boolean; onCancel: () => void; onSave: () => void }) {
   return (
-    <div className="mt-4 flex justify-end gap-2">
+    <div className="flex justify-end gap-2">
       <button type="button" onClick={onCancel} className="rounded-lg border px-3.5 py-2 text-sm font-bold hover:bg-muted">
         Cancel
       </button>

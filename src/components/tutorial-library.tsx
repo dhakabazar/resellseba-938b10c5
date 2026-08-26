@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { loadTutorialLibrary, youtubeEmbed, youtubeThumb, type Tutorial, type TutorialTopic } from "@/lib/tutorials";
-import { Loader2, PlayCircle, Search, X, Youtube } from "lucide-react";
+import { Loader2, PlayCircle, Search, Youtube } from "lucide-react";
+import { AppModal } from "@/components/ui-kit/AppModal";
 
 export function TutorialLibrary({ compact = false }: { compact?: boolean }) {
   const [loading, setLoading] = useState(true);
@@ -140,56 +141,47 @@ function TopicChip({ active, label, onClick }: { active: boolean; label: string;
 
 function TutorialModal({ video, topic, onClose }: { video: Tutorial; topic: string; onClose: () => void }) {
   const embed = youtubeEmbed(video.youtube_url);
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-[100] grid place-items-center bg-black/70 p-3 sm:p-6" onClick={onClose}>
-      <div
-        className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-2xl border bg-card shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-start justify-between gap-3 border-b p-4">
-          <div className="min-w-0">
-            <span className="inline-flex rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-bold text-primary">{topic}</span>
-            <h2 className="mt-1 text-base font-bold">{video.title}</h2>
-          </div>
-          <button type="button" onClick={onClose} aria-label="Close" className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border hover:bg-muted">
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-        <div className="aspect-video w-full bg-black">
-          {embed ? (
-            <iframe
-              src={embed}
-              title={video.title}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture"
-              allowFullScreen
-              className="h-full w-full"
-            />
-          ) : (
-            <div className="grid h-full place-items-center text-sm text-white/80">Invalid YouTube link</div>
-          )}
-        </div>
-        {video.details ? (
-          <div className="whitespace-pre-wrap p-4 text-sm text-muted-foreground">{video.details}</div>
-        ) : null}
-        <div className="flex justify-end border-t p-3">
+    <AppModal
+      size="lg"
+      padded={false}
+      onClose={onClose}
+      title={video.title}
+      badge={
+        <span className="inline-flex rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-bold text-primary">{topic}</span>
+      }
+      footer={
+        <div className="flex justify-end">
           <a
             href={video.youtube_url}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-bold hover:bg-muted"
+            className="inline-flex items-center gap-1.5 rounded-lg border bg-background px-3 py-1.5 text-xs font-bold hover:bg-muted"
           >
             <Youtube className="h-4 w-4" /> YouTube te dekhun
           </a>
         </div>
+      }
+    >
+      <div className="aspect-video w-full bg-black">
+        {embed ? (
+          <iframe
+            key={video.id}
+            src={embed}
+            title={video.title}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture; fullscreen"
+            referrerPolicy="strict-origin-when-cross-origin"
+            allowFullScreen
+            className="h-full w-full"
+          />
+        ) : (
+          <div className="grid h-full place-items-center text-sm text-white/80">Invalid YouTube link</div>
+        )}
       </div>
-    </div>
+      {video.details ? (
+        <div className="whitespace-pre-wrap p-4 text-sm text-muted-foreground">{video.details}</div>
+      ) : null}
+    </AppModal>
   );
 }
