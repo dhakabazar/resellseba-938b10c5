@@ -64,7 +64,7 @@ export function useCustomers(resellerId?: string | null) {
         .order("created_at", { ascending: false })
         .limit(5000);
       if (resellerId) q = q.eq("reseller_id", resellerId);
-        return q.then((r) => ({ data: r.data as OrderRow[] | null, error: r.error }));
+        return Promise.resolve(q).then((r) => ({ data: r.data as OrderRow[] | null, error: r.error }));
       };
       // Shared across remounts so a double mount costs one request.
       const { data, error } = await sharedLoad(`customers:${resellerId ?? "all"}`, load);
