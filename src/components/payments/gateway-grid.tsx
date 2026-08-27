@@ -391,6 +391,43 @@ function GatewayModal({
       }
     >
       <div className="grid gap-3 sm:grid-cols-2">
+        {resellerId && (
+          <div className="sm:col-span-2">
+            <Label>Money goes to</Label>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {(
+                [
+                  {
+                    value: "platform" as const,
+                    title: "Platform gateway",
+                    hint: platformActive && !platformActive.includes(spec.provider)
+                      ? "The platform has not enabled this gateway yet."
+                      : "Uses the account the admin already set up.",
+                  },
+                  {
+                    value: "own" as const,
+                    title: "My own credentials",
+                    hint: "Customers pay straight into your merchant account.",
+                  },
+                ]
+              ).map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setRow({ ...row, mode: opt.value })}
+                  className={
+                    "rounded-xl border p-3 text-left transition-colors " +
+                    (row.mode === opt.value ? "border-primary bg-primary/5" : "hover:bg-muted")
+                  }
+                >
+                  <span className="block text-xs font-semibold">{opt.title}</span>
+                  <span className="mt-0.5 block text-[10px] leading-relaxed text-muted-foreground">{opt.hint}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div>
           <div className="flex items-center justify-between">
             <Label>Display label</Label>
@@ -411,34 +448,41 @@ function GatewayModal({
             placeholder={spec.label}
           />
         </div>
-        <div>
-          <Label>API base URL</Label>
-          <input
-            value={(row.config?.base_url as string | undefined) ?? ""}
-            onChange={(e) => setRow({ ...row, config: { ...(row.config ?? {}), base_url: e.target.value } })}
-            className={field}
-            placeholder={spec.hosts.live}
-          />
-          <p className="mt-1 text-[10px] text-muted-foreground">
-            Leave empty to use the provider's standard live API. Fill it in only if your merchant panel gives a
-            different API address.
-          </p>
-        </div>
-
-        <div className="sm:col-span-2 mt-1 text-[11px] font-semibold">Credentials</div>
-        {spec.fields.map((f) => (
-          <div key={f.path} className={f.multiline ? "sm:col-span-2" : ""}>
-            <Label required={f.required}>{f.label}</Label>
-            <SecretInput
-              value={readField(row, f)}
-              onChange={(v) => setRow(writeField(row, f, v))}
-              placeholder={f.placeholder}
-              secret={f.secret}
-              multiline={f.multiline}
+        {row.mode === "own" && (
+          <div>
+            <Label>API base URL</Label>
+            <input
+              value={(row.config?.base_url as string | undefined) ?? ""}
+              onChange={(e) => setRow({ ...row, config: { ...(row.config ?? {}), base_url: e.target.value } })}
+              className={field}
+              placeholder={spec.hosts.live}
             />
-            {f.hint && <p className="mt-1 text-[10px] text-muted-foreground">{f.hint}</p>}
+            <p className="mt-1 text-[10px] text-muted-foreground">
+              Leave empty to use the provider's standard live API. Fill it in only if your merchant panel gives a
+              different API address.
+            </p>
           </div>
-        ))}
+        )}
+
+        {row.mode === "own" && (
+          <>
+            <div className="sm:col-span-2 mt-1 text-[11px] font-semibold">Credentials</div>
+            {spec.fields.map((f) => (
+              <div key={f.path} className={f.multiline ? "sm:col-span-2" : ""}>
+                <Label required={f.required}>{f.label}</Label>
+                <SecretInput
+                  value={readField(row, f)}
+                  onChange={(v) => setRow(writeField(row, f, v))}
+                  placeholder={f.placeholder}
+                  secret={f.secret}
+                  multiline={f.multiline}
+                />
+                {f.hint && <p className="mt-1 text-[10px] text-muted-foreground">{f.hint}</p>}
+              </div>
+            ))}
+          </>
+        )}
+
 
 
         <label className="sm:col-span-2 flex items-center justify-between gap-3 rounded-xl border p-3">
