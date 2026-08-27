@@ -219,7 +219,15 @@ function OrdersPage() {
   });
 
 
+  // A remount with the same tab within a moment must not refetch the same payload.
+  const lastLoad = useRef<{ key: string; at: number } | null>(null);
   async function load(opts?: { silent?: boolean }) {
+    const loadKey = `${tab}`;
+    if (!opts?.silent) {
+      const prev = lastLoad.current;
+      if (prev && prev.key === loadKey && Date.now() - prev.at < 1500) return;
+      lastLoad.current = { key: loadKey, at: Date.now() };
+    }
     if (!user) return;
     if (!opts?.silent) setLoading(true);
     // Single backend call: orders, items, shipments, courier events, listings and catalog.

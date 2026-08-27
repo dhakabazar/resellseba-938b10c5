@@ -213,7 +213,15 @@ function AdminOrdersPage() {
     "order_id,product_id,product_name,product_image,quantity,returned_qty,reseller_price,line_total,sa_price,buying_price,packaging_cost";
   const SHIPMENT_SELECT = "id,order_id,provider,tracking_id,consignment_id";
 
+  // A remount with the same tab within a moment must not refetch the same payload.
+  const lastLoad = useRef<{ key: string; at: number } | null>(null);
   async function load(opts?: { silent?: boolean }) {
+    const loadKey = `${tab}`;
+    if (!opts?.silent) {
+      const prev = lastLoad.current;
+      if (prev && prev.key === loadKey && Date.now() - prev.at < 1500) return;
+      lastLoad.current = { key: loadKey, at: Date.now() };
+    }
     if (!opts?.silent) setLoading(true);
     const statuses = (ORDER_TABS.find((t) => t.key === tab)?.statuses ?? []) as string[];
     // One backend call carries orders, items, shipments, status counts and reseller options.
