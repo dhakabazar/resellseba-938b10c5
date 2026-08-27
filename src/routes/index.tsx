@@ -137,8 +137,10 @@ function RootResolver() {
   const [content, setContent] = useState<LandingContent>(FALLBACK);
   const [siteName, setSiteName] = useState("Reseller");
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [stats, setStats] = useState<LpBootstrap | null>(null);
 
   useEffect(() => {
+    let alive = true;
     (async () => {
       const host = typeof window !== "undefined" ? window.location.hostname : "";
       const isPlatformHost =
@@ -147,33 +149,32 @@ function RootResolver() {
         host.endsWith(".lovable.app") ||
         host.endsWith(".lovableproject.com");
 
-      if (!isPlatformHost) {
-        const { data: dom } = await supabase
-          .from("reseller_domains")
-          .select("reseller_id, resellers(code, status)")
-          .eq("hostname", host)
-          .not("verified_at", "is", null)
-          .maybeSingle();
-        const r = (dom as { resellers?: { code: string; status: string } } | null)?.resellers;
-        if (r && r.status === "active") {
-          nav({ to: "/s/$code", params: { code: r.code }, replace: true });
-          return;
-        }
+      // ONE call: branding + landing content + stats + categories + products,
+      // and (for custom domains) the reseller this hostname belongs to.
+      const data = await getLpBootstrap(isPlatformHost ? "" : host);
+      if (!alive) return;
+
+      const store = data?.store;
+      if (!isPlatformHost && store && store.status === "active") {
+        nav({ to: "/s/$code", params: { code: store.code }, replace: true });
+        return;
       }
 
-      const { data } = await supabase
-        .from("global_settings")
-        .select("site_name, logo_url, landing_content")
-        .eq("id", 1)
-        .maybeSingle();
-      if (data) {
-        setSiteName(data.site_name ?? "Reseller");
-        setLogoUrl((data as { logo_url?: string | null }).logo_url ?? null);
-        const lc = (data as unknown as { landing_content?: LandingContent }).landing_content;
-        if (lc) setContent(lc);
+      const s = data?.settings as
+        | { site_name?: string | null; logo_url?: string | null; landing_content?: LandingContent }
+        | null
+        | undefined;
+      if (s) {
+        setSiteName(s.site_name ?? "Reseller");
+        setLogoUrl(s.logo_url ?? null);
+        if (s.landing_content) setContent(s.landing_content);
       }
+      setStats(data);
       setChecking(false);
     })();
+    return () => {
+      alive = false;
+    };
   }, [nav]);
 
   if (checking) {
@@ -184,18 +185,22 @@ function RootResolver() {
     );
   }
 
-  return <Landing c={content} siteName={siteName} logoUrl={logoUrl} />;
+  return <Landing c={content} siteName={siteName} logoUrl={logoUrl} stats={stats} />;
 }
 
 
-function Landing({ c, siteName, logoUrl }: { c: LandingContent; siteName: string; logoUrl: string | null }) {
-  const fetchStats = useServerFn(getPublicStats);
-  const [stats, setStats] = useState<any>(null);
-  
+function Landing({
+  c,
+  siteName,
+  logoUrl,
+  stats,
+}: {
+  c: LandingContent;
+  siteName: string;
+  logoUrl: string | null;
+  stats: LpBootstrap | null;
+}) {
 
-  useEffect(() => {
-    fetchStats().then(setStats);
-  }, [fetchStats]);
 
   const copy = (txt: string) => {
     navigator.clipboard.writeText(txt);
