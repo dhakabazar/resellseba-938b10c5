@@ -227,10 +227,24 @@ function ResellerPaymentsPage() {
         ) : (
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {globalManual.map((row) => {
-              const overridden = mine.some((m) => m.method === row.method && m.is_active);
+              const own = ownRow(row.method);
+              const overridden = Boolean(own?.is_active);
+              const hidden = Boolean(hiddenRow(row.method));
+              const shown = !hidden && !overridden;
               return (
                 <div key={row.id} className="surface-card flex flex-col p-4">
-                  <Head method={row.method} label={row.label} tag="Manual · verified by admin" />
+                  <div className="flex items-start gap-3">
+                    <div className="min-w-0 flex-1">
+                      <Head method={row.method} label={row.label} tag="Manual · verified by admin" />
+                    </div>
+                    {!own && (
+                      <Switch
+                        checked={!hidden}
+                        onChange={(v) => void toggleGlobal(row, v)}
+                        label={`Show ${row.label} on my store`}
+                      />
+                    )}
+                  </div>
                   <dl className="mt-3 space-y-1 text-[11px]">
                     <Row k="Account" v={cfgString(row.config, "account") || "—"} />
                     <Row k="Type" v={cfgString(row.config, "account_type") || "—"} />
@@ -238,14 +252,15 @@ function ResellerPaymentsPage() {
                   <span
                     className={
                       "mt-3 inline-flex w-fit items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold " +
-                      (overridden ? "bg-muted text-muted-foreground" : "bg-success/15 text-success")
+                      (shown ? "bg-success/15 text-success" : "bg-muted text-muted-foreground")
                     }
                   >
-                    {overridden ? "Replaced by your own method" : "Live on your store"}
+                    {overridden ? "Replaced by your own method" : hidden ? "Off on your store" : "Live on your store"}
                   </span>
                 </div>
               );
             })}
+
 
             {gateways.map((g) => (
               <div key={g.provider} className="surface-card flex flex-col p-4">
