@@ -13,7 +13,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { mergeDeliverySettings, setGlobalDelivery } from "@/lib/delivery";
 import { applyPlatformBranding } from "@/lib/platform-branding";
-import { panelBootstrapPending } from "@/lib/panel-bootstrap";
+import { waitForPanelBootstrap } from "@/lib/panel-bootstrap";
 
 export type GlobalSettings = {
   id: number;
@@ -58,11 +58,8 @@ export function getGlobalSettings(force = false): Promise<GlobalSettings | null>
     p = (async () => {
       try {
         // A panel bootstrap in flight already carries this row — wait for it.
-        const wait = panelBootstrapPending();
-        if (wait) {
-          await wait;
-          if (settingsPromise && settingsPromise !== p) return settingsPromise;
-        }
+        await waitForPanelBootstrap();
+        if (settingsPromise && settingsPromise !== p) return settingsPromise;
         const { data } = await supabase.from("global_settings").select("*").eq("id", 1).maybeSingle();
         setGlobalDelivery(mergeDeliverySettings((data as any)?.advanced_settings?.delivery));
         applyPlatformBranding(data as any);
@@ -94,11 +91,8 @@ export function getMyReseller(userId?: string | null, force = false): Promise<My
     resellerForUser = userId ?? null;
     p = (async () => {
       try {
-        const wait = panelBootstrapPending();
-        if (wait) {
-          await wait;
-          if (resellerPromise && resellerPromise !== p) return resellerPromise;
-        }
+        await waitForPanelBootstrap();
+        if (resellerPromise && resellerPromise !== p) return resellerPromise;
         let uid = userId ?? null;
         if (!uid) uid = (await supabase.auth.getUser()).data.user?.id ?? null;
         if (!uid) return null;

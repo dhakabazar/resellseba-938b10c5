@@ -48,6 +48,41 @@ export function markPanelBootstrapPending() {
   });
 }
 
+const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+/** True when a signed-in session is stored, so a bootstrap call is expected. */
+function hasStoredSession() {
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith("sb-") && k.endsWith("-auth-token")) return true;
+    }
+  } catch {
+    /* storage unavailable (SSR) */
+  }
+  return false;
+}
+
+/**
+ * Waits briefly for the panel bootstrap when a session exists, so shared caches
+ * reuse its payload instead of firing their own duplicate query. Public pages
+ * (no session) return immediately.
+ */
+export async function waitForPanelBootstrap(maxMs = 800): Promise<PanelBootstrap | null> {
+  if (current) return current;
+  if (typeof window === "undefined" || !hasStoredSession()) return null;
+  const deadline = Date.now() + maxMs;
+  while (Date.now() < deadline) {
+    if (current) return current;
+    if (pending) {
+      await Promise.race([pending, sleep(Math.max(deadline - Date.now(), 0))]);
+      return current;
+    }
+    await sleep(40);
+  }
+  return current;
+}
+
 /** Resolves once the bootstrap payload landed (or `null` when none is in flight). */
 export function panelBootstrapPending() {
   return pending;
