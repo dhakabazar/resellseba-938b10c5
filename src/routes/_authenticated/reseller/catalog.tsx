@@ -63,42 +63,23 @@ function CatalogPage() {
   const [detailId, setDetailId] = useState<string | null>(null);
   const { settings: adv } = useAdvancedSettings();
 
+  const didLoad = useRef(false);
   useEffect(() => {
-    if (!user) return;
+    if (!user || didLoad.current) return;
+    didLoad.current = true;
     (async () => {
-      // Catalog, brands and categories don't depend on the reseller row, so
-      // every request goes out at once instead of waiting in a chain.
-      const listingsPromise = getMyReseller(user.id).then(async (r) => {
-        if (!r) return null;
-        const { data: mine } = await supabase
-          .from("reseller_listings")
-          .select("product_id")
-          .eq("reseller_id", r.id);
-        return { id: r.id, mine: mine ?? [] };
-      });
-
-      const [{ data }, { data: b }, { data: c }, listings] = await Promise.all([
-        supabase
-          .from("products")
-          .select(
-            "id,name,slug,product_code,reseller_price,packaging_cost,delivery_inside,delivery_outside,delivery_sub,delivery_mode,delivery_flat,suggested_price,stock,og_image_url,brand_id,category_id",
-          )
-          .eq("is_active", true)
-          .order("created_at", { ascending: false }),
-        supabase.from("brands").select("id,name").eq("is_active", true).order("name"),
-        supabase.from("categories").select("id,name").eq("is_active", true).order("name"),
-        listingsPromise,
-      ]);
-      if (listings) {
-        setResellerId(listings.id);
-        setListed(new Set(listings.mine.map((m) => m.product_id)));
-      }
-      setItems((data ?? []) as P[]);
-      setBrands((b ?? []) as Opt[]);
-      setCategories((c ?? []) as Opt[]);
+      // ONE call: products + brands + categories + my listed product ids.
+      const { data } = await supabase.rpc("reseller_catalog_page");
+      const payload = (data ?? {}) as any;
+      if (payload.reseller_id) setResellerId(payload.reseller_id as string);
+      setListed(new Set(((payload.listed_product_ids ?? []) as string[])));
+      setItems((payload.products ?? []) as P[]);
+      setBrands((payload.brands ?? []) as Opt[]);
+      setCategories((payload.categories ?? []) as Opt[]);
       setLoading(false);
     })();
   }, [user]);
+
 
   useEffect(() => setPage(1), [q, brand, category, avail, perPage]);
 
