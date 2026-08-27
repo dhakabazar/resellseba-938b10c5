@@ -274,7 +274,12 @@ export function GatewayGrid({
       {editing && (
         <GatewayModal
           spec={GATEWAYS.find((g) => g.provider === editing)!}
-          row={rows[editing] ?? blank(GATEWAYS.find((g) => g.provider === editing)!)}
+          row={
+            rows[editing] ??
+            blank(GATEWAYS.find((g) => g.provider === editing)!, isReseller ? "platform" : "own")
+          }
+          resellerId={resellerId}
+          platformActive={platformActive}
           onClose={() => setEditing(null)}
           onSaved={() => {
             setEditing(null);
@@ -289,14 +294,19 @@ export function GatewayGrid({
 function GatewayModal({
   spec,
   row: initial,
+  resellerId,
+  platformActive,
   onClose,
   onSaved,
 }: {
   spec: GatewaySpec;
   row: Row;
+  resellerId: string | null;
+  platformActive?: string[];
   onClose: () => void;
   onSaved: () => void;
 }) {
+
   const [row, setRow] = useState<Row>(initial);
   const [busy, setBusy] = useState(false);
   const [testing, setTesting] = useState(false);
