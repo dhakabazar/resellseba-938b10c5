@@ -18,6 +18,7 @@ export interface AuthState {
 const listeners = new Set<(state: AuthState) => void>();
 let initialized = false;
 let authVersion = 0;
+let lastAppliedUser: string | null = null;
 
 let authState: AuthState = {
   session: null,
