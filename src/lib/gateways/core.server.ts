@@ -60,9 +60,9 @@ export function resolveGatewayRow<T extends { reseller_id: string | null; is_act
   }
   return platform && platform.is_active ? platform : null;
 }
-
-
+/**
  * Credential loader.
+
  *
  * A reseller row, when present, decides everything for that store:
  * - `is_active = false` → the gateway is off for this store (no platform fallback)
