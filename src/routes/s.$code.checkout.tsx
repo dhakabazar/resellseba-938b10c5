@@ -48,7 +48,12 @@ function Checkout() {
   const { l: directListing, q: directQty } = Route.useSearch();
   const nav = useNavigate();
   const store = useStore();
-  const [methods, setMethods] = useState<PayMethod[]>([]);
+  /** Manual methods arrive with the storefront bootstrap payload — no extra call. */
+  const methods: PayMethod[] = store.paymentMethods.map((m) => ({
+    method: m.method,
+    label: m.label ?? m.method,
+    instructions: m.instructions,
+  }));
   const [payMethod, setPayMethod] = useState<string>("cod");
   const [busy, setBusy] = useState(false);
   const [noteOpen, setNoteOpen] = useState(false);
