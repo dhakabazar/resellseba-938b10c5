@@ -322,34 +322,78 @@ function Checkout() {
 
           {extraMethods.length + gatewayOptions.length > 0 && (
             <div>
-              <div className="mb-2 text-xs font-semibold uppercase tracking-[0.14em]">Payment method</div>
-              <div className="grid gap-2 sm:grid-cols-2">
+              <div className="mb-2.5 flex items-baseline justify-between gap-2">
+                <div className="text-xs font-semibold uppercase tracking-[0.14em]">Payment method</div>
+                <span className={cx("text-[11px]", muted)}>Choose one</span>
+              </div>
+              <div className="grid gap-2.5 sm:grid-cols-2">
                 {[
-                  { value: "cod", method: "cod", label: "Cash on Delivery", instructions: codMeta?.instructions ?? null },
+                  {
+                    value: "cod",
+                    method: "cod",
+                    label: "Cash on Delivery",
+                    instructions: codMeta?.instructions ?? "Pay the courier when your parcel arrives.",
+                  },
                   ...extraMethods.map((m) => ({ ...m, value: m.method })),
                   ...gatewayOptions,
-                ].map((m) => (
-                  <button
-                    type="button"
-                    key={m.value}
-                    onClick={() => setPayMethod(m.value)}
-                    className={cx(
-                      "rounded-[var(--st-radius-sm)] border px-3 py-2.5 text-left text-sm",
-                      payMethod === m.value
-                        ? "border-[var(--st-primary)] bg-[var(--st-primary)]/10 text-[var(--st-fg)]"
-                        : borderc,
-                    )}
-                  >
-                    <div className="flex items-center gap-2">
-                      <PaymentLogo method={("provider" in m ? m.provider : m.method) as string} size={24} />
-                      <span className="font-medium capitalize">{m.label}</span>
-                    </div>
-                    {m.instructions && <div className={cx("text-xs", muted)}>{m.instructions}</div>}
-                  </button>
-                ))}
+                ].map((m) => {
+                  const selected = payMethod === m.value;
+                  const online = "provider" in m;
+                  const logoFor = (online ? m.provider : m.method) as string;
+                  return (
+                    <button
+                      type="button"
+                      key={m.value}
+                      onClick={() => setPayMethod(m.value)}
+                      aria-pressed={selected}
+                      className={cx(
+                        "group relative flex items-center gap-3 rounded-[var(--st-radius-sm)] border p-3 text-left transition-colors",
+                        selected
+                          ? "border-[var(--st-primary)] bg-[var(--st-primary)]/[0.07]"
+                          : cx(borderc, "hover:border-[var(--st-primary)]"),
+                      )}
+                    >
+                      <span
+                        className={cx(
+                          "grid h-12 w-16 shrink-0 place-items-center overflow-hidden rounded-[var(--st-radius-sm)] border bg-[var(--st-bg)] p-1",
+                          selected ? "border-[var(--st-primary)]" : borderc,
+                        )}
+                      >
+                        {m.value === "cod" ? (
+                          <Truck className="h-6 w-6 text-[var(--st-primary)]" />
+                        ) : (
+                          <PaymentLogo method={logoFor} width={60} height={40} fit="contain" alt={m.label} />
+                        )}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="flex items-center gap-1.5">
+                          <span className="truncate text-sm font-semibold text-[var(--st-fg)]">{m.label}</span>
+                          {online && (
+                            <span className="rounded-full bg-[var(--st-primary)]/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[var(--st-primary)]">
+                              instant
+                            </span>
+                          )}
+                        </span>
+                        <span className={cx("mt-0.5 line-clamp-2 block text-[11px] leading-snug", muted)}>
+                          {online ? "Pay securely online and confirm instantly." : m.instructions || "Manual payment"}
+                        </span>
+                      </span>
+                      <span
+                        aria-hidden
+                        className={cx(
+                          "grid h-4.5 w-4.5 shrink-0 place-items-center rounded-full border",
+                          selected ? "border-[var(--st-primary)] bg-[var(--st-primary)]" : borderc,
+                        )}
+                      >
+                        {selected && <span className="h-1.5 w-1.5 rounded-full bg-[var(--st-on-primary)]" />}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
+
 
           {extraMethods.length + gatewayOptions.length === 0 && (
             <div className={cx("flex items-start gap-2 rounded-[var(--st-radius-sm)] border border-dashed p-3 text-xs", borderc, muted)}>
