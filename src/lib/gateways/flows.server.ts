@@ -45,7 +45,13 @@ export async function startOrderPaymentFlow(input: {
   const store = (input.storeOrigin || core.siteOrigin()).replace(/\/+$/, "");
   const cb = await callbackBase();
   const spa = core.spaUrls(store, input.code, order.order_number);
-  const params = { on: order.order_number, su: spa.success, cu: spa.cancel, code: input.code };
+  const params = {
+    on: order.order_number,
+    su: spa.success,
+    cu: spa.cancel,
+    code: input.code,
+    sig: await core.signTargets(spa.success, spa.cancel),
+  };
   const urls = {
     returnUrl: core.returnUrl(cb, input.provider, { ...params, t: "success" }),
     failUrl: core.returnUrl(cb, input.provider, { ...params, t: "fail" }),
