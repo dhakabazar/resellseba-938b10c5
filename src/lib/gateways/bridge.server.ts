@@ -70,7 +70,10 @@ export async function forwardToPlatform<T>(
       "content-type": "application/json",
       ...(authorization ? { authorization } : {}),
     },
-    body: JSON.stringify({ op, ...payload, origin: here }),
+    // Keep the origin the shopper is actually browsing (sent by the caller);
+    // only fall back to this deployment's own origin when none was provided.
+    body: JSON.stringify({ op, ...payload, origin: (payload["origin"] as string | undefined) || here }),
+
   });
   const text = await res.text();
   if (!res.ok) {
