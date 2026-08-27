@@ -261,10 +261,10 @@ function ResellerPaymentsPage() {
         <h2 className="mb-2 flex items-center gap-1.5 text-sm font-semibold">
           <Globe2 className="h-4 w-4 text-primary" /> Global methods
           <span className="rounded-full bg-muted px-1.5 text-[10px] font-semibold">
-            {globalManual.length + gateways.length}
+            {globalManual.length + platformGateways.length}
           </span>
         </h2>
-        {globalManual.length + gateways.length === 0 ? (
+        {globalManual.length + platformGateways.length === 0 ? (
           <div className="rounded-xl border border-dashed p-8 text-center text-xs text-muted-foreground">
             No global method is active right now — Cash on delivery still works on your store.
           </div>
