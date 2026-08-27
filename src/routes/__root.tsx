@@ -126,10 +126,8 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
-  const [brand, setBrand] = useState<{ primary: string | null; accent: string | null }>({
-    primary: null,
-    accent: null,
-  });
+  const brand = usePlatformBranding();
+
 
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
