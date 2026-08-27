@@ -7,8 +7,8 @@ import {
   type ContentReader,
   type ThemeContentValues,
 } from "@/lib/store-content";
-import { buildMenuTree, fetchMenuRows, type MenuNode } from "@/lib/store-menu";
-import { getGlobalSettings } from "@/lib/app-data";
+import { buildMenuTree, type MenuNode } from "@/lib/store-menu";
+import { getStoreBootstrap } from "@/lib/bootstrap";
 
 
 export type StoreImage = { url: string; is_primary: boolean | null; sort_order?: number | null };
