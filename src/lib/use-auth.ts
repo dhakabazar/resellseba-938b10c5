@@ -113,6 +113,7 @@ async function loadAccess(
 async function applySession(session: Session | null, opts: { forceAccessReload?: boolean } = {}) {
   if (!session?.user) {
     clearAppDataCache();
+    clearPanelBootstrapPayload();
     authVersion++;
     lastAppliedUser = null;
     publish({ session: null, user: null, roles: [], permissions: [], loading: false, accessError: false });
