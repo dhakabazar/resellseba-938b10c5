@@ -6,6 +6,8 @@ const input = z.object({
   orderNumber: z.string().min(1),
   code: z.string().min(1),
   eventId: z.string().optional(),
+  /** Storefront origin of the buyer's browser — keeps event URLs domain-agnostic. */
+  origin: z.string().url().optional(),
 });
 
 const sha256 = (v: string) => createHash("sha256").update(v.trim().toLowerCase()).digest("hex");
@@ -39,6 +41,10 @@ export const trackPurchaseServer = createServerFn({ method: "POST" })
       return rows.find((c: any) => c.reseller_id === order.reseller_id) ?? rows.find((c: any) => c.reseller_id === null);
     };
 
+    // Event URLs follow the actual storefront origin (custom domain or platform host).
+    const origin = (data.origin ?? process.env['SITE_URL'] ?? "").replace(/\/$/, "");
+    const checkoutUrl = origin ? `${origin}/s/${data.code}/checkout` : undefined;
+
     const eventId = data.eventId ?? `purchase_${order.id}`;
     const eventTime = Math.floor(Date.now() / 1000);
     const results: Record<string, any> = {};
@@ -50,7 +56,7 @@ export const trackPurchaseServer = createServerFn({ method: "POST" })
           event_name: "Purchase",
           event_time: eventTime,
           event_id: eventId,
-          event_source_url: `https://${data.code}.lovable.app/s/${data.code}/checkout`,
+          event_source_url: checkoutUrl,
           client_user_agent: typeof window !== "undefined" ? window.navigator.userAgent : undefined,
           action_source: "website",
           user_data: {
@@ -84,7 +90,7 @@ export const trackPurchaseServer = createServerFn({ method: "POST" })
             phone: order.customer_phone ? sha256(order.customer_phone) : undefined,
           },
           context: {
-            page: { url: `https://${data.code}.lovable.app/s/${data.code}/checkout` },
+            page: { url: checkoutUrl },
             ad: { callback: undefined } // TikTok Click ID can be added here if captured in URL
           },
           properties: {

@@ -1,7 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { getMyReseller } from "@/lib/app-data";
+import { getResellerDashboard, clearBootstrapCache } from "@/lib/bootstrap";
 import { useDepositStatus } from "@/lib/deposit";
 import { DepositNotice } from "@/components/deposit-notice";
 import { AdminNoticePopup } from "@/components/admin-notice-popup";
@@ -81,95 +80,33 @@ function ResellerDashboard() {
     async (r: DateRangeState) => {
       if (!uid) return;
       setLoading(true);
-      const reseller = await getMyReseller(uid);
-      if (!reseller) {
+      const { fromTs, toTs } = resolveRange(r);
+      // ONE call: reseller + orders + items + payouts + commissions + listings + catalog.
+      const data = await getResellerDashboard(uid, fromTs, toTs, true);
+      if (!data?.reseller) {
         setLoading(false);
         return;
       }
-      setRid(reseller.id);
-      const { fromTs, toTs } = resolveRange(r);
-
-      let oq = supabase
-        .from("orders")
-        .select(
-          "id,order_number,reseller_id,status,created_at,subtotal,shipping_cost,discount,total,sa_cost_total,reseller_profit,received_amount,packaging_total,delivery_cost,advance_amount,advance_by",
-        )
-        .eq("reseller_id", reseller.id);
-      if (fromTs != null) oq = oq.gte("created_at", new Date(fromTs).toISOString());
-      if (toTs != null) oq = oq.lte("created_at", new Date(toTs).toISOString());
-
-      const [
-        ordersRes,
-        listAll,
-        listActive,
-        payoutRes,
-        commRes,
-        summaryRes,
-        listingsRes,
-        productsRes,
-      ] = await Promise.all([
-        oq.order("created_at", { ascending: false }).limit(5000),
-        supabase.from("reseller_listings").select("*", { count: "exact", head: true }).eq("reseller_id", reseller.id),
-        supabase
-          .from("reseller_listings")
-          .select("*", { count: "exact", head: true })
-          .eq("reseller_id", reseller.id)
-          .eq("is_active", true),
-        supabase.from("payouts").select("amount,status,created_at").eq("reseller_id", reseller.id),
-        supabase.from("leader_commissions").select("amount,status,created_at").eq("leader_id", reseller.id),
-        supabase.rpc("reseller_profit_summary", { _reseller_id: reseller.id }),
-        supabase
-          .from("reseller_listings")
-          .select(
-            "id,selling_price,products(id,brand_id,category_id,name,product_code,reseller_price,packaging_cost,delivery_inside,delivery_outside,delivery_mode,delivery_flat,og_image_url)",
-          )
-          .eq("reseller_id", reseller.id)
-          .eq("is_active", true),
-        supabase
-          .from("products")
-          .select(
-            "id,brand_id,category_id,name,slug,product_code,reseller_price,packaging_cost,delivery_inside,delivery_outside,delivery_mode,delivery_flat,og_image_url,suggested_price",
-          )
-          .eq("is_active", true)
-          .order("created_at", { ascending: false }),
-      ]);
-
-      const os = (ordersRes.data ?? []) as ReportOrder[];
-      setOrders(os);
-      setListingsReport({ total: listAll.count ?? 0, active: listActive.count ?? 0 });
-      setPayouts((payoutRes.data ?? []) as PayoutRow[]);
-      setCommissions((commRes.data ?? []) as CommissionRow[]);
-      setListings((listingsRes.data ?? []) as Listing[]);
-      setAllProducts((productsRes.data ?? []) as any[]);
-
-      const s = (Array.isArray(summaryRes.data) ? summaryRes.data[0] : summaryRes.data) as
-        | { delivered_profit?: number; pending_payout?: number; paid_out?: number; available?: number }
-        | null;
+      setRid(data.reseller.id);
+      setOrders((data.orders ?? []) as ReportOrder[]);
+      setItems((data.items ?? []) as ReportItem[]);
+      setListingsReport({ total: data.listings_total ?? 0, active: data.listings_active ?? 0 });
+      setPayouts((data.payouts ?? []) as PayoutRow[]);
+      setCommissions((data.commissions ?? []) as CommissionRow[]);
+      setListings((data.listings ?? []) as Listing[]);
+      setAllProducts((data.products ?? []) as any[]);
+      const s = data.summary;
       setLifetime({
         delivered: Number(s?.delivered_profit ?? 0),
         pendingPayout: Number(s?.pending_payout ?? 0),
         paidOut: Number(s?.paid_out ?? 0),
         available: Number(s?.available ?? 0),
       });
-
-      if (os.length) {
-        const ids = os.map((o) => o.id);
-        const chunks: ReportItem[] = [];
-        for (let i = 0; i < ids.length; i += 200) {
-          const { data } = await supabase
-            .from("order_items")
-            .select("order_id,product_id,product_name,quantity,sa_price,reseller_price,line_total,profit")
-            .in("order_id", ids.slice(i, i + 200));
-          chunks.push(...((data ?? []) as ReportItem[]));
-        }
-        setItems(chunks);
-      } else {
-        setItems([]);
-      }
       setLoading(false);
     },
     [uid],
   );
+
 
 
   useEffect(() => {
@@ -449,6 +386,7 @@ function ResellerDashboard() {
           onClose={() => setOrderOpen(false)}
           onCreated={() => {
             setOrderOpen(false);
+            clearBootstrapCache("rdash:");
             void load(range);
           }}
         />

@@ -222,56 +222,20 @@ function OrdersPage() {
   async function load(opts?: { silent?: boolean }) {
     if (!user) return;
     if (!opts?.silent) setLoading(true);
-    const r = await getMyReseller(user.id);
-    if (!r) return setLoading(false);
-    setResellerId(r.id);
-    const [{ data: o }, { data: l }, { data: p }] = await Promise.all([
-      supabase
-        .from("orders")
-        .select(ORDER_COLUMNS)
-        .eq("reseller_id", r.id)
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("reseller_listings")
-        .select("id,selling_price,products(id,brand_id,category_id,name,product_code,reseller_price,packaging_cost,delivery_inside,delivery_outside,delivery_mode,delivery_flat,og_image_url)")
-        .eq("reseller_id", r.id)
-        .eq("is_active", true),
-      supabase
-        .from("products")
-        .select("id,brand_id,category_id,name,slug,product_code,reseller_price,packaging_cost,delivery_inside,delivery_outside,delivery_mode,delivery_flat,og_image_url,suggested_price")
-        .eq("is_active", true)
-        .order("created_at", { ascending: false }),
-    ]);
-    const rows = (o ?? []) as OrderRow[];
-    setOrders(rows);
-    setListings((l ?? []) as Listing[]);
-    setAllProducts((p ?? []) as any[]);
-    
-    if (rows.length > 0) {
-      const [{ data: its }, { data: s }, { data: ev }] = await Promise.all([
-        supabase
-          .from("order_items")
-          .select("order_id,product_id,product_name,product_image,quantity,returned_qty,reseller_price,line_total,sa_price")
-          .in("order_id", rows.map((x) => x.id)),
-        supabase
-          .from("shipments")
-          .select("id,order_id,provider,tracking_id,consignment_id,status,courier_status,last_event_at")
-          .in("order_id", rows.map(x => x.id)),
-        supabase
-          .from("courier_events")
-          .select("order_id,provider,courier_status,note,event_at")
-          .in("order_id", rows.map(x => x.id))
-      ]);
-      setOrderItems((its ?? []) as OrderItemLite[]);
-      setShipments(s ?? []);
-      setEvents(ev ?? []);
-    } else {
-      setOrderItems([]);
-      setShipments([]);
-      setEvents([]);
-    }
+    // Single backend call: orders, items, shipments, courier events, listings and catalog.
+    const { data } = await supabase.rpc("reseller_orders_page");
+    const pl = (data ?? {}) as any;
+    if (!pl.reseller_id) return setLoading(false);
+    setResellerId(pl.reseller_id as string);
+    setOrders((pl.orders ?? []) as OrderRow[]);
+    setListings((pl.listings ?? []) as Listing[]);
+    setAllProducts((pl.products ?? []) as any[]);
+    setOrderItems((pl.items ?? []) as OrderItemLite[]);
+    setShipments((pl.shipments ?? []) as any[]);
+    setEvents((pl.events ?? []) as any[]);
     if (!opts?.silent) setLoading(false);
   }
+
 
   // Refresh only the touched rows so the current page/filters stay put.
   async function syncOrders(ids: string[]) {

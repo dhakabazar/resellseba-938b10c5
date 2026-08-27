@@ -69,7 +69,15 @@ export function getGlobalSettings(force = false): Promise<GlobalSettings | null>
   return p;
 }
 
+/** Seeds the reseller cache from a page bootstrap payload (no extra request). */
+export function primeMyReseller(userId: string | null | undefined, row: unknown) {
+  if (!row) return;
+  resellerForUser = userId ?? resellerForUser;
+  resellerPromise = Promise.resolve(row as MyReseller);
+}
+
 /** One `resellers` lookup per signed-in user (shared by every reseller screen). */
+
 export function getMyReseller(userId?: string | null, force = false): Promise<MyReseller | null> {
   if (force || (userId && resellerForUser && resellerForUser !== userId)) {
     resellerPromise = null;

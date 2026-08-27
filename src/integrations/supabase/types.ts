@@ -2578,7 +2578,10 @@ export type Database = {
         }
         Returns: string
       }
+      admin_dashboard: { Args: { _from?: string; _to?: string }; Returns: Json }
       admin_delete_user: { Args: { _user_id: string }; Returns: undefined }
+      admin_lookups: { Args: never; Returns: Json }
+      admin_orders_page: { Args: { _statuses?: string[] }; Returns: Json }
       admin_reseller_metrics: {
         Args: never
         Returns: {
@@ -2828,6 +2831,10 @@ export type Database = {
       }
       reseller_auto_approve: { Args: never; Returns: boolean }
       reseller_can_note: { Args: { _order_id: string }; Returns: boolean }
+      reseller_dashboard: {
+        Args: { _from?: string; _to?: string }
+        Returns: Json
+      }
       reseller_deposit_balance: {
         Args: { _reseller_id: string }
         Returns: number
@@ -2845,6 +2852,7 @@ export type Database = {
           status: string
         }[]
       }
+      reseller_orders_page: { Args: never; Returns: Json }
       reseller_profit_summary: {
         Args: { _reseller_id: string }
         Returns: {
