@@ -66,24 +66,21 @@ function ProductsPage() {
 
   async function load() {
     setLoading(true);
-    const [{ data: p }, { data: b }, { data: c }] = await Promise.all([
-      supabase
-        .from("products")
-        .select("id,product_code,name,buying_price,reseller_price,suggested_price,stock,is_active,is_featured,og_image_url,brand_id,category_id")
-        .order("created_at", { ascending: false }),
-      supabase.from("brands").select("id,name").order("name"),
-      supabase.from("categories").select("id,name").order("name"),
-    ]);
-    setItems((p ?? []) as Row[]);
-    setBrands((b ?? []) as Opt[]);
-    setCategories((c ?? []) as Opt[]);
+    // One backend call carries products, brands and categories.
+    const { data } = await supabase.rpc("admin_catalog_page");
+    const pl = (data ?? {}) as any;
+    setItems((pl.products ?? []) as Row[]);
+    setBrands((pl.brands ?? []) as Opt[]);
+    setCategories((pl.categories ?? []) as Opt[]);
     setLoading(false);
   }
+  const didLoad = useRef(false);
   useEffect(() => {
-    if (items.length === 0) {
-      load();
-    }
+    if (didLoad.current) return;
+    didLoad.current = true;
+    load();
   }, []);
+
 
   useEffect(() => {
     setPage(1);

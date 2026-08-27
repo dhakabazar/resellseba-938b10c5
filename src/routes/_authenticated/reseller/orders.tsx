@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ResellerTotalCell } from "@/components/order-total-cell";
 import { withKeptCost } from "@/lib/business-report";
@@ -219,7 +219,15 @@ function OrdersPage() {
   });
 
 
+  // A remount with the same tab within a moment must not refetch the same payload.
+  const lastLoad = useRef<{ key: string; at: number } | null>(null);
   async function load(opts?: { silent?: boolean }) {
+    const loadKey = `${tab}`;
+    if (!opts?.silent) {
+      const prev = lastLoad.current;
+      if (prev && prev.key === loadKey && Date.now() - prev.at < 1500) return;
+      lastLoad.current = { key: loadKey, at: Date.now() };
+    }
     if (!user) return;
     if (!opts?.silent) setLoading(true);
     // Single backend call: orders, items, shipments, courier events, listings and catalog.
