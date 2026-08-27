@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { getResellerDashboard } from "@/lib/bootstrap";
+import { getResellerDashboard, clearBootstrapCache } from "@/lib/bootstrap";
 import { useDepositStatus } from "@/lib/deposit";
 import { DepositNotice } from "@/components/deposit-notice";
 import { AdminNoticePopup } from "@/components/admin-notice-popup";
@@ -386,6 +386,7 @@ function ResellerDashboard() {
           onClose={() => setOrderOpen(false)}
           onCreated={() => {
             setOrderOpen(false);
+            clearBootstrapCache("rdash:");
             void load(range);
           }}
         />
