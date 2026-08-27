@@ -90,18 +90,16 @@ export async function listStoreGatewaysFlow(input: { code: string }) {
   const resellerId = (reseller?.id as string | undefined) ?? null;
   const { data: rows } = await db
     .from("payment_gateway_configs")
-    .select("provider,label,is_active,reseller_id")
-    .eq("is_active", true);
+    .select("provider,label,is_active,reseller_id,mode");
   const out: { provider: string; label: string; method: string }[] = [];
   for (const spec of GATEWAYS) {
     const matches = (rows ?? []).filter((r: any) => r.provider === spec.provider);
-    const row =
-      matches.find((r: any) => resellerId && r.reseller_id === resellerId) ??
-      matches.find((r: any) => r.reseller_id === null);
+    const row = core.resolveGatewayRow(matches as any[], resellerId);
     if (row) out.push({ provider: spec.provider, label: (row as any).label || spec.label, method: spec.method });
   }
   return out;
 }
+
 
 export async function listDepositGatewaysFlow() {
   const db = await core.admin();
