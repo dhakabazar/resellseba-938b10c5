@@ -247,7 +247,7 @@ function ResellerPaymentsPage() {
 
       <div className={tab === "api" ? "" : "hidden"}>
         {resellerId ? (
-          <GatewayGrid resellerId={resellerId} platformActive={platformGateways} />
+          <GatewayGrid resellerId={resellerId} platformActive={platformGateways.map((g) => g.provider)} />
         ) : (
           <div className="rounded-xl border border-dashed p-8 text-center text-xs text-muted-foreground">
             Your reseller account is still being set up.
