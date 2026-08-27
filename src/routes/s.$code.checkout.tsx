@@ -13,7 +13,7 @@ import { addToCart, bdt, clearCart, removeFromCart, setCartQty } from "@/lib/sto
 import { useStore } from "@/components/store/store-context";
 import { borderc, cx, EmptyState, GhostButton, Heading, muted, PrimaryButton } from "@/components/store/ui";
 
-type Search = { l?: string; q?: number };
+type Search = { l?: string; q?: number; pay?: string };
 
 export const Route = createFileRoute("/s/$code/checkout")({
   component: Checkout,
