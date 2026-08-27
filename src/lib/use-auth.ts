@@ -166,6 +166,11 @@ function initAuth() {
   if (initialized) return;
   initialized = true;
 
+  // Flag the bootstrap as pending before the session resolves, so shared
+  // caches (settings, reseller row) wait for that one call instead of racing
+  // it with their own queries.
+  markPanelBootstrapPending();
+
   supabase.auth.getSession().then(({ data }) => void applySession(data.session));
 
   supabase.auth.onAuthStateChange((event, session) => {
