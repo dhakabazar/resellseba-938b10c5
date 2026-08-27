@@ -189,7 +189,14 @@ function Checkout() {
     if (gateway) {
       try {
         const r = await startPayment({
-          data: { orderNumber: row.order_number, code, provider: gateway.provider },
+          data: {
+            orderNumber: row.order_number,
+            code,
+            provider: gateway.provider,
+            // The storefront may run on a custom domain behind a proxy, so the
+            // browser tells the server where to bring the shopper back.
+            storeOrigin: window.location.origin,
+          },
         });
         clearCart(code);
         window.location.href = r.redirectUrl;
