@@ -80,12 +80,27 @@ function Checkout() {
     }
   }, [directListing, directQty, code, nav]);
 
+  /**
+   * The shopper came back from a gateway without paying (cancelled or failed).
+   * They land here, on their own store, so they can retry or switch to COD.
+   */
+  useEffect(() => {
+    if (!payFlag) return;
+    toast.error(
+      payFlag === "cancelled"
+        ? "Payment was cancelled — your cart is still here, try again or choose Cash on Delivery."
+        : "Payment did not go through — please try again or choose Cash on Delivery.",
+    );
+    nav({ to: "/s/$code/checkout", params: { code }, search: {}, replace: true });
+  }, [payFlag, code, nav]);
+
   /** Automatic gateways come from the server (credentials never reach the browser). */
   useEffect(() => {
     loadGateways({ data: { code } })
       .then((rows) => setGateways(rows))
       .catch(() => setGateways([]));
   }, [code, loadGateways]);
+
 
   const lines = useMemo(
     () =>
