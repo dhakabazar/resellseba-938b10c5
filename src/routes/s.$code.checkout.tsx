@@ -48,7 +48,12 @@ function Checkout() {
   const { l: directListing, q: directQty } = Route.useSearch();
   const nav = useNavigate();
   const store = useStore();
-  const [methods, setMethods] = useState<PayMethod[]>([]);
+  /** Manual methods arrive with the storefront bootstrap payload — no extra call. */
+  const methods: PayMethod[] = store.paymentMethods.map((m) => ({
+    method: m.method,
+    label: m.label ?? m.method,
+    instructions: m.instructions,
+  }));
   const [payMethod, setPayMethod] = useState<string>("cod");
   const [busy, setBusy] = useState(false);
   const [noteOpen, setNoteOpen] = useState(false);
@@ -72,23 +77,6 @@ function Checkout() {
       nav({ to: "/s/$code/checkout", params: { code }, search: {}, replace: true });
     }
   }, [directListing, directQty, code, nav]);
-
-  useEffect(() => {
-    (async () => {
-      const { data } = await supabase
-        .from("public_payment_methods")
-        .select("method,label,instructions,reseller_id")
-        .or(`reseller_id.eq.${store.resellerId},reseller_id.is.null`);
-      const byMethod = new Map<string, PayMethod & { reseller_id?: string | null }>();
-      for (const r of data ?? []) {
-        if (!r.method) continue;
-        const existing = byMethod.get(r.method);
-        if (!existing || (r.reseller_id && !existing.reseller_id))
-          byMethod.set(r.method, { method: r.method, label: r.label ?? r.method, instructions: r.instructions, reseller_id: r.reseller_id });
-      }
-      setMethods(Array.from(byMethod.values()));
-    })();
-  }, [store.resellerId]);
 
   /** Automatic gateways come from the server (credentials never reach the browser). */
   useEffect(() => {

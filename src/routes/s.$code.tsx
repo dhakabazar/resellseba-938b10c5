@@ -1,7 +1,6 @@
 import { createFileRoute, Outlet, useRouterState } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { Loader2 } from "lucide-react";
-import { loadTrackingForReseller } from "@/lib/tracking";
 import { useStoreVisitLog } from "@/lib/store-visits";
 import { storeThemeStyle } from "@/lib/store-theme";
 import { useStoreLoader } from "@/components/store/store-context";
@@ -37,10 +36,6 @@ function StoreLayout() {
 
   /** Panel previews (?theme / ?palette) are not counted as customer visits. */
   useStoreVisitLog(code, pathname.replace(`/s/${code}`, "") || "/", Boolean(previewTheme || previewPalette));
-
-  useEffect(() => {
-    if (store?.resellerId) loadTrackingForReseller(store.resellerId).catch(() => {});
-  }, [store?.resellerId]);
 
   if (state === "loading")
     return (

@@ -2816,6 +2816,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      lp_bootstrap: { Args: { _host?: string }; Returns: Json }
       my_permissions: { Args: never; Returns: string[] }
       order_has_shipment: { Args: { _order_id: string }; Returns: boolean }
       order_kept_product_cost: { Args: { _order_id: string }; Returns: number }
@@ -2879,6 +2880,9 @@ export type Database = {
         Returns: number
       }
       seed_reseller_store: { Args: { _reseller_id: string }; Returns: number }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
+      store_bootstrap: { Args: { _code: string }; Returns: Json }
       store_visit_access: { Args: { _reseller_id: string }; Returns: boolean }
       store_visit_daily: {
         Args: { _from: string; _reseller_id: string; _to: string }

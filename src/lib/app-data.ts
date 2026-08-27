@@ -12,6 +12,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { mergeDeliverySettings, setGlobalDelivery } from "@/lib/delivery";
+import { applyPlatformBranding } from "@/lib/platform-branding";
 
 export type GlobalSettings = {
   id: number;
@@ -36,6 +37,18 @@ let settingsPromise: Promise<GlobalSettings | null> | null = null;
 let resellerPromise: Promise<MyReseller | null> | null = null;
 let resellerForUser: string | null = null;
 
+/**
+ * Seeds the settings cache from a page bootstrap payload that already carries
+ * the row — so `getGlobalSettings()` callers on that page cost no request.
+ */
+export function primeGlobalSettings(data: unknown) {
+  if (!data) return;
+  const s = data as GlobalSettings;
+  settingsPromise = Promise.resolve(s);
+  setGlobalDelivery(mergeDeliverySettings((s as any)?.advanced_settings?.delivery));
+  applyPlatformBranding(s as any);
+}
+
 /** One `global_settings` read per session (shared by every caller). */
 export function getGlobalSettings(force = false): Promise<GlobalSettings | null> {
   if (force) settingsPromise = null;
@@ -45,6 +58,7 @@ export function getGlobalSettings(force = false): Promise<GlobalSettings | null>
       try {
         const { data } = await supabase.from("global_settings").select("*").eq("id", 1).maybeSingle();
         setGlobalDelivery(mergeDeliverySettings((data as any)?.advanced_settings?.delivery));
+        applyPlatformBranding(data as any);
         return (data as GlobalSettings | null) ?? null;
       } catch {
         return null;

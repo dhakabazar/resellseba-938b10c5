@@ -11,6 +11,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Toaster } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useBrandingTheme } from "@/lib/branding";
+import { usePlatformBranding } from "@/lib/platform-branding";
 import { GlobalConfirmHost } from "@/lib/confirm";
 
 import appCss from "../styles.css?url";
@@ -126,10 +127,8 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
-  const [brand, setBrand] = useState<{ primary: string | null; accent: string | null }>({
-    primary: null,
-    accent: null,
-  });
+  const brand = usePlatformBranding();
+
 
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
@@ -142,25 +141,6 @@ function RootComponent() {
     });
     return () => sub.subscription.unsubscribe();
   }, [router, queryClient]);
-
-  useEffect(() => {
-    supabase
-      .from("global_settings")
-      .select("favicon_url, primary_color, accent_color")
-      .eq("id", 1)
-      .maybeSingle()
-      .then(({ data }) => {
-        const d = data as { favicon_url?: string | null; primary_color?: string | null; accent_color?: string | null } | null;
-        if (d?.favicon_url) {
-          document.querySelectorAll("link[rel~='icon']").forEach((el) => el.remove());
-          const link = document.createElement("link");
-          link.rel = "icon";
-          link.href = d.favicon_url;
-          document.head.appendChild(link);
-        }
-        setBrand({ primary: d?.primary_color ?? null, accent: d?.accent_color ?? null });
-      });
-  }, []);
 
   useBrandingTheme(brand.primary, brand.accent);
 

@@ -1,5 +1,4 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { getStoreTheme, getPalette, ensureThemeFont, type StorePalette, type StoreTheme } from "@/lib/store-theme";
 import { onCartChange, readCart, type CartLine } from "@/lib/store-cart";
 import {
@@ -7,8 +6,9 @@ import {
   type ContentReader,
   type ThemeContentValues,
 } from "@/lib/store-content";
-import { buildMenuTree, fetchMenuRows, type MenuNode } from "@/lib/store-menu";
-import { getGlobalSettings } from "@/lib/app-data";
+import { buildMenuTree, type MenuNode } from "@/lib/store-menu";
+import { getStoreBootstrap } from "@/lib/bootstrap";
+import { injectTrackingFromRows } from "@/lib/tracking";
 
 
 export type StoreImage = { url: string; is_primary: boolean | null; sort_order?: number | null };
@@ -82,6 +82,8 @@ export type StoreData = {
   categories: StoreCategory[];
   /** reseller-built header menu (empty = fall back to categories) */
   menu: MenuNode[];
+  /** manual payment methods usable at checkout (reseller's own wins over platform) */
+  paymentMethods: { method: string; label: string | null; instructions: string | null; reseller_id: string | null }[];
   cart: CartLine[];
 
   cartCount: number;
@@ -91,6 +93,19 @@ export type StoreData = {
   image: (l: StoreListing) => string | undefined;
 };
 
+
+/** reseller-specific method overrides the platform one with the same key */
+function dedupePayment(
+  rows: { method: string; label: string | null; instructions: string | null; reseller_id: string | null }[],
+) {
+  const byMethod = new Map<string, (typeof rows)[number]>();
+  for (const r of rows) {
+    if (!r.method) continue;
+    const existing = byMethod.get(r.method);
+    if (!existing || (r.reseller_id && !existing.reseller_id)) byMethod.set(r.method, r);
+  }
+  return Array.from(byMethod.values());
+}
 
 const Ctx = createContext<StoreData | null>(null);
 
@@ -118,53 +133,31 @@ export function useStoreLoader(code: string, themeOverride?: string | null, pale
     let alive = true;
     (async () => {
       setState("loading");
-      // Loads the platform-wide delivery rule into the shared cache (once per session).
-      void getGlobalSettings();
-      const { data: r } = await supabase
-        .from("public_stores")
-        .select("*")
-        .eq("code", code)
-        .maybeSingle();
+      // ONE call: store settings + listings (with images) + categories + menu
+      // + the platform delivery rule.
+      const boot = await getStoreBootstrap(code);
       if (!alive) return;
+      const r = boot?.store as (StoreSettings & { reseller_id: string; business_name: string }) | null;
       if (!r) return setState("missing");
 
-      const rid = r.reseller_id as string;
+      const rid = r.reseller_id;
       const s = r as unknown as StoreSettings;
 
+      const listings = ((boot?.listings ?? []) as unknown as StoreListing[]).map((l) => ({
+        ...l,
+        product: l.product
+          ? {
+              ...l.product,
+              product_images: [...(l.product.product_images ?? [])].sort(
+                (a, b) => Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0),
+              ),
+            }
+          : null,
+      })) as StoreListing[];
 
-      const { data: rows } = await supabase
-        .from("reseller_listings")
-        .select(
-          "id, selling_price, custom_title, custom_description, extra_delivery_inside, extra_delivery_outside, created_at, product:products(id,name,slug,product_code,short_description,description,stock,category_id,brand_id,is_featured,is_active,delivery_mode,delivery_flat,delivery_inside,delivery_outside,delivery_sub, product_images(url,is_primary,sort_order))",
-        )
-        .eq("reseller_id", rid)
-        .eq("is_active", true)
-        .order("created_at", { ascending: false });
-      if (!alive) return;
-
-      const listings = ((rows ?? []) as unknown as (StoreListing & { product: (StoreProduct & { is_active?: boolean }) | null })[])
-        .filter((l) => l.product?.is_active)
-        .map((l) => ({
-          ...l,
-          product: l.product
-            ? { ...l.product, product_images: [...(l.product.product_images ?? [])].sort((a, b) => Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0)) }
-            : null,
-        })) as StoreListing[];
-
-      const catIds = Array.from(new Set(listings.map((l) => l.product?.category_id).filter(Boolean))) as string[];
-      let categories: StoreCategory[] = [];
-      if (catIds.length) {
-        const { data: c } = await supabase
-          .from("categories")
-          .select("id,name,slug,image_url,sort_order")
-          .in("id", catIds)
-          .eq("is_active", true)
-          .order("sort_order", { ascending: true });
-        categories = (c ?? []) as StoreCategory[];
-      }
-
-      const menuRows = await fetchMenuRows(rid, true);
-      if (!alive) return;
+      const categories = (boot?.categories ?? []) as StoreCategory[];
+      const menuRows = (boot?.menu ?? []) as never;
+      injectTrackingFromRows(boot?.pixels as never);
 
       const theme = getStoreTheme(themeOverride || s?.theme);
       ensureThemeFont(theme);
@@ -174,6 +167,7 @@ export function useStoreLoader(code: string, themeOverride?: string | null, pale
       const palette = getPalette(theme, paletteOverride || savedPalette);
 
       if (!alive) return;
+
       setData({
         code,
         resellerId: rid,
@@ -186,6 +180,7 @@ export function useStoreLoader(code: string, themeOverride?: string | null, pale
         listings,
         categories,
         menu: buildMenuTree(menuRows),
+        paymentMethods: dedupePayment(boot?.payment_methods ?? []),
 
         byListingId: (id) => listings.find((l) => l.id === id),
         bySlug: (slug) => listings.find((l) => l.product?.slug === slug),
