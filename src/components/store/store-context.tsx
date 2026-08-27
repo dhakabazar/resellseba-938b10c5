@@ -118,53 +118,30 @@ export function useStoreLoader(code: string, themeOverride?: string | null, pale
     let alive = true;
     (async () => {
       setState("loading");
-      // Loads the platform-wide delivery rule into the shared cache (once per session).
-      void getGlobalSettings();
-      const { data: r } = await supabase
-        .from("public_stores")
-        .select("*")
-        .eq("code", code)
-        .maybeSingle();
+      // ONE call: store settings + listings (with images) + categories + menu
+      // + the platform delivery rule.
+      const boot = await getStoreBootstrap(code);
       if (!alive) return;
+      const r = boot?.store as (StoreSettings & { reseller_id: string; business_name: string }) | null;
       if (!r) return setState("missing");
 
-      const rid = r.reseller_id as string;
+      const rid = r.reseller_id;
       const s = r as unknown as StoreSettings;
 
+      const listings = ((boot?.listings ?? []) as unknown as StoreListing[]).map((l) => ({
+        ...l,
+        product: l.product
+          ? {
+              ...l.product,
+              product_images: [...(l.product.product_images ?? [])].sort(
+                (a, b) => Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0),
+              ),
+            }
+          : null,
+      })) as StoreListing[];
 
-      const { data: rows } = await supabase
-        .from("reseller_listings")
-        .select(
-          "id, selling_price, custom_title, custom_description, extra_delivery_inside, extra_delivery_outside, created_at, product:products(id,name,slug,product_code,short_description,description,stock,category_id,brand_id,is_featured,is_active,delivery_mode,delivery_flat,delivery_inside,delivery_outside,delivery_sub, product_images(url,is_primary,sort_order))",
-        )
-        .eq("reseller_id", rid)
-        .eq("is_active", true)
-        .order("created_at", { ascending: false });
-      if (!alive) return;
-
-      const listings = ((rows ?? []) as unknown as (StoreListing & { product: (StoreProduct & { is_active?: boolean }) | null })[])
-        .filter((l) => l.product?.is_active)
-        .map((l) => ({
-          ...l,
-          product: l.product
-            ? { ...l.product, product_images: [...(l.product.product_images ?? [])].sort((a, b) => Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0)) }
-            : null,
-        })) as StoreListing[];
-
-      const catIds = Array.from(new Set(listings.map((l) => l.product?.category_id).filter(Boolean))) as string[];
-      let categories: StoreCategory[] = [];
-      if (catIds.length) {
-        const { data: c } = await supabase
-          .from("categories")
-          .select("id,name,slug,image_url,sort_order")
-          .in("id", catIds)
-          .eq("is_active", true)
-          .order("sort_order", { ascending: true });
-        categories = (c ?? []) as StoreCategory[];
-      }
-
-      const menuRows = await fetchMenuRows(rid, true);
-      if (!alive) return;
+      const categories = (boot?.categories ?? []) as StoreCategory[];
+      const menuRows = (boot?.menu ?? []) as never;
 
       const theme = getStoreTheme(themeOverride || s?.theme);
       ensureThemeFont(theme);
@@ -174,6 +151,7 @@ export function useStoreLoader(code: string, themeOverride?: string | null, pale
       const palette = getPalette(theme, paletteOverride || savedPalette);
 
       if (!alive) return;
+
       setData({
         code,
         resellerId: rid,
