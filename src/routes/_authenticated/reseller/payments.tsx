@@ -11,7 +11,7 @@ import { getMyReseller } from "@/lib/app-data";
 import { listActiveGateways, listDepositGateways } from "@/lib/gateways.functions";
 import { GatewayGrid } from "@/components/payments/gateway-grid";
 
-import { MANUAL_METHODS, cfgString, methodLabel, type PaymentConfigRow } from "@/lib/payment-methods";
+import { MANUAL_METHODS, cfgBool, cfgString, methodLabel, type PaymentConfigRow } from "@/lib/payment-methods";
 import { Label, StatusDot, Switch, field } from "@/components/payments/shared";
 import { PaymentLogo, paymentLogo } from "@/components/payments/payment-brand";
 
