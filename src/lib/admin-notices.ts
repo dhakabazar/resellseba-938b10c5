@@ -43,7 +43,7 @@ export function useLiveNotices(userId: string | undefined, resellerId: string | 
   const [notices, setNotices] = useState<AdminNotice[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const load = useCallback(async (force = false) => {
+  const load = useCallback(async (force = true) => {
     if (!userId) return;
     // The panel bootstrap already filtered live, undismissed, targeted notices.
     const primed = force ? null : getPanelBootstrapPayload()?.notices;
@@ -70,12 +70,14 @@ export function useLiveNotices(userId: string | undefined, resellerId: string | 
   }, [userId, resellerId]);
 
   useEffect(() => {
-    void load();
+    void load(false);
   }, [load]);
 
   const dismiss = useCallback(
     async (id: string) => {
       setNotices((prev) => prev.filter((n) => n.id !== id));
+      const boot = getPanelBootstrapPayload();
+      if (boot) boot.notices = (boot.notices ?? []).filter((n: any) => n?.id !== id);
       if (!userId) return;
       await supabase.from("admin_notice_dismissals").upsert(
         { notice_id: id, user_id: userId },

@@ -56,7 +56,7 @@ export function useDepositStatus(resellerId: string | null | undefined) {
   const [status, setStatus] = useState<DepositStatus>(emptyDepositStatus);
   const [loading, setLoading] = useState(false);
 
-  const reload = useCallback(async (force = false) => {
+  const reload = useCallback(async (force = true) => {
     if (!resellerId) return;
     // Own deposit ledger already arrived with the panel bootstrap.
     const boot = force ? null : getPanelBootstrapPayload();
@@ -83,7 +83,7 @@ export function useDepositStatus(resellerId: string | null | undefined) {
   }, [resellerId]);
 
   useEffect(() => {
-    void reload();
+    void reload(false);
   }, [reload]);
 
   return { status, loading, reload };
