@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { clearAppDataCache, primeGlobalSettings, primeMyReseller } from "@/lib/app-data";
 import {
   clearPanelBootstrapPayload,
+  markPanelBootstrapPending,
   setPanelBootstrapPayload,
   type PanelBootstrap,
 } from "@/lib/panel-bootstrap";
@@ -48,14 +49,17 @@ async function loadAccessOnce(
     // ONE call: roles + permissions + settings + reseller + verification +
     // notices + deposits. The extras prime their caches so panel pages that
     // need them cost no further request.
+    markPanelBootstrapPending();
     const work = supabase.rpc("panel_bootstrap");
 
     const res = await Promise.race([work, timeout]);
     if (!res) {
+      setPanelBootstrapPayload(null);
       console.error("Access lookup timed out");
       return { roles: [], permissions: [], error: true };
     }
     if (res.error) {
+      setPanelBootstrapPayload(null);
       console.error("Error loading access:", res.error);
       return { roles: [], permissions: [], error: true };
     }
@@ -71,6 +75,7 @@ async function loadAccessOnce(
       error: false,
     };
   } catch (err) {
+    setPanelBootstrapPayload(null);
     console.error("Failed to load access data:", err);
     return { roles: [], permissions: [], error: true };
   }

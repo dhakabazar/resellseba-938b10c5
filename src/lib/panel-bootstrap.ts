@@ -37,6 +37,27 @@ export type PanelBootstrap = {
 };
 
 let current: PanelBootstrap | null = null;
+let pending: Promise<void> | null = null;
+let settle: (() => void) | null = null;
+
+/** Called when the bootstrap request starts, so other caches can wait for it. */
+export function markPanelBootstrapPending() {
+  if (pending) return;
+  pending = new Promise<void>((resolve) => {
+    settle = resolve;
+  });
+}
+
+/** Resolves once the bootstrap payload landed (or `null` when none is in flight). */
+export function panelBootstrapPending() {
+  return pending;
+}
+
+function finishPending() {
+  settle?.();
+  settle = null;
+  pending = null;
+}
 
 /** Latest bootstrap payload (null before sign-in completes). */
 export function getPanelBootstrapPayload() {
@@ -45,8 +66,10 @@ export function getPanelBootstrapPayload() {
 
 export function setPanelBootstrapPayload(payload: PanelBootstrap | null) {
   current = payload;
+  finishPending();
 }
 
 export function clearPanelBootstrapPayload() {
   current = null;
+  finishPending();
 }
