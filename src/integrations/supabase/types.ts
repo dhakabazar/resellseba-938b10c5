@@ -2833,6 +2833,7 @@ export type Database = {
       }
       reseller_auto_approve: { Args: never; Returns: boolean }
       reseller_can_note: { Args: { _order_id: string }; Returns: boolean }
+      reseller_catalog_page: { Args: never; Returns: Json }
       reseller_dashboard: {
         Args: { _from?: string; _to?: string }
         Returns: Json
