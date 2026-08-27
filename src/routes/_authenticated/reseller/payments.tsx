@@ -115,6 +115,41 @@ function ResellerPaymentsPage() {
     }
   }
 
+  /**
+   * A reseller entry for a method always wins over the platform one, so hiding a
+   * global method is simply an inactive marker row for that method. Showing it
+   * again deletes the marker.
+   */
+  const hiddenRow = (method: string) =>
+    mine.find((m) => m.method === method && cfgBool(m.config, "hidden_global")) ?? null;
+  const ownRow = (method: string) =>
+    mine.find((m) => m.method === method && !cfgBool(m.config, "hidden_global")) ?? null;
+  const myMethods = mine.filter((m) => !cfgBool(m.config, "hidden_global"));
+
+  async function toggleGlobal(row: PaymentConfigRow, show: boolean) {
+    if (!resellerId) return;
+    const marker = hiddenRow(row.method);
+    if (show) {
+      if (!marker) return;
+      const { error } = await supabase.from("payment_configs").delete().eq("id", marker.id);
+      if (error) return toast.error(error.message);
+      toast.success(`${row.label} is back on your store`);
+    } else {
+      const { error } = await supabase.from("payment_configs").insert({
+        reseller_id: resellerId,
+        method: row.method,
+        label: row.label,
+        mode: "manual",
+        is_active: false,
+        config: { hidden_global: true } as never,
+      });
+      if (error) return toast.error(error.message);
+      toast.success(`${row.label} removed from your store checkout`);
+    }
+    void loadMine(resellerId);
+  }
+
+
   async function remove(row: PaymentConfigRow) {
     const ok = await confirmAction({
       title: "Delete payment method",
