@@ -452,7 +452,7 @@ function Landing({
       </section>
 
       {/* ── Categories ──────────────────────────────────── */}
-      {stats?.categories?.length > 0 && (
+      {!!stats?.categories?.length && (
         <section id="categories" className="border-y border-border/60 bg-muted/30 py-10 sm:py-14">
           <div className="mx-auto max-w-7xl px-4 sm:px-6">
             <div className="mx-auto max-w-2xl text-center">
@@ -460,7 +460,7 @@ function Landing({
               <p className="mt-2 text-sm text-muted-foreground">আপনার নিশ অনুযায়ী ক্যাটাগরি বেছে নিয়ে প্রোডাক্ট লিস্ট করুন</p>
             </div>
             <div className="mt-8 grid grid-cols-5 gap-2 sm:grid-cols-6 sm:gap-3 md:grid-cols-8 lg:grid-cols-10">
-              {stats.categories.map((cat: any) => (
+              {(stats?.categories ?? []).map((cat: any) => (
                 <Link
                   key={cat.id}
                   to="/catalog"
