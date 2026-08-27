@@ -2561,6 +2561,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      admin_catalog_page: { Args: never; Returns: Json }
       admin_confirm_user_email: {
         Args: { _user_id: string }
         Returns: {
