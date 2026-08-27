@@ -50,10 +50,14 @@ function ResellerPaymentsPage() {
   const [resellerId, setResellerId] = useState<string | null>(null);
   const [globalManual, setGlobalManual] = useState<PaymentConfigRow[]>([]);
   const [gateways, setGateways] = useState<{ provider: string; label: string; method: string }[]>([]);
+  const [platformGateways, setPlatformGateways] = useState<string[]>([]);
   const [mine, setMine] = useState<PaymentConfigRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState<"manual" | "api">("manual");
   const [draft, setDraft] = useState<Draft | null>(null);
   const loadGateways = useServerFn(listActiveGateways);
+  const loadPlatformGateways = useServerFn(listDepositGateways);
+
 
   async function loadMine(rid: string) {
     const { data, error } = await supabase
