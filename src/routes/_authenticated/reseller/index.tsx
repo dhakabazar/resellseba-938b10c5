@@ -82,7 +82,7 @@ function ResellerDashboard() {
       setLoading(true);
       const { fromTs, toTs } = resolveRange(r);
       // ONE call: reseller + orders + items + payouts + commissions + listings + catalog.
-      const data = await getResellerDashboard(uid, fromTs, toTs);
+      const data = await getResellerDashboard(uid, fromTs, toTs, true);
       if (!data?.reseller) {
         setLoading(false);
         return;

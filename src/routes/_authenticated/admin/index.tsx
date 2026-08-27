@@ -68,7 +68,7 @@ function AdminDashboard() {
   const load = useCallback(async (r: DateRangeState) => {
     setLoading(true);
     const { fromTs, toTs } = resolveRange(r);
-    const data = await getAdminDashboard(fromTs, toTs);
+    const data = await getAdminDashboard(fromTs, toTs, true);
     setRows((data?.range_orders ?? []) as OrderRow[]);
 
     const all = (data?.all_orders ?? []) as ReportOrder[];
