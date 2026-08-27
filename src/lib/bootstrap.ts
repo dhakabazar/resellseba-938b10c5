@@ -84,6 +84,8 @@ export type StoreBootstrap = {
   categories: { id: string; name: string; slug: string; image_url: string | null }[];
   menu: any[];
   delivery: unknown;
+  pixels: { platform: string; pixel_id: string | null; is_global?: boolean | null }[];
+
 };
 
 /** Storefront: settings + listings + categories + menu + delivery rule in one call. */
