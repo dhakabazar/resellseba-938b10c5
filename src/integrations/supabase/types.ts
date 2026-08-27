@@ -636,6 +636,7 @@ export type Database = {
         Row: {
           accent_color: string | null
           advanced_settings: Json
+          allowed_origins: string[]
           callback_base_url: string | null
           contact_email: string | null
           contact_phone: string | null
@@ -661,6 +662,7 @@ export type Database = {
         Insert: {
           accent_color?: string | null
           advanced_settings?: Json
+          allowed_origins?: string[]
           callback_base_url?: string | null
           contact_email?: string | null
           contact_phone?: string | null
@@ -686,6 +688,7 @@ export type Database = {
         Update: {
           accent_color?: string | null
           advanced_settings?: Json
+          allowed_origins?: string[]
           callback_base_url?: string | null
           contact_email?: string | null
           contact_phone?: string | null

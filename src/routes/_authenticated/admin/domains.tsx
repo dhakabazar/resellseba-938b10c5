@@ -12,6 +12,8 @@ import {
   listDomains,
   refreshDomain,
   disconnectDomain,
+  getPlatformOrigins,
+  savePlatformOrigins,
   type DomainRow,
 } from "@/lib/cloudflare.functions";
 
@@ -175,6 +177,9 @@ function DomainsAdmin() {
         title="Custom domains"
         description="Choose how reseller domains are served — Cloudflare API automation, plain server DNS, or both — and manage every connected domain."
       />
+
+      <PlatformOriginsCard />
+
 
       <form onSubmit={onSave} className="space-y-6">
         <div className="surface-card space-y-3 p-5">
@@ -371,5 +376,95 @@ function DomainsAdmin() {
         onConfirm={onDelete}
       />
     </div>
+  );
+}
+
+/**
+ * The platform's own live domains. Payment gateways return to the origin that
+ * holds the privileged key, and the shopper/reseller is then sent back to the
+ * exact site they started on — only hosts listed here (plus connected reseller
+ * domains and the hosting URL) are accepted, so nothing can hijack a redirect.
+ */
+function PlatformOriginsCard() {
+  const loadOrigins = useServerFn(getPlatformOrigins);
+  const saveOrigins = useServerFn(savePlatformOrigins);
+  const [hosts, setHosts] = useState("");
+  const [callback, setCallback] = useState("");
+  const [ready, setReady] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    loadOrigins({})
+      .then((s) => {
+        setHosts((s.allowed_origins ?? []).join("\n"));
+        setCallback(s.callback_base_url ?? "");
+      })
+      .catch(() => undefined)
+      .finally(() => setReady(true));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function onSave() {
+    setSaving(true);
+    try {
+      const out = await saveOrigins({
+        data: {
+          allowed_origins: hosts.split(/[\s,]+/).filter(Boolean),
+          callback_base_url: callback,
+        },
+      });
+      setHosts(out.allowed_origins.join("\n"));
+      setCallback(out.callback_base_url);
+      toast.success("Payment redirect domains saved");
+    } catch (err) {
+      toast.error(errorText(err));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <section className="surface-card mb-6 space-y-3 p-5">
+      <div className="flex items-center gap-2 text-sm font-semibold">
+        <ShieldCheck className="h-4 w-4 text-primary" /> Payment redirect domains
+      </div>
+      <p className="text-xs text-muted-foreground">
+        Ekhane platform er nijer live domain gulo lekho (ek line e ek ta). Ei domain theke payment
+        korle payment success ba cancel — dutotei user oi domain e-i firbe, onno kothao jabe na.
+      </p>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <label className="grid gap-1 text-sm">
+          <span className="text-xs font-medium text-muted-foreground">Platform domains</span>
+          <textarea
+            rows={4}
+            value={hosts}
+            onChange={(e) => setHosts(e.target.value)}
+            placeholder={"yourbrand.com\nshop.yourbrand.com"}
+            disabled={!ready}
+            className="rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+          />
+        </label>
+        <label className="grid gap-1 text-sm">
+          <span className="text-xs font-medium text-muted-foreground">
+            Payment callback address (gateway return URL base)
+          </span>
+          <input
+            value={callback}
+            onChange={(e) => setCallback(e.target.value)}
+            placeholder="https://your-app-host"
+            disabled={!ready}
+            className="rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+          />
+        </label>
+      </div>
+      <button
+        type="button"
+        onClick={onSave}
+        disabled={saving || !ready}
+        className="btn-primary inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm disabled:opacity-60"
+      >
+        {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save domains
+      </button>
+    </section>
   );
 }
