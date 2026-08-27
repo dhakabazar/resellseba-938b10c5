@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { getAdminDashboard, getAdminLookups, clearBootstrapCache } from "@/lib/bootstrap";
 import { PageHeader, StatCard } from "@/components/ui-kit";
 import { DateRangeBar, DEFAULT_DATE_RANGE, resolveRange, type DateRangeState } from "@/components/date-range-filter";
 import { bdt, buildFinanceReport, isRealizedStatus, orderProfit, PROFIT_FORMULA_HINT, type FinanceReport, type ReportOrder } from "@/lib/finance-report";
@@ -133,10 +133,6 @@ function AdminDashboard() {
     })();
   }, [orderOpen]);
 
-
-  useEffect(() => {
-    void loadLifetime();
-  }, [loadLifetime]);
 
   useEffect(() => {
     void load(range);
@@ -382,8 +378,8 @@ function AdminDashboard() {
           onClose={() => setOrderOpen(false)}
           onCreated={() => {
             setOrderOpen(false);
+            clearBootstrapCache("adash:");
             void load(range);
-            void loadLifetime();
           }}
         />
       )}
