@@ -73,23 +73,6 @@ function Checkout() {
     }
   }, [directListing, directQty, code, nav]);
 
-  useEffect(() => {
-    (async () => {
-      const { data } = await supabase
-        .from("public_payment_methods")
-        .select("method,label,instructions,reseller_id")
-        .or(`reseller_id.eq.${store.resellerId},reseller_id.is.null`);
-      const byMethod = new Map<string, PayMethod & { reseller_id?: string | null }>();
-      for (const r of data ?? []) {
-        if (!r.method) continue;
-        const existing = byMethod.get(r.method);
-        if (!existing || (r.reseller_id && !existing.reseller_id))
-          byMethod.set(r.method, { method: r.method, label: r.label ?? r.method, instructions: r.instructions, reseller_id: r.reseller_id });
-      }
-      setMethods(Array.from(byMethod.values()));
-    })();
-  }, [store.resellerId]);
-
   /** Automatic gateways come from the server (credentials never reach the browser). */
   useEffect(() => {
     loadGateways({ data: { code } })
