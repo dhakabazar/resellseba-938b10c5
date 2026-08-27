@@ -221,11 +221,16 @@ async function parseBody(res: Response): Promise<any> {
   }
 }
 
-/** Success/cancel URLs on the storefront (SPA), used as the final redirect. */
+/**
+ * Final redirect targets on the storefront the shopper is actually browsing:
+ * - success → the order "thanks" page (verified payment result shows there)
+ * - cancel / fail → back to checkout, so the shopper can retry or pick COD
+ */
 export function spaUrls(origin: string, code: string, orderNumber: string) {
+  const store = `${origin}/s/${encodeURIComponent(code)}`;
   return {
-    success: `${origin}/s/${encodeURIComponent(code)}/thanks?n=${encodeURIComponent(orderNumber)}`,
-    cancel: `${origin}/s/${encodeURIComponent(code)}/thanks?n=${encodeURIComponent(orderNumber)}`,
+    success: `${store}/thanks?n=${encodeURIComponent(orderNumber)}`,
+    cancel: `${store}/checkout?pay=cancelled`,
   };
 }
 
@@ -243,6 +248,55 @@ export function safeReturnTarget(raw: string | undefined, origin: string): strin
   }
   return fallback;
 }
+
+/**
+ * The gateway always returns to the origin that holds the privileged key, but
+ * the shopper started on their own storefront (a reseller custom domain, the
+ * published site, or a preview host). A same-origin-only check would drop them
+ * on the wrong website, so any host the platform itself owns is allowed:
+ * this origin, the configured callback origin, platform hosting hosts, and
+ * every custom domain registered by a reseller. Everything else falls back.
+ */
+export async function resolveReturnTarget(raw: string | undefined, origin: string): Promise<string> {
+  const fallback = safeReturnTarget(raw, origin);
+  if (!raw) return fallback;
+  let target: URL;
+  try {
+    target = new URL(raw, origin || undefined);
+  } catch {
+    return fallback;
+  }
+  if (target.protocol !== "https:" && target.protocol !== "http:") return fallback;
+  if (origin) {
+    try {
+      if (target.origin === new URL(origin).origin) return target.toString();
+    } catch {
+      /* ignore */
+    }
+  }
+
+  const host = target.hostname.toLowerCase();
+  if (host === "localhost" || host.endsWith(".lovable.app") || host.endsWith(".lovableproject.com"))
+    return target.toString();
+
+  try {
+    const { platformOrigin } = await import("./bridge.server");
+    const base = await platformOrigin("");
+    if (base && new URL(base).hostname.toLowerCase() === host) return target.toString();
+  } catch {
+    /* callback base not configured */
+  }
+
+  try {
+    const db = await admin();
+    const { data } = await db.from("reseller_domains").select("hostname").ilike("hostname", host).limit(1);
+    if (data && data.length > 0) return target.toString();
+  } catch {
+    /* domain lookup unavailable */
+  }
+  return fallback;
+}
+
 
 /** Return-URL base every gateway is pointed at (never the SPA directly). */
 export function returnUrl(
