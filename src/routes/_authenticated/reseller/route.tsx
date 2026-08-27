@@ -132,11 +132,8 @@ function ResellerLayout() {
         setStoreName(r.business_name);
         setStoreCode(r.code);
         setAvatarUrl(r.avatar_url ?? null);
-        const { data: s } = await supabase
-          .from("reseller_settings")
-          .select("logo_url, primary_color")
-          .eq("reseller_id", r.id)
-          .maybeSingle();
+        // Store branding rides along with the panel bootstrap.
+        const s = getPanelBootstrapPayload()?.reseller_settings ?? null;
         if (s?.logo_url) logo = s.logo_url;
         if (s?.primary_color) color = s.primary_color;
       } else {
@@ -146,6 +143,7 @@ function ResellerLayout() {
       setPrimary(color);
     })();
   }, [user]);
+
 
   useBrandingTheme(primary);
 
