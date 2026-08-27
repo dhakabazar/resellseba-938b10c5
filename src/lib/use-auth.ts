@@ -102,6 +102,7 @@ async function applySession(session: Session | null, opts: { forceAccessReload?:
   if (!session?.user) {
     clearAppDataCache();
     authVersion++;
+    lastAppliedUser = null;
     publish({ session: null, user: null, roles: [], permissions: [], loading: false, accessError: false });
     return authState;
   }
