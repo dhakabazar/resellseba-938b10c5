@@ -40,30 +40,37 @@ async function loadAccessOnce(
   // Hard timeout: metadata fetching must never keep the panel on a spinner.
   const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), 10000));
   try {
-    const work = Promise.all([
-      supabase.from("user_roles").select("role").eq("user_id", userId),
-      supabase.rpc("my_permissions"),
-    ]);
+    // ONE call: roles + permissions + settings + reseller + verification +
+    // notices + deposits. The extras prime their caches so panel pages that
+    // need them cost no further request.
+    const work = supabase.rpc("panel_bootstrap");
 
     const res = await Promise.race([work, timeout]);
     if (!res) {
       console.error("Access lookup timed out");
       return { roles: [], permissions: [], error: true };
     }
-    const [rolesRes, permsRes] = res;
+    if (res.error) {
+      console.error("Error loading access:", res.error);
+      return { roles: [], permissions: [], error: true };
+    }
 
-    if (rolesRes.error) console.error("Error loading roles:", rolesRes.error);
-    if (permsRes.error) console.error("Error loading permissions:", permsRes.error);
+    const payload = (res.data ?? null) as PanelBootstrap | null;
+    setPanelBootstrapPayload(payload);
+    if (payload?.settings) primeGlobalSettings(payload.settings);
+    if (payload?.reseller) primeMyReseller(userId, payload.reseller);
 
-    const roles = rolesRes.error ? [] : (rolesRes.data ?? []).map((row: any) => row.role as Role);
-    const permissions = permsRes.error ? [] : ((permsRes.data as string[] | null) ?? []);
-
-    return { roles, permissions, error: Boolean(rolesRes.error) };
+    return {
+      roles: (payload?.roles ?? []) as Role[],
+      permissions: (payload?.permissions ?? []) as string[],
+      error: false,
+    };
   } catch (err) {
     console.error("Failed to load access data:", err);
     return { roles: [], permissions: [], error: true };
   }
 }
+
 
 /**
  * Roles decide where a signed-in user lands. A transient failure (network blip,
