@@ -37,6 +37,18 @@ let settingsPromise: Promise<GlobalSettings | null> | null = null;
 let resellerPromise: Promise<MyReseller | null> | null = null;
 let resellerForUser: string | null = null;
 
+/**
+ * Seeds the settings cache from a page bootstrap payload that already carries
+ * the row — so `getGlobalSettings()` callers on that page cost no request.
+ */
+export function primeGlobalSettings(data: unknown) {
+  if (!data) return;
+  const s = data as GlobalSettings;
+  settingsPromise = Promise.resolve(s);
+  setGlobalDelivery(mergeDeliverySettings((s as any)?.advanced_settings?.delivery));
+  applyPlatformBranding(s as any);
+}
+
 /** One `global_settings` read per session (shared by every caller). */
 export function getGlobalSettings(force = false): Promise<GlobalSettings | null> {
   if (force) settingsPromise = null;

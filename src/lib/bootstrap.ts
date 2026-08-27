@@ -12,6 +12,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { mergeDeliverySettings, setGlobalDelivery } from "@/lib/delivery";
 import { applyPlatformBranding } from "@/lib/platform-branding";
+import { primeGlobalSettings } from "@/lib/app-data";
 
 const cache = new Map<string, Promise<unknown>>();
 
@@ -84,6 +85,8 @@ export type StoreBootstrap = {
   categories: { id: string; name: string; slug: string; image_url: string | null }[];
   menu: any[];
   delivery: unknown;
+  settings: Record<string, unknown> | null;
+  payment_methods: { method: string; label: string | null; instructions: string | null; reseller_id: string | null }[];
   pixels: { platform: string; pixel_id: string | null; is_global?: boolean | null }[];
 
 };
@@ -96,7 +99,11 @@ export function getStoreBootstrap(code: string, force = false) {
       const data = await rpc<StoreBootstrap>("store_bootstrap", { _code: code });
       // storefront pages price with the platform delivery rule — seed it here so
       // no page has to fetch global_settings separately.
-      if (data) setGlobalDelivery(mergeDeliverySettings(data.delivery as never));
+      if (data) {
+        setGlobalDelivery(mergeDeliverySettings(data.delivery as never));
+        // checkout reads platform/advanced settings — seed them from this payload
+        primeGlobalSettings(data.settings);
+      }
       return data;
     },
     force,
