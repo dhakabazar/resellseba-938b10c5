@@ -137,7 +137,7 @@ function ResellerPaymentsPage() {
     } else {
       const { error } = await supabase.from("payment_configs").insert({
         reseller_id: resellerId,
-        method: row.method,
+        method: row.method as never,
         label: row.label,
         mode: "manual",
         is_active: false,
