@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getPanelBootstrapPayload } from "@/lib/panel-bootstrap";
 
 export type NoticeLevel = "info" | "success" | "warning" | "critical";
 
@@ -42,8 +43,15 @@ export function useLiveNotices(userId: string | undefined, resellerId: string | 
   const [notices, setNotices] = useState<AdminNotice[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (force = false) => {
     if (!userId) return;
+    // The panel bootstrap already filtered live, undismissed, targeted notices.
+    const primed = force ? null : getPanelBootstrapPayload()?.notices;
+    if (primed) {
+      setNotices(primed as AdminNotice[]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     const [noticeRes, seenRes] = await Promise.all([
       supabase.from("admin_notices").select("*").order("created_at", { ascending: false }).limit(50),

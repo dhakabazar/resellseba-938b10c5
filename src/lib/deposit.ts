@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getPanelBootstrapPayload } from "@/lib/panel-bootstrap";
 
 export type DepositRow = {
   id: string;
@@ -55,8 +56,15 @@ export function useDepositStatus(resellerId: string | null | undefined) {
   const [status, setStatus] = useState<DepositStatus>(emptyDepositStatus);
   const [loading, setLoading] = useState(false);
 
-  const reload = useCallback(async () => {
+  const reload = useCallback(async (force = false) => {
     if (!resellerId) return;
+    // Own deposit ledger already arrived with the panel bootstrap.
+    const boot = force ? null : getPanelBootstrapPayload();
+    if (boot?.reseller && boot.reseller.id === resellerId) {
+      setStatus(buildDepositStatus(boot.reseller as any, boot.deposits as DepositRow[]));
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     const [rRes, dRes] = await Promise.all([
       supabase

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdvancedSettings, pendingChannels } from "@/lib/advanced-settings";
 import { useAuth } from "@/lib/use-auth";
+import { getPanelBootstrapPayload } from "@/lib/panel-bootstrap";
 
 export type VerifyState = {
   emailVerified: boolean;
@@ -19,7 +20,7 @@ function fetchVerifyState(userId: string, force = false): Promise<VerifyState> {
   if (!force && cached && cached.userId === userId) return cached.promise;
   const promise = (async () => {
     // The panel bootstrap already carries verification state — reuse it.
-    const primed = getPanelBootstrapPayload()?.verify;
+    const primed = force ? null : getPanelBootstrapPayload()?.verify;
     const { data } = primed ? { data: primed } : await supabase.rpc("verify_state");
 
     const row = Array.isArray(data) ? (data as any[])[0] : (data as any);
