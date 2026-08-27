@@ -12,7 +12,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { mergeDeliverySettings, setGlobalDelivery } from "@/lib/delivery";
 import { applyPlatformBranding } from "@/lib/platform-branding";
-import { primeGlobalSettings } from "@/lib/app-data";
+import { primeGlobalSettings, primeMyReseller } from "@/lib/app-data";
 
 const cache = new Map<string, Promise<unknown>>();
 
@@ -108,4 +108,64 @@ export function getStoreBootstrap(code: string, force = false) {
     },
     force,
   );
+}
+
+/* ── Panels (reseller / admin dashboards) ──────────────────────────────── */
+
+export type ResellerDashboard = {
+  reseller: { id: string; code: string; business_name: string; status: string; avatar_url?: string | null } | null;
+  orders: any[];
+  items: any[];
+  payouts: { amount: number | string; status: string; created_at: string }[];
+  commissions: { amount: number | string; status: string; created_at: string }[];
+  summary: { delivered_profit?: number; pending_payout?: number; paid_out?: number; available?: number } | null;
+  listings: any[];
+  listings_total: number;
+  listings_active: number;
+  products: any[];
+};
+
+/** Reseller dashboard: reseller + orders + items + payouts + commissions + listings in one call. */
+export function getResellerDashboard(userId: string | null | undefined, fromTs: number | null, toTs: number | null, force = false) {
+  return once(
+    `rdash:${fromTs ?? ""}:${toTs ?? ""}`,
+    async () => {
+      const data = await rpc<ResellerDashboard>("reseller_dashboard", {
+        _from: fromTs != null ? new Date(fromTs).toISOString() : null,
+        _to: toTs != null ? new Date(toTs).toISOString() : null,
+      });
+      primeMyReseller(userId, data?.reseller ?? null);
+      return data;
+    },
+    force,
+  );
+}
+
+export type AdminDashboard = {
+  range_orders: any[];
+  all_orders: any[];
+  payouts: { paid: number; due: number };
+  catalog: Record<string, number>;
+  resellers: Record<string, number>;
+  metrics: { withStore: number; depositBalance: number; frozen: number; withdrawable: number };
+};
+
+/** Admin dashboard: range orders + lifetime orders + catalog/reseller/payout aggregates in one call. */
+export function getAdminDashboard(fromTs: number | null, toTs: number | null, force = false) {
+  return once(
+    `adash:${fromTs ?? ""}:${toTs ?? ""}`,
+    () =>
+      rpc<AdminDashboard>("admin_dashboard", {
+        _from: fromTs != null ? new Date(fromTs).toISOString() : null,
+        _to: toTs != null ? new Date(toTs).toISOString() : null,
+      }),
+    force,
+  );
+}
+
+export type AdminLookups = { resellers: any[]; products: any[] };
+
+/** Admin pickers (Add Order modal): resellers + active products, cached per session. */
+export function getAdminLookups(force = false) {
+  return once("alookups", () => rpc<AdminLookups>("admin_lookups", {}), force);
 }
