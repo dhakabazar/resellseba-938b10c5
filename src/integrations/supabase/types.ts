@@ -1317,6 +1317,7 @@ export type Database = {
           is_active: boolean
           label: string | null
           merchant_id: string | null
+          mode: string
           provider: string
           reseller_id: string | null
           updated_at: string
@@ -1330,6 +1331,7 @@ export type Database = {
           is_active?: boolean
           label?: string | null
           merchant_id?: string | null
+          mode?: string
           provider: string
           reseller_id?: string | null
           updated_at?: string
@@ -1343,6 +1345,7 @@ export type Database = {
           is_active?: boolean
           label?: string | null
           merchant_id?: string | null
+          mode?: string
           provider?: string
           reseller_id?: string | null
           updated_at?: string
