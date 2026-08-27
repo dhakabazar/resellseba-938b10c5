@@ -215,7 +215,13 @@ export function GatewayGrid({
                     <StatusDot on={row.is_active} />
                     {row.is_active ? "active" : row.id ? "off" : "not set up"}
                     <span>·</span>
-                    <span className="text-success">live</span>
+                    {isReseller ? (
+                      <span className={row.mode === "platform" ? "text-primary" : "text-success"}>
+                        {row.mode === "platform" ? "platform gateway" : "own account"}
+                      </span>
+                    ) : (
+                      <span className="text-success">live</span>
+                    )}
                   </div>
                 </div>
                 <Switch
@@ -228,12 +234,17 @@ export function GatewayGrid({
               <p className="mt-2.5 line-clamp-2 text-[11px] leading-relaxed text-muted-foreground">{spec.tagline}</p>
 
               <div className="mt-2 text-[10px] font-medium">
-                {missing.length ? (
+                {platformOff ? (
+                  <span className="text-amber-600 dark:text-amber-400">Not enabled by the platform</span>
+                ) : row.mode === "platform" ? (
+                  <span className="text-success">Uses the platform account</span>
+                ) : missing.length ? (
                   <span className="text-amber-600 dark:text-amber-400">{missing.length} credential(s) missing</span>
                 ) : (
                   <span className="text-success">Credentials complete</span>
                 )}
               </div>
+
 
               <div className="mt-auto flex gap-2 pt-3">
                 <button
