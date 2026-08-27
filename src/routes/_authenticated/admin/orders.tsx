@@ -214,34 +214,28 @@ function AdminOrdersPage() {
 
   async function load(opts?: { silent?: boolean }) {
     if (!opts?.silent) setLoading(true);
-    const statuses = ORDER_TABS.find((t) => t.key === tab)?.statuses ?? [];
-    let q = supabase
-      .from("orders")
-      .select(ORDER_SELECT)
-      .order("created_at", { ascending: false });
-    if (statuses.length > 0) q = q.in("status", statuses);
-    const [{ data }, { data: allStats }, { data: rs }, { data: p }] = await Promise.all([
-      q,
-      supabase.from("orders").select("status"),
-      supabase.from("resellers").select("id,business_name,code,contact_phone").order("business_name"),
-      supabase.from("products").select("id,brand_id,category_id,name,slug,product_code,og_image_url,suggested_price,reseller_price,buying_price,packaging_cost,delivery_mode,delivery_flat,delivery_inside,delivery_outside").eq("is_active", true),
+    const statuses = (ORDER_TABS.find((t) => t.key === tab)?.statuses ?? []) as string[];
+    // One backend call carries orders, items, shipments, status counts and reseller options.
+    const [{ data: page }, lookups] = await Promise.all([
+      supabase.rpc("admin_orders_page", { _statuses: statuses.length > 0 ? statuses : null }),
+      getAdminLookups(),
     ]);
-    const rows = (data ?? []) as OrderRow[];
-    setOrders(rows);
-    setAllOrders(allStats ?? []);
-    if (rows.length > 0) {
-      const [{ data: its }, { data: s }] = await Promise.all([
-        supabase.from("order_items").select(ITEM_SELECT).in("order_id", rows.map((r) => r.id)),
-        supabase.from("shipments").select(SHIPMENT_SELECT).in("order_id", rows.map(r => r.id)),
-      ]);
-      setOrderItems((its ?? []) as OrderItemLite[]);
-      setShipments(s ?? []);
-    }
-    setResellerOptions((rs ?? []).map((r: any) => ({ value: r.id, label: `${r.business_name} (/${r.code})` })));
-    setResellers(rs ?? []);
-    setAllProducts((p ?? []) as any[]);
+    const pl = (page ?? {}) as any;
+    setOrders((pl.orders ?? []) as OrderRow[]);
+    setOrderItems((pl.items ?? []) as OrderItemLite[]);
+    setShipments((pl.shipments ?? []) as any[]);
+    setAllOrders(
+      Object.entries((pl.status_counts ?? {}) as Record<string, number>).flatMap(([status, count]) =>
+        Array.from({ length: Number(count) || 0 }, () => ({ status })),
+      ),
+    );
+    const rs = (pl.resellers ?? []) as any[];
+    setResellerOptions(rs.map((r: any) => ({ value: r.id, label: `${r.business_name} (/${r.code})` })));
+    setResellers(rs);
+    setAllProducts((lookups.products ?? []) as any[]);
     if (!opts?.silent) setLoading(false);
   }
+
 
   // Refresh only the touched order rows — keeps scroll position, page and filters intact.
   async function syncOrders(ids: string[]) {
