@@ -31,6 +31,15 @@ const fail = (msg: string) => {
   throw new Error(msg);
 };
 
+/** Gateways demand an email; derive a no-reply on the live store host instead of a hardcoded domain. */
+const guestEmail = (urls: CreateUrls) => {
+  try {
+    return `noreply@${new URL(urls.returnUrl).hostname}`;
+  } catch {
+    return "noreply@localhost";
+  }
+};
+
 const num = (v: unknown) => Number(String(v ?? "0").replace(/[^0-9.\-]/g, "")) || 0;
 
 /* ------------------------------------------------------------------ SSLCommerz */
@@ -48,7 +57,7 @@ const sslcommerz: Adapter = {
       cancel_url: urls.cancelUrl,
       ipn_url: urls.ipnUrl,
       cus_name: order.customer_name,
-      cus_email: order.customer_email || "noreply@example.com",
+      cus_email: order.customer_email || guestEmail(urls),
       cus_phone: order.customer_phone,
       cus_add1: order.address_line,
       cus_city: order.city || "Dhaka",
@@ -285,7 +294,7 @@ const shurjopay: Adapter = {
           customer_address: order.address_line,
           customer_phone: order.customer_phone,
           customer_city: order.city || "Dhaka",
-          customer_email: order.customer_email || "noreply@example.com",
+          customer_email: order.customer_email || guestEmail(urls),
           customer_post_code: "1000",
           client_ip: "103.100.200.100",
           return_url: urls.returnUrl,
@@ -348,7 +357,7 @@ const eps: Adapter = {
           cancelUrl: urls.cancelUrl,
           transactionAmount: Number(order.total),
           customerName: order.customer_name,
-          customerEmail: order.customer_email || "noreply@example.com",
+          customerEmail: order.customer_email || guestEmail(urls),
           customerPhone: order.customer_phone,
           customerAddress: order.address_line,
         },
@@ -398,7 +407,7 @@ const aamarpay: Adapter = {
           currency: "BDT",
           desc: `Order ${order.order_number}`,
           cus_name: order.customer_name,
-          cus_email: order.customer_email || "noreply@example.com",
+          cus_email: order.customer_email || guestEmail(urls),
           cus_phone: order.customer_phone,
           cus_add1: order.address_line,
           cus_city: order.city || "Dhaka",
@@ -520,7 +529,7 @@ const epayseba: Adapter = {
         "/api/payment/create",
         {
           cus_name: order.customer_name || "Customer",
-          cus_email: order.customer_email || "noreply@example.com",
+          cus_email: order.customer_email || guestEmail(urls),
           amount: String(Number(order.total)),
           success_url: urls.returnUrl,
           cancel_url: urls.cancelUrl,
