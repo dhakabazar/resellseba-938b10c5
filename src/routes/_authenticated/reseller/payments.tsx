@@ -52,13 +52,56 @@ function ResellerPaymentsPage() {
   const [resellerId, setResellerId] = useState<string | null>(null);
   const [globalManual, setGlobalManual] = useState<PaymentConfigRow[]>([]);
   const [gateways, setGateways] = useState<{ provider: string; label: string; method: string }[]>([]);
-  const [platformGateways, setPlatformGateways] = useState<string[]>([]);
+  const [platformGateways, setPlatformGateways] = useState<{ provider: string; label: string }[]>([]);
+  const [myGw, setMyGw] = useState<{ id: string; provider: string; is_active: boolean; mode: string }[]>([]);
   const [mine, setMine] = useState<PaymentConfigRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<"manual" | "api">("manual");
   const [draft, setDraft] = useState<Draft | null>(null);
   const loadGateways = useServerFn(listActiveGateways);
   const loadPlatformGateways = useServerFn(listDepositGateways);
+
+  async function loadMyGateways(rid: string) {
+    const { data } = await supabase
+      .from("payment_gateway_configs")
+      .select("id,provider,is_active,mode")
+      .eq("reseller_id", rid);
+    setMyGw((data ?? []) as { id: string; provider: string; is_active: boolean; mode: string }[]);
+  }
+
+  /**
+   * Global automatic gateways are on by default. Turning one off writes an
+   * inactive platform-mode row for this store; turning it back on removes that
+   * row (unless the reseller runs the gateway on their own credentials).
+   */
+  async function toggleGlobalGateway(g: { provider: string; label: string }, show: boolean) {
+    if (!resellerId) return;
+    const row = myGw.find((r) => r.provider === g.provider);
+    if (show) {
+      if (!row) return;
+      const { error } = await supabase.from("payment_gateway_configs").delete().eq("id", row.id);
+      if (error) return toast.error(error.message);
+      toast.success(`${g.label} is back on your store`);
+    } else {
+      const payload = { is_active: false, mode: "platform" };
+      const { error } = row
+        ? await supabase.from("payment_gateway_configs").update(payload).eq("id", row.id)
+        : await supabase
+            .from("payment_gateway_configs")
+            .insert({ ...payload, reseller_id: resellerId, provider: g.provider, label: g.label });
+      if (error) return toast.error(error.message);
+      toast.success(`${g.label} removed from your store checkout`);
+    }
+    await loadMyGateways(resellerId);
+    const me = await getMyReseller();
+    if (me?.code) {
+      try {
+        setGateways(await loadGateways({ data: { code: me.code } }));
+      } catch {
+        /* keep current list */
+      }
+    }
+  }
 
 
   async function loadMine(rid: string) {
@@ -94,8 +137,9 @@ function ResellerPaymentsPage() {
         }
       }
       if (me?.id) {
+        void loadMyGateways(me.id);
         try {
-          setPlatformGateways((await loadPlatformGateways()).map((g) => g.provider));
+          setPlatformGateways(await loadPlatformGateways());
         } catch {
           setPlatformGateways([]);
         }
@@ -203,7 +247,7 @@ function ResellerPaymentsPage() {
 
       <div className={tab === "api" ? "" : "hidden"}>
         {resellerId ? (
-          <GatewayGrid resellerId={resellerId} platformActive={platformGateways} />
+          <GatewayGrid resellerId={resellerId} platformActive={platformGateways.map((g) => g.provider)} />
         ) : (
           <div className="rounded-xl border border-dashed p-8 text-center text-xs text-muted-foreground">
             Your reseller account is still being set up.
@@ -217,10 +261,10 @@ function ResellerPaymentsPage() {
         <h2 className="mb-2 flex items-center gap-1.5 text-sm font-semibold">
           <Globe2 className="h-4 w-4 text-primary" /> Global methods
           <span className="rounded-full bg-muted px-1.5 text-[10px] font-semibold">
-            {globalManual.length + gateways.length}
+            {globalManual.length + platformGateways.length}
           </span>
         </h2>
-        {globalManual.length + gateways.length === 0 ? (
+        {globalManual.length + platformGateways.length === 0 ? (
           <div className="rounded-xl border border-dashed p-8 text-center text-xs text-muted-foreground">
             No global method is active right now — Cash on delivery still works on your store.
           </div>
@@ -262,18 +306,49 @@ function ResellerPaymentsPage() {
             })}
 
 
-            {gateways.map((g) => (
-              <div key={g.provider} className="surface-card flex flex-col p-4">
-                <Head method={g.provider} label={g.label} tag="Automatic gateway" icon={<Zap className="h-4 w-4" />} />
-                <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground">
-                  Customers pay online and the gateway confirms it instantly — the order is marked paid without any
-                  manual check.
-                </p>
-                <span className="mt-3 inline-flex w-fit items-center gap-1 rounded-full bg-success/15 px-2 py-0.5 text-[10px] font-semibold text-success">
-                  Live on your store
-                </span>
-              </div>
-            ))}
+            {platformGateways.map((g) => {
+              const row = myGw.find((r) => r.provider === g.provider);
+              const own = row && row.mode === "own";
+              const overridden = Boolean(own && row?.is_active);
+              const hidden = Boolean(row && !row.is_active);
+              return (
+                <div key={g.provider} className="surface-card flex flex-col p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="min-w-0 flex-1">
+                      <Head
+                        method={g.provider}
+                        label={g.label}
+                        tag="Automatic gateway"
+                        icon={<Zap className="h-4 w-4" />}
+                      />
+                    </div>
+                    {!own && (
+                      <Switch
+                        checked={!hidden}
+                        onChange={(v) => void toggleGlobalGateway(g, v)}
+                        label={`Show ${g.label} on my store`}
+                      />
+                    )}
+                  </div>
+                  <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground">
+                    Customers pay online and the gateway confirms it instantly — the order is marked paid without any
+                    manual check.
+                  </p>
+                  <span
+                    className={
+                      "mt-3 inline-flex w-fit items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold " +
+                      (!hidden && !overridden ? "bg-success/15 text-success" : "bg-muted text-muted-foreground")
+                    }
+                  >
+                    {overridden
+                      ? "Running on your own credentials"
+                      : hidden
+                        ? "Off on your store"
+                        : "Live on your store"}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         )}
       </section>
