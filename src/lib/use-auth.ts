@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { clearAppDataCache } from "@/lib/app-data";
+import { clearAppDataCache, primeGlobalSettings, primeMyReseller } from "@/lib/app-data";
+import {
+  clearPanelBootstrapPayload,
+  setPanelBootstrapPayload,
+  type PanelBootstrap,
+} from "@/lib/panel-bootstrap";
 
 export type Role = "super_admin" | "reseller" | "leader" | "staff";
 
