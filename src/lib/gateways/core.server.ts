@@ -44,6 +44,24 @@ export async function admin() {
 }
 
 /**
+ * Picks the gateway row that applies to a store, shared by credential loading
+ * and the storefront gateway listing.
+ */
+export function resolveGatewayRow<T extends { reseller_id: string | null; is_active: boolean; mode?: string | null }>(
+  rows: T[],
+  resellerId: string | null,
+): T | null {
+  const platform = rows.find((r) => r.reseller_id === null) ?? null;
+  const mine = resellerId ? (rows.find((r) => r.reseller_id === resellerId) ?? null) : null;
+  if (mine) {
+    if (!mine.is_active) return null;
+    if ((mine.mode ?? "own") === "platform") return platform && platform.is_active ? platform : null;
+    return mine;
+  }
+  return platform && platform.is_active ? platform : null;
+}
+
+
  * Credential loader.
  *
  * A reseller row, when present, decides everything for that store:
