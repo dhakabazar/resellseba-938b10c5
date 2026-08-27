@@ -368,7 +368,7 @@ function GatewayModal({
           <button
             type="button"
             onClick={() => void test()}
-            disabled={testing || missing.length > 0}
+            disabled={testing || missing.length > 0 || row.mode === "platform"}
             className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-semibold hover:bg-muted disabled:opacity-50"
           >
             {testing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plug className="h-3.5 w-3.5" />} Test
