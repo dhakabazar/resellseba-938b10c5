@@ -55,6 +55,7 @@ import { LastUpdateCell, OrderNotePreview, OrderNotesModal, useOrderMeta } from 
 import { CourierTimeline, type CourierEvent } from "@/components/CourierTimeline";
 import { bookSteadfast } from "@/lib/couriers.functions";
 import { OrderTabs } from "@/components/OrderTabs";
+import { getAdminLookups } from "@/lib/bootstrap";
 import { Pencil, ExternalLink } from "lucide-react";
 import { courierTrackingUrl } from "@/lib/courier-tracking";
 import { PickListModal } from "@/components/pick-list-modal";
@@ -217,7 +218,7 @@ function AdminOrdersPage() {
     const statuses = (ORDER_TABS.find((t) => t.key === tab)?.statuses ?? []) as string[];
     // One backend call carries orders, items, shipments, status counts and reseller options.
     const [{ data: page }, lookups] = await Promise.all([
-      supabase.rpc("admin_orders_page", { _statuses: statuses.length > 0 ? statuses : null }),
+      supabase.rpc("admin_orders_page", { _statuses: statuses.length > 0 ? statuses : undefined }),
       getAdminLookups(),
     ]);
     const pl = (page ?? {}) as any;
