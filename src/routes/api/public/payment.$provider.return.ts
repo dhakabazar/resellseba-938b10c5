@@ -27,9 +27,12 @@ async function handle(request: Request, provider: string): Promise<Response> {
 
   const ref = params.on ?? params.tran_id ?? params.order_id ?? "";
   const origin = core.siteOrigin();
-  const success = core.safeReturnTarget(params.su, origin);
-  const cancel = core.safeReturnTarget(params.cu, success);
+  // The shopper may have started on a reseller custom domain, so the stored
+  // success/cancel targets are validated against every origin we own.
+  const success = await core.resolveReturnTarget(params.su, origin);
+  const cancel = await core.resolveReturnTarget(params.cu, success);
   const flag = gatewayByProvider(provider)?.returnFlag ?? provider;
+
 
   if (!ref) return core.htmlRedirect(core.appendFlag(cancel, flag, "failed"));
 

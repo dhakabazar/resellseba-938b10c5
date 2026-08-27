@@ -11,7 +11,7 @@ import { getMyReseller } from "@/lib/app-data";
 import { listActiveGateways, listDepositGateways } from "@/lib/gateways.functions";
 import { GatewayGrid } from "@/components/payments/gateway-grid";
 
-import { MANUAL_METHODS, cfgString, methodLabel, type PaymentConfigRow } from "@/lib/payment-methods";
+import { MANUAL_METHODS, cfgBool, cfgString, methodLabel, type PaymentConfigRow } from "@/lib/payment-methods";
 import { Label, StatusDot, Switch, field } from "@/components/payments/shared";
 import { PaymentLogo, paymentLogo } from "@/components/payments/payment-brand";
 
@@ -115,6 +115,41 @@ function ResellerPaymentsPage() {
     }
   }
 
+  /**
+   * A reseller entry for a method always wins over the platform one, so hiding a
+   * global method is simply an inactive marker row for that method. Showing it
+   * again deletes the marker.
+   */
+  const hiddenRow = (method: string) =>
+    mine.find((m) => m.method === method && cfgBool(m.config, "hidden_global")) ?? null;
+  const ownRow = (method: string) =>
+    mine.find((m) => m.method === method && !cfgBool(m.config, "hidden_global")) ?? null;
+  const myMethods = mine.filter((m) => !cfgBool(m.config, "hidden_global"));
+
+  async function toggleGlobal(row: PaymentConfigRow, show: boolean) {
+    if (!resellerId) return;
+    const marker = hiddenRow(row.method);
+    if (show) {
+      if (!marker) return;
+      const { error } = await supabase.from("payment_configs").delete().eq("id", marker.id);
+      if (error) return toast.error(error.message);
+      toast.success(`${row.label} is back on your store`);
+    } else {
+      const { error } = await supabase.from("payment_configs").insert({
+        reseller_id: resellerId,
+        method: row.method as never,
+        label: row.label,
+        mode: "manual",
+        is_active: false,
+        config: { hidden_global: true } as never,
+      });
+      if (error) return toast.error(error.message);
+      toast.success(`${row.label} removed from your store checkout`);
+    }
+    void loadMine(resellerId);
+  }
+
+
   async function remove(row: PaymentConfigRow) {
     const ok = await confirmAction({
       title: "Delete payment method",
@@ -192,10 +227,24 @@ function ResellerPaymentsPage() {
         ) : (
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {globalManual.map((row) => {
-              const overridden = mine.some((m) => m.method === row.method && m.is_active);
+              const own = ownRow(row.method);
+              const overridden = Boolean(own?.is_active);
+              const hidden = Boolean(hiddenRow(row.method));
+              const shown = !hidden && !overridden;
               return (
                 <div key={row.id} className="surface-card flex flex-col p-4">
-                  <Head method={row.method} label={row.label} tag="Manual · verified by admin" />
+                  <div className="flex items-start gap-3">
+                    <div className="min-w-0 flex-1">
+                      <Head method={row.method} label={row.label} tag="Manual · verified by admin" />
+                    </div>
+                    {!own && (
+                      <Switch
+                        checked={!hidden}
+                        onChange={(v) => void toggleGlobal(row, v)}
+                        label={`Show ${row.label} on my store`}
+                      />
+                    )}
+                  </div>
                   <dl className="mt-3 space-y-1 text-[11px]">
                     <Row k="Account" v={cfgString(row.config, "account") || "—"} />
                     <Row k="Type" v={cfgString(row.config, "account_type") || "—"} />
@@ -203,14 +252,15 @@ function ResellerPaymentsPage() {
                   <span
                     className={
                       "mt-3 inline-flex w-fit items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold " +
-                      (overridden ? "bg-muted text-muted-foreground" : "bg-success/15 text-success")
+                      (shown ? "bg-success/15 text-success" : "bg-muted text-muted-foreground")
                     }
                   >
-                    {overridden ? "Replaced by your own method" : "Live on your store"}
+                    {overridden ? "Replaced by your own method" : hidden ? "Off on your store" : "Live on your store"}
                   </span>
                 </div>
               );
             })}
+
 
             {gateways.map((g) => (
               <div key={g.provider} className="surface-card flex flex-col p-4">
@@ -232,7 +282,7 @@ function ResellerPaymentsPage() {
         <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
           <h2 className="flex items-center gap-1.5 text-sm font-semibold">
             <Wallet className="h-4 w-4 text-primary" /> My own methods
-            <span className="rounded-full bg-muted px-1.5 text-[10px] font-semibold">{mine.length}</span>
+            <span className="rounded-full bg-muted px-1.5 text-[10px] font-semibold">{myMethods.length}</span>
           </h2>
           <button
             type="button"
@@ -243,7 +293,7 @@ function ResellerPaymentsPage() {
           </button>
         </div>
 
-        {mine.length === 0 ? (
+        {myMethods.length === 0 ? (
           <div className="rounded-xl border border-dashed p-10 text-center">
             <Wallet className="mx-auto mb-2 h-6 w-6 text-muted-foreground" />
             <p className="text-sm font-semibold">Using global methods only</p>
@@ -253,7 +303,7 @@ function ResellerPaymentsPage() {
           </div>
         ) : (
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {mine.map((row) => (
+            {myMethods.map((row) => (
               <div key={row.id} className="surface-card flex flex-col p-4">
                 <div className="flex items-start gap-3">
                   <Logo method={row.method} />
