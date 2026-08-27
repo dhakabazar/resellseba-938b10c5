@@ -121,9 +121,12 @@ async function applySession(session: Session | null, opts: { forceAccessReload?:
     return authState;
   }
 
-
-  clearAppDataCache("reseller");
+  // Only wipe cached reseller data when the signed-in identity really changed;
+  // repeated INITIAL_SESSION/SIGNED_IN events for the same user must not refetch.
+  if (lastAppliedUser !== session.user.id) clearAppDataCache("reseller");
+  lastAppliedUser = session.user.id;
   const version = ++authVersion;
+
 
   publish({ session, user: session.user, roles: [], permissions: [], loading: true, accessError: false });
 
