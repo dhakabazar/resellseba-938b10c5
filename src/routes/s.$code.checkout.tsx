@@ -30,7 +30,9 @@ export const Route = createFileRoute("/s/$code/checkout")({
   validateSearch: (s: Record<string, unknown>): Search => ({
     l: typeof s.l === "string" ? s.l : undefined,
     q: s.q ? Number(s.q) : undefined,
+    pay: typeof s.pay === "string" ? s.pay : undefined,
   }),
+
 });
 
 type PayMethod = { method: string; label: string; instructions: string | null };
