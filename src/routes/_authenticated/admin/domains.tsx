@@ -176,6 +176,9 @@ function DomainsAdmin() {
         description="Choose how reseller domains are served — Cloudflare API automation, plain server DNS, or both — and manage every connected domain."
       />
 
+      <PlatformOriginsCard />
+
+
       <form onSubmit={onSave} className="space-y-6">
         <div className="surface-card space-y-3 p-5">
           <div className="text-sm font-semibold">Which setup do resellers use?</div>
