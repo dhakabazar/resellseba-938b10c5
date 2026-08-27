@@ -282,7 +282,7 @@ function ResellerPaymentsPage() {
         <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
           <h2 className="flex items-center gap-1.5 text-sm font-semibold">
             <Wallet className="h-4 w-4 text-primary" /> My own methods
-            <span className="rounded-full bg-muted px-1.5 text-[10px] font-semibold">{mine.length}</span>
+            <span className="rounded-full bg-muted px-1.5 text-[10px] font-semibold">{myMethods.length}</span>
           </h2>
           <button
             type="button"
@@ -293,7 +293,7 @@ function ResellerPaymentsPage() {
           </button>
         </div>
 
-        {mine.length === 0 ? (
+        {myMethods.length === 0 ? (
           <div className="rounded-xl border border-dashed p-10 text-center">
             <Wallet className="mx-auto mb-2 h-6 w-6 text-muted-foreground" />
             <p className="text-sm font-semibold">Using global methods only</p>
@@ -303,7 +303,7 @@ function ResellerPaymentsPage() {
           </div>
         ) : (
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {mine.map((row) => (
+            {myMethods.map((row) => (
               <div key={row.id} className="surface-card flex flex-col p-4">
                 <div className="flex items-start gap-3">
                   <Logo method={row.method} />
