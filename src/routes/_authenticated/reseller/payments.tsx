@@ -284,6 +284,9 @@ function ResellerPaymentsPage() {
           </div>
         )}
       </section>
+      </div>
+
+
 
       {draft && resellerId && (
         <MyMethodModal
