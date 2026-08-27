@@ -234,6 +234,67 @@ export function spaUrls(origin: string, code: string, orderNumber: string) {
   };
 }
 
+/**
+ * The origin a payment starts on is derived from the incoming request, so it is
+ * trustworthy at that moment — but the gateway returns to the platform origin,
+ * where it arrives as a plain query parameter again. To keep the shopper (or
+ * reseller) on the exact site they started from — a platform custom domain, a
+ * reseller domain, the published site, anything — the success/cancel targets are
+ * signed when the payment is created and the signature is checked on return.
+ * A valid signature proves the URL is the one this server built.
+ */
+function returnSecret(): string {
+  const env = process.env as Record<string, string | undefined>;
+  return (
+    env["SUPABASE_SERVICE_ROLE_KEY"] ||
+    env["SUPABASE_PUBLISHABLE_KEY"] ||
+    env["SUPABASE_ANON_KEY"] ||
+    "lovable-return-secret"
+  );
+}
+
+async function hmacHex(message: string): Promise<string> {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw",
+    enc.encode(returnSecret()),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const sig = await crypto.subtle.sign("HMAC", key, enc.encode(message));
+  return Array.from(new Uint8Array(sig))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+/** Signature over the return targets, attached to every gateway callback URL. */
+export async function signTargets(success: string, cancel: string): Promise<string> {
+  return (await hmacHex(`${success}\n${cancel}`)).slice(0, 32);
+}
+
+export async function verifyTargets(
+  success: string | undefined,
+  cancel: string | undefined,
+  sig: string | undefined,
+): Promise<boolean> {
+  if (!success || !cancel || !sig) return false;
+  const expected = await signTargets(success, cancel);
+  if (expected.length !== sig.length) return false;
+  let diff = 0;
+  for (let i = 0; i < expected.length; i += 1) diff |= expected.charCodeAt(i) ^ sig.charCodeAt(i);
+  if (diff !== 0) return false;
+  try {
+    const u = new URL(success);
+    const c = new URL(cancel);
+    return (
+      (u.protocol === "https:" || u.protocol === "http:") && (c.protocol === "https:" || c.protocol === "http:")
+    );
+  } catch {
+    return false;
+  }
+}
+
 /** Gateway return params are user-controlled, so only redirect inside this same storefront origin. */
 export function safeReturnTarget(raw: string | undefined, origin: string): string {
   const fallback = origin || "/";
