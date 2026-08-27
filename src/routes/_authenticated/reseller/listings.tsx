@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState , useRef} from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyReseller } from "@/lib/app-data";
 import { deliveryLabel } from "@/lib/delivery";
@@ -65,7 +65,10 @@ function ListingsPage() {
     setItems((data ?? []) as L[]);
     setLoading(false);
   }
+  const didLoad = useRef(false);
   useEffect(() => {
+    if (didLoad.current) return;
+    didLoad.current = true;
     load();
   }, [user]);
 
