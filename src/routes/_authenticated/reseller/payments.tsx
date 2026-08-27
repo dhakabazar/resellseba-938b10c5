@@ -137,8 +137,9 @@ function ResellerPaymentsPage() {
         }
       }
       if (me?.id) {
+        void loadMyGateways(me.id);
         try {
-          setPlatformGateways((await loadPlatformGateways()).map((g) => g.provider));
+          setPlatformGateways(await loadPlatformGateways());
         } catch {
           setPlatformGateways([]);
         }
