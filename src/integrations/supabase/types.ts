@@ -2581,6 +2581,7 @@ export type Database = {
       admin_dashboard: { Args: { _from?: string; _to?: string }; Returns: Json }
       admin_delete_user: { Args: { _user_id: string }; Returns: undefined }
       admin_lookups: { Args: never; Returns: Json }
+      admin_orders_page: { Args: { _statuses?: string[] }; Returns: Json }
       admin_reseller_metrics: {
         Args: never
         Returns: {
@@ -2851,6 +2852,7 @@ export type Database = {
           status: string
         }[]
       }
+      reseller_orders_page: { Args: never; Returns: Json }
       reseller_profit_summary: {
         Args: { _reseller_id: string }
         Returns: {
