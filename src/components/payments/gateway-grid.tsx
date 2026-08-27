@@ -317,8 +317,11 @@ function GatewayModal({
 
   async function save() {
     if (row.is_active && missing.length) return toast.error(`Fill in: ${missing.map((f) => f.label).join(", ")}`);
+    if (row.is_active && resellerId && row.mode === "platform" && platformActive && !platformActive.includes(spec.provider))
+      return toast.error(`${spec.label} is not enabled by the platform right now.`);
     setBusy(true);
-    const { error } = await persist(spec, row, row.is_active);
+    const { error } = await persist(spec, row, row.is_active, resellerId);
+
     setBusy(false);
     if (error) return toast.error(error.message);
     toast.success(`${row.label || spec.label} saved`);
