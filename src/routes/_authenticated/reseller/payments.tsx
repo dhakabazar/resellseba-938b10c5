@@ -8,7 +8,9 @@ import { PageHeader } from "@/components/ui-kit";
 import { AppModal } from "@/components/ui-kit/AppModal";
 import { confirmAction } from "@/lib/confirm";
 import { getMyReseller } from "@/lib/app-data";
-import { listActiveGateways } from "@/lib/gateways.functions";
+import { listActiveGateways, listDepositGateways } from "@/lib/gateways.functions";
+import { GatewayGrid } from "@/components/payments/gateway-grid";
+
 import { MANUAL_METHODS, cfgString, methodLabel, type PaymentConfigRow } from "@/lib/payment-methods";
 import { Label, StatusDot, Switch, field } from "@/components/payments/shared";
 import { PaymentLogo, paymentLogo } from "@/components/payments/payment-brand";
