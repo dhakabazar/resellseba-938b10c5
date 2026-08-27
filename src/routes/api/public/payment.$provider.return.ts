@@ -27,10 +27,13 @@ async function handle(request: Request, provider: string): Promise<Response> {
 
   const ref = params.on ?? params.tran_id ?? params.order_id ?? "";
   const origin = core.siteOrigin();
-  // The shopper may have started on a reseller custom domain, so the stored
-  // success/cancel targets are validated against every origin we own.
-  const success = await core.resolveReturnTarget(params.su, origin);
-  const cancel = await core.resolveReturnTarget(params.cu, success);
+  // The payment may have started on any live domain (a platform custom domain,
+  // a reseller domain, the published site). Targets signed when the payment was
+  // created are trusted as-is; anything else falls back to host validation, so
+  // nobody can inject an outside redirect.
+  const signed = await core.verifyTargets(params.su, params.cu, params.sig);
+  const success = signed ? params.su! : await core.resolveReturnTarget(params.su, origin);
+  const cancel = signed ? params.cu! : await core.resolveReturnTarget(params.cu, success);
   const flag = gatewayByProvider(provider)?.returnFlag ?? provider;
 
 
