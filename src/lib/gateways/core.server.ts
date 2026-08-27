@@ -43,7 +43,15 @@ export async function admin() {
   return gatewayDatabase();
 }
 
-/** Credential loader — reseller row wins over the platform row. */
+/**
+ * Credential loader.
+ *
+ * A reseller row, when present, decides everything for that store:
+ * - `is_active = false` → the gateway is off for this store (no platform fallback)
+ * - `mode = 'platform'` → the store reuses the admin's global gateway (admin gets the money)
+ * - `mode = 'own'`      → the reseller's own merchant credentials are used
+ * With no reseller row at all the platform gateway is used, as before.
+ */
 export async function getCredentials(
   provider: string,
   resellerId: string | null,
@@ -51,15 +59,14 @@ export async function getCredentials(
   const db = await admin();
   const q = db
     .from("payment_gateway_configs")
-    .select("provider,api_key,api_secret,merchant_id,config,is_active,reseller_id")
+    .select("provider,api_key,api_secret,merchant_id,config,is_active,reseller_id,mode")
     .eq("provider", provider);
   const { data } = resellerId
     ? await q.or(`reseller_id.eq.${resellerId},reseller_id.is.null`)
     : await q.is("reseller_id", null);
-  const rows = (data ?? []).filter((r: any) => r.is_active);
-  const row =
-    rows.find((r: any) => r.reseller_id === resellerId) ?? rows.find((r: any) => r.reseller_id === null);
+  const row = resolveGatewayRow((data ?? []) as any[], resellerId);
   if (!row) return null;
+
   const config = (row.config ?? {}) as Record<string, any>;
   return {
     provider,
