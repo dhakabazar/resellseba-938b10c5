@@ -64,77 +64,51 @@ function AdminDashboard() {
     payoutDue: 0,
   });
 
+  // ONE call per range: range orders + lifetime orders + catalog/reseller/payout aggregates.
   const load = useCallback(async (r: DateRangeState) => {
     setLoading(true);
     const { fromTs, toTs } = resolveRange(r);
-    let oq = supabase
-      .from("orders")
-      .select("total,shipping_cost,reseller_profit,sa_cost_total,received_amount,packaging_total,delivery_cost,advance_amount,advance_by,created_at,status,resellers(business_name)");
-    if (fromTs != null) oq = oq.gte("created_at", new Date(fromTs).toISOString());
-    if (toTs != null) oq = oq.lte("created_at", new Date(toTs).toISOString());
+    const data = await getAdminDashboard(fromTs, toTs);
+    setRows((data?.range_orders ?? []) as OrderRow[]);
 
-    // Counts come from the lifetime batch below, so the range view only needs its orders.
-    const orders = await oq.order("created_at", { ascending: false }).limit(5000);
-    setRows((orders.data ?? []) as OrderRow[]);
-    setLoading(false);
-  }, []);
-
-  const loadLifetime = useCallback(async () => {
-    const [allOrders, payoutsRes, prods, cats, brandRows, resellerRows, metricsRes] = await Promise.all([
-      supabase
-        .from("orders")
-        .select("id,order_number,reseller_id,status,created_at,subtotal,shipping_cost,discount,total,sa_cost_total,reseller_profit,received_amount,packaging_total,delivery_cost,advance_amount,advance_by")
-        .limit(20000),
-      supabase.from("payouts").select("amount,status").limit(20000),
-      supabase.from("products").select("is_active,is_featured,stock").limit(20000),
-      supabase.from("categories").select("is_active").limit(5000),
-      supabase.from("brands").select("is_active").limit(5000),
-      supabase.from("resellers").select("id,status").limit(20000),
-      supabase.rpc("admin_reseller_metrics"),
-    ]);
-    const pay = (payoutsRes.data ?? []) as { amount: number | string; status: string }[];
-    const all = (allOrders.data ?? []) as ReportOrder[];
-    // Delivered/partial slice is derived from the same rows instead of a second query.
+    const all = (data?.all_orders ?? []) as ReportOrder[];
     const d = all.filter((o) => ["delivered", "partial"].includes(String((o as { status?: string }).status ?? ""))) as unknown as {
       total: number | string; shipping_cost: number | string; reseller_profit: number | string; sa_cost_total: number | string;
       received_amount?: number | string | null; packaging_total?: number | string | null; status?: string;
     }[];
     setOrderReport(buildFinanceReport(all, []));
-    const p = (prods.data ?? []) as { is_active: boolean; is_featured: boolean; stock: number }[];
-    const c = (cats.data ?? []) as { is_active: boolean }[];
-    const b = (brandRows.data ?? []) as { is_active: boolean }[];
+
+    const cat = data?.catalog ?? {};
     setCatalog({
-      products: p.length,
-      active: p.filter((x) => x.is_active).length,
-      inactive: p.filter((x) => !x.is_active).length,
-      featured: p.filter((x) => x.is_featured).length,
-      low: p.filter((x) => Number(x.stock) > 0 && Number(x.stock) <= 5).length,
-      out: p.filter((x) => Number(x.stock) <= 0).length,
-      categories: c.length,
-      activeCategories: c.filter((x) => x.is_active).length,
-      activeBrands: b.filter((x) => x.is_active).length,
-    });
-    setCounts({
-      products: p.length,
-      resellers: ((resellerRows.data ?? []) as { status: string }[]).filter((x) => x.status === "active").length,
-      pendingResellers: ((resellerRows.data ?? []) as { status: string }[]).filter((x) => x.status === "pending").length,
-      brands: b.length,
+      products: Number(cat.products ?? 0),
+      active: Number(cat.active ?? 0),
+      inactive: Number(cat.inactive ?? 0),
+      featured: Number(cat.featured ?? 0),
+      low: Number(cat.low ?? 0),
+      out: Number(cat.out ?? 0),
+      categories: Number(cat.categories ?? 0),
+      activeCategories: Number(cat.activeCategories ?? 0),
+      activeBrands: Number(cat.activeBrands ?? 0),
     });
 
-    const rs = (resellerRows.data ?? []) as { id: string; status: string }[];
-    const metrics = (metricsRes.data ?? []) as Array<{
-      reseller_id: string; orders: number; deposit_balance: number; frozen_amount: number; available: number;
-    }>;
+    const rs = data?.resellers ?? {};
+    setCounts({
+      products: Number(cat.products ?? 0),
+      resellers: Number(rs.active ?? 0),
+      pendingResellers: Number(rs.pending ?? 0),
+      brands: Number(cat.brands ?? 0),
+    });
+    const m = data?.metrics;
     setResellerReport({
-      total: rs.length,
-      active: rs.filter((x) => x.status === "active").length,
-      pending: rs.filter((x) => x.status === "pending").length,
-      suspended: rs.filter((x) => x.status === "suspended").length,
-      rejected: rs.filter((x) => x.status === "rejected").length,
-      withStore: metrics.filter((m) => Number(m.orders ?? 0) > 0).length,
-      depositBalance: metrics.reduce((s, m) => s + Number(m.deposit_balance ?? 0), 0),
-      frozen: metrics.reduce((s, m) => s + Number(m.frozen_amount ?? 0), 0),
-      withdrawable: metrics.reduce((s, m) => s + Number(m.available ?? 0), 0),
+      total: Number(rs.total ?? 0),
+      active: Number(rs.active ?? 0),
+      pending: Number(rs.pending ?? 0),
+      suspended: Number(rs.suspended ?? 0),
+      rejected: Number(rs.rejected ?? 0),
+      withStore: Number(m?.withStore ?? 0),
+      depositBalance: Number(m?.depositBalance ?? 0),
+      frozen: Number(m?.frozen ?? 0),
+      withdrawable: Number(m?.withdrawable ?? 0),
     });
     setLifetime({
       orders: all.length,
@@ -142,32 +116,23 @@ function AdminDashboard() {
       revenue: d.reduce((s, o) => s + Number(o.total), 0),
       profit: d.reduce((s, o) => s + orderProfit(o), 0),
       saCost: d.reduce((s, o) => s + Number(o.sa_cost_total), 0),
-      payoutPaid: pay.filter((x) => x.status === "paid").reduce((s, x) => s + Number(x.amount), 0),
-      payoutDue: pay
-        .filter((x) => ["pending", "approved"].includes(x.status))
-        .reduce((s, x) => s + Number(x.amount), 0),
+      payoutPaid: Number(data?.payouts?.paid ?? 0),
+      payoutDue: Number(data?.payouts?.due ?? 0),
     });
+    setLoading(false);
   }, []);
 
-
-  // Order-modal data is only fetched the first time the modal is opened.
+  // Order-modal pickers are fetched once, the first time the modal is opened.
   useEffect(() => {
     if (!orderOpen || modalDataLoaded.current) return;
     modalDataLoaded.current = true;
     void (async () => {
-      const [rs, ps] = await Promise.all([
-        supabase.from("resellers").select("id,business_name,code,contact_phone").order("business_name"),
-        supabase
-          .from("products")
-          .select(
-            "id,name,slug,product_code,og_image_url,suggested_price,reseller_price,packaging_cost,delivery_mode,delivery_flat,delivery_inside,delivery_outside",
-          )
-          .eq("is_active", true),
-      ]);
-      setResellers((rs.data ?? []) as any[]);
-      setAllProducts((ps.data ?? []) as any[]);
+      const data = await getAdminLookups();
+      setResellers((data?.resellers ?? []) as any[]);
+      setAllProducts((data?.products ?? []) as any[]);
     })();
   }, [orderOpen]);
+
 
   useEffect(() => {
     void loadLifetime();
