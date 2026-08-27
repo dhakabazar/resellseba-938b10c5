@@ -1,7 +1,13 @@
 import { useEffect, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { clearAppDataCache } from "@/lib/app-data";
+import { clearAppDataCache, primeGlobalSettings, primeMyReseller } from "@/lib/app-data";
+import {
+  clearPanelBootstrapPayload,
+  markPanelBootstrapPending,
+  setPanelBootstrapPayload,
+  type PanelBootstrap,
+} from "@/lib/panel-bootstrap";
 
 export type Role = "super_admin" | "reseller" | "leader" | "staff";
 
@@ -40,30 +46,41 @@ async function loadAccessOnce(
   // Hard timeout: metadata fetching must never keep the panel on a spinner.
   const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), 10000));
   try {
-    const work = Promise.all([
-      supabase.from("user_roles").select("role").eq("user_id", userId),
-      supabase.rpc("my_permissions"),
-    ]);
+    // ONE call: roles + permissions + settings + reseller + verification +
+    // notices + deposits. The extras prime their caches so panel pages that
+    // need them cost no further request.
+    markPanelBootstrapPending();
+    const work = supabase.rpc("panel_bootstrap");
 
     const res = await Promise.race([work, timeout]);
     if (!res) {
+      setPanelBootstrapPayload(null);
       console.error("Access lookup timed out");
       return { roles: [], permissions: [], error: true };
     }
-    const [rolesRes, permsRes] = res;
+    if (res.error) {
+      setPanelBootstrapPayload(null);
+      console.error("Error loading access:", res.error);
+      return { roles: [], permissions: [], error: true };
+    }
 
-    if (rolesRes.error) console.error("Error loading roles:", rolesRes.error);
-    if (permsRes.error) console.error("Error loading permissions:", permsRes.error);
+    const payload = (res.data ?? null) as PanelBootstrap | null;
+    setPanelBootstrapPayload(payload);
+    if (payload?.settings) primeGlobalSettings(payload.settings);
+    if (payload?.reseller) primeMyReseller(userId, payload.reseller);
 
-    const roles = rolesRes.error ? [] : (rolesRes.data ?? []).map((row: any) => row.role as Role);
-    const permissions = permsRes.error ? [] : ((permsRes.data as string[] | null) ?? []);
-
-    return { roles, permissions, error: Boolean(rolesRes.error) };
+    return {
+      roles: (payload?.roles ?? []) as Role[],
+      permissions: (payload?.permissions ?? []) as string[],
+      error: false,
+    };
   } catch (err) {
+    setPanelBootstrapPayload(null);
     console.error("Failed to load access data:", err);
     return { roles: [], permissions: [], error: true };
   }
 }
+
 
 /**
  * Roles decide where a signed-in user lands. A transient failure (network blip,
@@ -101,6 +118,7 @@ async function loadAccess(
 async function applySession(session: Session | null, opts: { forceAccessReload?: boolean } = {}) {
   if (!session?.user) {
     clearAppDataCache();
+    clearPanelBootstrapPayload();
     authVersion++;
     lastAppliedUser = null;
     publish({ session: null, user: null, roles: [], permissions: [], loading: false, accessError: false });
@@ -147,6 +165,11 @@ async function applySession(session: Session | null, opts: { forceAccessReload?:
 function initAuth() {
   if (initialized) return;
   initialized = true;
+
+  // Flag the bootstrap as pending before the session resolves, so shared
+  // caches (settings, reseller row) wait for that one call instead of racing
+  // it with their own queries.
+  markPanelBootstrapPending();
 
   supabase.auth.getSession().then(({ data }) => void applySession(data.session));
 

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getPanelBootstrapPayload } from "@/lib/panel-bootstrap";
 
 export type NoticeLevel = "info" | "success" | "warning" | "critical";
 
@@ -42,8 +43,15 @@ export function useLiveNotices(userId: string | undefined, resellerId: string | 
   const [notices, setNotices] = useState<AdminNotice[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (force = true) => {
     if (!userId) return;
+    // The panel bootstrap already filtered live, undismissed, targeted notices.
+    const primed = force ? null : getPanelBootstrapPayload()?.notices;
+    if (primed) {
+      setNotices(primed as AdminNotice[]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     const [noticeRes, seenRes] = await Promise.all([
       supabase.from("admin_notices").select("*").order("created_at", { ascending: false }).limit(50),
@@ -62,12 +70,14 @@ export function useLiveNotices(userId: string | undefined, resellerId: string | 
   }, [userId, resellerId]);
 
   useEffect(() => {
-    void load();
+    void load(false);
   }, [load]);
 
   const dismiss = useCallback(
     async (id: string) => {
       setNotices((prev) => prev.filter((n) => n.id !== id));
+      const boot = getPanelBootstrapPayload();
+      if (boot) boot.notices = (boot.notices ?? []).filter((n: any) => n?.id !== id);
       if (!userId) return;
       await supabase.from("admin_notice_dismissals").upsert(
         { notice_id: id, user_id: userId },

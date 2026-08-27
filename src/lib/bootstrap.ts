@@ -38,6 +38,11 @@ function once<T>(key: string, run: () => Promise<T>, force = false): Promise<T> 
 }
 
 
+/** Share one in-flight/last payload across remounts for arbitrary loaders. */
+export function sharedLoad<T>(key: string, run: () => Promise<T>, force = false): Promise<T> {
+  return once(key, run, force);
+}
+
 /** Drop cached page payloads (all, or every key starting with `prefix`). */
 export function clearBootstrapCache(prefix?: string) {
   if (!prefix) return cache.clear();
