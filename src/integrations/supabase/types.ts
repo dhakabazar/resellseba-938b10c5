@@ -2825,6 +2825,7 @@ export type Database = {
       order_has_shipment: { Args: { _order_id: string }; Returns: boolean }
       order_kept_product_cost: { Args: { _order_id: string }; Returns: number }
       order_visible_to_me: { Args: { _order_id: string }; Returns: boolean }
+      panel_bootstrap: { Args: never; Returns: Json }
       purge_store_visits: { Args: never; Returns: number }
       recalc_order_packaging: {
         Args: { _order_id: string }
