@@ -69,19 +69,32 @@ async function loadAccessOnce(
  * token not attached yet) used to look like "this user has no roles", which sent
  * an existing reseller to the "Become a reseller" form. Retry before believing it.
  */
+let accessInflight: { userId: string; promise: Promise<{ roles: Role[]; permissions: string[]; error: boolean }> } | null = null;
+
 async function loadAccess(
   userId: string,
 ): Promise<{ roles: Role[]; permissions: string[]; error: boolean }> {
-  let last = await loadAccessOnce(userId);
-  for (let attempt = 0; attempt < 2; attempt++) {
-    if (!last.error && last.roles.length > 0) return last;
-    await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
-    const next = await loadAccessOnce(userId);
-    if (!next.error && next.roles.length > 0) return next;
-    if (!next.error) last = next;
-  }
-  return last;
+  // getSession() and the INITIAL_SESSION event both land here for the same user;
+  // share one lookup so roles/permissions are fetched once per sign-in.
+  if (accessInflight && accessInflight.userId === userId) return accessInflight.promise;
+  const promise = (async () => {
+    let last = await loadAccessOnce(userId);
+    for (let attempt = 0; attempt < 2; attempt++) {
+      if (!last.error && last.roles.length > 0) return last;
+      await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
+      const next = await loadAccessOnce(userId);
+      if (!next.error && next.roles.length > 0) return next;
+      if (!next.error) last = next;
+    }
+    return last;
+  })();
+  accessInflight = { userId, promise };
+  promise.finally(() => {
+    if (accessInflight?.promise === promise) accessInflight = null;
+  });
+  return promise;
 }
+
 
 
 async function applySession(session: Session | null, opts: { forceAccessReload?: boolean } = {}) {
