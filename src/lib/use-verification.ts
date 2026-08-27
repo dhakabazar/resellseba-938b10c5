@@ -12,6 +12,28 @@ export type VerifyState = {
 
 const EMPTY: VerifyState = { emailVerified: false, phoneVerified: false, emailSentAt: null, smsSentAt: null };
 
+/** Shared per-user lookup so several mounted screens cost one call, not one each. */
+let cached: { userId: string; promise: Promise<VerifyState> } | null = null;
+
+function fetchVerifyState(userId: string, force = false): Promise<VerifyState> {
+  if (!force && cached && cached.userId === userId) return cached.promise;
+  const promise = (async () => {
+    const { data } = await supabase.rpc("verify_state");
+    const row = Array.isArray(data) ? (data as any[])[0] : (data as any);
+    return {
+      emailVerified: Boolean(row?.email_verified_at),
+      phoneVerified: Boolean(row?.phone_verified_at),
+      emailSentAt: row?.email_sent_at ?? null,
+      smsSentAt: row?.sms_sent_at ?? null,
+    } satisfies VerifyState;
+  })().catch((e) => {
+    if (cached?.promise === promise) cached = null;
+    throw e;
+  });
+  cached = { userId, promise };
+  return promise;
+}
+
 /**
  * Verification gate for reseller-side screens.
  * Admin / staff accounts are never blocked.
@@ -21,28 +43,27 @@ export function useVerification() {
   const { user, roles, loading: authLoading } = useAuth();
   const [state, setState] = useState<VerifyState>(EMPTY);
   const [loading, setLoading] = useState(true);
+  const isStaff = roles.includes("super_admin") || roles.includes("staff");
 
-  const refresh = useCallback(async () => {
-    if (!user) return;
-    const { data } = await supabase.rpc("verify_state");
-    const row = Array.isArray(data) ? (data as any[])[0] : (data as any);
-    setState({
-      emailVerified: Boolean(row?.email_verified_at),
-      phoneVerified: Boolean(row?.phone_verified_at),
-      emailSentAt: row?.email_sent_at ?? null,
-      smsSentAt: row?.sms_sent_at ?? null,
-    });
-    setLoading(false);
-  }, [user]);
+  const refresh = useCallback(
+    async (force = true) => {
+      if (!user) return;
+      setState(await fetchVerifyState(user.id, force));
+      setLoading(false);
+    },
+    [user],
+  );
 
   useEffect(() => {
     if (authLoading) return;
-    if (!user) {
+    // Staff/admin accounts are never gated, so their state is never fetched.
+    if (!user || isStaff) {
       setLoading(false);
       return;
     }
-    void refresh();
-  }, [authLoading, user, refresh]);
+    void refresh(false);
+  }, [authLoading, user, isStaff, refresh]);
+
 
   const staff = roles.includes("super_admin") || roles.includes("staff");
   const pending = staff ? [] : pendingChannels(settings, state);
