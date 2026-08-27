@@ -125,7 +125,9 @@ export function DepositPayPanel({
     const provider = selected.id.replace(/^gw:/, "");
     setBusy(true);
     try {
-      const res = await startOnline({ data: { provider, amount: amt } });
+      const res = await startOnline({
+        data: { provider, amount: amt, storeOrigin: window.location.origin },
+      });
       if (res?.redirectUrl) window.location.href = res.redirectUrl;
       else toast.error("Could not start the payment");
     } catch (err: any) {

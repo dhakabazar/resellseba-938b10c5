@@ -12,12 +12,22 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export const startGatewayPayment = createServerFn({ method: "POST" })
   .inputValidator((d) =>
-    z.object({ orderNumber: z.string().min(3), code: z.string().min(1), provider: z.string().min(2) }).parse(d),
+    z
+      .object({
+        orderNumber: z.string().min(3),
+        code: z.string().min(1),
+        provider: z.string().min(2),
+        storeOrigin: z.string().url().optional(),
+      })
+      .parse(d),
   )
   .handler(async ({ data }) => {
     const bridge = await import("@/lib/gateways/bridge.server");
     if (!bridge.hasPrivilegedDb()) {
-      return await bridge.forwardToPlatform<{ redirectUrl: string }>("order-start", data);
+      return await bridge.forwardToPlatform<{ redirectUrl: string }>("order-start", {
+        ...data,
+        origin: data.storeOrigin,
+      });
     }
     const flows = await import("@/lib/gateways/flows.server");
     return await flows.startOrderPaymentFlow(data);
@@ -111,14 +121,20 @@ export const listDepositGateways = createServerFn({ method: "GET" })
 export const startDepositPayment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) =>
-    z.object({ provider: z.string().min(2), amount: z.number().positive().max(10_000_000) }).parse(d),
+    z
+      .object({
+        provider: z.string().min(2),
+        amount: z.number().positive().max(10_000_000),
+        storeOrigin: z.string().url().optional(),
+      })
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     const bridge = await import("@/lib/gateways/bridge.server");
     if (!bridge.hasPrivilegedDb()) {
       return await bridge.forwardToPlatform<{ redirectUrl: string; code: string }>(
         "deposit-start",
-        data,
+        { ...data, origin: data.storeOrigin },
         bridge.incomingAuthorization(),
       );
     }
