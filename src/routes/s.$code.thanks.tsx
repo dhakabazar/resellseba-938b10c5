@@ -77,7 +77,7 @@ function Thanks() {
         eventId,
       });
       // fire server-side CAPI (deduped by eventId)
-      capi({ data: { orderNumber: n, code, eventId } }).catch(() => {});
+      capi({ data: { orderNumber: n, code, eventId, origin: window.location.origin } }).catch(() => {});
     })();
   }, [n, code, capi]);
 
