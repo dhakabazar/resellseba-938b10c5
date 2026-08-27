@@ -32,8 +32,8 @@ import { ImpersonationBanner } from "@/components/impersonation-banner";
 import { useAuth } from "@/lib/use-auth";
 import { useVerification } from "@/lib/use-verification";
 import { useBrandingTheme } from "@/lib/branding";
-import { supabase } from "@/integrations/supabase/client";
 import { getGlobalSettings, getMyReseller } from "@/lib/app-data";
+import { getPanelBootstrapPayload } from "@/lib/panel-bootstrap";
 import { consumeImpersonationReturnTarget } from "@/lib/impersonation";
 
 export const Route = createFileRoute("/_authenticated/reseller")({
