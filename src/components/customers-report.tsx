@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { sharedLoad } from "@/lib/bootstrap";
 import { Loader2, Search, Phone, MessageCircle, FileSpreadsheet, FileText} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { EmptyState } from "@/components/ui-kit";
@@ -54,6 +55,7 @@ export function useCustomers(resellerId?: string | null) {
     let cancelled = false;
     (async () => {
       setLoading(true);
+      const load = () => {
       let q = supabase
         .from("orders")
         .select(
@@ -62,7 +64,10 @@ export function useCustomers(resellerId?: string | null) {
         .order("created_at", { ascending: false })
         .limit(5000);
       if (resellerId) q = q.eq("reseller_id", resellerId);
-      const { data, error } = await q;
+        return q;
+      };
+      // Shared across remounts so a double mount costs one request.
+      const { data, error } = await sharedLoad(`customers:${resellerId ?? "all"}`, load);
       if (cancelled) return;
       if (error) toast.error(error.message);
       setRows((data ?? []) as OrderRow[]);
