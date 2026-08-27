@@ -399,3 +399,60 @@ export const disconnectDomain = createServerFn({ method: "POST" })
       await db.from("reseller_domains").update({ is_primary: true }).eq("id", rest![0].id);
     return { ok: true };
   });
+
+/* --------------------------------------------- platform domains (payment redirects) */
+
+export type PlatformOriginSettings = {
+  /** The platform's own live hostnames (besides the hosting URL). */
+  allowed_origins: string[];
+  /** Origin that owns the privileged backend key — gateway callbacks land here. */
+  callback_base_url: string;
+};
+
+function cleanHost(raw: string): string {
+  return raw
+    .trim()
+    .toLowerCase()
+    .replace(/^https?:\/\//, "")
+    .replace(/\/.*$/, "")
+    .replace(/^www\./, "");
+}
+
+export const getPlatformOrigins = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<PlatformOriginSettings> => {
+    const { assertAnyPermission } = await import("@/lib/admin-users.server");
+    await assertAnyPermission(context.supabase, context.userId, ["settings.manage"]);
+    const { data } = await context.supabase
+      .from("global_settings")
+      .select("allowed_origins, callback_base_url")
+      .eq("id", 1)
+      .maybeSingle();
+    return {
+      allowed_origins: ((data as any)?.allowed_origins ?? []) as string[],
+      callback_base_url: String((data as any)?.callback_base_url ?? ""),
+    };
+  });
+
+export const savePlatformOrigins = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z
+      .object({
+        allowed_origins: z.array(z.string().max(253)).max(50).default([]),
+        callback_base_url: z.string().max(253).default(""),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }): Promise<PlatformOriginSettings> => {
+    const { assertAnyPermission } = await import("@/lib/admin-users.server");
+    await assertAnyPermission(context.supabase, context.userId, ["settings.manage"]);
+    const hosts = Array.from(new Set(data.allowed_origins.map(cleanHost).filter(Boolean)));
+    const callback = data.callback_base_url.trim().replace(/\/+$/, "");
+    const { error } = await context.supabase
+      .from("global_settings")
+      .update({ allowed_origins: hosts, callback_base_url: callback || null } as any)
+      .eq("id", 1);
+    if (error) throw new Response(error.message, { status: 400 });
+    return { allowed_origins: hosts, callback_base_url: callback };
+  });
