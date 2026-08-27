@@ -94,8 +94,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "Reseller Platform — Nijer online store, zero investment" },
       { name: "twitter:description", content: "Bangladesh er first-class reseller platform. Product listing, courier, payment, marketing — ekta panel-e sob." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/e6e3679e-dac1-4202-9aa4-535009bfced2/id-preview-750e03de--5d73bd1b-e372-42fe-87de-7efb4128bd67.lovable.app-1785176212947.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/e6e3679e-dac1-4202-9aa4-535009bfced2/id-preview-750e03de--5d73bd1b-e372-42fe-87de-7efb4128bd67.lovable.app-1785176212947.png" },
     ],
     links: [
       {
