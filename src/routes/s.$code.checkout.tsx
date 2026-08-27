@@ -47,7 +47,7 @@ function useAreas() {
 function Checkout() {
   const AREAS = useAreas();
   const { code } = Route.useParams();
-  const { l: directListing, q: directQty } = Route.useSearch();
+  const { l: directListing, q: directQty, pay: payFlag } = Route.useSearch();
   const nav = useNavigate();
   const store = useStore();
   /** Manual methods arrive with the storefront bootstrap payload — no extra call. */
