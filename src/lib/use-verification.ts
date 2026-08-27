@@ -18,7 +18,10 @@ let cached: { userId: string; promise: Promise<VerifyState> } | null = null;
 function fetchVerifyState(userId: string, force = false): Promise<VerifyState> {
   if (!force && cached && cached.userId === userId) return cached.promise;
   const promise = (async () => {
-    const { data } = await supabase.rpc("verify_state");
+    // The panel bootstrap already carries verification state — reuse it.
+    const primed = getPanelBootstrapPayload()?.verify;
+    const { data } = primed ? { data: primed } : await supabase.rpc("verify_state");
+
     const row = Array.isArray(data) ? (data as any[])[0] : (data as any);
     return {
       emailVerified: Boolean(row?.email_verified_at),
