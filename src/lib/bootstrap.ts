@@ -15,11 +15,20 @@ import { applyPlatformBranding } from "@/lib/platform-branding";
 import { primeGlobalSettings, primeMyReseller } from "@/lib/app-data";
 
 const cache = new Map<string, Promise<unknown>>();
+/** When a fresh load was started moments ago, a second mount reuses it instead of refetching. */
+const started = new Map<string, number>();
+const COALESCE_MS = 1500;
 
 function once<T>(key: string, run: () => Promise<T>, force = false): Promise<T> {
-  if (force) cache.delete(key);
   const hit = cache.get(key) as Promise<T> | undefined;
-  if (hit) return hit;
+  if (force) {
+    const age = Date.now() - (started.get(key) ?? 0);
+    if (hit && age < COALESCE_MS) return hit;
+    cache.delete(key);
+  } else if (hit) {
+    return hit;
+  }
+  started.set(key, Date.now());
   const p = run().catch((e) => {
     cache.delete(key);
     throw e;
@@ -27,6 +36,7 @@ function once<T>(key: string, run: () => Promise<T>, force = false): Promise<T> 
   cache.set(key, p);
   return p;
 }
+
 
 /** Drop cached page payloads (all, or every key starting with `prefix`). */
 export function clearBootstrapCache(prefix?: string) {
