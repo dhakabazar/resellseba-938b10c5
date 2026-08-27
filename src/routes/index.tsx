@@ -1,8 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useServerFn } from "@tanstack/react-start";
-import { getPublicStats } from "@/lib/landing.functions";
+import { getLpBootstrap, type LpBootstrap } from "@/lib/bootstrap";
 import { bdt } from "@/lib/finance-report";
 import {
   ArrowRight,
@@ -131,13 +130,18 @@ const FALLBACK: LandingContent = {
   footer: { tagline: "" },
 };
 
+type LandingStats = LpBootstrap["stats"] & {
+  categories: LpBootstrap["categories"];
+  products: LpBootstrap["products"];
+};
+
 function RootResolver() {
   const nav = useNavigate();
   const [checking, setChecking] = useState(true);
   const [content, setContent] = useState<LandingContent>(FALLBACK);
   const [siteName, setSiteName] = useState("Reseller");
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
-  const [stats, setStats] = useState<LpBootstrap | null>(null);
+  const [stats, setStats] = useState<LandingStats | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -169,7 +173,11 @@ function RootResolver() {
         setLogoUrl(s.logo_url ?? null);
         if (s.landing_content) setContent(s.landing_content);
       }
-      setStats(data);
+      setStats(
+        data
+          ? { ...data.stats, categories: data.categories ?? [], products: data.products ?? [] }
+          : null,
+      );
       setChecking(false);
     })();
     return () => {
@@ -198,7 +206,7 @@ function Landing({
   c: LandingContent;
   siteName: string;
   logoUrl: string | null;
-  stats: LpBootstrap | null;
+  stats: LandingStats | null;
 }) {
 
 
