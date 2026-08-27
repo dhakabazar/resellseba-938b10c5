@@ -12,6 +12,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { mergeDeliverySettings, setGlobalDelivery } from "@/lib/delivery";
+import { applyPlatformBranding } from "@/lib/platform-branding";
 
 export type GlobalSettings = {
   id: number;
@@ -45,6 +46,7 @@ export function getGlobalSettings(force = false): Promise<GlobalSettings | null>
       try {
         const { data } = await supabase.from("global_settings").select("*").eq("id", 1).maybeSingle();
         setGlobalDelivery(mergeDeliverySettings((data as any)?.advanced_settings?.delivery));
+        applyPlatformBranding(data as any);
         return (data as GlobalSettings | null) ?? null;
       } catch {
         return null;

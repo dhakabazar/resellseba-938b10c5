@@ -11,6 +11,7 @@
  */
 import { supabase } from "@/integrations/supabase/client";
 import { mergeDeliverySettings, setGlobalDelivery } from "@/lib/delivery";
+import { applyPlatformBranding } from "@/lib/platform-branding";
 
 const cache = new Map<string, Promise<unknown>>();
 
@@ -66,7 +67,11 @@ export type LpBootstrap = {
 export function getLpBootstrap(host: string, force = false) {
   return once(
     `lp:${host}`,
-    async () => (await rpc<LpBootstrap>("lp_bootstrap", { _host: host || null })) ?? null,
+    async () => {
+      const data = await rpc<LpBootstrap>("lp_bootstrap", { _host: host || null });
+      applyPlatformBranding(data?.settings as never);
+      return data;
+    },
     force,
   );
 }

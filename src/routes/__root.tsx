@@ -11,6 +11,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Toaster } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useBrandingTheme } from "@/lib/branding";
+import { usePlatformBranding } from "@/lib/platform-branding";
 import { GlobalConfirmHost } from "@/lib/confirm";
 
 import appCss from "../styles.css?url";
