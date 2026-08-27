@@ -2879,6 +2879,8 @@ export type Database = {
         Returns: number
       }
       seed_reseller_store: { Args: { _reseller_id: string }; Returns: number }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
       store_visit_access: { Args: { _reseller_id: string }; Returns: boolean }
       store_visit_daily: {
         Args: { _from: string; _reseller_id: string; _to: string }
