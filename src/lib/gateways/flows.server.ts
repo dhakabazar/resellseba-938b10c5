@@ -15,6 +15,18 @@ async function callbackBase(): Promise<string> {
   return await platformOrigin(here);
 }
 
+/**
+ * The storefront/dashboard origin the person is actually browsing. The browser
+ * sends it (the request may have been proxied, so headers can point at the
+ * platform host), and it is validated against the hosts we own before use.
+ */
+async function shopperOrigin(raw?: string): Promise<string> {
+  const here = core.siteOrigin();
+  if (!raw) return here.replace(/\/+$/, "");
+  const ok = await core.resolveReturnTarget(raw, here);
+  return ok.replace(/\/+$/, "");
+}
+
 function ipnFor(provider: string, origin: string, params: Record<string, string>) {
   if (provider === "sslcommerz") return `${origin}/api/public/payment/sslcommerz-ipn`;
   if (provider === "epayseba") return `${origin}/api/public/payment/epayseba-webhook`;
@@ -42,7 +54,7 @@ export async function startOrderPaymentFlow(input: {
   if (!creds) throw new Response("This payment gateway is not available", { status: 400 });
 
 
-  const store = (input.storeOrigin || core.siteOrigin()).replace(/\/+$/, "");
+  const store = await shopperOrigin(input.storeOrigin);
   const cb = await callbackBase();
   const spa = core.spaUrls(store, input.code, order.order_number);
   const params = {
@@ -169,7 +181,7 @@ export async function startDepositFlow(input: {
     .single();
   if (error || !intentRow) throw new Response("Could not start the payment", { status: 500 });
 
-  const store = (input.storeOrigin || core.siteOrigin()).replace(/\/+$/, "");
+  const store = await shopperOrigin(input.storeOrigin);
   const cb = await callbackBase();
   const back = `${store}/reseller/payouts`;
   const params = { on: code, su: back, cu: back, k: "deposit", code, sig: await core.signTargets(back, back) };
