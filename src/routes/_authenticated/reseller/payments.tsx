@@ -93,6 +93,14 @@ function ResellerPaymentsPage() {
           setGateways([]);
         }
       }
+      if (me?.id) {
+        try {
+          setPlatformGateways((await loadPlatformGateways()).map((g) => g.provider));
+        } catch {
+          setPlatformGateways([]);
+        }
+      }
+
       setLoading(false);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
