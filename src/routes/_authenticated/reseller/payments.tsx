@@ -306,18 +306,49 @@ function ResellerPaymentsPage() {
             })}
 
 
-            {gateways.map((g) => (
-              <div key={g.provider} className="surface-card flex flex-col p-4">
-                <Head method={g.provider} label={g.label} tag="Automatic gateway" icon={<Zap className="h-4 w-4" />} />
-                <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground">
-                  Customers pay online and the gateway confirms it instantly — the order is marked paid without any
-                  manual check.
-                </p>
-                <span className="mt-3 inline-flex w-fit items-center gap-1 rounded-full bg-success/15 px-2 py-0.5 text-[10px] font-semibold text-success">
-                  Live on your store
-                </span>
-              </div>
-            ))}
+            {platformGateways.map((g) => {
+              const row = myGw.find((r) => r.provider === g.provider);
+              const own = row && row.mode === "own";
+              const overridden = Boolean(own && row?.is_active);
+              const hidden = Boolean(row && !row.is_active);
+              return (
+                <div key={g.provider} className="surface-card flex flex-col p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="min-w-0 flex-1">
+                      <Head
+                        method={g.provider}
+                        label={g.label}
+                        tag="Automatic gateway"
+                        icon={<Zap className="h-4 w-4" />}
+                      />
+                    </div>
+                    {!own && (
+                      <Switch
+                        checked={!hidden}
+                        onChange={(v) => void toggleGlobalGateway(g, v)}
+                        label={`Show ${g.label} on my store`}
+                      />
+                    )}
+                  </div>
+                  <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground">
+                    Customers pay online and the gateway confirms it instantly — the order is marked paid without any
+                    manual check.
+                  </p>
+                  <span
+                    className={
+                      "mt-3 inline-flex w-fit items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold " +
+                      (!hidden && !overridden ? "bg-success/15 text-success" : "bg-muted text-muted-foreground")
+                    }
+                  >
+                    {overridden
+                      ? "Running on your own credentials"
+                      : hidden
+                        ? "Off on your store"
+                        : "Live on your store"}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         )}
       </section>
