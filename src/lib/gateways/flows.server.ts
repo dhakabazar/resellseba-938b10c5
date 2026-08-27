@@ -30,8 +30,17 @@ export async function startOrderPaymentFlow(input: {
 }): Promise<{ redirectUrl: string }> {
   const order = await core.loadOrder(input.orderNumber);
   if (order.payment_status === "paid") throw new Response("This order is already paid", { status: 400 });
+  // The store code must belong to the order's own store, so one storefront can
+  // never start (or capture the return of) another store's payment.
+  {
+    const db = await core.admin();
+    const { data: store } = await db.from("resellers").select("id").eq("code", input.code).maybeSingle();
+    const storeId = (store?.id as string | undefined) ?? null;
+    if ((order.reseller_id ?? null) !== storeId) throw new Response("Order not found", { status: 404 });
+  }
   const creds = await core.getCredentials(input.provider, order.reseller_id);
   if (!creds) throw new Response("This payment gateway is not available", { status: 400 });
+
 
   const store = (input.storeOrigin || core.siteOrigin()).replace(/\/+$/, "");
   const cb = await callbackBase();
