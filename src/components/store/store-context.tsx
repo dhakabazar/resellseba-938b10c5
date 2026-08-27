@@ -82,6 +82,8 @@ export type StoreData = {
   categories: StoreCategory[];
   /** reseller-built header menu (empty = fall back to categories) */
   menu: MenuNode[];
+  /** manual payment methods usable at checkout (reseller's own wins over platform) */
+  paymentMethods: { method: string; label: string | null; instructions: string | null; reseller_id: string | null }[];
   cart: CartLine[];
 
   cartCount: number;
@@ -91,6 +93,19 @@ export type StoreData = {
   image: (l: StoreListing) => string | undefined;
 };
 
+
+/** reseller-specific method overrides the platform one with the same key */
+function dedupePayment(
+  rows: { method: string; label: string | null; instructions: string | null; reseller_id: string | null }[],
+) {
+  const byMethod = new Map<string, (typeof rows)[number]>();
+  for (const r of rows) {
+    if (!r.method) continue;
+    const existing = byMethod.get(r.method);
+    if (!existing || (r.reseller_id && !existing.reseller_id)) byMethod.set(r.method, r);
+  }
+  return Array.from(byMethod.values());
+}
 
 const Ctx = createContext<StoreData | null>(null);
 
@@ -165,6 +180,7 @@ export function useStoreLoader(code: string, themeOverride?: string | null, pale
         listings,
         categories,
         menu: buildMenuTree(menuRows),
+        paymentMethods: dedupePayment(boot?.payment_methods ?? []),
 
         byListingId: (id) => listings.find((l) => l.id === id),
         bySlug: (slug) => listings.find((l) => l.product?.slug === slug),
