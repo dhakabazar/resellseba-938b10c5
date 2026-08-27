@@ -56,7 +56,10 @@ export const testGatewayConnection = createServerFn({ method: "POST" })
       _user_id: context.userId,
       _role: "super_admin",
     });
-    if (!isAdmin) throw new Response("Forbidden", { status: 403 });
+    // Resellers may test the credentials of their own gateway setups.
+    const { data: resellerId } = isAdmin ? { data: null } : await context.supabase.rpc("current_reseller_id");
+    if (!isAdmin && !resellerId) throw new Response("Forbidden", { status: 403 });
+
 
     const { adapterFor } = await import("@/lib/gateways/adapters.server");
     const { credsFromRaw } = await import("@/lib/gateways/core.server");

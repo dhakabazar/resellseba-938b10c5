@@ -43,7 +43,33 @@ export async function admin() {
   return gatewayDatabase();
 }
 
-/** Credential loader — reseller row wins over the platform row. */
+/**
+ * Picks the gateway row that applies to a store, shared by credential loading
+ * and the storefront gateway listing.
+ */
+export function resolveGatewayRow<T extends { reseller_id: string | null; is_active: boolean; mode?: string | null }>(
+  rows: T[],
+  resellerId: string | null,
+): T | null {
+  const platform = rows.find((r) => r.reseller_id === null) ?? null;
+  const mine = resellerId ? (rows.find((r) => r.reseller_id === resellerId) ?? null) : null;
+  if (mine) {
+    if (!mine.is_active) return null;
+    if ((mine.mode ?? "own") === "platform") return platform && platform.is_active ? platform : null;
+    return mine;
+  }
+  return platform && platform.is_active ? platform : null;
+}
+/**
+ * Credential loader.
+
+ *
+ * A reseller row, when present, decides everything for that store:
+ * - `is_active = false` → the gateway is off for this store (no platform fallback)
+ * - `mode = 'platform'` → the store reuses the admin's global gateway (admin gets the money)
+ * - `mode = 'own'`      → the reseller's own merchant credentials are used
+ * With no reseller row at all the platform gateway is used, as before.
+ */
 export async function getCredentials(
   provider: string,
   resellerId: string | null,
@@ -51,15 +77,14 @@ export async function getCredentials(
   const db = await admin();
   const q = db
     .from("payment_gateway_configs")
-    .select("provider,api_key,api_secret,merchant_id,config,is_active,reseller_id")
+    .select("provider,api_key,api_secret,merchant_id,config,is_active,reseller_id,mode")
     .eq("provider", provider);
   const { data } = resellerId
     ? await q.or(`reseller_id.eq.${resellerId},reseller_id.is.null`)
     : await q.is("reseller_id", null);
-  const rows = (data ?? []).filter((r: any) => r.is_active);
-  const row =
-    rows.find((r: any) => r.reseller_id === resellerId) ?? rows.find((r: any) => r.reseller_id === null);
+  const row = resolveGatewayRow((data ?? []) as any[], resellerId);
   if (!row) return null;
+
   const config = (row.config ?? {}) as Record<string, any>;
   return {
     provider,

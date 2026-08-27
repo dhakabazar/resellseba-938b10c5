@@ -8,7 +8,9 @@ import { PageHeader } from "@/components/ui-kit";
 import { AppModal } from "@/components/ui-kit/AppModal";
 import { confirmAction } from "@/lib/confirm";
 import { getMyReseller } from "@/lib/app-data";
-import { listActiveGateways } from "@/lib/gateways.functions";
+import { listActiveGateways, listDepositGateways } from "@/lib/gateways.functions";
+import { GatewayGrid } from "@/components/payments/gateway-grid";
+
 import { MANUAL_METHODS, cfgString, methodLabel, type PaymentConfigRow } from "@/lib/payment-methods";
 import { Label, StatusDot, Switch, field } from "@/components/payments/shared";
 import { PaymentLogo, paymentLogo } from "@/components/payments/payment-brand";
@@ -50,10 +52,14 @@ function ResellerPaymentsPage() {
   const [resellerId, setResellerId] = useState<string | null>(null);
   const [globalManual, setGlobalManual] = useState<PaymentConfigRow[]>([]);
   const [gateways, setGateways] = useState<{ provider: string; label: string; method: string }[]>([]);
+  const [platformGateways, setPlatformGateways] = useState<string[]>([]);
   const [mine, setMine] = useState<PaymentConfigRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState<"manual" | "api">("manual");
   const [draft, setDraft] = useState<Draft | null>(null);
   const loadGateways = useServerFn(listActiveGateways);
+  const loadPlatformGateways = useServerFn(listDepositGateways);
+
 
   async function loadMine(rid: string) {
     const { data, error } = await supabase
@@ -87,6 +93,14 @@ function ResellerPaymentsPage() {
           setGateways([]);
         }
       }
+      if (me?.id) {
+        try {
+          setPlatformGateways((await loadPlatformGateways()).map((g) => g.provider));
+        } catch {
+          setPlatformGateways([]);
+        }
+      }
+
       setLoading(false);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -125,10 +139,46 @@ function ResellerPaymentsPage() {
     <div>
       <PageHeader
         title="Payment methods"
-        description="Global methods stay ready for your store automatically. Add your own wallet number only when you want the money to come to you instead."
+        description="Global methods stay ready for your store automatically. Use your own wallet numbers or your own gateway credentials whenever you want the money to come to you instead."
       />
 
+      <div className="mb-5 inline-flex rounded-xl border bg-muted/30 p-1">
+        <button
+          type="button"
+          onClick={() => setTab("manual")}
+          className={
+            "inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-semibold transition-colors " +
+            (tab === "manual" ? "bg-card shadow-sm" : "text-muted-foreground hover:text-foreground")
+          }
+        >
+          <Wallet className="h-3.5 w-3.5" /> Manual
+        </button>
+        <button
+          type="button"
+          onClick={() => setTab("api")}
+          className={
+            "inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-semibold transition-colors " +
+            (tab === "api" ? "bg-card shadow-sm" : "text-muted-foreground hover:text-foreground")
+          }
+        >
+          <Zap className="h-3.5 w-3.5" /> Automatic gateways
+          <span className="rounded-full bg-muted px-1.5 text-[10px]">{gateways.length}</span>
+        </button>
+      </div>
+
+      <div className={tab === "api" ? "" : "hidden"}>
+        {resellerId ? (
+          <GatewayGrid resellerId={resellerId} platformActive={platformGateways} />
+        ) : (
+          <div className="rounded-xl border border-dashed p-8 text-center text-xs text-muted-foreground">
+            Your reseller account is still being set up.
+          </div>
+        )}
+      </div>
+
+      <div className={tab === "manual" ? "" : "hidden"}>
       <section className="mb-7">
+
         <h2 className="mb-2 flex items-center gap-1.5 text-sm font-semibold">
           <Globe2 className="h-4 w-4 text-primary" /> Global methods
           <span className="rounded-full bg-muted px-1.5 text-[10px] font-semibold">
@@ -244,6 +294,9 @@ function ResellerPaymentsPage() {
           </div>
         )}
       </section>
+      </div>
+
+
 
       {draft && resellerId && (
         <MyMethodModal
