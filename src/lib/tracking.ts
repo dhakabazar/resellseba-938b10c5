@@ -2,7 +2,6 @@
  * Lightweight client-side pixel injector.
  * Loads FB Pixel + GA4 scripts based on marketing_configs and exposes helpers.
  */
-import { supabase } from "@/integrations/supabase/client";
 
 declare global {
   interface Window {
@@ -20,21 +19,17 @@ export type TrackingConfig = {
   tiktok_pixel?: string | null;
 };
 
-export async function loadTrackingForReseller(resellerId: string): Promise<TrackingConfig> {
-  const [{ data: reseller }, { data: global }] = await Promise.all([
-    supabase
-      .from("public_marketing_pixels")
-      .select("platform,pixel_id")
-      .eq("reseller_id", resellerId),
-    supabase
-      .from("public_marketing_pixels")
-      .select("platform,pixel_id")
-      .is("reseller_id", null),
-  ]);
+export type PixelRow = { platform: string; pixel_id: string | null; is_global?: boolean | null };
 
+/**
+ * Injects pixels from rows already fetched by the storefront bootstrap call
+ * (reseller-owned wins, platform-wide is the fallback) — no extra request.
+ */
+export function injectTrackingFromRows(rows: PixelRow[] | null | undefined): TrackingConfig {
+  const list = rows ?? [];
   const pick = (platform: string) =>
-    reseller?.find((r) => r.platform === platform)?.pixel_id ??
-    global?.find((r) => r.platform === platform)?.pixel_id ??
+    list.find((r) => r.platform === platform && !r.is_global)?.pixel_id ??
+    list.find((r) => r.platform === platform)?.pixel_id ??
     null;
 
   const cfg: TrackingConfig = {

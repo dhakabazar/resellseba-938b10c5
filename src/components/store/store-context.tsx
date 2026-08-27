@@ -8,6 +8,7 @@ import {
 } from "@/lib/store-content";
 import { buildMenuTree, type MenuNode } from "@/lib/store-menu";
 import { getStoreBootstrap } from "@/lib/bootstrap";
+import { injectTrackingFromRows } from "@/lib/tracking";
 
 
 export type StoreImage = { url: string; is_primary: boolean | null; sort_order?: number | null };
@@ -141,6 +142,7 @@ export function useStoreLoader(code: string, themeOverride?: string | null, pale
 
       const categories = (boot?.categories ?? []) as StoreCategory[];
       const menuRows = (boot?.menu ?? []) as never;
+      injectTrackingFromRows(boot?.pixels as never);
 
       const theme = getStoreTheme(themeOverride || s?.theme);
       ensureThemeFont(theme);
