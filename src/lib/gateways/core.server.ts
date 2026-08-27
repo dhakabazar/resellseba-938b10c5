@@ -348,15 +348,26 @@ export async function resolveReturnTarget(raw: string | undefined, origin: strin
     /* callback base not configured */
   }
 
+  const bare = host.replace(/^www\./, "");
   try {
     const db = await admin();
-    const { data } = await db.from("reseller_domains").select("hostname").ilike("hostname", host).limit(1);
-    if (data && data.length > 0) return target.toString();
+    const [{ data: domains }, { data: settings }] = await Promise.all([
+      db.from("reseller_domains").select("hostname").ilike("hostname", host).limit(1),
+      db.from("global_settings").select("allowed_origins").eq("id", 1).maybeSingle(),
+    ]);
+    if (domains && domains.length > 0) return target.toString();
+    // The platform's own live domains (admin-managed list) are always allowed,
+    // so a payment started on any connected domain returns to that same site.
+    const allowed = ((settings as { allowed_origins?: string[] } | null)?.allowed_origins ?? [])
+      .map((h) => String(h).trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "").replace(/^www\./, ""))
+      .filter(Boolean);
+    if (allowed.includes(bare)) return target.toString();
   } catch {
     /* domain lookup unavailable */
   }
   return fallback;
 }
+
 
 
 /** Return-URL base every gateway is pointed at (never the SPA directly). */
