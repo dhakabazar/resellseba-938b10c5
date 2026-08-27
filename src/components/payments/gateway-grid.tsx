@@ -161,15 +161,30 @@ export function GatewayGrid({
   return (
     <div className={"space-y-4 " + (loading ? "animate-pulse" : "")}>
       <div className="rounded-xl border bg-muted/20 p-3 text-[11px] leading-relaxed text-muted-foreground">
-        Fill in the credentials from your merchant panel, then switch the gateway on — only enabled gateways appear at
-        checkout. Payments are always re-verified with the provider on the server before an order is marked paid, and
-        every callback URL is generated from the live site address, so a domain or server change needs no edit here.
+        {isReseller ? (
+          <>
+            For every gateway you choose the source: <b>Platform gateway</b> means the money goes to the platform
+            account the admin already configured, and <b>My own credentials</b> means the payment lands in your own
+            merchant account. Switch a gateway off and it disappears from your store checkout, even if the platform
+            keeps it on.
+          </>
+        ) : (
+          <>
+            Fill in the credentials from your merchant panel, then switch the gateway on — only enabled gateways appear
+            at checkout. Payments are always re-verified with the provider on the server before an order is marked
+            paid, and every callback URL is generated from the live site address, so a domain or server change needs no
+            edit here.
+          </>
+        )}
       </div>
 
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {GATEWAYS.map((spec) => {
-          const row = rows[spec.provider] ?? blank(spec);
+          const row = rows[spec.provider] ?? blank(spec, isReseller ? "platform" : "own");
           const missing = missingFields(spec, row);
+          const platformOff =
+            isReseller && row.mode === "platform" && platformActive ? !platformActive.includes(spec.provider) : false;
+
           return (
             <div
               key={spec.provider}
