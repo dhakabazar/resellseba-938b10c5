@@ -233,7 +233,7 @@ function AdminOrdersPage() {
     const rs = (pl.resellers ?? []) as any[];
     setResellerOptions(rs.map((r: any) => ({ value: r.id, label: `${r.business_name} (/${r.code})` })));
     setResellers(rs);
-    setAllProducts((lookups.products ?? []) as any[]);
+    setAllProducts((lookups?.products ?? []) as any[]);
     if (!opts?.silent) setLoading(false);
   }
 
