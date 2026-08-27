@@ -13,6 +13,11 @@ import { PaymentLogo, paymentLogo } from "./payment-brand";
  * Automatic (redirect) gateways. Every supported provider is a card in a grid:
  * status + on/off inline, credentials in a focused modal.
  * Credentials live in `payment_gateway_configs`, server side only.
+ *
+ * The same grid serves two scopes:
+ * - admin (`resellerId` omitted) → the platform/global gateways
+ * - reseller (`resellerId` set)  → per-store gateways, which may either reuse
+ *   the platform gateway or run on the reseller's own merchant credentials.
  */
 
 type Row = {
@@ -24,9 +29,10 @@ type Row = {
   merchant_id: string | null;
   config: Record<string, unknown>;
   is_active: boolean;
+  mode: "own" | "platform";
 };
 
-function blank(spec: GatewaySpec): Row {
+function blank(spec: GatewaySpec, mode: "own" | "platform" = "own"): Row {
   return {
     id: "",
     provider: spec.provider,
@@ -36,6 +42,7 @@ function blank(spec: GatewaySpec): Row {
     merchant_id: "",
     config: {},
     is_active: false,
+    mode,
   };
 }
 
@@ -54,44 +61,63 @@ function writeField(row: Row, spec: GatewayFieldSpec, value: string): Row {
 }
 
 const missingFields = (spec: GatewaySpec, row: Row) =>
-  spec.fields.filter((f) => f.required && !readField(row, f).trim());
+  row.mode === "platform" ? [] : spec.fields.filter((f) => f.required && !readField(row, f).trim());
 
-async function persist(spec: GatewaySpec, row: Row, is_active: boolean) {
+async function persist(spec: GatewaySpec, row: Row, is_active: boolean, resellerId: string | null) {
+  const usesPlatform = row.mode === "platform";
   const payload = {
     provider: spec.provider,
     label: (row.label || spec.label).trim(),
-    api_key: row.api_key || null,
-    api_secret: row.api_secret || null,
-    merchant_id: row.merchant_id || null,
+    api_key: usesPlatform ? null : row.api_key || null,
+    api_secret: usesPlatform ? null : row.api_secret || null,
+    merchant_id: usesPlatform ? null : row.merchant_id || null,
     config: {
       ...(row.config ?? {}),
       base_url: String(row.config?.base_url ?? "").trim() || null,
     } as never,
     is_active,
-    reseller_id: null,
+    mode: resellerId ? row.mode : "own",
+    reseller_id: resellerId,
   };
   return row.id
     ? supabase.from("payment_gateway_configs").update(payload).eq("id", row.id)
     : supabase.from("payment_gateway_configs").insert(payload);
 }
 
-export function GatewayGrid({ onCountChange }: { onCountChange?: (active: number) => void }) {
+export function GatewayGrid({
+  onCountChange,
+  resellerId = null,
+  platformActive,
+}: {
+  onCountChange?: (active: number) => void;
+  /** When set, the grid edits that reseller's own gateway setups. */
+  resellerId?: string | null;
+  /** Providers the admin keeps active globally (reseller scope only). */
+  platformActive?: string[];
+}) {
+  const isReseller = Boolean(resellerId);
   const [rows, setRows] = useState<Record<string, Row>>({});
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<string | null>(null);
 
   async function load() {
-    const { data, error } = await supabase
+    const query = supabase
       .from("payment_gateway_configs")
-      .select("id,provider,label,api_key,api_secret,merchant_id,config,is_active")
-      .is("reseller_id", null);
+      .select("id,provider,label,api_key,api_secret,merchant_id,config,is_active,mode");
+    const { data, error } = resellerId
+      ? await query.eq("reseller_id", resellerId)
+      : await query.is("reseller_id", null);
     if (error) toast.error(error.message);
     const next: Record<string, Row> = {};
     for (const spec of GATEWAYS) {
       const found = (data ?? []).find((r) => r.provider === spec.provider);
       next[spec.provider] = found
-        ? ({ ...found, config: (found.config ?? {}) as Record<string, unknown> } as Row)
-        : blank(spec);
+        ? ({
+            ...found,
+            mode: ((found as { mode?: string }).mode ?? "own") === "platform" ? "platform" : "own",
+            config: (found.config ?? {}) as Record<string, unknown>,
+          } as Row)
+        : blank(spec, isReseller ? "platform" : "own");
     }
     setRows(next);
     setLoading(false);
@@ -99,14 +125,20 @@ export function GatewayGrid({ onCountChange }: { onCountChange?: (active: number
 
   useEffect(() => {
     void load();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resellerId]);
 
   const active = useMemo(() => Object.values(rows).filter((r) => r.is_active).length, [rows]);
   useEffect(() => onCountChange?.(active), [active, onCountChange]);
 
   async function toggle(spec: GatewaySpec, next: boolean) {
-    const row = rows[spec.provider] ?? blank(spec);
+    const row = rows[spec.provider] ?? blank(spec, isReseller ? "platform" : "own");
     if (next) {
+      if (isReseller && row.mode === "platform" && platformActive && !platformActive.includes(spec.provider)) {
+        toast.error(`${spec.label} is not enabled by the platform — add your own credentials instead.`);
+        setEditing(spec.provider);
+        return;
+      }
       const missing = missingFields(spec, row);
       if (missing.length) {
         toast.error(`Add credentials first: ${missing.map((f) => f.label).join(", ")}`);
@@ -115,9 +147,10 @@ export function GatewayGrid({ onCountChange }: { onCountChange?: (active: number
       }
     }
     setRows((prev) => ({ ...prev, [spec.provider]: { ...row, is_active: next } }));
-    const { error } = await persist(spec, row, next);
+    const { error } = await persist(spec, row, next, resellerId);
     if (error) {
       toast.error(error.message);
+
       void load();
       return;
     }
