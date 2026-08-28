@@ -132,6 +132,30 @@ const FILTER_LABELS: Record<Filter, string> = {
   all: "All",
 };
 
+/** Security deposit state filter for the reseller list. */
+type DepositFilter = "all" | "paid" | "due" | "not_required";
+
+const DEPOSIT_FILTERS = ["all", "paid", "due", "not_required"] as const;
+
+const DEPOSIT_FILTER_LABELS: Record<DepositFilter, string> = {
+  all: "All deposits",
+  paid: "Deposit paid",
+  due: "Deposit due",
+  not_required: "No deposit rule",
+};
+
+/** "paid" | "due" | "not_required" for one reseller. */
+function depositStateOf(
+  r: { deposit_required: boolean; deposit_required_amount: number },
+  balance: number,
+): DepositFilter {
+  const need = Number(r.deposit_required_amount ?? 0);
+  if (!r.deposit_required || need <= 0) return "not_required";
+  return balance >= need ? "paid" : "due";
+}
+
+
+
 
 function ResellersPage() {
   const nav = useNavigate();
@@ -160,6 +184,7 @@ function ResellersPage() {
   const [resetFor, setResetFor] = useState<Reseller | null>(null);
   const [agents, setAgents] = useState<Array<{ id: string; display_name: string }>>([]);
   const [agentFilter, setAgentFilter] = useState("");
+  const [depositFilter, setDepositFilter] = useState<DepositFilter>("all");
   const { settings: advanced } = useAdvancedSettings();
   const autoApprove = advanced.resellerAutoApprove;
 
@@ -271,6 +296,8 @@ function ResellersPage() {
       });
     else if (filter !== "all") out = out.filter((r) => r.status === filter);
     if (agentFilter) out = out.filter((r) => (agentFilter === "none" ? !r.agent_id : r.agent_id === agentFilter));
+    if (depositFilter !== "all")
+      out = out.filter((r) => depositStateOf(r, summaries[r.id]?.deposit_balance ?? 0) === depositFilter);
     const q = query.trim().toLowerCase();
     if (q)
       out = out.filter(
@@ -281,7 +308,24 @@ function ResellersPage() {
           (emailStatus[r.user_id]?.email ?? "").toLowerCase().includes(q),
       );
     return out;
-  }, [items, filter, query, emailStatus, profileVerify, advanced, agentFilter]);
+  }, [items, filter, query, emailStatus, profileVerify, advanced, agentFilter, depositFilter, summaries]);
+
+  const depositCounts = useMemo(() => {
+    const out: Record<DepositFilter, number> = { all: items.length, paid: 0, due: 0, not_required: 0 };
+    for (const r of items) out[depositStateOf(r, summaries[r.id]?.deposit_balance ?? 0)] += 1;
+    return out;
+  }, [items, summaries]);
+
+  const depositDueTotal = useMemo(
+    () =>
+      items.reduce((sum, r) => {
+        const bal = summaries[r.id]?.deposit_balance ?? 0;
+        if (depositStateOf(r, bal) !== "due") return sum;
+        return sum + Math.max(Number(r.deposit_required_amount ?? 0) - bal, 0);
+      }, 0),
+    [items, summaries],
+  );
+
 
   const counts = useMemo(() => {
     return {
@@ -446,6 +490,50 @@ function ResellersPage() {
           </button>
         ))}
       </div>
+
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        {DEPOSIT_FILTERS.map((f) => {
+          const active = depositFilter === f;
+          const tone =
+            f === "paid"
+              ? "border-success/40 bg-success/10 text-success"
+              : f === "due"
+                ? "border-destructive/40 bg-destructive/10 text-destructive"
+                : "";
+          return (
+            <button
+              key={f}
+              type="button"
+              onClick={() => {
+                setDepositFilter(f);
+                setPage(1);
+              }}
+              className={
+                "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors " +
+                (active
+                  ? f === "paid"
+                    ? "border-transparent bg-success text-white"
+                    : f === "due"
+                      ? "border-transparent bg-destructive text-destructive-foreground"
+                      : "border-transparent bg-primary text-primary-foreground"
+                  : tone || "hover:bg-muted")
+              }
+            >
+              {f === "paid" && <ShieldCheck className="h-3 w-3" />}
+              {f === "due" && <AlertTriangle className="h-3 w-3" />}
+              {DEPOSIT_FILTER_LABELS[f]}
+              <span className={"tabular-nums " + (active ? "opacity-80" : "opacity-70")}>{depositCounts[f]}</span>
+            </button>
+          );
+        })}
+        {depositDueTotal > 0 && (
+          <span className="inline-flex items-center gap-1 rounded-full border border-destructive/30 bg-destructive/5 px-3 py-1.5 text-xs font-semibold text-destructive">
+            Total due ৳{depositDueTotal.toLocaleString()}
+          </span>
+        )}
+      </div>
+
+
 
       <div className="mb-3 w-full sm:max-w-xs">
         <SearchableSelect
