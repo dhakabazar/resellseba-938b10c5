@@ -125,7 +125,7 @@ function CatalogDetails() {
             {showPrices && (
               <>
                 <div>
-                  <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Admin price</div>
+                  <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Wholesale price</div>
                   <div className="text-xl font-black">{bdt(p.resellerPrice)}</div>
                 </div>
                 <div>

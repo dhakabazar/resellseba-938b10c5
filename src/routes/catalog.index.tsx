@@ -219,7 +219,7 @@ function CatalogIndex() {
                         {showPrices ? (
                           <div className="mt-3 grid grid-cols-3 gap-2 rounded-xl border bg-muted/40 p-2.5 text-[11px]">
                             <div>
-                              <div className="font-bold uppercase tracking-wide text-muted-foreground">Admin</div>
+                              <div className="font-bold uppercase tracking-wide text-muted-foreground">Wholesale</div>
                               <div className="text-sm font-bold">{bdt(p.resellerPrice)}</div>
                             </div>
                             <div>
