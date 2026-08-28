@@ -336,7 +336,14 @@ function CatalogPage() {
                   onClick={() => setDetailId(p.id)}
                 >
                   {p.og_image_url && (
-                    <img src={p.og_image_url} className="h-full w-full object-cover" alt="" />
+                    <img
+                      src={p.og_image_url}
+                      className="h-full w-full object-cover"
+                      alt=""
+                      loading="lazy"
+                      decoding="async"
+                    />
+
                   )}
                 </div>
                 <div className="p-4">
