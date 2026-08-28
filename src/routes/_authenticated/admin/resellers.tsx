@@ -491,6 +491,50 @@ function ResellersPage() {
         ))}
       </div>
 
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        {DEPOSIT_FILTERS.map((f) => {
+          const active = depositFilter === f;
+          const tone =
+            f === "paid"
+              ? "border-success/40 bg-success/10 text-success"
+              : f === "due"
+                ? "border-destructive/40 bg-destructive/10 text-destructive"
+                : "";
+          return (
+            <button
+              key={f}
+              type="button"
+              onClick={() => {
+                setDepositFilter(f);
+                setPage(1);
+              }}
+              className={
+                "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors " +
+                (active
+                  ? f === "paid"
+                    ? "border-transparent bg-success text-white"
+                    : f === "due"
+                      ? "border-transparent bg-destructive text-destructive-foreground"
+                      : "border-transparent bg-primary text-primary-foreground"
+                  : tone || "hover:bg-muted")
+              }
+            >
+              {f === "paid" && <ShieldCheck className="h-3 w-3" />}
+              {f === "due" && <AlertTriangle className="h-3 w-3" />}
+              {DEPOSIT_FILTER_LABELS[f]}
+              <span className={"tabular-nums " + (active ? "opacity-80" : "opacity-70")}>{depositCounts[f]}</span>
+            </button>
+          );
+        })}
+        {depositDueTotal > 0 && (
+          <span className="inline-flex items-center gap-1 rounded-full border border-destructive/30 bg-destructive/5 px-3 py-1.5 text-xs font-semibold text-destructive">
+            Total due ৳{depositDueTotal.toLocaleString()}
+          </span>
+        )}
+      </div>
+
+
+
       <div className="mb-3 w-full sm:max-w-xs">
         <SearchableSelect
           value={agentFilter}
