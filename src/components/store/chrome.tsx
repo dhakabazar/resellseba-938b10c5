@@ -238,7 +238,7 @@ function StoreNav({ variant }: { variant: "row" | "stack" }) {
           is_active: true,
           children: [],
         },
-        ...categories.map((c, i) => ({
+        ...categories.slice(0, 5).map((c, i) => ({
           id: c.id,
           label: c.name,
           kind: "category" as const,
