@@ -132,6 +132,30 @@ const FILTER_LABELS: Record<Filter, string> = {
   all: "All",
 };
 
+/** Security deposit state filter for the reseller list. */
+type DepositFilter = "all" | "paid" | "due" | "not_required";
+
+const DEPOSIT_FILTERS = ["all", "paid", "due", "not_required"] as const;
+
+const DEPOSIT_FILTER_LABELS: Record<DepositFilter, string> = {
+  all: "All deposits",
+  paid: "Deposit paid",
+  due: "Deposit due",
+  not_required: "No deposit rule",
+};
+
+/** "paid" | "due" | "not_required" for one reseller. */
+function depositStateOf(
+  r: { deposit_required: boolean; deposit_required_amount: number },
+  balance: number,
+): DepositFilter {
+  const need = Number(r.deposit_required_amount ?? 0);
+  if (!r.deposit_required || need <= 0) return "not_required";
+  return balance >= need ? "paid" : "due";
+}
+
+
+
 
 function ResellersPage() {
   const nav = useNavigate();
