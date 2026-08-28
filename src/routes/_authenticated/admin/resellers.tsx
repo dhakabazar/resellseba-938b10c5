@@ -296,6 +296,8 @@ function ResellersPage() {
       });
     else if (filter !== "all") out = out.filter((r) => r.status === filter);
     if (agentFilter) out = out.filter((r) => (agentFilter === "none" ? !r.agent_id : r.agent_id === agentFilter));
+    if (depositFilter !== "all")
+      out = out.filter((r) => depositStateOf(r, summaries[r.id]?.deposit_balance ?? 0) === depositFilter);
     const q = query.trim().toLowerCase();
     if (q)
       out = out.filter(
@@ -306,7 +308,24 @@ function ResellersPage() {
           (emailStatus[r.user_id]?.email ?? "").toLowerCase().includes(q),
       );
     return out;
-  }, [items, filter, query, emailStatus, profileVerify, advanced, agentFilter]);
+  }, [items, filter, query, emailStatus, profileVerify, advanced, agentFilter, depositFilter, summaries]);
+
+  const depositCounts = useMemo(() => {
+    const out: Record<DepositFilter, number> = { all: items.length, paid: 0, due: 0, not_required: 0 };
+    for (const r of items) out[depositStateOf(r, summaries[r.id]?.deposit_balance ?? 0)] += 1;
+    return out;
+  }, [items, summaries]);
+
+  const depositDueTotal = useMemo(
+    () =>
+      items.reduce((sum, r) => {
+        const bal = summaries[r.id]?.deposit_balance ?? 0;
+        if (depositStateOf(r, bal) !== "due") return sum;
+        return sum + Math.max(Number(r.deposit_required_amount ?? 0) - bal, 0);
+      }, 0),
+    [items, summaries],
+  );
+
 
   const counts = useMemo(() => {
     return {
