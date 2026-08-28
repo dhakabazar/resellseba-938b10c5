@@ -27,7 +27,7 @@ export function courierTrackingUrl(
     }
     case "carrybee": {
       const id = consignment || tracking;
-      return `https://merchant.carrybee.com/tracking?consignment_id=${encodeURIComponent(id)}`;
+      return `https://merchant.carrybee.com/order-track/${encodeURIComponent(id)}`;
     }
     default:
       return null;
