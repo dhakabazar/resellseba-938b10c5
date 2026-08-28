@@ -248,7 +248,28 @@ function CatalogIndex() {
                     </div>
                   ))}
                 </div>
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                  <span className="text-xs text-muted-foreground">
+                    {rows.length} products
+                  </span>
+                  <select
+                    value={perPage}
+                    onChange={(e) => {
+                      setPerPage(Number(e.target.value));
+                      setPage(1);
+                    }}
+                    className="h-9 rounded-md border bg-background px-2 text-xs"
+                    aria-label="Products per page"
+                  >
+                    {[24, 48, 96, 200].map((n) => (
+                      <option key={n} value={n}>
+                        {n} / page
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 <Pagination page={currentPage} perPage={perPage} total={rows.length} onPage={setPage} />
+
               </>
             )}
           </section>
