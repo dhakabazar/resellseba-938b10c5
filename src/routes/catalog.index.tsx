@@ -58,8 +58,9 @@ function CatalogIndex() {
   const [term, setTerm] = useState(q ?? "");
   // Master catalog is a reseller-facing showcase: admin price & profit are always visible.
   const showPrices = true;
-  const perPage = 100;
+  const [perPage, setPerPage] = useState(24);
   const currentPage = page ?? 1;
+
 
   useEffect(() => {
     fetchCatalog().then((d) => setData(d as never));
