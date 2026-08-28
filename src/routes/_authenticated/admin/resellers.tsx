@@ -160,6 +160,7 @@ function ResellersPage() {
   const [resetFor, setResetFor] = useState<Reseller | null>(null);
   const [agents, setAgents] = useState<Array<{ id: string; display_name: string }>>([]);
   const [agentFilter, setAgentFilter] = useState("");
+  const [depositFilter, setDepositFilter] = useState<DepositFilter>("all");
   const { settings: advanced } = useAdvancedSettings();
   const autoApprove = advanced.resellerAutoApprove;
 
