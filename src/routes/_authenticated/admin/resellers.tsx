@@ -472,30 +472,34 @@ function ResellersPage() {
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <div className="w-full sm:w-52">
           <SearchableSelect
-            value={filter}
+            value={filter === "all" ? "" : filter}
             onChange={(v) => {
               setFilter((v || "all") as Filter);
               setPage(1);
             }}
-            placeholder="All"
-            options={FILTERS.map((f) => ({ value: f, label: `${FILTER_LABELS[f]} (${counts[f]})` }))}
+            placeholder={`All (${counts.all})`}
+            options={FILTERS.filter((f) => f !== "all").map((f) => ({
+              value: f,
+              label: `${FILTER_LABELS[f]} (${counts[f]})`,
+            }))}
           />
         </div>
 
         <div className="w-full sm:w-52">
           <SearchableSelect
-            value={depositFilter}
+            value={depositFilter === "all" ? "" : depositFilter}
             onChange={(v) => {
               setDepositFilter((v || "all") as DepositFilter);
               setPage(1);
             }}
-            placeholder="All deposits"
-            options={DEPOSIT_FILTERS.map((f) => ({
+            placeholder={`All deposits (${depositCounts.all})`}
+            options={DEPOSIT_FILTERS.filter((f) => f !== "all").map((f) => ({
               value: f,
               label: `${DEPOSIT_FILTER_LABELS[f]} (${depositCounts[f]})`,
             }))}
           />
         </div>
+
 
         <div className="w-full sm:w-52">
           <SearchableSelect
