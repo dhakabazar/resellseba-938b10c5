@@ -767,8 +767,8 @@ function RolesPage() {
                   <span className="text-xs text-muted-foreground">{formData.permissionIds.length} selected</span>
                 </div>
                 {permissionGroups.map((group) => {
-                  const groupIds = group.items.map((p: any) => p.id);
-                  const allOn = groupIds.every((id) => formData.permissionIds.includes(id));
+                  const groupIds: string[] = group.items.map((p: any) => p.id as string);
+                  const allOn = groupIds.every((id: string) => formData.permissionIds.includes(id));
                   return (
                     <div key={group.key} className="rounded-xl border bg-muted/20 p-3">
                       <div className="mb-2 flex items-center justify-between gap-2">
