@@ -577,6 +577,84 @@ function ResellersPage() {
     loadEmailStatus();
   }
 
+  const selectedIds = useMemo(
+    () => filtered.filter((r) => selected[r.id]).map((r) => r.id),
+    [filtered, selected],
+  );
+
+  /** Run one bulk action over the current selection, permission-checked. */
+  async function runBulk(action: BulkAction) {
+    const rows = filtered.filter((r) => selected[r.id]);
+    if (rows.length === 0) return;
+
+    const need =
+      action === "delete"
+        ? "resellers.delete"
+        : action === "activate" || action === "suspend"
+          ? "resellers.edit"
+          : "resellers.verify";
+    if (!can(need)) return toast.error("Your role cannot perform this action");
+
+    const titles: Record<BulkAction, string> = {
+      activate: "Activate selected resellers",
+      suspend: "Deactivate selected resellers",
+      verify_email: "Mark email verified",
+      verify_phone: "Mark mobile verified",
+      clear_phone: "Clear mobile verification",
+      delete: "Delete selected resellers",
+    };
+    const ok = await confirmAction({
+      title: titles[action],
+      description:
+        action === "delete"
+          ? "This also deletes their login accounts and may remove related listings/orders."
+          : `This applies to ${rows.length} reseller${rows.length > 1 ? "s" : ""}.`,
+      detail: `${rows.length} selected`,
+      confirmText: action === "delete" ? "Delete" : "Apply",
+    });
+    if (!ok) return;
+
+    setBulkBusy(true);
+    let done = 0;
+    let failed = 0;
+    for (const r of rows) {
+      try {
+        if (action === "activate" || action === "suspend") {
+          const status: Status = action === "activate" ? "active" : "suspended";
+          const patch: { status: Status; approved_at?: string } = { status };
+          if (status === "active" && !r.approved_at) patch.approved_at = new Date().toISOString();
+          const { error } = await supabase.from("resellers").update(patch).eq("id", r.id);
+          if (error) throw new Error(error.message);
+        } else if (action === "verify_email") {
+          await confirmEmailFn({ data: { userId: r.user_id } });
+        } else if (action === "verify_phone" || action === "clear_phone") {
+          const { error } = await supabase.rpc("admin_set_phone_verified", {
+            _user_id: r.user_id,
+            _verified: action === "verify_phone",
+          });
+          if (error) throw new Error(error.message);
+        } else if (action === "delete") {
+          const { error } = await supabase.from("resellers").delete().eq("id", r.id);
+          if (error) throw new Error(error.message);
+          try {
+            await deleteAuthUserFn({ data: { userId: r.user_id } });
+          } catch {
+            /* reseller row already gone */
+          }
+        }
+        done += 1;
+      } catch {
+        failed += 1;
+      }
+    }
+    setBulkBusy(false);
+    setSelected({});
+    if (done) toast.success(`${done} reseller${done > 1 ? "s" : ""} updated`);
+    if (failed) toast.error(`${failed} failed`);
+    await load();
+    await loadEmailStatus();
+  }
+
   function copyStoreLink(r: Reseller) {
     const url = `${window.location.origin}/s/${r.code}`;
     navigator.clipboard.writeText(url);
