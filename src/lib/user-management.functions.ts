@@ -42,6 +42,35 @@ export const updateAdminUserPassword = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+const updateUserInput = z.object({
+  userId: z.string().uuid(),
+  email: z.string().trim().email().max(255),
+  fullName: z.string().trim().min(2).max(120),
+  phone: z.string().trim().max(30).optional().or(z.literal("")),
+  role: z.string().optional().or(z.literal("")),
+  password: z.string().min(6).max(72).optional().or(z.literal("")),
+});
+
+/** Edits every field of a staff account, optionally setting a brand-new password. */
+export const updateAdminUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => updateUserInput.parse(d))
+  .handler(async ({ data, context }) => {
+    await assertPermission(context.supabase, context.userId, "staff.manage");
+    const { updateUser, splitRoleSelection } = await import("@/lib/auth-admin.server");
+    const selection = data.role ? splitRoleSelection(data.role) : null;
+    await updateUser(context.supabase, {
+      userId: data.userId,
+      email: data.email,
+      fullName: data.fullName,
+      phone: data.phone ?? "",
+      role: selection?.role ?? null,
+      customRoleId: selection?.customRoleId ?? null,
+      password: data.password || null,
+    });
+    return { ok: true };
+  });
+
 const updateRoleInput = z.object({
   userId: z.string().uuid(),
   role: z.string(),

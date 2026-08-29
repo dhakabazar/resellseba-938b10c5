@@ -2610,6 +2610,18 @@ export type Database = {
         Args: { _password: string; _user_id: string }
         Returns: undefined
       }
+      admin_update_user: {
+        Args: {
+          _custom_role_id?: string
+          _email?: string
+          _full_name?: string
+          _password?: string
+          _phone?: string
+          _role?: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: undefined
+      }
       assert_admin_permission: {
         Args: { _permissions: string[] }
         Returns: undefined
