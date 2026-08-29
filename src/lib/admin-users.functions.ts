@@ -73,7 +73,7 @@ export const listStaffUsers = createServerFn({ method: "GET" })
 
     const { data: profiles } = await db
       .from("profiles")
-      .select("id, full_name, created_at")
+      .select("id, full_name, phone, created_at")
       .in("id", ids);
 
     // Emails come from a permission-checked database function, so no privileged
@@ -86,6 +86,7 @@ export const listStaffUsers = createServerFn({ method: "GET" })
       id: r.user_id,
       email: emails[r.user_id] ?? null,
       full_name: profileMap[r.user_id]?.full_name ?? null,
+      phone: profileMap[r.user_id]?.phone ?? null,
       role: r.role,
       custom_role_id: r.custom_role_id ?? null,
       custom_role_name: r.roles?.name ?? null,
