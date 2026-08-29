@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertAnyPermission } from "@/lib/admin-users.server";
 import { pickConfig, sendSms, sendEmail, type NotifCfg } from "@/lib/notifications.server";
 
 export const notifyOrderStatus = createServerFn({ method: "POST" })
@@ -57,6 +58,7 @@ export const sendTestNotification = createServerFn({ method: "POST" })
   }).parse(d))
   .handler(async ({ data, context }) => {
     const { supabase } = context;
+    await assertAnyPermission(context.supabase, context.userId, ["notifications.manage", "marketing.manage", "settings.manage"]);
     const { data: cfg, error } = await supabase.from("notification_configs").select("*").eq("id", data.configId).maybeSingle();
     if (error || !cfg) throw new Error("Config not found");
     const msg = "Test message from your reseller platform.";
