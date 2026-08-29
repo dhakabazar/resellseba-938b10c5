@@ -526,8 +526,12 @@ export function NewOrderModal({
                             </div>
                             <div className="min-w-0 flex-1">
                               <div className="truncate text-xs font-black text-foreground">{p.name}</div>
-                              <div className="mt-1"><ProductCodeChip code={p.product_code} /></div>
+                              <div className="mt-1 flex flex-wrap items-center gap-2">
+                                <ProductCodeChip code={p.product_code} />
+                                <StockChip stock={p.stock} />
+                              </div>
                               <div className="mt-1.5 flex items-center gap-2">
+
                                 <span className="text-[9px] font-semibold uppercase text-muted-foreground">Sell ৳</span>
                                 <input
                                   value={sellPrice}
