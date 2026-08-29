@@ -642,6 +642,30 @@ function RolesPage() {
     }));
   };
 
+  /** Select / clear a whole menu group at once. */
+  const toggleGroup = (ids: string[], on: boolean) => {
+    setFormData((prev) => ({
+      ...prev,
+      permissionIds: on
+        ? Array.from(new Set([...prev.permissionIds, ...ids]))
+        : prev.permissionIds.filter((pid) => !ids.includes(pid)),
+    }));
+  };
+
+  /** Permissions grouped and ordered exactly like the admin menu. */
+  const permissionGroups = useMemo(() => {
+    const sorted = [...permissions].sort(
+      (a, b) => (a.sort_order ?? 100) - (b.sort_order ?? 100) || String(a.name).localeCompare(String(b.name)),
+    );
+    const map = new Map<string, { key: string; label: string; items: any[] }>();
+    for (const perm of sorted) {
+      const key = perm.group_key ?? "other";
+      if (!map.has(key)) map.set(key, { key, label: perm.group_label ?? "Other", items: [] });
+      map.get(key)!.items.push(perm);
+    }
+    return Array.from(map.values());
+  }, [permissions]);
+
   const customRoles = roles.filter((role) => !role.is_system);
 
   return (
