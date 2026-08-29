@@ -2585,6 +2585,16 @@ export type Database = {
         }
         Returns: string
       }
+      admin_create_user: {
+        Args: {
+          _custom_role_id: string
+          _email: string
+          _full_name: string
+          _password: string
+          _role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: string
+      }
       admin_dashboard: { Args: { _from?: string; _to?: string }; Returns: Json }
       admin_delete_user: { Args: { _user_id: string }; Returns: undefined }
       admin_lookups: { Args: never; Returns: Json }
