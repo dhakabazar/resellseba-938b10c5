@@ -707,32 +707,30 @@ function ResellersPage() {
 
 
 
-      <div className="mb-3 flex flex-wrap items-center gap-2">
-        <FilterMenu
-          label="Status"
-          activeLabel={filter === "all" ? `All (${counts.all})` : `${FILTER_LABELS[filter]} (${counts[filter]})`}
+      {/* Status filter — one line of buttons like the order list tabs */}
+      <div className="mb-3">
+        <FilterButtonRow
+          active={filter}
           options={FILTERS.map((f) => ({
             value: f,
-            label: f === "all" ? `All (${counts.all})` : `${FILTER_LABELS[f]} (${counts[f]})`,
-            active: filter === f,
+            label: f === "all" ? "All" : FILTER_LABELS[f],
+            count: counts[f],
           }))}
           onSelect={(v) => {
             setFilter(v as Filter);
             setPage(1);
           }}
         />
+      </div>
 
-        <FilterMenu
-          label="Deposit"
-          activeLabel={
-            depositFilter === "all"
-              ? `All deposits (${depositCounts.all})`
-              : `${DEPOSIT_FILTER_LABELS[depositFilter]} (${depositCounts[depositFilter]})`
-          }
+      {/* Deposit filter — one line of buttons; agent filter is a closed button dropdown */}
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <FilterButtonRow
+          active={depositFilter}
           options={DEPOSIT_FILTERS.map((f) => ({
             value: f,
-            label: f === "all" ? `All deposits (${depositCounts.all})` : `${DEPOSIT_FILTER_LABELS[f]} (${depositCounts[f]})`,
-            active: depositFilter === f,
+            label: f === "all" ? "All deposits" : DEPOSIT_FILTER_LABELS[f],
+            count: depositCounts[f],
           }))}
           onSelect={(v) => {
             setDepositFilter(v as DepositFilter);
@@ -740,14 +738,37 @@ function ResellersPage() {
           }}
         />
 
+        <FilterMenu
+          label="Agent"
+          activeLabel={
+            agentFilter === ""
+              ? "All agents"
+              : agentFilter === "none"
+                ? "No agent assigned"
+                : agents.find((a) => a.id === agentFilter)?.display_name ?? "All agents"
+          }
+          options={[
+            { value: "", label: "All agents", active: agentFilter === "" },
+            { value: "none", label: "No agent assigned", active: agentFilter === "none" },
+            ...agents.map((a) => ({
+              value: a.id,
+              label: a.display_name,
+              active: agentFilter === a.id,
+            })),
+          ]}
+          onSelect={(v) => {
+            setAgentFilter(v);
+            setPage(1);
+          }}
+        />
+
         {depositDueTotal > 0 && (
-          <span className="inline-flex items-center gap-1 rounded-full border border-destructive/30 bg-destructive/5 px-3 py-1.5 text-xs font-semibold text-destructive">
+          <span className="ml-auto inline-flex items-center gap-1 rounded-full border border-destructive/30 bg-destructive/5 px-3 py-1.5 text-xs font-semibold text-destructive">
             <AlertTriangle className="h-3 w-3" />
             Total due ৳{depositDueTotal.toLocaleString()}
           </span>
         )}
       </div>
-
 
       <DataToolbar
         search={query}
@@ -756,23 +777,6 @@ function ResellersPage() {
           setPage(1);
         }}
         searchPlaceholder="Search name, code, phone, email…"
-        middle={
-          <div className="w-44">
-            <SearchableSelect
-              value={agentFilter}
-              onChange={(v) => {
-                setAgentFilter(v);
-                setPage(1);
-              }}
-              placeholder="All agents"
-              options={[
-                { value: "", label: "All agents" },
-                { value: "none", label: "No agent assigned" },
-                ...agents.map((a) => ({ value: a.id, label: a.display_name })),
-              ]}
-            />
-          </div>
-        }
         perPage={perPage}
         onPerPage={(n) => {
           setPerPage(n);
