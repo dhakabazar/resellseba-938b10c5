@@ -774,7 +774,16 @@ function ResellersPage() {
             const waPhone = phone.replace(/[^0-9]/g, "").replace(/^0/, "880");
             return (
               <div key={r.id} className="surface-card p-4 shadow-sm transition hover:shadow-md">
-                <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3">
+                <div className="grid grid-cols-[auto_auto_minmax(0,1fr)_auto] items-start gap-3">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(selected[r.id])}
+                    onChange={(e) =>
+                      setSelected((prev) => ({ ...prev, [r.id]: e.target.checked }))
+                    }
+                    aria-label={`Select ${r.business_name}`}
+                    className="mt-3 h-4 w-4 accent-[hsl(var(--primary))]"
+                  />
                   <ResellerAvatar url={r.avatar_url} name={r.business_name} size={40} />
 
                   <div className="min-w-0">
