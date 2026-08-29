@@ -5,7 +5,7 @@ export type Cfg = Record<string, string>;
 export async function assertAdmin(supabase: any, userId: string) {
   const { data, error } = await supabase.rpc("has_any_permission", {
     _user_id: userId,
-    _permissions: ["couriers.manage", "orders.edit"],
+    _permissions: ["couriers.manage", "orders.ship", "orders.status", "orders.edit"],
   });
   if (error || !data) throw new Response("Forbidden", { status: 403 });
 }
