@@ -737,42 +737,61 @@ function RolesPage() {
                 </div>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-5">
                 <div className="flex items-center justify-between border-b pb-2">
                   <Label className="text-base font-bold">Permissions</Label>
                   <span className="text-xs text-muted-foreground">{formData.permissionIds.length} selected</span>
                 </div>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {permissions.map((perm) => {
-                    const active = formData.permissionIds.includes(perm.id);
-                    return (
-                      <button
-                        type="button"
-                        key={perm.id}
-                        aria-pressed={active}
-                        onClick={() => togglePermission(perm.id)}
-                        className={`flex w-full items-start gap-3 rounded-lg border p-3 text-left transition-all hover:shadow-sm ${
-                          active ? "border-primary bg-primary/5 shadow-sm" : "hover:bg-muted/50"
-                        }`}
-                      >
-                        <span
-                          className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] border ${
-                            active ? "border-primary bg-primary text-primary-foreground" : "border-input"
-                          }`}
+                {permissionGroups.map((group) => {
+                  const groupIds = group.items.map((p: any) => p.id);
+                  const allOn = groupIds.every((id) => formData.permissionIds.includes(id));
+                  return (
+                    <div key={group.key} className="rounded-xl border bg-muted/20 p-3">
+                      <div className="mb-2 flex items-center justify-between gap-2">
+                        <h4 className="text-sm font-bold text-foreground">{group.label}</h4>
+                        <button
+                          type="button"
+                          onClick={() => toggleGroup(groupIds, !allOn)}
+                          className="rounded-md border bg-background px-2 py-1 text-[11px] font-semibold text-muted-foreground transition hover:text-foreground"
                         >
-                          {active && <Check className="h-3 w-3" />}
-                        </span>
-                        <span className="grid gap-1 leading-none">
-                          <span className="text-sm font-semibold leading-none">{perm.name}</span>
-                          {perm.description && (
-                            <span className="block text-[11px] text-muted-foreground leading-tight mt-1">{perm.description}</span>
-                          )}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
+                          {allOn ? "Clear all" : "Select all"}
+                        </button>
+                      </div>
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        {group.items.map((perm: any) => {
+                          const active = formData.permissionIds.includes(perm.id);
+                          return (
+                            <button
+                              type="button"
+                              key={perm.id}
+                              aria-pressed={active}
+                              onClick={() => togglePermission(perm.id)}
+                              className={`flex w-full items-start gap-2.5 rounded-lg border bg-background p-2.5 text-left transition-all hover:shadow-sm ${
+                                active ? "border-primary bg-primary/5 shadow-sm" : "hover:bg-muted/50"
+                              }`}
+                            >
+                              <span
+                                className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] border ${
+                                  active ? "border-primary bg-primary text-primary-foreground" : "border-input"
+                                }`}
+                              >
+                                {active && <Check className="h-3 w-3" />}
+                              </span>
+                              <span className="grid gap-0.5 leading-none">
+                                <span className="text-sm font-semibold leading-tight">
+                                  {perm.label || perm.name}
+                                </span>
+                                <span className="block text-[10px] font-mono text-muted-foreground/70">{perm.name}</span>
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
+
             </div>
 
             <DialogFooter className="p-6 pt-2 border-t bg-muted/20">
