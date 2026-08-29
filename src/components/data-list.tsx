@@ -24,6 +24,7 @@ export function DataToolbar({
   onPerPage,
   perPageOptions = [10, 20, 50, 100],
   right,
+  middle,
   inline = false,
 }: {
   search: string;
@@ -34,6 +35,8 @@ export function DataToolbar({
   onPerPage: (n: number) => void;
   perPageOptions?: number[];
   right?: ReactNode;
+  /** Rendered between the search box and the per-page selector. */
+  middle?: ReactNode;
   inline?: boolean;
 }) {
   const searchInput = (
@@ -89,6 +92,7 @@ export function DataToolbar({
                 {s}
               </div>
             ))}
+            {middle}
             {perPageSelect}
             {right}
           </div>
@@ -102,6 +106,7 @@ export function DataToolbar({
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
         {searchInput}
         <div className="flex shrink-0 items-center gap-2">
+          {middle}
           {perPageSelect}
           {right}
         </div>

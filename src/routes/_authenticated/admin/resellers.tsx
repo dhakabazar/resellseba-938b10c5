@@ -36,6 +36,7 @@ import {
   MessageCircle,
   KeyRound,
   LogIn,
+  ChevronDown,
 
 } from "lucide-react";
 import { toast } from "sonner";
@@ -58,6 +59,7 @@ import { confirmAction } from "@/lib/confirm";
 import { PasswordResetModal } from "@/components/password-reset-modal";
 import { useAdvancedSettings } from "@/lib/advanced-settings";
 import { VerifyBadges, verifyPending, type VerifyFlags } from "@/components/verify-badges";
+import { usePermissions } from "@/lib/permissions";
 import {
   resellerStatusActions,
   resellerStatusClass,
@@ -157,8 +159,128 @@ function depositStateOf(
 
 
 
+/** Compact dropdown-button filter (label + current value + count). */
+function FilterMenu({
+  label,
+  activeLabel,
+  options,
+  onSelect,
+}: {
+  label: string;
+  activeLabel: string;
+  options: Array<{ value: string; label: string; active: boolean }>;
+  onSelect: (value: string) => void;
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger className="inline-flex items-center gap-2 rounded-md border bg-background px-3 py-2 text-sm font-medium transition hover:bg-muted">
+        <span className="text-muted-foreground">{label}:</span>
+        <span className="max-w-[14rem] truncate">{activeLabel}</span>
+        <ChevronDown className="h-4 w-4 text-muted-foreground" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-56">
+        {options.map((o) => (
+          <DropdownMenuItem
+            key={o.value}
+            onClick={() => onSelect(o.value)}
+            className={o.active ? "font-semibold text-primary" : ""}
+          >
+            {o.active ? <Check className="mr-2 h-4 w-4" /> : <span className="mr-2 h-4 w-4" />}
+            {o.label}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+export type BulkAction =
+  | "activate"
+  | "suspend"
+  | "verify_email"
+  | "verify_phone"
+  | "clear_phone"
+  | "delete";
+
+/** Selection header with the bulk actions the current role is allowed to run. */
+function BulkBar({
+  total,
+  selectedIds,
+  onSelectAll,
+  onClear,
+  busy,
+  can,
+  onAction,
+}: {
+  total: number;
+  selectedIds: string[];
+  onSelectAll: (on: boolean) => void;
+  onClear: () => void;
+  busy: boolean;
+  can: (permission: string) => boolean;
+  onAction: (action: BulkAction) => void;
+}) {
+  const count = selectedIds.length;
+  const allSelected = count > 0 && count >= total;
+  const actions = ([
+    { key: "activate", label: "Activate", permission: "resellers.edit" },
+    { key: "suspend", label: "Deactivate", permission: "resellers.edit" },
+    { key: "verify_email", label: "Mark email verified", permission: "resellers.verify" },
+    { key: "verify_phone", label: "Mark mobile verified", permission: "resellers.verify" },
+    { key: "clear_phone", label: "Clear mobile verification", permission: "resellers.verify" },
+    { key: "delete", label: "Delete selected", permission: "resellers.delete", danger: true },
+  ] as Array<{ key: BulkAction; label: string; permission: string; danger?: boolean }>).filter((a) => can(a.permission));
+
+  return (
+    <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border bg-muted/30 px-3 py-2">
+      <label className="inline-flex items-center gap-2 text-sm font-medium">
+        <input
+          type="checkbox"
+          checked={allSelected}
+          onChange={(e) => onSelectAll(e.target.checked)}
+          className="h-4 w-4 accent-[hsl(var(--primary))]"
+        />
+        Select all ({total})
+      </label>
+      {count > 0 ? (
+        <>
+          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
+            {count} selected
+          </span>
+          {actions.length === 0 ? (
+            <span className="text-xs text-muted-foreground">No bulk permission for your role</span>
+          ) : (
+            actions.map((a) => (
+              <button
+                key={a.key}
+                type="button"
+                disabled={busy}
+                onClick={() => onAction(a.key)}
+                className={`rounded-md border px-2.5 py-1 text-xs font-semibold transition disabled:opacity-50 ${
+                  a.danger
+                    ? "border-destructive/40 text-destructive hover:bg-destructive/10"
+                    : "bg-background hover:bg-muted"
+                }`}
+              >
+                {a.label}
+              </button>
+            ))
+          )}
+          <button type="button" onClick={onClear} className="ml-auto text-xs text-muted-foreground hover:text-foreground">
+            Clear selection
+          </button>
+          {busy && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+        </>
+      ) : (
+        <span className="text-xs text-muted-foreground">Select resellers to run bulk actions</span>
+      )}
+    </div>
+  );
+}
+
 function ResellersPage() {
   const nav = useNavigate();
+  const { can } = usePermissions();
   const confirmEmailFn = useServerFn(confirmUserEmail);
   const listEmailStatusFn = useServerFn(listResellerEmailStatus);
   const deleteAuthUserFn = useServerFn(deleteAuthUser);
@@ -185,6 +307,8 @@ function ResellersPage() {
   const [agents, setAgents] = useState<Array<{ id: string; display_name: string }>>([]);
   const [agentFilter, setAgentFilter] = useState("");
   const [depositFilter, setDepositFilter] = useState<DepositFilter>("all");
+  const [selected, setSelected] = useState<Record<string, boolean>>({});
+  const [bulkBusy, setBulkBusy] = useState(false);
   const { settings: advanced } = useAdvancedSettings();
   const autoApprove = advanced.resellerAutoApprove;
 
@@ -453,6 +577,84 @@ function ResellersPage() {
     loadEmailStatus();
   }
 
+  const selectedIds = useMemo(
+    () => filtered.filter((r) => selected[r.id]).map((r) => r.id),
+    [filtered, selected],
+  );
+
+  /** Run one bulk action over the current selection, permission-checked. */
+  async function runBulk(action: BulkAction) {
+    const rows = filtered.filter((r) => selected[r.id]);
+    if (rows.length === 0) return;
+
+    const need =
+      action === "delete"
+        ? "resellers.delete"
+        : action === "activate" || action === "suspend"
+          ? "resellers.edit"
+          : "resellers.verify";
+    if (!can(need)) return toast.error("Your role cannot perform this action");
+
+    const titles: Record<BulkAction, string> = {
+      activate: "Activate selected resellers",
+      suspend: "Deactivate selected resellers",
+      verify_email: "Mark email verified",
+      verify_phone: "Mark mobile verified",
+      clear_phone: "Clear mobile verification",
+      delete: "Delete selected resellers",
+    };
+    const ok = await confirmAction({
+      title: titles[action],
+      description:
+        action === "delete"
+          ? "This also deletes their login accounts and may remove related listings/orders."
+          : `This applies to ${rows.length} reseller${rows.length > 1 ? "s" : ""}.`,
+      detail: `${rows.length} selected`,
+      confirmText: action === "delete" ? "Delete" : "Apply",
+    });
+    if (!ok) return;
+
+    setBulkBusy(true);
+    let done = 0;
+    let failed = 0;
+    for (const r of rows) {
+      try {
+        if (action === "activate" || action === "suspend") {
+          const status: Status = action === "activate" ? "active" : "suspended";
+          const patch: { status: Status; approved_at?: string } = { status };
+          if (status === "active" && !r.approved_at) patch.approved_at = new Date().toISOString();
+          const { error } = await supabase.from("resellers").update(patch).eq("id", r.id);
+          if (error) throw new Error(error.message);
+        } else if (action === "verify_email") {
+          await confirmEmailFn({ data: { userId: r.user_id } });
+        } else if (action === "verify_phone" || action === "clear_phone") {
+          const { error } = await supabase.rpc("admin_set_phone_verified", {
+            _user_id: r.user_id,
+            _verified: action === "verify_phone",
+          });
+          if (error) throw new Error(error.message);
+        } else if (action === "delete") {
+          const { error } = await supabase.from("resellers").delete().eq("id", r.id);
+          if (error) throw new Error(error.message);
+          try {
+            await deleteAuthUserFn({ data: { userId: r.user_id } });
+          } catch {
+            /* reseller row already gone */
+          }
+        }
+        done += 1;
+      } catch {
+        failed += 1;
+      }
+    }
+    setBulkBusy(false);
+    setSelected({});
+    if (done) toast.success(`${done} reseller${done > 1 ? "s" : ""} updated`);
+    if (failed) toast.error(`${failed} failed`);
+    await load();
+    await loadEmailStatus();
+  }
+
   function copyStoreLink(r: Reseller) {
     const url = `${window.location.origin}/s/${r.code}`;
     navigator.clipboard.writeText(url);
@@ -470,52 +672,37 @@ function ResellersPage() {
 
 
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <div className="w-full sm:w-52">
-          <SearchableSelect
-            value={filter === "all" ? "" : filter}
-            onChange={(v) => {
-              setFilter((v || "all") as Filter);
-              setPage(1);
-            }}
-            placeholder={`All (${counts.all})`}
-            options={FILTERS.filter((f) => f !== "all").map((f) => ({
-              value: f,
-              label: `${FILTER_LABELS[f]} (${counts[f]})`,
-            }))}
-          />
-        </div>
+        <FilterMenu
+          label="Status"
+          activeLabel={filter === "all" ? `All (${counts.all})` : `${FILTER_LABELS[filter]} (${counts[filter]})`}
+          options={FILTERS.map((f) => ({
+            value: f,
+            label: f === "all" ? `All (${counts.all})` : `${FILTER_LABELS[f]} (${counts[f]})`,
+            active: filter === f,
+          }))}
+          onSelect={(v) => {
+            setFilter(v as Filter);
+            setPage(1);
+          }}
+        />
 
-        <div className="w-full sm:w-52">
-          <SearchableSelect
-            value={depositFilter === "all" ? "" : depositFilter}
-            onChange={(v) => {
-              setDepositFilter((v || "all") as DepositFilter);
-              setPage(1);
-            }}
-            placeholder={`All deposits (${depositCounts.all})`}
-            options={DEPOSIT_FILTERS.filter((f) => f !== "all").map((f) => ({
-              value: f,
-              label: `${DEPOSIT_FILTER_LABELS[f]} (${depositCounts[f]})`,
-            }))}
-          />
-        </div>
-
-
-        <div className="w-full sm:w-52">
-          <SearchableSelect
-            value={agentFilter}
-            onChange={(v) => {
-              setAgentFilter(v);
-              setPage(1);
-            }}
-            placeholder="All agents"
-            options={[
-              { value: "", label: "All agents" },
-              { value: "none", label: "No agent assigned" },
-              ...agents.map((a) => ({ value: a.id, label: a.display_name })),
-            ]}
-          />
-        </div>
+        <FilterMenu
+          label="Deposit"
+          activeLabel={
+            depositFilter === "all"
+              ? `All deposits (${depositCounts.all})`
+              : `${DEPOSIT_FILTER_LABELS[depositFilter]} (${depositCounts[depositFilter]})`
+          }
+          options={DEPOSIT_FILTERS.map((f) => ({
+            value: f,
+            label: f === "all" ? `All deposits (${depositCounts.all})` : `${DEPOSIT_FILTER_LABELS[f]} (${depositCounts[f]})`,
+            active: depositFilter === f,
+          }))}
+          onSelect={(v) => {
+            setDepositFilter(v as DepositFilter);
+            setPage(1);
+          }}
+        />
 
         {depositDueTotal > 0 && (
           <span className="inline-flex items-center gap-1 rounded-full border border-destructive/30 bg-destructive/5 px-3 py-1.5 text-xs font-semibold text-destructive">
@@ -533,12 +720,42 @@ function ResellersPage() {
           setPage(1);
         }}
         searchPlaceholder="Search name, code, phone, email…"
+        middle={
+          <div className="w-44">
+            <SearchableSelect
+              value={agentFilter}
+              onChange={(v) => {
+                setAgentFilter(v);
+                setPage(1);
+              }}
+              placeholder="All agents"
+              options={[
+                { value: "", label: "All agents" },
+                { value: "none", label: "No agent assigned" },
+                ...agents.map((a) => ({ value: a.id, label: a.display_name })),
+              ]}
+            />
+          </div>
+        }
         perPage={perPage}
         onPerPage={(n) => {
           setPerPage(n);
           setPage(1);
         }}
       />
+
+      {!loading && filtered.length > 0 && (
+        <BulkBar
+          total={filtered.length}
+          selectedIds={selectedIds}
+          onSelectAll={(on) => setSelected(on ? Object.fromEntries(filtered.map((r) => [r.id, true])) : {})}
+          onClear={() => setSelected({})}
+          busy={bulkBusy}
+          can={can}
+          onAction={runBulk}
+        />
+      )}
+
 
       {loading ? (
         <div className="grid place-items-center py-12">
@@ -557,7 +774,16 @@ function ResellersPage() {
             const waPhone = phone.replace(/[^0-9]/g, "").replace(/^0/, "880");
             return (
               <div key={r.id} className="surface-card p-4 shadow-sm transition hover:shadow-md">
-                <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3">
+                <div className="grid grid-cols-[auto_auto_minmax(0,1fr)_auto] items-start gap-3">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(selected[r.id])}
+                    onChange={(e) =>
+                      setSelected((prev) => ({ ...prev, [r.id]: e.target.checked }))
+                    }
+                    aria-label={`Select ${r.business_name}`}
+                    className="mt-3 h-4 w-4 accent-[hsl(var(--primary))]"
+                  />
                   <ResellerAvatar url={r.avatar_url} name={r.business_name} size={40} />
 
                   <div className="min-w-0">
@@ -670,7 +896,7 @@ function ResellersPage() {
                     <DropdownMenuContent align="end" className="w-56">
                       <DropdownMenuLabel>{r.business_name}</DropdownMenuLabel>
                       <DropdownMenuSeparator />
-                      {resellerStatusActions(r.status, autoApprove).map((a) => (
+                      {can("resellers.edit") && resellerStatusActions(r.status, autoApprove).map((a) => (
                         <DropdownMenuItem
                           key={a.status}
                           onClick={() => setStatus(r, a.status)}
@@ -690,11 +916,12 @@ function ResellersPage() {
                       ))}
                       <DropdownMenuSeparator />
 
-                      {!emailVerified && (
+                      {!emailVerified && can("resellers.verify") && (
                         <DropdownMenuItem onClick={() => confirmEmail(r)}>
                           <MailCheck className="mr-2 h-4 w-4" /> Confirm email
                         </DropdownMenuItem>
                       )}
+                      {can("resellers.verify") && (
                       <DropdownMenuItem onClick={() => void setPhoneVerified(r, !vf.phoneVerified)}>
                         {vf.phoneVerified ? (
                           <>
@@ -706,22 +933,31 @@ function ResellersPage() {
                           </>
                         )}
                       </DropdownMenuItem>
+                      )}
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={() => setProfileFor(r)}>
                         <UserCircle className="mr-2 h-4 w-4" /> View profile
                       </DropdownMenuItem>
+                      {can("resellers.edit") && (
                       <DropdownMenuItem onClick={() => setEditing(r)}>
                         <Pencil className="mr-2 h-4 w-4" /> Edit details
                       </DropdownMenuItem>
+                      )}
+                      {can("resellers.deposit") && (
                       <DropdownMenuItem onClick={() => setDepositFor(r)}>
                         <Wallet className="mr-2 h-4 w-4" /> Deposit & freeze
                       </DropdownMenuItem>
+                      )}
+                      {can("resellers.password") && (
                       <DropdownMenuItem onClick={() => setResetFor(r)}>
                         <KeyRound className="mr-2 h-4 w-4" /> Reset password
                       </DropdownMenuItem>
+                      )}
+                      {can("resellers.impersonate") && (
                       <DropdownMenuItem onClick={() => void loginAsReseller(r)}>
                         <LogIn className="mr-2 h-4 w-4" /> Login as reseller
                       </DropdownMenuItem>
+                      )}
                       <DropdownMenuItem onClick={() => copyStoreLink(r)}>
                         <Copy className="mr-2 h-4 w-4" /> Copy store link
                       </DropdownMenuItem>
@@ -730,13 +966,13 @@ function ResellersPage() {
                           <ExternalLink className="mr-2 h-4 w-4" /> Visit storefront
                         </a>
                       </DropdownMenuItem>
-                      <DropdownMenuSeparator />
+                      {can("resellers.delete") && (<><DropdownMenuSeparator />
                       <DropdownMenuItem
                         onClick={() => remove(r)}
                         className="text-destructive focus:text-destructive"
                       >
                         <Trash2 className="mr-2 h-4 w-4" /> Delete reseller
-                      </DropdownMenuItem>
+                      </DropdownMenuItem></>)}
                     </DropdownMenuContent>
                     </DropdownMenu>
                   </div>

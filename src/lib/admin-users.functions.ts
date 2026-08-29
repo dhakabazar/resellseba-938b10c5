@@ -9,7 +9,7 @@ export const confirmUserEmail = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => input.parse(d))
   .handler(async ({ data, context }) => {
-    await assertPermission(context.supabase, context.userId, "resellers.manage");
+    await assertAnyPermission(context.supabase, context.userId, ["resellers.manage", "resellers.verify"]);
     const { confirmEmail } = await import("@/lib/auth-admin.server");
     const res = await confirmEmail(context.supabase, data.userId);
     return { ok: true, alreadyConfirmed: res.alreadyConfirmed, email: res.email };
@@ -24,7 +24,7 @@ export type EmailStatus = {
 export const listResellerEmailStatus = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<EmailStatus[]> => {
-    await assertPermission(context.supabase, context.userId, "resellers.manage");
+    await assertAnyPermission(context.supabase, context.userId, ["resellers.manage", "resellers.view", "resellers.verify", "resellers.edit"]);
     const { loadAuthUsers } = await import("@/lib/auth-admin.server");
     const users = await loadAuthUsers(context.supabase);
     return users.map((u) => ({
@@ -38,7 +38,7 @@ export const deleteAuthUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => input.parse(d))
   .handler(async ({ data, context }) => {
-    await assertAnyPermission(context.supabase, context.userId, ["staff.manage", "resellers.manage"]);
+    await assertAnyPermission(context.supabase, context.userId, ["staff.manage", "resellers.manage", "resellers.delete"]);
     const { deleteUser } = await import("@/lib/auth-admin.server");
     await deleteUser(context.supabase, data.userId);
     return { ok: true };
