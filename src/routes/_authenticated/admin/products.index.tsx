@@ -15,6 +15,7 @@ import { DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdow
 import { CopyButton, ImageDownloadTools, stripHtml } from "@/components/store/reseller-tools";
 import { ProductImportModal } from "@/components/ProductImportModal";
 import { confirmAction } from "@/lib/confirm";
+import { usePermissions } from "@/lib/permissions";
 
 type Row = {
   id: string;
@@ -54,6 +55,10 @@ function ProductsPage() {
   const [loading, setLoading] = useState(true);
   const [detailId, setDetailId] = useState<string | null>(null);
   const [importOpen, setImportOpen] = useState(false);
+  const { can } = usePermissions();
+  const canCreate = can("products.create");
+  const canEdit = can("products.edit");
+  const canDelete = can("products.delete");
 
   const [q, setQ] = useState("");
   const [brand, setBrand] = useState(search.brand ?? "");
@@ -198,6 +203,7 @@ function ProductsPage() {
         description="Master catalog resellers create listings from."
         actions={
           <div className="flex flex-wrap items-center gap-2">
+          {canCreate && (<>
           <button
             type="button"
             onClick={() => setImportOpen(true)}
@@ -211,6 +217,7 @@ function ProductsPage() {
           >
             <Plus className="h-4 w-4" /> New product
           </Link>
+          </>)}
           </div>
         }
       />
@@ -234,14 +241,14 @@ function ProductsPage() {
         <EmptyState
           title="No products match"
           description="Try changing filters or add a new product."
-          action={
+          action={canCreate ? (
             <Link
               to="/admin/products/new"
               className="btn-brand inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium"
             >
               <Plus className="h-4 w-4" /> Add product
             </Link>
-          }
+          ) : undefined}
         />
       ) : (
         <>
@@ -249,6 +256,7 @@ function ProductsPage() {
             <div className="mb-3 flex flex-wrap items-center gap-2 rounded-md border bg-primary/5 px-3 py-2 text-sm">
               <span className="font-medium">{selected.size} selected</span>
               <div className="ml-auto flex flex-wrap gap-2">
+                {canEdit && (<>
                 <button
                   disabled={bulkBusy}
                   onClick={() => bulkSetActive(true)}
@@ -262,14 +270,14 @@ function ProductsPage() {
                   className="inline-flex items-center gap-1 rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-background disabled:opacity-50"
                 >
                   <EyeOff className="h-3.5 w-3.5" /> Hide
-                </button>
-                <button
+                </button></>)}
+                {canDelete && (<button
                   disabled={bulkBusy}
                   onClick={bulkDelete}
                   className="inline-flex items-center gap-1 rounded-md border border-destructive/50 px-3 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/10 disabled:opacity-50"
                 >
                   <Trash2 className="h-3.5 w-3.5" /> Delete
-                </button>
+                </button>)}
                 <button
                   onClick={() => setSelected(new Set())}
                   className="inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
