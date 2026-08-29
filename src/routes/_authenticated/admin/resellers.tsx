@@ -470,52 +470,37 @@ function ResellersPage() {
 
 
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <div className="w-full sm:w-52">
-          <SearchableSelect
-            value={filter === "all" ? "" : filter}
-            onChange={(v) => {
-              setFilter((v || "all") as Filter);
-              setPage(1);
-            }}
-            placeholder={`All (${counts.all})`}
-            options={FILTERS.filter((f) => f !== "all").map((f) => ({
-              value: f,
-              label: `${FILTER_LABELS[f]} (${counts[f]})`,
-            }))}
-          />
-        </div>
+        <FilterMenu
+          label="Status"
+          activeLabel={filter === "all" ? `All (${counts.all})` : `${FILTER_LABELS[filter]} (${counts[filter]})`}
+          options={FILTERS.map((f) => ({
+            value: f,
+            label: f === "all" ? `All (${counts.all})` : `${FILTER_LABELS[f]} (${counts[f]})`,
+            active: filter === f,
+          }))}
+          onSelect={(v) => {
+            setFilter(v as Filter);
+            setPage(1);
+          }}
+        />
 
-        <div className="w-full sm:w-52">
-          <SearchableSelect
-            value={depositFilter === "all" ? "" : depositFilter}
-            onChange={(v) => {
-              setDepositFilter((v || "all") as DepositFilter);
-              setPage(1);
-            }}
-            placeholder={`All deposits (${depositCounts.all})`}
-            options={DEPOSIT_FILTERS.filter((f) => f !== "all").map((f) => ({
-              value: f,
-              label: `${DEPOSIT_FILTER_LABELS[f]} (${depositCounts[f]})`,
-            }))}
-          />
-        </div>
-
-
-        <div className="w-full sm:w-52">
-          <SearchableSelect
-            value={agentFilter}
-            onChange={(v) => {
-              setAgentFilter(v);
-              setPage(1);
-            }}
-            placeholder="All agents"
-            options={[
-              { value: "", label: "All agents" },
-              { value: "none", label: "No agent assigned" },
-              ...agents.map((a) => ({ value: a.id, label: a.display_name })),
-            ]}
-          />
-        </div>
+        <FilterMenu
+          label="Deposit"
+          activeLabel={
+            depositFilter === "all"
+              ? `All deposits (${depositCounts.all})`
+              : `${DEPOSIT_FILTER_LABELS[depositFilter]} (${depositCounts[depositFilter]})`
+          }
+          options={DEPOSIT_FILTERS.map((f) => ({
+            value: f,
+            label: f === "all" ? `All deposits (${depositCounts.all})` : `${DEPOSIT_FILTER_LABELS[f]} (${depositCounts[f]})`,
+            active: depositFilter === f,
+          }))}
+          onSelect={(v) => {
+            setDepositFilter(v as DepositFilter);
+            setPage(1);
+          }}
+        />
 
         {depositDueTotal > 0 && (
           <span className="inline-flex items-center gap-1 rounded-full border border-destructive/30 bg-destructive/5 px-3 py-1.5 text-xs font-semibold text-destructive">
@@ -533,12 +518,42 @@ function ResellersPage() {
           setPage(1);
         }}
         searchPlaceholder="Search name, code, phone, email…"
+        middle={
+          <div className="w-44">
+            <SearchableSelect
+              value={agentFilter}
+              onChange={(v) => {
+                setAgentFilter(v);
+                setPage(1);
+              }}
+              placeholder="All agents"
+              options={[
+                { value: "", label: "All agents" },
+                { value: "none", label: "No agent assigned" },
+                ...agents.map((a) => ({ value: a.id, label: a.display_name })),
+              ]}
+            />
+          </div>
+        }
         perPage={perPage}
         onPerPage={(n) => {
           setPerPage(n);
           setPage(1);
         }}
       />
+
+      {!loading && filtered.length > 0 && (
+        <BulkBar
+          total={filtered.length}
+          selectedIds={selectedIds}
+          onSelectAll={(on) => setSelected(on ? Object.fromEntries(filtered.map((r) => [r.id, true])) : {})}
+          onClear={() => setSelected({})}
+          busy={bulkBusy}
+          can={can}
+          onAction={runBulk}
+        />
+      )}
+
 
       {loading ? (
         <div className="grid place-items-center py-12">
