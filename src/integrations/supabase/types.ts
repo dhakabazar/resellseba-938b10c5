@@ -1431,20 +1431,32 @@ export type Database = {
         Row: {
           created_at: string | null
           description: string | null
+          group_key: string
+          group_label: string
           id: string
+          label: string | null
           name: string
+          sort_order: number
         }
         Insert: {
           created_at?: string | null
           description?: string | null
+          group_key?: string
+          group_label?: string
           id?: string
+          label?: string | null
           name: string
+          sort_order?: number
         }
         Update: {
           created_at?: string | null
           description?: string | null
+          group_key?: string
+          group_label?: string
           id?: string
+          label?: string | null
           name?: string
+          sort_order?: number
         }
         Relationships: []
       }
