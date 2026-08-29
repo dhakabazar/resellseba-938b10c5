@@ -1,11 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
-import { Shield, UserPlus, Key, Trash2, MoreHorizontal, Loader2, Mail, Plus, Check, Eye, EyeOff } from "lucide-react";
+import { Shield, UserPlus, Key, Trash2, MoreHorizontal, Loader2, Mail, Phone, Pencil, Plus, Check, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/lib/use-auth";
-import { createAdminUser, updateAdminUserPassword, updateAdminUserRole } from "@/lib/user-management.functions";
+import {
+  createAdminUser,
+  updateAdminUser,
+  updateAdminUserPassword,
+  updateAdminUserRole,
+} from "@/lib/user-management.functions";
 import { deleteAuthUser, listStaffUsers, type StaffUser } from "@/lib/admin-users.functions";
 import { getRoles, getPermissions, saveRole, deleteRole } from "@/lib/roles-permissions.functions";
 import {
@@ -60,6 +65,9 @@ function StaffPage() {
   const [isPassModalOpen, setIsPassModalOpen] = useState(false);
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editForm, setEditForm] = useState({ email: "", fullName: "", phone: "", role: "", password: "" });
+  const [showEditPassword, setShowEditPassword] = useState(false);
   const [selectedUser, setSelectedUser] = useState<StaffUser | null>(null);
   const [newPassword, setNewPassword] = useState("");
   const [newRole, setNewRole] = useState("");
@@ -72,6 +80,7 @@ function StaffPage() {
   const passwordMutation = useServerFn(updateAdminUserPassword);
   const roleMutation = useServerFn(updateAdminUserRole);
   const deleteUserMutation = useServerFn(deleteAuthUser);
+  const editUserMutation = useServerFn(updateAdminUser);
 
   const { user: currentUser, roles: currentRoles } = useAuth();
   const isSuperAdmin = currentRoles.includes("super_admin");
@@ -108,6 +117,45 @@ function StaffPage() {
       loadUsers();
     } catch (error: any) {
       toast.error(error?.message || "Failed to create user");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const openEdit = (user: StaffUser) => {
+    setSelectedUser(user);
+    setEditForm({
+      email: user.email ?? "",
+      fullName: user.full_name ?? "",
+      phone: user.phone ?? "",
+      role: user.custom_role_id ?? "",
+      password: "",
+    });
+    setShowEditPassword(false);
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedUser) return;
+    setIsSubmitting(true);
+    try {
+      await editUserMutation({
+        data: {
+          userId: selectedUser.id,
+          email: editForm.email,
+          fullName: editForm.fullName,
+          phone: editForm.phone,
+          // Super admin accounts keep their system role untouched.
+          role: selectedUser.role === "super_admin" ? "" : editForm.role,
+          password: editForm.password,
+        },
+      });
+      toast.success("User updated");
+      setIsEditModalOpen(false);
+      loadUsers();
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to update user");
     } finally {
       setIsSubmitting(false);
     }
@@ -190,6 +238,12 @@ function StaffPage() {
                       <Mail className="h-3.5 w-3.5" />
                       {user.email || "No email"}
                     </div>
+                    {user.phone ? (
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
+                        <Phone className="h-3.5 w-3.5" />
+                        {user.phone}
+                      </div>
+                    ) : null}
                     <div className="mt-2 inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
                       <Shield className="h-3 w-3" />
                       {user.role === "super_admin" ? "Super Admin" : user.custom_role_name || "No role assigned"}
@@ -202,6 +256,9 @@ function StaffPage() {
                       <MoreHorizontal className="h-5 w-5 text-muted-foreground" />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => openEdit(user)}>
+                        <Pencil className="mr-2 h-4 w-4" /> Edit user
+                      </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => {
                           setSelectedUser(user);
@@ -326,6 +383,98 @@ function StaffPage() {
               <button type="submit" disabled={isSubmitting} className="btn-brand w-full py-2.5 flex items-center justify-center gap-2">
                 {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
                 Create User
+              </button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent className="w-[95vw] sm:max-w-[425px]">
+          <form onSubmit={handleEditUser}>
+            <DialogHeader>
+              <DialogTitle>Edit user</DialogTitle>
+              <DialogDescription>
+                Update the account details. Leave the password field empty to keep the current password.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid max-h-[65vh] gap-4 overflow-y-auto modal-scroll py-4 pr-1">
+              <div className="grid gap-2">
+                <Label htmlFor="editFullName">Full name</Label>
+                <Input
+                  id="editFullName"
+                  value={editForm.fullName}
+                  onChange={(e) => setEditForm({ ...editForm, fullName: e.target.value })}
+                  maxLength={120}
+                  required
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="editEmail">Email</Label>
+                <Input
+                  id="editEmail"
+                  type="email"
+                  value={editForm.email}
+                  onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                  maxLength={255}
+                  required
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="editPhone">Phone</Label>
+                <Input
+                  id="editPhone"
+                  value={editForm.phone}
+                  onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                  placeholder="01XXXXXXXXX"
+                  maxLength={30}
+                />
+              </div>
+              {selectedUser?.role !== "super_admin" && (
+                <div className="grid gap-2">
+                  <Label>Role</Label>
+                  <Select value={editForm.role} onValueChange={(v) => setEditForm({ ...editForm, role: v })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {customRoles.map((role) => (
+                        <SelectItem key={role.id} value={role.id}>
+                          {role.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              <div className="grid gap-2">
+                <Label htmlFor="editPassword">New password (optional)</Label>
+                <div className="relative">
+                  <Input
+                    id="editPassword"
+                    type={showEditPassword ? "text" : "password"}
+                    value={editForm.password}
+                    onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
+                    placeholder="Leave empty to keep current"
+                    className="pr-10"
+                    minLength={6}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowEditPassword((v) => !v)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                    aria-label={showEditPassword ? "Hide password" : "Show password"}
+                    tabIndex={-1}
+                  >
+                    {showEditPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <button type="submit" disabled={isSubmitting} className="btn-brand w-full py-2.5 flex items-center justify-center gap-2">
+                {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                Save changes
               </button>
             </DialogFooter>
           </form>
