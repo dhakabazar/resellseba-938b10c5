@@ -50,6 +50,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
 const ROUTE_PERMISSIONS: Record<string, string[]> = {
   "/admin": ["dashboard.view"],
   "/admin/products": ["products.view", "products.manage"],
+  "/admin/products/new": ["products.manage"],
   "/admin/brands": ["brands.manage"],
   "/admin/categories": ["categories.manage"],
   "/admin/orders": ["orders.view", "orders.edit", "orders.create", "orders.delete", "orders.status", "orders.ship"],
