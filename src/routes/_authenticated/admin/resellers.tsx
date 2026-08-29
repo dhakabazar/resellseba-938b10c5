@@ -896,7 +896,7 @@ function ResellersPage() {
                     <DropdownMenuContent align="end" className="w-56">
                       <DropdownMenuLabel>{r.business_name}</DropdownMenuLabel>
                       <DropdownMenuSeparator />
-                      {resellerStatusActions(r.status, autoApprove).map((a) => (
+                      {can("resellers.edit") && resellerStatusActions(r.status, autoApprove).map((a) => (
                         <DropdownMenuItem
                           key={a.status}
                           onClick={() => setStatus(r, a.status)}
@@ -916,11 +916,12 @@ function ResellersPage() {
                       ))}
                       <DropdownMenuSeparator />
 
-                      {!emailVerified && (
+                      {!emailVerified && can("resellers.verify") && (
                         <DropdownMenuItem onClick={() => confirmEmail(r)}>
                           <MailCheck className="mr-2 h-4 w-4" /> Confirm email
                         </DropdownMenuItem>
                       )}
+                      {can("resellers.verify") && (
                       <DropdownMenuItem onClick={() => void setPhoneVerified(r, !vf.phoneVerified)}>
                         {vf.phoneVerified ? (
                           <>
@@ -932,22 +933,31 @@ function ResellersPage() {
                           </>
                         )}
                       </DropdownMenuItem>
+                      )}
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={() => setProfileFor(r)}>
                         <UserCircle className="mr-2 h-4 w-4" /> View profile
                       </DropdownMenuItem>
+                      {can("resellers.edit") && (
                       <DropdownMenuItem onClick={() => setEditing(r)}>
                         <Pencil className="mr-2 h-4 w-4" /> Edit details
                       </DropdownMenuItem>
+                      )}
+                      {can("resellers.deposit") && (
                       <DropdownMenuItem onClick={() => setDepositFor(r)}>
                         <Wallet className="mr-2 h-4 w-4" /> Deposit & freeze
                       </DropdownMenuItem>
+                      )}
+                      {can("resellers.password") && (
                       <DropdownMenuItem onClick={() => setResetFor(r)}>
                         <KeyRound className="mr-2 h-4 w-4" /> Reset password
                       </DropdownMenuItem>
+                      )}
+                      {can("resellers.impersonate") && (
                       <DropdownMenuItem onClick={() => void loginAsReseller(r)}>
                         <LogIn className="mr-2 h-4 w-4" /> Login as reseller
                       </DropdownMenuItem>
+                      )}
                       <DropdownMenuItem onClick={() => copyStoreLink(r)}>
                         <Copy className="mr-2 h-4 w-4" /> Copy store link
                       </DropdownMenuItem>
@@ -956,13 +966,13 @@ function ResellersPage() {
                           <ExternalLink className="mr-2 h-4 w-4" /> Visit storefront
                         </a>
                       </DropdownMenuItem>
-                      <DropdownMenuSeparator />
+                      {can("resellers.delete") && (<><DropdownMenuSeparator />
                       <DropdownMenuItem
                         onClick={() => remove(r)}
                         className="text-destructive focus:text-destructive"
                       >
                         <Trash2 className="mr-2 h-4 w-4" /> Delete reseller
-                      </DropdownMenuItem>
+                      </DropdownMenuItem></>)}
                     </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
