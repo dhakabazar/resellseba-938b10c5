@@ -36,6 +36,7 @@ import {
   MessageCircle,
   KeyRound,
   LogIn,
+  ChevronDown,
 
 } from "lucide-react";
 import { toast } from "sonner";
@@ -58,6 +59,7 @@ import { confirmAction } from "@/lib/confirm";
 import { PasswordResetModal } from "@/components/password-reset-modal";
 import { useAdvancedSettings } from "@/lib/advanced-settings";
 import { VerifyBadges, verifyPending, type VerifyFlags } from "@/components/verify-badges";
+import { usePermissions } from "@/lib/permissions";
 import {
   resellerStatusActions,
   resellerStatusClass,
@@ -220,14 +222,14 @@ function BulkBar({
 }) {
   const count = selectedIds.length;
   const allSelected = count > 0 && count >= total;
-  const actions: Array<{ key: BulkAction; label: string; permission: string; danger?: boolean }> = [
+  const actions = ([
     { key: "activate", label: "Activate", permission: "resellers.edit" },
     { key: "suspend", label: "Deactivate", permission: "resellers.edit" },
     { key: "verify_email", label: "Mark email verified", permission: "resellers.verify" },
     { key: "verify_phone", label: "Mark mobile verified", permission: "resellers.verify" },
     { key: "clear_phone", label: "Clear mobile verification", permission: "resellers.verify" },
     { key: "delete", label: "Delete selected", permission: "resellers.delete", danger: true },
-  ].filter((a) => can(a.permission));
+  ] as Array<{ key: BulkAction; label: string; permission: string; danger?: boolean }>).filter((a) => can(a.permission));
 
   return (
     <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border bg-muted/30 px-3 py-2">
@@ -305,6 +307,8 @@ function ResellersPage() {
   const [agents, setAgents] = useState<Array<{ id: string; display_name: string }>>([]);
   const [agentFilter, setAgentFilter] = useState("");
   const [depositFilter, setDepositFilter] = useState<DepositFilter>("all");
+  const [selected, setSelected] = useState<Record<string, boolean>>({});
+  const [bulkBusy, setBulkBusy] = useState(false);
   const { settings: advanced } = useAdvancedSettings();
   const autoApprove = advanced.resellerAutoApprove;
 
