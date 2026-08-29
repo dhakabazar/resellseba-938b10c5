@@ -18,6 +18,25 @@ function minSellPrice(p: any) {
   return Number(p?.reseller_price ?? 0) + Number(p?.packaging_cost ?? 0);
 }
 
+/** Live stock badge — shown for listed and unlisted products alike. */
+function StockChip({ stock }: { stock: number | null | undefined }) {
+  if (stock === null || stock === undefined) return null;
+  const n = Number(stock);
+  const tone =
+    n <= 0
+      ? "bg-destructive/10 text-destructive"
+      : n <= 5
+        ? "bg-amber-500/15 text-amber-600"
+        : "bg-emerald-500/15 text-emerald-600";
+  return (
+    <span className={`rounded-full px-1.5 py-0.5 text-[9px] font-black uppercase tracking-tight ${tone}`}>
+      {n <= 0 ? "Out of stock" : `Stock ${n}`}
+    </span>
+  );
+}
+
+
+
 interface NewOrderModalProps {
   listings: any[];
   allProducts: any[];
