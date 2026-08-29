@@ -48,6 +48,7 @@ export type StaffUser = {
   id: string;
   email: string | null;
   full_name: string | null;
+  phone: string | null;
   role: string;
   custom_role_id: string | null;
   custom_role_name: string | null;
