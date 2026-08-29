@@ -18,6 +18,25 @@ function minSellPrice(p: any) {
   return Number(p?.reseller_price ?? 0) + Number(p?.packaging_cost ?? 0);
 }
 
+/** Live stock badge — shown for listed and unlisted products alike. */
+function StockChip({ stock }: { stock: number | null | undefined }) {
+  if (stock === null || stock === undefined) return null;
+  const n = Number(stock);
+  const tone =
+    n <= 0
+      ? "bg-destructive/10 text-destructive"
+      : n <= 5
+        ? "bg-amber-500/15 text-amber-600"
+        : "bg-emerald-500/15 text-emerald-600";
+  return (
+    <span className={`rounded-full px-1.5 py-0.5 text-[9px] font-black uppercase tracking-tight ${tone}`}>
+      {n <= 0 ? "Out of stock" : `Stock ${n}`}
+    </span>
+  );
+}
+
+
+
 interface NewOrderModalProps {
   listings: any[];
   allProducts: any[];
@@ -490,7 +509,9 @@ export function NewOrderModal({
                                     <span className="text-[10px] text-muted-foreground">
                                       ৳{Number(price).toFixed(0)} · Delivery: ৳{dc.toFixed(0)}
                                     </span>
+                                    <StockChip stock={p.stock} />
                                   </div>
+
                                 </div>
                                 <div className={`shrink-0 rounded-full p-1.5 transition-all ${inCart ? 'bg-primary text-primary-foreground scale-110' : 'bg-accent hover:bg-primary/20 hover:text-primary'}`}>
                                   <Plus className="h-3.5 w-3.5" />
@@ -524,8 +545,12 @@ export function NewOrderModal({
                             </div>
                             <div className="min-w-0 flex-1">
                               <div className="truncate text-xs font-black text-foreground">{p.name}</div>
-                              <div className="mt-1"><ProductCodeChip code={p.product_code} /></div>
+                              <div className="mt-1 flex flex-wrap items-center gap-2">
+                                <ProductCodeChip code={p.product_code} />
+                                <StockChip stock={p.stock} />
+                              </div>
                               <div className="mt-1.5 flex items-center gap-2">
+
                                 <span className="text-[9px] font-semibold uppercase text-muted-foreground">Sell ৳</span>
                                 <input
                                   value={sellPrice}
