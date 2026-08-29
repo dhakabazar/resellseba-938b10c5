@@ -159,6 +159,42 @@ function depositStateOf(
 
 
 
+/** Horizontal row of button filters (like the order status tabs). */
+function FilterButtonRow({
+  options,
+  active,
+  onSelect,
+}: {
+  options: Array<{ value: string; label: string; count: number }>;
+  active: string;
+  onSelect: (value: string) => void;
+}) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {options.map((o) => {
+        const isActive = active === o.value;
+        return (
+          <button
+            key={o.value}
+            type="button"
+            onClick={() => onSelect(o.value)}
+            className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-colors sm:text-sm ${
+              isActive
+                ? "border-primary bg-primary text-primary-foreground"
+                : "bg-background hover:bg-muted"
+            }`}
+          >
+            <span className="truncate">{o.label}</span>
+            <span className={`text-[11px] ${isActive ? "opacity-80" : "text-muted-foreground"}`}>
+              {o.count}
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 /** Compact dropdown-button filter (label + current value + count). */
 function FilterMenu({
   label,
@@ -173,7 +209,7 @@ function FilterMenu({
 }) {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="inline-flex items-center gap-2 rounded-md border bg-background px-3 py-2 text-sm font-medium transition hover:bg-muted">
+      <DropdownMenuTrigger className="inline-flex h-10 items-center gap-2 rounded-md border bg-background px-3 text-sm font-medium transition hover:bg-muted">
         <span className="text-muted-foreground">{label}:</span>
         <span className="max-w-[14rem] truncate">{activeLabel}</span>
         <ChevronDown className="h-4 w-4 text-muted-foreground" />
