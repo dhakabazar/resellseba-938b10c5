@@ -402,6 +402,7 @@ function ProductsPage() {
                           <DropdownMenuItem onSelect={() => setDetailId(p.id)}>
                             <Eye className="mr-2 h-4 w-4" /> View Details
                           </DropdownMenuItem>
+                          {canEdit && (<>
                           <DropdownMenuItem onSelect={() => nav({ to: "/admin/products/$id/edit", params: { id: p.id } })}>
                             <Pencil className="mr-2 h-4 w-4" /> Edit
                           </DropdownMenuItem>
@@ -415,14 +416,15 @@ function ProductsPage() {
                                 <Eye className="mr-2 h-4 w-4" /> Show
                               </>
                             )}
-                          </DropdownMenuItem>
+                          </DropdownMenuItem></>)}
+                          {canDelete && (<>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             className="text-destructive focus:text-destructive"
                             onSelect={() => remove(p)}
                           >
                             <Trash2 className="mr-2 h-4 w-4" /> Delete
-                          </DropdownMenuItem>
+                          </DropdownMenuItem></>)}
                         </ActionMenu>
                       </div>
                     </td>
