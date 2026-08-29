@@ -83,6 +83,31 @@ export async function createStaffUser(
   return data as string;
 }
 
+/** Full staff-user edit: profile fields, email, role and optional new password. */
+export async function updateUser(
+  supabase: any,
+  input: {
+    userId: string;
+    email?: string | null;
+    fullName?: string | null;
+    phone?: string | null;
+    role?: string | null;
+    customRoleId?: string | null;
+    password?: string | null;
+  },
+) {
+  const { error } = await supabase.rpc("admin_update_user", {
+    _user_id: input.userId,
+    _email: input.email ?? null,
+    _full_name: input.fullName ?? null,
+    _phone: input.phone ?? null,
+    _role: input.role ?? null,
+    _custom_role_id: input.customRoleId ?? null,
+    _password: input.password ?? null,
+  });
+  if (error) fail(error);
+}
+
 export async function deleteUser(supabase: any, userId: string) {
   const { error } = await supabase.rpc("admin_delete_user", { _user_id: userId });
   if (error) fail(error);
