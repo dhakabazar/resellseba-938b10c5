@@ -157,8 +157,128 @@ function depositStateOf(
 
 
 
+/** Compact dropdown-button filter (label + current value + count). */
+function FilterMenu({
+  label,
+  activeLabel,
+  options,
+  onSelect,
+}: {
+  label: string;
+  activeLabel: string;
+  options: Array<{ value: string; label: string; active: boolean }>;
+  onSelect: (value: string) => void;
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger className="inline-flex items-center gap-2 rounded-md border bg-background px-3 py-2 text-sm font-medium transition hover:bg-muted">
+        <span className="text-muted-foreground">{label}:</span>
+        <span className="max-w-[14rem] truncate">{activeLabel}</span>
+        <ChevronDown className="h-4 w-4 text-muted-foreground" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-56">
+        {options.map((o) => (
+          <DropdownMenuItem
+            key={o.value}
+            onClick={() => onSelect(o.value)}
+            className={o.active ? "font-semibold text-primary" : ""}
+          >
+            {o.active ? <Check className="mr-2 h-4 w-4" /> : <span className="mr-2 h-4 w-4" />}
+            {o.label}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+export type BulkAction =
+  | "activate"
+  | "suspend"
+  | "verify_email"
+  | "verify_phone"
+  | "clear_phone"
+  | "delete";
+
+/** Selection header with the bulk actions the current role is allowed to run. */
+function BulkBar({
+  total,
+  selectedIds,
+  onSelectAll,
+  onClear,
+  busy,
+  can,
+  onAction,
+}: {
+  total: number;
+  selectedIds: string[];
+  onSelectAll: (on: boolean) => void;
+  onClear: () => void;
+  busy: boolean;
+  can: (permission: string) => boolean;
+  onAction: (action: BulkAction) => void;
+}) {
+  const count = selectedIds.length;
+  const allSelected = count > 0 && count >= total;
+  const actions: Array<{ key: BulkAction; label: string; permission: string; danger?: boolean }> = [
+    { key: "activate", label: "Activate", permission: "resellers.edit" },
+    { key: "suspend", label: "Deactivate", permission: "resellers.edit" },
+    { key: "verify_email", label: "Mark email verified", permission: "resellers.verify" },
+    { key: "verify_phone", label: "Mark mobile verified", permission: "resellers.verify" },
+    { key: "clear_phone", label: "Clear mobile verification", permission: "resellers.verify" },
+    { key: "delete", label: "Delete selected", permission: "resellers.delete", danger: true },
+  ].filter((a) => can(a.permission));
+
+  return (
+    <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border bg-muted/30 px-3 py-2">
+      <label className="inline-flex items-center gap-2 text-sm font-medium">
+        <input
+          type="checkbox"
+          checked={allSelected}
+          onChange={(e) => onSelectAll(e.target.checked)}
+          className="h-4 w-4 accent-[hsl(var(--primary))]"
+        />
+        Select all ({total})
+      </label>
+      {count > 0 ? (
+        <>
+          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
+            {count} selected
+          </span>
+          {actions.length === 0 ? (
+            <span className="text-xs text-muted-foreground">No bulk permission for your role</span>
+          ) : (
+            actions.map((a) => (
+              <button
+                key={a.key}
+                type="button"
+                disabled={busy}
+                onClick={() => onAction(a.key)}
+                className={`rounded-md border px-2.5 py-1 text-xs font-semibold transition disabled:opacity-50 ${
+                  a.danger
+                    ? "border-destructive/40 text-destructive hover:bg-destructive/10"
+                    : "bg-background hover:bg-muted"
+                }`}
+              >
+                {a.label}
+              </button>
+            ))
+          )}
+          <button type="button" onClick={onClear} className="ml-auto text-xs text-muted-foreground hover:text-foreground">
+            Clear selection
+          </button>
+          {busy && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+        </>
+      ) : (
+        <span className="text-xs text-muted-foreground">Select resellers to run bulk actions</span>
+      )}
+    </div>
+  );
+}
+
 function ResellersPage() {
   const nav = useNavigate();
+  const { can } = usePermissions();
   const confirmEmailFn = useServerFn(confirmUserEmail);
   const listEmailStatusFn = useServerFn(listResellerEmailStatus);
   const deleteAuthUserFn = useServerFn(deleteAuthUser);
