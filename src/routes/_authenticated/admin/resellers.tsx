@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ResellerAvatar } from "@/components/reseller-avatar";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
 import { DataToolbar, Pagination, usePaginated } from "@/components/data-list";
-import { SearchableSelect } from "@/components/searchable-select";
+
 import {
   Check,
   X,
