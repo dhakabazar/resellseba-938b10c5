@@ -490,7 +490,9 @@ export function NewOrderModal({
                                     <span className="text-[10px] text-muted-foreground">
                                       ৳{Number(price).toFixed(0)} · Delivery: ৳{dc.toFixed(0)}
                                     </span>
+                                    <StockChip stock={p.stock} />
                                   </div>
+
                                 </div>
                                 <div className={`shrink-0 rounded-full p-1.5 transition-all ${inCart ? 'bg-primary text-primary-foreground scale-110' : 'bg-accent hover:bg-primary/20 hover:text-primary'}`}>
                                   <Plus className="h-3.5 w-3.5" />
