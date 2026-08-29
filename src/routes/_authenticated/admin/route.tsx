@@ -198,9 +198,13 @@ function AdminLayout() {
   const isSuperAdmin = roles.includes("super_admin");
   const isStaff = roles.includes("staff");
   const canEnter = isSuperAdmin || isStaff;
-  const routePermission = Object.entries(ROUTE_PERMISSIONS)
-    .sort(([a], [b]) => b.length - a.length)
-    .find(([route]) => pathname === route || pathname.startsWith(`${route}/`))?.[1];
+  // Editing / creating a product needs write access, not just products.view.
+  const isProductWriteRoute = /^\/admin\/products\/(new$|.+\/edit$)/.test(pathname);
+  const routePermission = isProductWriteRoute
+    ? ["products.manage"]
+    : Object.entries(ROUTE_PERMISSIONS)
+        .sort(([a], [b]) => b.length - a.length)
+        .find(([route]) => pathname === route || pathname.startsWith(`${route}/`))?.[1];
   const canViewRoute =
     isSuperAdmin ||
     (isStaff && routePermission != null && routePermission.some((permission) => permissions.includes(permission)));
