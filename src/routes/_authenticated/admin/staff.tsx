@@ -660,17 +660,28 @@ function RolesPage() {
           customRoles.map((role) => (
             <div key={role.id} className="surface-card p-5 group relative">
               <div className="flex items-start justify-between">
-                <button type="button" onClick={() => openEdit(role)} className="flex items-center gap-2 text-left">
+                <div className="flex items-center gap-2 text-left">
                   <Shield className="h-5 w-5 text-primary" />
                   <h3 className="font-bold">{role.name}</h3>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDeleteTarget(role)}
-                  className="text-muted-foreground hover:text-destructive transition-colors p-1"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
+                </div>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => openEdit(role)}
+                    className="text-muted-foreground hover:text-primary transition-colors p-1"
+                    aria-label="Edit role"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDeleteTarget(role)}
+                    className="text-muted-foreground hover:text-destructive transition-colors p-1"
+                    aria-label="Delete role"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
               <p className="text-sm text-muted-foreground mt-2">{role.description}</p>
               <div className="mt-4 flex flex-wrap gap-1">
