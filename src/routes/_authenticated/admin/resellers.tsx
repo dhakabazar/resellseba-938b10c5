@@ -37,6 +37,7 @@ import {
   KeyRound,
   LogIn,
   ChevronDown,
+  Search,
 
 } from "lucide-react";
 import { toast } from "sonner";
@@ -53,6 +54,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { ResellerProfile, type ResellerProfileData } from "@/components/ResellerProfile";
 import { DepositLedger } from "@/components/deposit-ledger";
 import { confirmAction } from "@/lib/confirm";
@@ -233,6 +239,78 @@ function FilterMenu({
         ))}
       </DropdownMenuContent>
     </DropdownMenu>
+  );
+}
+
+/** Dropdown-style filter with an inline search input (useful for long lists). */
+function SearchableFilterMenu({
+  label,
+  activeLabel,
+  options,
+  onSelect,
+  searchPlaceholder = "Search…",
+}: {
+  label: string;
+  activeLabel: string;
+  options: Array<{ value: string; label: string; active: boolean }>;
+  onSelect: (value: string) => void;
+  searchPlaceholder?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const filtered = useMemo(
+    () =>
+      search.trim() === ""
+        ? options
+        : options.filter((o) => o.label.toLowerCase().includes(search.toLowerCase())),
+    [options, search],
+  );
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger className="inline-flex h-10 items-center gap-2 rounded-md border bg-background px-3 text-sm font-medium transition hover:bg-muted">
+        <span className="text-muted-foreground">{label}:</span>
+        <span className="max-w-[14rem] truncate">{activeLabel}</span>
+        <ChevronDown className="h-4 w-4 text-muted-foreground" />
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-64 p-0">
+        <div className="border-b p-2">
+          <div className="relative">
+            <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={searchPlaceholder}
+              className="w-full rounded-md border bg-background py-1.5 pl-8 pr-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+              autoFocus
+            />
+          </div>
+        </div>
+        <div className="modal-scroll max-h-60 overflow-y-auto p-1">
+          {filtered.length === 0 ? (
+            <div className="px-3 py-4 text-center text-sm text-muted-foreground">No results</div>
+          ) : (
+            filtered.map((o) => (
+              <button
+                key={o.value}
+                type="button"
+                onClick={() => {
+                  onSelect(o.value);
+                  setOpen(false);
+                  setSearch("");
+                }}
+                className={`flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm transition hover:bg-muted ${
+                  o.active ? "font-semibold text-primary" : ""
+                }`}
+              >
+                {o.active ? <Check className="h-4 w-4 shrink-0" /> : <span className="h-4 w-4 shrink-0" />}
+                <span className="truncate">{o.label}</span>
+              </button>
+            ))
+          )}
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -775,7 +853,7 @@ function ResellersPage() {
         searchPlaceholder="Search name, code, phone, email…"
         middle={
           !canViewAll ? null : (
-          <FilterMenu
+          <SearchableFilterMenu
             label="Agent"
             activeLabel={
               agentFilter === ""
@@ -797,6 +875,7 @@ function ResellersPage() {
               setAgentFilter(v);
               setPage(1);
             }}
+            searchPlaceholder="Search agent…"
           />
           )
         }
