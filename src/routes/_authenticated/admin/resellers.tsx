@@ -331,6 +331,8 @@ function BulkBar({
   busy,
   can,
   onAction,
+  agents,
+  onAssignAgent,
 }: {
   total: number;
   selectedIds: string[];
@@ -339,9 +341,12 @@ function BulkBar({
   busy: boolean;
   can: (permission: string) => boolean;
   onAction: (action: BulkAction) => void;
+  agents: Array<{ id: string; display_name: string }>;
+  onAssignAgent: (agentId: string | null) => void;
 }) {
   const count = selectedIds.length;
   const allSelected = count > 0 && count >= total;
+  const canAssign = can("resellers.edit") || can("agents.manage");
   const actions = ([
     { key: "activate", label: "Activate", permission: "resellers.edit" },
     { key: "suspend", label: "Deactivate", permission: "resellers.edit" },
@@ -350,6 +355,7 @@ function BulkBar({
     { key: "clear_phone", label: "Clear mobile verification", permission: "resellers.verify" },
     { key: "delete", label: "Delete selected", permission: "resellers.delete", danger: true },
   ] as Array<{ key: BulkAction; label: string; permission: string; danger?: boolean }>).filter((a) => can(a.permission));
+
 
   return (
     <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border bg-muted/30 px-3 py-2">
@@ -386,6 +392,29 @@ function BulkBar({
               </button>
             ))
           )}
+          {canAssign && (
+            <select
+              value=""
+              disabled={busy}
+              onChange={(e) => {
+                const v = e.target.value;
+                if (!v) return;
+                onAssignAgent(v === "none" ? null : v);
+                e.target.value = "";
+              }}
+              title="Assign agent to selected resellers"
+              className="rounded-md border bg-background px-2 py-1 text-xs font-semibold outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
+            >
+              <option value="">Assign agent…</option>
+              <option value="none">Unassign agent</option>
+              {agents.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.display_name}
+                </option>
+              ))}
+            </select>
+          )}
+
           <button type="button" onClick={onClear} className="ml-auto text-xs text-muted-foreground hover:text-foreground">
             Clear selection
           </button>
@@ -719,6 +748,35 @@ function ResellersPage() {
     loadEmailStatus();
   }
 
+  /** Assign (or clear) the commission agent for every selected reseller. */
+  async function bulkAssignAgent(agentId: string | null) {
+    const rows = filtered.filter((r) => selected[r.id]);
+    if (rows.length === 0) return;
+    if (!can("resellers.edit") && !can("agents.manage"))
+      return toast.error("Your role cannot perform this action");
+
+    const name = agentId ? agents.find((a) => a.id === agentId)?.display_name ?? "agent" : null;
+    const ok = await confirmAction({
+      title: name ? `Assign ${name}` : "Remove agent assignment",
+      description: `This applies to ${rows.length} reseller${rows.length > 1 ? "s" : ""}.`,
+      detail: `${rows.length} selected`,
+      confirmText: "Apply",
+    });
+    if (!ok) return;
+
+    setBulkBusy(true);
+    const { error } = await supabase
+      .from("resellers")
+      .update({ agent_id: agentId })
+      .in("id", rows.map((r) => r.id));
+    setBulkBusy(false);
+    if (error) return toast.error(error.message);
+    setSelected({});
+    toast.success(name ? `${rows.length} assigned to ${name}` : `${rows.length} unassigned`);
+    await load();
+  }
+
+
   const selectedIds = useMemo(
     () => filtered.filter((r) => selected[r.id]).map((r) => r.id),
     [filtered, selected],
@@ -906,6 +964,9 @@ function ResellersPage() {
           busy={bulkBusy}
           can={can}
           onAction={runBulk}
+          agents={agents}
+          onAssignAgent={bulkAssignAgent}
+
         />
       )}
 
