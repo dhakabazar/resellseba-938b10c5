@@ -444,7 +444,8 @@ function ResellersPage() {
   useEffect(() => {
     load();
     loadEmailStatus();
-  }, []);
+    // reload once the permission scope / signed-in user is known
+  }, [scopeOwn, user?.id]);
 
   useEffect(() => {
     const s = searchParams.status;
