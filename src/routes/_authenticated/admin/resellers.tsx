@@ -154,9 +154,10 @@ function depositStateOf(
   const need = Number(r.deposit_required_amount ?? 0);
   const bal = Number(balance ?? 0);
   // Anyone who actually paid counts as paid, even without a deposit rule.
-  if (need > 0) return bal >= need ? "paid" : "due";
+  if (need > 0 && r.deposit_required) return bal >= need ? "paid" : "due";
   if (bal > 0) return "paid";
   return "not_required";
+
 }
 
 
