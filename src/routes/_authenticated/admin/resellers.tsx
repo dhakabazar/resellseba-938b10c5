@@ -748,6 +748,35 @@ function ResellersPage() {
     loadEmailStatus();
   }
 
+  /** Assign (or clear) the commission agent for every selected reseller. */
+  async function bulkAssignAgent(agentId: string | null) {
+    const rows = filtered.filter((r) => selected[r.id]);
+    if (rows.length === 0) return;
+    if (!can("resellers.edit") && !can("agents.manage"))
+      return toast.error("Your role cannot perform this action");
+
+    const name = agentId ? agents.find((a) => a.id === agentId)?.display_name ?? "agent" : null;
+    const ok = await confirmAction({
+      title: name ? `Assign ${name}` : "Remove agent assignment",
+      description: `This applies to ${rows.length} reseller${rows.length > 1 ? "s" : ""}.`,
+      detail: `${rows.length} selected`,
+      confirmText: "Apply",
+    });
+    if (!ok) return;
+
+    setBulkBusy(true);
+    const { error } = await supabase
+      .from("resellers")
+      .update({ agent_id: agentId })
+      .in("id", rows.map((r) => r.id));
+    setBulkBusy(false);
+    if (error) return toast.error(error.message);
+    setSelected({});
+    toast.success(name ? `${rows.length} assigned to ${name}` : `${rows.length} unassigned`);
+    await load();
+  }
+
+
   const selectedIds = useMemo(
     () => filtered.filter((r) => selected[r.id]).map((r) => r.id),
     [filtered, selected],
