@@ -91,14 +91,14 @@ const GROUPS: Group[] = [
   {
     tab: "orders",
     title: "Order packaging charge",
-    hint: "Ek parcel e ekadhik product hole packaging charge kivabe hisab hobe.",
+    hint: "How packaging charge is calculated when a parcel contains multiple products.",
     icon: <Boxes className="h-4 w-4" />,
     rows: [
       {
         key: "packagingChargeSum",
         label: "Add up every product's packaging charge",
         help:
-          "ON = protita product er packaging charge × quantity jog hobe (ekhon jemon ache). OFF = ekadhik product hole sob gulor moddhe jetar packaging charge sob theke besi, sudhu setai ekbar dhora hobe. Single product hole dui khetrei ek e.",
+          "ON = each product's packaging charge is multiplied by its quantity and added up. OFF = when there are multiple products, only the highest single packaging charge is applied once. For a single product, both modes give the same result.",
       },
     ],
   },
