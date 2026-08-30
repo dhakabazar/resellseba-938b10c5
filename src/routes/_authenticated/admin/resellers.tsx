@@ -60,6 +60,7 @@ import { PasswordResetModal } from "@/components/password-reset-modal";
 import { useAdvancedSettings } from "@/lib/advanced-settings";
 import { VerifyBadges, verifyPending, type VerifyFlags } from "@/components/verify-badges";
 import { usePermissions } from "@/lib/permissions";
+import { useAuth } from "@/lib/use-auth";
 import {
   resellerStatusActions,
   resellerStatusClass,
