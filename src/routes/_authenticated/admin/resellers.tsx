@@ -791,7 +791,16 @@ function ResellersPage() {
           setPerPage(n);
           setPage(1);
         }}
+        right={
+          depositDueTotal > 0 ? (
+            <span className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-destructive/30 bg-destructive/5 px-3 py-1.5 text-xs font-semibold text-destructive">
+              <AlertTriangle className="h-3 w-3" />
+              Total due ৳{depositDueTotal.toLocaleString()}
+            </span>
+          ) : null
+        }
       />
+
 
 
       {!loading && filtered.length > 0 && (
