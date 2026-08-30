@@ -475,36 +475,46 @@ function ResellersPage() {
     return out;
   }, [items, filter, query, emailStatus, profileVerify, advanced, agentFilter, depositFilter, summaries]);
 
+  /** Everything the counters use respects the selected agent. */
+  const agentScoped = useMemo(
+    () =>
+      agentFilter
+        ? items.filter((r) => (agentFilter === "none" ? !r.agent_id : r.agent_id === agentFilter))
+        : items,
+    [items, agentFilter],
+  );
+
   const depositCounts = useMemo(() => {
-    const out: Record<DepositFilter, number> = { all: items.length, paid: 0, due: 0, not_required: 0 };
-    for (const r of items) out[depositStateOf(r, summaries[r.id]?.deposit_balance ?? 0)] += 1;
+    const out: Record<DepositFilter, number> = { all: agentScoped.length, paid: 0, due: 0, not_required: 0 };
+    for (const r of agentScoped) out[depositStateOf(r, summaries[r.id]?.deposit_balance ?? 0)] += 1;
     return out;
-  }, [items, summaries]);
+  }, [agentScoped, summaries]);
 
   const depositDueTotal = useMemo(
     () =>
-      items.reduce((sum, r) => {
+      agentScoped.reduce((sum, r) => {
         const bal = summaries[r.id]?.deposit_balance ?? 0;
         if (depositStateOf(r, bal) !== "due") return sum;
         return sum + Math.max(Number(r.deposit_required_amount ?? 0) - bal, 0);
       }, 0),
-    [items, summaries],
+    [agentScoped, summaries],
   );
 
 
   const counts = useMemo(() => {
     return {
-      pending: items.filter((r) => r.status === "pending").length,
-      active: items.filter((r) => r.status === "active").length,
-      suspended: items.filter((r) => r.status === "suspended").length,
-      rejected: items.filter((r) => r.status === "rejected").length,
-      email_unverified: items.filter((r) => {
+      pending: agentScoped.filter((r) => r.status === "pending").length,
+      active: agentScoped.filter((r) => r.status === "active").length,
+      suspended: agentScoped.filter((r) => r.status === "suspended").length,
+      rejected: agentScoped.filter((r) => r.status === "rejected").length,
+      email_unverified: agentScoped.filter((r) => {
         const f = verifyFor(r);
         return verifyPending(f) || !f.emailVerified;
       }).length,
-      all: items.length,
+      all: agentScoped.length,
     } as Record<Filter, number>;
-  }, [items, emailStatus, profileVerify, advanced]);
+  }, [agentScoped, emailStatus, profileVerify, advanced]);
+
 
   /**
    * Single entry point for every status change. Panel access (role + store
