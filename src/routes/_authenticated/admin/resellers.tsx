@@ -798,6 +798,7 @@ function ResellersPage() {
               setPage(1);
             }}
           />
+          )
         }
         perPage={perPage}
         onPerPage={(n) => {
