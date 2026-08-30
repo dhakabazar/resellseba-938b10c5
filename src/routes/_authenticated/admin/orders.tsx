@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Pagination, usePaginated, type FilterOption } from "@/components/data-list";
 import {
@@ -819,7 +819,18 @@ function AdminOrdersPage() {
                     </div>
                     <div className="min-w-0 space-y-0.5 border-l pl-2">
                       <div className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70">Reseller</div>
-                      <div className="truncate text-xs font-medium">{o.resellers?.business_name || "Direct"}</div>
+                       {o.reseller_id && o.resellers ? (
+                         <Link
+                           to="/admin/transactions"
+                           search={{ reseller: o.reseller_id }}
+                           className="block truncate text-xs font-medium text-primary hover:underline"
+                           title="View transaction report"
+                         >
+                           {o.resellers.business_name}
+                         </Link>
+                       ) : (
+                         <div className="truncate text-xs font-medium">Direct</div>
+                       )}
                       {o.resellers?.contact_phone && (
                         <div className="flex min-w-0 items-center gap-1 text-[11px] tabular-nums text-muted-foreground">
                           <span className="truncate">{o.resellers.contact_phone}</span>
@@ -986,7 +997,18 @@ function AdminOrdersPage() {
                     </div>
                   </div>
                   <div className="min-w-0 text-center">
-                     <div className="font-medium truncate">{o.resellers?.business_name || "Direct"}</div>
+                      {o.reseller_id && o.resellers ? (
+                        <Link
+                          to="/admin/transactions"
+                          search={{ reseller: o.reseller_id }}
+                          className="block truncate font-medium text-primary hover:underline"
+                          title="View transaction report"
+                        >
+                          {o.resellers.business_name}
+                        </Link>
+                      ) : (
+                        <div className="font-medium truncate">Direct</div>
+                      )}
                      <div className="flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground">
                        {o.resellers?.contact_phone || "—"}
                        {o.resellers?.contact_phone && (
@@ -1446,7 +1468,14 @@ function OrderDrawer({
               <h3 className="mb-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Source / Reseller</h3>
               {order.resellers ? (
                 <div className="space-y-2 text-sm">
-                  <p className="font-bold text-foreground">{order.resellers.business_name}</p>
+                   <Link
+                     to="/admin/transactions"
+                     search={{ reseller: order.reseller_id ?? undefined }}
+                     className="font-bold text-primary hover:underline"
+                     title="View transaction report"
+                   >
+                     {order.resellers.business_name}
+                   </Link>
                   <p className="text-xs font-mono bg-muted/50 px-2 py-0.5 rounded inline-block">ID: {order.resellers.code}</p>
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Phone className="h-4 w-4 text-primary" />
