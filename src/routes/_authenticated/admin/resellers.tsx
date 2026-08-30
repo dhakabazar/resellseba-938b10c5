@@ -37,6 +37,7 @@ import {
   KeyRound,
   LogIn,
   ChevronDown,
+  Search,
 
 } from "lucide-react";
 import { toast } from "sonner";
