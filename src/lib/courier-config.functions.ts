@@ -5,10 +5,8 @@ export const getActiveCouriers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase } = context;
-    const { data } = await supabase
-      .from("courier_configs")
-      .select("provider, is_active")
-      .eq("is_active", true);
-    
-    return (data ?? []).map(c => c.provider);
+    // Security-definer RPC: staff with shipping/status/edit permission get the
+    // active provider names without needing read access to courier credentials.
+    const { data } = await supabase.rpc("active_courier_providers");
+    return (data ?? []) as string[];
   });
