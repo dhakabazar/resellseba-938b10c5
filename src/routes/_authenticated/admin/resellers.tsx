@@ -331,6 +331,8 @@ function BulkBar({
   busy,
   can,
   onAction,
+  agents,
+  onAssignAgent,
 }: {
   total: number;
   selectedIds: string[];
@@ -339,9 +341,12 @@ function BulkBar({
   busy: boolean;
   can: (permission: string) => boolean;
   onAction: (action: BulkAction) => void;
+  agents: Array<{ id: string; display_name: string }>;
+  onAssignAgent: (agentId: string | null) => void;
 }) {
   const count = selectedIds.length;
   const allSelected = count > 0 && count >= total;
+  const canAssign = can("resellers.edit") || can("agents.manage");
   const actions = ([
     { key: "activate", label: "Activate", permission: "resellers.edit" },
     { key: "suspend", label: "Deactivate", permission: "resellers.edit" },
@@ -350,6 +355,7 @@ function BulkBar({
     { key: "clear_phone", label: "Clear mobile verification", permission: "resellers.verify" },
     { key: "delete", label: "Delete selected", permission: "resellers.delete", danger: true },
   ] as Array<{ key: BulkAction; label: string; permission: string; danger?: boolean }>).filter((a) => can(a.permission));
+
 
   return (
     <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border bg-muted/30 px-3 py-2">
