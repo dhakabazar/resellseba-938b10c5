@@ -750,14 +750,8 @@ function ResellersPage() {
             setPage(1);
           }}
         />
-
-        {depositDueTotal > 0 && (
-          <span className="ml-auto inline-flex items-center gap-1 rounded-full border border-destructive/30 bg-destructive/5 px-3 py-1.5 text-xs font-semibold text-destructive">
-            <AlertTriangle className="h-3 w-3" />
-            Total due ৳{depositDueTotal.toLocaleString()}
-          </span>
-        )}
       </div>
+
 
 
       <DataToolbar
