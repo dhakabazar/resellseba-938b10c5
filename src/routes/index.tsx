@@ -264,12 +264,13 @@ function Landing({
               >
                 {c.hero.ctaPrimary} <ArrowRight className="h-4 w-4" />
               </Link>
-              <a
-                href="#about"
+              <Link
+                to="/login"
                 className="btn-live inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-card px-7 py-3.5 text-sm font-bold transition hover:border-primary/50 hover:text-primary sm:text-base"
               >
                 {c.hero.ctaSecondary}
-              </a>
+              </Link>
+
             </div>
 
             {c.hero.badges.length > 0 && (
