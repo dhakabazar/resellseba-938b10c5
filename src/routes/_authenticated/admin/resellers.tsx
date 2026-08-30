@@ -774,6 +774,7 @@ function ResellersPage() {
         }}
         searchPlaceholder="Search name, code, phone, email…"
         middle={
+          !canViewAll ? null : (
           <FilterMenu
             label="Agent"
             activeLabel={
