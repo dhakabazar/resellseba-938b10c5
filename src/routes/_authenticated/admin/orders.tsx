@@ -1470,7 +1470,7 @@ function OrderDrawer({
                 <div className="space-y-2 text-sm">
                    <Link
                      to="/admin/transactions"
-                     search={{ reseller: order.reseller_id }}
+                     search={{ reseller: order.reseller_id ?? undefined }}
                      className="font-bold text-primary hover:underline"
                      title="View transaction report"
                    >
