@@ -853,7 +853,7 @@ function ResellersPage() {
         searchPlaceholder="Search name, code, phone, email…"
         middle={
           !canViewAll ? null : (
-          <FilterMenu
+          <SearchableFilterMenu
             label="Agent"
             activeLabel={
               agentFilter === ""
@@ -875,6 +875,7 @@ function ResellersPage() {
               setAgentFilter(v);
               setPage(1);
             }}
+            searchPlaceholder="Search agent…"
           />
           )
         }
