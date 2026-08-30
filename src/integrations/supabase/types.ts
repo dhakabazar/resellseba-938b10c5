@@ -2562,6 +2562,7 @@ export type Database = {
       }
     }
     Functions: {
+      active_courier_providers: { Args: never; Returns: string[] }
       admin_assign_role: {
         Args: {
           _custom_role_id: string
