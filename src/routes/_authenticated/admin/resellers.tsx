@@ -152,9 +152,14 @@ function depositStateOf(
   balance: number,
 ): DepositFilter {
   const need = Number(r.deposit_required_amount ?? 0);
-  if (!r.deposit_required || need <= 0) return "not_required";
-  return balance >= need ? "paid" : "due";
+  const bal = Number(balance ?? 0);
+  // Anyone who actually paid counts as paid, even without a deposit rule.
+  if (need > 0 && r.deposit_required) return bal >= need ? "paid" : "due";
+  if (bal > 0) return "paid";
+  return "not_required";
+
 }
+
 
 
 
@@ -707,57 +712,31 @@ function ResellersPage() {
 
 
 
-      {/* Status filter — one line of buttons like the order list tabs */}
-      <div className="mb-3">
-        <FilterButtonRow
-          active={filter}
-          options={FILTERS.map((f) => ({
-            value: f,
-            label: f === "all" ? "All" : FILTER_LABELS[f],
-            count: counts[f],
-          }))}
-          onSelect={(v) => {
-            setFilter(v as Filter);
-            setPage(1);
-          }}
-        />
-      </div>
-
-      {/* Deposit filter — one line of buttons; agent filter is a closed button dropdown */}
+      {/* One merged filter set: status + deposit share a single active selection */}
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <FilterButtonRow
-          active={depositFilter}
-          options={DEPOSIT_FILTERS.map((f) => ({
-            value: f,
-            label: f === "all" ? "All deposits" : DEPOSIT_FILTER_LABELS[f],
-            count: depositCounts[f],
-          }))}
-          onSelect={(v) => {
-            setDepositFilter(v as DepositFilter);
-            setPage(1);
-          }}
-        />
-
-        <FilterMenu
-          label="Agent"
-          activeLabel={
-            agentFilter === ""
-              ? "All agents"
-              : agentFilter === "none"
-                ? "No agent assigned"
-                : agents.find((a) => a.id === agentFilter)?.display_name ?? "All agents"
-          }
+          active={depositFilter !== "all" ? `deposit:${depositFilter}` : `status:${filter}`}
           options={[
-            { value: "", label: "All agents", active: agentFilter === "" },
-            { value: "none", label: "No agent assigned", active: agentFilter === "none" },
-            ...agents.map((a) => ({
-              value: a.id,
-              label: a.display_name,
-              active: agentFilter === a.id,
+            ...FILTERS.map((f) => ({
+              value: `status:${f}`,
+              label: f === "all" ? "All" : FILTER_LABELS[f],
+              count: counts[f],
+            })),
+            ...DEPOSIT_FILTERS.filter((f) => f !== "all").map((f) => ({
+              value: `deposit:${f}`,
+              label: DEPOSIT_FILTER_LABELS[f],
+              count: depositCounts[f],
             })),
           ]}
           onSelect={(v) => {
-            setAgentFilter(v);
+            const [kind, value] = v.split(":");
+            if (kind === "deposit") {
+              setDepositFilter(value as DepositFilter);
+              setFilter("all");
+            } else {
+              setFilter(value as Filter);
+              setDepositFilter("all");
+            }
             setPage(1);
           }}
         />
@@ -777,12 +756,38 @@ function ResellersPage() {
           setPage(1);
         }}
         searchPlaceholder="Search name, code, phone, email…"
+        middle={
+          <FilterMenu
+            label="Agent"
+            activeLabel={
+              agentFilter === ""
+                ? "All agents"
+                : agentFilter === "none"
+                  ? "No agent assigned"
+                  : agents.find((a) => a.id === agentFilter)?.display_name ?? "All agents"
+            }
+            options={[
+              { value: "", label: "All agents", active: agentFilter === "" },
+              { value: "none", label: "No agent assigned", active: agentFilter === "none" },
+              ...agents.map((a) => ({
+                value: a.id,
+                label: a.display_name,
+                active: agentFilter === a.id,
+              })),
+            ]}
+            onSelect={(v) => {
+              setAgentFilter(v);
+              setPage(1);
+            }}
+          />
+        }
         perPage={perPage}
         onPerPage={(n) => {
           setPerPage(n);
           setPage(1);
         }}
       />
+
 
       {!loading && filtered.length > 0 && (
         <BulkBar
