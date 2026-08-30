@@ -60,6 +60,7 @@ import { PasswordResetModal } from "@/components/password-reset-modal";
 import { useAdvancedSettings } from "@/lib/advanced-settings";
 import { VerifyBadges, verifyPending, type VerifyFlags } from "@/components/verify-badges";
 import { usePermissions } from "@/lib/permissions";
+import { useAuth } from "@/lib/use-auth";
 import {
   resellerStatusActions,
   resellerStatusClass,
@@ -321,7 +322,11 @@ function BulkBar({
 
 function ResellersPage() {
   const nav = useNavigate();
-  const { can } = usePermissions();
+  const { can, isSuperAdmin } = usePermissions();
+  const { user } = useAuth();
+  /** `resellers.view_own` limits the list to resellers assigned to this staff agent. */
+  const canViewAll = isSuperAdmin || can("resellers.view_all") || can("resellers.view") || can("resellers.manage");
+  const scopeOwn = !canViewAll && can("resellers.view_own");
   const confirmEmailFn = useServerFn(confirmUserEmail);
   const listEmailStatusFn = useServerFn(listResellerEmailStatus);
   const deleteAuthUserFn = useServerFn(deleteAuthUser);
@@ -356,7 +361,7 @@ function ResellersPage() {
 
   async function load() {
     setLoading(true);
-    const [listRes, metricsRes] = await Promise.all([
+    const [listRes, metricsRes, agentsRes] = await Promise.all([
       supabase
         .from("resellers")
         .select(
@@ -364,9 +369,17 @@ function ResellersPage() {
         )
         .order("created_at", { ascending: false }),
       supabase.rpc("admin_reseller_metrics"),
+      supabase.from("agents").select("id,display_name,user_id").order("display_name"),
     ]);
 
-    const rows = (listRes.data ?? []) as Reseller[];
+    const agentRows = (agentsRes.data ?? []) as Array<{ id: string; display_name: string; user_id: string }>;
+    setAgents(agentRows.map((a) => ({ id: a.id, display_name: a.display_name })));
+
+    let rows = (listRes.data ?? []) as Reseller[];
+    if (scopeOwn) {
+      const mine = new Set(agentRows.filter((a) => a.user_id === user?.id).map((a) => a.id));
+      rows = rows.filter((r) => r.agent_id && mine.has(r.agent_id));
+    }
     setItems(rows);
 
     // App-level verification lives on profiles (auth email confirm is separate).
@@ -386,8 +399,6 @@ function ResellersPage() {
       );
     }
 
-    const { data: agentRows } = await supabase.from("agents").select("id,display_name").order("display_name");
-    setAgents((agentRows ?? []) as Array<{ id: string; display_name: string }>);
 
     const metrics = (metricsRes.data ?? []) as Array<{
       reseller_id: string;
@@ -433,7 +444,8 @@ function ResellersPage() {
   useEffect(() => {
     load();
     loadEmailStatus();
-  }, []);
+    // reload once the permission scope / signed-in user is known
+  }, [scopeOwn, user?.id]);
 
   useEffect(() => {
     const s = searchParams.status;
@@ -762,6 +774,7 @@ function ResellersPage() {
         }}
         searchPlaceholder="Search name, code, phone, email…"
         middle={
+          !canViewAll ? null : (
           <FilterMenu
             label="Agent"
             activeLabel={
@@ -785,6 +798,7 @@ function ResellersPage() {
               setPage(1);
             }}
           />
+          )
         }
         perPage={perPage}
         onPerPage={(n) => {
