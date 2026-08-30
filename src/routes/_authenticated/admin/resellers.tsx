@@ -1011,6 +1011,17 @@ function ResellersPage() {
                           no phone
                         </span>
                       )}
+                      {r.agent_id && (
+                        <span
+                          className="inline-flex items-center gap-1 rounded-md border border-primary/30 bg-primary/5 px-2 py-0.5"
+                          title="Assigned agent"
+                        >
+                          <UserCircle className="h-3 w-3 text-primary" />
+                          <span className="text-[11px] font-medium text-primary">
+                            {agents.find((a) => a.id === r.agent_id)?.display_name ?? "Unknown"}
+                          </span>
+                        </span>
+                      )}
                     </div>
                   </div>
 
