@@ -321,7 +321,11 @@ function BulkBar({
 
 function ResellersPage() {
   const nav = useNavigate();
-  const { can } = usePermissions();
+  const { can, isSuperAdmin } = usePermissions();
+  const { user } = useAuth();
+  /** `resellers.view_own` limits the list to resellers assigned to this staff agent. */
+  const canViewAll = isSuperAdmin || can("resellers.view_all") || can("resellers.view") || can("resellers.manage");
+  const scopeOwn = !canViewAll && can("resellers.view_own");
   const confirmEmailFn = useServerFn(confirmUserEmail);
   const listEmailStatusFn = useServerFn(listResellerEmailStatus);
   const deleteAuthUserFn = useServerFn(deleteAuthUser);
