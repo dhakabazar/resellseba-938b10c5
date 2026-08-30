@@ -935,6 +935,9 @@ function ResellersPage() {
           busy={bulkBusy}
           can={can}
           onAction={runBulk}
+          agents={agents}
+          onAssignAgent={bulkAssignAgent}
+
         />
       )}
 
