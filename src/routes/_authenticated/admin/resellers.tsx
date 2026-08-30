@@ -403,8 +403,9 @@ function ResellersPage() {
   const { can, isSuperAdmin } = usePermissions();
   const { user } = useAuth();
   /** `resellers.view_own` limits the list to resellers assigned to this staff agent. */
-  const canViewAll = isSuperAdmin || can("resellers.view_all") || can("resellers.view") || can("resellers.manage");
-  const scopeOwn = !canViewAll && can("resellers.view_own");
+  const ownOnly = !isSuperAdmin && can("resellers.view_own") && !can("resellers.view_all") && !can("resellers.manage");
+  const canViewAll = !ownOnly && (isSuperAdmin || can("resellers.view_all") || can("resellers.view") || can("resellers.manage"));
+  const scopeOwn = ownOnly;
   const confirmEmailFn = useServerFn(confirmUserEmail);
   const listEmailStatusFn = useServerFn(listResellerEmailStatus);
   const deleteAuthUserFn = useServerFn(deleteAuthUser);
