@@ -392,6 +392,29 @@ function BulkBar({
               </button>
             ))
           )}
+          {canAssign && (
+            <select
+              value=""
+              disabled={busy}
+              onChange={(e) => {
+                const v = e.target.value;
+                if (!v) return;
+                onAssignAgent(v === "none" ? null : v);
+                e.target.value = "";
+              }}
+              title="Assign agent to selected resellers"
+              className="rounded-md border bg-background px-2 py-1 text-xs font-semibold outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
+            >
+              <option value="">Assign agent…</option>
+              <option value="none">Unassign agent</option>
+              {agents.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.display_name}
+                </option>
+              ))}
+            </select>
+          )}
+
           <button type="button" onClick={onClear} className="ml-auto text-xs text-muted-foreground hover:text-foreground">
             Clear selection
           </button>
