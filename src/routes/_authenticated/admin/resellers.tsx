@@ -399,8 +399,6 @@ function ResellersPage() {
       );
     }
 
-    const { data: agentRows } = await supabase.from("agents").select("id,display_name").order("display_name");
-    setAgents((agentRows ?? []) as Array<{ id: string; display_name: string }>);
 
     const metrics = (metricsRes.data ?? []) as Array<{
       reseller_id: string;
