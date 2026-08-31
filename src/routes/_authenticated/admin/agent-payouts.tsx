@@ -296,7 +296,7 @@ function AgentPayoutsPage() {
                         <div className="hidden grid-cols-4 gap-2 bg-muted/40 px-3 py-2 text-[11px] font-bold uppercase text-muted-foreground sm:grid">
                           <div>Month</div>
                           <div className="text-right">Settled orders</div>
-                          <div className="text-right">Net profit</div>
+                          <div className="text-right">{v.perf.mode === "per_product" ? "Product units" : "Net profit"}</div>
                           <div className="text-right">Commission</div>
                         </div>
                         {v.months.map((m) => (
@@ -311,7 +311,9 @@ function AgentPayoutsPage() {
                               })}
                             </div>
                             <div className="text-right tabular-nums text-muted-foreground">{m.orders}</div>
-                            <div className="text-right tabular-nums">{bdt(m.base)}</div>
+                            <div className="text-right tabular-nums">
+                              {v.perf.mode === "per_product" ? `${m.units} pc` : bdt(m.base)}
+                            </div>
                             <div className="text-right font-bold tabular-nums text-primary">{bdt(m.commission)}</div>
                           </div>
                         ))}
