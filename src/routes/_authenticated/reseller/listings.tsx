@@ -198,8 +198,13 @@ function ListingsPage() {
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="mb-1">
+                  <div className="mb-1 flex flex-wrap items-center gap-1.5">
                     <ProductCodeChip code={l.products?.product_code} />
+                    {l.custom_price && (
+                      <span className="inline-flex items-center rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-tight text-primary">
+                        Special price
+                      </span>
+                    )}
                   </div>
                   <div 
                     className="truncate font-medium cursor-pointer hover:text-primary transition-colors"
