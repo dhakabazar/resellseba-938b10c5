@@ -53,6 +53,14 @@ export type AgentPayout = {
   paid_at: string | null;
 };
 
+/** Only these settled statuses earn agent commission: full delivery, or partial where items were kept. */
+export const COMMISSION_STATUSES = ["delivered", "partial", "partial_full", "partial_item"] as const;
+
+/** True when the order earns agent commission (returned / partial_delivery / damaged / cancelled do not). */
+export function isCommissionOrder(status: string | null | undefined) {
+  return (COMMISSION_STATUSES as readonly string[]).includes(String(status ?? ""));
+}
+
 export type AgentResellerRow = {
   reseller_id: string;
   business_name: string;
@@ -64,10 +72,13 @@ export type AgentResellerRow = {
   failed: number;
   sales: number;
   profit: number;
+  /** Net profit of commission-eligible orders only — the percent-mode base. */
+  commissionProfit: number;
   /** Product units the customers kept — the per-product commission base. */
   units: number;
   lastOrderAt: string | null;
 };
+
 
 export type AgentPerformance = {
   agentId: string;
