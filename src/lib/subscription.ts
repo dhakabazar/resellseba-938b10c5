@@ -38,7 +38,16 @@ export const PLAN_META: Record<PlanKey, { label: string; short: string; blurb: s
 };
 
 export type SubscriptionState = {
+  /** True only when the package actually governs this reseller. */
   enabled: boolean;
+  /** Master switch state, regardless of this reseller's enrolment. */
+  master_enabled?: boolean;
+  /** Auto-apply mode: every reseller is in the package. */
+  auto_apply?: boolean;
+  /** Manually put in the package by an admin. */
+  enrolled?: boolean;
+  enrolled_at?: string | null;
+  notice_days?: number;
   reseller_id?: string | null;
   exempt?: boolean;
   plan?: PlanKey | null;
@@ -98,6 +107,12 @@ export type SubscriptionOverview = {
 
 export const emptyState: SubscriptionState = { enabled: false, locked: false, store_allowed: true };
 
+/** How many days before expiry the reseller should start seeing the reminder. */
+export function noticeWindow(state: SubscriptionState | null | undefined) {
+  const d = Number(state?.notice_days ?? 7);
+  return Number.isFinite(d) && d > 0 ? d : 7;
+}
+
 export const emptyOverview: SubscriptionOverview = {
   state: emptyState,
   options: [],
@@ -126,12 +141,15 @@ export function subscriptionBadge(state: SubscriptionState): {
   tone: "off" | "ok" | "warn" | "danger" | "trial";
   text: string;
 } | null {
-  if (!state?.enabled) return null;
+  if (!state?.enabled) {
+    if (state?.master_enabled && !state.auto_apply) return { tone: "off", text: "Not in package" };
+    return null;
+  }
   if (state.exempt) return { tone: "off", text: "Package free" };
   if (state.locked) return { tone: "danger", text: "Package expired" };
   const days = state.days_left ?? null;
   if (state.in_trial) return { tone: "trial", text: days !== null ? `Trial · ${days}d left` : "Free trial" };
-  if (days !== null && days <= 7) return { tone: "warn", text: `${days}d left` };
+  if (days !== null && days <= noticeWindow(state)) return { tone: "warn", text: `${days}d left` };
   return { tone: "ok", text: days !== null ? `${days}d left` : "Active" };
 }
 

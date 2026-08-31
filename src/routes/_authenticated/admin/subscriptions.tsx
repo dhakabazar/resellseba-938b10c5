@@ -409,7 +409,38 @@ function RulesTab() {
             </span>
           </label>
 
-          <div className="grid gap-3 sm:grid-cols-3">
+          <label className="flex items-start gap-3 rounded-lg border p-3">
+            <input
+              type="checkbox"
+              checked={s.autoApply}
+              onChange={(e) => patch({ autoApply: e.target.checked })}
+              className="mt-0.5 h-4 w-4"
+              disabled={!s.enabled}
+            />
+            <span className="text-sm">
+              <span className="font-semibold">Apply to every reseller automatically</span>
+              <span className="block text-xs text-muted-foreground">
+                On: every reseller (old and new) is in the package and must pay after the trial. Off: only the
+                resellers you put in the package from the reseller 3-dot menu are asked to pay — everybody else keeps
+                using the panel and store normally.
+              </span>
+            </span>
+          </label>
+
+          <div className="grid gap-3 sm:grid-cols-4">
+            <label className="text-xs font-medium">
+              Reminder starts (days before)
+              <input
+                type="number"
+                min={1}
+                value={s.noticeDays}
+                onChange={(e) => patch({ noticeDays: Math.max(1, Number(e.target.value) || 1) })}
+                className={inp + " mt-1"}
+              />
+              <span className="mt-1 block text-[11px] font-normal text-muted-foreground">
+                Reseller sees the renew reminder from this many days before expiry.
+              </span>
+            </label>
             <label className="text-xs font-medium">
               Free trial (days)
               <input

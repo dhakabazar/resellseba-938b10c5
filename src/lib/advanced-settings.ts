@@ -40,6 +40,14 @@ export type AdvancedSettings = {
 export type SubscriptionSettings = {
   /** Master switch: when off, nobody is asked to pay for a package. */
   enabled: boolean;
+  /**
+   * On  → every reseller is in the package automatically.
+   * Off → only resellers an admin puts in the package are asked to pay;
+   *       everybody else keeps using the panel and store normally.
+   */
+  autoApply: boolean;
+  /** How many days before expiry the reseller starts seeing the reminder. */
+  noticeDays: number;
   /** Free trial length for a brand-new reseller (0 = no trial). */
   trialDays: number;
   /** Extra days the panel keeps working after the package expired. */
@@ -55,6 +63,8 @@ export type SubscriptionSettings = {
 
 export const DEFAULT_SUBSCRIPTION_SETTINGS: SubscriptionSettings = {
   enabled: false,
+  autoApply: true,
+  noticeDays: 7,
   trialDays: 7,
   graceDays: 0,
   trialPlan: "panel_store",
@@ -83,6 +93,8 @@ export function mergeSubscriptionSettings(raw: unknown): SubscriptionSettings {
   const r = (raw ?? {}) as Record<string, unknown>;
   const out = { ...DEFAULT_SUBSCRIPTION_SETTINGS };
   if (typeof r.enabled === "boolean") out.enabled = r.enabled;
+  if (typeof r.autoApply === "boolean") out.autoApply = r.autoApply;
+  if (Number.isFinite(Number(r.noticeDays))) out.noticeDays = Math.max(1, Number(r.noticeDays));
   if (Number.isFinite(Number(r.trialDays))) out.trialDays = Math.max(0, Number(r.trialDays));
   if (Number.isFinite(Number(r.graceDays))) out.graceDays = Math.max(0, Number(r.graceDays));
   if (r.trialPlan === "panel" || r.trialPlan === "panel_store") out.trialPlan = r.trialPlan;
