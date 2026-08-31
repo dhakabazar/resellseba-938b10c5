@@ -10,6 +10,7 @@ type NavContent = {
   signIn?: string;
   cta?: string;
   faq?: string;
+  stories?: string;
 };
 
 export type PublicHeaderContent = {
