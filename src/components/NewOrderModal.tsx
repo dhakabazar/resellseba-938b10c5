@@ -509,6 +509,11 @@ export function NewOrderModal({
                                     {item.type === 'listing' && (
                                       <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[8px] font-black text-primary uppercase tracking-tighter">Listing</span>
                                     )}
+                                    {hasCustomPrice(p.id, prices) && (
+                                      <span className="rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-tighter text-amber-600">
+                                        Special price
+                                      </span>
+                                    )}
                                   </div>
                                   <div className="mt-1 flex flex-wrap items-center gap-2">
                                     <ProductCodeChip code={p.product_code} />
