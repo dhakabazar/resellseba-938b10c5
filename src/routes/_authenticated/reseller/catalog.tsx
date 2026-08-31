@@ -32,6 +32,10 @@ type P = {
   og_image_url: string | null;
   brand_id: string | null;
   category_id: string | null;
+  /** master admin price, kept when a reseller specific price applies */
+  base_reseller_price?: number | null;
+  /** true when admin set a reseller specific admin price for this product */
+  has_custom_price?: boolean | null;
 };
 type Opt = { id: string; name: string };
 
