@@ -44,6 +44,18 @@ function StoreLayout() {
       </div>
     );
 
+  if (state === "closed")
+    return (
+      <div className="grid min-h-screen place-items-center p-6 text-center">
+        <div className="max-w-sm">
+          <h1 className="text-2xl font-semibold">Store temporarily unavailable</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            This store is closed right now. Please try again later or contact the store owner.
+          </p>
+        </div>
+      </div>
+    );
+
   if (state === "missing" || !store)
     return (
       <div className="grid min-h-screen place-items-center p-6 text-center">
@@ -53,6 +65,7 @@ function StoreLayout() {
         </div>
       </div>
     );
+
 
   const style = storeThemeStyle(store.theme, store.palette.id);
 

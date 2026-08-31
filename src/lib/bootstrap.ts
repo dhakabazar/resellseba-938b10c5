@@ -96,6 +96,8 @@ export function getLpBootstrap(host: string, force = false) {
 
 export type StoreBootstrap = {
   store: Record<string, any> | null;
+  /** True when the reseller's monthly package does not cover the public store. */
+  store_closed?: boolean;
   listings: any[];
   categories: { id: string; name: string; slug: string; image_url: string | null }[];
   menu: any[];

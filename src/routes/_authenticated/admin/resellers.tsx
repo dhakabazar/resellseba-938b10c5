@@ -64,7 +64,9 @@ import {
 import { ResellerProfile, type ResellerProfileData } from "@/components/ResellerProfile";
 import { DepositLedger } from "@/components/deposit-ledger";
 import { confirmAction } from "@/lib/confirm";
+import { Crown } from "lucide-react";
 import { PasswordResetModal } from "@/components/password-reset-modal";
+import { ResellerSubscriptionModal } from "@/components/reseller-subscription-modal";
 import { useAdvancedSettings } from "@/lib/advanced-settings";
 import { VerifyBadges, verifyPending, type VerifyFlags } from "@/components/verify-badges";
 import { usePermissions } from "@/lib/permissions";
@@ -433,7 +435,7 @@ function BulkBar({
 
 function ResellersPage() {
   const nav = useNavigate();
-  const { can, isSuperAdmin } = usePermissions();
+  const { can, canAny, isSuperAdmin } = usePermissions();
   const { user } = useAuth();
   /** `resellers.view_own` limits the list to resellers assigned to this staff agent. */
   const ownOnly = !isSuperAdmin && can("resellers.view_own") && !can("resellers.view_all") && !can("resellers.manage");
@@ -460,6 +462,7 @@ function ResellersPage() {
   const [perPage, setPerPage] = useState(20);
   const [editing, setEditing] = useState<Reseller | null>(null);
   const [depositFor, setDepositFor] = useState<Reseller | null>(null);
+  const [packageFor, setPackageFor] = useState<Reseller | null>(null);
   const [profileFor, setProfileFor] = useState<Reseller | null>(null);
   const [resetFor, setResetFor] = useState<Reseller | null>(null);
   const [noteFor, setNoteFor] = useState<Reseller | null>(null);
@@ -1272,6 +1275,11 @@ function ResellersPage() {
                         <Wallet className="mr-2 h-4 w-4" /> Deposit & freeze
                       </DropdownMenuItem>
                       )}
+                      {canAny(["subscriptions.manage", "resellers.manage"]) && (
+                      <DropdownMenuItem onClick={() => setPackageFor(r)}>
+                        <Crown className="mr-2 h-4 w-4" /> Monthly package
+                      </DropdownMenuItem>
+                      )}
                       {can("resellers.password") && (
                       <DropdownMenuItem onClick={() => setResetFor(r)}>
                         <KeyRound className="mr-2 h-4 w-4" /> Reset password
@@ -1392,6 +1400,13 @@ function ResellersPage() {
           label={resetFor.business_name}
           onClose={() => setResetFor(null)}
           onReset={(pw) => applyPasswordReset(resetFor, pw)}
+        />
+      )}
+
+      {packageFor && (
+        <ResellerSubscriptionModal
+          reseller={packageFor}
+          onClose={() => setPackageFor(null)}
         />
       )}
 
