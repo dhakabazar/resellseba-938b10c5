@@ -141,12 +141,15 @@ export function subscriptionBadge(state: SubscriptionState): {
   tone: "off" | "ok" | "warn" | "danger" | "trial";
   text: string;
 } | null {
-  if (!state?.enabled) return null;
+  if (!state?.enabled) {
+    if (state?.master_enabled && !state.auto_apply) return { tone: "off", text: "Not in package" };
+    return null;
+  }
   if (state.exempt) return { tone: "off", text: "Package free" };
   if (state.locked) return { tone: "danger", text: "Package expired" };
   const days = state.days_left ?? null;
   if (state.in_trial) return { tone: "trial", text: days !== null ? `Trial · ${days}d left` : "Free trial" };
-  if (days !== null && days <= 7) return { tone: "warn", text: `${days}d left` };
+  if (days !== null && days <= noticeWindow(state)) return { tone: "warn", text: `${days}d left` };
   return { tone: "ok", text: days !== null ? `${days}d left` : "Active" };
 }
 
