@@ -469,6 +469,11 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
                             )}
                           </span>
                           <span className="min-w-0 flex-1 truncate font-medium">{p.name}</span>
+                          {hasCustomPrice(p.id, prices) && (
+                            <span className="shrink-0 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-tighter text-amber-600">
+                              Special
+                            </span>
+                          )}
                           <span className="shrink-0 text-muted-foreground">৳{Number(p.suggested_price ?? 0)}</span>
                         </button>
                       ))}
