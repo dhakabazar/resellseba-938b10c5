@@ -185,7 +185,14 @@ export function ListingPricingModal({
               </div>
               <dl className="space-y-1.5 text-sm">
                 <div className="flex items-center justify-between">
-                  <dt className="text-muted-foreground">Product cost (admin price)</dt>
+                  <dt className="flex items-center gap-1.5 text-muted-foreground">
+                    Product cost (admin price)
+                    {customPrice && (
+                      <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold uppercase text-primary">
+                        Special
+                      </span>
+                    )}
+                  </dt>
                   <dd className="font-medium">{taka(calc.productCost)}</dd>
                 </div>
                 <div className="flex items-center justify-between">
