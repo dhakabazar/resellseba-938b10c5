@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { clearAppDataCache } from "@/lib/app-data";
 import { PageHeader } from "@/components/ui-kit";
@@ -10,7 +10,7 @@ import {
   clearAdvancedSettingsCache,
   type AdvancedSettings,
 } from "@/lib/advanced-settings";
-import { Loader2, Save, Package, ShieldCheck, Mail, Smartphone, Info, Boxes, Truck, UserCheck } from "lucide-react";
+import { Loader2, Save, Check, Package, ShieldCheck, Mail, Smartphone, Info, Boxes, Truck, UserCheck } from "lucide-react";
 import {
   DELIVERY_AREAS,
   deliverySettingsSummary,
