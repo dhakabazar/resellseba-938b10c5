@@ -51,6 +51,7 @@ import { Route as AuthenticatedResellerCatalogRouteImport } from './routes/_auth
 import { Route as AuthenticatedAdminVisitorsRouteImport } from './routes/_authenticated/admin/visitors'
 import { Route as AuthenticatedAdminTutorialsRouteImport } from './routes/_authenticated/admin/tutorials'
 import { Route as AuthenticatedAdminTransactionsRouteImport } from './routes/_authenticated/admin/transactions'
+import { Route as AuthenticatedAdminSubscriptionsRouteImport } from './routes/_authenticated/admin/subscriptions'
 import { Route as AuthenticatedAdminStaffRouteImport } from './routes/_authenticated/admin/staff'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin/settings'
 import { Route as AuthenticatedAdminResellersRouteImport } from './routes/_authenticated/admin/resellers'
@@ -324,6 +325,12 @@ const AuthenticatedAdminTransactionsRoute =
   AuthenticatedAdminTransactionsRouteImport.update({
     id: '/transactions',
     path: '/transactions',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAdminSubscriptionsRoute =
+  AuthenticatedAdminSubscriptionsRouteImport.update({
+    id: '/subscriptions',
+    path: '/subscriptions',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
 const AuthenticatedAdminStaffRoute = AuthenticatedAdminStaffRouteImport.update({
@@ -615,6 +622,7 @@ export interface FileRoutesByFullPath {
   '/admin/resellers': typeof AuthenticatedAdminResellersRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/staff': typeof AuthenticatedAdminStaffRoute
+  '/admin/subscriptions': typeof AuthenticatedAdminSubscriptionsRoute
   '/admin/transactions': typeof AuthenticatedAdminTransactionsRoute
   '/admin/tutorials': typeof AuthenticatedAdminTutorialsRoute
   '/admin/visitors': typeof AuthenticatedAdminVisitorsRoute
@@ -696,6 +704,7 @@ export interface FileRoutesByTo {
   '/admin/resellers': typeof AuthenticatedAdminResellersRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/staff': typeof AuthenticatedAdminStaffRoute
+  '/admin/subscriptions': typeof AuthenticatedAdminSubscriptionsRoute
   '/admin/transactions': typeof AuthenticatedAdminTransactionsRoute
   '/admin/tutorials': typeof AuthenticatedAdminTutorialsRoute
   '/admin/visitors': typeof AuthenticatedAdminVisitorsRoute
@@ -783,6 +792,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/resellers': typeof AuthenticatedAdminResellersRoute
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/_authenticated/admin/staff': typeof AuthenticatedAdminStaffRoute
+  '/_authenticated/admin/subscriptions': typeof AuthenticatedAdminSubscriptionsRoute
   '/_authenticated/admin/transactions': typeof AuthenticatedAdminTransactionsRoute
   '/_authenticated/admin/tutorials': typeof AuthenticatedAdminTutorialsRoute
   '/_authenticated/admin/visitors': typeof AuthenticatedAdminVisitorsRoute
@@ -870,6 +880,7 @@ export interface FileRouteTypes {
     | '/admin/resellers'
     | '/admin/settings'
     | '/admin/staff'
+    | '/admin/subscriptions'
     | '/admin/transactions'
     | '/admin/tutorials'
     | '/admin/visitors'
@@ -951,6 +962,7 @@ export interface FileRouteTypes {
     | '/admin/resellers'
     | '/admin/settings'
     | '/admin/staff'
+    | '/admin/subscriptions'
     | '/admin/transactions'
     | '/admin/tutorials'
     | '/admin/visitors'
@@ -1037,6 +1049,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/resellers'
     | '/_authenticated/admin/settings'
     | '/_authenticated/admin/staff'
+    | '/_authenticated/admin/subscriptions'
     | '/_authenticated/admin/transactions'
     | '/_authenticated/admin/tutorials'
     | '/_authenticated/admin/visitors'
@@ -1397,6 +1410,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminTransactionsRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/_authenticated/admin/subscriptions': {
+      id: '/_authenticated/admin/subscriptions'
+      path: '/subscriptions'
+      fullPath: '/admin/subscriptions'
+      preLoaderRoute: typeof AuthenticatedAdminSubscriptionsRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
     '/_authenticated/admin/staff': {
       id: '/_authenticated/admin/staff'
       path: '/staff'
@@ -1723,6 +1743,7 @@ interface AuthenticatedAdminRouteRouteChildren {
   AuthenticatedAdminResellersRoute: typeof AuthenticatedAdminResellersRoute
   AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
   AuthenticatedAdminStaffRoute: typeof AuthenticatedAdminStaffRoute
+  AuthenticatedAdminSubscriptionsRoute: typeof AuthenticatedAdminSubscriptionsRoute
   AuthenticatedAdminTransactionsRoute: typeof AuthenticatedAdminTransactionsRoute
   AuthenticatedAdminTutorialsRoute: typeof AuthenticatedAdminTutorialsRoute
   AuthenticatedAdminVisitorsRoute: typeof AuthenticatedAdminVisitorsRoute
@@ -1765,6 +1786,7 @@ const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren
     AuthenticatedAdminResellersRoute: AuthenticatedAdminResellersRoute,
     AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
     AuthenticatedAdminStaffRoute: AuthenticatedAdminStaffRoute,
+    AuthenticatedAdminSubscriptionsRoute: AuthenticatedAdminSubscriptionsRoute,
     AuthenticatedAdminTransactionsRoute: AuthenticatedAdminTransactionsRoute,
     AuthenticatedAdminTutorialsRoute: AuthenticatedAdminTutorialsRoute,
     AuthenticatedAdminVisitorsRoute: AuthenticatedAdminVisitorsRoute,
