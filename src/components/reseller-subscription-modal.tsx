@@ -44,6 +44,7 @@ export function ResellerSubscriptionModal({
   const [data, setData] = useState<SubscriptionOverview | null>(null);
   const [busy, setBusy] = useState(false);
   const [exempt, setExempt] = useState(false);
+  const [enrolled, setEnrolled] = useState(false);
   const [plan, setPlan] = useState<PlanKey | "">("");
   const [expires, setExpires] = useState("");
   const [trial, setTrial] = useState("");
@@ -57,6 +58,7 @@ export function ResellerSubscriptionModal({
       const d = await fetchSubscriptionOverview(reseller.id);
       setData(d);
       setExempt(Boolean(d.state.exempt));
+      setEnrolled(Boolean(d.state.enrolled));
       setPlan((d.state.plan as PlanKey | null) ?? "");
       setExpires(toDateInput(d.state.expires_at));
       setTrial(toDateInput(d.state.trial_ends_at));
@@ -70,6 +72,7 @@ export function ResellerSubscriptionModal({
     setBusy(true);
     const payload = {
       exempt,
+      enrolled,
       plan: plan || null,
       expires_at: expires ? new Date(`${expires}T23:59:59`).toISOString() : null,
       trial_ends_at: trial ? new Date(`${trial}T23:59:59`).toISOString() : null,
@@ -131,7 +134,17 @@ export function ResellerSubscriptionModal({
               <span>Trial until: {formatDate(data.state.trial_ends_at)}</span>
               <span>
                 Status:{" "}
-                {data.state.exempt ? "Free account" : data.state.locked ? "Expired (panel locked)" : "Active"}
+                {data.state.exempt
+                  ? "Free account"
+                  : !data.state.enabled
+                    ? data.state.master_enabled
+                      ? "Not in package (full access)"
+                      : "Package system off"
+                    : data.state.locked
+                      ? "Expired (panel locked)"
+                      : data.state.in_trial
+                        ? "Free trial"
+                        : "Active"}
               </span>
             </div>
           </div>
@@ -201,6 +214,23 @@ export function ResellerSubscriptionModal({
                 <input type="date" value={trial} onChange={(e) => setTrial(e.target.value)} className={inp + " mt-1"} />
               </label>
             </div>
+            <label className="mt-3 flex items-start gap-2 rounded-lg border bg-primary/5 p-3 text-xs">
+              <input
+                type="checkbox"
+                checked={enrolled}
+                onChange={(e) => setEnrolled(e.target.checked)}
+                className="mt-0.5 h-4 w-4"
+              />
+              <span>
+                <span className="font-semibold">In the monthly package</span>
+                <span className="block text-muted-foreground">
+                  {data.state.auto_apply
+                    ? "Auto apply is on, so every reseller is in the package anyway."
+                    : "Auto apply is off — only resellers with this ticked have to pay for a package."}
+                </span>
+              </span>
+            </label>
+
             <label className="mt-3 flex items-start gap-2 rounded-lg border bg-muted/30 p-3 text-xs">
               <input
                 type="checkbox"
