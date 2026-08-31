@@ -63,6 +63,8 @@ export type SubscriptionSettings = {
 
 export const DEFAULT_SUBSCRIPTION_SETTINGS: SubscriptionSettings = {
   enabled: false,
+  autoApply: true,
+  noticeDays: 7,
   trialDays: 7,
   graceDays: 0,
   trialPlan: "panel_store",
