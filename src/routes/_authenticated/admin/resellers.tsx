@@ -65,6 +65,7 @@ import { ResellerProfile, type ResellerProfileData } from "@/components/Reseller
 import { DepositLedger } from "@/components/deposit-ledger";
 import { confirmAction } from "@/lib/confirm";
 import { PasswordResetModal } from "@/components/password-reset-modal";
+import { ResellerSubscriptionModal } from "@/components/reseller-subscription-modal";
 import { useAdvancedSettings } from "@/lib/advanced-settings";
 import { VerifyBadges, verifyPending, type VerifyFlags } from "@/components/verify-badges";
 import { usePermissions } from "@/lib/permissions";
@@ -460,6 +461,7 @@ function ResellersPage() {
   const [perPage, setPerPage] = useState(20);
   const [editing, setEditing] = useState<Reseller | null>(null);
   const [depositFor, setDepositFor] = useState<Reseller | null>(null);
+  const [packageFor, setPackageFor] = useState<Reseller | null>(null);
   const [profileFor, setProfileFor] = useState<Reseller | null>(null);
   const [resetFor, setResetFor] = useState<Reseller | null>(null);
   const [noteFor, setNoteFor] = useState<Reseller | null>(null);
@@ -1272,6 +1274,11 @@ function ResellersPage() {
                         <Wallet className="mr-2 h-4 w-4" /> Deposit & freeze
                       </DropdownMenuItem>
                       )}
+                      {canAny(["subscriptions.manage", "resellers.manage"]) && (
+                      <DropdownMenuItem onClick={() => setPackageFor(r)}>
+                        <Crown className="mr-2 h-4 w-4" /> Monthly package
+                      </DropdownMenuItem>
+                      )}
                       {can("resellers.password") && (
                       <DropdownMenuItem onClick={() => setResetFor(r)}>
                         <KeyRound className="mr-2 h-4 w-4" /> Reset password
@@ -1392,6 +1399,13 @@ function ResellersPage() {
           label={resetFor.business_name}
           onClose={() => setResetFor(null)}
           onReset={(pw) => applyPasswordReset(resetFor, pw)}
+        />
+      )}
+
+      {packageFor && (
+        <ResellerSubscriptionModal
+          reseller={packageFor}
+          onClose={() => setPackageFor(null)}
         />
       )}
 
