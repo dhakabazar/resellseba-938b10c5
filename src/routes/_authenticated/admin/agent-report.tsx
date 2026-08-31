@@ -64,9 +64,14 @@ function AgentReportPage() {
         .limit(5000),
     ]);
     if (o.error) toast.error(o.error.message);
+    const { data: unitRows } = await supabase.rpc("agent_order_units");
+    const unitMap = new Map<string, number>(
+      ((unitRows ?? []) as Array<{ order_id: string; units: number }>).map((u) => [u.order_id, Number(u.units) || 0]),
+    );
+    const withUnits = ((o.data ?? []) as AgentOrder[]).map((row) => ({ ...row, units: unitMap.get(row.id) ?? 0 }));
     setAgents((a.data ?? []) as Agent[]);
     setResellers((r.data ?? []) as ResellerLite[]);
-    setOrders((o.data ?? []) as AgentOrder[]);
+    setOrders(withUnits);
     setLoading(false);
   }
 
@@ -212,7 +217,7 @@ function AgentReportPage() {
                       hint="Received amount − delivery charge − product cost − packaging cost. Failed orders subtract delivery and packaging as loss."
                     />
                     <Mini
-                      label={`Commission (${p.rate}%)`}
+                      label={p.mode === "per_product" ? `Commission (${p.units} pc × ${bdt(p.perUnit)})` : `Commission (${p.rate}%)`}
                       value={bdt(p.commission)}
                       tone="text-primary"
                       hint={AGENT_COMMISSION_HINT}

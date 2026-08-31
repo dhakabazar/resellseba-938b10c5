@@ -13,7 +13,7 @@ import { ReportCard, ReportTabs, SortTh, toneOf } from "@/components/report-bloc
 import { Pagination, usePaginated } from "@/components/data-list";
 import { ResellerAvatar } from "@/components/reseller-avatar";
 import { bdt, toCsv, downloadCsv, orderProfit, orderReceived } from "@/lib/finance-report";
-import { agentCommission, AGENT_COMMISSION_HINT } from "@/lib/agents";
+import { agentCommissionFor, commissionMode, AGENT_COMMISSION_HINT } from "@/lib/agents";
 import {
   ADMIN_PROFIT_HINT,
   buildCourierRows,
@@ -65,6 +65,8 @@ type Agent = {
   display_name: string;
   sale_target: number | string;
   commission_rate: number | string;
+  commission_mode?: string | null;
+  commission_per_unit?: number | string | null;
   is_active: boolean;
 };
 type ResellerLite = { id: string; business_name: string; code: string; agent_id: string | null; avatar_url?: string | null };
@@ -77,6 +79,8 @@ type AgentRow = {
   target: number;
   achieved: number;
   rate: number;
+  rateLabel: string;
+
   commission: number;
   adminProfit: number;
   netAdminProfit: number;
@@ -119,7 +123,7 @@ function BusinessReportPage() {
         supabase.from("products").select("id,name,product_code,buying_price,packaging_cost,og_image_url"),
         supabase.from("shipments").select("order_id,provider,cost"),
         supabase.from("resellers").select("id,business_name,code,agent_id,avatar_url"),
-        supabase.from("agents").select("id,display_name,sale_target,commission_rate,is_active"),
+        supabase.from("agents").select("id,display_name,sale_target,commission_rate,commission_mode,commission_per_unit,is_active"),
         supabase.from("expenses").select("*"),
       ]);
       setOrders((o.data ?? []) as unknown as BizOrder[]);
@@ -179,16 +183,24 @@ function BusinessReportPage() {
       let sales = 0;
       let base = 0;
       let adminProfit = 0;
+      let units = 0;
       for (const o of mineOrders) {
         const myItems = itemsByOrder.get(o.id) ?? [];
         const ord = withKeptCost(o, myItems);
         sales += orderReceived(ord);
         base += orderProfit(ord);
+        if (["delivered", "partial", "partial_full", "partial_item", "damaged"].includes(String(o.status)))
+          units += myItems.reduce(
+            (t, it) => t + Math.max(Number(it.quantity ?? 0) - Number((it as any).returned_qty ?? 0), 0),
+            0,
+          );
         adminProfit += orderReceived(ord) - orderProfit(ord) - orderBuyingCost(myItems, o.status, productMap);
       }
       const target = Number(ag.sale_target ?? 0) || 0;
       const rate = Number(ag.commission_rate ?? 0) || 0;
-      const commission = agentCommission(base, rate);
+      const perUnit = Number(ag.commission_per_unit ?? 0) || 0;
+      const perProduct = commissionMode(ag) === "per_product";
+      const commission = agentCommissionFor(ag, base, units);
       return {
         key: ag.id,
         name: ag.display_name,
@@ -198,6 +210,7 @@ function BusinessReportPage() {
         target,
         achieved: target > 0 ? (sales / target) * 100 : 0,
         rate,
+        rateLabel: perProduct ? `${bdt(perUnit)}/pc × ${units} pc` : `${rate}% rate`,
         commission,
         adminProfit,
         netAdminProfit: adminProfit - commission,
@@ -550,7 +563,7 @@ function BusinessReportPage() {
                     </td>
                     <td className="px-3 py-2 text-center tabular-nums">
                       {bdt(r.commission)}
-                      <div className="text-[9px] text-muted-foreground">{r.rate}% rate</div>
+                      <div className="text-[9px] text-muted-foreground">{r.rateLabel}</div>
                     </td>
                     <td className={"px-3 py-2 text-center tabular-nums " + toneOf(r.adminProfit)}>{bdt(r.adminProfit)}</td>
                     <td className={"px-3 py-2 text-center font-semibold tabular-nums " + toneOf(r.netAdminProfit)}>
