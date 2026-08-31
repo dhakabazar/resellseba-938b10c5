@@ -2645,6 +2645,8 @@ export type Database = {
         }
         Returns: undefined
       }
+      agent_deposit_overview: { Args: never; Returns: Json }
+      agent_owns_reseller: { Args: { _reseller_id: string }; Returns: boolean }
       assert_admin_permission: {
         Args: { _permissions: string[] }
         Returns: undefined
