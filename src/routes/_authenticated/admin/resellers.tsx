@@ -64,6 +64,7 @@ import {
 import { ResellerProfile, type ResellerProfileData } from "@/components/ResellerProfile";
 import { DepositLedger } from "@/components/deposit-ledger";
 import { confirmAction } from "@/lib/confirm";
+import { Crown } from "lucide-react";
 import { PasswordResetModal } from "@/components/password-reset-modal";
 import { ResellerSubscriptionModal } from "@/components/reseller-subscription-modal";
 import { useAdvancedSettings } from "@/lib/advanced-settings";
@@ -434,7 +435,7 @@ function BulkBar({
 
 function ResellersPage() {
   const nav = useNavigate();
-  const { can, isSuperAdmin } = usePermissions();
+  const { can, canAny, isSuperAdmin } = usePermissions();
   const { user } = useAuth();
   /** `resellers.view_own` limits the list to resellers assigned to this staff agent. */
   const ownOnly = !isSuperAdmin && can("resellers.view_own") && !can("resellers.view_all") && !can("resellers.manage");
