@@ -29,6 +29,8 @@ type LandingContent = {
     ctaSecondary: string;
     badges: string[];
     bannerImage?: UploadedImage | null;
+    videoUrl?: string;
+    videoTitle?: string;
   };
   stats?: { items: StatItem[] };
   about?: { badge: string; title: string; body: string; points: string[]; flow?: FlowStep[] };
@@ -105,6 +107,14 @@ function LandingEditor() {
         <F label="Trust badges (comma separated)">
           <I value={c.hero.badges.join(", ")} onChange={(v) => update((d) => { d.hero.badges = v.split(",").map(s => s.trim()).filter(Boolean); })} />
         </F>
+        <Grid>
+          <F label="Hero video link (YouTube or mp4) — khali rakhle sudhu banner dekhabe">
+            <I value={c.hero.videoUrl ?? ""} onChange={(v) => update((d) => { d.hero.videoUrl = v; })} />
+          </F>
+          <F label="Video title (play button er niche dekhabe)">
+            <I value={c.hero.videoTitle ?? ""} onChange={(v) => update((d) => { d.hero.videoTitle = v; })} />
+          </F>
+        </Grid>
         <F label="Hero banner image (auto-compressed to WebP ≤200KB)">
           <ImageUploader
             bucket="branding"

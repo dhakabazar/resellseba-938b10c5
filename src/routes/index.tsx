@@ -13,6 +13,7 @@ import {
   HelpCircle,
   Quote,
   Star,
+  Play,
 } from "lucide-react";
 import { APP_ICONS } from "@/lib/icons";
 import { toast } from "sonner";
@@ -24,6 +25,8 @@ import {
 } from "@/components/ui/accordion";
 
 import { CountUp } from "@/components/count-up";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { youtubeEmbed, youtubeThumb } from "@/lib/tutorials";
 import { PublicHeader, Brand } from "@/components/public-header";
 
 export const Route = createFileRoute("/")({
@@ -68,6 +71,8 @@ type LandingContent = {
     badge: string; titleStart: string; titleHighlight: string; subtitle: string;
     ctaPrimary: string; ctaSecondary: string; badges: string[];
     bannerImage?: HeroImage;
+    videoUrl?: string;
+    videoTitle?: string;
   };
   stats?: { title?: string; items: StatItem[] };
   about?: { badge: string; title: string; body: string; points: string[]; flow?: FlowStep[] };
@@ -91,6 +96,8 @@ const FALLBACK: LandingContent = {
     ctaSecondary: "অ্যাডমিন সাইন ইন",
     badges: ["সেটআপ ফি নেই"],
     bannerImage: null,
+    videoUrl: "",
+    videoTitle: "দেখুন কিভাবে রেজিস্ট্রেশন করবেন",
   },
   about: {
     badge: "",
@@ -274,6 +281,10 @@ function Landing({
   };
 
   const banner = c.hero.bannerImage?.url;
+  const videoUrl = c.hero.videoUrl?.trim() || "";
+  const videoEmbed = videoUrl ? youtubeEmbed(videoUrl) : null;
+  const poster = banner || (videoUrl ? youtubeThumb(videoUrl) : null);
+  const [videoOpen, setVideoOpen] = useState(false);
 
   const statIcons = [Boxes, Layers, ShoppingBag, Users];
   const customStats = c.stats?.items?.filter((s) => s.value?.trim() || s.label?.trim()) ?? [];
@@ -347,9 +358,9 @@ function Landing({
             {/* soft ambient glow behind the banner so any image blends in */}
             <div className="pointer-events-none absolute -inset-6 -z-10 rounded-[2rem] bg-[image:var(--gradient-brand)] opacity-20 blur-2xl" />
             <div className="animate-float relative overflow-hidden rounded-2xl shadow-[var(--shadow-elegant)]">
-              {banner ? (
+              {poster ? (
                 <>
-                  <img src={banner} alt={siteName} className="aspect-[4/3] w-full object-cover" />
+                  <img src={poster} alt={c.hero.videoTitle || siteName} className="aspect-[4/3] w-full object-cover" />
                   {/* gentle vignette + tint keeps bright, dark or busy images looking consistent */}
                   <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-background/35 via-transparent to-background/10" />
                 </>
@@ -358,12 +369,56 @@ function Landing({
                   <Boxes className="h-16 w-16 opacity-80" />
                 </div>
               )}
+
+              {/* Video mode: play button in the center + optional title */}
+              {videoUrl && (
+                <button
+                  type="button"
+                  onClick={() => setVideoOpen(true)}
+                  aria-label={c.hero.videoTitle || "Video play korun"}
+                  className="group absolute inset-0 grid place-items-center bg-foreground/25 transition hover:bg-foreground/35"
+                >
+                  <span className="relative grid h-16 w-16 place-items-center rounded-full bg-background/95 shadow-[var(--shadow-elegant)] transition group-hover:scale-110 sm:h-20 sm:w-20">
+                    <span className="absolute inset-0 animate-ping rounded-full bg-background/50" />
+                    <Play className="relative ml-0.5 h-7 w-7 fill-primary text-primary sm:h-8 sm:w-8" />
+                  </span>
+                  {c.hero.videoTitle && (
+                    <span className="absolute inset-x-3 bottom-3 rounded-xl bg-background/85 px-3 py-2 text-center text-xs font-bold backdrop-blur-sm sm:text-sm">
+                      {c.hero.videoTitle}
+                    </span>
+                  )}
+                </button>
+              )}
               {/* hairline inner ring instead of a hard border */}
               <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-inset ring-foreground/10" />
             </div>
           </div>
 
         </div>
+
+        {/* video popup */}
+        <Dialog open={videoOpen} onOpenChange={setVideoOpen}>
+          <DialogContent className="max-w-3xl overflow-hidden p-0">
+            <DialogHeader className="px-5 pt-5">
+              <DialogTitle className="text-base sm:text-lg">
+                {c.hero.videoTitle || siteName}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="aspect-video w-full bg-black">
+              {videoEmbed ? (
+                <iframe
+                  src={`${videoEmbed}&autoplay=1`}
+                  title={c.hero.videoTitle || siteName}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture"
+                  allowFullScreen
+                  className="h-full w-full border-0"
+                />
+              ) : videoUrl ? (
+                <video src={videoUrl} controls autoPlay playsInline className="h-full w-full" />
+              ) : null}
+            </div>
+          </DialogContent>
+        </Dialog>
       </section>
 
       {/* ── Stats band ──────────────────────────────────── */}
