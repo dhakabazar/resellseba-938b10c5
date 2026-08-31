@@ -18,6 +18,8 @@ export type ResellerProfileData = {
   leader_name?: string | null;
   agent_name?: string | null;
   notes?: string | null;
+  notes_by_name?: string | null;
+  notes_at?: string | null;
   created_at: string;
   approved_at: string | null;
   payout_method: string | null;
