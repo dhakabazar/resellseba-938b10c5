@@ -93,6 +93,8 @@ export function mergeSubscriptionSettings(raw: unknown): SubscriptionSettings {
   const r = (raw ?? {}) as Record<string, unknown>;
   const out = { ...DEFAULT_SUBSCRIPTION_SETTINGS };
   if (typeof r.enabled === "boolean") out.enabled = r.enabled;
+  if (typeof r.autoApply === "boolean") out.autoApply = r.autoApply;
+  if (Number.isFinite(Number(r.noticeDays))) out.noticeDays = Math.max(1, Number(r.noticeDays));
   if (Number.isFinite(Number(r.trialDays))) out.trialDays = Math.max(0, Number(r.trialDays));
   if (Number.isFinite(Number(r.graceDays))) out.graceDays = Math.max(0, Number(r.graceDays));
   if (r.trialPlan === "panel" || r.trialPlan === "panel_store") out.trialPlan = r.trialPlan;
