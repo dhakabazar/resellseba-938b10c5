@@ -74,6 +74,7 @@ const ROUTE_PERMISSIONS: Record<string, string[]> = {
   "/admin/agents": ["agents.manage", "agents.view", "agents.create", "agents.edit", "agents.delete"],
   "/admin/agent-report": ["agents.view", "agents.manage"],
   "/admin/agent-payouts": ["agents.manage", "payouts.manage"],
+  "/admin/agent-deposits": ["deposits.collect_own", "deposits.manage"],
 
   "/admin/visitors": ["visitors.view", "reports.view", "dashboard.view", "resellers.manage"],
   "/admin/marketing": ["marketing.manage"],
@@ -128,6 +129,7 @@ const NAV: NavEntry[] = [
       { label: "Commission Agents", to: "/admin/agents", icon: <UserCheck className="h-4 w-4" /> },
       { label: "Agent report", to: "/admin/agent-report", icon: <Target className="h-4 w-4" /> },
       { label: "Commission payout", to: "/admin/agent-payouts", icon: <Percent className="h-4 w-4" /> },
+      { label: "Collect deposits", to: "/admin/agent-deposits", icon: <ShieldCheck className="h-4 w-4" /> },
 
     ],
   },
