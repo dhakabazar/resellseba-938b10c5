@@ -16,12 +16,14 @@ import { z } from "zod";
  * - No credentials are ever returned to the caller.
  */
 const Body = z.object({
-  op: z.enum(["order-start", "order-verify", "deposit-start", "list-store", "list-deposit"]),
+  op: z.enum(["order-start", "order-verify", "deposit-start", "sub-start", "list-store", "list-deposit"]),
   origin: z.string().url().optional(),
   orderNumber: z.string().min(3).optional(),
   code: z.string().min(1).optional(),
   provider: z.string().min(2).optional(),
   amount: z.number().positive().max(10_000_000).optional(),
+  plan: z.enum(["panel", "panel_store"]).optional(),
+  months: z.union([z.literal(1), z.literal(6), z.literal(12)]).optional(),
 });
 
 function json(body: unknown, status = 200) {
@@ -103,6 +105,20 @@ async function handle(request: Request): Promise<Response> {
             userId,
             provider: input.provider,
             amount: input.amount,
+            storeOrigin: input.origin,
+          }),
+        );
+      }
+      case "sub-start": {
+        const userId = await userFromBearer(request);
+        if (!userId) return json({ error: "Unauthorized" }, 401);
+        if (!input.provider || !input.plan || !input.months) return json({ error: "Invalid request" }, 400);
+        return json(
+          await flows.startSubscriptionFlow({
+            userId,
+            provider: input.provider,
+            plan: input.plan,
+            months: input.months,
             storeOrigin: input.origin,
           }),
         );
