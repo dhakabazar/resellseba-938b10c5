@@ -339,10 +339,17 @@ export function harvestRichDescription(html: string): string {
     const safe = sanitizeRichHtml(raw);
     const text = key3(toPlainText(safe, 20_000));
     if (text.length <= 60) continue;
-    // A longer block often already contains the shorter one (Daraz repeats highlights).
-    if (parts.some((p) => p.text.includes(text))) continue;
-    const shorter = parts.findIndex((p) => text.includes(p.text));
-    if (shorter >= 0) parts.splice(shorter, 1);
+    // Daraz repeats the same copy across keys — keep only the richest version.
+    const dupe = parts.findIndex(
+      (p) =>
+        p.text.includes(text) ||
+        text.includes(p.text) ||
+        p.text.slice(0, 200) === text.slice(0, 200),
+    );
+    if (dupe >= 0) {
+      if (parts[dupe]!.text.length >= text.length) continue;
+      parts.splice(dupe, 1);
+    }
     parts.push({ html: safe, text });
     if (parts.reduce((n, p) => n + p.html.length, 0) > 18_000) break;
   }
