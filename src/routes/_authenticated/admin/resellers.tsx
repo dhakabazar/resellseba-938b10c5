@@ -460,6 +460,8 @@ function ResellersPage() {
   const [depositFor, setDepositFor] = useState<Reseller | null>(null);
   const [profileFor, setProfileFor] = useState<Reseller | null>(null);
   const [resetFor, setResetFor] = useState<Reseller | null>(null);
+  const [noteFor, setNoteFor] = useState<Reseller | null>(null);
+  const [noteAuthors, setNoteAuthors] = useState<Record<string, string>>({});
   const [agents, setAgents] = useState<Array<{ id: string; display_name: string }>>([]);
   const [agentFilter, setAgentFilter] = useState("");
   const [depositFilter, setDepositFilter] = useState<DepositFilter>("all");
