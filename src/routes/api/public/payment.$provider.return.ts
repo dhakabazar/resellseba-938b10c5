@@ -11,6 +11,7 @@ import { createFileRoute } from "@tanstack/react-router";
  * Two kinds of payments come back here:
  * - `k=order` (default) → a storefront order
  * - `k=deposit`         → a reseller security deposit
+ * - `k=sub`             → a reseller monthly package
  */
 async function handle(request: Request, provider: string): Promise<Response> {
   const core = await import("@/lib/gateways/core.server");
@@ -38,6 +39,32 @@ async function handle(request: Request, provider: string): Promise<Response> {
 
 
   if (!ref) return core.htmlRedirect(core.appendFlag(cancel, flag, "failed"));
+
+  if (params.k === "sub") {
+    try {
+      const intent = await core.loadSubscriptionIntent(ref);
+      if (!intent) return core.htmlRedirect(core.appendFlag(cancel, flag, "failed"));
+      if (intent.status === "approved") return core.htmlRedirect(core.appendFlag(success, flag, "paid"));
+      if (params.t === "cancel") return core.htmlRedirect(core.appendFlag(cancel, flag, "cancelled"));
+
+      const creds = await core.getPlatformCredentials(provider);
+      if (!creds) return core.htmlRedirect(core.appendFlag(cancel, flag, "failed"));
+      const pseudo = core.subscriptionAsOrder(intent);
+      const v = await adapterFor(provider).verifyReturn(creds, pseudo, params);
+      const outcome = await core.settleSubscription({
+        intent,
+        provider,
+        paid: v.paid,
+        amount: v.amount,
+        txnId: v.txnId,
+      });
+      const ok = outcome === "paid" || outcome === "already";
+      const status = ok ? "paid" : v.cancelled ? "cancelled" : "failed";
+      return core.htmlRedirect(core.appendFlag(ok ? success : cancel, flag, status, v.txnId));
+    } catch {
+      return core.htmlRedirect(core.appendFlag(cancel, flag, "failed"));
+    }
+  }
 
   if (params.k === "deposit") {
     try {

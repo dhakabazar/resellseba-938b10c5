@@ -24,6 +24,7 @@ import {
   UserCircle,
   ListTree,
   CreditCard,
+  Crown,
 
 
 } from "lucide-react";
@@ -35,6 +36,7 @@ import { useBrandingTheme } from "@/lib/branding";
 import { getGlobalSettings, getMyReseller } from "@/lib/app-data";
 import { getPanelBootstrapPayload } from "@/lib/panel-bootstrap";
 import { consumeImpersonationReturnTarget } from "@/lib/impersonation";
+import { SubscriptionGate } from "@/components/subscription-lock";
 
 export const Route = createFileRoute("/_authenticated/reseller")({
   component: ResellerLayout,
@@ -83,6 +85,7 @@ const NAV: NavEntry[] = [
       { label: "Visitors", to: "/reseller/visitors", icon: <Activity className="h-4 w-4" /> },
     ],
   },
+  { label: "My package", to: "/reseller/subscription", icon: <Crown className="h-4 w-4" /> },
   { label: "My profile", to: "/reseller/profile", icon: <UserCircle className="h-4 w-4" /> },
   { label: "Support", to: "/reseller/support", icon: <Headphones className="h-4 w-4" /> },
 ];
@@ -186,7 +189,9 @@ function ResellerLayout() {
       }
     >
       <ImpersonationBanner />
-      <Outlet />
+      <SubscriptionGate>
+        <Outlet />
+      </SubscriptionGate>
     </AppShell>
   );
 }

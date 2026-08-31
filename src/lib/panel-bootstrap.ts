@@ -30,6 +30,25 @@ export type PanelBootstrap = {
     deposit_required: boolean | null;
     deposit_required_amount: number | null;
     frozen_amount: number | null;
+    subscription_plan?: string | null;
+    subscription_expires_at?: string | null;
+    subscription_trial_ends_at?: string | null;
+    subscription_exempt?: boolean | null;
+  } | null;
+  /** Monthly package state for the signed-in reseller (null for staff). */
+  subscription: {
+    enabled: boolean;
+    locked: boolean;
+    store_allowed: boolean;
+    plan?: string | null;
+    expires_at?: string | null;
+    trial_ends_at?: string | null;
+    until?: string | null;
+    in_trial?: boolean;
+    days_left?: number | null;
+    exempt?: boolean;
+    grace_days?: number;
+    trial_days?: number;
   } | null;
   reseller_settings: { logo_url: string | null; primary_color: string | null } | null;
   deposits: { id: string; amount: number; method: string | null; reference: string | null; note: string | null; created_at: string }[];
