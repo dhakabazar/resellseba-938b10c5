@@ -38,7 +38,16 @@ export const PLAN_META: Record<PlanKey, { label: string; short: string; blurb: s
 };
 
 export type SubscriptionState = {
+  /** True only when the package actually governs this reseller. */
   enabled: boolean;
+  /** Master switch state, regardless of this reseller's enrolment. */
+  master_enabled?: boolean;
+  /** Auto-apply mode: every reseller is in the package. */
+  auto_apply?: boolean;
+  /** Manually put in the package by an admin. */
+  enrolled?: boolean;
+  enrolled_at?: string | null;
+  notice_days?: number;
   reseller_id?: string | null;
   exempt?: boolean;
   plan?: PlanKey | null;
