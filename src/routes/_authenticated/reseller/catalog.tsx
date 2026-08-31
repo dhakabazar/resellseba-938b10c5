@@ -351,8 +351,13 @@ function CatalogPage() {
                   )}
                 </div>
                 <div className="p-4">
-                  <div className="mb-1.5">
+                  <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
                     <ProductCodeChip code={p.product_code} />
+                    {p.has_custom_price && (
+                      <span className="inline-flex items-center rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-tight text-primary">
+                        Special price
+                      </span>
+                    )}
                   </div>
                   <div 
                     className="truncate text-sm font-medium cursor-pointer hover:text-primary transition-colors"
@@ -361,7 +366,11 @@ function CatalogPage() {
                     {p.name}
                   </div>
                   <div className="mt-1 text-xs text-muted-foreground">
-                    Product ৳{p.reseller_price} + Pack ৳{p.packaging_cost} = <b>৳{myCost}</b> (your cost)
+                    Product ৳{p.reseller_price}
+                    {p.has_custom_price && p.base_reseller_price != null && (
+                      <s className="ml-1 opacity-60">৳{p.base_reseller_price}</s>
+                    )}{" "}
+                    + Pack ৳{p.packaging_cost} = <b>৳{myCost}</b> (your cost)
                   </div>
                   <div className="mt-1 text-xs text-muted-foreground">
                     Delivery: {deliveryLabel(p)} · customer pays
