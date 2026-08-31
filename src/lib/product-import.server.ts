@@ -332,7 +332,7 @@ export function sanitizeRichHtml(raw: string, limit = 20_000): string {
  */
 export function harvestRichDescription(html: string): string {
   const parts: string[] = [];
-  for (const key of ["highlights", "descriptionHtml", "detailDescription", "html", "body_html"]) {
+  for (const key of ["highlights", "desc", "descriptionHtml", "detailDescription", "html", "body_html"]) {
     const raw = readJsonStringValue(html, key);
     if (!raw) continue;
     const safe = sanitizeRichHtml(raw);
