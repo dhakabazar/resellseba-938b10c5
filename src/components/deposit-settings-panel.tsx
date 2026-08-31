@@ -25,11 +25,12 @@ const FIELDS: { key: keyof DepositTexts; label: string; help: string; long?: boo
 /** Security deposit rules + reseller-facing texts. Rendered as a tab inside Advanced settings. */
 export function DepositSettingsPanel() {
   const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState(false);
+  const [status, setStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [triggerOn, setTriggerOn] = useState(false);
   const [amount, setAmount] = useState("0");
   const [frozen, setFrozen] = useState("0");
   const [texts, setTexts] = useState<DepositTexts>(DEFAULT_DEPOSIT_TEXTS);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const inp = "w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring";
 
@@ -50,21 +51,36 @@ export function DepositSettingsPanel() {
     })();
   }, []);
 
-  async function save() {
-    setBusy(true);
-    const { error } = await supabase
-      .from("global_settings")
-      .update({
-        deposit_trigger_default_on: triggerOn,
-        deposit_default_amount: Number(amount) || 0,
-        deposit_default_frozen: Number(frozen) || 0,
-        deposit_texts: texts as any,
-      } as any)
-      .eq("id", 1);
-    clearAppDataCache("settings");
-    setBusy(false);
-    if (error) return toast.error(error.message);
-    toast.success("Deposit settings saved");
+  useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
+
+  /** Auto-save: every switch and field persists itself. */
+  function schedule(
+    next: { triggerOn?: boolean; amount?: string; frozen?: string; texts?: DepositTexts },
+    delay = 600,
+  ) {
+    const payload = {
+      deposit_trigger_default_on: next.triggerOn ?? triggerOn,
+      deposit_default_amount: Number(next.amount ?? amount) || 0,
+      deposit_default_frozen: Number(next.frozen ?? frozen) || 0,
+      deposit_texts: (next.texts ?? texts) as any,
+    };
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(async () => {
+      setStatus("saving");
+      const { error } = await supabase.from("global_settings").update(payload as any).eq("id", 1);
+      clearAppDataCache("settings");
+      if (error) {
+        setStatus("idle");
+        return toast.error(error.message);
+      }
+      setStatus("saved");
+    }, delay);
+  }
+
+  function patchTexts(patch: Partial<DepositTexts>) {
+    const next = { ...texts, ...patch };
+    setTexts(next);
+    schedule({ texts: next });
   }
 
   if (loading)
@@ -73,6 +89,7 @@ export function DepositSettingsPanel() {
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     );
+
 
   const preview = {
     due: Math.max((Number(amount) || 0) - 0, 0),
