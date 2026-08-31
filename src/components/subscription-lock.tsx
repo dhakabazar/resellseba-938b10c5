@@ -46,7 +46,7 @@ export function SubscriptionGate({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      {locked && <SubscriptionLockedBanner state={state!} />}
+      {locked ? <SubscriptionLockedBanner state={state!} /> : <SubscriptionNotice />}
       {blocked ? <LockedScreen /> : children}
     </>
   );
