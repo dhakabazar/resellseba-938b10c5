@@ -91,6 +91,8 @@ type Reseller = {
   leader_id: string | null;
   agent_id: string | null;
   notes: string | null;
+  notes_by?: string | null;
+  notes_at?: string | null;
   approved_at: string | null;
   created_at: string;
   payout_method: string | null;
