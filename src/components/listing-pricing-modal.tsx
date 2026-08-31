@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Loader2, X, Save, TrendingUp } from "lucide-react";
 import { ProductCodeChip } from "@/components/product-code";
 import { getGlobalSettings } from "@/lib/app-data";
+import { fetchResellerPriceMap, hasCustomPrice, wholesalePrice } from "@/lib/reseller-prices";
 import {
   DELIVERY_AREAS,
   areaLabel,
