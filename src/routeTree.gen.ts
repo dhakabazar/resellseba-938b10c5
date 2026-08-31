@@ -75,6 +75,7 @@ import { Route as AuthenticatedAdminBrandsRouteImport } from './routes/_authenti
 import { Route as AuthenticatedAdminAgentsRouteImport } from './routes/_authenticated/admin/agents'
 import { Route as AuthenticatedAdminAgentReportRouteImport } from './routes/_authenticated/admin/agent-report'
 import { Route as AuthenticatedAdminAgentPayoutsRouteImport } from './routes/_authenticated/admin/agent-payouts'
+import { Route as AuthenticatedAdminAgentDepositsRouteImport } from './routes/_authenticated/admin/agent-deposits'
 import { Route as AuthenticatedAdminAdvancedRouteImport } from './routes/_authenticated/admin/advanced'
 import { Route as AuthenticatedAdminProductsIndexRouteImport } from './routes/_authenticated/admin/products.index'
 import { Route as SCodePSlugRouteImport } from './routes/s.$code.p.$slug'
@@ -466,6 +467,12 @@ const AuthenticatedAdminAgentPayoutsRoute =
     path: '/agent-payouts',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
+const AuthenticatedAdminAgentDepositsRoute =
+  AuthenticatedAdminAgentDepositsRouteImport.update({
+    id: '/agent-deposits',
+    path: '/agent-deposits',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
 const AuthenticatedAdminAdvancedRoute =
   AuthenticatedAdminAdvancedRouteImport.update({
     id: '/advanced',
@@ -567,6 +574,7 @@ export interface FileRoutesByFullPath {
   '/s/$code': typeof SCodeRouteWithChildren
   '/catalog/': typeof CatalogIndexRoute
   '/admin/advanced': typeof AuthenticatedAdminAdvancedRoute
+  '/admin/agent-deposits': typeof AuthenticatedAdminAgentDepositsRoute
   '/admin/agent-payouts': typeof AuthenticatedAdminAgentPayoutsRoute
   '/admin/agent-report': typeof AuthenticatedAdminAgentReportRoute
   '/admin/agents': typeof AuthenticatedAdminAgentsRoute
@@ -645,6 +653,7 @@ export interface FileRoutesByTo {
   '/catalog/$slug': typeof CatalogSlugRoute
   '/catalog': typeof CatalogIndexRoute
   '/admin/advanced': typeof AuthenticatedAdminAdvancedRoute
+  '/admin/agent-deposits': typeof AuthenticatedAdminAgentDepositsRoute
   '/admin/agent-payouts': typeof AuthenticatedAdminAgentPayoutsRoute
   '/admin/agent-report': typeof AuthenticatedAdminAgentReportRoute
   '/admin/agents': typeof AuthenticatedAdminAgentsRoute
@@ -729,6 +738,7 @@ export interface FileRoutesById {
   '/s/$code': typeof SCodeRouteWithChildren
   '/catalog/': typeof CatalogIndexRoute
   '/_authenticated/admin/advanced': typeof AuthenticatedAdminAdvancedRoute
+  '/_authenticated/admin/agent-deposits': typeof AuthenticatedAdminAgentDepositsRoute
   '/_authenticated/admin/agent-payouts': typeof AuthenticatedAdminAgentPayoutsRoute
   '/_authenticated/admin/agent-report': typeof AuthenticatedAdminAgentReportRoute
   '/_authenticated/admin/agents': typeof AuthenticatedAdminAgentsRoute
@@ -813,6 +823,7 @@ export interface FileRouteTypes {
     | '/s/$code'
     | '/catalog/'
     | '/admin/advanced'
+    | '/admin/agent-deposits'
     | '/admin/agent-payouts'
     | '/admin/agent-report'
     | '/admin/agents'
@@ -891,6 +902,7 @@ export interface FileRouteTypes {
     | '/catalog/$slug'
     | '/catalog'
     | '/admin/advanced'
+    | '/admin/agent-deposits'
     | '/admin/agent-payouts'
     | '/admin/agent-report'
     | '/admin/agents'
@@ -974,6 +986,7 @@ export interface FileRouteTypes {
     | '/s/$code'
     | '/catalog/'
     | '/_authenticated/admin/advanced'
+    | '/_authenticated/admin/agent-deposits'
     | '/_authenticated/admin/agent-payouts'
     | '/_authenticated/admin/agent-report'
     | '/_authenticated/admin/agents'
@@ -1526,6 +1539,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAgentPayoutsRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/_authenticated/admin/agent-deposits': {
+      id: '/_authenticated/admin/agent-deposits'
+      path: '/agent-deposits'
+      fullPath: '/admin/agent-deposits'
+      preLoaderRoute: typeof AuthenticatedAdminAgentDepositsRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
     '/_authenticated/admin/advanced': {
       id: '/_authenticated/admin/advanced'
       path: '/advanced'
@@ -1636,6 +1656,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedAdminRouteRouteChildren {
   AuthenticatedAdminAdvancedRoute: typeof AuthenticatedAdminAdvancedRoute
+  AuthenticatedAdminAgentDepositsRoute: typeof AuthenticatedAdminAgentDepositsRoute
   AuthenticatedAdminAgentPayoutsRoute: typeof AuthenticatedAdminAgentPayoutsRoute
   AuthenticatedAdminAgentReportRoute: typeof AuthenticatedAdminAgentReportRoute
   AuthenticatedAdminAgentsRoute: typeof AuthenticatedAdminAgentsRoute
@@ -1673,6 +1694,7 @@ interface AuthenticatedAdminRouteRouteChildren {
 const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren =
   {
     AuthenticatedAdminAdvancedRoute: AuthenticatedAdminAdvancedRoute,
+    AuthenticatedAdminAgentDepositsRoute: AuthenticatedAdminAgentDepositsRoute,
     AuthenticatedAdminAgentPayoutsRoute: AuthenticatedAdminAgentPayoutsRoute,
     AuthenticatedAdminAgentReportRoute: AuthenticatedAdminAgentReportRoute,
     AuthenticatedAdminAgentsRoute: AuthenticatedAdminAgentsRoute,
