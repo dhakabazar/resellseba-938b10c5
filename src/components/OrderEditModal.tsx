@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { AdvanceByToggle, MoneyField, SectionLabel } from "@/components/order-form-fields";
 import { packagingModeHint, packagingTotal } from "@/lib/packaging";
 import { useAdvancedSettings } from "@/lib/advanced-settings";
+import { useResellerPriceMap, wholesalePrice, hasCustomPrice } from "@/lib/reseller-prices";
 
 
 
@@ -61,6 +62,8 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
   /** Packaging charge rule from Admin → System → Advanced settings. */
   const { settings: advanced } = useAdvancedSettings();
   const packagingSum = advanced.packagingChargeSum;
+  /** Reseller specific admin prices — only newly added lines use them. */
+  const prices = useResellerPriceMap(order ? ((order as any).reseller_id ?? null) : undefined);
 
 
   /** Money actually collected by the courier. Empty = full order total received. */
@@ -226,7 +229,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
   function minFor(it: EditItem) {
     if (it.id) return Number(it.sa_price ?? 0);
     const p = allProducts.find((x) => x.id === it.product_id);
-    const fromProduct = p ? Number(p.reseller_price ?? 0) + Number(p.packaging_cost ?? 0) : 0;
+    const fromProduct = p ? wholesalePrice(p, prices) + Number(p.packaging_cost ?? 0) : 0;
     return Math.max(fromProduct, Number(it.sa_price ?? 0));
   }
 
@@ -248,7 +251,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
     setItems((prev) => {
       const hit = prev.find((x) => x.product_id === p.id);
       if (hit) return prev.map((x) => (x === hit ? { ...x, quantity: x.quantity + 1 } : x));
-      const sa = Number(p.reseller_price ?? 0) + Number(p.packaging_cost ?? 0);
+      const sa = wholesalePrice(p, prices) + Number(p.packaging_cost ?? 0);
       return [
         ...prev,
         {
