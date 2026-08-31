@@ -73,8 +73,15 @@ const GROUPS: Group[] = [
           "ON = notun registration sathe sathe active hoye jabe, 3 dot theke approve korte hobe na. OFF = manual process, admin approve dile access pabe. Dui khetrei admin chaile pore deactivate / reject korte parbe.",
         master: true,
       },
+      {
+        key: "resellerAutoAssign",
+        label: "Automatic agent assign",
+        help:
+          "ON = notun protita reseller auto vabe agent der moddhe pry soman vabe bhag hoye jabe (jei agent er sob theke kom reseller ache se next ta pabe). Sudhu active agent jader reseller permission ache tara pabe. Admin chaile pore manually change korte parbe.",
+      },
     ],
   },
+
   {
     tab: "resellers",
     title: "Reseller catalog",

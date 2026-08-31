@@ -19,6 +19,9 @@ export type AdvancedSettings = {
   packagingChargeSum: boolean;
   /** ON = new reseller applications become active instantly (no manual approve). */
   resellerAutoApprove: boolean;
+  /** ON = every new reseller is auto-assigned to an agent, balanced evenly. */
+  resellerAutoAssign: boolean;
+
   /** Master switch: when off, no verification is required at signup. */
   verifyEnabled: boolean;
   /** Require the email code (only used when the master switch is on). */
@@ -35,6 +38,8 @@ export const DEFAULT_ADVANCED_SETTINGS: AdvancedSettings = {
   resellerCatalogShowStock: true,
   packagingChargeSum: true,
   resellerAutoApprove: false,
+  resellerAutoAssign: false,
+
   verifyEnabled: false,
   verifyEmail: true,
   verifySms: false,

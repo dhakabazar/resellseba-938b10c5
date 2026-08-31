@@ -2875,12 +2875,14 @@ export type Database = {
       order_kept_product_cost: { Args: { _order_id: string }; Returns: number }
       order_visible_to_me: { Args: { _order_id: string }; Returns: boolean }
       panel_bootstrap: { Args: never; Returns: Json }
+      pick_balanced_agent: { Args: never; Returns: string }
       purge_store_visits: { Args: never; Returns: number }
       recalc_order_packaging: {
         Args: { _order_id: string }
         Returns: undefined
       }
       reseller_auto_approve: { Args: never; Returns: boolean }
+      reseller_auto_assign: { Args: never; Returns: boolean }
       reseller_can_note: { Args: { _order_id: string }; Returns: boolean }
       reseller_catalog_page: { Args: never; Returns: Json }
       reseller_dashboard: {
