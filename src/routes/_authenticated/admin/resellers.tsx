@@ -511,6 +511,21 @@ function ResellersPage() {
       );
     }
 
+    // Who wrote each internal note (staff profiles).
+    const authorIds = Array.from(new Set(rows.map((r) => r.notes_by).filter(Boolean))) as string[];
+    if (authorIds.length) {
+      const { data: authorRows } = await supabase
+        .from("profiles")
+        .select("id,full_name")
+        .in("id", authorIds);
+      setNoteAuthors(
+        Object.fromEntries(
+          (authorRows ?? []).map((p: any) => [p.id, (p.full_name as string | null) || "Staff"]),
+        ),
+      );
+    } else {
+      setNoteAuthors({});
+    }
 
     const metrics = (metricsRes.data ?? []) as Array<{
       reseller_id: string;
