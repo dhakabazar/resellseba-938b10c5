@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { clearAppDataCache } from "@/lib/app-data";
 import { toast } from "sonner";
-import { Loader2, Save, RotateCcw, ShieldCheck } from "lucide-react";
+import { Loader2, Save, Check, RotateCcw, ShieldCheck } from "lucide-react";
 import {
   DEFAULT_DEPOSIT_TEXTS,
   mergeTexts,
@@ -25,11 +25,12 @@ const FIELDS: { key: keyof DepositTexts; label: string; help: string; long?: boo
 /** Security deposit rules + reseller-facing texts. Rendered as a tab inside Advanced settings. */
 export function DepositSettingsPanel() {
   const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState(false);
+  const [status, setStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [triggerOn, setTriggerOn] = useState(false);
   const [amount, setAmount] = useState("0");
   const [frozen, setFrozen] = useState("0");
   const [texts, setTexts] = useState<DepositTexts>(DEFAULT_DEPOSIT_TEXTS);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const inp = "w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring";
 
@@ -50,21 +51,36 @@ export function DepositSettingsPanel() {
     })();
   }, []);
 
-  async function save() {
-    setBusy(true);
-    const { error } = await supabase
-      .from("global_settings")
-      .update({
-        deposit_trigger_default_on: triggerOn,
-        deposit_default_amount: Number(amount) || 0,
-        deposit_default_frozen: Number(frozen) || 0,
-        deposit_texts: texts as any,
-      } as any)
-      .eq("id", 1);
-    clearAppDataCache("settings");
-    setBusy(false);
-    if (error) return toast.error(error.message);
-    toast.success("Deposit settings saved");
+  useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
+
+  /** Auto-save: every switch and field persists itself. */
+  function schedule(
+    next: { triggerOn?: boolean; amount?: string; frozen?: string; texts?: DepositTexts },
+    delay = 600,
+  ) {
+    const payload = {
+      deposit_trigger_default_on: next.triggerOn ?? triggerOn,
+      deposit_default_amount: Number(next.amount ?? amount) || 0,
+      deposit_default_frozen: Number(next.frozen ?? frozen) || 0,
+      deposit_texts: (next.texts ?? texts) as any,
+    };
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(async () => {
+      setStatus("saving");
+      const { error } = await supabase.from("global_settings").update(payload as any).eq("id", 1);
+      clearAppDataCache("settings");
+      if (error) {
+        setStatus("idle");
+        return toast.error(error.message);
+      }
+      setStatus("saved");
+    }, delay);
+  }
+
+  function patchTexts(patch: Partial<DepositTexts>) {
+    const next = { ...texts, ...patch };
+    setTexts(next);
+    schedule({ texts: next });
   }
 
   if (loading)
@@ -73,6 +89,7 @@ export function DepositSettingsPanel() {
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     );
+
 
   const preview = {
     due: Math.max((Number(amount) || 0) - 0, 0),
@@ -92,7 +109,7 @@ export function DepositSettingsPanel() {
           <input
             type="checkbox"
             checked={triggerOn}
-            onChange={(e) => setTriggerOn(e.target.checked)}
+            onChange={(e) => { setTriggerOn(e.target.checked); schedule({ triggerOn: e.target.checked }, 0); }}
             className="mt-0.5 h-4 w-4"
           />
           <span className="text-xs">
@@ -103,11 +120,11 @@ export function DepositSettingsPanel() {
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
             <label className="mb-1 block text-xs font-medium">Default deposit amount (৳)</label>
-            <input type="number" min={0} value={amount} onChange={(e) => setAmount(e.target.value)} className={inp} />
+            <input type="number" min={0} value={amount} onChange={(e) => { setAmount(e.target.value); schedule({ amount: e.target.value }); }} className={inp} />
           </div>
           <div>
             <label className="mb-1 block text-xs font-medium">Default freeze amount (৳)</label>
-            <input type="number" min={0} value={frozen} onChange={(e) => setFrozen(e.target.value)} className={inp} />
+            <input type="number" min={0} value={frozen} onChange={(e) => { setFrozen(e.target.value); schedule({ frozen: e.target.value }); }} className={inp} />
           </div>
         </div>
       </div>
@@ -141,7 +158,7 @@ export function DepositSettingsPanel() {
           </div>
           <button
             type="button"
-            onClick={() => setTexts(DEFAULT_DEPOSIT_TEXTS)}
+            onClick={() => { setTexts(DEFAULT_DEPOSIT_TEXTS); schedule({ texts: DEFAULT_DEPOSIT_TEXTS }, 0); }}
             className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs hover:bg-muted"
           >
             <RotateCcw className="h-3.5 w-3.5" /> Reset to default
@@ -159,13 +176,13 @@ export function DepositSettingsPanel() {
                 <textarea
                   rows={3}
                   value={texts[f.key]}
-                  onChange={(e) => setTexts({ ...texts, [f.key]: e.target.value })}
+                  onChange={(e) => patchTexts({ [f.key]: e.target.value })}
                   className={inp}
                 />
               ) : (
                 <input
                   value={texts[f.key]}
-                  onChange={(e) => setTexts({ ...texts, [f.key]: e.target.value })}
+                  onChange={(e) => patchTexts({ [f.key]: e.target.value })}
                   className={inp}
                 />
               )}
@@ -174,13 +191,21 @@ export function DepositSettingsPanel() {
         </div>
 
         <div className="flex justify-end">
-          <button
-            onClick={save}
-            disabled={busy}
-            className="btn-brand inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium disabled:opacity-50"
-          >
-            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save deposit settings
-          </button>
+          <span className="inline-flex items-center gap-2 rounded-full border bg-muted/40 px-3 py-1.5 text-xs text-muted-foreground">
+            {status === "saving" ? (
+              <>
+                <Loader2 className="h-3.5 w-3.5 animate-spin" /> Saving…
+              </>
+            ) : status === "saved" ? (
+              <>
+                <Check className="h-3.5 w-3.5 text-success" /> Saved automatically
+              </>
+            ) : (
+              <>
+                <Save className="h-3.5 w-3.5" /> Auto-save on
+              </>
+            )}
+          </span>
         </div>
       </div>
     </div>

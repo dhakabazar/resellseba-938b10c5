@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { clearAppDataCache } from "@/lib/app-data";
 import { PageHeader } from "@/components/ui-kit";
@@ -10,7 +10,7 @@ import {
   clearAdvancedSettingsCache,
   type AdvancedSettings,
 } from "@/lib/advanced-settings";
-import { Loader2, Save, Package, ShieldCheck, Mail, Smartphone, Info, Boxes, Truck, UserCheck } from "lucide-react";
+import { Loader2, Save, Check, Package, ShieldCheck, Mail, Smartphone, Info, Boxes, Truck, UserCheck } from "lucide-react";
 import {
   DELIVERY_AREAS,
   deliverySettingsSummary,
@@ -140,9 +140,10 @@ const GROUPS: Group[] = [
 
 function AdvancedSettingsPage() {
   const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState(false);
+  const [status, setStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [tab, setTab] = useState<TabKey>("delivery");
   const [settings, setSettings] = useState<AdvancedSettings>(DEFAULT_ADVANCED_SETTINGS);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -157,18 +158,32 @@ function AdvancedSettingsPage() {
     })();
   }, []);
 
-  async function save() {
-    setBusy(true);
+  useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
+
+  async function persist(next: AdvancedSettings) {
+    setStatus("saving");
     const { error } = await supabase
       .from("global_settings")
-      .update({ advanced_settings: settings as any } as any)
+      .update({ advanced_settings: next as any } as any)
       .eq("id", 1);
     clearAppDataCache("settings");
-    setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) {
+      setStatus("idle");
+      return toast.error(error.message);
+    }
     clearAdvancedSettingsCache();
-    setGlobalDelivery(settings.delivery);
-    toast.success("Advanced settings saved");
+    setGlobalDelivery(next.delivery);
+    setStatus("saved");
+  }
+
+  /** Every switch / field saves itself — no Save button needed. */
+  function apply(patch: Partial<AdvancedSettings>, delay = 250) {
+    setSettings((s) => {
+      const next = { ...s, ...patch };
+      if (timer.current) clearTimeout(timer.current);
+      timer.current = setTimeout(() => void persist(next), delay);
+      return next;
+    });
   }
 
   if (loading) {
@@ -185,17 +200,23 @@ function AdvancedSettingsPage() {
     <div className="space-y-5">
       <PageHeader
         title="Advanced settings"
-        description="Platform logic switches — new options will keep being added here."
+        description="Platform logic switches — every change saves automatically."
         actions={
-          tab === "deposit" ? undefined : (
-            <button
-              onClick={save}
-              disabled={busy}
-              className="btn-brand inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium disabled:opacity-50"
-            >
-              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save changes
-            </button>
-          )
+          <span className="inline-flex items-center gap-2 rounded-full border bg-muted/40 px-3 py-1.5 text-xs text-muted-foreground">
+            {status === "saving" ? (
+              <>
+                <Loader2 className="h-3.5 w-3.5 animate-spin" /> Saving…
+              </>
+            ) : status === "saved" ? (
+              <>
+                <Check className="h-3.5 w-3.5 text-success" /> Saved automatically
+              </>
+            ) : (
+              <>
+                <Save className="h-3.5 w-3.5" /> Auto-save on
+              </>
+            )}
+          </span>
         }
       />
 
@@ -221,9 +242,8 @@ function AdvancedSettingsPage() {
       <div className="flex items-start gap-2 rounded-lg border bg-muted/40 p-3 text-xs text-muted-foreground">
         <Info className="mt-0.5 h-4 w-4 shrink-0" />
         <span>
-          {tab === "deposit"
-            ? "Deposit rules and reseller-facing text changed here apply to the reseller panel immediately. This tab has its own Save button."
-            : "These switches apply everywhere instantly — reseller panel, registration, login and dashboard."}
+          Every switch and field on this page saves by itself and applies everywhere instantly — reseller
+          panel, registration, login and dashboard.
         </span>
       </div>
 
@@ -233,14 +253,15 @@ function AdvancedSettingsPage() {
         <div className="space-y-5">
           <DeliveryCard
             value={settings.delivery}
-            onChange={(delivery) => setSettings((s) => ({ ...s, delivery }))}
+            onChange={(delivery) => apply({ delivery }, 700)}
           />
           <DeliveryRulesCard
             value={settings.delivery}
-            onChange={(delivery) => setSettings((s) => ({ ...s, delivery }))}
+            onChange={(delivery) => apply({ delivery }, 700)}
           />
         </div>
       )}
+
 
       {groups.length > 0 && (
         <div className="grid gap-5 lg:grid-cols-2">
@@ -279,7 +300,7 @@ function AdvancedSettingsPage() {
                       <Toggle
                         checked={Boolean(settings[row.key])}
                         disabled={disabled}
-                        onChange={(v) => setSettings((s) => ({ ...s, [row.key]: v }))}
+                        onChange={(v) => apply({ [row.key]: v } as Partial<AdvancedSettings>, 0)}
                       />
                     </label>
                   );
