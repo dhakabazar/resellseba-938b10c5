@@ -107,6 +107,12 @@ export type SubscriptionOverview = {
 
 export const emptyState: SubscriptionState = { enabled: false, locked: false, store_allowed: true };
 
+/** How many days before expiry the reseller should start seeing the reminder. */
+export function noticeWindow(state: SubscriptionState | null | undefined) {
+  const d = Number(state?.notice_days ?? 7);
+  return Number.isFinite(d) && d > 0 ? d : 7;
+}
+
 export const emptyOverview: SubscriptionOverview = {
   state: emptyState,
   options: [],
