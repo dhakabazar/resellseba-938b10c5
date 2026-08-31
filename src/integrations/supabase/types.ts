@@ -1928,6 +1928,61 @@ export type Database = {
           },
         ]
       }
+      reseller_product_prices: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          note: string | null
+          product_id: string
+          reseller_id: string
+          reseller_price: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          note?: string | null
+          product_id: string
+          reseller_id: string
+          reseller_price: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          note?: string | null
+          product_id?: string
+          reseller_id?: string
+          reseller_price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reseller_product_prices_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reseller_product_prices_reseller_id_fkey"
+            columns: ["reseller_id"]
+            isOneToOne: false
+            referencedRelation: "public_stores"
+            referencedColumns: ["reseller_id"]
+          },
+          {
+            foreignKeyName: "reseller_product_prices_reseller_id_fkey"
+            columns: ["reseller_id"]
+            isOneToOne: false
+            referencedRelation: "resellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reseller_settings: {
         Row: {
           about_text: string | null
@@ -2930,6 +2985,10 @@ export type Database = {
           paid_out: number
           pending_payout: number
         }[]
+      }
+      reseller_wholesale_price: {
+        Args: { _product_id: string; _reseller_id: string }
+        Returns: number
       }
       resolve_delivery_charge: {
         Args: {
