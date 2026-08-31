@@ -18,7 +18,10 @@ type L = {
   id: string;
   selling_price: number;
   is_active: boolean;
+  /** true when admin set a reseller specific admin price for this product */
+  custom_price?: boolean;
   products: {
+    id?: string;
     name: string;
     slug: string;
     product_code: string | null;
