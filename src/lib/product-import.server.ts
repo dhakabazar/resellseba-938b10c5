@@ -294,6 +294,68 @@ export function harvestDescription(html: string): string {
   return "";
 }
 
+const ALLOWED_TAGS = new Set([
+  "p", "br", "ul", "ol", "li", "strong", "b", "em", "i", "u",
+  "h2", "h3", "h4", "table", "thead", "tbody", "tr", "td", "th", "img",
+]);
+
+/**
+ * Keeps the marketplace's own formatting (bullets, bold, tables, spec images)
+ * while dropping every script, style, event handler and inline style.
+ */
+export function sanitizeRichHtml(raw: string, limit = 20_000): string {
+  const cleaned = raw
+    .replace(/<!--[\s\S]*?-->/g, " ")
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<\/?(article|section|div|span|font|figure)[^>]*>/gi, "")
+    .replace(/<(\/?)([a-z0-9]+)([^>]*)>/gi, (_m, slash: string, tag: string, attrs: string) => {
+      const name = tag.toLowerCase();
+      if (!ALLOWED_TAGS.has(name)) return " ";
+      if (slash) return `</${name}>`;
+      if (name === "img") {
+        const src = attrs.match(/src=["']([^"']+)["']/i)?.[1]?.trim() ?? "";
+        const abs = src.startsWith("//") ? `https:${src}` : src;
+        return /^https:\/\//i.test(abs) ? `<img src="${abs}" loading="lazy" />` : " ";
+      }
+      return `<${name}>`;
+    })
+    .replace(/(?:\s*<p>\s*<\/p>\s*)+/gi, "")
+    .replace(/[ \t]{2,}/g, " ")
+    .trim();
+  return cleaned.slice(0, limit);
+}
+
+/**
+ * Daraz (and most Lazada-family shops) keep highlights + the real description
+ * as escaped HTML inside module JSON. Returns sanitized HTML, "" when absent.
+ */
+export function harvestRichDescription(html: string): string {
+  const parts: { html: string; text: string }[] = [];
+  const key3 = (t: string) => t.replace(/\s+/g, " ").toLowerCase();
+  for (const key of ["highlights", "desc", "descriptionHtml", "detailDescription", "html", "body_html"]) {
+    const raw = readJsonStringValue(html, key);
+    if (!raw) continue;
+    const safe = sanitizeRichHtml(raw);
+    const text = key3(toPlainText(safe, 20_000));
+    if (text.length <= 60) continue;
+    // Daraz repeats the same copy across keys — keep only the richest version.
+    const dupe = parts.findIndex(
+      (p) =>
+        p.text.includes(text) ||
+        text.includes(p.text) ||
+        p.text.slice(0, 200) === text.slice(0, 200),
+    );
+    if (dupe >= 0) {
+      if (parts[dupe]!.text.length >= text.length) continue;
+      parts.splice(dupe, 1);
+    }
+    parts.push({ html: safe, text });
+    if (parts.reduce((n, p) => n + p.html.length, 0) > 18_000) break;
+  }
+  return parts.map((p) => p.html).join("\n").slice(0, 20_000);
+}
+
 /** Anti-bot / captcha interstitials must not be imported as product data. */
 function assertNotBlocked(html: string, host: string) {
   if (/rgv587_flag|_____tmd_____|x5secdata|captcha-delivery|Enable JavaScript and cookies to continue|Are you a human/i.test(html.slice(0, 4000)))
@@ -406,9 +468,12 @@ export async function scrapeProduct(rawUrl: string): Promise<ImportedProduct> {
 
   const ldDesc = typeof product?.description === "string" ? toPlainText(product.description) : "";
   const metaDesc = toPlainText(meta(html, "og:description", "description", "twitter:description") ?? "");
-  const deepDesc = ldDesc.length > 120 ? "" : harvestDescription(html);
-  // Longest meaningful text wins — Daraz keeps the real detail in module JSON.
-  const description = [ldDesc, deepDesc, metaDesc].sort((a, b) => b.length - a.length)[0] ?? "";
+  const deepDesc = harvestDescription(html);
+  // Formatted marketplace HTML wins (bullets/specs kept); otherwise longest text.
+  const richDesc = harvestRichDescription(html);
+  const description =
+    richDesc || ([ldDesc, deepDesc, metaDesc].sort((a, b) => b.length - a.length)[0] ?? "");
+  const descText = toPlainText(description, 4000);
 
 
   const price =
@@ -443,7 +508,7 @@ export async function scrapeProduct(rawUrl: string): Promise<ImportedProduct> {
     url: url.href,
     name,
     description,
-    shortDescription: description.slice(0, 200),
+    shortDescription: descText.slice(0, 200),
     price,
     currency:
       (typeof offer?.priceCurrency === "string" ? offer.priceCurrency.slice(0, 6) : null) ??
@@ -455,7 +520,7 @@ export async function scrapeProduct(rawUrl: string): Promise<ImportedProduct> {
     category,
     images: cleanImages(imageCandidates, url),
     metaTitle: name.slice(0, 60),
-    metaDescription: description.slice(0, 160),
+    metaDescription: descText.slice(0, 160),
   };
 }
 
