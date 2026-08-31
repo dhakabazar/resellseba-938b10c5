@@ -2034,6 +2034,8 @@ export type Database = {
           leader_id: string | null
           nid_number: string | null
           notes: string | null
+          notes_at: string | null
+          notes_by: string | null
           payout_account_name: string | null
           payout_account_number: string | null
           payout_bank_name: string | null
@@ -2063,6 +2065,8 @@ export type Database = {
           leader_id?: string | null
           nid_number?: string | null
           notes?: string | null
+          notes_at?: string | null
+          notes_by?: string | null
           payout_account_name?: string | null
           payout_account_number?: string | null
           payout_bank_name?: string | null
@@ -2092,6 +2096,8 @@ export type Database = {
           leader_id?: string | null
           nid_number?: string | null
           notes?: string | null
+          notes_at?: string | null
+          notes_by?: string | null
           payout_account_name?: string | null
           payout_account_number?: string | null
           payout_bank_name?: string | null
