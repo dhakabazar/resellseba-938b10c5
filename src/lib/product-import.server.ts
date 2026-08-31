@@ -331,15 +331,22 @@ export function sanitizeRichHtml(raw: string, limit = 20_000): string {
  * as escaped HTML inside module JSON. Returns sanitized HTML, "" when absent.
  */
 export function harvestRichDescription(html: string): string {
-  const parts: string[] = [];
+  const parts: { html: string; text: string }[] = [];
+  const key3 = (t: string) => t.replace(/\s+/g, " ").toLowerCase();
   for (const key of ["highlights", "desc", "descriptionHtml", "detailDescription", "html", "body_html"]) {
     const raw = readJsonStringValue(html, key);
     if (!raw) continue;
     const safe = sanitizeRichHtml(raw);
-    if (toPlainText(safe).length > 60 && !parts.some((p) => p === safe)) parts.push(safe);
-    if (parts.join("").length > 18_000) break;
+    const text = key3(toPlainText(safe, 20_000));
+    if (text.length <= 60) continue;
+    // A longer block often already contains the shorter one (Daraz repeats highlights).
+    if (parts.some((p) => p.text.includes(text))) continue;
+    const shorter = parts.findIndex((p) => text.includes(p.text));
+    if (shorter >= 0) parts.splice(shorter, 1);
+    parts.push({ html: safe, text });
+    if (parts.reduce((n, p) => n + p.html.length, 0) > 18_000) break;
   }
-  return parts.join("\n").slice(0, 20_000);
+  return parts.map((p) => p.html).join("\n").slice(0, 20_000);
 }
 
 /** Anti-bot / captcha interstitials must not be imported as product data. */
