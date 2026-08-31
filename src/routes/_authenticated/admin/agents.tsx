@@ -156,13 +156,18 @@ function AgentsPage() {
                   <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Sale target</div>
                   <div className="text-sm font-black text-primary">{bdt(Number(a.sale_target))}</div>
                 </div>
-                <div
-                  className="rounded-lg border bg-muted/40 p-2.5"
-                  title="Commission = this % × settled net profit of the assigned resellers' delivered orders."
-                >
+                <div className="rounded-lg border bg-muted/40 p-2.5" title={AGENT_COMMISSION_HINT}>
                   <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Commission</div>
-                  <div className="text-sm font-black">{Number(a.commission_rate ?? 0)}%</div>
+                  <div className="text-sm font-black">
+                    {commissionMode(a) === "per_product"
+                      ? `${bdt(Number(a.commission_per_unit ?? 0))}/pc`
+                      : `${Number(a.commission_rate ?? 0)}%`}
+                  </div>
+                  <div className="mt-0.5 text-[10px] font-semibold text-muted-foreground">
+                    {commissionMode(a) === "per_product" ? "Per product" : "Of profit"}
+                  </div>
                 </div>
+
                 <div className="rounded-lg border bg-muted/40 p-2.5">
                   <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Resellers</div>
                   <div className="text-sm font-black">{counts[a.id] ?? 0}</div>
