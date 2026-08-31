@@ -101,6 +101,7 @@ export function PublicHeader({
         { href: "#categories", label: c.nav.categories || "ক্যাটাগরি" },
         { to: "/catalog", label: "প্রোডাক্টস" },
         { to: "/tutorials", label: "টিউটোরিয়াল" },
+        { href: "#stories", label: c.nav.stories || "সাকসেস স্টোরি" },
         { href: "#faq", label: c.nav.faq || "FAQ" },
       ];
 

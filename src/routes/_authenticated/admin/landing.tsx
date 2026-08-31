@@ -16,9 +16,10 @@ type Feature = { icon: string; title: string; desc: string };
 type Step = { title: string; desc: string };
 type FlowStep = { icon: string; title: string; desc: string };
 type FaqItem = { q: string; a: string };
+type Story = { name: string; role?: string; location?: string; quote: string; metric?: string; metricLabel?: string; rating?: number; avatar?: UploadedImage | null };
 type StatItem = { value: string; label: string };
 type LandingContent = {
-  nav: { features: string; how: string; categories: string; signIn: string; cta: string; faq?: string };
+  nav: { features: string; how: string; categories: string; signIn: string; cta: string; faq?: string; stories?: string };
   hero: {
     badge: string;
     titleStart: string;
@@ -34,6 +35,7 @@ type LandingContent = {
   features: { title: string; subtitle: string; items: Feature[] };
   how: { title: string; subtitle: string; steps: Step[] };
   faq?: { title: string; subtitle: string; items: FaqItem[] };
+  stories?: { title?: string; subtitle?: string; items: Story[] };
   cta: { badge: string; title: string; subtitle: string; button: string };
   footer: { tagline: string };
 };
@@ -82,6 +84,7 @@ function LandingEditor() {
           <F label="Features"><I value={c.nav.features} onChange={(v) => update((d) => { d.nav.features = v; })} /></F>
           <F label="How it works"><I value={c.nav.how} onChange={(v) => update((d) => { d.nav.how = v; })} /></F>
           <F label="Categories"><I value={c.nav.categories} onChange={(v) => update((d) => { d.nav.categories = v; })} /></F>
+          <F label="Stories"><I value={c.nav.stories ?? ""} onChange={(v) => update((d) => { d.nav.stories = v; })} /></F>
           <F label="FAQ"><I value={c.nav.faq ?? ""} onChange={(v) => update((d) => { d.nav.faq = v; })} /></F>
           <F label="Sign in"><I value={c.nav.signIn} onChange={(v) => update((d) => { d.nav.signIn = v; })} /></F>
           <F label="CTA button"><I value={c.nav.cta} onChange={(v) => update((d) => { d.nav.cta = v; })} /></F>
@@ -240,6 +243,44 @@ function LandingEditor() {
           ))}
           <button type="button" onClick={() => update((d) => { d.faq = { ...(d.faq ?? { title: "", subtitle: "", items: [] }), items: [...(d.faq?.items ?? []), { q: "", a: "" }] }; })} className="inline-flex items-center gap-1 rounded-md border px-3 py-1.5 text-xs hover:bg-muted">
             <Plus className="h-3.5 w-3.5" /> FAQ add
+          </button>
+        </div>
+      </Section>
+
+      <Section title="7.5 Reseller stories">
+        <Grid>
+          <F label="Title"><I value={c.stories?.title ?? ""} onChange={(v) => update((d) => { d.stories = { ...(d.stories ?? { items: [] }), title: v }; })} /></F>
+          <F label="Subtitle"><I value={c.stories?.subtitle ?? ""} onChange={(v) => update((d) => { d.stories = { ...(d.stories ?? { items: [] }), subtitle: v }; })} /></F>
+        </Grid>
+        <div className="space-y-3">
+          {(c.stories?.items ?? []).map((s, i) => (
+            <div key={i} className="rounded-lg border p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-muted-foreground">Story #{i + 1}</span>
+                <button type="button" onClick={() => update((d) => { d.stories!.items.splice(i, 1); })} className="text-destructive hover:opacity-70"><Trash2 className="h-3.5 w-3.5" /></button>
+              </div>
+              <Grid>
+                <F label="Name"><I value={s.name} onChange={(v) => update((d) => { d.stories!.items[i].name = v; })} /></F>
+                <F label="Role"><I value={s.role ?? ""} onChange={(v) => update((d) => { d.stories!.items[i].role = v; })} /></F>
+                <F label="Location"><I value={s.location ?? ""} onChange={(v) => update((d) => { d.stories!.items[i].location = v; })} /></F>
+                <F label="Rating (1-5)"><I value={String(s.rating ?? 5)} onChange={(v) => update((d) => { d.stories!.items[i].rating = Math.max(0, Math.min(5, Number(v) || 0)); })} /></F>
+                <F label="Metric (e.g. ৳৩২,০০০)"><I value={s.metric ?? ""} onChange={(v) => update((d) => { d.stories!.items[i].metric = v; })} /></F>
+                <F label="Metric label"><I value={s.metricLabel ?? ""} onChange={(v) => update((d) => { d.stories!.items[i].metricLabel = v; })} /></F>
+              </Grid>
+              <F label="Quote"><T value={s.quote} onChange={(v) => update((d) => { d.stories!.items[i].quote = v; })} /></F>
+              <F label="Photo (auto WebP ≤200KB)">
+                <ImageUploader
+                  bucket="branding"
+                  folder="landing-stories"
+                  value={s.avatar ? [s.avatar] : []}
+                  onChange={(v) => update((d) => { d.stories!.items[i].avatar = v[0] ?? null; })}
+                  label="Upload photo"
+                />
+              </F>
+            </div>
+          ))}
+          <button type="button" onClick={() => update((d) => { d.stories = { ...(d.stories ?? {}), items: [...(d.stories?.items ?? []), { name: "", role: "", location: "", quote: "", metric: "", metricLabel: "", rating: 5, avatar: null }] }; })} className="inline-flex items-center gap-1 rounded-md border px-3 py-1.5 text-xs hover:bg-muted">
+            <Plus className="h-3.5 w-3.5" /> Story add
           </button>
         </div>
       </Section>
