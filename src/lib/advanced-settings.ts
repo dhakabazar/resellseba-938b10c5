@@ -32,6 +32,37 @@ export type AdvancedSettings = {
   depositPayEnabled: boolean;
   /** Platform-wide delivery charge rule (products can override it). */
   delivery: DeliverySettings;
+  /** Monthly package (subscription) rules. */
+  subscription: SubscriptionSettings;
+};
+
+/** Monthly package rules — prices themselves live in `subscription_plans`. */
+export type SubscriptionSettings = {
+  /** Master switch: when off, nobody is asked to pay for a package. */
+  enabled: boolean;
+  /** Free trial length for a brand-new reseller (0 = no trial). */
+  trialDays: number;
+  /** Extra days the panel keeps working after the package expired. */
+  graceDays: number;
+  /** Which package a new reseller gets during the free trial. */
+  trialPlan: "panel" | "panel_store";
+  /** Reseller-facing texts. */
+  noticeTitle: string;
+  noticeBody: string;
+  lockedTitle: string;
+  lockedBody: string;
+};
+
+export const DEFAULT_SUBSCRIPTION_SETTINGS: SubscriptionSettings = {
+  enabled: false,
+  trialDays: 7,
+  graceDays: 0,
+  trialPlan: "panel_store",
+  noticeTitle: "Your monthly package ends soon",
+  noticeBody: "Renew the package to keep the panel and your store running without a break.",
+  lockedTitle: "Your monthly package has expired",
+  lockedBody:
+    "The panel is read-only right now. Renew the package to add orders and manage your listings again.",
 };
 
 export const DEFAULT_ADVANCED_SETTINGS: AdvancedSettings = {
@@ -45,9 +76,21 @@ export const DEFAULT_ADVANCED_SETTINGS: AdvancedSettings = {
   verifySms: false,
   depositPayEnabled: true,
   delivery: DEFAULT_DELIVERY_SETTINGS,
+  subscription: DEFAULT_SUBSCRIPTION_SETTINGS,
 };
 
-
+export function mergeSubscriptionSettings(raw: unknown): SubscriptionSettings {
+  const r = (raw ?? {}) as Record<string, unknown>;
+  const out = { ...DEFAULT_SUBSCRIPTION_SETTINGS };
+  if (typeof r.enabled === "boolean") out.enabled = r.enabled;
+  if (Number.isFinite(Number(r.trialDays))) out.trialDays = Math.max(0, Number(r.trialDays));
+  if (Number.isFinite(Number(r.graceDays))) out.graceDays = Math.max(0, Number(r.graceDays));
+  if (r.trialPlan === "panel" || r.trialPlan === "panel_store") out.trialPlan = r.trialPlan;
+  for (const k of ["noticeTitle", "noticeBody", "lockedTitle", "lockedBody"] as const) {
+    if (typeof r[k] === "string" && (r[k] as string).trim()) out[k] = r[k] as string;
+  }
+  return out;
+}
 
 export function mergeAdvanced(raw: unknown): AdvancedSettings {
   const r = (raw ?? {}) as Record<string, unknown>;
@@ -58,6 +101,7 @@ export function mergeAdvanced(raw: unknown): AdvancedSettings {
     }
   }
   out.delivery = mergeDeliverySettings(r.delivery);
+  out.subscription = mergeSubscriptionSettings(r.subscription);
   setGlobalDelivery(out.delivery);
   return out;
 }
