@@ -1928,6 +1928,57 @@ export type Database = {
           },
         ]
       }
+      reseller_plan_prices: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          months: number
+          note: string | null
+          plan: string
+          price: number
+          reseller_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          months: number
+          note?: string | null
+          plan: string
+          price?: number
+          reseller_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          months?: number
+          note?: string | null
+          plan?: string
+          price?: number
+          reseller_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reseller_plan_prices_reseller_id_fkey"
+            columns: ["reseller_id"]
+            isOneToOne: false
+            referencedRelation: "public_stores"
+            referencedColumns: ["reseller_id"]
+          },
+          {
+            foreignKeyName: "reseller_plan_prices_reseller_id_fkey"
+            columns: ["reseller_id"]
+            isOneToOne: false
+            referencedRelation: "resellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reseller_product_prices: {
         Row: {
           created_at: string
@@ -2076,6 +2127,63 @@ export type Database = {
           },
         ]
       }
+      reseller_subscriptions: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          ends_at: string
+          id: string
+          months: number
+          note: string | null
+          plan: string
+          reseller_id: string
+          source: string
+          starts_at: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          ends_at: string
+          id?: string
+          months: number
+          note?: string | null
+          plan: string
+          reseller_id: string
+          source?: string
+          starts_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          ends_at?: string
+          id?: string
+          months?: number
+          note?: string | null
+          plan?: string
+          reseller_id?: string
+          source?: string
+          starts_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reseller_subscriptions_reseller_id_fkey"
+            columns: ["reseller_id"]
+            isOneToOne: false
+            referencedRelation: "public_stores"
+            referencedColumns: ["reseller_id"]
+          },
+          {
+            foreignKeyName: "reseller_subscriptions_reseller_id_fkey"
+            columns: ["reseller_id"]
+            isOneToOne: false
+            referencedRelation: "resellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       resellers: {
         Row: {
           address: string | null
@@ -2105,6 +2213,10 @@ export type Database = {
           payout_notes: string | null
           payout_routing: string | null
           status: Database["public"]["Enums"]["reseller_status"]
+          subscription_exempt: boolean
+          subscription_expires_at: string | null
+          subscription_plan: string | null
+          subscription_trial_ends_at: string | null
           updated_at: string
           user_id: string
         }
@@ -2136,6 +2248,10 @@ export type Database = {
           payout_notes?: string | null
           payout_routing?: string | null
           status?: Database["public"]["Enums"]["reseller_status"]
+          subscription_exempt?: boolean
+          subscription_expires_at?: string | null
+          subscription_plan?: string | null
+          subscription_trial_ends_at?: string | null
           updated_at?: string
           user_id: string
         }
@@ -2167,6 +2283,10 @@ export type Database = {
           payout_notes?: string | null
           payout_routing?: string | null
           status?: Database["public"]["Enums"]["reseller_status"]
+          subscription_exempt?: boolean
+          subscription_expires_at?: string | null
+          subscription_plan?: string | null
+          subscription_trial_ends_at?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -2363,6 +2483,141 @@ export type Database = {
             columns: ["reseller_id"]
             isOneToOne: false
             referencedRelation: "resellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscription_plans: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          months: number
+          plan: string
+          price: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          months: number
+          plan: string
+          price?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          months?: number
+          plan?: string
+          price?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      subscription_requests: {
+        Row: {
+          admin_note: string | null
+          amount: number
+          code: string | null
+          created_at: string
+          id: string
+          method: string | null
+          months: number
+          note: string | null
+          paid_at: string | null
+          payment_config_id: string | null
+          plan: string
+          provider: string | null
+          reference: string | null
+          reseller_id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          subscription_id: string | null
+          txn_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          admin_note?: string | null
+          amount?: number
+          code?: string | null
+          created_at?: string
+          id?: string
+          method?: string | null
+          months: number
+          note?: string | null
+          paid_at?: string | null
+          payment_config_id?: string | null
+          plan: string
+          provider?: string | null
+          reference?: string | null
+          reseller_id: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          subscription_id?: string | null
+          txn_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          admin_note?: string | null
+          amount?: number
+          code?: string | null
+          created_at?: string
+          id?: string
+          method?: string | null
+          months?: number
+          note?: string | null
+          paid_at?: string | null
+          payment_config_id?: string | null
+          plan?: string
+          provider?: string | null
+          reference?: string | null
+          reseller_id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          subscription_id?: string | null
+          txn_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_requests_payment_config_id_fkey"
+            columns: ["payment_config_id"]
+            isOneToOne: false
+            referencedRelation: "payment_configs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_requests_payment_config_id_fkey"
+            columns: ["payment_config_id"]
+            isOneToOne: false
+            referencedRelation: "public_payment_methods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_requests_reseller_id_fkey"
+            columns: ["reseller_id"]
+            isOneToOne: false
+            referencedRelation: "public_stores"
+            referencedColumns: ["reseller_id"]
+          },
+          {
+            foreignKeyName: "subscription_requests_reseller_id_fkey"
+            columns: ["reseller_id"]
+            isOneToOne: false
+            referencedRelation: "resellers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_requests_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "reseller_subscriptions"
             referencedColumns: ["id"]
           },
         ]
@@ -2705,6 +2960,20 @@ export type Database = {
       admin_set_user_password: {
         Args: { _password: string; _user_id: string }
         Returns: undefined
+      }
+      admin_subscription_extend: {
+        Args: {
+          _amount?: number
+          _months: number
+          _note?: string
+          _plan: string
+          _reseller_id: string
+        }
+        Returns: Json
+      }
+      admin_subscription_save: {
+        Args: { _payload: Json; _reseller_id: string }
+        Returns: Json
       }
       admin_update_user: {
         Args: {
@@ -3067,6 +3336,91 @@ export type Database = {
           visits: number
         }[]
       }
+      subscription_apply: {
+        Args: {
+          _actor?: string
+          _amount: number
+          _months: number
+          _note?: string
+          _plan: string
+          _reseller_id: string
+          _source?: string
+        }
+        Returns: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          ends_at: string
+          id: string
+          months: number
+          note: string | null
+          plan: string
+          reseller_id: string
+          source: string
+          starts_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "reseller_subscriptions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      subscription_config: { Args: never; Returns: Json }
+      subscription_locked: { Args: { _reseller_id: string }; Returns: boolean }
+      subscription_options: {
+        Args: { _reseller_id?: string }
+        Returns: {
+          active: boolean
+          base_price: number
+          is_custom: boolean
+          months: number
+          plan_key: string
+          price: number
+        }[]
+      }
+      subscription_overview: { Args: { _reseller_id?: string }; Returns: Json }
+      subscription_price: {
+        Args: { _months: number; _plan: string; _reseller_id: string }
+        Returns: number
+      }
+      subscription_request_review: {
+        Args: { _admin_note?: string; _approve: boolean; _id: string }
+        Returns: {
+          admin_note: string | null
+          amount: number
+          code: string | null
+          created_at: string
+          id: string
+          method: string | null
+          months: number
+          note: string | null
+          paid_at: string | null
+          payment_config_id: string | null
+          plan: string
+          provider: string | null
+          reference: string | null
+          reseller_id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          subscription_id: string | null
+          txn_id: string | null
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "subscription_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      subscription_state: { Args: { _reseller_id?: string }; Returns: Json }
+      subscription_store_allowed: {
+        Args: { _reseller_id: string }
+        Returns: boolean
+      }
+      subscription_until: { Args: { _reseller_id: string }; Returns: string }
       transaction_report: {
         Args: {
           _from: string
