@@ -164,6 +164,8 @@ export type Database = {
       }
       agents: {
         Row: {
+          commission_mode: string
+          commission_per_unit: number
           commission_rate: number
           created_at: string
           display_name: string
@@ -178,6 +180,8 @@ export type Database = {
           whatsapp: string | null
         }
         Insert: {
+          commission_mode?: string
+          commission_per_unit?: number
           commission_rate?: number
           created_at?: string
           display_name: string
@@ -192,6 +196,8 @@ export type Database = {
           whatsapp?: string | null
         }
         Update: {
+          commission_mode?: string
+          commission_per_unit?: number
           commission_rate?: number
           created_at?: string
           display_name?: string
@@ -2652,6 +2658,13 @@ export type Database = {
         Returns: undefined
       }
       agent_deposit_overview: { Args: never; Returns: Json }
+      agent_order_units: {
+        Args: never
+        Returns: {
+          order_id: string
+          units: number
+        }[]
+      }
       agent_owns_reseller: { Args: { _reseller_id: string }; Returns: boolean }
       assert_admin_permission: {
         Args: { _permissions: string[] }
