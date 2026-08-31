@@ -1092,6 +1092,31 @@ function ResellersPage() {
                           no phone
                         </span>
                       )}
+                      {r.notes ? (
+                        <button
+                          type="button"
+                          onClick={() => setNoteFor(r)}
+                          title={`${r.notes}${r.notes_by ? `\n— ${noteAuthors[r.notes_by] ?? "Staff"}` : ""}`}
+                          className="inline-flex max-w-[260px] items-center gap-1 rounded-md border border-warning/40 bg-warning/15 px-2 py-0.5 text-warning transition hover:bg-warning/25"
+                        >
+                          <StickyNote className="h-3 w-3 shrink-0" />
+                          <span className="truncate text-[11px] font-medium">{r.notes}</span>
+                          {r.notes_by && (
+                            <span className="shrink-0 text-[10px] opacity-80">
+                              · {noteAuthors[r.notes_by] ?? "Staff"}
+                            </span>
+                          )}
+                        </button>
+                      ) : can("resellers.edit") ? (
+                        <button
+                          type="button"
+                          onClick={() => setNoteFor(r)}
+                          title="Add internal note"
+                          className="inline-flex items-center gap-1 rounded-md border border-dashed px-2 py-0.5 text-[11px] text-muted-foreground transition hover:bg-muted"
+                        >
+                          <StickyNote className="h-3 w-3" /> Add note
+                        </button>
+                      ) : null}
                       {r.agent_id && (
                         <span
                           className="inline-flex items-center gap-1 rounded-md border border-primary/30 bg-primary/5 px-2 py-0.5"
