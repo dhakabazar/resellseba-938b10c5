@@ -80,8 +80,8 @@ export function DeliveryRulesCard({
           <div>
             <h2 className="text-sm font-semibold">Custom delivery rules</h2>
             <p className="text-xs text-muted-foreground">
-              Product, brand ba category select kore alada delivery charge set korun. Ekadhik rule banano jabe —
-              upor theke niche check hobe, first match kaj korbe.
+              Set a different delivery charge for selected products, brands or categories. You can create
+              multiple rules — they are checked top to bottom and the first match wins.
             </p>
           </div>
         </div>
@@ -96,7 +96,7 @@ export function DeliveryRulesCard({
 
       <div className="space-y-3 p-4">
         <p className="rounded-md bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-          Priority: 1) product edit e set kora delivery charge, 2) ei custom rule, 3) global rule.
+          Priority: 1) delivery charge set on the product, 2) these custom rules, 3) the global rule.
         </p>
 
         {rules.length === 0 && (
@@ -211,7 +211,7 @@ export function DeliveryRulesCard({
                     value={rule.custom}
                     onChange={(e) => patch(rule.id, { custom: Number(e.target.value) || 0 })}
                     className={inp}
-                    placeholder="Default charge (order e change kora jabe)"
+                    placeholder="Default charge (editable per order)"
                   />
                 )}
                 {rule.mode === "free" && (
@@ -243,7 +243,7 @@ export function DeliveryRulesCard({
                 />
                 {!rule.target.products.length && !rule.target.brands.length && !rule.target.categories.length && (
                   <p className="text-[11px] text-amber-600">
-                    Kichu select kora nai — ei rule apply hobe na.
+                    Nothing selected — this rule will not apply.
                   </p>
                 )}
               </div>

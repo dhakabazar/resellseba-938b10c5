@@ -63,21 +63,21 @@ const GROUPS: Group[] = [
   {
     tab: "resellers",
     title: "New reseller approval",
-    hint: "Manual approval na automatic — ekhan theke niyontron.",
+    hint: "Choose between manual and automatic approval.",
     icon: <UserCheck className="h-4 w-4" />,
     rows: [
       {
         key: "resellerAutoApprove",
         label: "Automatic approval",
         help:
-          "ON = notun registration sathe sathe active hoye jabe, 3 dot theke approve korte hobe na. OFF = manual process, admin approve dile access pabe. Dui khetrei admin chaile pore deactivate / reject korte parbe.",
+          "ON = a new registration becomes active immediately, no manual approval needed. OFF = an admin must approve the account before it gets access. In both cases an admin can deactivate or reject the account later.",
         master: true,
       },
       {
         key: "resellerAutoAssign",
         label: "Automatic agent assign",
         help:
-          "ON = notun protita reseller auto vabe agent der moddhe pry soman vabe bhag hoye jabe (jei agent er sob theke kom reseller ache se next ta pabe). Sudhu active agent jader reseller permission ache tara pabe. Admin chaile pore manually change korte parbe.",
+          "ON = every new reseller is distributed evenly between agents (the agent with the fewest resellers gets the next one). Only active agents with reseller permission are included. An admin can reassign manually at any time.",
       },
     ],
   },
@@ -91,7 +91,7 @@ const GROUPS: Group[] = [
       {
         key: "resellerCatalogShowStock",
         label: "Show stock on product grid",
-        help: "Off korle reseller catalog grid e stock number dekhabe na.",
+        help: "When off, stock numbers are hidden on the reseller catalog grid.",
       },
     ],
   },
@@ -113,25 +113,25 @@ const GROUPS: Group[] = [
   {
     tab: "resellers",
     title: "Reseller registration verification",
-    hint: "Master switch off thakle verify na korei registration complete hoye jabe.",
+    hint: "With the master switch off, registration completes without any verification.",
     icon: <ShieldCheck className="h-4 w-4" />,
     rows: [
       {
         key: "verifyEnabled",
         label: "Verification required (master)",
-        help: "Off = kono verification lagbe na, signup korei panel e dhukbe.",
+        help: "Off = no verification required; the panel opens right after signup.",
         master: true,
       },
       {
         key: "verifyEmail",
         label: "Email code verification",
-        help: "Email e 6 digit code pathabe (active email sender lagbe).",
+        help: "Sends a 6-digit code by email (requires an active email sender).",
         dependsOn: "verifyEnabled",
       },
       {
         key: "verifySms",
         label: "SMS code verification",
-        help: "Phone number e 6 digit code pathabe (active SMS sender lagbe).",
+        help: "Sends a 6-digit code by SMS (requires an active SMS sender).",
         dependsOn: "verifyEnabled",
       },
     ],
@@ -185,7 +185,7 @@ function AdvancedSettingsPage() {
     <div className="space-y-5">
       <PageHeader
         title="Advanced settings"
-        description="Platform logic switches — notun logic ekhane jog hote thakbe."
+        description="Platform logic switches — new options will keep being added here."
         actions={
           tab === "deposit" ? undefined : (
             <button
@@ -222,8 +222,8 @@ function AdvancedSettingsPage() {
         <Info className="mt-0.5 h-4 w-4 shrink-0" />
         <span>
           {tab === "deposit"
-            ? "Deposit rule o reseller-facing text ekhan theke change korle sathe sathe reseller panel e apply hobe. Ei tab er nijer Save button ache."
-            : "Ei switch gulo sathe sathe sob jaigai apply hoy — reseller panel, registration, login o dashboard."}
+            ? "Deposit rules and reseller-facing text changed here apply to the reseller panel immediately. This tab has its own Save button."
+            : "These switches apply everywhere instantly — reseller panel, registration, login and dashboard."}
         </span>
       </div>
 
@@ -295,10 +295,10 @@ function AdvancedSettingsPage() {
 
 
 const DELIVERY_MODES: { value: DeliveryMode; label: string; help: string }[] = [
-  { value: "area", label: "Area-wise", help: "3 ta area, protita area er alada charge." },
-  { value: "flat", label: "Flat rate", help: "Sob area te ek e charge." },
-  { value: "free", label: "Free shipping", help: "Customer delivery charge dibe na." },
-  { value: "custom", label: "Custom", help: "Ekta default amount, order e manual change kora jabe." },
+  { value: "area", label: "Area-wise", help: "Three areas, each with its own charge." },
+  { value: "flat", label: "Flat rate", help: "The same charge for every area." },
+  { value: "free", label: "Free shipping", help: "The customer pays no delivery charge." },
+  { value: "custom", label: "Custom", help: "One default amount that can be changed manually per order." },
 ];
 
 /** Global delivery charge rule. A product can still override it from product edit. */
@@ -325,8 +325,8 @@ function DeliveryCard({
         <div>
           <h2 className="text-sm font-semibold">Delivery charge (global)</h2>
           <p className="text-xs text-muted-foreground">
-            Ei rule sob product e apply hobe. Product edit e delivery charge set kora thakle
-            sei product er nijer setting priority pabe (priority 1).
+            This rule applies to every product. If a delivery charge is set on a product,
+            that product's own setting takes priority (priority 1).
           </p>
         </div>
       </header>
@@ -352,7 +352,7 @@ function DeliveryCard({
         {value.mode === "area" && (
           <div className="space-y-2">
             <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Areas (name change kora jabe)
+              Areas (names are editable)
             </div>
             {DELIVERY_AREAS.map((area) => (
               <div key={area} className="grid gap-2 sm:grid-cols-[2fr_1fr]">
@@ -399,7 +399,7 @@ function DeliveryCard({
               className={inp + " mt-1"}
             />
             <span className="mt-1 block text-[11px] font-normal text-muted-foreground">
-              Order add / edit e ei charge manual change kora jabe.
+              This charge can be changed manually while adding or editing an order.
             </span>
           </label>
         )}
