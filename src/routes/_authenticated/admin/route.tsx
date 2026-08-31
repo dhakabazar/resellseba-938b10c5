@@ -129,6 +129,7 @@ const NAV: NavEntry[] = [
       { label: "Commission Agents", to: "/admin/agents", icon: <UserCheck className="h-4 w-4" /> },
       { label: "Agent report", to: "/admin/agent-report", icon: <Target className="h-4 w-4" /> },
       { label: "Commission payout", to: "/admin/agent-payouts", icon: <Percent className="h-4 w-4" /> },
+      { label: "Collect deposits", to: "/admin/agent-deposits", icon: <ShieldCheck className="h-4 w-4" /> },
 
     ],
   },
