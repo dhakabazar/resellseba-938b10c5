@@ -77,6 +77,7 @@ const ROUTE_PERMISSIONS: Record<string, string[]> = {
   "/admin/agent-deposits": ["deposits.collect_own", "deposits.manage"],
 
   "/admin/visitors": ["visitors.view", "reports.view", "dashboard.view", "resellers.manage"],
+  "/admin/reseller-pricing": ["reseller_pricing.manage", "products.manage", "resellers.manage"],
   "/admin/marketing": ["marketing.manage"],
   "/admin/notifications": ["notifications.manage"],
   "/admin/notices": ["notifications.manage", "settings.manage"],
@@ -138,6 +139,7 @@ const NAV: NavEntry[] = [
     label: "Growth",
     icon: <Rocket className="h-4 w-4" />,
     items: [
+      { label: "Reseller pricing", to: "/admin/reseller-pricing", icon: <Tag className="h-4 w-4" /> },
       { label: "Marketing", to: "/admin/marketing", icon: <Megaphone className="h-4 w-4" /> },
       { label: "Notifications", to: "/admin/notifications", icon: <Bell className="h-4 w-4" /> },
       { label: "Reseller notices", to: "/admin/notices", icon: <Megaphone className="h-4 w-4" /> },
