@@ -454,9 +454,12 @@ export async function scrapeProduct(rawUrl: string): Promise<ImportedProduct> {
 
   const ldDesc = typeof product?.description === "string" ? toPlainText(product.description) : "";
   const metaDesc = toPlainText(meta(html, "og:description", "description", "twitter:description") ?? "");
-  const deepDesc = ldDesc.length > 120 ? "" : harvestDescription(html);
-  // Longest meaningful text wins — Daraz keeps the real detail in module JSON.
-  const description = [ldDesc, deepDesc, metaDesc].sort((a, b) => b.length - a.length)[0] ?? "";
+  const deepDesc = harvestDescription(html);
+  // Formatted marketplace HTML wins (bullets/specs kept); otherwise longest text.
+  const richDesc = harvestRichDescription(html);
+  const description =
+    richDesc || ([ldDesc, deepDesc, metaDesc].sort((a, b) => b.length - a.length)[0] ?? "");
+  const descText = toPlainText(description, 4000);
 
 
   const price =
