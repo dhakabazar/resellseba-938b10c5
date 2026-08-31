@@ -228,16 +228,17 @@ export function buildAgentSettlement(earned: number, payouts: AgentPayout[]): Ag
 }
 
 /** Commission earned per month, from settled orders of the assigned resellers. */
-export function agentCommissionMonths(orders: AgentOrder[], rate: number | string) {
-  const map = new Map<string, { key: string; base: number; commission: number; orders: number }>();
+export function agentCommissionMonths(orders: AgentOrder[], plan: CommissionPlan) {
+  const map = new Map<string, { key: string; base: number; units: number; commission: number; orders: number }>();
   for (const o of orders) {
     if (!["delivered", "partial", "returned", "cancelled"].includes(String(o.status))) continue;
     const d = new Date(o.created_at);
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-    const row = map.get(key) ?? { key, base: 0, commission: 0, orders: 0 };
+    const row = map.get(key) ?? { key, base: 0, units: 0, commission: 0, orders: 0 };
     row.base += orderProfit(o);
+    row.units += orderUnits(o);
     row.orders += 1;
-    row.commission = agentCommission(row.base, rate);
+    row.commission = agentCommissionFor(plan, row.base, row.units);
     map.set(key, row);
   }
   return Array.from(map.values()).sort((a, b) => (a.key < b.key ? 1 : -1));
@@ -250,21 +251,27 @@ const monthLabel = (key: string) =>
  * Same timeline format as the reseller money ledger:
  * commission earned = money in, admin payments = money out, rejected = void.
  */
-export function buildAgentLedger(orders: AgentOrder[], rate: number | string, payouts: AgentPayout[]): LedgerRow[] {
+export function buildAgentLedger(orders: AgentOrder[], plan: CommissionPlan, payouts: AgentPayout[]): LedgerRow[] {
   const rows: Omit<LedgerRow, "running">[] = [];
+  const perUnit = Number(plan.commission_per_unit ?? 0) || 0;
+  const rate = Number(plan.commission_rate ?? 0) || 0;
 
-  for (const m of agentCommissionMonths(orders, rate)) {
+  for (const m of agentCommissionMonths(orders, plan)) {
     if (m.commission === 0) continue;
     rows.push({
       at: `${m.key}-28T23:59:00`,
       kind: "commission",
       direction: m.commission >= 0 ? "in" : "out",
       label: `Commission earned · ${monthLabel(m.key)}`,
-      reference: `${m.orders} settled order(s) · net profit ৳${Math.round(m.base).toLocaleString()} × ${Number(rate) || 0}%`,
+      reference:
+        commissionMode(plan) === "per_product"
+          ? `${m.orders} settled order(s) · ${m.units} product unit(s) × ৳${perUnit.toLocaleString()}`
+          : `${m.orders} settled order(s) · net profit ৳${Math.round(m.base).toLocaleString()} × ${rate}%`,
       status: "earned",
       amount: Math.abs(m.commission),
     });
   }
+
 
   for (const p of payouts) {
     const advance = p.kind === "advance";
