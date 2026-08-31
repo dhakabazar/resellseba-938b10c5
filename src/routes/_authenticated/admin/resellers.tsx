@@ -38,6 +38,8 @@ import {
   LogIn,
   ChevronDown,
   Search,
+  StickyNote,
+
 
 } from "lucide-react";
 import { toast } from "sonner";
