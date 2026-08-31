@@ -33,15 +33,24 @@ export async function ensureActiveResellerRole(supabase: DbClient, userId: strin
 }
 
 /** Creates temporary email/password credentials the browser can exchange for a reseller session. */
-export async function createImpersonationLogin(supabase: DbClient, userId: string) {
-  await ensureActiveResellerRole(supabase, userId);
-  const { confirmEmail, loadAuthUsers, setPassword } = await import("@/lib/auth-admin.server");
-  const account = (await loadAuthUsers(supabase)).find((u) => u.user_id === userId);
-  if (!account?.email) throw new Response("Reseller account has no email", { status: 400 });
-
+export async function createImpersonationLogin(supabase: any, userId: string) {
   const password = easyPassword();
-  await confirmEmail(supabase, userId);
-  await setPassword(supabase, userId, password);
+  // Single permission-checked database function: verifies the caller can
+  // impersonate, ensures the reseller role, confirms the email, sets the
+  // temporary password and returns the login email. Works for staff that only
+  // have `resellers.impersonate` (no full reseller management access).
+  const { data, error } = await supabase.rpc("admin_impersonation_login" as any, {
+    _user_id: userId,
+    _password: password,
+  });
+  if (error) {
+    const message = error.message.replace(/^.*?(?:ERROR|error):\s*/i, "") || "Could not open reseller panel";
+    throw new Response(message, { status: /forbidden|not signed in/i.test(message) ? 403 : 400 });
+  }
+  const row = Array.isArray(data) ? data[0] : data;
+  const email = typeof row === "string" ? row : (row?.email as string | null);
+  if (!email) throw new Response("Reseller account has no email", { status: 400 });
 
-  return { ok: true as const, email: account.email, password };
+  return { ok: true as const, email, password };
 }
+
