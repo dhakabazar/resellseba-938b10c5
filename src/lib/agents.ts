@@ -246,7 +246,7 @@ export function buildAgentSettlement(earned: number, payouts: AgentPayout[]): Ag
 export function agentCommissionMonths(orders: AgentOrder[], plan: CommissionPlan) {
   const map = new Map<string, { key: string; base: number; units: number; commission: number; orders: number }>();
   for (const o of orders) {
-    if (!["delivered", "partial", "returned", "cancelled"].includes(String(o.status))) continue;
+    if (!isCommissionOrder(o.status)) continue;
     const d = new Date(o.created_at);
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
     const row = map.get(key) ?? { key, base: 0, units: 0, commission: 0, orders: 0 };
