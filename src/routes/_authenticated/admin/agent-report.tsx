@@ -64,9 +64,14 @@ function AgentReportPage() {
         .limit(5000),
     ]);
     if (o.error) toast.error(o.error.message);
+    const { data: unitRows } = await supabase.rpc("agent_order_units");
+    const unitMap = new Map<string, number>(
+      ((unitRows ?? []) as Array<{ order_id: string; units: number }>).map((u) => [u.order_id, Number(u.units) || 0]),
+    );
+    const withUnits = ((o.data ?? []) as AgentOrder[]).map((row) => ({ ...row, units: unitMap.get(row.id) ?? 0 }));
     setAgents((a.data ?? []) as Agent[]);
     setResellers((r.data ?? []) as ResellerLite[]);
-    setOrders((o.data ?? []) as AgentOrder[]);
+    setOrders(withUnits);
     setLoading(false);
   }
 
