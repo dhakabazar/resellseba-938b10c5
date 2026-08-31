@@ -56,6 +56,8 @@ export function ListingPricingModal({
 
   const [settingsTick, setSettingsTick] = useState(0);
 
+  const [customPrice, setCustomPrice] = useState(false);
+
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -73,7 +75,14 @@ export function ListingPricingModal({
       ]);
       if (!alive) return;
       if (error) toast.error(error.message);
-      const l = (data ?? null) as PricingListing | null;
+      let l = (data ?? null) as PricingListing | null;
+      // Admin can set a reseller specific admin price — RLS only exposes our own row.
+      if (l?.products?.id) {
+        const map = await fetchResellerPriceMap();
+        if (!alive) return;
+        setCustomPrice(hasCustomPrice(l.products.id, map));
+        l = { ...l, products: { ...l.products, reseller_price: wholesalePrice(l.products, map) } };
+      }
       setRow(l);
       setPrice(l ? String(l.selling_price) : "");
       setSettingsTick((t) => t + 1);
