@@ -494,7 +494,7 @@ export async function scrapeProduct(rawUrl: string): Promise<ImportedProduct> {
     url: url.href,
     name,
     description,
-    shortDescription: description.slice(0, 200),
+    shortDescription: descText.slice(0, 200),
     price,
     currency:
       (typeof offer?.priceCurrency === "string" ? offer.priceCurrency.slice(0, 6) : null) ??
@@ -506,7 +506,7 @@ export async function scrapeProduct(rawUrl: string): Promise<ImportedProduct> {
     category,
     images: cleanImages(imageCandidates, url),
     metaTitle: name.slice(0, 60),
-    metaDescription: description.slice(0, 160),
+    metaDescription: descText.slice(0, 160),
   };
 }
 
