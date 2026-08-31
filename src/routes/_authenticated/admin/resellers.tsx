@@ -819,8 +819,7 @@ function ResellersPage() {
       /* ignore — reseller row already gone */
     }
     toast.success("Deleted");
-    load();
-    loadEmailStatus();
+    setItems((prev) => prev.filter((x) => x.id !== r.id));
   }
 
   /** Assign (or clear) the commission agent for every selected reseller. */
