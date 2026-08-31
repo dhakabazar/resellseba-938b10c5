@@ -131,8 +131,9 @@ export function agentCommissionFor(plan: CommissionPlan, base: number, units: nu
     : agentCommission(base, plan.commission_rate ?? 0);
 }
 
-/** Product units the customer kept in this order (0 for returned / cancelled). */
+/** Product units the customer kept — 0 unless the order is commission-eligible. */
 export function orderUnits(o: AgentOrder) {
+  if (!isCommissionOrder(o.status)) return 0;
   return Math.max(Number(o.units ?? 0) || 0, 0);
 }
 
@@ -155,6 +156,7 @@ export function buildAgentPerformance(
       failed: 0,
       sales: 0,
       profit: 0,
+      commissionProfit: 0,
       units: 0,
       lastOrderAt: null,
     });
@@ -165,11 +167,12 @@ export function buildAgentPerformance(
     const row = byReseller.get(o.reseller_id);
     if (!row) continue;
     row.orders += 1;
-    if (o.status === "delivered" || o.status === "partial") {
+    if (isCommissionOrder(o.status)) {
       row.delivered += 1;
       row.sales += orderReceived(o);
       row.profit += orderProfit(o);
-    } else if (o.status === "returned" || o.status === "cancelled") {
+      row.commissionProfit += orderProfit(o);
+    } else if (["returned", "cancelled", "partial_delivery", "damaged"].includes(String(o.status))) {
       row.failed += 1;
       row.profit += orderProfit(o);
     }
@@ -181,8 +184,9 @@ export function buildAgentPerformance(
   const target = Number(agent.sale_target ?? 0) || 0;
   const sales = rows.reduce((s, r) => s + r.sales, 0);
   const rate = Number(agent.commission_rate ?? 0) || 0;
-  const commissionBase = rows.reduce((s, r) => s + r.profit, 0);
+  const commissionBase = rows.reduce((s, r) => s + r.commissionProfit, 0);
   const units = rows.reduce((s, r) => s + r.units, 0);
+
 
   return {
     agentId: agent.id,
