@@ -1889,6 +1889,7 @@ function ProfileModal({
   verify,
   leaderName,
   agentName,
+  noteAuthorName,
   onClose,
 }: {
   reseller: Reseller;
@@ -1898,10 +1899,13 @@ function ProfileModal({
   verify?: VerifyFlags;
   leaderName: string | null;
   agentName: string | null;
+  noteAuthorName?: string | null;
   onClose: () => void;
 }) {
   const data: ResellerProfileData = {
     ...reseller,
+    notes_by_name: noteAuthorName ?? null,
+    notes_at: reseller.notes_at ?? null,
     commission_rate: Number(reseller.commission_rate),
     deposit_required_amount: Number(reseller.deposit_required_amount),
     frozen_amount: Number(reseller.frozen_amount),
