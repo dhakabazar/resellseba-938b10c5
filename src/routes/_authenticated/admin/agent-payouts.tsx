@@ -240,8 +240,10 @@ function AgentPayoutsPage() {
                 <div className="min-w-0">
                   <div className="truncate text-base font-bold">{v.agent.display_name}</div>
                   <div className="text-xs text-muted-foreground">
-                    {v.perf.resellerCount} reseller(s) · commission rate {v.agent.commission_rate || 0}% · settled net
-                    profit {bdt(v.perf.commissionBase)}
+                    {v.perf.resellerCount} reseller(s) ·{" "}
+                    {v.perf.mode === "per_product"
+                      ? `${bdt(v.perf.perUnit)} per product · ${v.perf.units} delivered unit(s)`
+                      : `commission rate ${v.agent.commission_rate || 0}% · settled net profit ${bdt(v.perf.commissionBase)}`}
                   </div>
                 </div>
                 <div className="flex items-center gap-3">

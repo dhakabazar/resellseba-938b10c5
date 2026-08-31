@@ -217,7 +217,7 @@ function AgentReportPage() {
                       hint="Received amount − delivery charge − product cost − packaging cost. Failed orders subtract delivery and packaging as loss."
                     />
                     <Mini
-                      label={`Commission (${p.rate}%)`}
+                      label={p.mode === "per_product" ? `Commission (${p.units} pc × ${bdt(p.perUnit)})` : `Commission (${p.rate}%)`}
                       value={bdt(p.commission)}
                       tone="text-primary"
                       hint={AGENT_COMMISSION_HINT}
