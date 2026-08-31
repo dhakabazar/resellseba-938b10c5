@@ -13,7 +13,7 @@ import { ReportCard, ReportTabs, SortTh, toneOf } from "@/components/report-bloc
 import { Pagination, usePaginated } from "@/components/data-list";
 import { ResellerAvatar } from "@/components/reseller-avatar";
 import { bdt, toCsv, downloadCsv, orderProfit, orderReceived } from "@/lib/finance-report";
-import { agentCommissionFor, commissionMode, AGENT_COMMISSION_HINT } from "@/lib/agents";
+import { agentCommissionFor, commissionMode, isCommissionOrder, AGENT_COMMISSION_HINT } from "@/lib/agents";
 import {
   ADMIN_PROFIT_HINT,
   buildCourierRows,
@@ -182,6 +182,7 @@ function BusinessReportPage() {
       const mineOrders = scoped.filter((o) => o.reseller_id && mine.has(o.reseller_id));
       let sales = 0;
       let base = 0;
+      let commissionBase = 0;
       let adminProfit = 0;
       let units = 0;
       for (const o of mineOrders) {
@@ -189,18 +190,20 @@ function BusinessReportPage() {
         const ord = withKeptCost(o, myItems);
         sales += orderReceived(ord);
         base += orderProfit(ord);
-        if (["delivered", "partial", "partial_full", "partial_item", "damaged"].includes(String(o.status)))
+        if (isCommissionOrder(o.status)) {
+          commissionBase += orderProfit(ord);
           units += myItems.reduce(
             (t, it) => t + Math.max(Number(it.quantity ?? 0) - Number((it as any).returned_qty ?? 0), 0),
             0,
           );
+        }
         adminProfit += orderReceived(ord) - orderProfit(ord) - orderBuyingCost(myItems, o.status, productMap);
       }
       const target = Number(ag.sale_target ?? 0) || 0;
       const rate = Number(ag.commission_rate ?? 0) || 0;
       const perUnit = Number(ag.commission_per_unit ?? 0) || 0;
       const perProduct = commissionMode(ag) === "per_product";
-      const commission = agentCommissionFor(ag, base, units);
+      const commission = agentCommissionFor(ag, commissionBase, units);
       return {
         key: ag.id,
         name: ag.display_name,

@@ -53,6 +53,14 @@ export type AgentPayout = {
   paid_at: string | null;
 };
 
+/** Only these settled statuses earn agent commission: full delivery, or partial where items were kept. */
+export const COMMISSION_STATUSES = ["delivered", "partial", "partial_full", "partial_item"] as const;
+
+/** True when the order earns agent commission (returned / partial_delivery / damaged / cancelled do not). */
+export function isCommissionOrder(status: string | null | undefined) {
+  return (COMMISSION_STATUSES as readonly string[]).includes(String(status ?? ""));
+}
+
 export type AgentResellerRow = {
   reseller_id: string;
   business_name: string;
@@ -64,10 +72,13 @@ export type AgentResellerRow = {
   failed: number;
   sales: number;
   profit: number;
+  /** Net profit of commission-eligible orders only — the percent-mode base. */
+  commissionProfit: number;
   /** Product units the customers kept — the per-product commission base. */
   units: number;
   lastOrderAt: string | null;
 };
+
 
 export type AgentPerformance = {
   agentId: string;
@@ -102,7 +113,7 @@ export const AGENT_SALES_HINT =
   "Sales = money actually received for the orders of this agent's resellers in the selected period. Profit uses the same formula as every report: received amount − delivery charge − product cost − packaging cost.";
 
 export const AGENT_COMMISSION_HINT =
-  "Each agent is paid one of two ways. Percent of profit: rate % × settled net profit of the assigned resellers' orders (received amount − delivery charge − product cost − packaging cost), so returned / cancelled orders reduce the base. Per product: a flat amount × the number of product units customers actually kept in delivered or partial orders (returned units are not counted).";
+  "Commission is earned only on orders where the customer kept the products: Delivered, Partial (full item) and Partial (item returned). Returned, cancelled, delivery-charge-only partials and damaged orders earn nothing. Percent of profit: rate % × net profit of those orders (received amount − delivery charge − product cost − packaging cost). Per product: a flat amount × the product units the customer actually kept (returned units are not counted).";
 
 export function commissionMode(plan: CommissionPlan): CommissionMode {
   return plan.commission_mode === "per_product" ? "per_product" : "percent";
@@ -120,8 +131,9 @@ export function agentCommissionFor(plan: CommissionPlan, base: number, units: nu
     : agentCommission(base, plan.commission_rate ?? 0);
 }
 
-/** Product units the customer kept in this order (0 for returned / cancelled). */
+/** Product units the customer kept — 0 unless the order is commission-eligible. */
 export function orderUnits(o: AgentOrder) {
+  if (!isCommissionOrder(o.status)) return 0;
   return Math.max(Number(o.units ?? 0) || 0, 0);
 }
 
@@ -144,6 +156,7 @@ export function buildAgentPerformance(
       failed: 0,
       sales: 0,
       profit: 0,
+      commissionProfit: 0,
       units: 0,
       lastOrderAt: null,
     });
@@ -154,11 +167,12 @@ export function buildAgentPerformance(
     const row = byReseller.get(o.reseller_id);
     if (!row) continue;
     row.orders += 1;
-    if (o.status === "delivered" || o.status === "partial") {
+    if (isCommissionOrder(o.status)) {
       row.delivered += 1;
       row.sales += orderReceived(o);
       row.profit += orderProfit(o);
-    } else if (o.status === "returned" || o.status === "cancelled") {
+      row.commissionProfit += orderProfit(o);
+    } else if (["returned", "cancelled", "partial_delivery", "damaged"].includes(String(o.status))) {
       row.failed += 1;
       row.profit += orderProfit(o);
     }
@@ -170,8 +184,9 @@ export function buildAgentPerformance(
   const target = Number(agent.sale_target ?? 0) || 0;
   const sales = rows.reduce((s, r) => s + r.sales, 0);
   const rate = Number(agent.commission_rate ?? 0) || 0;
-  const commissionBase = rows.reduce((s, r) => s + r.profit, 0);
+  const commissionBase = rows.reduce((s, r) => s + r.commissionProfit, 0);
   const units = rows.reduce((s, r) => s + r.units, 0);
+
 
   return {
     agentId: agent.id,
@@ -231,7 +246,7 @@ export function buildAgentSettlement(earned: number, payouts: AgentPayout[]): Ag
 export function agentCommissionMonths(orders: AgentOrder[], plan: CommissionPlan) {
   const map = new Map<string, { key: string; base: number; units: number; commission: number; orders: number }>();
   for (const o of orders) {
-    if (!["delivered", "partial", "returned", "cancelled"].includes(String(o.status))) continue;
+    if (!isCommissionOrder(o.status)) continue;
     const d = new Date(o.created_at);
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
     const row = map.get(key) ?? { key, base: 0, units: 0, commission: 0, orders: 0 };
