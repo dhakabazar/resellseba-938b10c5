@@ -558,6 +558,60 @@ function ResellersPage() {
     setLoading(false);
   }
 
+  /**
+   * Refresh a single reseller row in place — no full page reload, so the
+   * current page, filters, scroll position and selection stay untouched.
+   */
+  async function refreshOne(id: string, opts: { metrics?: boolean } = {}) {
+    const { data } = await supabase
+      .from("resellers")
+      .select(
+        "id,user_id,avatar_url,business_name,code,contact_phone,address,nid_number,status,commission_rate,leader_id,agent_id,notes,notes_by,notes_at,approved_at,created_at,payout_method,payout_account_name,payout_account_number,payout_bank_name,payout_branch,payout_routing,deposit_required,deposit_required_amount,frozen_amount",
+      )
+      .eq("id", id)
+      .maybeSingle();
+    const row = data as Reseller | null;
+    if (!row) {
+      // Row is gone (deleted or moved out of scope) — drop it locally.
+      setItems((prev) => prev.filter((r) => r.id !== id));
+      return;
+    }
+    setItems((prev) => prev.map((r) => (r.id === id ? row : r)));
+
+    if (row.notes_by && !noteAuthors[row.notes_by]) {
+      const { data: author } = await supabase
+        .from("profiles")
+        .select("id,full_name")
+        .eq("id", row.notes_by)
+        .maybeSingle();
+      if (author)
+        setNoteAuthors((prev) => ({
+          ...prev,
+          [(author as any).id]: ((author as any).full_name as string | null) || "Staff",
+        }));
+    }
+
+    if (opts.metrics) {
+      const { data: metricRows } = await supabase.rpc("admin_reseller_metrics");
+      const m = ((metricRows ?? []) as any[]).find((x) => x.reseller_id === id);
+      if (m) {
+        setSummaries((prev) => ({
+          ...prev,
+          [id]: {
+            delivered_profit: Number(m.delivered_profit ?? 0),
+            pending_payout: Number(m.pending_payout ?? 0),
+            paid_out: Number(m.paid_out ?? 0),
+            available: Number(m.available ?? 0),
+            deposit_balance: Number(m.deposit_balance ?? 0),
+            frozen_amount: Number(m.frozen_amount ?? 0),
+          } as Summary,
+        }));
+        setOrderCounts((prev) => ({ ...prev, [id]: Number(m.orders ?? 0) }));
+      }
+    }
+  }
+
+
 
   async function loadEmailStatus() {
     try {
@@ -682,7 +736,7 @@ function ResellersPage() {
         ? `${r.business_name} is now active`
         : `Status set to ${resellerStatusLabel(status)}`,
     );
-    load();
+    refreshOne(r.id);
   }
 
 
@@ -765,8 +819,7 @@ function ResellersPage() {
       /* ignore — reseller row already gone */
     }
     toast.success("Deleted");
-    load();
-    loadEmailStatus();
+    setItems((prev) => prev.filter((x) => x.id !== r.id));
   }
 
   /** Assign (or clear) the commission agent for every selected reseller. */
@@ -1291,8 +1344,9 @@ function ResellersPage() {
           others={items.filter((i) => i.id !== editing.id && i.status === "active")}
           onClose={() => setEditing(null)}
           onSaved={() => {
+            const id = editing.id;
             setEditing(null);
-            load();
+            refreshOne(id);
           }}
         />
       )}
@@ -1325,8 +1379,9 @@ function ResellersPage() {
           canEdit={can("resellers.edit")}
           onClose={() => setNoteFor(null)}
           onSaved={() => {
+            const id = noteFor.id;
             setNoteFor(null);
-            load();
+            refreshOne(id);
           }}
         />
       )}
@@ -1345,8 +1400,9 @@ function ResellersPage() {
           reseller={depositFor}
           onClose={() => setDepositFor(null)}
           onSaved={() => {
+            const id = depositFor.id;
             setDepositFor(null);
-            load();
+            refreshOne(id, { metrics: true });
           }}
         />
       )}
