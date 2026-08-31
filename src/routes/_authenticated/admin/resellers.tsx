@@ -1939,3 +1939,95 @@ function ProfileModal({
     </div>
   );
 }
+
+function NoteModal({
+  reseller,
+  authorName,
+  canEdit,
+  onClose,
+  onSaved,
+}: {
+  reseller: Reseller;
+  authorName?: string | null;
+  canEdit: boolean;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [text, setText] = useState(reseller.notes ?? "");
+  const [saving, setSaving] = useState(false);
+
+  async function save() {
+    setSaving(true);
+    const { error } = await supabase
+      .from("resellers")
+      .update({ notes: text.trim() || null })
+      .eq("id", reseller.id);
+    setSaving(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Internal note saved");
+    onSaved();
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4"
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="surface-card flex max-h-[92dvh] w-full max-w-lg flex-col rounded-b-none sm:rounded-lg"
+      >
+        <div className="flex items-center justify-between gap-3 border-b px-4 py-3">
+          <div className="min-w-0">
+            <h3 className="truncate text-base font-semibold">Internal note</h3>
+            <p className="truncate text-xs text-muted-foreground">{reseller.business_name} · #{reseller.code}</p>
+          </div>
+          <button type="button" onClick={onClose} className="shrink-0 rounded-md p-1 hover:bg-muted">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="modal-scroll min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
+          {canEdit ? (
+            <textarea
+              autoFocus
+              rows={5}
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder="Write an internal note about this reseller…"
+              className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/40"
+            />
+          ) : (
+            <p className="whitespace-pre-wrap rounded-md border bg-muted/30 p-3 text-sm">
+              {reseller.notes || "No note yet."}
+            </p>
+          )}
+          {(authorName || reseller.notes_at) && (
+            <p className="flex items-center gap-1 text-xs text-muted-foreground">
+              <UserCircle className="h-3.5 w-3.5" />
+              Last note by {authorName ?? "Staff"}
+              {reseller.notes_at ? ` · ${new Date(reseller.notes_at).toLocaleString()}` : ""}
+            </p>
+          )}
+        </div>
+        {canEdit && (
+          <div className="flex justify-end gap-2 border-t px-4 py-3">
+            <button type="button" onClick={onClose} className="rounded-md border px-3 py-1.5 text-sm hover:bg-muted">
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => void save()}
+              disabled={saving}
+              className="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground disabled:opacity-60"
+            >
+              {saving && <Loader2 className="h-4 w-4 animate-spin" />} Save note
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
