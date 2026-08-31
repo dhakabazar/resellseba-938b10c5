@@ -326,10 +326,12 @@ function ResellerPricingPage() {
 
       {del && (
         <ConfirmModal
+          isOpen
           title="Remove custom price"
           description={`${del.name} will fall back to the master admin price for this reseller.`}
-          confirmLabel="Remove"
-          onCancel={() => setDel(null)}
+          confirmText="Remove"
+          variant="danger"
+          onClose={() => setDel(null)}
           onConfirm={async () => {
             await remove(del.id);
             setDel(null);
