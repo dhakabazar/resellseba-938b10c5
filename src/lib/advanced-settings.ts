@@ -38,6 +38,8 @@ export const DEFAULT_ADVANCED_SETTINGS: AdvancedSettings = {
   resellerCatalogShowStock: true,
   packagingChargeSum: true,
   resellerAutoApprove: false,
+  resellerAutoAssign: false,
+
   verifyEnabled: false,
   verifyEmail: true,
   verifySms: false,
