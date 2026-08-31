@@ -1313,9 +1313,24 @@ function ResellersPage() {
                 })()
               : null
           }
+          noteAuthorName={profileFor.notes_by ? (noteAuthors[profileFor.notes_by] ?? "Staff") : null}
           onClose={() => setProfileFor(null)}
         />
       )}
+
+      {noteFor && (
+        <NoteModal
+          reseller={noteFor}
+          authorName={noteFor.notes_by ? (noteAuthors[noteFor.notes_by] ?? "Staff") : null}
+          canEdit={can("resellers.edit")}
+          onClose={() => setNoteFor(null)}
+          onSaved={() => {
+            setNoteFor(null);
+            load();
+          }}
+        />
+      )}
+
 
       {resetFor && (
         <PasswordResetModal
