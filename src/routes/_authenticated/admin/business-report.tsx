@@ -79,6 +79,8 @@ type AgentRow = {
   target: number;
   achieved: number;
   rate: number;
+  rateLabel: string;
+
   commission: number;
   adminProfit: number;
   netAdminProfit: number;
