@@ -297,7 +297,22 @@ export function ResellerProfile({
           />
           <Row label="Joined" value={date(r.created_at)} />
           <Row label="Approved" value={date(r.approved_at)} />
-          {r.notes ? <Row label="Notes" value={r.notes} /> : null}
+          {r.notes ? (
+            <Row
+              label="Internal note"
+              value={
+                <span className="block">
+                  <span className="block whitespace-pre-wrap">{r.notes}</span>
+                  {(r.notes_by_name || r.notes_at) && (
+                    <span className="mt-1 block text-[11px] text-muted-foreground">
+                      by {r.notes_by_name ?? "Staff"}
+                      {r.notes_at ? ` • ${date(r.notes_at)}` : ""}
+                    </span>
+                  )}
+                </span>
+              }
+            />
+          ) : null}
         </div>
 
         {/* Payout info */}
