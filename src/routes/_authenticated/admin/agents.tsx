@@ -5,7 +5,7 @@ import { PageHeader, EmptyState } from "@/components/ui-kit";
 import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
 import { useServerFn } from "@tanstack/react-start";
 import { listAgentCandidates, type AgentCandidate } from "@/lib/agents.functions";
-import { bdt, type Agent } from "@/lib/agents";
+import { bdt, commissionMode, AGENT_COMMISSION_HINT, type Agent, type CommissionMode } from "@/lib/agents";
 import {
   Loader2,
   Plus,
@@ -270,6 +270,8 @@ function AgentModal({
   const [email, setEmail] = useState(agent?.email ?? "");
   const [target, setTarget] = useState(String(agent?.sale_target ?? 0));
   const [rate, setRate] = useState(String(agent?.commission_rate ?? 0));
+  const [mode, setMode] = useState<CommissionMode>(agent ? commissionMode(agent) : "percent");
+  const [perUnit, setPerUnit] = useState(String(agent?.commission_per_unit ?? 0));
 
   const [active, setActive] = useState(agent?.is_active ?? true);
   const [notes, setNotes] = useState(agent?.notes ?? "");
@@ -298,6 +300,8 @@ function AgentModal({
       email: email.trim() || null,
       sale_target: Number(target) || 0,
       commission_rate: Number(rate) || 0,
+      commission_mode: mode,
+      commission_per_unit: Number(perUnit) || 0,
 
       is_active: active,
       notes: notes.trim() || null,
@@ -353,21 +357,57 @@ function AgentModal({
               <label className="mb-1 block text-xs font-medium">Sale target (৳)</label>
               <input type="number" min={0} value={target} onChange={(e) => setTarget(e.target.value)} className={cls} />
             </div>
-            <div className="sm:col-span-2">
-              <label className="mb-1 block text-xs font-medium">Commission rate (%)</label>
-              <input
-                type="number"
-                min={0}
-                max={100}
-                step="0.01"
-                value={rate}
-                onChange={(e) => setRate(e.target.value)}
-                className={cls}
-              />
-              <p className="mt-1 text-[11px] text-muted-foreground">
-                Commission = this % × settled net profit of the assigned resellers' orders (final delivered amount −
-                delivery charge − product cost − packaging cost). Returned / cancelled orders reduce the base.
-              </p>
+            <div className="sm:col-span-2 rounded-lg border bg-muted/30 p-3">
+              <div className="mb-2 text-xs font-semibold">Commission type</div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {([
+                  { id: "percent", title: "Percent of profit", sub: "% × settled net profit" },
+                  { id: "per_product", title: "Per product", sub: "৳ × delivered product unit" },
+                ] as const).map((opt) => (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => setMode(opt.id)}
+                    className={
+                      "rounded-lg border p-3 text-left transition " +
+                      (mode === opt.id ? "border-primary bg-primary/5 ring-1 ring-primary" : "hover:bg-muted")
+                    }
+                  >
+                    <span className="block text-sm font-bold">{opt.title}</span>
+                    <span className="block text-[11px] text-muted-foreground">{opt.sub}</span>
+                  </button>
+                ))}
+              </div>
+
+              <div className="mt-3">
+                {mode === "percent" ? (
+                  <>
+                    <label className="mb-1 block text-xs font-medium">Commission rate (%)</label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      step="0.01"
+                      value={rate}
+                      onChange={(e) => setRate(e.target.value)}
+                      className={cls}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <label className="mb-1 block text-xs font-medium">Amount per product unit (৳)</label>
+                    <input
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      value={perUnit}
+                      onChange={(e) => setPerUnit(e.target.value)}
+                      className={cls}
+                    />
+                  </>
+                )}
+                <p className="mt-1 text-[11px] text-muted-foreground">{AGENT_COMMISSION_HINT}</p>
+              </div>
             </div>
             <div>
 
