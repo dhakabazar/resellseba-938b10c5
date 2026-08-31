@@ -141,3 +141,32 @@ export const startDepositPayment = createServerFn({ method: "POST" })
     const flows = await import("@/lib/gateways/flows.server");
     return await flows.startDepositFlow({ ...data, userId: context.userId });
   });
+
+/**
+ * Reseller: start an online monthly-package payment. Only the plan + duration
+ * are sent; the price and the reseller identity are resolved server-side.
+ */
+export const startSubscriptionPayment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z
+      .object({
+        provider: z.string().min(2),
+        plan: z.enum(["panel", "panel_store"]),
+        months: z.union([z.literal(1), z.literal(6), z.literal(12)]),
+        storeOrigin: z.string().url().optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const bridge = await import("@/lib/gateways/bridge.server");
+    if (!bridge.hasPrivilegedDb()) {
+      return await bridge.forwardToPlatform<{ redirectUrl: string; code: string }>(
+        "sub-start",
+        { ...data, origin: data.storeOrigin },
+        bridge.incomingAuthorization(),
+      );
+    }
+    const flows = await import("@/lib/gateways/flows.server");
+    return await flows.startSubscriptionFlow({ ...data, userId: context.userId });
+  });

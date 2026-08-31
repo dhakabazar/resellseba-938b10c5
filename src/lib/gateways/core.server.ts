@@ -552,3 +552,100 @@ export function appendFlag(url: string, flag: string, status: string, txnId?: st
   const extra = txnId ? `&txn=${encodeURIComponent(txnId)}` : "";
   return `${url}${sep}${flag}=1&pay=${encodeURIComponent(status)}${extra}`;
 }
+
+/* ------------------------------------------------------- monthly package (subscription) */
+
+export type SubscriptionIntent = {
+  id: string;
+  code: string;
+  reseller_id: string;
+  plan: string;
+  months: number;
+  amount: number;
+  status: string;
+  provider: string | null;
+  txn_id: string | null;
+};
+
+export function newSubscriptionCode(): string {
+  const rnd = Math.random().toString(36).slice(2, 8).toUpperCase();
+  return `SUB${Date.now().toString(36).toUpperCase().slice(-5)}${rnd}`;
+}
+
+/** Adapters speak "order"; a package payment is presented as a 1-line order. */
+export function subscriptionAsOrder(
+  intent: SubscriptionIntent,
+  reseller?: { name?: string; phone?: string },
+): GatewayOrder {
+  return {
+    id: intent.id,
+    order_number: intent.code,
+    total: Number(intent.amount || 0),
+    customer_name: reseller?.name || "Monthly package",
+    customer_phone: reseller?.phone || "01700000000",
+    customer_email: null,
+    address_line: "Monthly package",
+    city: "Dhaka",
+    reseller_id: intent.reseller_id,
+    payment_status: intent.status === "approved" ? "paid" : "unpaid",
+    payment_provider: intent.provider,
+    paid_amount: null,
+    transaction_id: intent.txn_id,
+    advance_amount: null,
+    advance_by: null,
+  };
+}
+
+export async function loadSubscriptionIntent(code: string): Promise<SubscriptionIntent | null> {
+  const db = await admin();
+  const { data } = await db
+    .from("subscription_requests")
+    .select("id,code,reseller_id,plan,months,amount,status,provider,txn_id")
+    .eq("code", code)
+    .maybeSingle();
+  return (data as unknown as SubscriptionIntent) ?? null;
+}
+
+/**
+ * Confirms a gateway-paid monthly package: activates (or extends) the package
+ * once and marks the request approved. Idempotent on the request status.
+ */
+export async function settleSubscription(opts: {
+  intent: SubscriptionIntent;
+  provider: string;
+  paid: boolean;
+  amount: number;
+  txnId: string;
+}): Promise<"paid" | "already" | "unpaid"> {
+  const db = await admin();
+  if (opts.intent.status === "approved") return "already";
+  if (!opts.paid || !(opts.amount > 0)) {
+    await db
+      .from("subscription_requests")
+      .update({ provider: opts.provider, txn_id: opts.txnId || null })
+      .eq("id", opts.intent.id);
+    return "unpaid";
+  }
+  const { data: sub } = await db.rpc("subscription_apply", {
+    _reseller_id: opts.intent.reseller_id,
+    _plan: opts.intent.plan,
+    _months: opts.intent.months,
+    _amount: opts.amount,
+    _source: "online",
+    _note: `Online package payment via ${opts.provider}`,
+    _actor: null,
+  } as never);
+  await db
+    .from("subscription_requests")
+    .update({
+      status: "approved",
+      provider: opts.provider,
+      txn_id: opts.txnId || null,
+      paid_at: new Date().toISOString(),
+      reviewed_at: new Date().toISOString(),
+      admin_note: "Auto-approved: verified online payment",
+      subscription_id: (sub as { id?: string } | null)?.id ?? null,
+    })
+    .eq("id", opts.intent.id);
+  return "paid";
+}

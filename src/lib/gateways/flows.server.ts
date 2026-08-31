@@ -205,3 +205,76 @@ export async function startDepositFlow(input: {
     throw new Response(extractGatewayError(err), { status: 502 });
   }
 }
+
+/**
+ * Starts a monthly package (subscription) payment. The price is always taken
+ * from the database — never from the browser — so the amount cannot be tampered.
+ */
+export async function startSubscriptionFlow(input: {
+  userId: string;
+  provider: string;
+  plan: string;
+  months: number;
+  storeOrigin?: string;
+}): Promise<{ redirectUrl: string; code: string }> {
+  const db = await core.admin();
+  const { data: reseller } = await db
+    .from("resellers")
+    .select("id,business_name,contact_phone")
+    .eq("user_id", input.userId)
+    .maybeSingle();
+  if (!reseller) throw new Response("Reseller account not found", { status: 400 });
+
+  const creds = await core.getPlatformCredentials(input.provider);
+  if (!creds) throw new Response("This payment gateway is not available", { status: 400 });
+
+  const { data: price } = await db.rpc("subscription_price", {
+    _reseller_id: (reseller as any).id,
+    _plan: input.plan,
+    _months: input.months,
+  } as never);
+  const amount = Number(price ?? 0);
+  if (!(amount > 0)) throw new Response("This package has no price yet", { status: 400 });
+
+  const code = core.newSubscriptionCode();
+  const { data: intentRow, error } = await db
+    .from("subscription_requests")
+    .insert({
+      reseller_id: (reseller as any).id,
+      plan: input.plan,
+      months: input.months,
+      amount,
+      code,
+      provider: input.provider,
+      method: input.provider,
+      status: "pending",
+      note: "Online payment (awaiting gateway confirmation)",
+    })
+    .select("id,code,reseller_id,plan,months,amount,status,provider,txn_id")
+    .single();
+  if (error || !intentRow) throw new Response("Could not start the payment", { status: 500 });
+
+  const store = await shopperOrigin(input.storeOrigin);
+  const cb = await callbackBase();
+  const back = `${store}/reseller/subscription`;
+  const params = { on: code, su: back, cu: back, k: "sub", code, sig: await core.signTargets(back, back) };
+  const urls = {
+    returnUrl: core.returnUrl(cb, input.provider, { ...params, t: "success" }),
+    failUrl: core.returnUrl(cb, input.provider, { ...params, t: "fail" }),
+    cancelUrl: core.returnUrl(cb, input.provider, { ...params, t: "cancel" }),
+    ipnUrl: ipnFor(input.provider, cb, params),
+  };
+
+  const pseudo = core.subscriptionAsOrder(intentRow as any, {
+    name: (reseller as any).business_name ?? undefined,
+    phone: (reseller as any).contact_phone ?? undefined,
+  });
+  try {
+    const res = await adapterFor(input.provider).create(creds, pseudo, urls);
+    await db.from("subscription_requests").update({ txn_id: res.ref || null }).eq("id", (intentRow as any).id);
+    return { redirectUrl: res.paymentUrl, code };
+  } catch (err) {
+    await db.from("subscription_requests").delete().eq("id", (intentRow as any).id);
+    throw new Response(extractGatewayError(err), { status: 502 });
+  }
+}
