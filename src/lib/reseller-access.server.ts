@@ -33,13 +33,13 @@ export async function ensureActiveResellerRole(supabase: DbClient, userId: strin
 }
 
 /** Creates temporary email/password credentials the browser can exchange for a reseller session. */
-export async function createImpersonationLogin(supabase: DbClient & { rpc: (fn: string, args: any) => any }, userId: string) {
+export async function createImpersonationLogin(supabase: any, userId: string) {
   const password = easyPassword();
   // Single permission-checked database function: verifies the caller can
   // impersonate, ensures the reseller role, confirms the email, sets the
   // temporary password and returns the login email. Works for staff that only
   // have `resellers.impersonate` (no full reseller management access).
-  const { data, error } = await supabase.rpc("admin_impersonation_login", {
+  const { data, error } = await supabase.rpc("admin_impersonation_login" as any, {
     _user_id: userId,
     _password: password,
   });
