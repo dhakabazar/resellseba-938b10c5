@@ -8,14 +8,18 @@ import { ProductCodeChip } from "@/components/product-code";
 import { AdvanceByToggle, MoneyField, SectionLabel } from "@/components/order-form-fields";
 import { packagingModeHint, packagingTotal } from "@/lib/packaging";
 import { useAdvancedSettings } from "@/lib/advanced-settings";
+import { useResellerPriceMap, wholesalePrice, hasCustomPrice, type ResellerPriceMap } from "@/lib/reseller-prices";
 
 
 
 type Line = { listing_id?: string; product_id?: string; qty: number; name?: string; price?: number; cost?: number; image?: string; delivery?: any };
 
-/** Minimum allowed selling price = SA base cost (product cost + packaging). */
-function minSellPrice(p: any) {
-  return Number(p?.reseller_price ?? 0) + Number(p?.packaging_cost ?? 0);
+/**
+ * Minimum allowed selling price = SA base cost (product cost + packaging).
+ * The product cost respects the reseller specific admin price when admin set one.
+ */
+function minSellPrice(p: any, prices?: ResellerPriceMap) {
+  return wholesalePrice(p, prices) + Number(p?.packaging_cost ?? 0);
 }
 
 /** Live stock badge — shown for listed and unlisted products alike. */
@@ -78,6 +82,8 @@ export function NewOrderModal({
   /** Packaging charge rule from Admin → System → Advanced settings. */
   const { settings: advanced } = useAdvancedSettings();
   const packagingSum = advanced.packagingChargeSum;
+  /** Per-reseller admin price overrides for the selected reseller. */
+  const prices = useResellerPriceMap(resellerId);
 
 
 
@@ -119,14 +125,14 @@ export function NewOrderModal({
       if (line.listing_id) {
         const l = listings.find(x => x.id === line.listing_id);
         if (l?.products) {
-          const min = minSellPrice(l.products);
+          const min = minSellPrice(l.products, prices);
           return { line, index, p: l.products, sellPrice: Number(line.price ?? l.selling_price), minPrice: min, listingId: l.id };
         }
       }
       if (line.product_id) {
         const p = allProducts.find(x => x.id === line.product_id);
         if (p) {
-          const min = minSellPrice(p);
+          const min = minSellPrice(p, prices);
           return {
             line,
             index,
@@ -139,7 +145,7 @@ export function NewOrderModal({
       }
       return null;
     }).filter(Boolean) as { line: Line; index: number; p: any; sellPrice: number; minPrice: number; listingId: string | null }[];
-  }, [lines, listings, allProducts]);
+  }, [lines, listings, allProducts, prices]);
 
   const totals = useMemo(() => {
     let subtotal = 0;
@@ -151,7 +157,7 @@ export function NewOrderModal({
 
     for (const { line, p, sellPrice } of picked) {
       subtotal += Number(sellPrice) * line.qty;
-      productCost += Number(p.reseller_price) * line.qty;
+      productCost += wholesalePrice(p, prices) * line.qty;
 
       const mode = deliveryMode(p);
       if (mode !== "free") isUniversalFree = false;
@@ -205,7 +211,7 @@ export function NewOrderModal({
       shipFrom,
       showAreaPicker,
     };
-  }, [picked, area, shipOverride, packagingOverride, discount, deliveryCostOverride, advance, advanceBy, packagingSum]);
+  }, [picked, area, shipOverride, packagingOverride, discount, deliveryCostOverride, advance, advanceBy, packagingSum, prices]);
 
 
 
@@ -228,7 +234,7 @@ export function NewOrderModal({
       setLines(prev =>
         prev.some(x => x.product_id === p.id)
           ? prev.map(x => (x.product_id === p.id ? { ...x, qty: x.qty + 1 } : x))
-          : [...prev, { product_id: p.id, qty: 1, price: p.suggested_price || (p.reseller_price + p.packaging_cost) }]
+          : [...prev, { product_id: p.id, qty: 1, price: p.suggested_price || minSellPrice(p, prices) }]
       );
     }
     setQuery("");
@@ -275,7 +281,7 @@ export function NewOrderModal({
       if (error) throw error;
 
       const items = picked.map(({ line, p, sellPrice, listingId }) => {
-        const saPrice = Number(p.reseller_price) + Number(p.packaging_cost);
+        const saPrice = wholesalePrice(p, prices) + Number(p.packaging_cost);
         return {
           order_id: order.id,
           listing_id: listingId,
@@ -480,7 +486,7 @@ export function NewOrderModal({
                         {results.length > 0 ? (
                           results.map((item) => {
                             const p = item.type === 'listing' ? item.data.products! : item.data;
-                            const price = item.type === 'listing' ? item.data.selling_price : (p.suggested_price || p.reseller_price + p.packaging_cost);
+                            const price = item.type === 'listing' ? item.data.selling_price : (p.suggested_price || minSellPrice(p, prices));
                             const dc = productDeliveryCharge(p, area);
                             const inCart = item.type === 'listing' 
                               ? lines.some((x) => x.listing_id === item.data.id)
