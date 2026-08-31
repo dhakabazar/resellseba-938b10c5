@@ -113,7 +113,7 @@ export const AGENT_SALES_HINT =
   "Sales = money actually received for the orders of this agent's resellers in the selected period. Profit uses the same formula as every report: received amount − delivery charge − product cost − packaging cost.";
 
 export const AGENT_COMMISSION_HINT =
-  "Each agent is paid one of two ways. Percent of profit: rate % × settled net profit of the assigned resellers' orders (received amount − delivery charge − product cost − packaging cost), so returned / cancelled orders reduce the base. Per product: a flat amount × the number of product units customers actually kept in delivered or partial orders (returned units are not counted).";
+  "Commission is earned only on orders where the customer kept the products: Delivered, Partial (full item) and Partial (item returned). Returned, cancelled, delivery-charge-only partials and damaged orders earn nothing. Percent of profit: rate % × net profit of those orders (received amount − delivery charge − product cost − packaging cost). Per product: a flat amount × the product units the customer actually kept (returned units are not counted).";
 
 export function commissionMode(plan: CommissionPlan): CommissionMode {
   return plan.commission_mode === "per_product" ? "per_product" : "percent";
