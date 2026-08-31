@@ -1,6 +1,9 @@
 import { orderProfit, orderReceived, type ProfitOrder } from "@/lib/finance-report";
 import type { LedgerRow } from "@/components/ledger-timeline";
 
+/** How an agent earns: a % of settled net profit, or a flat amount per delivered product unit. */
+export type CommissionMode = "percent" | "per_product";
+
 export type Agent = {
   id: string;
   user_id: string;
@@ -10,16 +13,28 @@ export type Agent = {
   whatsapp: string | null;
   sale_target: number;
   commission_rate: number;
+  commission_mode: CommissionMode;
+  commission_per_unit: number;
   is_active: boolean;
   notes: string | null;
   created_at: string;
+};
+
+/** Only the commission settings — enough for every money helper below. */
+export type CommissionPlan = {
+  commission_rate?: number | string | null;
+  commission_mode?: string | null;
+  commission_per_unit?: number | string | null;
 };
 
 export type AgentOrder = ProfitOrder & {
   id: string;
   reseller_id: string | null;
   created_at: string;
+  /** Product units the customer actually kept (from agent_order_units). */
+  units?: number | null;
 };
+
 
 export type AgentPayout = {
   id: string;
