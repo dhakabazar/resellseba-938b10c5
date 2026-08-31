@@ -736,7 +736,7 @@ function ResellersPage() {
         ? `${r.business_name} is now active`
         : `Status set to ${resellerStatusLabel(status)}`,
     );
-    load();
+    refreshOne(r.id);
   }
 
 
