@@ -96,23 +96,30 @@ export function SubscriptionLockedBanner({ state }: { state: SubscriptionState }
   );
 }
 
-/** Dashboard nudge shown while the package is still active but ending soon. */
+/**
+ * Reminder shown on every reseller page while the package is still valid but
+ * ending inside the reminder window (or while the free trial is running out).
+ */
 export function SubscriptionNotice() {
   const state = useSubscriptionGate();
   const { settings } = useAdvancedSettings();
   if (!state?.enabled || state.exempt || state.locked) return null;
   const days = state.days_left ?? null;
-  if (days === null || days > 7) return null;
+  if (days === null || days > noticeWindow(state)) return null;
   const s = settings.subscription;
+  const trial = Boolean(state.in_trial);
 
   return (
     <div className="mb-6 flex flex-col gap-3 rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex gap-3">
         <Crown className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
         <div className="min-w-0 text-sm">
-          <div className="font-bold text-amber-700 dark:text-amber-300">{s.noticeTitle}</div>
+          <div className="font-bold text-amber-700 dark:text-amber-300">
+            {trial ? "Your free trial ends soon" : s.noticeTitle}
+          </div>
           <p className="mt-0.5 text-xs text-amber-700/80 dark:text-amber-200/80">
-            {planLabel(state.plan)} · valid until {formatDate(state.until)} ({days} days left). {s.noticeBody}
+            {trial ? "Free trial" : planLabel(state.plan)} · valid until {formatDate(state.until)} (
+            {days <= 0 ? "last day" : `${days} days left`}). {s.noticeBody}
           </p>
         </div>
       </div>
