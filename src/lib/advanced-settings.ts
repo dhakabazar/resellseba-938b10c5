@@ -40,6 +40,14 @@ export type AdvancedSettings = {
 export type SubscriptionSettings = {
   /** Master switch: when off, nobody is asked to pay for a package. */
   enabled: boolean;
+  /**
+   * On  → every reseller is in the package automatically.
+   * Off → only resellers an admin puts in the package are asked to pay;
+   *       everybody else keeps using the panel and store normally.
+   */
+  autoApply: boolean;
+  /** How many days before expiry the reseller starts seeing the reminder. */
+  noticeDays: number;
   /** Free trial length for a brand-new reseller (0 = no trial). */
   trialDays: number;
   /** Extra days the panel keeps working after the package expired. */
