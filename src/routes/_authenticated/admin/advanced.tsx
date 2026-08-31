@@ -300,7 +300,7 @@ function AdvancedSettingsPage() {
                       <Toggle
                         checked={Boolean(settings[row.key])}
                         disabled={disabled}
-                        onChange={(v) => setSettings((s) => ({ ...s, [row.key]: v }))}
+                        onChange={(v) => apply({ [row.key]: v } as Partial<AdvancedSettings>, 0)}
                       />
                     </label>
                   );
