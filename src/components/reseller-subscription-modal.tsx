@@ -113,7 +113,7 @@ export function ResellerSubscriptionModal({
       open
       onClose={onClose}
       title={`Monthly package · ${reseller.business_name}`}
-      description={`Package, price and expiry for ${reseller.code}.`}
+      subtitle={`Package, price and expiry for ${reseller.code}.`}
       size="lg"
     >
       {!data ? (
