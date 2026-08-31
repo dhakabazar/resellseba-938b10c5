@@ -58,14 +58,27 @@ function ListingsPage() {
     setLoading(true);
     const r = await getMyReseller(user.id);
     if (!r) return setLoading(false);
-    const { data } = await supabase
-      .from("reseller_listings")
-      .select(
-        "id,selling_price,is_active,products(id,brand_id,category_id,name,slug,product_code,reseller_price,packaging_cost,delivery_inside,delivery_outside,delivery_sub,delivery_mode,delivery_flat,og_image_url)",
-      )
-      .eq("reseller_id", r.id)
-      .order("created_at", { ascending: false });
-    setItems((data ?? []) as L[]);
+    const [{ data }, priceMap] = await Promise.all([
+      supabase
+        .from("reseller_listings")
+        .select(
+          "id,selling_price,is_active,products(id,brand_id,category_id,name,slug,product_code,reseller_price,packaging_cost,delivery_inside,delivery_outside,delivery_sub,delivery_mode,delivery_flat,og_image_url)",
+        )
+        .eq("reseller_id", r.id)
+        .order("created_at", { ascending: false }),
+      fetchResellerPriceMap(r.id),
+    ]);
+    // Admin may have set a reseller specific admin price — it replaces the master one.
+    const rows = ((data ?? []) as L[]).map((l) =>
+      l.products
+        ? {
+            ...l,
+            custom_price: hasCustomPrice(l.products.id, priceMap),
+            products: { ...l.products, reseller_price: wholesalePrice(l.products, priceMap) },
+          }
+        : l,
+    );
+    setItems(rows);
     setLoading(false);
   }
   const didLoad = useRef(false);
