@@ -1344,8 +1344,9 @@ function ResellersPage() {
           others={items.filter((i) => i.id !== editing.id && i.status === "active")}
           onClose={() => setEditing(null)}
           onSaved={() => {
+            const id = editing.id;
             setEditing(null);
-            load();
+            refreshOne(id);
           }}
         />
       )}
