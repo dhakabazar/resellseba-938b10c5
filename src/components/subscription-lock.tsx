@@ -9,7 +9,13 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AlertTriangle, Crown, Lock, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { formatDate, planLabel, subscriptionFromBootstrap, type SubscriptionState } from "@/lib/subscription";
+import {
+  formatDate,
+  noticeWindow,
+  planLabel,
+  subscriptionFromBootstrap,
+  type SubscriptionState,
+} from "@/lib/subscription";
 import { useAdvancedSettings } from "@/lib/advanced-settings";
 
 /** Paths that keep working while the package is expired. */
