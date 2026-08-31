@@ -11,6 +11,8 @@ import {
   Layers,
   Users,
   HelpCircle,
+  Quote,
+  Star,
 } from "lucide-react";
 import { APP_ICONS } from "@/lib/icons";
 import { toast } from "sonner";
@@ -48,10 +50,20 @@ type Feature = { icon: string; title: string; desc: string };
 type FlowStep = { icon: string; title: string; desc: string };
 type Step = { title: string; desc: string };
 type FaqItem = { q: string; a: string };
+type Story = {
+  name: string;
+  role?: string;
+  location?: string;
+  quote: string;
+  metric?: string;
+  metricLabel?: string;
+  rating?: number;
+  avatar?: HeroImage;
+};
 type HeroImage = { path: string; url: string; bytes: number } | null;
 type StatItem = { value: string; label: string };
 type LandingContent = {
-  nav: { features: string; how: string; categories?: string; signIn: string; cta: string; faq?: string };
+  nav: { features: string; how: string; categories?: string; signIn: string; cta: string; faq?: string; stories?: string };
   hero: {
     badge: string; titleStart: string; titleHighlight: string; subtitle: string;
     ctaPrimary: string; ctaSecondary: string; badges: string[];
@@ -62,13 +74,14 @@ type LandingContent = {
   features: { title: string; subtitle: string; items: Feature[] };
   how: { title: string; subtitle: string; steps: Step[] };
   faq?: { title: string; subtitle: string; items: FaqItem[] };
+  stories?: { title?: string; subtitle?: string; items: Story[] };
   cta: { badge: string; title: string; subtitle: string; button: string };
   footer: { tagline: string };
 };
 
 
 const FALLBACK: LandingContent = {
-  nav: { features: "ফিচার", how: "কীভাবে কাজ করে", categories: "ক্যাটাগরি", faq: "FAQ", signIn: "সাইন ইন", cta: "শুরু করুন" },
+  nav: { features: "ফিচার", how: "কীভাবে কাজ করে", categories: "ক্যাটাগরি", stories: "সাকসেস স্টোরি", faq: "FAQ", signIn: "সাইন ইন", cta: "শুরু করুন" },
   hero: {
     badge: "বাংলাদেশের রিসেলার প্ল্যাটফর্ম",
     titleStart: "নিজের অনলাইন স্টোর চালু করুন",
@@ -123,6 +136,52 @@ const FALLBACK: LandingContent = {
       { q: "রিটার্ন/রিফান্ড কীভাবে হয়?", a: "কাস্টমার রিফান্ড চাইলে রিসেলার অর্ডার প্যানেলে রিকোয়েস্ট তোলেন। অ্যাডমিন কুরিয়ার থেকে প্রোডাক্ট রিসিভ করে যাচাই করার পর রিফান্ড/রিপ্লেসমেন্ট প্রসেস হয়।" },
       { q: "কাস্টমার সাপোর্ট কে দেবে?", a: "রিসেলার নিজেই কাস্টমারের যোগাযোগ ও সাপোর্ট দেন। অ্যাডমিন শুধু প্যাকিং, কুরিয়ার বুকিং ও ডেলিভারি স্ট্যাটাস হ্যান্ডল করে।" },
       { q: "মোবাইল অ্যাপ আছে কি?", a: "এখনো পুরো মোবাইল অ্যাপ নেই, তবে স্টোর এবং প্যানেল পুরোপুরি মোবাইল-রেস্পন্সিভ — ফোন থেকেই অর্ডার, ট্র্যাকিং ও প্রফিট দেখা যায়।" },
+    ],
+  },
+  stories: {
+    title: "রিসেলারদের সাকসেস স্টোরি",
+    subtitle: "যারা জিরো ইনভেস্টমেন্টে শুরু করে আজ নিজের ব্র্যান্ড দাঁড় করিয়েছেন",
+    items: [
+      {
+        name: "সাদিয়া আফরিন",
+        role: "স্টুডেন্ট রিসেলার",
+        location: "রাজশাহী",
+        quote:
+          "ক্লাসের ফাঁকে ফেসবুক পেজে প্রোডাক্ট পোস্ট করি, অর্ডার এলে প্যানেলে তুলে দিই। প্যাকিং-কুরিয়ার নিয়ে ভাবতেই হয় না। প্রথম মাসেই টিউশনের চেয়ে বেশি ইনকাম হয়েছে।",
+        metric: "৳৩২,০০০",
+        metricLabel: "মাসিক প্রফিট",
+        rating: 5,
+      },
+      {
+        name: "রাকিব হাসান",
+        role: "ফেসবুক পেজ অ্যাডমিন",
+        location: "চট্টগ্রাম",
+        quote:
+          "আগে স্টক কিনে টাকা আটকে রাখতাম। এখন লিস্টিং থেকেই সেল হয়, প্রফিট রিপোর্ট রিয়েল-টাইমে দেখি। কাস্টম ডোমেইনে নিজের ব্র্যান্ডেড স্টোর — কাস্টমার আমাকেই চেনে।",
+        metric: "১,২০০+",
+        metricLabel: "ডেলিভারড অর্ডার",
+        rating: 5,
+      },
+      {
+        name: "নুসরাত জাহান",
+        role: "হোম-বেইজড সেলার",
+        location: "ঢাকা",
+        quote:
+          "বাচ্চা সামলে ঘরে বসেই স্টোর চালাই। কুরিয়ার ট্র্যাকিং আর প্রফিট উইথড্র একদম ঝামেলাহীন — bKash-এ টাকা চলে আসে।",
+        metric: "৳৪৫,০০০",
+        metricLabel: "সেরা মাসের সেল",
+        rating: 5,
+      },
+      {
+        name: "তানভীর আলম",
+        role: "ফুলটাইম রিসেলার",
+        location: "সিলেট",
+        quote:
+          "দিনে ২০-৩০টা অর্ডার হ্যান্ডল করি একজনেই। বাল্ক কুরিয়ার বুকিং আর থার্মাল লেবেল সিস্টেম সময় বাঁচিয়ে দিয়েছে।",
+        metric: "৯৭%",
+        metricLabel: "ডেলিভারি সাকসেস",
+        rating: 5,
+      },
     ],
   },
   cta: { badge: "", title: "শুরু করুন", subtitle: "", button: "সাইনআপ" },
@@ -535,6 +594,77 @@ function Landing({
               >
                 <ShoppingBag className="h-4 w-4" /> সব প্রোডাক্টস দেখুন
               </Link>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── Reseller stories ────────────────────────────── */}
+      {c.stories && c.stories.items.length > 0 && (
+        <section id="stories" className="relative overflow-hidden border-t border-border/60 py-12 sm:py-20">
+          <div className="pointer-events-none absolute -top-24 right-0 -z-10 h-72 w-72 rounded-full bg-primary/15 blur-3xl" />
+          <div className="pointer-events-none absolute bottom-0 -left-20 -z-10 h-64 w-64 rounded-full bg-primary/10 blur-3xl" />
+          <div className="mx-auto max-w-7xl px-4 sm:px-6">
+            <div className="mx-auto max-w-2xl text-center">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-[11px] font-bold text-primary">
+                <Quote className="h-3.5 w-3.5" /> সাকসেস স্টোরি
+              </span>
+              {c.stories.title && (
+                <h2 className="mt-3 text-xl font-extrabold sm:text-3xl">{c.stories.title}</h2>
+              )}
+              {c.stories.subtitle && (
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{c.stories.subtitle}</p>
+              )}
+            </div>
+
+            <div className="mt-9 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {c.stories.items.map((s, i) => (
+                <article
+                  key={i}
+                  className="surface-card surface-card-hover relative flex h-full flex-col gap-4 overflow-hidden p-5"
+                >
+                  <Quote className="pointer-events-none absolute -right-2 -top-3 h-16 w-16 text-primary/10" />
+                  {typeof s.rating === "number" && s.rating > 0 && (
+                    <div className="flex gap-0.5">
+                      {Array.from({ length: Math.min(5, Math.round(s.rating)) }).map((_, k) => (
+                        <Star key={k} className="h-3.5 w-3.5 fill-primary text-primary" />
+                      ))}
+                    </div>
+                  )}
+                  <p className="relative text-sm leading-relaxed text-muted-foreground">“{s.quote}”</p>
+
+                  {(s.metric || s.metricLabel) && (
+                    <div className="rounded-xl border border-primary/25 bg-primary/5 px-3 py-2">
+                      <div className="text-base font-black text-primary">{s.metric}</div>
+                      {s.metricLabel && (
+                        <div className="text-[11px] font-medium text-muted-foreground">{s.metricLabel}</div>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="mt-auto flex items-center gap-3 border-t border-border/60 pt-4">
+                    {s.avatar?.url ? (
+                      <img
+                        src={s.avatar.url}
+                        alt={s.name}
+                        loading="lazy"
+                        decoding="async"
+                        className="h-10 w-10 shrink-0 rounded-full object-cover ring-2 ring-primary/25"
+                      />
+                    ) : (
+                      <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[image:var(--gradient-brand)] text-sm font-black text-primary-foreground">
+                        {s.name?.charAt(0) || "R"}
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-bold">{s.name}</div>
+                      <div className="truncate text-[11px] text-muted-foreground">
+                        {[s.role, s.location].filter(Boolean).join(" • ")}
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              ))}
             </div>
           </div>
         </section>
