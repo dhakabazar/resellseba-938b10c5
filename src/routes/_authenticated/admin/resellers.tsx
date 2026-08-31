@@ -1400,8 +1400,9 @@ function ResellersPage() {
           reseller={depositFor}
           onClose={() => setDepositFor(null)}
           onSaved={() => {
+            const id = depositFor.id;
             setDepositFor(null);
-            load();
+            refreshOne(id, { metrics: true });
           }}
         />
       )}
