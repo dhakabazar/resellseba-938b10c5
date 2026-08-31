@@ -53,6 +53,7 @@ import { Route as AuthenticatedAdminTransactionsRouteImport } from './routes/_au
 import { Route as AuthenticatedAdminStaffRouteImport } from './routes/_authenticated/admin/staff'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin/settings'
 import { Route as AuthenticatedAdminResellersRouteImport } from './routes/_authenticated/admin/resellers'
+import { Route as AuthenticatedAdminResellerPricingRouteImport } from './routes/_authenticated/admin/reseller-pricing'
 import { Route as AuthenticatedAdminPrivacyRouteImport } from './routes/_authenticated/admin/privacy'
 import { Route as AuthenticatedAdminPayoutsRouteImport } from './routes/_authenticated/admin/payouts'
 import { Route as AuthenticatedAdminPaymentsRouteImport } from './routes/_authenticated/admin/payments'
@@ -335,6 +336,12 @@ const AuthenticatedAdminResellersRoute =
     path: '/resellers',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
+const AuthenticatedAdminResellerPricingRoute =
+  AuthenticatedAdminResellerPricingRouteImport.update({
+    id: '/reseller-pricing',
+    path: '/reseller-pricing',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
 const AuthenticatedAdminPrivacyRoute =
   AuthenticatedAdminPrivacyRouteImport.update({
     id: '/privacy',
@@ -597,6 +604,7 @@ export interface FileRoutesByFullPath {
   '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
   '/admin/payouts': typeof AuthenticatedAdminPayoutsRoute
   '/admin/privacy': typeof AuthenticatedAdminPrivacyRoute
+  '/admin/reseller-pricing': typeof AuthenticatedAdminResellerPricingRoute
   '/admin/resellers': typeof AuthenticatedAdminResellersRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/staff': typeof AuthenticatedAdminStaffRoute
@@ -676,6 +684,7 @@ export interface FileRoutesByTo {
   '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
   '/admin/payouts': typeof AuthenticatedAdminPayoutsRoute
   '/admin/privacy': typeof AuthenticatedAdminPrivacyRoute
+  '/admin/reseller-pricing': typeof AuthenticatedAdminResellerPricingRoute
   '/admin/resellers': typeof AuthenticatedAdminResellersRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/staff': typeof AuthenticatedAdminStaffRoute
@@ -761,6 +770,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/payments': typeof AuthenticatedAdminPaymentsRoute
   '/_authenticated/admin/payouts': typeof AuthenticatedAdminPayoutsRoute
   '/_authenticated/admin/privacy': typeof AuthenticatedAdminPrivacyRoute
+  '/_authenticated/admin/reseller-pricing': typeof AuthenticatedAdminResellerPricingRoute
   '/_authenticated/admin/resellers': typeof AuthenticatedAdminResellersRoute
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/_authenticated/admin/staff': typeof AuthenticatedAdminStaffRoute
@@ -846,6 +856,7 @@ export interface FileRouteTypes {
     | '/admin/payments'
     | '/admin/payouts'
     | '/admin/privacy'
+    | '/admin/reseller-pricing'
     | '/admin/resellers'
     | '/admin/settings'
     | '/admin/staff'
@@ -925,6 +936,7 @@ export interface FileRouteTypes {
     | '/admin/payments'
     | '/admin/payouts'
     | '/admin/privacy'
+    | '/admin/reseller-pricing'
     | '/admin/resellers'
     | '/admin/settings'
     | '/admin/staff'
@@ -1009,6 +1021,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/payments'
     | '/_authenticated/admin/payouts'
     | '/_authenticated/admin/privacy'
+    | '/_authenticated/admin/reseller-pricing'
     | '/_authenticated/admin/resellers'
     | '/_authenticated/admin/settings'
     | '/_authenticated/admin/staff'
@@ -1385,6 +1398,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminResellersRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/_authenticated/admin/reseller-pricing': {
+      id: '/_authenticated/admin/reseller-pricing'
+      path: '/reseller-pricing'
+      fullPath: '/admin/reseller-pricing'
+      preLoaderRoute: typeof AuthenticatedAdminResellerPricingRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
     '/_authenticated/admin/privacy': {
       id: '/_authenticated/admin/privacy'
       path: '/privacy'
@@ -1679,6 +1699,7 @@ interface AuthenticatedAdminRouteRouteChildren {
   AuthenticatedAdminPaymentsRoute: typeof AuthenticatedAdminPaymentsRoute
   AuthenticatedAdminPayoutsRoute: typeof AuthenticatedAdminPayoutsRoute
   AuthenticatedAdminPrivacyRoute: typeof AuthenticatedAdminPrivacyRoute
+  AuthenticatedAdminResellerPricingRoute: typeof AuthenticatedAdminResellerPricingRoute
   AuthenticatedAdminResellersRoute: typeof AuthenticatedAdminResellersRoute
   AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
   AuthenticatedAdminStaffRoute: typeof AuthenticatedAdminStaffRoute
@@ -1719,6 +1740,8 @@ const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren
     AuthenticatedAdminPaymentsRoute: AuthenticatedAdminPaymentsRoute,
     AuthenticatedAdminPayoutsRoute: AuthenticatedAdminPayoutsRoute,
     AuthenticatedAdminPrivacyRoute: AuthenticatedAdminPrivacyRoute,
+    AuthenticatedAdminResellerPricingRoute:
+      AuthenticatedAdminResellerPricingRoute,
     AuthenticatedAdminResellersRoute: AuthenticatedAdminResellersRoute,
     AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
     AuthenticatedAdminStaffRoute: AuthenticatedAdminStaffRoute,

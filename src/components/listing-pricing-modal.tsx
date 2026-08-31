@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Loader2, X, Save, TrendingUp } from "lucide-react";
 import { ProductCodeChip } from "@/components/product-code";
 import { getGlobalSettings } from "@/lib/app-data";
+import { fetchResellerPriceMap, hasCustomPrice, wholesalePrice } from "@/lib/reseller-prices";
 import {
   DELIVERY_AREAS,
   areaLabel,
@@ -56,6 +57,8 @@ export function ListingPricingModal({
 
   const [settingsTick, setSettingsTick] = useState(0);
 
+  const [customPrice, setCustomPrice] = useState(false);
+
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -73,7 +76,14 @@ export function ListingPricingModal({
       ]);
       if (!alive) return;
       if (error) toast.error(error.message);
-      const l = (data ?? null) as PricingListing | null;
+      let l = (data ?? null) as PricingListing | null;
+      // Admin can set a reseller specific admin price — RLS only exposes our own row.
+      if (l?.products?.id) {
+        const map = await fetchResellerPriceMap();
+        if (!alive) return;
+        setCustomPrice(hasCustomPrice(l.products.id, map));
+        l = { ...l, products: { ...l.products, reseller_price: wholesalePrice(l.products, map) } };
+      }
       setRow(l);
       setPrice(l ? String(l.selling_price) : "");
       setSettingsTick((t) => t + 1);
@@ -175,7 +185,14 @@ export function ListingPricingModal({
               </div>
               <dl className="space-y-1.5 text-sm">
                 <div className="flex items-center justify-between">
-                  <dt className="text-muted-foreground">Product cost (admin price)</dt>
+                  <dt className="flex items-center gap-1.5 text-muted-foreground">
+                    Product cost (admin price)
+                    {customPrice && (
+                      <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold uppercase text-primary">
+                        Special
+                      </span>
+                    )}
+                  </dt>
                   <dd className="font-medium">{taka(calc.productCost)}</dd>
                 </div>
                 <div className="flex items-center justify-between">

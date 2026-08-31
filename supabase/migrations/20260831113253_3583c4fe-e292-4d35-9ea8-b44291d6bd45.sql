@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.reseller_wholesale_price(uuid, uuid) FROM anon, authenticated;

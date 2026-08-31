@@ -13,12 +13,16 @@ import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { ProductCodeChip } from "@/components/product-code";
 import { confirmAction } from "@/lib/confirm";
 import { ListingPricingModal } from "@/components/listing-pricing-modal";
+import { fetchResellerPriceMap, hasCustomPrice, wholesalePrice } from "@/lib/reseller-prices";
 
 type L = {
   id: string;
   selling_price: number;
   is_active: boolean;
+  /** true when admin set a reseller specific admin price for this product */
+  custom_price?: boolean;
   products: {
+    id?: string;
     name: string;
     slug: string;
     product_code: string | null;
@@ -55,14 +59,27 @@ function ListingsPage() {
     setLoading(true);
     const r = await getMyReseller(user.id);
     if (!r) return setLoading(false);
-    const { data } = await supabase
-      .from("reseller_listings")
-      .select(
-        "id,selling_price,is_active,products(id,brand_id,category_id,name,slug,product_code,reseller_price,packaging_cost,delivery_inside,delivery_outside,delivery_sub,delivery_mode,delivery_flat,og_image_url)",
-      )
-      .eq("reseller_id", r.id)
-      .order("created_at", { ascending: false });
-    setItems((data ?? []) as L[]);
+    const [{ data }, priceMap] = await Promise.all([
+      supabase
+        .from("reseller_listings")
+        .select(
+          "id,selling_price,is_active,products(id,brand_id,category_id,name,slug,product_code,reseller_price,packaging_cost,delivery_inside,delivery_outside,delivery_sub,delivery_mode,delivery_flat,og_image_url)",
+        )
+        .eq("reseller_id", r.id)
+        .order("created_at", { ascending: false }),
+      fetchResellerPriceMap(r.id),
+    ]);
+    // Admin may have set a reseller specific admin price — it replaces the master one.
+    const rows = ((data ?? []) as L[]).map((l) =>
+      l.products
+        ? {
+            ...l,
+            custom_price: hasCustomPrice(l.products.id, priceMap),
+            products: { ...l.products, reseller_price: wholesalePrice(l.products, priceMap) },
+          }
+        : l,
+    );
+    setItems(rows);
     setLoading(false);
   }
   const didLoad = useRef(false);
@@ -181,8 +198,13 @@ function ListingsPage() {
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="mb-1">
+                  <div className="mb-1 flex flex-wrap items-center gap-1.5">
                     <ProductCodeChip code={l.products?.product_code} />
+                    {l.custom_price && (
+                      <span className="inline-flex items-center rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-tight text-primary">
+                        Special price
+                      </span>
+                    )}
                   </div>
                   <div 
                     className="truncate font-medium cursor-pointer hover:text-primary transition-colors"
