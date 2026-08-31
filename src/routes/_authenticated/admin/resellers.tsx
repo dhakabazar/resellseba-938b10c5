@@ -38,6 +38,8 @@ import {
   LogIn,
   ChevronDown,
   Search,
+  StickyNote,
+
 
 } from "lucide-react";
 import { toast } from "sonner";
@@ -91,6 +93,8 @@ type Reseller = {
   leader_id: string | null;
   agent_id: string | null;
   notes: string | null;
+  notes_by?: string | null;
+  notes_at?: string | null;
   approved_at: string | null;
   created_at: string;
   payout_method: string | null;
@@ -458,6 +462,8 @@ function ResellersPage() {
   const [depositFor, setDepositFor] = useState<Reseller | null>(null);
   const [profileFor, setProfileFor] = useState<Reseller | null>(null);
   const [resetFor, setResetFor] = useState<Reseller | null>(null);
+  const [noteFor, setNoteFor] = useState<Reseller | null>(null);
+  const [noteAuthors, setNoteAuthors] = useState<Record<string, string>>({});
   const [agents, setAgents] = useState<Array<{ id: string; display_name: string }>>([]);
   const [agentFilter, setAgentFilter] = useState("");
   const [depositFilter, setDepositFilter] = useState<DepositFilter>("all");
@@ -473,7 +479,7 @@ function ResellersPage() {
       supabase
         .from("resellers")
         .select(
-          "id,user_id,avatar_url,business_name,code,contact_phone,address,nid_number,status,commission_rate,leader_id,agent_id,notes,approved_at,created_at,payout_method,payout_account_name,payout_account_number,payout_bank_name,payout_branch,payout_routing,deposit_required,deposit_required_amount,frozen_amount",
+          "id,user_id,avatar_url,business_name,code,contact_phone,address,nid_number,status,commission_rate,leader_id,agent_id,notes,notes_by,notes_at,approved_at,created_at,payout_method,payout_account_name,payout_account_number,payout_bank_name,payout_branch,payout_routing,deposit_required,deposit_required_amount,frozen_amount",
         )
         .order("created_at", { ascending: false }),
       supabase.rpc("admin_reseller_metrics"),
@@ -507,6 +513,21 @@ function ResellersPage() {
       );
     }
 
+    // Who wrote each internal note (staff profiles).
+    const authorIds = Array.from(new Set(rows.map((r) => r.notes_by).filter(Boolean))) as string[];
+    if (authorIds.length) {
+      const { data: authorRows } = await supabase
+        .from("profiles")
+        .select("id,full_name")
+        .in("id", authorIds);
+      setNoteAuthors(
+        Object.fromEntries(
+          (authorRows ?? []).map((p: any) => [p.id, (p.full_name as string | null) || "Staff"]),
+        ),
+      );
+    } else {
+      setNoteAuthors({});
+    }
 
     const metrics = (metricsRes.data ?? []) as Array<{
       reseller_id: string;
@@ -1073,6 +1094,31 @@ function ResellersPage() {
                           no phone
                         </span>
                       )}
+                      {r.notes ? (
+                        <button
+                          type="button"
+                          onClick={() => setNoteFor(r)}
+                          title={`${r.notes}${r.notes_by ? `\n— ${noteAuthors[r.notes_by] ?? "Staff"}` : ""}`}
+                          className="inline-flex max-w-[260px] items-center gap-1 rounded-md border border-warning/40 bg-warning/15 px-2 py-0.5 text-warning transition hover:bg-warning/25"
+                        >
+                          <StickyNote className="h-3 w-3 shrink-0" />
+                          <span className="truncate text-[11px] font-medium">{r.notes}</span>
+                          {r.notes_by && (
+                            <span className="shrink-0 text-[10px] opacity-80">
+                              · {noteAuthors[r.notes_by] ?? "Staff"}
+                            </span>
+                          )}
+                        </button>
+                      ) : can("resellers.edit") ? (
+                        <button
+                          type="button"
+                          onClick={() => setNoteFor(r)}
+                          title="Add internal note"
+                          className="inline-flex items-center gap-1 rounded-md border border-dashed px-2 py-0.5 text-[11px] text-muted-foreground transition hover:bg-muted"
+                        >
+                          <StickyNote className="h-3 w-3" /> Add note
+                        </button>
+                      ) : null}
                       {r.agent_id && (
                         <span
                           className="inline-flex items-center gap-1 rounded-md border border-primary/30 bg-primary/5 px-2 py-0.5"
@@ -1267,9 +1313,24 @@ function ResellersPage() {
                 })()
               : null
           }
+          noteAuthorName={profileFor.notes_by ? (noteAuthors[profileFor.notes_by] ?? "Staff") : null}
           onClose={() => setProfileFor(null)}
         />
       )}
+
+      {noteFor && (
+        <NoteModal
+          reseller={noteFor}
+          authorName={noteFor.notes_by ? (noteAuthors[noteFor.notes_by] ?? "Staff") : null}
+          canEdit={can("resellers.edit")}
+          onClose={() => setNoteFor(null)}
+          onSaved={() => {
+            setNoteFor(null);
+            load();
+          }}
+        />
+      )}
+
 
       {resetFor && (
         <PasswordResetModal
@@ -1828,6 +1889,7 @@ function ProfileModal({
   verify,
   leaderName,
   agentName,
+  noteAuthorName,
   onClose,
 }: {
   reseller: Reseller;
@@ -1837,10 +1899,13 @@ function ProfileModal({
   verify?: VerifyFlags;
   leaderName: string | null;
   agentName: string | null;
+  noteAuthorName?: string | null;
   onClose: () => void;
 }) {
   const data: ResellerProfileData = {
     ...reseller,
+    notes_by_name: noteAuthorName ?? null,
+    notes_at: reseller.notes_at ?? null,
     commission_rate: Number(reseller.commission_rate),
     deposit_required_amount: Number(reseller.deposit_required_amount),
     frozen_amount: Number(reseller.frozen_amount),
@@ -1870,6 +1935,98 @@ function ProfileModal({
         <div className="min-h-0 flex-1 overflow-y-auto bg-muted/20 px-4 py-4 sm:px-6">
           <ResellerProfile reseller={data} summary={summary} orders={orders} admin />
         </div>
+      </div>
+    </div>
+  );
+}
+
+function NoteModal({
+  reseller,
+  authorName,
+  canEdit,
+  onClose,
+  onSaved,
+}: {
+  reseller: Reseller;
+  authorName?: string | null;
+  canEdit: boolean;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [text, setText] = useState(reseller.notes ?? "");
+  const [saving, setSaving] = useState(false);
+
+  async function save() {
+    setSaving(true);
+    const { error } = await supabase
+      .from("resellers")
+      .update({ notes: text.trim() || null })
+      .eq("id", reseller.id);
+    setSaving(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Internal note saved");
+    onSaved();
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4"
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="surface-card flex max-h-[92dvh] w-full max-w-lg flex-col rounded-b-none sm:rounded-lg"
+      >
+        <div className="flex items-center justify-between gap-3 border-b px-4 py-3">
+          <div className="min-w-0">
+            <h3 className="truncate text-base font-semibold">Internal note</h3>
+            <p className="truncate text-xs text-muted-foreground">{reseller.business_name} · #{reseller.code}</p>
+          </div>
+          <button type="button" onClick={onClose} className="shrink-0 rounded-md p-1 hover:bg-muted">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="modal-scroll min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
+          {canEdit ? (
+            <textarea
+              autoFocus
+              rows={5}
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder="Write an internal note about this reseller…"
+              className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/40"
+            />
+          ) : (
+            <p className="whitespace-pre-wrap rounded-md border bg-muted/30 p-3 text-sm">
+              {reseller.notes || "No note yet."}
+            </p>
+          )}
+          {(authorName || reseller.notes_at) && (
+            <p className="flex items-center gap-1 text-xs text-muted-foreground">
+              <UserCircle className="h-3.5 w-3.5" />
+              Last note by {authorName ?? "Staff"}
+              {reseller.notes_at ? ` · ${new Date(reseller.notes_at).toLocaleString()}` : ""}
+            </p>
+          )}
+        </div>
+        {canEdit && (
+          <div className="flex justify-end gap-2 border-t px-4 py-3">
+            <button type="button" onClick={onClose} className="rounded-md border px-3 py-1.5 text-sm hover:bg-muted">
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => void save()}
+              disabled={saving}
+              className="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground disabled:opacity-60"
+            >
+              {saving && <Loader2 className="h-4 w-4 animate-spin" />} Save note
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
