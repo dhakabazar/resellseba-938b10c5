@@ -1379,8 +1379,9 @@ function ResellersPage() {
           canEdit={can("resellers.edit")}
           onClose={() => setNoteFor(null)}
           onSaved={() => {
+            const id = noteFor.id;
             setNoteFor(null);
-            load();
+            refreshOne(id);
           }}
         />
       )}
