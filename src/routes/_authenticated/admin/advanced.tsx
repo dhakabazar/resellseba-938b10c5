@@ -77,7 +77,7 @@ const GROUPS: Group[] = [
         key: "resellerAutoAssign",
         label: "Automatic agent assign",
         help:
-          "ON = every new reseller is distributed evenly between agents (the agent with the fewest resellers gets the next one). Only active agents with reseller permission are included. An admin can reassign manually at any time.",
+          "ON = every new reseller is distributed evenly between staff agents (the agent with the fewest resellers gets the next one). Super admin accounts are never auto-assigned — they already see every reseller. If no eligible staff agent exists, the reseller stays unassigned. An admin can reassign manually at any time.",
       },
     ],
   },
