@@ -2213,6 +2213,8 @@ export type Database = {
           payout_notes: string | null
           payout_routing: string | null
           status: Database["public"]["Enums"]["reseller_status"]
+          subscription_enrolled: boolean
+          subscription_enrolled_at: string | null
           subscription_exempt: boolean
           subscription_expires_at: string | null
           subscription_plan: string | null
@@ -2248,6 +2250,8 @@ export type Database = {
           payout_notes?: string | null
           payout_routing?: string | null
           status?: Database["public"]["Enums"]["reseller_status"]
+          subscription_enrolled?: boolean
+          subscription_enrolled_at?: string | null
           subscription_exempt?: boolean
           subscription_expires_at?: string | null
           subscription_plan?: string | null
@@ -2283,6 +2287,8 @@ export type Database = {
           payout_notes?: string | null
           payout_routing?: string | null
           status?: Database["public"]["Enums"]["reseller_status"]
+          subscription_enrolled?: boolean
+          subscription_enrolled_at?: string | null
           subscription_exempt?: boolean
           subscription_expires_at?: string | null
           subscription_plan?: string | null
@@ -3336,6 +3342,7 @@ export type Database = {
           visits: number
         }[]
       }
+      subscription_applies: { Args: { _reseller_id: string }; Returns: boolean }
       subscription_apply: {
         Args: {
           _actor?: string
@@ -3366,6 +3373,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      subscription_auto_apply: { Args: never; Returns: boolean }
       subscription_config: { Args: never; Returns: Json }
       subscription_locked: { Args: { _reseller_id: string }; Returns: boolean }
       subscription_options: {
