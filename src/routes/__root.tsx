@@ -140,7 +140,7 @@ function RootComponent() {
     return () => sub.subscription.unsubscribe();
   }, [router, queryClient]);
 
-  useBrandingTheme(brand.primary, brand.accent);
+  useBrandingTheme(brand.primary, brand.accent, brand.secondary, brand.highlight);
 
 
   return (
