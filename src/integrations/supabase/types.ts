@@ -652,6 +652,7 @@ export type Database = {
           deposit_trigger_default_on: boolean
           favicon_url: string | null
           flagship_reseller_code: string | null
+          highlight_color: string | null
           id: number
           label_size: string
           landing_content: Json
@@ -661,6 +662,7 @@ export type Database = {
           og_image_url: string | null
           primary_color: string | null
           privacy_policy: string | null
+          secondary_color: string | null
           site_name: string
           tagline: string | null
           updated_at: string
@@ -678,6 +680,7 @@ export type Database = {
           deposit_trigger_default_on?: boolean
           favicon_url?: string | null
           flagship_reseller_code?: string | null
+          highlight_color?: string | null
           id?: number
           label_size?: string
           landing_content?: Json
@@ -687,6 +690,7 @@ export type Database = {
           og_image_url?: string | null
           primary_color?: string | null
           privacy_policy?: string | null
+          secondary_color?: string | null
           site_name?: string
           tagline?: string | null
           updated_at?: string
@@ -704,6 +708,7 @@ export type Database = {
           deposit_trigger_default_on?: boolean
           favicon_url?: string | null
           flagship_reseller_code?: string | null
+          highlight_color?: string | null
           id?: number
           label_size?: string
           landing_content?: Json
@@ -713,6 +718,7 @@ export type Database = {
           og_image_url?: string | null
           primary_color?: string | null
           privacy_policy?: string | null
+          secondary_color?: string | null
           site_name?: string
           tagline?: string | null
           updated_at?: string

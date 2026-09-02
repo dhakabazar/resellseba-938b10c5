@@ -20,6 +20,8 @@ function SettingsPage() {
   const [metaDesc, setMetaDesc] = useState("");
   const [primary, setPrimary] = useState("#3b82f6");
   const [accent, setAccent] = useState("#f59e0b");
+  const [secondary, setSecondary] = useState("#0ea5e9");
+  const [highlight, setHighlight] = useState("#ec4899");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [logo, setLogo] = useState<UploadedImage[]>([]);
@@ -39,6 +41,8 @@ function SettingsPage() {
         setMetaDesc(data.meta_description ?? "");
         setPrimary(data.primary_color ?? "#3b82f6");
         setAccent(data.accent_color ?? "#f59e0b");
+        setSecondary((data as any).secondary_color ?? "#0ea5e9");
+        setHighlight((data as any).highlight_color ?? "#ec4899");
         setPhone(data.contact_phone ?? "");
         setEmail(data.contact_email ?? "");
         setFlagshipCode((data as any).flagship_reseller_code ?? "");
@@ -64,6 +68,8 @@ function SettingsPage() {
       meta_description: metaDesc || null,
       primary_color: primary,
       accent_color: accent,
+      secondary_color: secondary,
+      highlight_color: highlight,
       contact_phone: phone || null,
       contact_email: email || null,
       logo_url: logo[0]?.url ?? null,
@@ -106,13 +112,28 @@ function SettingsPage() {
           <Field label="Favicon (browser tab icon — square PNG/WebP)">
             <ImageUploader bucket="branding" folder="favicon" value={favicon} onChange={setFavicon} />
           </Field>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <Field label="Primary color">
               <input type="color" value={primary} onChange={(e) => setPrimary(e.target.value)} className="h-10 w-full rounded-md border" />
             </Field>
             <Field label="Accent color">
               <input type="color" value={accent} onChange={(e) => setAccent(e.target.value)} className="h-10 w-full rounded-md border" />
             </Field>
+            <Field label="Secondary color">
+              <input type="color" value={secondary} onChange={(e) => setSecondary(e.target.value)} className="h-10 w-full rounded-md border" />
+            </Field>
+            <Field label="Highlight color">
+              <input type="color" value={highlight} onChange={(e) => setHighlight(e.target.value)} className="h-10 w-full rounded-md border" />
+            </Field>
+          </div>
+          <div>
+            <div
+              className="h-8 w-full rounded-lg"
+              style={{ background: `linear-gradient(120deg, ${primary} 0%, ${secondary} 38%, ${highlight} 68%, ${accent} 100%)` }}
+            />
+            <p className="mt-1.5 text-[11px] text-muted-foreground">
+              These 4 colors drive the landing page, admin and reseller panels.
+            </p>
           </div>
         </div>
         <div className="surface-card space-y-3 p-6">

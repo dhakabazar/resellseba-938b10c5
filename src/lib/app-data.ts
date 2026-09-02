@@ -20,6 +20,9 @@ export type GlobalSettings = {
   site_name: string | null;
   logo_url: string | null;
   primary_color: string | null;
+  accent_color?: string | null;
+  secondary_color?: string | null;
+  highlight_color?: string | null;
   contact_phone: string | null;
   contact_email: string | null;
   advanced_settings: unknown;

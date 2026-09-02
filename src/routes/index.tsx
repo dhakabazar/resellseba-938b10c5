@@ -341,8 +341,10 @@ function Landing({
       {/* ── Hero ────────────────────────────────────────── */}
       <section className="relative isolate overflow-hidden">
         <div className="pointer-events-none absolute inset-0 -z-10 bg-[image:var(--gradient-hero)]" />
-        <div className="pointer-events-none absolute -top-40 -left-32 -z-10 h-96 w-96 rounded-full bg-primary/25 blur-3xl animate-blob-drift" />
-        <div className="pointer-events-none absolute -bottom-40 -right-24 -z-10 h-96 w-96 rounded-full bg-accent/25 blur-3xl animate-blob-drift-slow" />
+        <div className="pointer-events-none absolute -top-40 -left-32 -z-10 h-96 w-96 rounded-full bg-brand-1/25 blur-3xl animate-blob-drift" />
+        <div className="pointer-events-none absolute -bottom-40 -right-24 -z-10 h-96 w-96 rounded-full bg-brand-2/25 blur-3xl animate-blob-drift-slow" />
+        <div className="pointer-events-none absolute top-10 right-1/4 -z-10 h-72 w-72 rounded-full bg-brand-3/20 blur-3xl animate-blob-drift-slow" />
+        <div className="pointer-events-none absolute bottom-0 left-1/3 -z-10 h-64 w-64 rounded-full bg-brand-4/20 blur-3xl animate-blob-drift" />
 
         <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 pt-12 pb-14 sm:px-6 sm:pt-20 sm:pb-20 lg:grid-cols-[1.05fr_.95fr] lg:gap-14">
           <div className="text-center lg:text-left">
@@ -353,7 +355,7 @@ function Landing({
 
             <h1 className="mt-5 text-balance text-[30px] font-black leading-[1.22] tracking-tight sm:text-5xl sm:leading-[1.12] lg:text-[56px] animate-fade-in-up animation-delay-200">
               {c.hero.titleStart}{" "}
-              <span className="bg-[image:var(--gradient-brand)] bg-clip-text text-transparent">{c.hero.titleHighlight}</span>
+              <span className="bg-[image:var(--gradient-brand-4)] bg-clip-text text-transparent">{c.hero.titleHighlight}</span>
             </h1>
 
             <p className="mx-auto mt-5 max-w-xl text-pretty text-[15px] leading-relaxed text-muted-foreground sm:text-base lg:mx-0 lg:text-lg animate-fade-in-up animation-delay-300">
@@ -390,7 +392,7 @@ function Landing({
 
           <div className="relative animate-scale-in-slow animation-delay-300">
             {/* soft ambient glow behind the banner so any image blends in */}
-            <div className="pointer-events-none absolute -inset-6 -z-10 rounded-[2rem] bg-[image:var(--gradient-brand)] opacity-20 blur-2xl" />
+            <div className="pointer-events-none absolute -inset-6 -z-10 rounded-[2rem] bg-[image:var(--gradient-brand-4)] opacity-20 blur-2xl" />
             <div className="animate-float relative overflow-hidden rounded-2xl shadow-[var(--shadow-elegant)]">
               {poster ? (
                 <>
@@ -399,7 +401,7 @@ function Landing({
                   <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-background/35 via-transparent to-background/10" />
                 </>
               ) : (
-                <div className="grid aspect-[4/3] w-full place-items-center bg-[image:var(--gradient-brand)] text-primary-foreground">
+                <div className="grid aspect-[4/3] w-full place-items-center bg-[image:var(--gradient-brand-4)] text-primary-foreground">
                   <Boxes className="h-16 w-16 opacity-80" />
                 </div>
               )}
@@ -457,14 +459,15 @@ function Landing({
 
       {/* ── Stats band ──────────────────────────────────── */}
       {statItems.length > 0 && (
-        <section className="border-y border-border/60 bg-card">
+        <section className="brand-mesh border-y border-border/60 bg-card">
           <div className="mx-auto grid max-w-6xl grid-cols-2 gap-8 px-4 py-10 sm:px-6 md:grid-cols-4 md:py-12">
             {statItems.slice(0, 4).map((s, i) => {
               const Icon = statIcons[i] ?? Sparkles;
+              const tile = ["brand-tile-1", "brand-tile-3", "brand-tile-4", "brand-tile-2"][i % 4];
               return (
                 <div key={i} className="flex flex-col items-center text-center">
                   <div className="flex items-center gap-2">
-                    <span className="grid h-9 w-9 place-items-center rounded-lg bg-primary/10 text-primary">
+                    <span className={`grid h-9 w-9 place-items-center rounded-lg ${tile}`}>
                       <Icon className="h-5 w-5" />
                     </span>
                     <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground sm:text-sm">{s.label}</span>
@@ -490,11 +493,13 @@ function Landing({
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {c.features.items.map((f, i) => {
               const Icon = ICON_MAP[f.icon] ?? Sparkles;
+              const solid = ["brand-solid-1", "brand-solid-3", "brand-solid-4", "brand-solid-2"][i % 4];
+              const glow = ["bg-brand-1/25", "bg-brand-3/25", "bg-brand-4/25", "bg-brand-2/25"][i % 4];
               return (
                 <div key={i} className="surface-card surface-card-hover group relative flex flex-col overflow-hidden p-4">
-                  <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-primary/20 opacity-0 blur-2xl transition-opacity group-hover:opacity-100" />
+                  <div className={`pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full ${glow} opacity-0 blur-2xl transition-opacity group-hover:opacity-100`} />
                   <div className="relative flex items-start gap-2.5">
-                    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground">
+                    <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg ${solid}`}>
                       <Icon className="h-3.5 w-3.5" />
                     </span>
                     <h3 className="flex-1 pt-0.5 text-[13px] font-bold leading-tight">{f.title}</h3>
@@ -510,7 +515,7 @@ function Landing({
       {/* ── How we work (flow) ──────────────────────────── */}
       {((c.about?.flow?.length ?? 0) > 0 || c.about?.title || c.about?.body) && (
         <section id="about" className="relative overflow-hidden py-14 sm:py-20">
-          <div className="pointer-events-none absolute inset-0 bg-[image:var(--gradient-brand)] opacity-[0.06]" />
+          <div className="pointer-events-none absolute inset-0 bg-[image:var(--gradient-brand-4)] opacity-[0.06]" />
           <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
             <div className="mx-auto max-w-2xl text-center">
               {c.about?.title && (
@@ -589,7 +594,7 @@ function Landing({
           <div className="relative mt-10 grid gap-6 md:grid-cols-3">
             {c.how.steps.map((s, i) => (
               <div key={i} className="surface-card surface-card-hover relative p-6 pt-8">
-                <div className="absolute -top-5 left-6 grid h-11 w-11 place-items-center rounded-xl bg-[image:var(--gradient-brand)] text-base font-black text-primary-foreground ring-4 ring-background">
+                <div className="absolute -top-5 left-6 grid h-11 w-11 place-items-center rounded-xl bg-[image:var(--gradient-brand-4)] text-base font-black text-primary-foreground ring-4 ring-background">
                   {String(i + 1).padStart(2, "0")}
                 </div>
                 <h3 className="text-base font-bold sm:text-lg">{s.title}</h3>
@@ -607,6 +612,7 @@ function Landing({
             <div className="mx-auto max-w-2xl text-center">
               <h2 className="text-xl font-extrabold sm:text-3xl">ক্যাটাগরি</h2>
               <p className="mt-2 text-sm text-muted-foreground">আপনার নিশ অনুযায়ী ক্যাটাগরি বেছে নিয়ে প্রোডাক্ট লিস্ট করুন</p>
+              <div className="brand-rule mx-auto mt-4 h-1 w-24 rounded-full" />
             </div>
             <div className="mt-8 grid grid-cols-5 gap-2 sm:grid-cols-6 sm:gap-3 md:grid-cols-8 lg:grid-cols-10">
               {(stats?.categories ?? []).map((cat: any) => (
@@ -642,16 +648,22 @@ function Landing({
 
       {/* ── Products ────────────────────────────────────── */}
       {stats?.products && stats.products.length > 0 && (
-        <section id="products" className="border-y border-border/60 bg-muted/30 py-10 sm:py-14">
+        <section id="products" className="brand-mesh border-y border-border/60 py-10 sm:py-14">
           <div className="mx-auto max-w-7xl px-4 sm:px-6">
             <div className="mx-auto max-w-2xl text-center">
               <h2 className="text-xl font-extrabold sm:text-3xl">ফিচার্ড প্রোডাক্টস</h2>
               <p className="mt-2 text-sm text-muted-foreground">এই মাসের সেরা ও সবচেয়ে বেশি সেল হওয়া প্রোডাক্টস</p>
+              <div className="brand-rule mx-auto mt-4 h-1 w-24 rounded-full" />
             </div>
             <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-              {stats.products.map((p: any) => (
-                <div key={p.id} className="group surface-card surface-card-hover flex flex-col overflow-hidden">
-                  <div className="relative aspect-square overflow-hidden bg-primary/5">
+              {stats.products.map((p: any, i: number) => (
+                <Link
+                  key={p.id}
+                  to="/catalog/$slug"
+                  params={{ slug: p.slug }}
+                  className="group surface-card surface-card-hover flex flex-col overflow-hidden"
+                >
+                  <div className={`relative aspect-square overflow-hidden ${["bg-brand-1/8", "bg-brand-3/8", "bg-brand-4/8", "bg-brand-2/10"][i % 4]}`}>
                     {p.main_image ? (
                       <img
                         src={p.main_image}
@@ -666,22 +678,23 @@ function Landing({
                     )}
                   </div>
                   <div className="flex flex-1 flex-col p-3">
-                    <h3 className="line-clamp-2 text-sm font-bold leading-tight">{p.name}</h3>
+                    <h3 className="line-clamp-2 text-sm font-bold leading-tight group-hover:text-primary">{p.name}</h3>
                     <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{p.description}</p>
                     <div className="mt-auto pt-3">
                       <span className="text-sm font-black text-primary">{bdt(p.price)}</span>
                     </div>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
-            <div className="mt-8 flex justify-center">
+            <div className="mt-9 flex justify-center">
               <Link
                 to="/catalog"
                 search={{}}
-                className="btn-live inline-flex items-center gap-2 rounded-xl border border-border bg-card px-6 py-2.5 text-sm font-bold hover:border-primary/50 hover:text-primary"
+                className="btn-brand-4 btn-live inline-flex items-center gap-2.5 rounded-2xl px-9 py-4 text-base font-extrabold sm:text-lg"
               >
-                <ShoppingBag className="h-4 w-4" /> সব প্রোডাক্টস দেখুন
+                <ShoppingBag className="h-5 w-5" /> সব প্রোডাক্টস দেখুন
+                <ArrowRight className="h-5 w-5" />
               </Link>
             </div>
           </div>
@@ -691,8 +704,8 @@ function Landing({
       {/* ── Reseller stories ────────────────────────────── */}
       {c.stories && c.stories.items.length > 0 && (
         <section id="stories" className="relative overflow-hidden border-t border-border/60 py-12 sm:py-20">
-          <div className="pointer-events-none absolute -top-24 right-0 -z-10 h-72 w-72 rounded-full bg-primary/15 blur-3xl" />
-          <div className="pointer-events-none absolute bottom-0 -left-20 -z-10 h-64 w-64 rounded-full bg-primary/10 blur-3xl" />
+          <div className="pointer-events-none absolute -top-24 right-0 -z-10 h-72 w-72 rounded-full bg-brand-3/20 blur-3xl" />
+          <div className="pointer-events-none absolute bottom-0 -left-20 -z-10 h-64 w-64 rounded-full bg-brand-4/18 blur-3xl" />
           <div className="mx-auto max-w-7xl px-4 sm:px-6">
             <div className="mx-auto max-w-2xl text-center">
               <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-[11px] font-bold text-primary">
@@ -741,7 +754,7 @@ function Landing({
                         className="h-10 w-10 shrink-0 rounded-full object-cover ring-2 ring-primary/25"
                       />
                     ) : (
-                      <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[image:var(--gradient-brand)] text-sm font-black text-primary-foreground">
+                      <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[image:var(--gradient-brand-4)] text-sm font-black text-primary-foreground">
                         {s.name?.charAt(0) || "R"}
                       </div>
                     )}
@@ -791,7 +804,7 @@ function Landing({
 
       {/* ── CTA ─────────────────────────────────────────── */}
       <section id="pricing" className="px-4 pb-16 sm:px-6 sm:pb-24">
-        <div className="relative mx-auto max-w-6xl overflow-hidden rounded-3xl bg-[image:var(--gradient-brand)] px-6 py-12 text-center sm:px-12 sm:py-16">
+        <div className="relative mx-auto max-w-6xl overflow-hidden rounded-3xl bg-[image:var(--gradient-brand-4)] px-6 py-12 text-center sm:px-12 sm:py-16">
           <div className="pointer-events-none absolute -top-24 left-1/2 h-72 w-[36rem] -translate-x-1/2 rounded-full bg-primary-foreground/10 blur-3xl" />
           <div className="relative mx-auto max-w-2xl">
             {c.cta.title && <h2 className="text-2xl font-extrabold text-primary-foreground sm:text-3xl">{c.cta.title}</h2>}
@@ -819,7 +832,7 @@ function Landing({
       {/* ── Contact team (last section) ──────────────────── */}
       {(c.contacts?.items?.length ?? 0) > 0 && (
         <section id="contact" className="relative overflow-hidden border-t border-border/60 px-4 py-14 sm:px-6 sm:py-20">
-          <div className="pointer-events-none absolute -left-24 top-10 h-64 w-64 rounded-full bg-primary/10 blur-3xl" />
+          <div className="pointer-events-none absolute -left-24 top-10 h-64 w-64 rounded-full bg-brand-3/15 blur-3xl" />
           <div className="relative mx-auto max-w-6xl">
             <div className="mx-auto max-w-2xl text-center">
               <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-primary">
@@ -840,7 +853,7 @@ function Landing({
                   key={i}
                   className="group relative flex flex-col overflow-hidden rounded-2xl border border-border/70 bg-card p-5 text-center transition hover:-translate-y-1 hover:border-primary/40 hover:shadow-xl"
                 >
-                  <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-[image:var(--gradient-brand)] opacity-10 transition group-hover:opacity-20" />
+                  <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-[image:var(--gradient-brand-4)] opacity-10 transition group-hover:opacity-20" />
                   <div className="relative mx-auto">
                     {p.photo?.url ? (
                       <img
@@ -851,7 +864,7 @@ function Landing({
                         className="h-20 w-20 rounded-full object-cover ring-4 ring-primary/20"
                       />
                     ) : (
-                      <div className="grid h-20 w-20 place-items-center rounded-full bg-[image:var(--gradient-brand)] text-2xl font-black text-primary-foreground ring-4 ring-primary/20">
+                      <div className="grid h-20 w-20 place-items-center rounded-full bg-[image:var(--gradient-brand-4)] text-2xl font-black text-primary-foreground ring-4 ring-primary/20">
                         {p.name?.charAt(0) || "?"}
                       </div>
                     )}

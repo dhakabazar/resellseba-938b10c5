@@ -1,5 +1,5 @@
 /**
- * Platform branding (favicon + primary/accent colors).
+ * Platform branding (favicon + the four brand colors).
  *
  * Instead of every page re-reading `global_settings`, whichever page bootstrap
  * already carries the settings row pushes them here once. The root layout only
@@ -7,14 +7,25 @@
  */
 import { useEffect, useState } from "react";
 
-export type PlatformBrand = { primary: string | null; accent: string | null };
+export type PlatformBrand = {
+  primary: string | null;
+  accent: string | null;
+  secondary: string | null;
+  highlight: string | null;
+};
 
-let current: PlatformBrand = { primary: null, accent: null };
+let current: PlatformBrand = { primary: null, accent: null, secondary: null, highlight: null };
 const subs = new Set<(b: PlatformBrand) => void>();
 
 export function applyPlatformBranding(
   settings:
-    | { favicon_url?: string | null; primary_color?: string | null; accent_color?: string | null }
+    | {
+        favicon_url?: string | null;
+        primary_color?: string | null;
+        accent_color?: string | null;
+        secondary_color?: string | null;
+        highlight_color?: string | null;
+      }
     | null
     | undefined,
 ) {
@@ -29,8 +40,16 @@ export function applyPlatformBranding(
   const next: PlatformBrand = {
     primary: settings.primary_color ?? null,
     accent: settings.accent_color ?? null,
+    secondary: settings.secondary_color ?? null,
+    highlight: settings.highlight_color ?? null,
   };
-  if (next.primary === current.primary && next.accent === current.accent) return;
+  if (
+    next.primary === current.primary &&
+    next.accent === current.accent &&
+    next.secondary === current.secondary &&
+    next.highlight === current.highlight
+  )
+    return;
   current = next;
   subs.forEach((fn) => fn(current));
 }
