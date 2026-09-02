@@ -123,7 +123,7 @@ function AdminDashboard() {
       withdrawable: Number(m?.withdrawable ?? 0),
     });
     setLifetime({
-      orders: all.length,
+      orders: ranged.length,
       deliveredOrders: d.length,
       revenue: d.reduce((s, o) => s + Number(o.total), 0),
       profit: d.reduce((s, o) => s + orderProfit(o), 0),
