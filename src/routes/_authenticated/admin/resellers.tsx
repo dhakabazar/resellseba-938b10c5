@@ -1447,7 +1447,45 @@ function ResellersPage() {
                       Math.max(Number(r.deposit_required_amount ?? 0) - (s?.deposit_balance ?? 0), 0) === 0
                     }
                   />
+                  {(() => {
+                    const st = subStates[r.id];
+                    const plan = st?.plan ? planLabel(st.plan) : null;
+                    const text = !st
+                      ? "—"
+                      : st.exempt
+                        ? "Free"
+                        : !st.enabled
+                          ? st.master_enabled
+                            ? "Not in package"
+                            : "—"
+                          : st.locked
+                            ? "Expired"
+                            : `${plan ?? (st.in_trial ? "Trial" : "Active")}${
+                                st.days_left != null ? ` · ${st.days_left}d` : ""
+                              }`;
+                    return (
+                      <div className="rounded-md border bg-muted/30 px-2 py-1.5">
+                        <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                          Package
+                        </div>
+                        <div
+                          className={
+                            "truncate text-sm font-semibold " +
+                            (st?.locked
+                              ? "text-destructive"
+                              : st?.enabled && !st.exempt
+                                ? "text-success"
+                                : "text-muted-foreground")
+                          }
+                          title={text}
+                        >
+                          {text}
+                        </div>
+                      </div>
+                    );
+                  })()}
                   <Metric label="Frozen" value={Number(r.frozen_amount ?? 0)} muted />
+
                 </div>
               </div>
             );
