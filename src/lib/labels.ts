@@ -106,13 +106,13 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
 
           .customer { 
             border: 1.5px solid #000;
-            padding: 6px;
+            padding: 5px;
             margin-bottom: 6px;
             border-radius: 4px;
           }
-          .name { font-size: 13pt; font-weight: 800; margin-bottom: 2px; color: #000; }
-          .phone { font-size: 12pt; font-weight: bold; margin-bottom: 4px; display: block; border-bottom: 1px dashed #000; width: fit-content; }
-          .address { font-size: 9pt; line-height: 1.3; font-weight: 500; }
+          .name { font-size: 11pt; font-weight: 800; margin-bottom: 2px; color: #000; }
+          .phone { font-size: 10pt; font-weight: bold; margin-bottom: 3px; display: block; border-bottom: 1px dashed #000; width: fit-content; }
+          .address { font-size: 8pt; line-height: 1.25; font-weight: 500; }
           
           .items-box {
             border: 1px solid #000;
