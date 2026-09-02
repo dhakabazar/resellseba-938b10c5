@@ -67,6 +67,15 @@ import { confirmAction } from "@/lib/confirm";
 import { Crown } from "lucide-react";
 import { PasswordResetModal } from "@/components/password-reset-modal";
 import { ResellerSubscriptionModal } from "@/components/reseller-subscription-modal";
+import {
+  PACKAGE_FILTERS,
+  PACKAGE_FILTER_LABELS,
+  computeSubscriptionState,
+  formatDate as formatPlanDate,
+  packageStateOf,
+  planLabel,
+  type PackageFilter,
+} from "@/lib/subscription";
 import { useAdvancedSettings } from "@/lib/advanced-settings";
 import { VerifyBadges, verifyPending, type VerifyFlags } from "@/components/verify-badges";
 import { usePermissions } from "@/lib/permissions";
@@ -108,6 +117,12 @@ type Reseller = {
   deposit_required: boolean;
   deposit_required_amount: number;
   frozen_amount: number;
+  subscription_plan: string | null;
+  subscription_expires_at: string | null;
+  subscription_trial_ends_at: string | null;
+  subscription_exempt: boolean;
+  subscription_enrolled: boolean;
+  subscription_enrolled_at: string | null;
 };
 
 type Summary = {
@@ -470,6 +485,7 @@ function ResellersPage() {
   const [agents, setAgents] = useState<Array<{ id: string; display_name: string }>>([]);
   const [agentFilter, setAgentFilter] = useState("");
   const [depositFilter, setDepositFilter] = useState<DepositFilter>("all");
+  const [packageFilter, setPackageFilter] = useState<PackageFilter>("all");
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [bulkBusy, setBulkBusy] = useState(false);
   const { settings: advanced } = useAdvancedSettings();
@@ -482,7 +498,7 @@ function ResellersPage() {
       supabase
         .from("resellers")
         .select(
-          "id,user_id,avatar_url,business_name,code,contact_phone,address,nid_number,status,commission_rate,leader_id,agent_id,notes,notes_by,notes_at,approved_at,created_at,payout_method,payout_account_name,payout_account_number,payout_bank_name,payout_branch,payout_routing,deposit_required,deposit_required_amount,frozen_amount",
+          "id,user_id,avatar_url,business_name,code,contact_phone,address,nid_number,status,commission_rate,leader_id,agent_id,notes,notes_by,notes_at,approved_at,created_at,payout_method,payout_account_name,payout_account_number,payout_bank_name,payout_branch,payout_routing,deposit_required,deposit_required_amount,frozen_amount,subscription_plan,subscription_expires_at,subscription_trial_ends_at,subscription_exempt,subscription_enrolled,subscription_enrolled_at",
         )
         .order("created_at", { ascending: false }),
       supabase.rpc("admin_reseller_metrics"),
@@ -569,7 +585,7 @@ function ResellersPage() {
     const { data } = await supabase
       .from("resellers")
       .select(
-        "id,user_id,avatar_url,business_name,code,contact_phone,address,nid_number,status,commission_rate,leader_id,agent_id,notes,notes_by,notes_at,approved_at,created_at,payout_method,payout_account_name,payout_account_number,payout_bank_name,payout_branch,payout_routing,deposit_required,deposit_required_amount,frozen_amount",
+        "id,user_id,avatar_url,business_name,code,contact_phone,address,nid_number,status,commission_rate,leader_id,agent_id,notes,notes_by,notes_at,approved_at,created_at,payout_method,payout_account_name,payout_account_number,payout_bank_name,payout_branch,payout_routing,deposit_required,deposit_required_amount,frozen_amount,subscription_plan,subscription_expires_at,subscription_trial_ends_at,subscription_exempt,subscription_enrolled,subscription_enrolled_at",
       )
       .eq("id", id)
       .maybeSingle();
@@ -650,6 +666,24 @@ function ResellersPage() {
     requirePhone: advanced.verifyEnabled && advanced.verifySms,
   });
 
+  /** Package rules straight from Advanced settings (one source of truth). */
+  const subRules = useMemo(
+    () => ({
+      enabled: advanced.subscription.enabled,
+      autoApply: advanced.subscription.autoApply,
+      noticeDays: advanced.subscription.noticeDays,
+      trialDays: advanced.subscription.trialDays,
+      graceDays: advanced.subscription.graceDays,
+    }),
+    [advanced.subscription],
+  );
+
+  const subStates = useMemo(() => {
+    const out: Record<string, ReturnType<typeof computeSubscriptionState>> = {};
+    for (const r of items) out[r.id] = computeSubscriptionState(r, subRules);
+    return out;
+  }, [items, subRules]);
+
   const filtered = useMemo(() => {
     let out = items;
     if (filter === "email_unverified")
@@ -661,6 +695,11 @@ function ResellersPage() {
     if (agentFilter) out = out.filter((r) => (agentFilter === "none" ? !r.agent_id : r.agent_id === agentFilter));
     if (depositFilter !== "all")
       out = out.filter((r) => depositStateOf(r, summaries[r.id]?.deposit_balance ?? 0) === depositFilter);
+    if (packageFilter !== "all")
+      out = out.filter((r) => {
+        const st = subStates[r.id];
+        return st ? packageStateOf(st) === packageFilter : false;
+      });
     const q = query.trim().toLowerCase();
     if (q)
       out = out.filter(
@@ -671,7 +710,19 @@ function ResellersPage() {
           (emailStatus[r.user_id]?.email ?? "").toLowerCase().includes(q),
       );
     return out;
-  }, [items, filter, query, emailStatus, profileVerify, advanced, agentFilter, depositFilter, summaries]);
+  }, [
+    items,
+    filter,
+    query,
+    emailStatus,
+    profileVerify,
+    advanced,
+    agentFilter,
+    depositFilter,
+    packageFilter,
+    subStates,
+    summaries,
+  ]);
 
   /** Everything the counters use respects the selected agent. */
   const agentScoped = useMemo(
@@ -681,6 +732,23 @@ function ResellersPage() {
         : items,
     [items, agentFilter],
   );
+
+  const packageCounts = useMemo(() => {
+    const out: Record<PackageFilter, number> = {
+      all: agentScoped.length,
+      active: 0,
+      trial: 0,
+      expiring: 0,
+      expired: 0,
+      free: 0,
+      out: 0,
+    };
+    for (const r of agentScoped) {
+      const st = subStates[r.id];
+      if (st) out[packageStateOf(st)] += 1;
+    }
+    return out;
+  }, [agentScoped, subStates]);
 
   const depositCounts = useMemo(() => {
     const out: Record<DepositFilter, number> = { all: agentScoped.length, paid: 0, due: 0, not_required: 0 };
@@ -988,7 +1056,21 @@ function ResellersPage() {
         }}
         searchPlaceholder="Search name, code, phone, email…"
         middle={
-          !canViewAll ? null : (
+          <>
+            <FilterMenu
+              label="Package"
+              activeLabel={PACKAGE_FILTER_LABELS[packageFilter]}
+              options={PACKAGE_FILTERS.map((f) => ({
+                value: f,
+                label: f === "all" ? PACKAGE_FILTER_LABELS[f] : `${PACKAGE_FILTER_LABELS[f]} (${packageCounts[f]})`,
+                active: packageFilter === f,
+              }))}
+              onSelect={(v) => {
+                setPackageFilter(v as PackageFilter);
+                setPage(1);
+              }}
+            />
+            {!canViewAll ? null : (
           <SearchableFilterMenu
             label="Agent"
             activeLabel={
@@ -1013,7 +1095,8 @@ function ResellersPage() {
             }}
             searchPlaceholder="Search agent…"
           />
-          )
+            )}
+          </>
         }
         perPage={perPage}
         onPerPage={(n) => {
@@ -1094,6 +1177,40 @@ function ResellersPage() {
                           </span>
                         )
                       )}
+                      {(() => {
+                        const st = subStates[r.id];
+                        if (!st) return null;
+                        const bucket = packageStateOf(st);
+                        if (bucket === "out" && !st.master_enabled) return null;
+                        const cls =
+                          bucket === "active"
+                            ? "bg-success/15 text-success"
+                            : bucket === "trial"
+                              ? "bg-primary/10 text-primary"
+                              : bucket === "expiring"
+                                ? "bg-amber-500/15 text-amber-700 dark:text-amber-400"
+                                : bucket === "expired"
+                                  ? "bg-destructive/15 text-destructive"
+                                  : "bg-muted text-muted-foreground";
+                        const text =
+                          bucket === "free"
+                            ? "Package free"
+                            : bucket === "out"
+                              ? "Not in package"
+                              : bucket === "expired"
+                                ? `${planLabel(st.plan)} expired`
+                                : `${planLabel(st.plan)}${st.days_left !== null ? ` · ${st.days_left}d` : ""}`;
+                        return (
+                          <span
+                            title={
+                              st.until ? `Package access until ${formatPlanDate(st.until)}` : "No package date set"
+                            }
+                            className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${cls}`}
+                          >
+                            <Crown className="h-3 w-3" /> {text}
+                          </span>
+                        );
+                      })()}
                       {Number(r.frozen_amount) > 0 && (
                         <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
                           <Lock className="h-3 w-3" /> Frozen ৳{Number(r.frozen_amount).toLocaleString()}
@@ -1407,6 +1524,7 @@ function ResellersPage() {
         <ResellerSubscriptionModal
           reseller={packageFor}
           onClose={() => setPackageFor(null)}
+          onSaved={() => refreshOne(packageFor.id)}
         />
       )}
 

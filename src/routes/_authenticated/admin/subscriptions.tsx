@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { DataToolbar, Pagination, usePaginated } from "@/components/data-list";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/ui-kit";
@@ -103,10 +104,18 @@ type RequestRow = {
   resellers?: { code: string; business_name: string } | null;
 };
 
+const REQ_STATUSES = ["pending", "approved", "rejected"] as const;
+
 function RequestsTab() {
   const [rows, setRows] = useState<RequestRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"pending" | "all">("pending");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [planFilter, setPlanFilter] = useState("");
+  const [monthsFilter, setMonthsFilter] = useState("");
+  const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(20);
   const [busyId, setBusyId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -121,13 +130,39 @@ function RequestsTab() {
         "id,reseller_id,plan,months,amount,method,reference,note,status,admin_note,created_at,resellers(code,business_name)",
       )
       .order("created_at", { ascending: false })
-      .limit(200);
+      .limit(1000);
     if (filter === "pending") q = q.eq("status", "pending");
     const { data, error } = await q;
     if (error) toast.error(error.message);
     setRows((data ?? []) as unknown as RequestRow[]);
+    setPage(1);
     setLoading(false);
   }
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return rows.filter((r) => {
+      if (statusFilter && r.status !== statusFilter) return false;
+      if (planFilter && r.plan !== planFilter) return false;
+      if (monthsFilter && String(r.months) !== monthsFilter) return false;
+      if (!q) return true;
+      return [
+        r.resellers?.business_name,
+        r.resellers?.code,
+        r.reference,
+        r.method,
+        r.note,
+        String(r.amount),
+      ]
+        .filter(Boolean)
+        .some((v) => String(v).toLowerCase().includes(q));
+    });
+  }, [rows, statusFilter, planFilter, monthsFilter, query]);
+
+  const pendingTotal = useMemo(
+    () => filtered.filter((r) => r.status === "pending").reduce((sum, r) => sum + Number(r.amount || 0), 0),
+    [filtered],
+  );
 
   async function review(row: RequestRow, approve: boolean) {
     const ok = await confirmAction({
@@ -153,7 +188,7 @@ function RequestsTab() {
 
   return (
     <div>
-      <div className="mb-3 flex items-center gap-2">
+      <div className="mb-3 flex flex-wrap items-center gap-2">
         {(["pending", "all"] as const).map((k) => (
           <button
             key={k}
@@ -163,20 +198,73 @@ function RequestsTab() {
               (filter === k ? "border-transparent bg-primary text-primary-foreground" : "hover:bg-muted")
             }
           >
-            {k}
+            {k === "pending" ? "Awaiting approval" : "All payments"}
           </button>
         ))}
+        {pendingTotal > 0 && (
+          <span className="rounded-full border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-700 dark:text-amber-400">
+            Pending {bdt(pendingTotal)}
+          </span>
+        )}
       </div>
+
+      <DataToolbar
+        search={query}
+        onSearch={(v) => {
+          setQuery(v);
+          setPage(1);
+        }}
+        searchPlaceholder="Search reseller, code, TrxID, amount…"
+        filters={[
+          {
+            key: "status",
+            label: "Status",
+            value: statusFilter,
+            onChange: (v) => {
+              setStatusFilter(v);
+              setPage(1);
+            },
+            options: REQ_STATUSES.map((s) => ({ value: s, label: s })),
+          },
+          {
+            key: "plan",
+            label: "Package",
+            value: planFilter,
+            onChange: (v) => {
+              setPlanFilter(v);
+              setPage(1);
+            },
+            options: PLAN_KEYS.map((p) => ({ value: p, label: PLAN_META[p].label })),
+          },
+          {
+            key: "months",
+            label: "Duration",
+            value: monthsFilter,
+            onChange: (v) => {
+              setMonthsFilter(v);
+              setPage(1);
+            },
+            options: PLAN_MONTHS.map((m) => ({ value: String(m), label: monthsLabel(m) })),
+          },
+        ]}
+        perPage={perPage}
+        onPerPage={(n) => {
+          setPerPage(n);
+          setPage(1);
+        }}
+      />
+
 
       {loading ? (
         <div className="grid place-items-center py-8">
           <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
         </div>
-      ) : rows.length === 0 ? (
+      ) : filtered.length === 0 ? (
         <div className="rounded-lg border border-dashed p-8 text-center text-xs text-muted-foreground">
-          {filter === "pending" ? "No package payment awaiting approval." : "No package payment yet."}
+          {filter === "pending" ? "No package payment awaiting approval." : "No package payment matches this filter."}
         </div>
       ) : (
+        <>
         <div className="overflow-x-auto rounded-lg border">
           <table className="w-full text-xs">
             <thead className="bg-muted/40 text-left uppercase text-muted-foreground">
@@ -191,7 +279,7 @@ function RequestsTab() {
               </tr>
             </thead>
             <tbody>
-              {rows.map((r) => (
+              {usePaginated(filtered, page, perPage).map((r) => (
                 <tr key={r.id} className="border-t align-top">
                   <td className="whitespace-nowrap p-2">{formatDate(r.created_at)}</td>
                   <td>
@@ -241,6 +329,8 @@ function RequestsTab() {
             </tbody>
           </table>
         </div>
+        <Pagination page={page} perPage={perPage} total={filtered.length} onPage={setPage} />
+        </>
       )}
     </div>
   );
@@ -270,6 +360,18 @@ function PricesTab() {
       setLoading(false);
     })();
   }, []);
+
+  /** Turns one duration on or off for everybody. */
+  async function toggleActive(row: PlanRow) {
+    const next = !row.is_active;
+    const { error } = await supabase
+      .from("subscription_plans")
+      .update({ is_active: next } as never)
+      .eq("id", row.id);
+    if (error) return toast.error(error.message);
+    setRows((s) => s.map((r) => (r.id === row.id ? { ...r, is_active: next } : r)));
+    toast.success(next ? "Duration switched on" : "Duration switched off");
+  }
 
   async function save() {
     setBusy(true);
@@ -309,17 +411,35 @@ function PricesTab() {
               </div>
             </header>
             <div className="grid gap-3 p-4 sm:grid-cols-3">
-              {PLAN_MONTHS.map((m) => (
-                <label key={m} className="text-xs font-medium">
-                  {monthsLabel(m)}
-                  <input
-                    value={draft[`${p}:${m}`] ?? ""}
-                    onChange={(e) => setDraft((s) => ({ ...s, [`${p}:${m}`]: e.target.value }))}
-                    className={inp + " mt-1"}
-                    inputMode="decimal"
-                  />
-                </label>
-              ))}
+              {PLAN_MONTHS.map((m) => {
+                const row = rows.find((r) => r.plan === p && r.months === m);
+                return (
+                  <label key={m} className="text-xs font-medium">
+                    <span className="flex items-center justify-between gap-2">
+                      {monthsLabel(m)}
+                      {row && (
+                        <button
+                          type="button"
+                          onClick={() => void toggleActive(row)}
+                          className={
+                            "rounded-full px-2 py-0.5 text-[10px] font-semibold " +
+                            (row.is_active ? "bg-success/15 text-success" : "bg-muted text-muted-foreground")
+                          }
+                        >
+                          {row.is_active ? "Active" : "Off"}
+                        </button>
+                      )}
+                    </span>
+                    <input
+                      value={draft[`${p}:${m}`] ?? ""}
+                      onChange={(e) => setDraft((s) => ({ ...s, [`${p}:${m}`]: e.target.value }))}
+                      className={inp + " mt-1"}
+                      inputMode="decimal"
+                      disabled={row ? !row.is_active : false}
+                    />
+                  </label>
+                );
+              })}
             </div>
           </section>
         ))}

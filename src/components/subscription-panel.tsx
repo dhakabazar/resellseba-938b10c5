@@ -138,6 +138,12 @@ export function SubscriptionPanel({ resellerId }: { resellerId: string | null })
     if (data.state.plan) setPlan(data.state.plan as PlanKey);
   }, [data.state.plan]);
 
+  /** Keep the duration on something that is actually sold right now. */
+  useEffect(() => {
+    const live = data.options.filter((o) => o.plan === plan && o.active).sort((a, b) => a.months - b.months);
+    if (live.length && !live.some((o) => o.months === months)) setMonths(live[0]!.months);
+  }, [data.options, plan, months]);
+
   const unified = useMemo<UnifiedMethod[]>(() => {
     const manual: UnifiedMethod[] = methods.map((m) => ({
       id: m.id,
@@ -194,11 +200,13 @@ export function SubscriptionPanel({ resellerId }: { resellerId: string | null })
       reseller_id: resellerId,
       plan,
       months,
+      amount: price,
       method: selected.method,
       payment_config_id: selected.id,
       reference: reference.trim(),
       note: note.trim() || null,
     } as never);
+
     setBusy(false);
     if (error) return toast.error(error.message);
     setReference("");
@@ -232,7 +240,9 @@ export function SubscriptionPanel({ resellerId }: { resellerId: string | null })
             {PLAN_KEYS.map((key) => {
               const meta = PLAN_META[key];
               const active = plan === key;
-              const opts = data.options.filter((o) => o.plan === key).sort((a, b) => a.months - b.months);
+              const opts = data.options
+                .filter((o) => o.plan === key && o.active)
+                .sort((a, b) => a.months - b.months);
               return (
                 <button
                   key={key}
@@ -279,7 +289,7 @@ export function SubscriptionPanel({ resellerId }: { resellerId: string | null })
             <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Duration</div>
             <div className="grid gap-2 sm:grid-cols-3">
               {data.options
-                .filter((o) => o.plan === plan)
+                .filter((o) => o.plan === plan && o.active)
                 .sort((a, b) => a.months - b.months)
                 .map((o) => (
                   <DurationCard key={o.months} option={o} active={o.months === months} onPick={() => setMonths(o.months)} />
