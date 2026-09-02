@@ -26,6 +26,7 @@ function MaintenancePage() {
   const stats = useServerFn(cleanupStats);
   const clean = useServerFn(runCleanup);
   const [rows, setRows] = useState<Record<string, number>>({});
+  const [totals, setTotals] = useState<Record<string, number>>({});
   const [picked, setPicked] = useState<string[]>(CLEANUP_TARGETS.map((t) => t.key));
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
