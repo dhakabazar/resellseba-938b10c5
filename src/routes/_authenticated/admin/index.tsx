@@ -18,6 +18,7 @@ import {
   BarChart,
   Bar,
   Legend,
+  Cell,
 } from "recharts";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
@@ -339,14 +340,32 @@ function AdminDashboard() {
           </div>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={daily}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="day" tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 11 }} />
-                <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }} />
-                <Legend />
-                <Area type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" fill="hsl(var(--primary) / 0.2)" name="Revenue ৳" />
-                <Area type="monotone" dataKey="profit" stroke="hsl(142 76% 36%)" fill="hsl(142 76% 36% / 0.15)" name="Reseller profit ৳" />
+              <AreaChart data={daily} margin={{ top: 8, right: 8, left: -8, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="gradRevenue" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.45} />
+                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.04} />
+                  </linearGradient>
+                  <linearGradient id="gradProfit" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(var(--success))" stopOpacity={0.5} />
+                    <stop offset="95%" stopColor="hsl(var(--success))" stopOpacity={0.04} />
+                  </linearGradient>
+                  <linearGradient id="gradOrders" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(var(--accent))" stopOpacity={0.55} />
+                    <stop offset="95%" stopColor="hsl(var(--accent))" stopOpacity={0.06} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                <XAxis dataKey="day" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
+                <Tooltip
+                  contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "0.75rem" }}
+                  itemStyle={{ fontSize: 12, fontWeight: 600 }}
+                />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
+                <Area type="monotone" dataKey="orders" stroke="hsl(var(--accent))" strokeWidth={2.5} fill="url(#gradOrders)" name="Orders" />
+                <Area type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" strokeWidth={2.5} fill="url(#gradRevenue)" name="Revenue ৳" />
+                <Area type="monotone" dataKey="profit" stroke="hsl(var(--success))" strokeWidth={2.5} fill="url(#gradProfit)" name="Reseller profit ৳" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -358,11 +377,28 @@ function AdminDashboard() {
           </div>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={top} layout="vertical" margin={{ left: 20 }}>
-                <XAxis type="number" tick={{ fontSize: 11 }} />
-                <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={100} />
-                <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }} />
-                <Bar dataKey="sales" fill="hsl(var(--primary))" radius={[0, 6, 6, 0]} />
+              <BarChart data={top} layout="vertical" margin={{ left: 20, right: 24, top: 8, bottom: 8 }}>
+                <defs>
+                  {BAR_PALETTE.map((c, i) => (
+                    <linearGradient key={i} id={`barGrad-${i}`} x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%" stopColor={c.from} stopOpacity={0.92} />
+                      <stop offset="100%" stopColor={c.to} stopOpacity={0.75} />
+                    </linearGradient>
+                  ))}
+                </defs>
+                <XAxis type="number" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
+                <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} width={100} axisLine={false} tickLine={false} />
+                <Tooltip
+                  cursor={{ fill: "hsl(var(--muted) / 0.4)" }}
+                  contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "0.75rem" }}
+                  itemStyle={{ fontSize: 12, fontWeight: 600 }}
+                  formatter={(value: number) => [bdt(value), "Sales"]}
+                />
+                <Bar dataKey="sales" radius={[0, 8, 8, 0]} barSize={18}>
+                  {top.map((_, i) => (
+                    <Cell key={`cell-${i}`} fill={`url(#barGrad-${i % BAR_PALETTE.length})`} />
+                  ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
