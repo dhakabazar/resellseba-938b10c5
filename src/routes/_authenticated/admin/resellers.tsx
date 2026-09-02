@@ -723,7 +723,7 @@ function ResellersPage() {
       );
     return out;
   }, [
-    items,
+    dateScoped,
     filter,
     query,
     emailStatus,
@@ -736,13 +736,13 @@ function ResellersPage() {
     summaries,
   ]);
 
-  /** Everything the counters use respects the selected agent. */
+  /** Everything the counters use respects the date scope + selected agent. */
   const agentScoped = useMemo(
     () =>
       agentFilter
-        ? items.filter((r) => (agentFilter === "none" ? !r.agent_id : r.agent_id === agentFilter))
-        : items,
-    [items, agentFilter],
+        ? dateScoped.filter((r) => (agentFilter === "none" ? !r.agent_id : r.agent_id === agentFilter))
+        : dateScoped,
+    [dateScoped, agentFilter],
   );
 
   const packageCounts = useMemo(() => {
