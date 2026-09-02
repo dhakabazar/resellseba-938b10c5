@@ -647,16 +647,22 @@ function Landing({
 
       {/* ── Products ────────────────────────────────────── */}
       {stats?.products && stats.products.length > 0 && (
-        <section id="products" className="border-y border-border/60 bg-muted/30 py-10 sm:py-14">
+        <section id="products" className="brand-mesh border-y border-border/60 py-10 sm:py-14">
           <div className="mx-auto max-w-7xl px-4 sm:px-6">
             <div className="mx-auto max-w-2xl text-center">
               <h2 className="text-xl font-extrabold sm:text-3xl">ফিচার্ড প্রোডাক্টস</h2>
               <p className="mt-2 text-sm text-muted-foreground">এই মাসের সেরা ও সবচেয়ে বেশি সেল হওয়া প্রোডাক্টস</p>
+              <div className="brand-rule mx-auto mt-4 h-1 w-24 rounded-full" />
             </div>
             <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-              {stats.products.map((p: any) => (
-                <div key={p.id} className="group surface-card surface-card-hover flex flex-col overflow-hidden">
-                  <div className="relative aspect-square overflow-hidden bg-primary/5">
+              {stats.products.map((p: any, i: number) => (
+                <Link
+                  key={p.id}
+                  to="/catalog/$slug"
+                  params={{ slug: p.slug }}
+                  className="group surface-card surface-card-hover flex flex-col overflow-hidden"
+                >
+                  <div className={`relative aspect-square overflow-hidden ${["bg-brand-1/8", "bg-brand-3/8", "bg-brand-4/8", "bg-brand-2/10"][i % 4]}`}>
                     {p.main_image ? (
                       <img
                         src={p.main_image}
@@ -671,22 +677,23 @@ function Landing({
                     )}
                   </div>
                   <div className="flex flex-1 flex-col p-3">
-                    <h3 className="line-clamp-2 text-sm font-bold leading-tight">{p.name}</h3>
+                    <h3 className="line-clamp-2 text-sm font-bold leading-tight group-hover:text-primary">{p.name}</h3>
                     <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{p.description}</p>
                     <div className="mt-auto pt-3">
                       <span className="text-sm font-black text-primary">{bdt(p.price)}</span>
                     </div>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
-            <div className="mt-8 flex justify-center">
+            <div className="mt-9 flex justify-center">
               <Link
                 to="/catalog"
                 search={{}}
-                className="btn-live inline-flex items-center gap-2 rounded-xl border border-border bg-card px-6 py-2.5 text-sm font-bold hover:border-primary/50 hover:text-primary"
+                className="btn-brand-4 btn-live inline-flex items-center gap-2.5 rounded-2xl px-9 py-4 text-base font-extrabold sm:text-lg"
               >
-                <ShoppingBag className="h-4 w-4" /> সব প্রোডাক্টস দেখুন
+                <ShoppingBag className="h-5 w-5" /> সব প্রোডাক্টস দেখুন
+                <ArrowRight className="h-5 w-5" />
               </Link>
             </div>
           </div>
