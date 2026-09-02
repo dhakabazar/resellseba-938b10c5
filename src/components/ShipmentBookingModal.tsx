@@ -57,18 +57,27 @@ export function ShipmentBookingModal({
     let successCount = 0;
     let failCount = 0;
 
+    let lastError = "";
     for (const id of orderIds) {
       try {
+        let res: any = null;
         if (provider === "steadfast") {
-          await doSteadfast({ data: { orderId: id } });
+          res = await doSteadfast({ data: { orderId: id } });
         } else if (provider === "pathao") {
-          await doPathao({ data: { orderId: id } });
+          res = await doPathao({ data: { orderId: id } });
         } else if (provider === "carrybee") {
-          await doCarrybee({ data: { orderId: id } });
+          res = await doCarrybee({ data: { orderId: id } });
         }
-        successCount++;
+        // Only count a booking when the server actually confirms it.
+        if (res?.success && (res.consignmentId || res.trackingId)) {
+          successCount++;
+        } else {
+          failCount++;
+          lastError = typeof res === "string" ? res : "Booking was not saved";
+        }
       } catch (err: any) {
         console.error(`Booking failed for ${id}:`, err);
+        lastError = err?.message || String(err ?? "");
         failCount++;
       }
     }
@@ -79,7 +88,10 @@ export function ShipmentBookingModal({
       onClose();
     }
     if (failCount > 0) {
-      toast.error(`Failed to book ${failCount} orders. Check console for details.`);
+      toast.error(
+        `Failed to book ${failCount} order(s).${lastError ? ` ${lastError}` : " Check console for details."}`,
+      );
+      if (successCount === 0) onClose();
     }
     setLoading(false);
   };
