@@ -10,8 +10,20 @@ export async function assertAdmin(supabase: any, userId: string) {
   if (error || !data) throw new Response("Forbidden", { status: 403 });
 }
 
-export async function getCourierConfig(supabase: any, provider: string): Promise<Cfg> {
-  const { data: cfg } = await supabase
+/**
+ * Courier credentials live in `courier_configs`, which only `couriers.manage`
+ * holders may read. Booking/sync flows are already permission-gated, so the
+ * config is read server-side with the service role — staff never receive the
+ * secrets, they just stop being blocked by RLS.
+ */
+export async function courierDb() {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  return supabaseAdmin as any;
+}
+
+export async function getCourierConfig(_supabase: any, provider: string): Promise<Cfg> {
+  const db = await courierDb();
+  const { data: cfg } = await db
     .from("courier_configs")
     .select("config, is_active")
     .eq("provider", provider)
@@ -197,3 +209,21 @@ export async function applyCourierUpdate(
   return { matched: true as const, orderId, shipmentId: shipment?.id ?? null, mapped };
 }
 
+
+/**
+ * Turns anything thrown inside a booking handler into a readable message.
+ * Thrown Response objects carry the real reason in their body, which the
+ * client never sees — so we read it here and return it as data instead.
+ */
+export async function bookingErrorText(e: unknown): Promise<string> {
+  if (e instanceof Response) {
+    try {
+      const text = await e.clone().text();
+      return text?.trim() || `Request failed (${e.status})`;
+    } catch {
+      return `Request failed (${e.status})`;
+    }
+  }
+  const msg = (e as { message?: string } | null)?.message;
+  return msg || String(e ?? "Unknown error");
+}

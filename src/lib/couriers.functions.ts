@@ -10,6 +10,8 @@ import {
   getOrderForBooking,
   normalizePhone,
   steadfastRequest,
+  bookingErrorText,
+  courierDb,
 } from "@/lib/couriers.server";
 
 const orderInput = z.object({ orderId: z.string().uuid() });
@@ -26,96 +28,102 @@ export const bookSteadfast = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    await assertAdmin(supabase, userId);
-    const conf = await getCourierConfig(supabase, "steadfast");
-    const order = await getOrderForBooking(supabase, data.orderId);
+    try {
+      const { supabase, userId } = context;
+      await assertAdmin(supabase, userId);
+      const conf = await getCourierConfig(supabase, "steadfast");
+      const order = await getOrderForBooking(supabase, data.orderId);
 
-    const { data: existing } = await supabase
-      .from("shipments")
-      .select("id")
-      .eq("order_id", order.id)
-      .not("consignment_id", "is", null)
-      .maybeSingle();
-    if (existing) throw new Response("This order is already booked with a courier", { status: 400 });
+      const { data: existing } = await supabase
+        .from("shipments")
+        .select("id")
+        .eq("order_id", order.id)
+        .not("consignment_id", "is", null)
+        .maybeSingle();
+      if (existing) throw new Response("This order is already booked with a courier", { status: 400 });
 
-    const { data: items } = await supabase
-      .from("order_items")
-      .select("product_name, quantity")
-      .eq("order_id", order.id);
+      const { data: items } = await supabase
+        .from("order_items")
+        .select("product_name, quantity")
+        .eq("order_id", order.id);
 
-    const codAmount = order.payment_method === "cod" ? Number(order.total) : 0;
-    const payload = {
-      invoice: order.order_number,
-      recipient_name: String(order.customer_name).slice(0, 100),
-      recipient_phone: normalizePhone(order.customer_phone),
-      recipient_address: fullAddress(order),
-      cod_amount: codAmount,
-      note: (data.note || order.reseller_note || order.notes || "")?.slice(0, 250) || undefined,
-      item_description:
-        (items ?? []).map((i: any) => `${i.product_name} x${i.quantity}`).join(", ").slice(0, 250) ||
-        undefined,
-      total_lot: (items ?? []).reduce((s: number, i: any) => s + Number(i.quantity || 0), 0) || 1,
-      delivery_type: data.deliveryType ?? 0,
-    };
+      const codAmount = order.payment_method === "cod" ? Number(order.total) : 0;
+      const payload = {
+        invoice: order.order_number,
+        recipient_name: String(order.customer_name).slice(0, 100),
+        recipient_phone: normalizePhone(order.customer_phone),
+        recipient_address: fullAddress(order),
+        cod_amount: codAmount,
+        note: (data.note || order.reseller_note || order.notes || "")?.slice(0, 250) || undefined,
+        item_description:
+          (items ?? []).map((i: any) => `${i.product_name} x${i.quantity}`).join(", ").slice(0, 250) ||
+          undefined,
+        total_lot: (items ?? []).reduce((s: number, i: any) => s + Number(i.quantity || 0), 0) || 1,
+        delivery_type: data.deliveryType ?? 0,
+      };
 
-    const body = await steadfastRequest(conf, "/create_order", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
-    const c = body.consignment ?? {};
-    const trackingId = c.tracking_code || String(c.consignment_id ?? "");
-    const nowIso = new Date().toISOString();
+      const body = await steadfastRequest(conf, "/create_order", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      const c = body.consignment ?? {};
+      const trackingId = c.tracking_code || String(c.consignment_id ?? "");
+      const nowIso = new Date().toISOString();
 
-    const { data: shipment, error: shipmentError } = await supabase
-      .from("shipments")
-      .insert({
+      const { data: shipment, error: shipmentError } = await supabase
+        .from("shipments")
+        .insert({
+          order_id: order.id,
+          provider: "steadfast",
+          tracking_id: trackingId,
+          consignment_id: String(c.consignment_id ?? ""),
+          status: "booked",
+          courier_status: String(c.status ?? "in_review"),
+          cod_amount: Number(c.cod_amount ?? codAmount),
+          request_payload: payload,
+          response_payload: body,
+          booked_at: nowIso,
+          last_event_at: nowIso,
+          booked_by: userId,
+        })
+        .select("id")
+        .single();
+      if (shipmentError || !shipment)
+        throw new Response(
+          shipmentError?.message || "Booking could not be saved (no permission to create shipments)",
+          { status: 403 },
+        );
+
+      await supabase.from("courier_events").insert({
         order_id: order.id,
+        shipment_id: shipment?.id ?? null,
         provider: "steadfast",
-        tracking_id: trackingId,
-        consignment_id: String(c.consignment_id ?? ""),
-        status: "booked",
+        source: "sync",
+        notification_type: "booking",
         courier_status: String(c.status ?? "in_review"),
+        consignment_id: String(c.consignment_id ?? ""),
+        tracking_code: trackingId,
         cod_amount: Number(c.cod_amount ?? codAmount),
-        request_payload: payload,
-        response_payload: body,
-        booked_at: nowIso,
-        last_event_at: nowIso,
-        booked_by: userId,
-      })
-      .select("id")
-      .single();
-    if (shipmentError || !shipment)
-      throw new Response(
-        shipmentError?.message || "Booking could not be saved (no permission to create shipments)",
-        { status: 403 },
-      );
+        note: "Consignment created",
+        payload: body,
+        event_at: nowIso,
+      });
 
-    await supabase.from("courier_events").insert({
-      order_id: order.id,
-      shipment_id: shipment?.id ?? null,
-      provider: "steadfast",
-      source: "sync",
-      notification_type: "booking",
-      courier_status: String(c.status ?? "in_review"),
-      consignment_id: String(c.consignment_id ?? ""),
-      tracking_code: trackingId,
-      cod_amount: Number(c.cod_amount ?? codAmount),
-      note: "Consignment created",
-      payload: body,
-      event_at: nowIso,
-    });
+      // Booking alone does NOT change the order status. The status only moves when a
+      // courier webhook/sync event arrives (received -> to courier, delivered, return).
+      await supabase.from("order_status_history").insert({
+        order_id: order.id,
+        status: (order as { status: Database["public"]["Enums"]["order_status"] }).status,
+        note: `Steadfast booked · ${trackingId}`,
+        changed_by: userId,
+      });
 
-    // Booking alone does NOT change the order status. The status only moves when a
-    // courier webhook/sync event arrives (received -> to courier, delivered, return).
-    await supabase.from("order_status_history").insert({
-      order_id: order.id,
-      status: (order as { status: Database["public"]["Enums"]["order_status"] }).status,
-      note: `Steadfast booked · ${trackingId}`,
-      changed_by: userId,
-    });
-
-    return { success: true, trackingId, consignmentId: String(c.consignment_id ?? ""), status: c.status ?? "in_review" };
+      return { success: true, trackingId, consignmentId: String(c.consignment_id ?? ""), status: c.status ?? "in_review" };
+    } catch (e) {
+      const error = await bookingErrorText(e);
+      console.error("[courier-booking] failed", error);
+      return { success: false as const, error };
+    }
   });
 
 
@@ -236,7 +244,7 @@ export const pathaoStores = createServerFn({ method: "POST" })
     await assertAdmin(supabase, userId);
     const { pathaoStoreList } = await import("@/lib/pathao.server");
     const conf = await getCourierConfig(supabase, "pathao");
-    return { stores: await pathaoStoreList(supabase, conf) };
+    return { stores: await pathaoStoreList(await courierDb(), conf) };
   });
 
 export const pathaoPricePlan = createServerFn({ method: "POST" })
@@ -257,7 +265,7 @@ export const pathaoPricePlan = createServerFn({ method: "POST" })
     const { pathaoPricePlanRequest } = await import("@/lib/pathao.server");
     const conf = await getCourierConfig(supabase, "pathao");
     if (!conf.store_id) throw new Response("Pathao store id set korun", { status: 400 });
-    return pathaoPricePlanRequest(supabase, conf, { storeId: conf.store_id, ...data });
+    return pathaoPricePlanRequest(await courierDb(), conf, { storeId: conf.store_id, ...data });
   });
 
 export const bookPathao = createServerFn({ method: "POST" })
@@ -273,110 +281,116 @@ export const bookPathao = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    await assertAdmin(supabase, userId);
-    const { pathaoRequest } = await import("@/lib/pathao.server");
-    const conf = await getCourierConfig(supabase, "pathao");
-    if (!conf.store_id) throw new Response("Pathao store id set korun", { status: 400 });
-    const order = await getOrderForBooking(supabase, data.orderId);
+    try {
+      const { supabase, userId } = context;
+      await assertAdmin(supabase, userId);
+      const { pathaoRequest } = await import("@/lib/pathao.server");
+      const conf = await getCourierConfig(supabase, "pathao");
+      if (!conf.store_id) throw new Response("Pathao store id set korun", { status: 400 });
+      const order = await getOrderForBooking(supabase, data.orderId);
 
-    const { data: existing } = await supabase
-      .from("shipments")
-      .select("id")
-      .eq("order_id", order.id)
-      .not("consignment_id", "is", null)
-      .maybeSingle();
-    if (existing) throw new Response("This order is already booked with a courier", { status: 400 });
+      const { data: existing } = await supabase
+        .from("shipments")
+        .select("id")
+        .eq("order_id", order.id)
+        .not("consignment_id", "is", null)
+        .maybeSingle();
+      if (existing) throw new Response("This order is already booked with a courier", { status: 400 });
 
-    const { data: items } = await supabase
-      .from("order_items")
-      .select("product_name, quantity")
-      .eq("order_id", order.id);
-    const quantity = (items ?? []).reduce((s: number, i: any) => s + Number(i.quantity || 0), 0) || 1;
+      const { data: items } = await supabase
+        .from("order_items")
+        .select("product_name, quantity")
+        .eq("order_id", order.id);
+      const quantity = (items ?? []).reduce((s: number, i: any) => s + Number(i.quantity || 0), 0) || 1;
 
-    const codAmount = order.payment_method === "cod" ? Math.round(Number(order.total)) : 0;
-    // recipient_city/zone/area are intentionally omitted — Pathao resolves them
-    // from the address, and sending nulls is rejected by the API.
-    const payload: Record<string, unknown> = {
-      store_id: Number(conf.store_id),
-      merchant_order_id: order.order_number,
-      recipient_name: String(order.customer_name).slice(0, 100),
-      recipient_phone: normalizePhone(order.customer_phone),
-      recipient_address: fullAddress(order).padEnd(10, " ").slice(0, 220),
-      delivery_type: data.deliveryType ?? 48,
-      item_type: 2,
-      item_quantity: quantity,
-      item_weight: String(data.itemWeight ?? 0.5),
-      amount_to_collect: codAmount,
-      item_description:
-        (items ?? []).map((i: any) => `${i.product_name} x${i.quantity}`).join(", ").slice(0, 250) ||
-        `Order ${order.order_number}`,
-      special_instruction:
-        (data.note || order.reseller_note || order.notes || "")?.slice(0, 250) || undefined,
-    };
+      const codAmount = order.payment_method === "cod" ? Math.round(Number(order.total)) : 0;
+      // recipient_city/zone/area are intentionally omitted — Pathao resolves them
+      // from the address, and sending nulls is rejected by the API.
+      const payload: Record<string, unknown> = {
+        store_id: Number(conf.store_id),
+        merchant_order_id: order.order_number,
+        recipient_name: String(order.customer_name).slice(0, 100),
+        recipient_phone: normalizePhone(order.customer_phone),
+        recipient_address: fullAddress(order).padEnd(10, " ").slice(0, 220),
+        delivery_type: data.deliveryType ?? 48,
+        item_type: 2,
+        item_quantity: quantity,
+        item_weight: String(data.itemWeight ?? 0.5),
+        amount_to_collect: codAmount,
+        item_description:
+          (items ?? []).map((i: any) => `${i.product_name} x${i.quantity}`).join(", ").slice(0, 250) ||
+          `Order ${order.order_number}`,
+        special_instruction:
+          (data.note || order.reseller_note || order.notes || "")?.slice(0, 250) || undefined,
+      };
 
-    const body = await pathaoRequest(supabase, conf, "/aladdin/api/v1/orders", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
-    const d = body?.data ?? {};
-    const consignmentId = String(d.consignment_id ?? "");
-    const courierStatus = String(d.order_status ?? "pending");
-    const deliveryFee = d.delivery_fee != null ? Number(d.delivery_fee) : null;
-    const nowIso = new Date().toISOString();
+      const body = await pathaoRequest(await courierDb(), conf, "/aladdin/api/v1/orders", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      const d = body?.data ?? {};
+      const consignmentId = String(d.consignment_id ?? "");
+      const courierStatus = String(d.order_status ?? "pending");
+      const deliveryFee = d.delivery_fee != null ? Number(d.delivery_fee) : null;
+      const nowIso = new Date().toISOString();
 
-    const { data: shipment, error: shipmentError } = await supabase
-      .from("shipments")
-      .insert({
+      const { data: shipment, error: shipmentError } = await supabase
+        .from("shipments")
+        .insert({
+          order_id: order.id,
+          provider: "pathao",
+          tracking_id: consignmentId,
+          consignment_id: consignmentId,
+          status: "booked",
+          courier_status: courierStatus.toLowerCase(),
+          cod_amount: codAmount,
+          delivery_charge: deliveryFee,
+          cost: deliveryFee ?? 0,
+          request_payload: payload as any,
+          response_payload: body,
+          booked_at: nowIso,
+          last_event_at: nowIso,
+          booked_by: userId,
+        })
+        .select("id")
+        .single();
+      if (shipmentError || !shipment)
+        throw new Response(
+          shipmentError?.message || "Booking could not be saved (no permission to create shipments)",
+          { status: 403 },
+        );
+
+      await supabase.from("courier_events").insert({
         order_id: order.id,
+        shipment_id: shipment?.id ?? null,
         provider: "pathao",
-        tracking_id: consignmentId,
-        consignment_id: consignmentId,
-        status: "booked",
+        source: "sync",
+        notification_type: "booking",
         courier_status: courierStatus.toLowerCase(),
+        consignment_id: consignmentId,
+        tracking_code: consignmentId,
         cod_amount: codAmount,
         delivery_charge: deliveryFee,
-        cost: deliveryFee ?? 0,
-        request_payload: payload as any,
-        response_payload: body,
-        booked_at: nowIso,
-        last_event_at: nowIso,
-        booked_by: userId,
-      })
-      .select("id")
-      .single();
-    if (shipmentError || !shipment)
-      throw new Response(
-        shipmentError?.message || "Booking could not be saved (no permission to create shipments)",
-        { status: 403 },
-      );
+        note: "Consignment created",
+        payload: body,
+        event_at: nowIso,
+      });
 
-    await supabase.from("courier_events").insert({
-      order_id: order.id,
-      shipment_id: shipment?.id ?? null,
-      provider: "pathao",
-      source: "sync",
-      notification_type: "booking",
-      courier_status: courierStatus.toLowerCase(),
-      consignment_id: consignmentId,
-      tracking_code: consignmentId,
-      cod_amount: codAmount,
-      delivery_charge: deliveryFee,
-      note: "Consignment created",
-      payload: body,
-      event_at: nowIso,
-    });
+      // Booking alone does NOT change the order status. The status only moves when a
+      // courier webhook/sync event arrives (received -> to courier, delivered, return).
+      await supabase.from("order_status_history").insert({
+        order_id: order.id,
+        status: (order as { status: Database["public"]["Enums"]["order_status"] }).status,
+        note: `Pathao booked · ${consignmentId}`,
+        changed_by: userId,
+      });
 
-    // Booking alone does NOT change the order status. The status only moves when a
-    // courier webhook/sync event arrives (received -> to courier, delivered, return).
-    await supabase.from("order_status_history").insert({
-      order_id: order.id,
-      status: (order as { status: Database["public"]["Enums"]["order_status"] }).status,
-      note: `Pathao booked · ${consignmentId}`,
-      changed_by: userId,
-    });
-
-    return { success: true, trackingId: consignmentId, consignmentId, deliveryFee: deliveryFee ?? 0 };
+      return { success: true, trackingId: consignmentId, consignmentId, deliveryFee: deliveryFee ?? 0 };
+    } catch (e) {
+      const error = await bookingErrorText(e);
+      console.error("[courier-booking] failed", error);
+      return { success: false as const, error };
+    }
   });
 
 
@@ -396,7 +410,7 @@ export const syncPathaoStatus = createServerFn({ method: "POST" })
     const cid = sh?.consignment_id || sh?.tracking_id;
     if (!cid) throw new Response("Shipment is not booked with Pathao", { status: 400 });
 
-    const info = await pathaoOrderInfo(supabase, conf, cid);
+    const info = await pathaoOrderInfo(await courierDb(), conf, cid);
     const result = await applyCourierUpdate(supabase, {
       provider: "pathao",
       consignmentId: sh?.consignment_id ?? cid,
@@ -448,117 +462,123 @@ export const bookCarrybee = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    await assertAdmin(supabase, userId);
-    const { carrybeeRequest, carrybeeResolveLocation } = await import("@/lib/carrybee.server");
-    const conf = await getCourierConfig(supabase, "carrybee");
-    if (!conf.store_id) throw new Response("Carrybee store id set korun", { status: 400 });
-    const order = await getOrderForBooking(supabase, data.orderId);
+    try {
+      const { supabase, userId } = context;
+      await assertAdmin(supabase, userId);
+      const { carrybeeRequest, carrybeeResolveLocation } = await import("@/lib/carrybee.server");
+      const conf = await getCourierConfig(supabase, "carrybee");
+      if (!conf.store_id) throw new Response("Carrybee store id set korun", { status: 400 });
+      const order = await getOrderForBooking(supabase, data.orderId);
 
-    const { data: existing } = await supabase
-      .from("shipments")
-      .select("id")
-      .eq("order_id", order.id)
-      .not("consignment_id", "is", null)
-      .maybeSingle();
-    if (existing) throw new Response("This order is already booked with a courier", { status: 400 });
+      const { data: existing } = await supabase
+        .from("shipments")
+        .select("id")
+        .eq("order_id", order.id)
+        .not("consignment_id", "is", null)
+        .maybeSingle();
+      if (existing) throw new Response("This order is already booked with a courier", { status: 400 });
 
-    const { data: items } = await supabase
-      .from("order_items")
-      .select("product_name, quantity")
-      .eq("order_id", order.id);
-    const quantity = (items ?? []).reduce((s: number, i: any) => s + Number(i.quantity || 0), 0) || 1;
+      const { data: items } = await supabase
+        .from("order_items")
+        .select("product_name, quantity")
+        .eq("order_id", order.id);
+      const quantity = (items ?? []).reduce((s: number, i: any) => s + Number(i.quantity || 0), 0) || 1;
 
-    const address = fullAddress(order);
-    const loc = await carrybeeResolveLocation(conf, {
-      address,
-      city: order.city,
-      area: order.area,
-    });
+      const address = fullAddress(order);
+      const loc = await carrybeeResolveLocation(conf, {
+        address,
+        city: order.city,
+        area: order.area,
+      });
 
-    const codAmount = order.payment_method === "cod" ? Math.round(Number(order.total)) : 0;
-    const payload: Record<string, unknown> = {
-      store_id: conf.store_id,
-      merchant_order_id: order.order_number,
-      delivery_type: data.deliveryType ?? 1,
-      product_type: data.productType ?? 1,
-      recipient_phone: normalizePhone(order.customer_phone),
-      recipient_name: String(order.customer_name).slice(0, 99),
-      recipient_address: address.padEnd(10, " ").slice(0, 200),
-      city_id: loc.cityId,
-      zone_id: loc.zoneId,
-      ...(loc.areaId ? { area_id: loc.areaId } : {}),
-      item_weight: data.itemWeight ?? Math.min(25000, Math.max(500, quantity * 500)),
-      item_quantity: Math.min(200, quantity),
-      collectable_amount: Math.min(100000, codAmount),
-      product_description:
-        (items ?? []).map((i: any) => `${i.product_name} x${i.quantity}`).join(", ").slice(0, 255) ||
-        undefined,
-      special_instruction: (data.note || order.reseller_note || order.notes || "")?.slice(0, 255) || undefined,
-      ...(data.isExchange ? { is_exchange: true } : {}),
-    };
+      const codAmount = order.payment_method === "cod" ? Math.round(Number(order.total)) : 0;
+      const payload: Record<string, unknown> = {
+        store_id: conf.store_id,
+        merchant_order_id: order.order_number,
+        delivery_type: data.deliveryType ?? 1,
+        product_type: data.productType ?? 1,
+        recipient_phone: normalizePhone(order.customer_phone),
+        recipient_name: String(order.customer_name).slice(0, 99),
+        recipient_address: address.padEnd(10, " ").slice(0, 200),
+        city_id: loc.cityId,
+        zone_id: loc.zoneId,
+        ...(loc.areaId ? { area_id: loc.areaId } : {}),
+        item_weight: data.itemWeight ?? Math.min(25000, Math.max(500, quantity * 500)),
+        item_quantity: Math.min(200, quantity),
+        collectable_amount: Math.min(100000, codAmount),
+        product_description:
+          (items ?? []).map((i: any) => `${i.product_name} x${i.quantity}`).join(", ").slice(0, 255) ||
+          undefined,
+        special_instruction: (data.note || order.reseller_note || order.notes || "")?.slice(0, 255) || undefined,
+        ...(data.isExchange ? { is_exchange: true } : {}),
+      };
 
-    const body = await carrybeeRequest(conf, "/api/v2/orders", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
-    const o = body?.data?.order ?? body?.data ?? {};
-    const consignmentId = String(o.consignment_id ?? "");
-    const nowIso = new Date().toISOString();
+      const body = await carrybeeRequest(conf, "/api/v2/orders", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      const o = body?.data?.order ?? body?.data ?? {};
+      const consignmentId = String(o.consignment_id ?? "");
+      const nowIso = new Date().toISOString();
 
-    const { data: shipment, error: shipmentError } = await supabase
-      .from("shipments")
-      .insert({
+      const { data: shipment, error: shipmentError } = await supabase
+        .from("shipments")
+        .insert({
+          order_id: order.id,
+          provider: "carrybee",
+          tracking_id: consignmentId,
+          consignment_id: consignmentId,
+          status: "booked",
+          courier_status: "created",
+          cod_amount: Number(o.collectable_amount ?? codAmount),
+          delivery_charge: o.delivery_fee != null ? Number(o.delivery_fee) : null,
+          cost: o.delivery_fee != null ? Number(o.delivery_fee) : 0,
+          request_payload: payload as any,
+
+          response_payload: body,
+          booked_at: nowIso,
+          last_event_at: nowIso,
+          booked_by: userId,
+        })
+        .select("id")
+        .single();
+      if (shipmentError || !shipment)
+        throw new Response(
+          shipmentError?.message || "Booking could not be saved (no permission to create shipments)",
+          { status: 403 },
+        );
+
+      await supabase.from("courier_events").insert({
         order_id: order.id,
+        shipment_id: shipment?.id ?? null,
         provider: "carrybee",
-        tracking_id: consignmentId,
-        consignment_id: consignmentId,
-        status: "booked",
+        source: "sync",
+        notification_type: "booking",
         courier_status: "created",
+        consignment_id: consignmentId,
+        tracking_code: consignmentId,
         cod_amount: Number(o.collectable_amount ?? codAmount),
         delivery_charge: o.delivery_fee != null ? Number(o.delivery_fee) : null,
-        cost: o.delivery_fee != null ? Number(o.delivery_fee) : 0,
-        request_payload: payload as any,
+        note: "Consignment created",
+        payload: body,
+        event_at: nowIso,
+      });
 
-        response_payload: body,
-        booked_at: nowIso,
-        last_event_at: nowIso,
-        booked_by: userId,
-      })
-      .select("id")
-      .single();
-    if (shipmentError || !shipment)
-      throw new Response(
-        shipmentError?.message || "Booking could not be saved (no permission to create shipments)",
-        { status: 403 },
-      );
+      // Booking alone does NOT change the order status. The status only moves when a
+      // courier webhook/sync event arrives (received -> to courier, delivered, return).
+      await supabase.from("order_status_history").insert({
+        order_id: order.id,
+        status: (order as { status: Database["public"]["Enums"]["order_status"] }).status,
+        note: `Carrybee booked · ${consignmentId}`,
+        changed_by: userId,
+      });
 
-    await supabase.from("courier_events").insert({
-      order_id: order.id,
-      shipment_id: shipment?.id ?? null,
-      provider: "carrybee",
-      source: "sync",
-      notification_type: "booking",
-      courier_status: "created",
-      consignment_id: consignmentId,
-      tracking_code: consignmentId,
-      cod_amount: Number(o.collectable_amount ?? codAmount),
-      delivery_charge: o.delivery_fee != null ? Number(o.delivery_fee) : null,
-      note: "Consignment created",
-      payload: body,
-      event_at: nowIso,
-    });
-
-    // Booking alone does NOT change the order status. The status only moves when a
-    // courier webhook/sync event arrives (received -> to courier, delivered, return).
-    await supabase.from("order_status_history").insert({
-      order_id: order.id,
-      status: (order as { status: Database["public"]["Enums"]["order_status"] }).status,
-      note: `Carrybee booked · ${consignmentId}`,
-      changed_by: userId,
-    });
-
-    return { success: true, trackingId: consignmentId, consignmentId, deliveryFee: Number(o.delivery_fee ?? 0) };
+      return { success: true, trackingId: consignmentId, consignmentId, deliveryFee: Number(o.delivery_fee ?? 0) };
+    } catch (e) {
+      const error = await bookingErrorText(e);
+      console.error("[courier-booking] failed", error);
+      return { success: false as const, error };
+    }
   });
 
 

@@ -73,7 +73,10 @@ export function ShipmentBookingModal({
           successCount++;
         } else {
           failCount++;
-          lastError = typeof res === "string" ? res : "Booking was not saved";
+          // The server now returns the real reason instead of an opaque response.
+          lastError =
+            (typeof res === "string" ? res : res?.error) || "Booking was not saved (unknown reason)";
+          console.error(`Booking rejected for ${id}:`, res);
         }
       } catch (err: any) {
         console.error(`Booking failed for ${id}:`, err);
