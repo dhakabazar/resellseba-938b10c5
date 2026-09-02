@@ -341,8 +341,10 @@ function Landing({
       {/* ── Hero ────────────────────────────────────────── */}
       <section className="relative isolate overflow-hidden">
         <div className="pointer-events-none absolute inset-0 -z-10 bg-[image:var(--gradient-hero)]" />
-        <div className="pointer-events-none absolute -top-40 -left-32 -z-10 h-96 w-96 rounded-full bg-primary/25 blur-3xl animate-blob-drift" />
-        <div className="pointer-events-none absolute -bottom-40 -right-24 -z-10 h-96 w-96 rounded-full bg-accent/25 blur-3xl animate-blob-drift-slow" />
+        <div className="pointer-events-none absolute -top-40 -left-32 -z-10 h-96 w-96 rounded-full bg-brand-1/25 blur-3xl animate-blob-drift" />
+        <div className="pointer-events-none absolute -bottom-40 -right-24 -z-10 h-96 w-96 rounded-full bg-brand-2/25 blur-3xl animate-blob-drift-slow" />
+        <div className="pointer-events-none absolute top-10 right-1/4 -z-10 h-72 w-72 rounded-full bg-brand-3/20 blur-3xl animate-blob-drift-slow" />
+        <div className="pointer-events-none absolute bottom-0 left-1/3 -z-10 h-64 w-64 rounded-full bg-brand-4/20 blur-3xl animate-blob-drift" />
 
         <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 pt-12 pb-14 sm:px-6 sm:pt-20 sm:pb-20 lg:grid-cols-[1.05fr_.95fr] lg:gap-14">
           <div className="text-center lg:text-left">
