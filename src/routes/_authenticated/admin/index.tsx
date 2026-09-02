@@ -80,14 +80,15 @@ function AdminDashboard() {
     setLoading(true);
     const { fromTs, toTs } = resolveRange(r);
     const data = await getAdminDashboard(fromTs, toTs, true);
-    setRows((data?.range_orders ?? []) as OrderRow[]);
+    const ranged = (data?.range_orders ?? []) as unknown as ReportOrder[];
+    setRows(ranged as unknown as OrderRow[]);
 
-    const all = (data?.all_orders ?? []) as ReportOrder[];
-    const d = all.filter((o) => ["delivered", "partial"].includes(String((o as { status?: string }).status ?? ""))) as unknown as {
+    // Every card on this page follows the selected date range.
+    const d = ranged.filter((o) => ["delivered", "partial"].includes(String(o.status ?? ""))) as unknown as {
       total: number | string; shipping_cost: number | string; reseller_profit: number | string; sa_cost_total: number | string;
       received_amount?: number | string | null; packaging_total?: number | string | null; status?: string;
     }[];
-    setOrderReport(buildFinanceReport(all, []));
+    setOrderReport(buildFinanceReport(ranged, []));
 
     const cat = data?.catalog ?? {};
     setCatalog({
@@ -122,7 +123,7 @@ function AdminDashboard() {
       withdrawable: Number(m?.withdrawable ?? 0),
     });
     setLifetime({
-      orders: all.length,
+      orders: ranged.length,
       deliveredOrders: d.length,
       revenue: d.reduce((s, o) => s + Number(o.total), 0),
       profit: d.reduce((s, o) => s + orderProfit(o), 0),
