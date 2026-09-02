@@ -106,13 +106,28 @@ function SettingsPage() {
           <Field label="Favicon (browser tab icon — square PNG/WebP)">
             <ImageUploader bucket="branding" folder="favicon" value={favicon} onChange={setFavicon} />
           </Field>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <Field label="Primary color">
               <input type="color" value={primary} onChange={(e) => setPrimary(e.target.value)} className="h-10 w-full rounded-md border" />
             </Field>
             <Field label="Accent color">
               <input type="color" value={accent} onChange={(e) => setAccent(e.target.value)} className="h-10 w-full rounded-md border" />
             </Field>
+            <Field label="Secondary color">
+              <input type="color" value={secondary} onChange={(e) => setSecondary(e.target.value)} className="h-10 w-full rounded-md border" />
+            </Field>
+            <Field label="Highlight color">
+              <input type="color" value={highlight} onChange={(e) => setHighlight(e.target.value)} className="h-10 w-full rounded-md border" />
+            </Field>
+          </div>
+          <div>
+            <div
+              className="h-8 w-full rounded-lg"
+              style={{ background: `linear-gradient(120deg, ${primary} 0%, ${secondary} 38%, ${highlight} 68%, ${accent} 100%)` }}
+            />
+            <p className="mt-1.5 text-[11px] text-muted-foreground">
+              These 4 colors drive the landing page, admin and reseller panels.
+            </p>
           </div>
         </div>
         <div className="surface-card space-y-3 p-6">
