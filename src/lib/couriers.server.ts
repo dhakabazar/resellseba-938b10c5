@@ -10,8 +10,20 @@ export async function assertAdmin(supabase: any, userId: string) {
   if (error || !data) throw new Response("Forbidden", { status: 403 });
 }
 
-export async function getCourierConfig(supabase: any, provider: string): Promise<Cfg> {
-  const { data: cfg } = await supabase
+/**
+ * Courier credentials live in `courier_configs`, which only `couriers.manage`
+ * holders may read. Booking/sync flows are already permission-gated, so the
+ * config is read server-side with the service role — staff never receive the
+ * secrets, they just stop being blocked by RLS.
+ */
+export async function courierDb() {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  return supabaseAdmin as any;
+}
+
+export async function getCourierConfig(_supabase: any, provider: string): Promise<Cfg> {
+  const db = await courierDb();
+  const { data: cfg } = await db
     .from("courier_configs")
     .select("config, is_active")
     .eq("provider", provider)

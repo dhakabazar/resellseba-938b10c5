@@ -11,6 +11,7 @@ import {
   normalizePhone,
   steadfastRequest,
   bookingErrorText,
+  courierDb,
 } from "@/lib/couriers.server";
 
 const orderInput = z.object({ orderId: z.string().uuid() });
@@ -243,7 +244,7 @@ export const pathaoStores = createServerFn({ method: "POST" })
     await assertAdmin(supabase, userId);
     const { pathaoStoreList } = await import("@/lib/pathao.server");
     const conf = await getCourierConfig(supabase, "pathao");
-    return { stores: await pathaoStoreList(supabase, conf) };
+    return { stores: await pathaoStoreList(await courierDb(), conf) };
   });
 
 export const pathaoPricePlan = createServerFn({ method: "POST" })
@@ -264,7 +265,7 @@ export const pathaoPricePlan = createServerFn({ method: "POST" })
     const { pathaoPricePlanRequest } = await import("@/lib/pathao.server");
     const conf = await getCourierConfig(supabase, "pathao");
     if (!conf.store_id) throw new Response("Pathao store id set korun", { status: 400 });
-    return pathaoPricePlanRequest(supabase, conf, { storeId: conf.store_id, ...data });
+    return pathaoPricePlanRequest(await courierDb(), conf, { storeId: conf.store_id, ...data });
   });
 
 export const bookPathao = createServerFn({ method: "POST" })
@@ -323,7 +324,7 @@ export const bookPathao = createServerFn({ method: "POST" })
           (data.note || order.reseller_note || order.notes || "")?.slice(0, 250) || undefined,
       };
 
-      const body = await pathaoRequest(supabase, conf, "/aladdin/api/v1/orders", {
+      const body = await pathaoRequest(await courierDb(), conf, "/aladdin/api/v1/orders", {
         method: "POST",
         body: JSON.stringify(payload),
       });
@@ -409,7 +410,7 @@ export const syncPathaoStatus = createServerFn({ method: "POST" })
     const cid = sh?.consignment_id || sh?.tracking_id;
     if (!cid) throw new Response("Shipment is not booked with Pathao", { status: 400 });
 
-    const info = await pathaoOrderInfo(supabase, conf, cid);
+    const info = await pathaoOrderInfo(await courierDb(), conf, cid);
     const result = await applyCourierUpdate(supabase, {
       provider: "pathao",
       consignmentId: sh?.consignment_id ?? cid,
