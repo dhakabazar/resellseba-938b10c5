@@ -229,40 +229,6 @@ function FilterButtonRow({
   );
 }
 
-/** Compact dropdown-button filter (label + current value + count). */
-function FilterMenu({
-  label,
-  activeLabel,
-  options,
-  onSelect,
-}: {
-  label: string;
-  activeLabel: string;
-  options: Array<{ value: string; label: string; active: boolean }>;
-  onSelect: (value: string) => void;
-}) {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger className="inline-flex h-10 items-center gap-2 rounded-md border bg-background px-3 text-sm font-medium transition hover:bg-muted">
-        <span className="text-muted-foreground">{label}:</span>
-        <span className="max-w-[14rem] truncate">{activeLabel}</span>
-        <ChevronDown className="h-4 w-4 text-muted-foreground" />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-56">
-        {options.map((o) => (
-          <DropdownMenuItem
-            key={o.value}
-            onClick={() => onSelect(o.value)}
-            className={o.active ? "font-semibold text-primary" : ""}
-          >
-            {o.active ? <Check className="mr-2 h-4 w-4" /> : <span className="mr-2 h-4 w-4" />}
-            {o.label}
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
 
 /** Dropdown-style filter with an inline search input (useful for long lists). */
 function SearchableFilterMenu({
