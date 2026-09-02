@@ -194,11 +194,13 @@ export function SubscriptionPanel({ resellerId }: { resellerId: string | null })
       reseller_id: resellerId,
       plan,
       months,
+      amount: price,
       method: selected.method,
       payment_config_id: selected.id,
       reference: reference.trim(),
       note: note.trim() || null,
     } as never);
+
     setBusy(false);
     if (error) return toast.error(error.message);
     setReference("");
