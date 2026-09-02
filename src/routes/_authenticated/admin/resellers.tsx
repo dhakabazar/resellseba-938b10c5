@@ -666,6 +666,24 @@ function ResellersPage() {
     requirePhone: advanced.verifyEnabled && advanced.verifySms,
   });
 
+  /** Package rules straight from Advanced settings (one source of truth). */
+  const subRules = useMemo(
+    () => ({
+      enabled: advanced.subscription.enabled,
+      autoApply: advanced.subscription.autoApply,
+      noticeDays: advanced.subscription.noticeDays,
+      trialDays: advanced.subscription.trialDays,
+      graceDays: advanced.subscription.graceDays,
+    }),
+    [advanced.subscription],
+  );
+
+  const subStates = useMemo(() => {
+    const out: Record<string, ReturnType<typeof computeSubscriptionState>> = {};
+    for (const r of items) out[r.id] = computeSubscriptionState(r, subRules);
+    return out;
+  }, [items, subRules]);
+
   const filtered = useMemo(() => {
     let out = items;
     if (filter === "email_unverified")
@@ -677,6 +695,11 @@ function ResellersPage() {
     if (agentFilter) out = out.filter((r) => (agentFilter === "none" ? !r.agent_id : r.agent_id === agentFilter));
     if (depositFilter !== "all")
       out = out.filter((r) => depositStateOf(r, summaries[r.id]?.deposit_balance ?? 0) === depositFilter);
+    if (packageFilter !== "all")
+      out = out.filter((r) => {
+        const st = subStates[r.id];
+        return st ? packageStateOf(st) === packageFilter : false;
+      });
     const q = query.trim().toLowerCase();
     if (q)
       out = out.filter(
@@ -687,7 +710,19 @@ function ResellersPage() {
           (emailStatus[r.user_id]?.email ?? "").toLowerCase().includes(q),
       );
     return out;
-  }, [items, filter, query, emailStatus, profileVerify, advanced, agentFilter, depositFilter, summaries]);
+  }, [
+    items,
+    filter,
+    query,
+    emailStatus,
+    profileVerify,
+    advanced,
+    agentFilter,
+    depositFilter,
+    packageFilter,
+    subStates,
+    summaries,
+  ]);
 
   /** Everything the counters use respects the selected agent. */
   const agentScoped = useMemo(
@@ -697,6 +732,23 @@ function ResellersPage() {
         : items,
     [items, agentFilter],
   );
+
+  const packageCounts = useMemo(() => {
+    const out: Record<PackageFilter, number> = {
+      all: agentScoped.length,
+      active: 0,
+      trial: 0,
+      expiring: 0,
+      expired: 0,
+      free: 0,
+      out: 0,
+    };
+    for (const r of agentScoped) {
+      const st = subStates[r.id];
+      if (st) out[packageStateOf(st)] += 1;
+    }
+    return out;
+  }, [agentScoped, subStates]);
 
   const depositCounts = useMemo(() => {
     const out: Record<DepositFilter, number> = { all: agentScoped.length, paid: 0, due: 0, not_required: 0 };
@@ -1031,6 +1083,8 @@ function ResellersPage() {
           />
           )
         }
+        filters={[]}
+        right={undefined as never}
         perPage={perPage}
         onPerPage={(n) => {
           setPerPage(n);
