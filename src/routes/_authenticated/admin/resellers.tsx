@@ -1108,6 +1108,18 @@ function ResellersPage() {
             searchPlaceholder="Search agent…"
           />
             )}
+            {/* Global joined-date scope — every other filter/count works inside it. */}
+            <div className="shrink-0">
+              <DateRangeBar
+                compact
+                label="Joined"
+                value={dateRange}
+                onChange={(v) => {
+                  setDateRange(v);
+                  setPage(1);
+                }}
+              />
+            </div>
           </>
         }
         perPage={perPage}
