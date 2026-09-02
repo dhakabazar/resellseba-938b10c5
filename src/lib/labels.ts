@@ -71,21 +71,21 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
           }
           .header { 
             border-bottom: 2px solid #000; 
-            padding-bottom: 4px; 
-            margin-bottom: 6px; 
+            padding-bottom: 2px; 
+            margin-bottom: 4px; 
             display: flex; 
             justify-content: space-between; 
             align-items: center;
-            gap: 6px;
+            gap: 2px;
           }
-          .reseller-info { display: flex; align-items: center; gap: 6px; min-width: 0; }
-          .reseller-logo { width: 30px; height: 30px; object-fit: contain; border: 1px solid #eee; }
-          .site-name { font-size: 10pt; font-weight: 800; text-transform: uppercase; letter-spacing: 0.3px; }
-          .order-block { text-align: right; }
+          .reseller-info { display: flex; align-items: center; gap: 4px; min-width: 0; flex: 1; }
+          .reseller-logo { width: 28px; height: 28px; object-fit: contain; border: 1px solid #eee; }
+          .site-name { font-size: 9.5pt; font-weight: 800; text-transform: uppercase; letter-spacing: 0.3px; }
+          .order-block { text-align: right; width: 45%; }
           .order-num { font-size: 11pt; font-weight: 900; letter-spacing: 0.5px; line-height: 1.05; }
           .barcode { display: block; }
           .barcode svg { display: block; width: 100%; height: auto; }
-          .order-block .barcode { width: 55%; margin-left: auto; }
+          .order-block .barcode { width: 100%; margin-left: auto; }
 
           .section-title { font-size: 7pt; text-transform: uppercase; color: #666; font-weight: bold; margin-bottom: 2px; }
 
