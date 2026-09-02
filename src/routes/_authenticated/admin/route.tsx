@@ -316,7 +316,24 @@ function AdminLayout() {
   return (
     <AppShell
       title={isSuperAdmin ? "Super Admin" : "Staff Panel"}
-      headerRight={<BulkScanButton compact />}
+      headerRight={
+        <div className="flex items-center gap-2">
+          <a
+            href="/"
+            target="_blank"
+            rel="noreferrer"
+            className="hidden md:inline-flex"
+            title="Visit landing page"
+          >
+            <Button variant="outline" size="sm" className="gap-2">
+              <Home className="h-4 w-4" />
+              <span>LP Visit</span>
+              <ExternalLink className="h-3.5 w-3.5 opacity-60" />
+            </Button>
+          </a>
+          <BulkScanButton compact />
+        </div>
+      }
       brand={{ name: brand.name, sub: isSuperAdmin ? "Admin panel" : "Staff panel", logoUrl: brand.logoUrl }}
       nav={filterNav(NAV, permissions, isSuperAdmin)}
       user={{
