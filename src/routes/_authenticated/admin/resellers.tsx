@@ -1058,6 +1058,23 @@ function ResellersPage() {
         />
       </div>
 
+      {/* Monthly package buttons — independent group, merges with the filters above */}
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <span className="text-xs font-medium text-muted-foreground">Package</span>
+        <FilterButtonRow
+          active={`pkg:${packageFilter}`}
+          options={PACKAGE_FILTERS.map((f) => ({
+            value: `pkg:${f}`,
+            label: PACKAGE_FILTER_LABELS[f],
+            count: packageCounts[f],
+          }))}
+          onSelect={(v) => {
+            setPackageFilter(v.split(":")[1] as PackageFilter);
+            setPage(1);
+          }}
+        />
+      </div>
+
 
 
       <DataToolbar
