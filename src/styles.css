@@ -395,3 +395,44 @@
   scroll-behavior: smooth;
   scrollbar-gutter: stable;
 }
+
+/* ---------------------------------------------------------------
+   Four-color brand helpers — used across the landing page, admin
+   and reseller surfaces so the whole app follows the 4 colors set
+   in Settings → Branding.
+   --------------------------------------------------------------- */
+@utility brand-gradient-text {
+  background: var(--gradient-brand-4);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+@utility brand-rule {
+  background: var(--gradient-brand-4);
+}
+@utility btn-brand-4 {
+  background: var(--gradient-brand-4);
+  color: var(--color-primary-foreground);
+  box-shadow: var(--shadow-elegant);
+  background-size: 180% 180%;
+  animation: brand-shift 9s ease-in-out infinite;
+}
+@keyframes brand-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+@utility brand-tile-1 { background: color-mix(in oklab, var(--brand-1) 14%, var(--color-card)); color: var(--brand-1); }
+@utility brand-tile-2 { background: color-mix(in oklab, var(--brand-2) 18%, var(--color-card)); color: color-mix(in oklab, var(--brand-2) 70%, black); }
+@utility brand-tile-3 { background: color-mix(in oklab, var(--brand-3) 16%, var(--color-card)); color: color-mix(in oklab, var(--brand-3) 80%, black); }
+@utility brand-tile-4 { background: color-mix(in oklab, var(--brand-4) 16%, var(--color-card)); color: color-mix(in oklab, var(--brand-4) 80%, black); }
+@utility brand-solid-1 { background: var(--brand-1); color: var(--color-primary-foreground); }
+@utility brand-solid-2 { background: var(--brand-2); color: var(--color-accent-foreground); }
+@utility brand-solid-3 { background: var(--brand-3); color: var(--brand-3-foreground); }
+@utility brand-solid-4 { background: var(--brand-4); color: var(--brand-4-foreground); }
+@utility brand-mesh {
+  background:
+    radial-gradient(circle at 15% 20%, color-mix(in oklab, var(--brand-1) 16%, transparent), transparent 55%),
+    radial-gradient(circle at 85% 15%, color-mix(in oklab, var(--brand-3) 16%, transparent), transparent 55%),
+    radial-gradient(circle at 70% 85%, color-mix(in oklab, var(--brand-4) 14%, transparent), transparent 55%),
+    radial-gradient(circle at 25% 90%, color-mix(in oklab, var(--brand-2) 14%, transparent), transparent 55%);
+}
