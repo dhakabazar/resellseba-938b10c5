@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ResellerAvatar } from "@/components/reseller-avatar";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
 import { DataToolbar, Pagination, usePaginated } from "@/components/data-list";
+import { DateRangeBar, inRange, rangeLabel, type DateRangeState } from "@/components/date-range-filter";
 
 import {
   Check,
