@@ -81,11 +81,11 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
           .reseller-info { display: flex; align-items: center; gap: 4px; min-width: 0; flex: 1; }
           .reseller-logo { width: 28px; height: 28px; object-fit: contain; border: 1px solid #eee; }
           .site-name { font-size: 9.5pt; font-weight: 800; text-transform: uppercase; letter-spacing: 0.3px; }
-          .order-block { text-align: right; width: 45%; }
-          .order-num { font-size: 11pt; font-weight: 900; letter-spacing: 0.5px; line-height: 1.05; }
+          .order-block { text-align: center; width: 28%; }
+          .order-num { font-size: 10.5pt; font-weight: 900; letter-spacing: 0.5px; line-height: 1; margin-top: 1px; }
           .barcode { display: block; }
           .barcode svg { display: block; width: 100%; height: auto; }
-          .order-block .barcode { width: 100%; margin-left: auto; }
+          .order-block .barcode { width: 100%; margin: 0 auto; }
 
           .section-title { font-size: 7pt; text-transform: uppercase; color: #666; font-weight: bold; margin-bottom: 2px; }
 
@@ -169,7 +169,7 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
                   <div class="site-name">${reseller?.name || siteName}</div>
                 </div>
                 <div class="order-block">
-                  <div class="barcode">${code128Svg(String(o.order_number), { height: 42 })}</div>
+                  <div class="barcode">${code128Svg(String(o.order_number), { height: 30 })}</div>
                   <div class="order-num">#${o.order_number}</div>
                 </div>
               </div>
