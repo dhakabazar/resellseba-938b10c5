@@ -275,7 +275,14 @@ function RootResolver() {
         setSiteName(s.site_name ?? "Reseller");
         setLogoUrl(s.logo_url ?? null);
         setContact({ phone: s.contact_phone ?? null, email: s.contact_email ?? null });
-        if (s.landing_content) setContent(s.landing_content);
+        if (s.landing_content)
+          setContent({
+            ...s.landing_content,
+            contacts:
+              (s.landing_content.contacts?.items?.length ?? 0) > 0
+                ? s.landing_content.contacts
+                : FALLBACK.contacts,
+          });
       }
       setStats(
         data
