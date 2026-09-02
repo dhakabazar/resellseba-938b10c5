@@ -455,6 +455,8 @@ function ResellersPage() {
   const [dateRange, setDateRange] = useState<DateRangeState>({ preset: "lifetime", from: "", to: "" });
   const [depositFilter, setDepositFilter] = useState<DepositFilter>("all");
   const [packageFilter, setPackageFilter] = useState<PackageFilter>("all");
+  /** Active plan filter (panel / panel + store) — part of the same merged filter row. */
+  const [planFilter, setPlanFilter] = useState<PlanKey | "">("");
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [bulkBusy, setBulkBusy] = useState(false);
   const { settings: advanced } = useAdvancedSettings();
