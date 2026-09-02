@@ -35,6 +35,8 @@ import {
   UserCheck,
   Target,
   Receipt,
+  ExternalLink,
+  Home,
 } from "lucide-react";
 import { AppShell, type NavEntry } from "@/components/AppShell";
 import { BulkScanButton } from "@/components/BulkScanModal";
@@ -42,6 +44,8 @@ import { useAuth } from "@/lib/use-auth";
 import { useBrandingTheme } from "@/lib/branding";
 import { getGlobalSettings } from "@/lib/app-data";
 import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminLayout,
