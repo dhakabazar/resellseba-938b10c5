@@ -1069,19 +1069,6 @@ function ResellersPage() {
         searchPlaceholder="Search name, code, phone, email…"
         middle={
           <>
-            <FilterMenu
-              label="Package"
-              activeLabel={PACKAGE_FILTER_LABELS[packageFilter]}
-              options={PACKAGE_FILTERS.map((f) => ({
-                value: f,
-                label: f === "all" ? PACKAGE_FILTER_LABELS[f] : `${PACKAGE_FILTER_LABELS[f]} (${packageCounts[f]})`,
-                active: packageFilter === f,
-              }))}
-              onSelect={(v) => {
-                setPackageFilter(v as PackageFilter);
-                setPage(1);
-              }}
-            />
             {!canViewAll ? null : (
           <SearchableFilterMenu
             label="Agent"
