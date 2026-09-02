@@ -82,10 +82,10 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
           .reseller-logo { width: 30px; height: 30px; object-fit: contain; border: 1px solid #eee; }
           .site-name { font-size: 10pt; font-weight: 800; text-transform: uppercase; letter-spacing: 0.3px; }
           .order-block { text-align: right; }
-          .order-num { font-size: 14pt; font-weight: 900; letter-spacing: 0.5px; line-height: 1.05; }
+          .order-num { font-size: 11pt; font-weight: 900; letter-spacing: 0.5px; line-height: 1.05; }
           .barcode { display: block; }
           .barcode svg { display: block; width: 100%; height: auto; }
-          .order-block .barcode { width: 30%; margin-left: auto; }
+          .order-block .barcode { width: 55%; margin-left: auto; }
 
           .section-title { font-size: 7pt; text-transform: uppercase; color: #666; font-weight: bold; margin-bottom: 2px; }
 
@@ -99,10 +99,10 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
             margin-bottom: 6px;
           }
           .courier-logo { height: 28px; max-width: 0.85in; object-fit: contain; }
-          .courier-meta { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-          .courier-name { font-size: 8pt; font-weight: 800; text-transform: uppercase; }
-          .booking-id { font-size: 13pt; font-weight: 900; font-family: 'Courier New', monospace; letter-spacing: 0.5px; }
-          .courier-bar .barcode { width: 1.55in; flex-shrink: 0; }
+          .courier-meta { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: stretch; gap: 3px; }
+          .courier-name { font-size: 8pt; font-weight: 800; text-transform: uppercase; text-align: center; }
+          .booking-id { font-size: 12pt; font-weight: 900; font-family: 'Courier New', monospace; letter-spacing: 0.5px; text-align: center; }
+          .courier-bar .barcode { width: 100%; max-width: 2.3in; margin: 0 auto; }
 
           .customer { 
             border: 1.5px solid #000;
@@ -137,14 +137,15 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
             align-items: center;
           }
           .cod-badge { 
-            background: #000; 
-            color: #fff; 
-            padding: 4px 8px; 
+            background: #FFD700; 
+            color: #000; 
+            padding: 6px 10px; 
             border-radius: 4px;
             text-align: right;
+            border: 1.5px solid #000;
           }
-          .cod-label { font-size: 7pt; text-transform: uppercase; display: block; line-height: 1; }
-          .cod-value { font-size: 12pt; font-weight: 900; }
+          .cod-label { font-size: 10pt; font-weight: 900; text-transform: uppercase; display: block; line-height: 1; }
+          .cod-value { font-size: 13pt; font-weight: 900; }
           .thank-you { font-size: 7pt; color: #555; text-transform: uppercase; letter-spacing: 0.3px; }
         </style>
       </head>
@@ -190,7 +191,7 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
               <div class="footer">
                 <div class="thank-you">Thank you for shopping with us</div>
                 <div class="cod-badge">
-                  <span class="cod-label">Cash to Collect</span>
+                  <span class="cod-label">COD</span>
                   <span class="cod-value">৳${Number(o.total).toFixed(0)}</span>
                 </div>
               </div>
