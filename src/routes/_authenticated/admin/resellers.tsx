@@ -75,7 +75,9 @@ import {
   formatDate as formatPlanDate,
   packageStateOf,
   planLabel,
+  PLAN_KEYS,
   type PackageFilter,
+  type PlanKey,
 } from "@/lib/subscription";
 import { useAdvancedSettings } from "@/lib/advanced-settings";
 import { VerifyBadges, verifyPending, type VerifyFlags } from "@/components/verify-badges";
