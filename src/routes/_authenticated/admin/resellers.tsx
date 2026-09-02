@@ -687,8 +687,17 @@ function ResellersPage() {
     return out;
   }, [items, subRules]);
 
+  /**
+   * Date scope is applied first so status / deposit / package / agent filters and
+   * all counters work on the same subset — no conflicting selections.
+   */
+  const dateScoped = useMemo(
+    () => (dateRange.preset === "lifetime" ? items : items.filter((r) => inRange(r.created_at, dateRange))),
+    [items, dateRange],
+  );
+
   const filtered = useMemo(() => {
-    let out = items;
+    let out = dateScoped;
     if (filter === "email_unverified")
       out = out.filter((r) => {
         const f = verifyFor(r);
