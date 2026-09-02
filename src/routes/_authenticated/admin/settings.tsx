@@ -20,6 +20,8 @@ function SettingsPage() {
   const [metaDesc, setMetaDesc] = useState("");
   const [primary, setPrimary] = useState("#3b82f6");
   const [accent, setAccent] = useState("#f59e0b");
+  const [secondary, setSecondary] = useState("#0ea5e9");
+  const [highlight, setHighlight] = useState("#ec4899");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [logo, setLogo] = useState<UploadedImage[]>([]);
