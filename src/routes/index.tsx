@@ -459,14 +459,15 @@ function Landing({
 
       {/* ── Stats band ──────────────────────────────────── */}
       {statItems.length > 0 && (
-        <section className="border-y border-border/60 bg-card">
+        <section className="brand-mesh border-y border-border/60 bg-card">
           <div className="mx-auto grid max-w-6xl grid-cols-2 gap-8 px-4 py-10 sm:px-6 md:grid-cols-4 md:py-12">
             {statItems.slice(0, 4).map((s, i) => {
               const Icon = statIcons[i] ?? Sparkles;
+              const tile = ["brand-tile-1", "brand-tile-3", "brand-tile-4", "brand-tile-2"][i % 4];
               return (
                 <div key={i} className="flex flex-col items-center text-center">
                   <div className="flex items-center gap-2">
-                    <span className="grid h-9 w-9 place-items-center rounded-lg bg-primary/10 text-primary">
+                    <span className={`grid h-9 w-9 place-items-center rounded-lg ${tile}`}>
                       <Icon className="h-5 w-5" />
                     </span>
                     <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground sm:text-sm">{s.label}</span>
