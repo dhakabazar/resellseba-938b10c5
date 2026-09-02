@@ -283,12 +283,20 @@ export function ResellerSubscriptionModal({
             </div>
           </div>
 
-          {!state.master_enabled && (
+          {state.exempt ? (
             <div className="flex flex-wrap items-center gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-xs">
               <AlertTriangle className="h-4 w-4 text-amber-600" />
               <span className="min-w-0">
-                The monthly package system is switched off, so nothing here is enforced yet. Turn it on in the
-                package rules.
+                This reseller is set to package free, so nothing here is enforced. Turn the package on for this
+                reseller below to enforce it.
+              </span>
+            </div>
+          ) : !state.enabled ? (
+            <div className="flex flex-wrap items-center gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-xs">
+              <AlertTriangle className="h-4 w-4 text-amber-600" />
+              <span className="min-w-0">
+                This reseller is not in the package yet, so nothing here is enforced. Turn the package on for this
+                reseller below — it works even while the master switch is off.
               </span>
               <Link
                 to="/admin/subscriptions"
@@ -298,7 +306,16 @@ export function ResellerSubscriptionModal({
                 Open rules
               </Link>
             </div>
-          )}
+          ) : !state.master_enabled ? (
+            <div className="flex flex-wrap items-center gap-2 rounded-lg border border-emerald-500/40 bg-emerald-500/10 p-3 text-xs">
+              <AlertTriangle className="h-4 w-4 text-emerald-600" />
+              <span className="min-w-0">
+                The master switch is off, but this reseller is manually in the package — the rules are enforced for
+                them.
+              </span>
+            </div>
+          ) : null}
+
 
           {/* Add / extend a plan */}
           <section className="rounded-xl border border-primary/30 bg-primary/5 p-4">
