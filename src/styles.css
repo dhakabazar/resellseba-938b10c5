@@ -117,9 +117,21 @@
   --flow-step-3: oklch(0.52 0.18 295);
   --flow-step-4: oklch(0.65 0.16 155);
   --flow-step-5: oklch(0.76 0.15 68);
+  /* Four-color brand palette (overridden live from Settings) */
+  --brand-1: oklch(0.42 0.19 268);
+  --brand-2: oklch(0.82 0.15 68);
+  --brand-3: oklch(0.62 0.15 200);
+  --brand-4: oklch(0.6 0.2 340);
+  --brand-3-foreground: oklch(0.99 0.005 200);
+  --brand-4-foreground: oklch(0.99 0.005 340);
+  --gradient-brand-4: linear-gradient(120deg, var(--brand-1) 0%, var(--brand-3) 38%, var(--brand-4) 68%, var(--brand-2) 100%);
 }
 
 .dark {
+  --brand-3: oklch(0.72 0.14 200);
+  --brand-4: oklch(0.7 0.18 340);
+  --brand-3-foreground: oklch(0.16 0.03 200);
+  --brand-4-foreground: oklch(0.16 0.03 340);
   --background: oklch(0.15 0.02 265);
   --foreground: oklch(0.97 0.005 260);
   --card: oklch(0.2 0.03 265);
