@@ -197,3 +197,21 @@ export async function applyCourierUpdate(
   return { matched: true as const, orderId, shipmentId: shipment?.id ?? null, mapped };
 }
 
+
+/**
+ * Turns anything thrown inside a booking handler into a readable message.
+ * Thrown Response objects carry the real reason in their body, which the
+ * client never sees — so we read it here and return it as data instead.
+ */
+export async function bookingErrorText(e: unknown): Promise<string> {
+  if (e instanceof Response) {
+    try {
+      const text = await e.clone().text();
+      return text?.trim() || `Request failed (${e.status})`;
+    } catch {
+      return `Request failed (${e.status})`;
+    }
+  }
+  const msg = (e as { message?: string } | null)?.message;
+  return msg || String(e ?? "Unknown error");
+}
