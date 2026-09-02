@@ -103,10 +103,18 @@ type RequestRow = {
   resellers?: { code: string; business_name: string } | null;
 };
 
+const REQ_STATUSES = ["pending", "approved", "rejected"] as const;
+
 function RequestsTab() {
   const [rows, setRows] = useState<RequestRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"pending" | "all">("pending");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [planFilter, setPlanFilter] = useState("");
+  const [monthsFilter, setMonthsFilter] = useState("");
+  const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(20);
   const [busyId, setBusyId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -121,13 +129,39 @@ function RequestsTab() {
         "id,reseller_id,plan,months,amount,method,reference,note,status,admin_note,created_at,resellers(code,business_name)",
       )
       .order("created_at", { ascending: false })
-      .limit(200);
+      .limit(1000);
     if (filter === "pending") q = q.eq("status", "pending");
     const { data, error } = await q;
     if (error) toast.error(error.message);
     setRows((data ?? []) as unknown as RequestRow[]);
+    setPage(1);
     setLoading(false);
   }
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return rows.filter((r) => {
+      if (statusFilter && r.status !== statusFilter) return false;
+      if (planFilter && r.plan !== planFilter) return false;
+      if (monthsFilter && String(r.months) !== monthsFilter) return false;
+      if (!q) return true;
+      return [
+        r.resellers?.business_name,
+        r.resellers?.code,
+        r.reference,
+        r.method,
+        r.note,
+        String(r.amount),
+      ]
+        .filter(Boolean)
+        .some((v) => String(v).toLowerCase().includes(q));
+    });
+  }, [rows, statusFilter, planFilter, monthsFilter, query]);
+
+  const pendingTotal = useMemo(
+    () => filtered.filter((r) => r.status === "pending").reduce((sum, r) => sum + Number(r.amount || 0), 0),
+    [filtered],
+  );
 
   async function review(row: RequestRow, approve: boolean) {
     const ok = await confirmAction({
@@ -153,7 +187,7 @@ function RequestsTab() {
 
   return (
     <div>
-      <div className="mb-3 flex items-center gap-2">
+      <div className="mb-3 flex flex-wrap items-center gap-2">
         {(["pending", "all"] as const).map((k) => (
           <button
             key={k}
@@ -163,10 +197,62 @@ function RequestsTab() {
               (filter === k ? "border-transparent bg-primary text-primary-foreground" : "hover:bg-muted")
             }
           >
-            {k}
+            {k === "pending" ? "Awaiting approval" : "All payments"}
           </button>
         ))}
+        {pendingTotal > 0 && (
+          <span className="rounded-full border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-700 dark:text-amber-400">
+            Pending {bdt(pendingTotal)}
+          </span>
+        )}
       </div>
+
+      <DataToolbar
+        search={query}
+        onSearch={(v) => {
+          setQuery(v);
+          setPage(1);
+        }}
+        searchPlaceholder="Search reseller, code, TrxID, amount…"
+        filters={[
+          {
+            key: "status",
+            label: "Status",
+            value: statusFilter,
+            onChange: (v) => {
+              setStatusFilter(v);
+              setPage(1);
+            },
+            options: REQ_STATUSES.map((s) => ({ value: s, label: s })),
+          },
+          {
+            key: "plan",
+            label: "Package",
+            value: planFilter,
+            onChange: (v) => {
+              setPlanFilter(v);
+              setPage(1);
+            },
+            options: PLAN_KEYS.map((p) => ({ value: p, label: PLAN_META[p].label })),
+          },
+          {
+            key: "months",
+            label: "Duration",
+            value: monthsFilter,
+            onChange: (v) => {
+              setMonthsFilter(v);
+              setPage(1);
+            },
+            options: PLAN_MONTHS.map((m) => ({ value: String(m), label: monthsLabel(m) })),
+          },
+        ]}
+        perPage={perPage}
+        onPerPage={(n) => {
+          setPerPage(n);
+          setPage(1);
+        }}
+      />
+
 
       {loading ? (
         <div className="grid place-items-center py-8">
