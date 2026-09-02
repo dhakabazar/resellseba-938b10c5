@@ -17,6 +17,7 @@ type Step = { title: string; desc: string };
 type FlowStep = { icon: string; title: string; desc: string };
 type FaqItem = { q: string; a: string };
 type Story = { name: string; role?: string; location?: string; quote: string; metric?: string; metricLabel?: string; rating?: number; avatar?: UploadedImage | null };
+type ContactPerson = { name: string; role?: string; phone?: string; whatsapp?: string; email?: string; photo?: UploadedImage | null };
 type StatItem = { value: string; label: string };
 type LandingContent = {
   nav: { features: string; how: string; categories: string; signIn: string; cta: string; faq?: string; stories?: string };
@@ -38,6 +39,7 @@ type LandingContent = {
   how: { title: string; subtitle: string; steps: Step[] };
   faq?: { title: string; subtitle: string; items: FaqItem[] };
   stories?: { title?: string; subtitle?: string; items: Story[] };
+  contacts?: { badge?: string; title?: string; subtitle?: string; items: ContactPerson[] };
   cta: { badge: string; title: string; subtitle: string; button: string };
   footer: { tagline: string };
 };
@@ -53,6 +55,7 @@ const TABS = [
   { id: "how", label: "How it works" },
   { id: "faq", label: "FAQ" },
   { id: "stories", label: "Stories" },
+  { id: "contacts", label: "Contacts" },
   { id: "cta", label: "Call to action" },
   { id: "footer", label: "Footer" },
 ] as const;
@@ -339,6 +342,45 @@ function LandingEditor() {
           ))}
           <button type="button" onClick={() => update((d) => { d.stories = { ...(d.stories ?? {}), items: [...(d.stories?.items ?? []), { name: "", role: "", location: "", quote: "", metric: "", metricLabel: "", rating: 5, avatar: null }] }; })} className="inline-flex items-center gap-1 rounded-md border px-3 py-1.5 text-xs hover:bg-muted">
             <Plus className="h-3.5 w-3.5" /> Story add
+          </button>
+        </div>
+      </Section>
+      )}
+
+      {tab === "contacts" && (
+      <Section title="Contact section (last section on landing page)">
+        <Grid>
+          <F label="Badge"><I value={c.contacts?.badge ?? ""} onChange={(v) => update((d) => { d.contacts = { ...(d.contacts ?? { items: [] }), badge: v }; })} /></F>
+          <F label="Title"><I value={c.contacts?.title ?? ""} onChange={(v) => update((d) => { d.contacts = { ...(d.contacts ?? { items: [] }), title: v }; })} /></F>
+        </Grid>
+        <F label="Subtitle"><T value={c.contacts?.subtitle ?? ""} onChange={(v) => update((d) => { d.contacts = { ...(d.contacts ?? { items: [] }), subtitle: v }; })} /></F>
+        <div className="space-y-3">
+          {(c.contacts?.items ?? []).map((p, i) => (
+            <div key={i} className="rounded-lg border p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-muted-foreground">Contact #{i + 1}</span>
+                <button type="button" onClick={() => update((d) => { d.contacts!.items.splice(i, 1); })} className="text-destructive hover:opacity-70"><Trash2 className="h-3.5 w-3.5" /></button>
+              </div>
+              <Grid>
+                <F label="Name"><I value={p.name} onChange={(v) => update((d) => { d.contacts!.items[i].name = v; })} /></F>
+                <F label="Designation (CEO, Manager...)"><I value={p.role ?? ""} onChange={(v) => update((d) => { d.contacts!.items[i].role = v; })} /></F>
+                <F label="Phone"><I value={p.phone ?? ""} onChange={(v) => update((d) => { d.contacts!.items[i].phone = v; })} /></F>
+                <F label="WhatsApp (8801XXXXXXXXX)"><I value={p.whatsapp ?? ""} onChange={(v) => update((d) => { d.contacts!.items[i].whatsapp = v; })} /></F>
+                <F label="Email"><I value={p.email ?? ""} onChange={(v) => update((d) => { d.contacts!.items[i].email = v; })} /></F>
+              </Grid>
+              <F label="Photo (auto WebP ≤200KB)">
+                <ImageUploader
+                  bucket="branding"
+                  folder="landing-contacts"
+                  value={p.photo ? [p.photo] : []}
+                  onChange={(v) => update((d) => { d.contacts!.items[i].photo = v[0] ?? null; })}
+                  label="Upload photo"
+                />
+              </F>
+            </div>
+          ))}
+          <button type="button" onClick={() => update((d) => { d.contacts = { ...(d.contacts ?? {}), items: [...(d.contacts?.items ?? []), { name: "", role: "", phone: "", whatsapp: "", email: "", photo: null }] }; })} className="inline-flex items-center gap-1 rounded-md border px-3 py-1.5 text-xs hover:bg-muted">
+            <Plus className="h-3.5 w-3.5" /> Contact add
           </button>
         </div>
       </Section>
