@@ -738,6 +738,16 @@ function ResellersPage() {
     return out;
   }, [agentScoped, subStates]);
 
+  /** How many resellers run each plan right now (expired plans are not counted). */
+  const planCounts = useMemo(() => {
+    const out: Record<PlanKey, number> = { panel: 0, panel_store: 0 };
+    for (const r of agentScoped) {
+      const st = subStates[r.id];
+      if (st && st.plan && !st.locked) out[st.plan] += 1;
+    }
+    return out;
+  }, [agentScoped, subStates]);
+
   const depositCounts = useMemo(() => {
     const out: Record<DepositFilter, number> = { all: agentScoped.length, paid: 0, due: 0, not_required: 0 };
     for (const r of agentScoped) out[depositStateOf(r, summaries[r.id]?.deposit_balance ?? 0)] += 1;
