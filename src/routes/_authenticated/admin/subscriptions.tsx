@@ -361,6 +361,18 @@ function PricesTab() {
     })();
   }, []);
 
+  /** Turns one duration on or off for everybody. */
+  async function toggleActive(row: PlanRow) {
+    const next = !row.is_active;
+    const { error } = await supabase
+      .from("subscription_plans")
+      .update({ is_active: next } as never)
+      .eq("id", row.id);
+    if (error) return toast.error(error.message);
+    setRows((s) => s.map((r) => (r.id === row.id ? { ...r, is_active: next } : r)));
+    toast.success(next ? "Duration switched on" : "Duration switched off");
+  }
+
   async function save() {
     setBusy(true);
     for (const r of rows) {
@@ -399,17 +411,35 @@ function PricesTab() {
               </div>
             </header>
             <div className="grid gap-3 p-4 sm:grid-cols-3">
-              {PLAN_MONTHS.map((m) => (
-                <label key={m} className="text-xs font-medium">
-                  {monthsLabel(m)}
-                  <input
-                    value={draft[`${p}:${m}`] ?? ""}
-                    onChange={(e) => setDraft((s) => ({ ...s, [`${p}:${m}`]: e.target.value }))}
-                    className={inp + " mt-1"}
-                    inputMode="decimal"
-                  />
-                </label>
-              ))}
+              {PLAN_MONTHS.map((m) => {
+                const row = rows.find((r) => r.plan === p && r.months === m);
+                return (
+                  <label key={m} className="text-xs font-medium">
+                    <span className="flex items-center justify-between gap-2">
+                      {monthsLabel(m)}
+                      {row && (
+                        <button
+                          type="button"
+                          onClick={() => void toggleActive(row)}
+                          className={
+                            "rounded-full px-2 py-0.5 text-[10px] font-semibold " +
+                            (row.is_active ? "bg-success/15 text-success" : "bg-muted text-muted-foreground")
+                          }
+                        >
+                          {row.is_active ? "Active" : "Off"}
+                        </button>
+                      )}
+                    </span>
+                    <input
+                      value={draft[`${p}:${m}`] ?? ""}
+                      onChange={(e) => setDraft((s) => ({ ...s, [`${p}:${m}`]: e.target.value }))}
+                      className={inp + " mt-1"}
+                      inputMode="decimal"
+                      disabled={row ? !row.is_active : false}
+                    />
+                  </label>
+                );
+              })}
             </div>
           </section>
         ))}

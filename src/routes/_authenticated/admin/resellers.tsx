@@ -1524,6 +1524,7 @@ function ResellersPage() {
         <ResellerSubscriptionModal
           reseller={packageFor}
           onClose={() => setPackageFor(null)}
+          onSaved={() => refreshOne(packageFor.id)}
         />
       )}
 
