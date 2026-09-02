@@ -85,24 +85,24 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
           .order-num { font-size: 14pt; font-weight: 900; letter-spacing: 0.5px; line-height: 1.05; }
           .barcode { display: block; }
           .barcode svg { display: block; width: 100%; height: auto; }
-          .order-block .barcode { width: 1.5in; margin-left: auto; }
+          .order-block .barcode { width: 30%; margin-left: auto; }
 
           .section-title { font-size: 7pt; text-transform: uppercase; color: #666; font-weight: bold; margin-bottom: 2px; }
 
           .courier-bar {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
             border: 1.5px solid #000;
             border-radius: 4px;
-            padding: 4px 6px;
+            padding: 5px 7px;
             margin-bottom: 6px;
           }
-          .courier-logo { height: 26px; max-width: 0.75in; object-fit: contain; }
-          .courier-meta { flex: 1; min-width: 0; }
+          .courier-logo { height: 28px; max-width: 0.85in; object-fit: contain; }
+          .courier-meta { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
           .courier-name { font-size: 8pt; font-weight: 800; text-transform: uppercase; }
-          .booking-id { font-size: 12pt; font-weight: 900; font-family: 'Courier New', monospace; letter-spacing: 0.5px; }
-          .courier-bar .barcode { width: 1.25in; }
+          .booking-id { font-size: 13pt; font-weight: 900; font-family: 'Courier New', monospace; letter-spacing: 0.5px; }
+          .courier-bar .barcode { width: 1.55in; flex-shrink: 0; }
 
           .customer { 
             border: 1.5px solid #000;
@@ -136,9 +136,6 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
             justify-content: space-between; 
             align-items: center;
           }
-          .courier-info { display: flex; flex-direction: column; }
-          .courier { font-size: 10pt; font-weight: 900; text-transform: uppercase; color: #000; }
-          .tracking { font-size: 9pt; font-family: monospace; font-weight: bold; }
           .cod-badge { 
             background: #000; 
             color: #fff; 
@@ -148,6 +145,7 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
           }
           .cod-label { font-size: 7pt; text-transform: uppercase; display: block; line-height: 1; }
           .cod-value { font-size: 12pt; font-weight: 900; }
+          .thank-you { font-size: 7pt; color: #555; text-transform: uppercase; letter-spacing: 0.3px; }
         </style>
       </head>
       <body>
@@ -167,17 +165,17 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
                   <div class="site-name">${reseller?.name || siteName}</div>
                 </div>
                 <div class="order-block">
+                  <div class="barcode">${code128Svg(String(o.order_number), { height: 34 })}</div>
                   <div class="order-num">#${o.order_number}</div>
-                  <div class="barcode">${code128Svg(String(o.order_number), { height: 26 })}</div>
                 </div>
               </div>
               <div class="courier-bar">
                 ${brandLogo ? `<img src="${brandLogo}" class="courier-logo" />` : ""}
                 <div class="courier-meta">
-                  <div class="courier-name">${courierLabel(s?.provider) === "—" ? "Manual" : courierLabel(s?.provider)}</div>
+                  ${brandLogo ? "" : `<div class="courier-name">${courierLabel(s?.provider) === "—" ? "Manual" : courierLabel(s?.provider)}</div>`}
                   <div class="booking-id">${booking || "PENDING"}</div>
+                  ${booking ? `<div class="barcode">${code128Svg(booking, { height: 38 })}</div>` : ""}
                 </div>
-                ${booking ? `<div class="barcode">${code128Svg(booking, { height: 30 })}</div>` : ""}
               </div>
               <div class="customer">
                 <div class="section-title">Recipient</div>
@@ -190,11 +188,7 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
                 ${oItems.map(it => `<div class="item-row">${it.product_image ? `<img src="${it.product_image}" class="item-img" />` : ""}<span class="item-name">${it.product_name} <strong>x ${it.quantity}</strong></span></div>`).join("")}
               </div>
               <div class="footer">
-                <div class="courier-info">
-                  <div class="section-title">Courier</div>
-                  <div class="courier">${courierLabel(s?.provider) === "—" ? "Manual" : courierLabel(s?.provider)}</div>
-                  <div class="tracking">${booking || "PENDING"}</div>
-                </div>
+                <div class="thank-you">Thank you for shopping with us</div>
                 <div class="cod-badge">
                   <span class="cod-label">Cash to Collect</span>
                   <span class="cod-value">৳${Number(o.total).toFixed(0)}</span>
