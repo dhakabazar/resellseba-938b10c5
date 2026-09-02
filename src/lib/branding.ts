@@ -77,8 +77,8 @@ export function useBrandingTheme(
 
     const c1 = color ?? "var(--primary)";
     const c2 = accent ?? "var(--accent)";
-    const c3 = secondary ?? c1;
-    const c4 = highlight ?? c2;
+    const c3 = secondary ?? "var(--brand-3)";
+    const c4 = highlight ?? "var(--brand-4)";
 
     root.style.setProperty(
       "--gradient-brand-4",
