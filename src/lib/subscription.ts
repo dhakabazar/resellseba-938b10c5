@@ -159,6 +159,112 @@ export function subscriptionFromBootstrap(): SubscriptionState | null {
   return (boot?.subscription as SubscriptionState | null) ?? null;
 }
 
+/* ------------------------------------------------------------------ *
+ * Client-side mirror of the database package rules.
+ *
+ * The reseller list already loads every reseller row, so the package
+ * state is derived locally instead of one RPC per reseller. The logic
+ * mirrors `subscription_state()` exactly.
+ * ------------------------------------------------------------------ */
+
+export type SubscriptionRules = {
+  enabled: boolean;
+  autoApply: boolean;
+  noticeDays: number;
+  trialDays: number;
+  graceDays: number;
+};
+
+export type ResellerSubscriptionRow = {
+  subscription_plan?: string | null;
+  subscription_expires_at?: string | null;
+  subscription_trial_ends_at?: string | null;
+  subscription_exempt?: boolean | null;
+  subscription_enrolled?: boolean | null;
+  subscription_enrolled_at?: string | null;
+  created_at?: string | null;
+};
+
+const DAY = 86_400_000;
+
+export function computeSubscriptionState(
+  r: ResellerSubscriptionRow,
+  cfg: SubscriptionRules,
+): SubscriptionState {
+  const now = Date.now();
+  const enrolled = Boolean(r.subscription_enrolled);
+  const applies = cfg.enabled && (cfg.autoApply || enrolled);
+  const expires = r.subscription_expires_at ? new Date(r.subscription_expires_at).getTime() : null;
+  const explicitTrial = r.subscription_trial_ends_at
+    ? new Date(r.subscription_trial_ends_at).getTime()
+    : null;
+  const startedAt = r.subscription_enrolled_at ?? r.created_at ?? null;
+  const impliedTrial =
+    explicitTrial === null && cfg.trialDays > 0 && startedAt
+      ? new Date(startedAt).getTime() + cfg.trialDays * DAY
+      : null;
+  const trial = explicitTrial ?? impliedTrial;
+  const until = [expires, trial].filter((v): v is number => v !== null).sort((a, b) => b - a)[0] ?? null;
+  const inTrial = (expires === null || expires <= now) && until !== null && until > now;
+  const exempt = Boolean(r.subscription_exempt);
+  const locked =
+    applies && !exempt && (until === null || until + cfg.graceDays * DAY < now);
+
+  return {
+    enabled: applies,
+    master_enabled: cfg.enabled,
+    auto_apply: cfg.autoApply,
+    enrolled,
+    enrolled_at: r.subscription_enrolled_at ?? null,
+    notice_days: cfg.noticeDays,
+    exempt,
+    plan: (r.subscription_plan as PlanKey | null) ?? null,
+    expires_at: r.subscription_expires_at ?? null,
+    trial_ends_at: r.subscription_trial_ends_at ?? null,
+    until: until === null ? null : new Date(until).toISOString(),
+    in_trial: inTrial,
+    days_left: until === null ? null : Math.ceil((until - now) / DAY),
+    grace_days: cfg.graceDays,
+    trial_days: cfg.trialDays,
+    locked,
+    store_allowed: !locked && (!applies || exempt || r.subscription_plan !== "panel"),
+  };
+}
+
+/** Package buckets used by the admin reseller-list filter. */
+export type PackageFilter = "all" | "active" | "trial" | "expiring" | "expired" | "free" | "out";
+
+export const PACKAGE_FILTERS: PackageFilter[] = [
+  "all",
+  "active",
+  "trial",
+  "expiring",
+  "expired",
+  "free",
+  "out",
+];
+
+export const PACKAGE_FILTER_LABELS: Record<PackageFilter, string> = {
+  all: "All packages",
+  active: "Package active",
+  trial: "On free trial",
+  expiring: "Expiring soon",
+  expired: "Package expired",
+  free: "Package free",
+  out: "Not in package",
+};
+
+export function packageStateOf(state: SubscriptionState): Exclude<PackageFilter, "all"> {
+  if (state.exempt) return "free";
+  if (!state.enabled) return "out";
+  if (state.locked) return "expired";
+  if (state.in_trial) return "trial";
+  const days = state.days_left ?? null;
+  if (days !== null && days <= noticeWindow(state)) return "expiring";
+  return "active";
+}
+
+
 export async function fetchSubscriptionOverview(resellerId?: string | null): Promise<SubscriptionOverview> {
   const { data, error } = await supabase.rpc("subscription_overview", {
     _reseller_id: resellerId ?? null,
