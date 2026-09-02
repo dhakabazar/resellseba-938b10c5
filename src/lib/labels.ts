@@ -136,9 +136,6 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
             justify-content: space-between; 
             align-items: center;
           }
-          .courier-info { display: flex; flex-direction: column; }
-          .courier { font-size: 10pt; font-weight: 900; text-transform: uppercase; color: #000; }
-          .tracking { font-size: 9pt; font-family: monospace; font-weight: bold; }
           .cod-badge { 
             background: #000; 
             color: #fff; 
@@ -148,6 +145,7 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
           }
           .cod-label { font-size: 7pt; text-transform: uppercase; display: block; line-height: 1; }
           .cod-value { font-size: 12pt; font-weight: 900; }
+          .thank-you { font-size: 7pt; color: #555; text-transform: uppercase; letter-spacing: 0.3px; }
         </style>
       </head>
       <body>
