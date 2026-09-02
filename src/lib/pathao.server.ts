@@ -76,7 +76,13 @@ export async function pathaoAccessToken(db: any, conf: Cfg): Promise<string> {
     refresh_token: token.refresh_token ?? conf.refresh_token ?? "",
     token_expires_at: String(Date.now() + Number(token.expires_in ?? 432000) * 1000),
   };
-  await db.from("courier_configs").update({ config: nextConfig }).eq("provider", "pathao");
+  // Persist the cached token through the permission-checked helper so staff
+  // without direct table access can still refresh it.
+  await patchCourierConfig(db, "pathao", {
+    access_token: nextConfig.access_token,
+    refresh_token: nextConfig.refresh_token,
+    token_expires_at: nextConfig.token_expires_at,
+  });
 
   // mutate the in-memory copy so later calls in the same request reuse it
   conf.access_token = nextConfig.access_token!;
