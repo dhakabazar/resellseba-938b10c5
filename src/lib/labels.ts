@@ -57,6 +57,17 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
         <style>
           @page { size: ${width} ${height}; margin: 0; }
           body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #fff; }
+          /* Thermal printers print 1-bit black/white: dark photos turn into a black blob.
+             Force exact color handling and lighten + flatten images so they stay readable. */
+          * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          img {
+            background: #fff;
+            filter: grayscale(1) brightness(1.5) contrast(0.75);
+            image-rendering: -webkit-optimize-contrast;
+          }
+          @media print {
+            img { filter: grayscale(1) brightness(1.65) contrast(0.7); opacity: 0.92; }
+          }
           .label { 
             width: ${width}; 
             height: ${height}; 
