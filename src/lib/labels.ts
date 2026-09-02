@@ -188,11 +188,7 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
                 ${oItems.map(it => `<div class="item-row">${it.product_image ? `<img src="${it.product_image}" class="item-img" />` : ""}<span class="item-name">${it.product_name} <strong>x ${it.quantity}</strong></span></div>`).join("")}
               </div>
               <div class="footer">
-                <div class="courier-info">
-                  <div class="section-title">Courier</div>
-                  <div class="courier">${courierLabel(s?.provider) === "—" ? "Manual" : courierLabel(s?.provider)}</div>
-                  <div class="tracking">${booking || "PENDING"}</div>
-                </div>
+                <div class="thank-you">Thank you for shopping with us</div>
                 <div class="cod-badge">
                   <span class="cod-label">Cash to Collect</span>
                   <span class="cod-value">৳${Number(o.total).toFixed(0)}</span>
