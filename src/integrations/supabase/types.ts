@@ -3128,6 +3128,11 @@ export type Database = {
           rows: number
         }[]
       }
+      courier_config_get: { Args: { _provider: string }; Returns: Json }
+      courier_config_patch: {
+        Args: { _patch: Json; _provider: string }
+        Returns: undefined
+      }
       create_public_order: {
         Args: {
           _address_line: string

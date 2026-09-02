@@ -11,26 +11,25 @@ export async function assertAdmin(supabase: any, userId: string) {
 }
 
 /**
- * Courier credentials live in `courier_configs`, which only `couriers.manage`
- * holders may read. Booking/sync flows are already permission-gated, so the
- * config is read server-side with the service role — staff never receive the
- * secrets, they just stop being blocked by RLS.
+ * Courier credentials live in `courier_configs`, readable only by
+ * `couriers.manage` holders. Booking/sync flows are permission-gated already,
+ * so the config is fetched through the `courier_config_get` database function,
+ * which re-checks the caller's permissions server-side. No service-role key is
+ * needed, so this also works on custom domains where that key is absent.
  */
-export async function courierDb() {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  return supabaseAdmin as any;
+export async function getCourierConfig(supabase: any, provider: string): Promise<Cfg> {
+  const { data, error } = await supabase.rpc("courier_config_get", { _provider: provider });
+  if (error)
+    throw new Response(`Cannot read ${provider} settings: ${error.message}`, { status: 403 });
+  if (!data) throw new Response(`${provider} not configured`, { status: 400 });
+  return (data ?? {}) as Cfg;
 }
 
-export async function getCourierConfig(_supabase: any, provider: string): Promise<Cfg> {
-  const db = await courierDb();
-  const { data: cfg } = await db
-    .from("courier_configs")
-    .select("config, is_active")
-    .eq("provider", provider)
-    .maybeSingle();
-  if (!cfg || !cfg.is_active) throw new Response(`${provider} not configured`, { status: 400 });
-  return (cfg.config ?? {}) as Cfg;
+/** Persist partial config changes (e.g. cached Pathao tokens) via the same gate. */
+export async function patchCourierConfig(supabase: any, provider: string, patch: any) {
+  await supabase.rpc("courier_config_patch", { _provider: provider, _patch: patch });
 }
+
 
 export function steadfastBase(conf: Cfg) {
   return (conf.base_url || "https://portal.packzy.com/api/v1").replace(/\/+$/, "");
