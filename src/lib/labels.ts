@@ -99,10 +99,10 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
             margin-bottom: 6px;
           }
           .courier-logo { height: 28px; max-width: 0.85in; object-fit: contain; }
-          .courier-meta { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-          .courier-name { font-size: 8pt; font-weight: 800; text-transform: uppercase; }
-          .booking-id { font-size: 13pt; font-weight: 900; font-family: 'Courier New', monospace; letter-spacing: 0.5px; }
-          .courier-bar .barcode { width: 1.55in; flex-shrink: 0; }
+          .courier-meta { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: stretch; gap: 3px; }
+          .courier-name { font-size: 8pt; font-weight: 800; text-transform: uppercase; text-align: center; }
+          .booking-id { font-size: 12pt; font-weight: 900; font-family: 'Courier New', monospace; letter-spacing: 0.5px; text-align: center; }
+          .courier-bar .barcode { width: 100%; max-width: 2.3in; margin: 0 auto; }
 
           .customer { 
             border: 1.5px solid #000;
