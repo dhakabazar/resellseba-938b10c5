@@ -177,7 +177,13 @@ export function ResellerSubscriptionModal({
     const out: React.ReactNode[] = [];
     if (!state.master_enabled) out.push(<Chip key="off" tone="muted">Package system off</Chip>);
     if (state.exempt) out.push(<Chip key="free" tone="muted">Package free</Chip>);
-    else if (!state.enabled) out.push(<Chip key="out" tone="muted">Not in package</Chip>);
+    else if (!state.enabled)
+      out.push(
+        <Chip key="out" tone="muted">
+          {state.enrolled ? "Enrolled · waiting for system" : "Not in package"}
+        </Chip>,
+      );
+
     else if (state.locked) out.push(<Chip key="lock" tone="danger"><AlertTriangle className="h-3 w-3" /> Expired · panel locked</Chip>);
     else if (state.in_trial)
       out.push(
