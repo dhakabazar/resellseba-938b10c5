@@ -139,14 +139,17 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
           .cod-badge { 
             background: #FFD700; 
             color: #000; 
-            padding: 6px 10px; 
+            padding: 5px 8px; 
             border-radius: 4px;
             text-align: right;
             border: 1.5px solid #000;
+            display: inline-flex;
+            align-items: baseline;
+            gap: 5px;
           }
-          .cod-label { font-size: 10pt; font-weight: 900; text-transform: uppercase; display: block; line-height: 1; }
-          .cod-value { font-size: 13pt; font-weight: 900; }
-          .thank-you { font-size: 7pt; color: #555; text-transform: uppercase; letter-spacing: 0.3px; }
+          .cod-label { font-size: 10pt; font-weight: 900; text-transform: uppercase; line-height: 1; }
+          .cod-value { font-size: 12pt; font-weight: 900; }
+          .thank-you { font-size: 6pt; color: #555; text-transform: uppercase; letter-spacing: 0.3px; }
         </style>
       </head>
       <body>
