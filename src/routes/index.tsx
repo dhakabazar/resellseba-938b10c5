@@ -372,7 +372,7 @@ function Landing({
               </Link>
               <Link
                 to="/login"
-                className="btn-live inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-card px-7 py-3.5 text-sm font-bold transition hover:border-primary/50 hover:text-primary sm:text-base"
+                className="btn-ghost-brand btn-live inline-flex items-center justify-center gap-2 rounded-xl px-7 py-3.5 text-sm font-bold sm:text-base"
               >
                 {c.hero.ctaSecondary}
               </Link>
@@ -484,7 +484,7 @@ function Landing({
 
 
       {/* ── Features ────────────────────────────────────── */}
-      <section id="features" className="border-t border-border/60 bg-muted/30">
+      <section id="features" className="section-tint-1 border-t border-border/60">
         <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
           <div className="mx-auto max-w-2xl text-center">
             {c.features.title && <h2 className="text-xl font-extrabold sm:text-3xl">{c.features.title}</h2>}
@@ -576,7 +576,7 @@ function Landing({
               <Link to="/login" search={{ mode: "signup" }} className="btn-brand btn-live inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold">
                 {c.hero.ctaPrimary} <ArrowRight className="h-4 w-4" />
               </Link>
-              <Link to="/catalog" search={{}} className="btn-live inline-flex items-center gap-2 rounded-xl border px-5 py-2.5 text-sm font-bold hover:bg-muted">
+              <Link to="/catalog" search={{}} className="btn-ghost-brand btn-live inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold">
                 Master Catalog দেখুন
               </Link>
             </div>
@@ -585,7 +585,7 @@ function Landing({
       )}
 
       {/* ── How it works ────────────────────────────────── */}
-      <section id="how" className="relative overflow-hidden border-t border-border/60">
+      <section id="how" className="section-tint-4 relative overflow-hidden border-t border-border/60">
         <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
           <div className="mx-auto max-w-2xl text-center">
             {c.how.title && <h2 className="text-xl font-extrabold sm:text-3xl">{c.how.title}</h2>}
@@ -607,7 +607,7 @@ function Landing({
 
       {/* ── Categories ──────────────────────────────────── */}
       {!!stats?.categories?.length && (
-        <section id="categories" className="border-y border-border/60 bg-muted/30 py-10 sm:py-14">
+        <section id="categories" className="section-tint-3 border-y border-border/60 py-10 sm:py-14">
           <div className="mx-auto max-w-7xl px-4 sm:px-6">
             <div className="mx-auto max-w-2xl text-center">
               <h2 className="text-xl font-extrabold sm:text-3xl">ক্যাটাগরি</h2>
@@ -775,7 +775,7 @@ function Landing({
       {/* ── FAQ ─────────────────────────────────────────── */}
 
       {c.faq && c.faq.items.length > 0 && (
-        <section id="faq" className="border-t border-border/60 bg-muted/30">
+        <section id="faq" className="section-tint-2 border-t border-border/60">
           <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
             <div className="mx-auto max-w-2xl text-center">
               {c.faq.title && <h2 className="text-xl font-extrabold sm:text-3xl">{c.faq.title}</h2>}
@@ -814,14 +814,14 @@ function Landing({
             <Link
               to="/login"
               search={{ mode: "signup" }}
-              className="btn-live inline-flex items-center gap-2 rounded-xl bg-background px-7 py-3.5 text-sm font-bold text-foreground sm:text-base"
+              className="btn-invert-brand btn-live inline-flex items-center gap-2 rounded-xl px-7 py-3.5 text-sm font-bold sm:text-base"
             >
               {c.cta.button} <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
               to="/catalog"
               search={{}}
-              className="btn-live inline-flex items-center gap-2 rounded-xl border border-primary-foreground/30 px-7 py-3.5 text-sm font-bold text-primary-foreground hover:bg-primary-foreground/10 sm:text-base"
+              className="btn-outline-light btn-live inline-flex items-center gap-2 rounded-xl px-7 py-3.5 text-sm font-bold sm:text-base"
             >
               <Layers className="h-4 w-4" /> প্রোডাক্টস
             </Link>
