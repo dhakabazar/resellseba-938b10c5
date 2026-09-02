@@ -75,7 +75,9 @@ import {
   formatDate as formatPlanDate,
   packageStateOf,
   planLabel,
+  PLAN_KEYS,
   type PackageFilter,
+  type PlanKey,
 } from "@/lib/subscription";
 import { useAdvancedSettings } from "@/lib/advanced-settings";
 import { VerifyBadges, verifyPending, type VerifyFlags } from "@/components/verify-badges";
@@ -455,6 +457,8 @@ function ResellersPage() {
   const [dateRange, setDateRange] = useState<DateRangeState>({ preset: "lifetime", from: "", to: "" });
   const [depositFilter, setDepositFilter] = useState<DepositFilter>("all");
   const [packageFilter, setPackageFilter] = useState<PackageFilter>("all");
+  /** Active plan filter (panel / panel + store) — part of the same merged filter row. */
+  const [planFilter, setPlanFilter] = useState<PlanKey | "">("");
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [bulkBusy, setBulkBusy] = useState(false);
   const { settings: advanced } = useAdvancedSettings();
@@ -678,6 +682,11 @@ function ResellersPage() {
         const st = subStates[r.id];
         return st ? packageStateOf(st) === packageFilter : false;
       });
+    if (planFilter)
+      out = out.filter((r) => {
+        const st = subStates[r.id];
+        return Boolean(st && st.plan === planFilter && !st.locked);
+      });
     const q = query.trim().toLowerCase();
     if (q)
       out = out.filter(
@@ -698,6 +707,7 @@ function ResellersPage() {
     agentFilter,
     depositFilter,
     packageFilter,
+    planFilter,
     subStates,
     summaries,
   ]);
@@ -724,6 +734,16 @@ function ResellersPage() {
     for (const r of agentScoped) {
       const st = subStates[r.id];
       if (st) out[packageStateOf(st)] += 1;
+    }
+    return out;
+  }, [agentScoped, subStates]);
+
+  /** How many resellers run each plan right now (expired plans are not counted). */
+  const planCounts = useMemo(() => {
+    const out: Record<PlanKey, number> = { panel: 0, panel_store: 0 };
+    for (const r of agentScoped) {
+      const st = subStates[r.id];
+      if (st && st.plan && !st.locked) out[st.plan] += 1;
     }
     return out;
   }, [agentScoped, subStates]);
@@ -994,10 +1014,18 @@ function ResellersPage() {
 
 
 
-      {/* One merged filter set: status + deposit share a single active selection */}
+      {/* One merged filter set: status + deposit + package + active plan, single selection */}
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <FilterButtonRow
-          active={depositFilter !== "all" ? `deposit:${depositFilter}` : `status:${filter}`}
+          active={
+            planFilter
+              ? `plan:${planFilter}`
+              : packageFilter !== "all"
+                ? `pkg:${packageFilter}`
+                : depositFilter !== "all"
+                  ? `deposit:${depositFilter}`
+                  : `status:${filter}`
+          }
           options={[
             ...FILTERS.map((f) => ({
               value: `status:${f}`,
@@ -1009,33 +1037,23 @@ function ResellersPage() {
               label: DEPOSIT_FILTER_LABELS[f],
               count: depositCounts[f],
             })),
+            ...PACKAGE_FILTERS.filter((f) => f !== "all").map((f) => ({
+              value: `pkg:${f}`,
+              label: PACKAGE_FILTER_LABELS[f],
+              count: packageCounts[f],
+            })),
+            ...PLAN_KEYS.map((p) => ({
+              value: `plan:${p}`,
+              label: `${planLabel(p)} plan`,
+              count: planCounts[p],
+            })),
           ]}
           onSelect={(v) => {
             const [kind, value] = v.split(":");
-            if (kind === "deposit") {
-              setDepositFilter(value as DepositFilter);
-              setFilter("all");
-            } else {
-              setFilter(value as Filter);
-              setDepositFilter("all");
-            }
-            setPage(1);
-          }}
-        />
-      </div>
-
-      {/* Monthly package buttons — independent group, merges with the filters above */}
-      <div className="mb-3 flex flex-wrap items-center gap-2">
-        <span className="text-xs font-medium text-muted-foreground">Package</span>
-        <FilterButtonRow
-          active={`pkg:${packageFilter}`}
-          options={PACKAGE_FILTERS.map((f) => ({
-            value: `pkg:${f}`,
-            label: PACKAGE_FILTER_LABELS[f],
-            count: packageCounts[f],
-          }))}
-          onSelect={(v) => {
-            setPackageFilter(v.split(":")[1] as PackageFilter);
+            setFilter(kind === "status" ? (value as Filter) : "all");
+            setDepositFilter(kind === "deposit" ? (value as DepositFilter) : "all");
+            setPackageFilter(kind === "pkg" ? (value as PackageFilter) : "all");
+            setPlanFilter(kind === "plan" ? (value as PlanKey) : "");
             setPage(1);
           }}
         />
