@@ -94,7 +94,9 @@ type LandingContent = {
   how: { title: string; subtitle: string; steps: Step[] };
   faq?: { title: string; subtitle: string; items: FaqItem[] };
   stories?: { title?: string; subtitle?: string; items: Story[] };
+  contacts?: { badge?: string; title?: string; subtitle?: string; items: ContactPerson[] };
   cta: { badge: string; title: string; subtitle: string; button: string };
+
   footer: { tagline: string };
 };
 
