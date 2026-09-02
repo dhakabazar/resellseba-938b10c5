@@ -1,4 +1,4 @@
-import type { Cfg } from "@/lib/couriers.server";
+import { patchCourierConfig, type Cfg } from "@/lib/couriers.server";
 
 /** Pathao Courier Merchant API — production only (same policy as Steadfast/Carrybee). */
 export const PATHAO_PRODUCTION_URL = "https://api-hermes.pathao.com";
