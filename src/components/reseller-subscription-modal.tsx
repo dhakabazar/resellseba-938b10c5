@@ -350,7 +350,6 @@ export function ResellerSubscriptionModal({
               className={inp + " mt-2"}
               placeholder="Note (optional)"
             />
-          </section>
             <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs">
               <span className="text-muted-foreground">
                 Value <span className="font-semibold text-foreground tabular-nums">{bdt(grantPrice)}</span> · new
