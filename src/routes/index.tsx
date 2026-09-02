@@ -69,7 +69,16 @@ type Story = {
   avatar?: HeroImage;
 };
 type HeroImage = { path: string; url: string; bytes: number } | null;
+type ContactPerson = {
+  name: string;
+  role?: string;
+  phone?: string;
+  whatsapp?: string;
+  email?: string;
+  photo?: HeroImage;
+};
 type StatItem = { value: string; label: string };
+
 type LandingContent = {
   nav: { features: string; how: string; categories?: string; signIn: string; cta: string; faq?: string; stories?: string };
   hero: {
