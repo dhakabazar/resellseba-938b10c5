@@ -18,6 +18,7 @@ import {
   Mail,
   MessageCircle,
   Headset,
+  MapPin,
 
 } from "lucide-react";
 import { APP_ICONS } from "@/lib/icons";
@@ -97,7 +98,7 @@ type LandingContent = {
   contacts?: { badge?: string; title?: string; subtitle?: string; items: ContactPerson[] };
   cta: { badge: string; title: string; subtitle: string; button: string };
 
-  footer: { tagline: string };
+  footer: { tagline: string; address?: string; phone?: string; email?: string };
 };
 
 
@@ -220,7 +221,7 @@ const FALLBACK: LandingContent = {
   },
   cta: { badge: "", title: "শুরু করুন", subtitle: "", button: "সাইনআপ" },
 
-  footer: { tagline: "" },
+  footer: { tagline: "বাংলাদেশের সেরা রিসেলার প্ল্যাটফর্ম", address: "", phone: "", email: "" },
 };
 
 type LandingStats = LpBootstrap["stats"] & {
@@ -945,6 +946,30 @@ function Landing({
           <div>
             <Brand siteName={siteName} logoUrl={logoUrl} size="sm" />
             <p className="mt-4 max-w-sm text-sm leading-relaxed text-muted-foreground">{c.footer.tagline}</p>
+            <ul className="mt-4 space-y-2 text-sm">
+              {c.footer.address && (
+                <li className="flex items-start gap-2 text-muted-foreground">
+                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                  <span className="max-w-xs leading-relaxed">{c.footer.address}</span>
+                </li>
+              )}
+              {(c.footer.phone || contact.phone) && (
+                <li>
+                  <a href={`tel:${c.footer.phone || contact.phone}`} className="inline-flex items-center gap-2 font-medium text-foreground hover:text-primary">
+                    <Phone className="h-4 w-4 shrink-0 text-primary" />
+                    {c.footer.phone || contact.phone}
+                  </a>
+                </li>
+              )}
+              {(c.footer.email || contact.email) && (
+                <li>
+                  <a href={`mailto:${c.footer.email || contact.email}`} className="inline-flex items-center gap-2 break-all font-medium text-foreground hover:text-primary">
+                    <Mail className="h-4 w-4 shrink-0 text-primary" />
+                    {c.footer.email || contact.email}
+                  </a>
+                </li>
+              )}
+            </ul>
           </div>
           <div>
             <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">প্ল্যাটফর্ম</h4>
