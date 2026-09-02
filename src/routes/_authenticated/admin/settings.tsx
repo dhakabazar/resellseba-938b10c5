@@ -41,6 +41,8 @@ function SettingsPage() {
         setMetaDesc(data.meta_description ?? "");
         setPrimary(data.primary_color ?? "#3b82f6");
         setAccent(data.accent_color ?? "#f59e0b");
+        setSecondary((data as any).secondary_color ?? "#0ea5e9");
+        setHighlight((data as any).highlight_color ?? "#ec4899");
         setPhone(data.contact_phone ?? "");
         setEmail(data.contact_email ?? "");
         setFlagshipCode((data as any).flagship_reseller_code ?? "");
