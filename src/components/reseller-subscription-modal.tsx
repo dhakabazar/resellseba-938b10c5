@@ -329,21 +329,28 @@ export function ResellerSubscriptionModal({
                 </button>
               ))}
             </div>
-            <div className="mt-3 grid gap-2 sm:grid-cols-4">
-              <select value={grantMonths} onChange={(e) => setGrantMonths(Number(e.target.value))} className={inp}>
-                {PLAN_MONTHS.map((m) => (
-                  <option key={m} value={m}>
-                    {monthsLabel(m)}
-                  </option>
-                ))}
-              </select>
-              <input
-                value={grantNote}
-                onChange={(e) => setGrantNote(e.target.value)}
-                className={inp + " sm:col-span-3"}
-                placeholder="Note (optional)"
-              />
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {PLAN_MONTHS.map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setGrantMonths(m)}
+                  className={
+                    "rounded-md border bg-background px-3 py-1.5 text-xs font-semibold transition " +
+                    (grantMonths === m ? "border-primary bg-primary/10 text-primary" : "hover:bg-muted/50")
+                  }
+                >
+                  {monthsLabel(m)}
+                </button>
+              ))}
             </div>
+            <input
+              value={grantNote}
+              onChange={(e) => setGrantNote(e.target.value)}
+              className={inp + " mt-2"}
+              placeholder="Note (optional)"
+            />
+          </section>
             <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs">
               <span className="text-muted-foreground">
                 Value <span className="font-semibold text-foreground tabular-nums">{bdt(grantPrice)}</span> · new
