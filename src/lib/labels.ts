@@ -82,10 +82,10 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
           .reseller-logo { width: 30px; height: 30px; object-fit: contain; border: 1px solid #eee; }
           .site-name { font-size: 10pt; font-weight: 800; text-transform: uppercase; letter-spacing: 0.3px; }
           .order-block { text-align: right; }
-          .order-num { font-size: 14pt; font-weight: 900; letter-spacing: 0.5px; line-height: 1.05; }
+          .order-num { font-size: 11pt; font-weight: 900; letter-spacing: 0.5px; line-height: 1.05; }
           .barcode { display: block; }
           .barcode svg { display: block; width: 100%; height: auto; }
-          .order-block .barcode { width: 30%; margin-left: auto; }
+          .order-block .barcode { width: 55%; margin-left: auto; }
 
           .section-title { font-size: 7pt; text-transform: uppercase; color: #666; font-weight: bold; margin-bottom: 2px; }
 
