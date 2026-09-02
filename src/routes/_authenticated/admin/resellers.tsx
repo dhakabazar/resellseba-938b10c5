@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ResellerAvatar } from "@/components/reseller-avatar";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
 import { DataToolbar, Pagination, usePaginated } from "@/components/data-list";
+import { DateRangeBar, inRange, type DateRangeState } from "@/components/date-range-filter";
 
 import {
   Check,
@@ -484,6 +485,8 @@ function ResellersPage() {
   const [noteAuthors, setNoteAuthors] = useState<Record<string, string>>({});
   const [agents, setAgents] = useState<Array<{ id: string; display_name: string }>>([]);
   const [agentFilter, setAgentFilter] = useState("");
+  /** Global joined-date scope: every other filter and counter respects it. */
+  const [dateRange, setDateRange] = useState<DateRangeState>({ preset: "lifetime", from: "", to: "" });
   const [depositFilter, setDepositFilter] = useState<DepositFilter>("all");
   const [packageFilter, setPackageFilter] = useState<PackageFilter>("all");
   const [selected, setSelected] = useState<Record<string, boolean>>({});
@@ -684,8 +687,17 @@ function ResellersPage() {
     return out;
   }, [items, subRules]);
 
+  /**
+   * Date scope is applied first so status / deposit / package / agent filters and
+   * all counters work on the same subset — no conflicting selections.
+   */
+  const dateScoped = useMemo(
+    () => (dateRange.preset === "lifetime" ? items : items.filter((r) => inRange(r.created_at, dateRange))),
+    [items, dateRange],
+  );
+
   const filtered = useMemo(() => {
-    let out = items;
+    let out = dateScoped;
     if (filter === "email_unverified")
       out = out.filter((r) => {
         const f = verifyFor(r);
@@ -711,7 +723,7 @@ function ResellersPage() {
       );
     return out;
   }, [
-    items,
+    dateScoped,
     filter,
     query,
     emailStatus,
@@ -724,13 +736,13 @@ function ResellersPage() {
     summaries,
   ]);
 
-  /** Everything the counters use respects the selected agent. */
+  /** Everything the counters use respects the date scope + selected agent. */
   const agentScoped = useMemo(
     () =>
       agentFilter
-        ? items.filter((r) => (agentFilter === "none" ? !r.agent_id : r.agent_id === agentFilter))
-        : items,
-    [items, agentFilter],
+        ? dateScoped.filter((r) => (agentFilter === "none" ? !r.agent_id : r.agent_id === agentFilter))
+        : dateScoped,
+    [dateScoped, agentFilter],
   );
 
   const packageCounts = useMemo(() => {
@@ -1096,6 +1108,18 @@ function ResellersPage() {
             searchPlaceholder="Search agent…"
           />
             )}
+            {/* Global joined-date scope — every other filter/count works inside it. */}
+            <div className="shrink-0">
+              <DateRangeBar
+                compact
+                label="Joined"
+                value={dateRange}
+                onChange={(v) => {
+                  setDateRange(v);
+                  setPage(1);
+                }}
+              />
+            </div>
           </>
         }
         perPage={perPage}
