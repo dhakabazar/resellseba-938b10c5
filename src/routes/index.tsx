@@ -355,7 +355,7 @@ function Landing({
 
             <h1 className="mt-5 text-balance text-[30px] font-black leading-[1.22] tracking-tight sm:text-5xl sm:leading-[1.12] lg:text-[56px] animate-fade-in-up animation-delay-200">
               {c.hero.titleStart}{" "}
-              <span className="bg-[image:var(--gradient-brand)] bg-clip-text text-transparent">{c.hero.titleHighlight}</span>
+              <span className="bg-[image:var(--gradient-brand-4)] bg-clip-text text-transparent">{c.hero.titleHighlight}</span>
             </h1>
 
             <p className="mx-auto mt-5 max-w-xl text-pretty text-[15px] leading-relaxed text-muted-foreground sm:text-base lg:mx-0 lg:text-lg animate-fade-in-up animation-delay-300">
@@ -392,7 +392,7 @@ function Landing({
 
           <div className="relative animate-scale-in-slow animation-delay-300">
             {/* soft ambient glow behind the banner so any image blends in */}
-            <div className="pointer-events-none absolute -inset-6 -z-10 rounded-[2rem] bg-[image:var(--gradient-brand)] opacity-20 blur-2xl" />
+            <div className="pointer-events-none absolute -inset-6 -z-10 rounded-[2rem] bg-[image:var(--gradient-brand-4)] opacity-20 blur-2xl" />
             <div className="animate-float relative overflow-hidden rounded-2xl shadow-[var(--shadow-elegant)]">
               {poster ? (
                 <>
@@ -401,7 +401,7 @@ function Landing({
                   <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-background/35 via-transparent to-background/10" />
                 </>
               ) : (
-                <div className="grid aspect-[4/3] w-full place-items-center bg-[image:var(--gradient-brand)] text-primary-foreground">
+                <div className="grid aspect-[4/3] w-full place-items-center bg-[image:var(--gradient-brand-4)] text-primary-foreground">
                   <Boxes className="h-16 w-16 opacity-80" />
                 </div>
               )}
@@ -496,7 +496,7 @@ function Landing({
                 <div key={i} className="surface-card surface-card-hover group relative flex flex-col overflow-hidden p-4">
                   <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-primary/20 opacity-0 blur-2xl transition-opacity group-hover:opacity-100" />
                   <div className="relative flex items-start gap-2.5">
-                    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[image:var(--gradient-brand)] text-primary-foreground">
+                    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[image:var(--gradient-brand-4)] text-primary-foreground">
                       <Icon className="h-3.5 w-3.5" />
                     </span>
                     <h3 className="flex-1 pt-0.5 text-[13px] font-bold leading-tight">{f.title}</h3>
@@ -512,7 +512,7 @@ function Landing({
       {/* ── How we work (flow) ──────────────────────────── */}
       {((c.about?.flow?.length ?? 0) > 0 || c.about?.title || c.about?.body) && (
         <section id="about" className="relative overflow-hidden py-14 sm:py-20">
-          <div className="pointer-events-none absolute inset-0 bg-[image:var(--gradient-brand)] opacity-[0.06]" />
+          <div className="pointer-events-none absolute inset-0 bg-[image:var(--gradient-brand-4)] opacity-[0.06]" />
           <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
             <div className="mx-auto max-w-2xl text-center">
               {c.about?.title && (
@@ -591,7 +591,7 @@ function Landing({
           <div className="relative mt-10 grid gap-6 md:grid-cols-3">
             {c.how.steps.map((s, i) => (
               <div key={i} className="surface-card surface-card-hover relative p-6 pt-8">
-                <div className="absolute -top-5 left-6 grid h-11 w-11 place-items-center rounded-xl bg-[image:var(--gradient-brand)] text-base font-black text-primary-foreground ring-4 ring-background">
+                <div className="absolute -top-5 left-6 grid h-11 w-11 place-items-center rounded-xl bg-[image:var(--gradient-brand-4)] text-base font-black text-primary-foreground ring-4 ring-background">
                   {String(i + 1).padStart(2, "0")}
                 </div>
                 <h3 className="text-base font-bold sm:text-lg">{s.title}</h3>
@@ -743,7 +743,7 @@ function Landing({
                         className="h-10 w-10 shrink-0 rounded-full object-cover ring-2 ring-primary/25"
                       />
                     ) : (
-                      <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[image:var(--gradient-brand)] text-sm font-black text-primary-foreground">
+                      <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[image:var(--gradient-brand-4)] text-sm font-black text-primary-foreground">
                         {s.name?.charAt(0) || "R"}
                       </div>
                     )}
@@ -793,7 +793,7 @@ function Landing({
 
       {/* ── CTA ─────────────────────────────────────────── */}
       <section id="pricing" className="px-4 pb-16 sm:px-6 sm:pb-24">
-        <div className="relative mx-auto max-w-6xl overflow-hidden rounded-3xl bg-[image:var(--gradient-brand)] px-6 py-12 text-center sm:px-12 sm:py-16">
+        <div className="relative mx-auto max-w-6xl overflow-hidden rounded-3xl bg-[image:var(--gradient-brand-4)] px-6 py-12 text-center sm:px-12 sm:py-16">
           <div className="pointer-events-none absolute -top-24 left-1/2 h-72 w-[36rem] -translate-x-1/2 rounded-full bg-primary-foreground/10 blur-3xl" />
           <div className="relative mx-auto max-w-2xl">
             {c.cta.title && <h2 className="text-2xl font-extrabold text-primary-foreground sm:text-3xl">{c.cta.title}</h2>}
@@ -842,7 +842,7 @@ function Landing({
                   key={i}
                   className="group relative flex flex-col overflow-hidden rounded-2xl border border-border/70 bg-card p-5 text-center transition hover:-translate-y-1 hover:border-primary/40 hover:shadow-xl"
                 >
-                  <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-[image:var(--gradient-brand)] opacity-10 transition group-hover:opacity-20" />
+                  <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-[image:var(--gradient-brand-4)] opacity-10 transition group-hover:opacity-20" />
                   <div className="relative mx-auto">
                     {p.photo?.url ? (
                       <img
@@ -853,7 +853,7 @@ function Landing({
                         className="h-20 w-20 rounded-full object-cover ring-4 ring-primary/20"
                       />
                     ) : (
-                      <div className="grid h-20 w-20 place-items-center rounded-full bg-[image:var(--gradient-brand)] text-2xl font-black text-primary-foreground ring-4 ring-primary/20">
+                      <div className="grid h-20 w-20 place-items-center rounded-full bg-[image:var(--gradient-brand-4)] text-2xl font-black text-primary-foreground ring-4 ring-primary/20">
                         {p.name?.charAt(0) || "?"}
                       </div>
                     )}
