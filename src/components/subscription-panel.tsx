@@ -138,6 +138,12 @@ export function SubscriptionPanel({ resellerId }: { resellerId: string | null })
     if (data.state.plan) setPlan(data.state.plan as PlanKey);
   }, [data.state.plan]);
 
+  /** Keep the duration on something that is actually sold right now. */
+  useEffect(() => {
+    const live = data.options.filter((o) => o.plan === plan && o.active).sort((a, b) => a.months - b.months);
+    if (live.length && !live.some((o) => o.months === months)) setMonths(live[0]!.months);
+  }, [data.options, plan, months]);
+
   const unified = useMemo<UnifiedMethod[]>(() => {
     const manual: UnifiedMethod[] = methods.map((m) => ({
       id: m.id,
