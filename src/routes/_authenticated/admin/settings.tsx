@@ -68,6 +68,8 @@ function SettingsPage() {
       meta_description: metaDesc || null,
       primary_color: primary,
       accent_color: accent,
+      secondary_color: secondary,
+      highlight_color: highlight,
       contact_phone: phone || null,
       contact_email: email || null,
       logo_url: logo[0]?.url ?? null,
