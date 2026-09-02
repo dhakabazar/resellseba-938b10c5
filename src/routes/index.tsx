@@ -946,6 +946,7 @@ function Landing({
               <li><a href="#features" className="text-muted-foreground hover:text-primary">{c.nav.features}</a></li>
               <li><a href="#how" className="text-muted-foreground hover:text-primary">{c.nav.how}</a></li>
               <li><a href="#faq" className="text-muted-foreground hover:text-primary">{c.nav.faq || "FAQ"}</a></li>
+              <li><a href="#contact" className="text-muted-foreground hover:text-primary">যোগাযোগ</a></li>
             </ul>
           </div>
           <div>
@@ -958,39 +959,7 @@ function Landing({
               <li><Link to="/privacy" className="text-muted-foreground hover:text-primary">Privacy Policy</Link></li>
             </ul>
           </div>
-          {(contact.phone || contact.email) && (
-            <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">যোগাযোগ</h4>
-              <ul className="mt-3 space-y-2.5 text-sm">
-                {contact.phone && (
-                  <li>
-                    <a
-                      href={`tel:${contact.phone}`}
-                      className="inline-flex items-center gap-2 font-medium text-foreground hover:text-primary"
-                    >
-                      <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary/10 text-primary">
-                        <Phone className="h-4 w-4" />
-                      </span>
-                      {contact.phone}
-                    </a>
-                  </li>
-                )}
-                {contact.email && (
-                  <li>
-                    <a
-                      href={`mailto:${contact.email}`}
-                      className="inline-flex items-center gap-2 break-all font-medium text-foreground hover:text-primary"
-                    >
-                      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
-                        <Mail className="h-4 w-4" />
-                      </span>
-                      {contact.email}
-                    </a>
-                  </li>
-                )}
-              </ul>
-            </div>
-          )}
+
         </div>
         <div className="border-t border-border/60 px-4 py-5 text-center text-xs text-muted-foreground sm:px-6">
           © {new Date().getFullYear()} {siteName}. All rights reserved.
