@@ -637,16 +637,55 @@ function RulesTab() {
         </div>
       </section>
 
-      <div className="flex justify-end">
-        <button
-          type="button"
-          disabled={busy}
-          onClick={() => void save()}
-          className="btn-brand inline-flex items-center gap-1.5 rounded-md px-4 py-2 text-xs font-semibold disabled:opacity-50"
-        >
-          {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />} Save rules
-        </button>
-      </div>
     </div>
   );
 }
+
+/** Switch-style toggle used by the package rules. */
+function RuleToggle({
+  checked,
+  onChange,
+  title,
+  help,
+  highlight,
+}: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  title: string;
+  help: string;
+  highlight?: boolean;
+}) {
+  return (
+    <div
+      className={
+        "flex items-start gap-3 rounded-lg border p-3 " +
+        (highlight ? "bg-primary/5 " : "") +
+        (checked ? "border-primary/50" : "")
+      }
+    >
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        aria-label={title}
+        onClick={() => onChange(!checked)}
+        className={
+          "mt-0.5 inline-flex h-5 w-9 shrink-0 items-center rounded-full border transition " +
+          (checked ? "border-primary bg-primary" : "border-input bg-muted")
+        }
+      >
+        <span
+          className={
+            "h-4 w-4 rounded-full bg-background shadow transition-transform " +
+            (checked ? "translate-x-[18px]" : "translate-x-[2px]")
+          }
+        />
+      </button>
+      <span className="text-sm">
+        <span className="font-semibold">{title}</span>
+        <span className="block text-xs text-muted-foreground">{help}</span>
+      </span>
+    </div>
+  );
+}
+
