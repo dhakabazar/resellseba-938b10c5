@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { DataToolbar, Pagination, usePaginated } from "@/components/data-list";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/ui-kit";
@@ -258,11 +259,12 @@ function RequestsTab() {
         <div className="grid place-items-center py-8">
           <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
         </div>
-      ) : rows.length === 0 ? (
+      ) : filtered.length === 0 ? (
         <div className="rounded-lg border border-dashed p-8 text-center text-xs text-muted-foreground">
-          {filter === "pending" ? "No package payment awaiting approval." : "No package payment yet."}
+          {filter === "pending" ? "No package payment awaiting approval." : "No package payment matches this filter."}
         </div>
       ) : (
+        <>
         <div className="overflow-x-auto rounded-lg border">
           <table className="w-full text-xs">
             <thead className="bg-muted/40 text-left uppercase text-muted-foreground">
@@ -277,7 +279,7 @@ function RequestsTab() {
               </tr>
             </thead>
             <tbody>
-              {rows.map((r) => (
+              {usePaginated(filtered, page, perPage).map((r) => (
                 <tr key={r.id} className="border-t align-top">
                   <td className="whitespace-nowrap p-2">{formatDate(r.created_at)}</td>
                   <td>
@@ -327,6 +329,8 @@ function RequestsTab() {
             </tbody>
           </table>
         </div>
+        <Pagination page={page} perPage={perPage} total={filtered.length} onPage={setPage} />
+        </>
       )}
     </div>
   );
