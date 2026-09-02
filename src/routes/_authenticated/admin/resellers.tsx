@@ -682,6 +682,11 @@ function ResellersPage() {
         const st = subStates[r.id];
         return st ? packageStateOf(st) === packageFilter : false;
       });
+    if (planFilter)
+      out = out.filter((r) => {
+        const st = subStates[r.id];
+        return Boolean(st && st.plan === planFilter && !st.locked);
+      });
     const q = query.trim().toLowerCase();
     if (q)
       out = out.filter(
