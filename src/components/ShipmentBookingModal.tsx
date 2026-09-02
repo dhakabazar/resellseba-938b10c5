@@ -88,7 +88,10 @@ export function ShipmentBookingModal({
       onClose();
     }
     if (failCount > 0) {
-      toast.error(`Failed to book ${failCount} orders. Check console for details.`);
+      toast.error(
+        `Failed to book ${failCount} order(s).${lastError ? ` ${lastError}` : " Check console for details."}`,
+      );
+      if (successCount === 0) onClose();
     }
     setLoading(false);
   };
