@@ -229,40 +229,6 @@ function FilterButtonRow({
   );
 }
 
-/** Compact dropdown-button filter (label + current value + count). */
-function FilterMenu({
-  label,
-  activeLabel,
-  options,
-  onSelect,
-}: {
-  label: string;
-  activeLabel: string;
-  options: Array<{ value: string; label: string; active: boolean }>;
-  onSelect: (value: string) => void;
-}) {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger className="inline-flex h-10 items-center gap-2 rounded-md border bg-background px-3 text-sm font-medium transition hover:bg-muted">
-        <span className="text-muted-foreground">{label}:</span>
-        <span className="max-w-[14rem] truncate">{activeLabel}</span>
-        <ChevronDown className="h-4 w-4 text-muted-foreground" />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-56">
-        {options.map((o) => (
-          <DropdownMenuItem
-            key={o.value}
-            onClick={() => onSelect(o.value)}
-            className={o.active ? "font-semibold text-primary" : ""}
-          >
-            {o.active ? <Check className="mr-2 h-4 w-4" /> : <span className="mr-2 h-4 w-4" />}
-            {o.label}
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
 
 /** Dropdown-style filter with an inline search input (useful for long lists). */
 function SearchableFilterMenu({
@@ -1058,6 +1024,23 @@ function ResellersPage() {
         />
       </div>
 
+      {/* Monthly package buttons — independent group, merges with the filters above */}
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <span className="text-xs font-medium text-muted-foreground">Package</span>
+        <FilterButtonRow
+          active={`pkg:${packageFilter}`}
+          options={PACKAGE_FILTERS.map((f) => ({
+            value: `pkg:${f}`,
+            label: PACKAGE_FILTER_LABELS[f],
+            count: packageCounts[f],
+          }))}
+          onSelect={(v) => {
+            setPackageFilter(v.split(":")[1] as PackageFilter);
+            setPage(1);
+          }}
+        />
+      </div>
+
 
 
       <DataToolbar
@@ -1069,19 +1052,6 @@ function ResellersPage() {
         searchPlaceholder="Search name, code, phone, email…"
         middle={
           <>
-            <FilterMenu
-              label="Package"
-              activeLabel={PACKAGE_FILTER_LABELS[packageFilter]}
-              options={PACKAGE_FILTERS.map((f) => ({
-                value: f,
-                label: f === "all" ? PACKAGE_FILTER_LABELS[f] : `${PACKAGE_FILTER_LABELS[f]} (${packageCounts[f]})`,
-                active: packageFilter === f,
-              }))}
-              onSelect={(v) => {
-                setPackageFilter(v as PackageFilter);
-                setPage(1);
-              }}
-            />
             {!canViewAll ? null : (
           <SearchableFilterMenu
             label="Agent"
