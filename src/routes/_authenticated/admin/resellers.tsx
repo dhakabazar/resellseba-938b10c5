@@ -1014,10 +1014,18 @@ function ResellersPage() {
 
 
 
-      {/* One merged filter set: status + deposit share a single active selection */}
+      {/* One merged filter set: status + deposit + package + active plan, single selection */}
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <FilterButtonRow
-          active={depositFilter !== "all" ? `deposit:${depositFilter}` : `status:${filter}`}
+          active={
+            planFilter
+              ? `plan:${planFilter}`
+              : packageFilter !== "all"
+                ? `pkg:${packageFilter}`
+                : depositFilter !== "all"
+                  ? `deposit:${depositFilter}`
+                  : `status:${filter}`
+          }
           options={[
             ...FILTERS.map((f) => ({
               value: `status:${f}`,
@@ -1029,33 +1037,23 @@ function ResellersPage() {
               label: DEPOSIT_FILTER_LABELS[f],
               count: depositCounts[f],
             })),
+            ...PACKAGE_FILTERS.filter((f) => f !== "all").map((f) => ({
+              value: `pkg:${f}`,
+              label: PACKAGE_FILTER_LABELS[f],
+              count: packageCounts[f],
+            })),
+            ...PLAN_KEYS.map((p) => ({
+              value: `plan:${p}`,
+              label: `${planLabel(p)} plan`,
+              count: planCounts[p],
+            })),
           ]}
           onSelect={(v) => {
             const [kind, value] = v.split(":");
-            if (kind === "deposit") {
-              setDepositFilter(value as DepositFilter);
-              setFilter("all");
-            } else {
-              setFilter(value as Filter);
-              setDepositFilter("all");
-            }
-            setPage(1);
-          }}
-        />
-      </div>
-
-      {/* Monthly package buttons — independent group, merges with the filters above */}
-      <div className="mb-3 flex flex-wrap items-center gap-2">
-        <span className="text-xs font-medium text-muted-foreground">Package</span>
-        <FilterButtonRow
-          active={`pkg:${packageFilter}`}
-          options={PACKAGE_FILTERS.map((f) => ({
-            value: `pkg:${f}`,
-            label: PACKAGE_FILTER_LABELS[f],
-            count: packageCounts[f],
-          }))}
-          onSelect={(v) => {
-            setPackageFilter(v.split(":")[1] as PackageFilter);
+            setFilter(kind === "status" ? (value as Filter) : "all");
+            setDepositFilter(kind === "deposit" ? (value as DepositFilter) : "all");
+            setPackageFilter(kind === "pkg" ? (value as PackageFilter) : "all");
+            setPlanFilter(kind === "plan" ? (value as PlanKey) : "");
             setPage(1);
           }}
         />
