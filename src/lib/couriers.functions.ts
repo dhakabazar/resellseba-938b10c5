@@ -67,7 +67,7 @@ export const bookSteadfast = createServerFn({ method: "POST" })
     const trackingId = c.tracking_code || String(c.consignment_id ?? "");
     const nowIso = new Date().toISOString();
 
-    const { data: shipment } = await supabase
+    const { data: shipment, error: shipmentError } = await supabase
       .from("shipments")
       .insert({
         order_id: order.id,
@@ -85,6 +85,11 @@ export const bookSteadfast = createServerFn({ method: "POST" })
       })
       .select("id")
       .single();
+    if (shipmentError || !shipment)
+      throw new Response(
+        shipmentError?.message || "Booking could not be saved (no permission to create shipments)",
+        { status: 403 },
+      );
 
     await supabase.from("courier_events").insert({
       order_id: order.id,
@@ -320,7 +325,7 @@ export const bookPathao = createServerFn({ method: "POST" })
     const deliveryFee = d.delivery_fee != null ? Number(d.delivery_fee) : null;
     const nowIso = new Date().toISOString();
 
-    const { data: shipment } = await supabase
+    const { data: shipment, error: shipmentError } = await supabase
       .from("shipments")
       .insert({
         order_id: order.id,
@@ -340,6 +345,11 @@ export const bookPathao = createServerFn({ method: "POST" })
       })
       .select("id")
       .single();
+    if (shipmentError || !shipment)
+      throw new Response(
+        shipmentError?.message || "Booking could not be saved (no permission to create shipments)",
+        { status: 403 },
+      );
 
     await supabase.from("courier_events").insert({
       order_id: order.id,
@@ -496,7 +506,7 @@ export const bookCarrybee = createServerFn({ method: "POST" })
     const consignmentId = String(o.consignment_id ?? "");
     const nowIso = new Date().toISOString();
 
-    const { data: shipment } = await supabase
+    const { data: shipment, error: shipmentError } = await supabase
       .from("shipments")
       .insert({
         order_id: order.id,
@@ -517,6 +527,11 @@ export const bookCarrybee = createServerFn({ method: "POST" })
       })
       .select("id")
       .single();
+    if (shipmentError || !shipment)
+      throw new Response(
+        shipmentError?.message || "Booking could not be saved (no permission to create shipments)",
+        { status: 403 },
+      );
 
     await supabase.from("courier_events").insert({
       order_id: order.id,
