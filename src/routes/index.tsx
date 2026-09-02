@@ -207,7 +207,19 @@ const FALLBACK: LandingContent = {
       },
     ],
   },
+  contacts: {
+    badge: "সাপোর্ট টিম",
+    title: "সরাসরি আমাদের সাথে যোগাযোগ করুন",
+    subtitle: "যেকোনো প্রশ্ন, একাউন্ট বা অর্ডার সংক্রান্ত সহায়তার জন্য নিচের যেকোনো একজনকে কল, WhatsApp বা ইমেইল করুন।",
+    items: [
+      { name: "মোঃ জাহিদ হাসান", role: "CEO & Founder", phone: "01700000001", whatsapp: "8801700000001", email: "ceo@example.com", photo: null },
+      { name: "সাব্বির আহমেদ", role: "Operations Manager", phone: "01700000002", whatsapp: "8801700000002", email: "manager@example.com", photo: null },
+      { name: "তাসনিম রহমান", role: "Reseller Support", phone: "01700000003", whatsapp: "8801700000003", email: "support@example.com", photo: null },
+      { name: "রায়হান কবির", role: "Accounts & Payment", phone: "01700000004", whatsapp: "8801700000004", email: "accounts@example.com", photo: null },
+    ],
+  },
   cta: { badge: "", title: "শুরু করুন", subtitle: "", button: "সাইনআপ" },
+
   footer: { tagline: "" },
 };
 
