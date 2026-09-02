@@ -704,8 +704,8 @@ function Landing({
       {/* ── Reseller stories ────────────────────────────── */}
       {c.stories && c.stories.items.length > 0 && (
         <section id="stories" className="relative overflow-hidden border-t border-border/60 py-12 sm:py-20">
-          <div className="pointer-events-none absolute -top-24 right-0 -z-10 h-72 w-72 rounded-full bg-primary/15 blur-3xl" />
-          <div className="pointer-events-none absolute bottom-0 -left-20 -z-10 h-64 w-64 rounded-full bg-primary/10 blur-3xl" />
+          <div className="pointer-events-none absolute -top-24 right-0 -z-10 h-72 w-72 rounded-full bg-brand-3/20 blur-3xl" />
+          <div className="pointer-events-none absolute bottom-0 -left-20 -z-10 h-64 w-64 rounded-full bg-brand-4/18 blur-3xl" />
           <div className="mx-auto max-w-7xl px-4 sm:px-6">
             <div className="mx-auto max-w-2xl text-center">
               <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-[11px] font-bold text-primary">
@@ -832,7 +832,7 @@ function Landing({
       {/* ── Contact team (last section) ──────────────────── */}
       {(c.contacts?.items?.length ?? 0) > 0 && (
         <section id="contact" className="relative overflow-hidden border-t border-border/60 px-4 py-14 sm:px-6 sm:py-20">
-          <div className="pointer-events-none absolute -left-24 top-10 h-64 w-64 rounded-full bg-primary/10 blur-3xl" />
+          <div className="pointer-events-none absolute -left-24 top-10 h-64 w-64 rounded-full bg-brand-3/15 blur-3xl" />
           <div className="relative mx-auto max-w-6xl">
             <div className="mx-auto max-w-2xl text-center">
               <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-primary">
