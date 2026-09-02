@@ -16,6 +16,9 @@ import {
   Play,
   Phone,
   Mail,
+  MessageCircle,
+  Headset,
+
 } from "lucide-react";
 import { APP_ICONS } from "@/lib/icons";
 import { toast } from "sonner";
