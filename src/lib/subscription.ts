@@ -193,7 +193,10 @@ export function computeSubscriptionState(
 ): SubscriptionState {
   const now = Date.now();
   const enrolled = Boolean(r.subscription_enrolled);
-  const applies = cfg.enabled && (cfg.autoApply || enrolled);
+  const exempt = Boolean(r.subscription_exempt);
+  // Per-reseller OFF always wins; per-reseller ON works even when the master
+  // switch is off. Otherwise the master switch + auto-apply decides.
+  const applies = !exempt && (enrolled || (cfg.enabled && cfg.autoApply));
   const expires = r.subscription_expires_at ? new Date(r.subscription_expires_at).getTime() : null;
   const explicitTrial = r.subscription_trial_ends_at
     ? new Date(r.subscription_trial_ends_at).getTime()
@@ -206,9 +209,7 @@ export function computeSubscriptionState(
   const trial = explicitTrial ?? impliedTrial;
   const until = [expires, trial].filter((v): v is number => v !== null).sort((a, b) => b - a)[0] ?? null;
   const inTrial = (expires === null || expires <= now) && until !== null && until > now;
-  const exempt = Boolean(r.subscription_exempt);
-  const locked =
-    applies && !exempt && (until === null || until + cfg.graceDays * DAY < now);
+  const locked = applies && (until === null || until + cfg.graceDays * DAY < now);
 
   return {
     enabled: applies,
