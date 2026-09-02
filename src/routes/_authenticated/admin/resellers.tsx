@@ -1056,7 +1056,21 @@ function ResellersPage() {
         }}
         searchPlaceholder="Search name, code, phone, email…"
         middle={
-          !canViewAll ? null : (
+          <>
+            <FilterMenu
+              label="Package"
+              activeLabel={PACKAGE_FILTER_LABELS[packageFilter]}
+              options={PACKAGE_FILTERS.map((f) => ({
+                value: f,
+                label: f === "all" ? PACKAGE_FILTER_LABELS[f] : `${PACKAGE_FILTER_LABELS[f]} (${packageCounts[f]})`,
+                active: packageFilter === f,
+              }))}
+              onSelect={(v) => {
+                setPackageFilter(v as PackageFilter);
+                setPage(1);
+              }}
+            />
+            {!canViewAll ? null : (
           <SearchableFilterMenu
             label="Agent"
             activeLabel={
@@ -1081,10 +1095,9 @@ function ResellersPage() {
             }}
             searchPlaceholder="Search agent…"
           />
-          )
+            )}
+          </>
         }
-        filters={[]}
-        right={undefined as never}
         perPage={perPage}
         onPerPage={(n) => {
           setPerPage(n);
@@ -1164,6 +1177,40 @@ function ResellersPage() {
                           </span>
                         )
                       )}
+                      {(() => {
+                        const st = subStates[r.id];
+                        if (!st) return null;
+                        const bucket = packageStateOf(st);
+                        if (bucket === "out" && !st.master_enabled) return null;
+                        const cls =
+                          bucket === "active"
+                            ? "bg-success/15 text-success"
+                            : bucket === "trial"
+                              ? "bg-primary/10 text-primary"
+                              : bucket === "expiring"
+                                ? "bg-amber-500/15 text-amber-700 dark:text-amber-400"
+                                : bucket === "expired"
+                                  ? "bg-destructive/15 text-destructive"
+                                  : "bg-muted text-muted-foreground";
+                        const text =
+                          bucket === "free"
+                            ? "Package free"
+                            : bucket === "out"
+                              ? "Not in package"
+                              : bucket === "expired"
+                                ? `${planLabel(st.plan)} expired`
+                                : `${planLabel(st.plan)}${st.days_left !== null ? ` · ${st.days_left}d` : ""}`;
+                        return (
+                          <span
+                            title={
+                              st.until ? `Package access until ${formatPlanDate(st.until)}` : "No package date set"
+                            }
+                            className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${cls}`}
+                          >
+                            <Crown className="h-3 w-3" /> {text}
+                          </span>
+                        );
+                      })()}
                       {Number(r.frozen_amount) > 0 && (
                         <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
                           <Lock className="h-3 w-3" /> Frozen ৳{Number(r.frozen_amount).toLocaleString()}
