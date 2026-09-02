@@ -485,6 +485,8 @@ function ResellersPage() {
   const [noteAuthors, setNoteAuthors] = useState<Record<string, string>>({});
   const [agents, setAgents] = useState<Array<{ id: string; display_name: string }>>([]);
   const [agentFilter, setAgentFilter] = useState("");
+  /** Global joined-date scope: every other filter and counter respects it. */
+  const [dateRange, setDateRange] = useState<DateRangeState>({ preset: "lifetime", from: "", to: "" });
   const [depositFilter, setDepositFilter] = useState<DepositFilter>("all");
   const [packageFilter, setPackageFilter] = useState<PackageFilter>("all");
   const [selected, setSelected] = useState<Record<string, boolean>>({});
