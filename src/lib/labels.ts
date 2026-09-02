@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { getGlobalSettings } from "@/lib/app-data";
-import { courierLabel } from "@/components/courier-brand";
+import { courierLabel, courierBrand } from "@/components/courier-brand";
+import { code128Svg } from "@/lib/barcode";
 
 export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" | "3x4") {
   if (!orderIds.length) return;
@@ -8,9 +9,10 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
   const [settings, { data: orders }, { data: items }, { data: shipments }] = await Promise.all([
     getGlobalSettings(),
     supabase.from("orders").select("id,order_number,customer_name,customer_phone,address_line,area,total,reseller_id").in("id", orderIds),
-    supabase.from("order_items").select("order_id,product_name,quantity").in("order_id", orderIds),
+    supabase.from("order_items").select("order_id,product_name,product_image,quantity").in("order_id", orderIds),
     supabase.from("shipments").select("order_id,provider,tracking_id,consignment_id").in("order_id", orderIds)
   ]);
+
 
   if (!orders || orders.length === 0) return;
 
