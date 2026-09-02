@@ -172,10 +172,10 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
               <div class="courier-bar">
                 ${brandLogo ? `<img src="${brandLogo}" class="courier-logo" />` : ""}
                 <div class="courier-meta">
-                  <div class="courier-name">${courierLabel(s?.provider) === "—" ? "Manual" : courierLabel(s?.provider)}</div>
+                  ${brandLogo ? "" : `<div class="courier-name">${courierLabel(s?.provider) === "—" ? "Manual" : courierLabel(s?.provider)}</div>`}
                   <div class="booking-id">${booking || "PENDING"}</div>
+                  ${booking ? `<div class="barcode">${code128Svg(booking, { height: 38 })}</div>` : ""}
                 </div>
-                ${booking ? `<div class="barcode">${code128Svg(booking, { height: 30 })}</div>` : ""}
               </div>
               <div class="customer">
                 <div class="section-title">Recipient</div>
