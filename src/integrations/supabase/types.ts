@@ -3119,6 +3119,7 @@ export type Database = {
         Returns: {
           key: string
           rows: number
+          total: number
         }[]
       }
       cleanup_purge: {
