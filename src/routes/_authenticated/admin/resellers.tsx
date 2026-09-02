@@ -67,6 +67,15 @@ import { confirmAction } from "@/lib/confirm";
 import { Crown } from "lucide-react";
 import { PasswordResetModal } from "@/components/password-reset-modal";
 import { ResellerSubscriptionModal } from "@/components/reseller-subscription-modal";
+import {
+  PACKAGE_FILTERS,
+  PACKAGE_FILTER_LABELS,
+  computeSubscriptionState,
+  formatDate as formatPlanDate,
+  packageStateOf,
+  planLabel,
+  type PackageFilter,
+} from "@/lib/subscription";
 import { useAdvancedSettings } from "@/lib/advanced-settings";
 import { VerifyBadges, verifyPending, type VerifyFlags } from "@/components/verify-badges";
 import { usePermissions } from "@/lib/permissions";
@@ -108,6 +117,12 @@ type Reseller = {
   deposit_required: boolean;
   deposit_required_amount: number;
   frozen_amount: number;
+  subscription_plan: string | null;
+  subscription_expires_at: string | null;
+  subscription_trial_ends_at: string | null;
+  subscription_exempt: boolean;
+  subscription_enrolled: boolean;
+  subscription_enrolled_at: string | null;
 };
 
 type Summary = {
@@ -470,6 +485,7 @@ function ResellersPage() {
   const [agents, setAgents] = useState<Array<{ id: string; display_name: string }>>([]);
   const [agentFilter, setAgentFilter] = useState("");
   const [depositFilter, setDepositFilter] = useState<DepositFilter>("all");
+  const [packageFilter, setPackageFilter] = useState<PackageFilter>("all");
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [bulkBusy, setBulkBusy] = useState(false);
   const { settings: advanced } = useAdvancedSettings();
@@ -482,7 +498,7 @@ function ResellersPage() {
       supabase
         .from("resellers")
         .select(
-          "id,user_id,avatar_url,business_name,code,contact_phone,address,nid_number,status,commission_rate,leader_id,agent_id,notes,notes_by,notes_at,approved_at,created_at,payout_method,payout_account_name,payout_account_number,payout_bank_name,payout_branch,payout_routing,deposit_required,deposit_required_amount,frozen_amount",
+          "id,user_id,avatar_url,business_name,code,contact_phone,address,nid_number,status,commission_rate,leader_id,agent_id,notes,notes_by,notes_at,approved_at,created_at,payout_method,payout_account_name,payout_account_number,payout_bank_name,payout_branch,payout_routing,deposit_required,deposit_required_amount,frozen_amount,subscription_plan,subscription_expires_at,subscription_trial_ends_at,subscription_exempt,subscription_enrolled,subscription_enrolled_at",
         )
         .order("created_at", { ascending: false }),
       supabase.rpc("admin_reseller_metrics"),
@@ -569,7 +585,7 @@ function ResellersPage() {
     const { data } = await supabase
       .from("resellers")
       .select(
-        "id,user_id,avatar_url,business_name,code,contact_phone,address,nid_number,status,commission_rate,leader_id,agent_id,notes,notes_by,notes_at,approved_at,created_at,payout_method,payout_account_name,payout_account_number,payout_bank_name,payout_branch,payout_routing,deposit_required,deposit_required_amount,frozen_amount",
+        "id,user_id,avatar_url,business_name,code,contact_phone,address,nid_number,status,commission_rate,leader_id,agent_id,notes,notes_by,notes_at,approved_at,created_at,payout_method,payout_account_name,payout_account_number,payout_bank_name,payout_branch,payout_routing,deposit_required,deposit_required_amount,frozen_amount,subscription_plan,subscription_expires_at,subscription_trial_ends_at,subscription_exempt,subscription_enrolled,subscription_enrolled_at",
       )
       .eq("id", id)
       .maybeSingle();
