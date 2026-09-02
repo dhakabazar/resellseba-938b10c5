@@ -60,7 +60,7 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
           .label { 
             width: ${width}; 
             height: ${height}; 
-            padding: 0.15in; 
+            padding: 0.1in; 
             box-sizing: border-box; 
             border: 2px solid #000;
             page-break-after: always;
@@ -95,10 +95,10 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
             gap: 8px;
             border: 1.5px solid #000;
             border-radius: 4px;
-            padding: 5px 7px;
-            margin-bottom: 6px;
+            padding: 4px 6px;
+            margin-bottom: 4px;
           }
-          .courier-logo { height: 28px; max-width: 0.85in; object-fit: contain; }
+          .courier-logo { height: 26px; max-width: 0.85in; object-fit: contain; }
           .courier-meta { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: stretch; gap: 3px; }
           .courier-name { font-size: 8pt; font-weight: 800; text-transform: uppercase; text-align: center; }
           .booking-id { font-size: 12pt; font-weight: 900; font-family: 'Courier New', monospace; letter-spacing: 0.5px; text-align: center; }
@@ -106,8 +106,8 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
 
           .customer { 
             border: 1.5px solid #000;
-            padding: 5px;
-            margin-bottom: 6px;
+            padding: 4px;
+            margin-bottom: 4px;
             border-radius: 4px;
           }
           .name { font-size: 11pt; font-weight: 800; margin-bottom: 2px; color: #000; }
@@ -116,9 +116,9 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
           
           .items-box {
             border: 1px solid #000;
-            padding: 5px;
+            padding: 4px;
             flex-grow: 1;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
             border-radius: 4px;
             background: #f9f9f9;
             font-size: 8pt;
@@ -131,7 +131,7 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
 
           .footer { 
             border-top: 2px solid #000; 
-            padding-top: 5px; 
+            padding-top: 2px; 
             display: flex; 
             justify-content: space-between; 
             align-items: center;
@@ -139,17 +139,17 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
           .cod-badge { 
             background: #FFD700; 
             color: #000; 
-            padding: 5px 8px; 
+            padding: 3px 6px; 
             border-radius: 4px;
             text-align: right;
             border: 1.5px solid #000;
             display: inline-flex;
             align-items: baseline;
-            gap: 5px;
+            gap: 4px;
           }
-          .cod-label { font-size: 10pt; font-weight: 900; text-transform: uppercase; line-height: 1; }
-          .cod-value { font-size: 12pt; font-weight: 900; }
-          .thank-you { font-size: 6pt; color: #555; text-transform: uppercase; letter-spacing: 0.3px; }
+          .cod-label { font-size: 9pt; font-weight: 900; text-transform: uppercase; line-height: 1; }
+          .cod-value { font-size: 10.5pt; font-weight: 900; }
+          .thank-you { font-size: 5.5pt; color: #555; text-transform: uppercase; letter-spacing: 0.3px; }
         </style>
       </head>
       <body>
