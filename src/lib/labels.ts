@@ -169,7 +169,7 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
                   <div class="site-name">${reseller?.name || siteName}</div>
                 </div>
                 <div class="order-block">
-                  <div class="barcode">${code128Svg(String(o.order_number), { height: 34 })}</div>
+                  <div class="barcode">${code128Svg(String(o.order_number), { height: 42 })}</div>
                   <div class="order-num">#${o.order_number}</div>
                 </div>
               </div>
@@ -177,8 +177,8 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
                 ${brandLogo ? `<img src="${brandLogo}" class="courier-logo" />` : ""}
                 <div class="courier-meta">
                   ${brandLogo ? "" : `<div class="courier-name">${courierLabel(s?.provider) === "—" ? "Manual" : courierLabel(s?.provider)}</div>`}
+                  ${booking ? `<div class="barcode">${code128Svg(booking, { height: 36 })}</div>` : ""}
                   <div class="booking-id">${booking || "PENDING"}</div>
-                  ${booking ? `<div class="barcode">${code128Svg(booking, { height: 38 })}</div>` : ""}
                 </div>
               </div>
               <div class="customer">
