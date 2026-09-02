@@ -707,6 +707,7 @@ function ResellersPage() {
     agentFilter,
     depositFilter,
     packageFilter,
+    planFilter,
     subStates,
     summaries,
   ]);
