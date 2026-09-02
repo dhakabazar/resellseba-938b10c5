@@ -26,6 +26,7 @@ function MaintenancePage() {
   const stats = useServerFn(cleanupStats);
   const clean = useServerFn(runCleanup);
   const [rows, setRows] = useState<Record<string, number>>({});
+  const [totals, setTotals] = useState<Record<string, number>>({});
   const [picked, setPicked] = useState<string[]>(CLEANUP_TARGETS.map((t) => t.key));
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -36,6 +37,7 @@ function MaintenancePage() {
     try {
       const res = await stats({});
       setRows(Object.fromEntries(res.map((r) => [r.key, r.rows])));
+      setTotals(Object.fromEntries(res.map((r) => [r.key, r.total])));
     } catch (e: any) {
       toast.error(e?.message ?? "Could not read cleanup data");
     }
@@ -125,8 +127,19 @@ function MaintenancePage() {
               <div className="text-sm font-semibold">{t.label}</div>
               <div className="text-xs text-muted-foreground">{t.hint}</div>
             </div>
-            <div className="shrink-0 text-sm font-black">
-              {loading ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> : (rows[t.key] ?? 0).toLocaleString()}
+            <div className="shrink-0 text-right">
+              {loading ? (
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              ) : (
+                <>
+                  <div className={"text-sm font-black " + ((rows[t.key] ?? 0) > 0 ? "" : "text-muted-foreground")}>
+                    {(rows[t.key] ?? 0).toLocaleString()}
+                  </div>
+                  <div className="text-[11px] text-muted-foreground">
+                    {(totals[t.key] ?? 0).toLocaleString()} stored
+                  </div>
+                </>
+              )}
             </div>
           </label>
         ))}

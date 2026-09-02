@@ -2,11 +2,15 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertAnyPermission } from "@/lib/admin-users.server";
 
-export type CleanupStat = { key: string; rows: number };
+export type CleanupStat = { key: string; rows: number; total: number };
 
 function normalise(rows: any): CleanupStat[] {
   if (!Array.isArray(rows)) return [];
-  return rows.map((r: any) => ({ key: String(r.key), rows: Number(r.rows ?? 0) }));
+  return rows.map((r: any) => ({
+    key: String(r.key),
+    rows: Number(r.rows ?? 0),
+    total: Number(r.total ?? r.rows ?? 0),
+  }));
 }
 
 /** How many junk rows are currently sitting in the database. */
