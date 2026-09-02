@@ -165,8 +165,8 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
                   <div class="site-name">${reseller?.name || siteName}</div>
                 </div>
                 <div class="order-block">
+                  <div class="barcode">${code128Svg(String(o.order_number), { height: 34 })}</div>
                   <div class="order-num">#${o.order_number}</div>
-                  <div class="barcode">${code128Svg(String(o.order_number), { height: 26 })}</div>
                 </div>
               </div>
               <div class="courier-bar">
