@@ -85,7 +85,7 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
           .order-num { font-size: 11pt; font-weight: 900; letter-spacing: 0.5px; line-height: 1.05; }
           .barcode { display: block; }
           .barcode svg { display: block; width: 100%; height: auto; }
-          .order-block .barcode { width: 55%; margin-left: auto; height: 42px; }
+          .order-block .barcode { width: 55%; margin-left: auto; }
 
           .section-title { font-size: 7pt; text-transform: uppercase; color: #666; font-weight: bold; margin-bottom: 2px; }
 
