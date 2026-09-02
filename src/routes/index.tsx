@@ -493,11 +493,13 @@ function Landing({
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {c.features.items.map((f, i) => {
               const Icon = ICON_MAP[f.icon] ?? Sparkles;
+              const solid = ["brand-solid-1", "brand-solid-3", "brand-solid-4", "brand-solid-2"][i % 4];
+              const glow = ["bg-brand-1/25", "bg-brand-3/25", "bg-brand-4/25", "bg-brand-2/25"][i % 4];
               return (
                 <div key={i} className="surface-card surface-card-hover group relative flex flex-col overflow-hidden p-4">
-                  <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-primary/20 opacity-0 blur-2xl transition-opacity group-hover:opacity-100" />
+                  <div className={`pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full ${glow} opacity-0 blur-2xl transition-opacity group-hover:opacity-100`} />
                   <div className="relative flex items-start gap-2.5">
-                    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[image:var(--gradient-brand-4)] text-primary-foreground">
+                    <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg ${solid}`}>
                       <Icon className="h-3.5 w-3.5" />
                     </span>
                     <h3 className="flex-1 pt-0.5 text-[13px] font-bold leading-tight">{f.title}</h3>
