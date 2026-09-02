@@ -41,7 +41,7 @@ type LandingContent = {
   stories?: { title?: string; subtitle?: string; items: Story[] };
   contacts?: { badge?: string; title?: string; subtitle?: string; items: ContactPerson[] };
   cta: { badge: string; title: string; subtitle: string; button: string };
-  footer: { tagline: string };
+  footer: { tagline: string; address?: string; phone?: string; email?: string };
 };
 
 const ICONS = APP_ICON_NAMES;
@@ -398,6 +398,12 @@ function LandingEditor() {
       {tab === "footer" && (
       <Section title="Footer">
         <F label="Tagline"><I value={c.footer.tagline} onChange={(v) => update((d) => { d.footer.tagline = v; })} /></F>
+        <F label="Address"><T value={c.footer.address ?? ""} onChange={(v) => update((d) => { d.footer.address = v; })} /></F>
+        <Grid>
+          <F label="Phone"><I value={c.footer.phone ?? ""} onChange={(v) => update((d) => { d.footer.phone = v; })} /></F>
+          <F label="Email"><I value={c.footer.email ?? ""} onChange={(v) => update((d) => { d.footer.email = v; })} /></F>
+        </Grid>
+        <p className="text-xs text-muted-foreground">Logo comes automatically from the main branding logo.</p>
       </Section>
       )}
 
