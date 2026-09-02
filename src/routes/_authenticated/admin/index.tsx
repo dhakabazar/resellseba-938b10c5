@@ -27,6 +27,16 @@ export const Route = createFileRoute("/_authenticated/admin/")({
 
 type DailyRow = { day: string; orders: number; revenue: number; profit: number };
 type ResellerRow = { name: string; sales: number };
+
+const BAR_PALETTE: { from: string; to: string }[] = [
+  { from: "hsl(var(--primary))", to: "hsl(270 75% 60%)" },
+  { from: "hsl(142 76% 36%)", to: "hsl(160 80% 42%)" },
+  { from: "hsl(38 92% 50%)", to: "hsl(28 90% 55%)" },
+  { from: "hsl(0 84% 60%)", to: "hsl(340 82% 58%)" },
+  { from: "hsl(199 89% 48%)", to: "hsl(210 92% 52%)" },
+  { from: "hsl(280 70% 60%)", to: "hsl(300 70% 55%)" },
+];
+
 type OrderRow = {
   total: number | string;
   shipping_cost: number | string;
