@@ -903,21 +903,6 @@ function Landing({
                 </div>
               ))}
             </div>
-
-            {(contact.phone || contact.email) && (
-              <div className="mt-8 flex flex-wrap items-center justify-center gap-3 text-sm">
-                {contact.phone && (
-                  <a href={`tel:${contact.phone}`} className="inline-flex items-center gap-2 rounded-xl border border-border/60 bg-card px-4 py-2 font-semibold hover:border-primary/40 hover:text-primary">
-                    <Phone className="h-4 w-4 text-primary" /> {contact.phone}
-                  </a>
-                )}
-                {contact.email && (
-                  <a href={`mailto:${contact.email}`} className="inline-flex items-center gap-2 rounded-xl border border-border/60 bg-card px-4 py-2 font-semibold hover:border-primary/40 hover:text-primary">
-                    <Mail className="h-4 w-4 text-primary" /> {contact.email}
-                  </a>
-                )}
-              </div>
-            )}
           </div>
         </section>
       )}
