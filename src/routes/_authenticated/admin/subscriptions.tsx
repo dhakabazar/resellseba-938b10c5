@@ -587,20 +587,24 @@ function RulesTab() {
                 Extra days the panel keeps working after expiry.
               </span>
             </label>
-            <label className="text-xs font-medium">
+            <div className="text-xs font-medium">
               Trial package
-              <select
-                value={s.trialPlan}
-                onChange={(e) => patch({ trialPlan: e.target.value as PlanKey })}
-                className={inp + " mt-1"}
-              >
+              <div className="mt-1 flex flex-wrap gap-1.5">
                 {PLAN_KEYS.map((p) => (
-                  <option key={p} value={p}>
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => patch({ trialPlan: p })}
+                    className={
+                      "rounded-md border px-2.5 py-1.5 text-xs font-semibold transition " +
+                      (s.trialPlan === p ? "border-primary bg-primary/10 text-primary" : "hover:bg-muted/50")
+                    }
+                  >
                     {PLAN_META[p].label}
-                  </option>
+                  </button>
                 ))}
-              </select>
-            </label>
+              </div>
+            </div>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">

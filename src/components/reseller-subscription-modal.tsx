@@ -329,21 +329,27 @@ export function ResellerSubscriptionModal({
                 </button>
               ))}
             </div>
-            <div className="mt-3 grid gap-2 sm:grid-cols-4">
-              <select value={grantMonths} onChange={(e) => setGrantMonths(Number(e.target.value))} className={inp}>
-                {PLAN_MONTHS.map((m) => (
-                  <option key={m} value={m}>
-                    {monthsLabel(m)}
-                  </option>
-                ))}
-              </select>
-              <input
-                value={grantNote}
-                onChange={(e) => setGrantNote(e.target.value)}
-                className={inp + " sm:col-span-3"}
-                placeholder="Note (optional)"
-              />
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {PLAN_MONTHS.map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setGrantMonths(m)}
+                  className={
+                    "rounded-md border bg-background px-3 py-1.5 text-xs font-semibold transition " +
+                    (grantMonths === m ? "border-primary bg-primary/10 text-primary" : "hover:bg-muted/50")
+                  }
+                >
+                  {monthsLabel(m)}
+                </button>
+              ))}
             </div>
+            <input
+              value={grantNote}
+              onChange={(e) => setGrantNote(e.target.value)}
+              className={inp + " mt-2"}
+              placeholder="Note (optional)"
+            />
             <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs">
               <span className="text-muted-foreground">
                 Value <span className="font-semibold text-foreground tabular-nums">{bdt(grantPrice)}</span> · new
@@ -367,34 +373,49 @@ export function ResellerSubscriptionModal({
             <div className="mt-3 grid gap-2 sm:grid-cols-2">
               <Toggle
                 checked={enrolled}
-                onChange={setEnrolled}
-                title="In the monthly package"
+                onChange={(v) => {
+                  setEnrolled(v);
+                  if (v) setExempt(false);
+                }}
+                title="Package ON for this reseller"
                 hint={
-                  state.auto_apply
-                    ? "Auto apply is on, so every reseller is in the package anyway."
-                    : "Auto apply is off — only resellers switched on here have to pay for a package."
+                  state.master_enabled
+                    ? "Already included by the master switch — keep this on to force it even if the master switch is turned off later."
+                    : "Master switch is off, but this reseller still has to pay for a package."
                 }
               />
               <Toggle
                 checked={exempt}
-                onChange={setExempt}
+                onChange={(v) => {
+                  setExempt(v);
+                  if (v) setEnrolled(false);
+                }}
                 tone="muted"
-                title="No package required"
-                hint="This account keeps full access for free — nothing is ever locked."
+                title="Package OFF for this reseller"
+                hint="Free access — this account is never asked to pay and is never locked, even when the master switch is on."
               />
             </div>
             <div className="mt-3 grid gap-3 sm:grid-cols-3">
-              <label className="text-xs font-medium">
+              <div className="text-xs font-medium">
                 Current package
-                <select value={plan} onChange={(e) => setPlan(e.target.value as PlanKey | "")} className={inp + " mt-1"}>
-                  <option value="">— none —</option>
-                  {PLAN_KEYS.map((p) => (
-                    <option key={p} value={p}>
-                      {PLAN_META[p].label}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                <div className="mt-1 flex flex-wrap gap-1.5">
+                  {([["", "None"], ...PLAN_KEYS.map((p) => [p, PLAN_META[p].short] as const)] as const).map(
+                    ([value, label]) => (
+                      <button
+                        key={value || "none"}
+                        type="button"
+                        onClick={() => setPlan(value as PlanKey | "")}
+                        className={
+                          "rounded-md border px-2.5 py-1.5 text-xs font-semibold transition " +
+                          (plan === value ? "border-primary bg-primary/10 text-primary" : "hover:bg-muted/50")
+                        }
+                      >
+                        {label}
+                      </button>
+                    ),
+                  )}
+                </div>
+              </div>
               <label className="text-xs font-medium">
                 Paid until
                 <input type="date" value={expires} onChange={(e) => setExpires(e.target.value)} className={inp + " mt-1"} />
