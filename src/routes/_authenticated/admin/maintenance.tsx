@@ -37,6 +37,7 @@ function MaintenancePage() {
     try {
       const res = await stats({});
       setRows(Object.fromEntries(res.map((r) => [r.key, r.rows])));
+      setTotals(Object.fromEntries(res.map((r) => [r.key, r.total])));
     } catch (e: any) {
       toast.error(e?.message ?? "Could not read cleanup data");
     }
