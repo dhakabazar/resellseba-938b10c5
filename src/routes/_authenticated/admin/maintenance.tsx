@@ -127,8 +127,19 @@ function MaintenancePage() {
               <div className="text-sm font-semibold">{t.label}</div>
               <div className="text-xs text-muted-foreground">{t.hint}</div>
             </div>
-            <div className="shrink-0 text-sm font-black">
-              {loading ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> : (rows[t.key] ?? 0).toLocaleString()}
+            <div className="shrink-0 text-right">
+              {loading ? (
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              ) : (
+                <>
+                  <div className={"text-sm font-black " + ((rows[t.key] ?? 0) > 0 ? "" : "text-muted-foreground")}>
+                    {(rows[t.key] ?? 0).toLocaleString()}
+                  </div>
+                  <div className="text-[11px] text-muted-foreground">
+                    {(totals[t.key] ?? 0).toLocaleString()} stored
+                  </div>
+                </>
+              )}
             </div>
           </label>
         ))}
