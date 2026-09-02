@@ -62,11 +62,12 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
           * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
           img {
             background: #fff;
-            filter: grayscale(1) brightness(1.5) contrast(0.75);
+            filter: grayscale(1) brightness(2.15) contrast(0.48);
+            opacity: 0.78;
             image-rendering: -webkit-optimize-contrast;
           }
           @media print {
-            img { filter: grayscale(1) brightness(1.65) contrast(0.7); opacity: 0.92; }
+            img { filter: grayscale(1) brightness(2.4) contrast(0.42); opacity: 0.72; }
           }
           .label { 
             width: ${width}; 
@@ -109,7 +110,9 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
             padding: 4px 6px;
             margin-bottom: 4px;
           }
-          .courier-logo { height: 26px; max-width: 0.85in; object-fit: contain; }
+          .courier-brand { width: 0.85in; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 1px; }
+          .courier-logo { height: 24px; max-width: 0.85in; object-fit: contain; }
+          .courier-brand-name { max-width: 100%; font-size: 5.5pt; line-height: 1; font-weight: 800; text-transform: uppercase; text-align: center; }
           .courier-meta { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: stretch; gap: 3px; }
           .courier-name { font-size: 8pt; font-weight: 800; text-transform: uppercase; text-align: center; }
           .booking-id { font-size: 12pt; font-weight: 900; font-family: 'Courier New', monospace; letter-spacing: 0.5px; text-align: center; }
@@ -185,7 +188,7 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
                 </div>
               </div>
               <div class="courier-bar">
-                ${brandLogo ? `<img src="${brandLogo}" class="courier-logo" />` : ""}
+                ${brandLogo ? `<div class="courier-brand"><img src="${brandLogo}" class="courier-logo" /><div class="courier-brand-name">${courierLabel(s?.provider)}</div></div>` : ""}
                 <div class="courier-meta">
                   ${brandLogo ? "" : `<div class="courier-name">${courierLabel(s?.provider) === "—" ? "Manual" : courierLabel(s?.provider)}</div>`}
                   ${booking ? `<div class="barcode">${code128Svg(booking, { height: 36 })}</div>` : ""}
