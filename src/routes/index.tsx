@@ -16,6 +16,9 @@ import {
   Play,
   Phone,
   Mail,
+  MessageCircle,
+  Headset,
+
 } from "lucide-react";
 import { APP_ICONS } from "@/lib/icons";
 import { toast } from "sonner";
@@ -66,7 +69,16 @@ type Story = {
   avatar?: HeroImage;
 };
 type HeroImage = { path: string; url: string; bytes: number } | null;
+type ContactPerson = {
+  name: string;
+  role?: string;
+  phone?: string;
+  whatsapp?: string;
+  email?: string;
+  photo?: HeroImage;
+};
 type StatItem = { value: string; label: string };
+
 type LandingContent = {
   nav: { features: string; how: string; categories?: string; signIn: string; cta: string; faq?: string; stories?: string };
   hero: {
@@ -82,7 +94,9 @@ type LandingContent = {
   how: { title: string; subtitle: string; steps: Step[] };
   faq?: { title: string; subtitle: string; items: FaqItem[] };
   stories?: { title?: string; subtitle?: string; items: Story[] };
+  contacts?: { badge?: string; title?: string; subtitle?: string; items: ContactPerson[] };
   cta: { badge: string; title: string; subtitle: string; button: string };
+
   footer: { tagline: string };
 };
 
@@ -193,7 +207,19 @@ const FALLBACK: LandingContent = {
       },
     ],
   },
+  contacts: {
+    badge: "সাপোর্ট টিম",
+    title: "সরাসরি আমাদের সাথে যোগাযোগ করুন",
+    subtitle: "যেকোনো প্রশ্ন, একাউন্ট বা অর্ডার সংক্রান্ত সহায়তার জন্য নিচের যেকোনো একজনকে কল, WhatsApp বা ইমেইল করুন।",
+    items: [
+      { name: "মোঃ জাহিদ হাসান", role: "CEO & Founder", phone: "01700000001", whatsapp: "8801700000001", email: "ceo@example.com", photo: null },
+      { name: "সাব্বির আহমেদ", role: "Operations Manager", phone: "01700000002", whatsapp: "8801700000002", email: "manager@example.com", photo: null },
+      { name: "তাসনিম রহমান", role: "Reseller Support", phone: "01700000003", whatsapp: "8801700000003", email: "support@example.com", photo: null },
+      { name: "রায়হান কবির", role: "Accounts & Payment", phone: "01700000004", whatsapp: "8801700000004", email: "accounts@example.com", photo: null },
+    ],
+  },
   cta: { badge: "", title: "শুরু করুন", subtitle: "", button: "সাইনআপ" },
+
   footer: { tagline: "" },
 };
 
@@ -249,7 +275,14 @@ function RootResolver() {
         setSiteName(s.site_name ?? "Reseller");
         setLogoUrl(s.logo_url ?? null);
         setContact({ phone: s.contact_phone ?? null, email: s.contact_email ?? null });
-        if (s.landing_content) setContent(s.landing_content);
+        if (s.landing_content)
+          setContent({
+            ...s.landing_content,
+            contacts:
+              (s.landing_content.contacts?.items?.length ?? 0) > 0
+                ? s.landing_content.contacts
+                : FALLBACK.contacts,
+          });
       }
       setStats(
         data
@@ -799,9 +832,116 @@ function Landing({
         </div>
       </section>
 
+      {/* ── Contact team (last section) ──────────────────── */}
+      {(c.contacts?.items?.length ?? 0) > 0 && (
+        <section id="contact" className="relative overflow-hidden border-t border-border/60 px-4 py-14 sm:px-6 sm:py-20">
+          <div className="pointer-events-none absolute -left-24 top-10 h-64 w-64 rounded-full bg-primary/10 blur-3xl" />
+          <div className="relative mx-auto max-w-6xl">
+            <div className="mx-auto max-w-2xl text-center">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-primary">
+                <Headset className="h-3.5 w-3.5" />
+                {c.contacts?.badge || "যোগাযোগ"}
+              </span>
+              {c.contacts?.title && (
+                <h2 className="mt-3 text-xl font-extrabold sm:text-3xl">{c.contacts.title}</h2>
+              )}
+              {c.contacts?.subtitle && (
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{c.contacts.subtitle}</p>
+              )}
+            </div>
+
+            <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              {(c.contacts?.items ?? []).map((p, i) => (
+                <div
+                  key={i}
+                  className="group relative flex flex-col overflow-hidden rounded-2xl border border-border/70 bg-card p-5 text-center transition hover:-translate-y-1 hover:border-primary/40 hover:shadow-xl"
+                >
+                  <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-[image:var(--gradient-brand)] opacity-10 transition group-hover:opacity-20" />
+                  <div className="relative mx-auto">
+                    {p.photo?.url ? (
+                      <img
+                        src={p.photo.url}
+                        alt={p.name}
+                        loading="lazy"
+                        decoding="async"
+                        className="h-20 w-20 rounded-full object-cover ring-4 ring-primary/20"
+                      />
+                    ) : (
+                      <div className="grid h-20 w-20 place-items-center rounded-full bg-[image:var(--gradient-brand)] text-2xl font-black text-primary-foreground ring-4 ring-primary/20">
+                        {p.name?.charAt(0) || "?"}
+                      </div>
+                    )}
+                  </div>
+                  <div className="relative mt-4">
+                    <h3 className="text-sm font-bold sm:text-base">{p.name}</h3>
+                    {p.role && (
+                      <p className="mt-0.5 text-xs font-semibold uppercase tracking-wide text-primary">{p.role}</p>
+                    )}
+                  </div>
+
+                  <div className="relative mt-4 space-y-2 text-left">
+                    {p.phone && (
+                      <a
+                        href={`tel:${p.phone}`}
+                        className="flex items-center gap-2.5 rounded-xl border border-border/60 bg-background/60 px-3 py-2 text-xs font-medium hover:border-primary/40 hover:text-primary"
+                      >
+                        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+                          <Phone className="h-3.5 w-3.5" />
+                        </span>
+                        {p.phone}
+                      </a>
+                    )}
+                    {p.whatsapp && (
+                      <a
+                        href={`https://wa.me/${p.whatsapp.replace(/[^\d]/g, "")}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center gap-2.5 rounded-xl border border-border/60 bg-background/60 px-3 py-2 text-xs font-medium hover:border-primary/40 hover:text-primary"
+                      >
+                        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+                          <MessageCircle className="h-3.5 w-3.5" />
+                        </span>
+                        WhatsApp
+                      </a>
+                    )}
+                    {p.email && (
+                      <a
+                        href={`mailto:${p.email}`}
+                        className="flex items-center gap-2.5 rounded-xl border border-border/60 bg-background/60 px-3 py-2 text-xs font-medium hover:border-primary/40 hover:text-primary"
+                      >
+                        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+                          <Mail className="h-3.5 w-3.5" />
+                        </span>
+                        <span className="truncate">{p.email}</span>
+                      </a>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {(contact.phone || contact.email) && (
+              <div className="mt-8 flex flex-wrap items-center justify-center gap-3 text-sm">
+                {contact.phone && (
+                  <a href={`tel:${contact.phone}`} className="inline-flex items-center gap-2 rounded-xl border border-border/60 bg-card px-4 py-2 font-semibold hover:border-primary/40 hover:text-primary">
+                    <Phone className="h-4 w-4 text-primary" /> {contact.phone}
+                  </a>
+                )}
+                {contact.email && (
+                  <a href={`mailto:${contact.email}`} className="inline-flex items-center gap-2 rounded-xl border border-border/60 bg-card px-4 py-2 font-semibold hover:border-primary/40 hover:text-primary">
+                    <Mail className="h-4 w-4 text-primary" /> {contact.email}
+                  </a>
+                )}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
       {/* ── Footer ──────────────────────────────────────── */}
       <footer className="border-t border-border/60 bg-card">
-        <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:px-6 md:grid-cols-[1.4fr_1fr_1fr_1.1fr]">
+        <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:px-6 md:grid-cols-[1.6fr_1fr_1fr]">
+
           <div>
             <Brand siteName={siteName} logoUrl={logoUrl} size="sm" />
             <p className="mt-4 max-w-sm text-sm leading-relaxed text-muted-foreground">{c.footer.tagline}</p>
@@ -813,6 +953,7 @@ function Landing({
               <li><a href="#features" className="text-muted-foreground hover:text-primary">{c.nav.features}</a></li>
               <li><a href="#how" className="text-muted-foreground hover:text-primary">{c.nav.how}</a></li>
               <li><a href="#faq" className="text-muted-foreground hover:text-primary">{c.nav.faq || "FAQ"}</a></li>
+              <li><a href="#contact" className="text-muted-foreground hover:text-primary">যোগাযোগ</a></li>
             </ul>
           </div>
           <div>
@@ -825,39 +966,7 @@ function Landing({
               <li><Link to="/privacy" className="text-muted-foreground hover:text-primary">Privacy Policy</Link></li>
             </ul>
           </div>
-          {(contact.phone || contact.email) && (
-            <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">যোগাযোগ</h4>
-              <ul className="mt-3 space-y-2.5 text-sm">
-                {contact.phone && (
-                  <li>
-                    <a
-                      href={`tel:${contact.phone}`}
-                      className="inline-flex items-center gap-2 font-medium text-foreground hover:text-primary"
-                    >
-                      <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary/10 text-primary">
-                        <Phone className="h-4 w-4" />
-                      </span>
-                      {contact.phone}
-                    </a>
-                  </li>
-                )}
-                {contact.email && (
-                  <li>
-                    <a
-                      href={`mailto:${contact.email}`}
-                      className="inline-flex items-center gap-2 break-all font-medium text-foreground hover:text-primary"
-                    >
-                      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
-                        <Mail className="h-4 w-4" />
-                      </span>
-                      {contact.email}
-                    </a>
-                  </li>
-                )}
-              </ul>
-            </div>
-          )}
+
         </div>
         <div className="border-t border-border/60 px-4 py-5 text-center text-xs text-muted-foreground sm:px-6">
           © {new Date().getFullYear()} {siteName}. All rights reserved.
