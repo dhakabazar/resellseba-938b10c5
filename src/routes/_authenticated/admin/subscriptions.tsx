@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DataToolbar, Pagination, usePaginated } from "@/components/data-list";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -466,7 +466,8 @@ function PricesTab() {
 function RulesTab() {
   const [settings, setSettings] = useState<AdvancedSettings>(DEFAULT_ADVANCED_SETTINGS);
   const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState(false);
+  const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     void (async () => {
@@ -477,21 +478,32 @@ function RulesTab() {
     })();
   }, []);
 
-  function patch(p: Partial<SubscriptionSettings>) {
-    setSettings((s) => ({ ...s, subscription: { ...s.subscription, ...p } }));
-  }
+  useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
 
-  async function save() {
-    setBusy(true);
+  const persist = useCallback(async (next: AdvancedSettings) => {
+    setStatus("saving");
     const { error } = await supabase
       .from("global_settings")
-      .update({ advanced_settings: settings as any } as any)
+      .update({ advanced_settings: next as any } as any)
       .eq("id", 1);
     clearAppDataCache("settings");
     clearAdvancedSettingsCache();
-    setBusy(false);
-    if (error) return toast.error(error.message);
-    toast.success("Package rules saved");
+    if (error) {
+      setStatus("error");
+      toast.error(error.message);
+      return;
+    }
+    setStatus("saved");
+  }, []);
+
+  function patch(p: Partial<SubscriptionSettings>, immediate = false) {
+    setSettings((s) => {
+      const next = { ...s, subscription: { ...s.subscription, ...p } };
+      if (timer.current) clearTimeout(timer.current);
+      if (immediate) void persist(next);
+      else timer.current = setTimeout(() => void persist(next), 700);
+      return next;
+    });
   }
 
   if (loading)
@@ -506,46 +518,43 @@ function RulesTab() {
   return (
     <div className="space-y-4">
       <section className="surface-card overflow-hidden">
-        <header className="border-b bg-muted/30 px-4 py-3">
-          <h2 className="text-sm font-semibold">Package rules</h2>
-          <p className="text-xs text-muted-foreground">
-            With the master switch off, nobody is asked to pay and no panel is ever locked.
-          </p>
+        <header className="flex flex-wrap items-center justify-between gap-2 border-b bg-muted/30 px-4 py-3">
+          <div>
+            <h2 className="text-sm font-semibold">Package rules</h2>
+            <p className="text-xs text-muted-foreground">
+              With the master switch off, nobody is asked to pay and no panel is ever locked.
+            </p>
+          </div>
+          <span className="text-[11px] font-semibold text-muted-foreground">
+            {status === "saving" ? (
+              <span className="inline-flex items-center gap-1">
+                <Loader2 className="h-3 w-3 animate-spin" /> Saving…
+              </span>
+            ) : status === "saved" ? (
+              <span className="text-success">Saved automatically</span>
+            ) : status === "error" ? (
+              <span className="text-destructive">Not saved</span>
+            ) : (
+              "Changes save automatically"
+            )}
+          </span>
         </header>
         <div className="space-y-4 p-4">
-          <label className="flex items-start gap-3 rounded-lg border bg-primary/5 p-3">
-            <input
-              type="checkbox"
-              checked={s.enabled}
-              onChange={(e) => patch({ enabled: e.target.checked })}
-              className="mt-0.5 h-4 w-4"
-            />
-            <span className="text-sm">
-              <span className="font-semibold">Monthly package required (master)</span>
-              <span className="block text-xs text-muted-foreground">
-                When on, a reseller whose package expired gets a read-only panel until they renew. A panel-only
-                package also keeps the public storefront closed.
-              </span>
-            </span>
-          </label>
+          <RuleToggle
+            checked={s.enabled}
+            onChange={(v) => patch({ enabled: v }, true)}
+            title="Monthly package required (master)"
+            help="When on, a reseller whose package expired gets a read-only panel until they renew. A panel-only package also keeps the public storefront closed."
+            highlight
+          />
 
-          <label className="flex items-start gap-3 rounded-lg border p-3">
-            <input
-              type="checkbox"
-              checked={s.autoApply}
-              onChange={(e) => patch({ autoApply: e.target.checked })}
-              className="mt-0.5 h-4 w-4"
-              disabled={!s.enabled}
-            />
-            <span className="text-sm">
-              <span className="font-semibold">Apply to every reseller automatically</span>
-              <span className="block text-xs text-muted-foreground">
-                On: every reseller (old and new) is in the package and must pay after the trial. Off: only the
-                resellers you put in the package from the reseller 3-dot menu are asked to pay — everybody else keeps
-                using the panel and store normally.
-              </span>
-            </span>
-          </label>
+          <RuleToggle
+            checked={s.autoApply}
+            onChange={(v) => patch({ autoApply: v }, true)}
+            title="Apply to every reseller automatically"
+            help="On: every reseller (old and new) is in the package and must pay after the trial. Off: only the resellers you put in the package from the reseller 3-dot menu are asked to pay — everybody else keeps using the panel and store normally."
+          />
+
 
           <div className="grid gap-3 sm:grid-cols-4">
             <label className="text-xs font-medium">
@@ -628,16 +637,55 @@ function RulesTab() {
         </div>
       </section>
 
-      <div className="flex justify-end">
-        <button
-          type="button"
-          disabled={busy}
-          onClick={() => void save()}
-          className="btn-brand inline-flex items-center gap-1.5 rounded-md px-4 py-2 text-xs font-semibold disabled:opacity-50"
-        >
-          {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />} Save rules
-        </button>
-      </div>
     </div>
   );
 }
+
+/** Switch-style toggle used by the package rules. */
+function RuleToggle({
+  checked,
+  onChange,
+  title,
+  help,
+  highlight,
+}: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  title: string;
+  help: string;
+  highlight?: boolean;
+}) {
+  return (
+    <div
+      className={
+        "flex items-start gap-3 rounded-lg border p-3 " +
+        (highlight ? "bg-primary/5 " : "") +
+        (checked ? "border-primary/50" : "")
+      }
+    >
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        aria-label={title}
+        onClick={() => onChange(!checked)}
+        className={
+          "mt-0.5 inline-flex h-5 w-9 shrink-0 items-center rounded-full border transition " +
+          (checked ? "border-primary bg-primary" : "border-input bg-muted")
+        }
+      >
+        <span
+          className={
+            "h-4 w-4 rounded-full bg-background shadow transition-transform " +
+            (checked ? "translate-x-[18px]" : "translate-x-[2px]")
+          }
+        />
+      </button>
+      <span className="text-sm">
+        <span className="font-semibold">{title}</span>
+        <span className="block text-xs text-muted-foreground">{help}</span>
+      </span>
+    </div>
+  );
+}
+
