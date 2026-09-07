@@ -56,10 +56,22 @@ function CatalogIndex() {
   const fetchCatalog = useServerFn(getCatalog);
   const [data, setData] = useState<{ categories: Cat[]; brands: { id: string; name: string; slug: string }[]; products: Prod[] } | null>(null);
   const [term, setTerm] = useState(q ?? "");
+  const [openSug, setOpenSug] = useState(false);
+  const [catsOpen, setCatsOpen] = useState(false);
   // Master catalog is a reseller-facing showcase: admin price & profit are always visible.
   const showPrices = true;
   const [perPage, setPerPage] = useState(24);
   const currentPage = page ?? 1;
+
+  const matches = useMemo(() => {
+    const t = term.trim().toLowerCase();
+    if (!t) return [];
+    return (data?.products ?? []).filter(
+      (p) => p.name.toLowerCase().includes(t) || p.code.toLowerCase().includes(t),
+    );
+  }, [data, term]);
+  const suggestions = matches.slice(0, 6);
+  const matchCount = matches.length;
 
 
   useEffect(() => {
