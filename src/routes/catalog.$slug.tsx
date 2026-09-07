@@ -109,9 +109,11 @@ function CatalogDetails() {
             <span className="rounded-full bg-muted px-2.5 py-1">#{p.code}</span>
             {p.category && <span className="rounded-full bg-primary/10 px-2.5 py-1 text-primary">{p.category}</span>}
             {p.brand && <span className="rounded-full bg-accent/15 px-2.5 py-1">{p.brand}</span>}
-            <span className={`rounded-full px-2.5 py-1 ${p.stock > 0 ? "bg-emerald-500/10 text-emerald-600" : "bg-rose-500/10 text-rose-600"}`}>
-              {p.stock > 0 ? `Stock ${p.stock}` : "Stock out"}
-            </span>
+            {showStock && (
+              <span className={`rounded-full px-2.5 py-1 ${p.stock > 0 ? "bg-emerald-500/10 text-emerald-600" : "bg-rose-500/10 text-rose-600"}`}>
+                {p.stock > 0 ? `Stock ${p.stock}` : "Stock out"}
+              </span>
+            )}
           </div>
 
           <h1 className="mt-4 text-2xl font-extrabold tracking-tight sm:text-3xl">{p.name}</h1>
