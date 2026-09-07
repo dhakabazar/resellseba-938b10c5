@@ -6,6 +6,7 @@ import { CopyBtn } from "@/components/catalog/shell";
 import { ImagePickerButton } from "@/components/catalog/image-picker";
 import { bdt } from "@/lib/finance-report";
 import { areaLabel } from "@/lib/delivery";
+import { useAdvancedSettings } from "@/lib/advanced-settings";
 import { ArrowLeft, Loader2, Truck } from "lucide-react";
 
 export const Route = createFileRoute("/catalog/$slug")({
@@ -32,6 +33,8 @@ function CatalogDetails() {
   const [idx, setIdx] = useState(0);
   // Master catalog is a reseller-facing showcase: admin price & profit are always visible.
   const showPrices = true;
+  const { settings } = useAdvancedSettings();
+  const showStock = settings.resellerCatalogShowStock;
 
   useEffect(() => {
     setState("loading");
