@@ -196,28 +196,55 @@ function CatalogIndex() {
               <Stat icon={<Sparkles className="h-4 w-4" />} label="Showing" value={rows.length} />
             </div>
 
-            <div className="mt-6 flex flex-wrap gap-2">
-              <Link
-                to="/catalog"
-                search={{ page: undefined }}
-                className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
-                  !category ? "border-primary bg-primary text-primary-foreground" : "hover:border-primary/50"
-                }`}
-              >
-                সব ({data.products.length})
-              </Link>
-              {data.categories.map((c) => (
-                <Link
-                  key={c.id}
-                  to="/catalog"
-                  search={{ category: c.slug, page: undefined }}
-                  className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
-                    category === c.slug ? "border-primary bg-primary text-primary-foreground" : "hover:border-primary/50"
-                  }`}
-                >
-                  {c.name} ({c.count})
-                </Link>
-              ))}
+            {/* Mobile: one animated pill opens the whole category list. */}
+            <button
+              type="button"
+              onClick={() => setCatsOpen((v) => !v)}
+              aria-expanded={catsOpen}
+              className="mt-6 flex w-full items-center justify-between gap-2 rounded-xl border border-primary/40 bg-[image:var(--gradient-brand)] px-4 py-3 text-sm font-bold text-primary-foreground shadow-[var(--shadow-elegant)] transition active:scale-[.99] sm:hidden"
+            >
+              <span className="flex items-center gap-2">
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary-foreground/70" />
+                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-primary-foreground" />
+                </span>
+                {activeCat ? activeCat.name : `All products (${data.products.length})`} + ক্যাটাগরি
+              </span>
+              <ChevronDown className={`h-4 w-4 transition-transform ${catsOpen ? "rotate-180" : ""}`} />
+            </button>
+
+            <div
+              className={`grid overflow-hidden transition-all duration-300 sm:!grid-rows-[1fr] sm:!opacity-100 ${
+                catsOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+              }`}
+            >
+              <div className="min-h-0">
+                <div className="mt-3 flex flex-wrap gap-2 sm:mt-6">
+                  <Link
+                    to="/catalog"
+                    search={{ page: undefined }}
+                    onClick={() => setCatsOpen(false)}
+                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
+                      !category ? "border-primary bg-primary text-primary-foreground" : "hover:border-primary/50"
+                    }`}
+                  >
+                    সব ({data.products.length})
+                  </Link>
+                  {data.categories.map((c) => (
+                    <Link
+                      key={c.id}
+                      to="/catalog"
+                      search={{ category: c.slug, page: undefined }}
+                      onClick={() => setCatsOpen(false)}
+                      className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
+                        category === c.slug ? "border-primary bg-primary text-primary-foreground" : "hover:border-primary/50"
+                      }`}
+                    >
+                      {c.name} ({c.count})
+                    </Link>
+                  ))}
+                </div>
+              </div>
             </div>
           </section>
 
