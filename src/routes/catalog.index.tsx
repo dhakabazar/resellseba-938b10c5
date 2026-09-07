@@ -203,12 +203,19 @@ function CatalogIndex() {
               aria-expanded={catsOpen}
               className="mt-6 flex w-full items-center justify-between gap-2 rounded-xl border border-primary/40 bg-[image:var(--gradient-brand)] px-4 py-3 text-sm font-bold text-primary-foreground shadow-[var(--shadow-elegant)] transition active:scale-[.99] sm:hidden"
             >
-              <span className="flex items-center gap-2">
-                <span className="relative flex h-2.5 w-2.5">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary-foreground/70" />
-                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-primary-foreground" />
+              <span className="flex flex-col items-start gap-0.5 text-left">
+                <span className="flex items-center gap-2">
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary-foreground/70" />
+                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-primary-foreground" />
+                  </span>
+                  <span className="text-sm font-bold">
+                    {activeCat ? activeCat.name : `All products (${data.products.length})`}
+                  </span>
                 </span>
-                {activeCat ? activeCat.name : `All products (${data.products.length})`} + ক্যাটাগরি
+                <span className="pl-4 text-[10px] font-medium opacity-90">
+                  {activeCat ? "ক্যাটাগরি খোলা আছে" : "সব ক্যাটাগরি দেখুন"}
+                </span>
               </span>
               <ChevronDown className={`h-4 w-4 transition-transform ${catsOpen ? "rotate-180" : ""}`} />
             </button>
