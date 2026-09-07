@@ -7,7 +7,7 @@ import { ImagePickerButton } from "@/components/catalog/image-picker";
 import { ProductCodeChip } from "@/components/product-code";
 import { bdt } from "@/lib/finance-report";
 import { Pagination, usePaginated } from "@/components/data-list";
-import { Boxes, Layers, Loader2, Search, Sparkles, Tag } from "lucide-react";
+import { Boxes, ChevronDown, Layers, Loader2, Search, Sparkles, Tag } from "lucide-react";
 
 type Search = { category?: string; brand?: string; q?: string; page?: number };
 
