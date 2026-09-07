@@ -97,7 +97,7 @@ function CatalogIndex() {
 
   return (
     <div>
-      <section className="relative isolate overflow-hidden border-b border-border/60">
+      <section className="relative isolate overflow-clip border-b border-border/60">
         {banner ? (
           <div className="pointer-events-none absolute inset-0 z-0">
             <img src={banner} alt="" aria-hidden className="h-full w-full object-cover" />
