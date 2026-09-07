@@ -115,9 +115,10 @@ function CatalogIndex() {
           </p>
 
           <form
-            className="mx-auto mt-7 flex max-w-md items-center gap-2"
+            className="relative mx-auto mt-7 flex max-w-md items-center gap-2"
             onSubmit={(e) => {
               e.preventDefault();
+              setOpenSug(false);
               void navigate({ to: "/catalog", search: { category, brand, q: term.trim() || undefined, page: undefined } });
             }}
           >
@@ -125,11 +126,42 @@ function CatalogIndex() {
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <input
                 value={term}
-                onChange={(e) => setTerm(e.target.value)}
+                onChange={(e) => {
+                  setTerm(e.target.value);
+                  setOpenSug(true);
+                }}
+                onFocus={() => setOpenSug(true)}
+                onBlur={() => window.setTimeout(() => setOpenSug(false), 150)}
                 placeholder="প্রোডাক্ট খুঁজুন…"
                 aria-label="Search products"
                 className="w-full rounded-xl border bg-card/95 py-2.5 pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-primary/40"
               />
+              {openSug && suggestions.length > 0 && (
+                <div className="absolute left-0 right-0 top-full z-30 mt-2 overflow-hidden rounded-xl border bg-card text-left shadow-xl">
+                  {suggestions.map((s) => (
+                    <Link
+                      key={s.id}
+                      to="/catalog/$slug"
+                      params={{ slug: s.slug }}
+                      className="flex items-center gap-3 border-b px-3 py-2 last:border-0 hover:bg-muted/60"
+                    >
+                      <span className="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-muted">
+                        {s.image ? <img src={s.image} alt={s.name} className="h-full w-full object-cover" /> : null}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-xs font-bold">{s.name}</span>
+                        <span className="block text-[11px] text-muted-foreground">#{s.code} · {bdt(s.price)}</span>
+                      </span>
+                    </Link>
+                  ))}
+                  <button
+                    type="submit"
+                    className="block w-full bg-muted/50 px-3 py-2 text-[11px] font-bold text-primary hover:bg-muted"
+                  >
+                    সব রেজাল্ট দেখুন ({matchCount})
+                  </button>
+                </div>
+              )}
             </div>
             <button type="submit" className="btn-brand rounded-xl px-4 py-2.5 text-sm font-semibold">
               Search
