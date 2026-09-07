@@ -143,19 +143,19 @@ function CatalogDetails() {
           </div>
 
           <div className="surface-card mt-4 p-5">
-            <div className="flex items-center gap-2 text-sm font-bold">
-              <Truck className="h-4 w-4 text-primary" /> Delivery charge
+            <div className="flex items-center gap-2 text-base font-bold">
+              <Truck className="h-5 w-5 text-primary" /> Delivery charge
             </div>
-            <div className="mt-3 grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
+            <div className="mt-3 grid gap-2 text-base font-bold text-foreground sm:grid-cols-2">
               {p.deliveryMode === "free" ? (
-                <span className="font-semibold text-emerald-600">Free delivery</span>
+                <span className="text-lg font-extrabold text-emerald-600">Free delivery</span>
               ) : p.deliveryMode === "flat" || p.deliveryMode === "custom" ? (
-                <span>{p.deliveryMode === "flat" ? "Flat" : "Custom"}: {bdt(p.deliveryFlat)}</span>
+                <span>{p.deliveryMode === "flat" ? "Flat" : "Custom"}: <span className="font-extrabold text-primary">{bdt(p.deliveryFlat)}</span></span>
               ) : (
                 <>
-                  <span>{areaLabel("inside_dhaka")}: {bdt(p.deliveryInside)}</span>
-                  <span>{areaLabel("sub_dhaka")}: {bdt(p.deliverySub)}</span>
-                  <span>{areaLabel("outside_dhaka")}: {bdt(p.deliveryOutside)}</span>
+                  <span>{areaLabel("inside_dhaka")}: <span className="font-extrabold text-primary">{bdt(p.deliveryInside)}</span></span>
+                  <span>{areaLabel("sub_dhaka")}: <span className="font-extrabold text-primary">{bdt(p.deliverySub)}</span></span>
+                  <span>{areaLabel("outside_dhaka")}: <span className="font-extrabold text-primary">{bdt(p.deliveryOutside)}</span></span>
                 </>
               )}
             </div>
