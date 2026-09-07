@@ -334,7 +334,7 @@ function Landing({
 
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-background text-foreground">
+    <div className="min-h-screen overflow-x-clip bg-background text-foreground">
       {/* ── Nav ─────────────────────────────────────────── */}
       <PublicHeader siteName={siteName} logoUrl={logoUrl} content={c} />
 

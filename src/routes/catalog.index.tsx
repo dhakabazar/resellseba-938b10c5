@@ -7,7 +7,7 @@ import { ImagePickerButton } from "@/components/catalog/image-picker";
 import { ProductCodeChip } from "@/components/product-code";
 import { bdt } from "@/lib/finance-report";
 import { Pagination, usePaginated } from "@/components/data-list";
-import { Boxes, Layers, Loader2, Search, Sparkles, Tag } from "lucide-react";
+import { Boxes, ChevronDown, Layers, Loader2, Search, Sparkles, Tag } from "lucide-react";
 
 type Search = { category?: string; brand?: string; q?: string; page?: number };
 
@@ -56,10 +56,22 @@ function CatalogIndex() {
   const fetchCatalog = useServerFn(getCatalog);
   const [data, setData] = useState<{ categories: Cat[]; brands: { id: string; name: string; slug: string }[]; products: Prod[] } | null>(null);
   const [term, setTerm] = useState(q ?? "");
+  const [openSug, setOpenSug] = useState(false);
+  const [catsOpen, setCatsOpen] = useState(false);
   // Master catalog is a reseller-facing showcase: admin price & profit are always visible.
   const showPrices = true;
   const [perPage, setPerPage] = useState(24);
   const currentPage = page ?? 1;
+
+  const matches = useMemo(() => {
+    const t = term.trim().toLowerCase();
+    if (!t) return [];
+    return (data?.products ?? []).filter(
+      (p) => p.name.toLowerCase().includes(t) || p.code.toLowerCase().includes(t),
+    );
+  }, [data, term]);
+  const suggestions = matches.slice(0, 6);
+  const matchCount = matches.length;
 
 
   useEffect(() => {
@@ -115,9 +127,10 @@ function CatalogIndex() {
           </p>
 
           <form
-            className="mx-auto mt-7 flex max-w-md items-center gap-2"
+            className="relative mx-auto mt-7 flex max-w-md items-center gap-2"
             onSubmit={(e) => {
               e.preventDefault();
+              setOpenSug(false);
               void navigate({ to: "/catalog", search: { category, brand, q: term.trim() || undefined, page: undefined } });
             }}
           >
@@ -125,11 +138,42 @@ function CatalogIndex() {
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <input
                 value={term}
-                onChange={(e) => setTerm(e.target.value)}
+                onChange={(e) => {
+                  setTerm(e.target.value);
+                  setOpenSug(true);
+                }}
+                onFocus={() => setOpenSug(true)}
+                onBlur={() => window.setTimeout(() => setOpenSug(false), 150)}
                 placeholder="প্রোডাক্ট খুঁজুন…"
                 aria-label="Search products"
                 className="w-full rounded-xl border bg-card/95 py-2.5 pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-primary/40"
               />
+              {openSug && suggestions.length > 0 && (
+                <div className="absolute left-0 right-0 top-full z-30 mt-2 overflow-hidden rounded-xl border bg-card text-left shadow-xl">
+                  {suggestions.map((s) => (
+                    <Link
+                      key={s.id}
+                      to="/catalog/$slug"
+                      params={{ slug: s.slug }}
+                      className="flex items-center gap-3 border-b px-3 py-2 last:border-0 hover:bg-muted/60"
+                    >
+                      <span className="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-muted">
+                        {s.image ? <img src={s.image} alt={s.name} className="h-full w-full object-cover" /> : null}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-xs font-bold">{s.name}</span>
+                        <span className="block text-[11px] text-muted-foreground">#{s.code} · {bdt(s.price)}</span>
+                      </span>
+                    </Link>
+                  ))}
+                  <button
+                    type="submit"
+                    className="block w-full bg-muted/50 px-3 py-2 text-[11px] font-bold text-primary hover:bg-muted"
+                  >
+                    সব রেজাল্ট দেখুন ({matchCount})
+                  </button>
+                </div>
+              )}
             </div>
             <button type="submit" className="btn-brand rounded-xl px-4 py-2.5 text-sm font-semibold">
               Search
@@ -152,28 +196,55 @@ function CatalogIndex() {
               <Stat icon={<Sparkles className="h-4 w-4" />} label="Showing" value={rows.length} />
             </div>
 
-            <div className="mt-6 flex flex-wrap gap-2">
-              <Link
-                to="/catalog"
-                search={{ page: undefined }}
-                className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
-                  !category ? "border-primary bg-primary text-primary-foreground" : "hover:border-primary/50"
-                }`}
-              >
-                সব ({data.products.length})
-              </Link>
-              {data.categories.map((c) => (
-                <Link
-                  key={c.id}
-                  to="/catalog"
-                  search={{ category: c.slug, page: undefined }}
-                  className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
-                    category === c.slug ? "border-primary bg-primary text-primary-foreground" : "hover:border-primary/50"
-                  }`}
-                >
-                  {c.name} ({c.count})
-                </Link>
-              ))}
+            {/* Mobile: one animated pill opens the whole category list. */}
+            <button
+              type="button"
+              onClick={() => setCatsOpen((v) => !v)}
+              aria-expanded={catsOpen}
+              className="mt-6 flex w-full items-center justify-between gap-2 rounded-xl border border-primary/40 bg-[image:var(--gradient-brand)] px-4 py-3 text-sm font-bold text-primary-foreground shadow-[var(--shadow-elegant)] transition active:scale-[.99] sm:hidden"
+            >
+              <span className="flex items-center gap-2">
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary-foreground/70" />
+                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-primary-foreground" />
+                </span>
+                {activeCat ? activeCat.name : `All products (${data.products.length})`} + ক্যাটাগরি
+              </span>
+              <ChevronDown className={`h-4 w-4 transition-transform ${catsOpen ? "rotate-180" : ""}`} />
+            </button>
+
+            <div
+              className={`grid overflow-hidden transition-all duration-300 sm:!grid-rows-[1fr] sm:!opacity-100 ${
+                catsOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+              }`}
+            >
+              <div className="min-h-0">
+                <div className="mt-3 flex flex-wrap gap-2 sm:mt-6">
+                  <Link
+                    to="/catalog"
+                    search={{ page: undefined }}
+                    onClick={() => setCatsOpen(false)}
+                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
+                      !category ? "border-primary bg-primary text-primary-foreground" : "hover:border-primary/50"
+                    }`}
+                  >
+                    সব ({data.products.length})
+                  </Link>
+                  {data.categories.map((c) => (
+                    <Link
+                      key={c.id}
+                      to="/catalog"
+                      search={{ category: c.slug, page: undefined }}
+                      onClick={() => setCatsOpen(false)}
+                      className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
+                        category === c.slug ? "border-primary bg-primary text-primary-foreground" : "hover:border-primary/50"
+                      }`}
+                    >
+                      {c.name} ({c.count})
+                    </Link>
+                  ))}
+                </div>
+              </div>
             </div>
           </section>
 

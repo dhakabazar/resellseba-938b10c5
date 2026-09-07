@@ -6,6 +6,7 @@ import { CopyBtn } from "@/components/catalog/shell";
 import { ImagePickerButton } from "@/components/catalog/image-picker";
 import { bdt } from "@/lib/finance-report";
 import { areaLabel } from "@/lib/delivery";
+import { useAdvancedSettings } from "@/lib/advanced-settings";
 import { ArrowLeft, Loader2, Truck } from "lucide-react";
 
 export const Route = createFileRoute("/catalog/$slug")({
@@ -32,6 +33,8 @@ function CatalogDetails() {
   const [idx, setIdx] = useState(0);
   // Master catalog is a reseller-facing showcase: admin price & profit are always visible.
   const showPrices = true;
+  const { settings } = useAdvancedSettings();
+  const showStock = settings.resellerCatalogShowStock;
 
   useEffect(() => {
     setState("loading");
@@ -109,9 +112,11 @@ function CatalogDetails() {
             <span className="rounded-full bg-muted px-2.5 py-1">#{p.code}</span>
             {p.category && <span className="rounded-full bg-primary/10 px-2.5 py-1 text-primary">{p.category}</span>}
             {p.brand && <span className="rounded-full bg-accent/15 px-2.5 py-1">{p.brand}</span>}
-            <span className={`rounded-full px-2.5 py-1 ${p.stock > 0 ? "bg-emerald-500/10 text-emerald-600" : "bg-rose-500/10 text-rose-600"}`}>
-              {p.stock > 0 ? `Stock ${p.stock}` : "Stock out"}
-            </span>
+            {showStock && (
+              <span className={`rounded-full px-2.5 py-1 ${p.stock > 0 ? "bg-emerald-500/10 text-emerald-600" : "bg-rose-500/10 text-rose-600"}`}>
+                {p.stock > 0 ? `Stock ${p.stock}` : "Stock out"}
+              </span>
+            )}
           </div>
 
           <h1 className="mt-4 text-2xl font-extrabold tracking-tight sm:text-3xl">{p.name}</h1>
@@ -143,19 +148,19 @@ function CatalogDetails() {
           </div>
 
           <div className="surface-card mt-4 p-5">
-            <div className="flex items-center gap-2 text-sm font-bold">
-              <Truck className="h-4 w-4 text-primary" /> Delivery charge
+            <div className="flex items-center gap-2 text-base font-bold">
+              <Truck className="h-5 w-5 text-primary" /> Delivery charge
             </div>
-            <div className="mt-3 grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
+            <div className="mt-3 grid gap-2 text-base font-bold text-foreground sm:grid-cols-2">
               {p.deliveryMode === "free" ? (
-                <span className="font-semibold text-emerald-600">Free delivery</span>
+                <span className="text-lg font-extrabold text-emerald-600">Free delivery</span>
               ) : p.deliveryMode === "flat" || p.deliveryMode === "custom" ? (
-                <span>{p.deliveryMode === "flat" ? "Flat" : "Custom"}: {bdt(p.deliveryFlat)}</span>
+                <span>{p.deliveryMode === "flat" ? "Flat" : "Custom"}: <span className="font-extrabold text-primary">{bdt(p.deliveryFlat)}</span></span>
               ) : (
                 <>
-                  <span>{areaLabel("inside_dhaka")}: {bdt(p.deliveryInside)}</span>
-                  <span>{areaLabel("sub_dhaka")}: {bdt(p.deliverySub)}</span>
-                  <span>{areaLabel("outside_dhaka")}: {bdt(p.deliveryOutside)}</span>
+                  <span>{areaLabel("inside_dhaka")}: <span className="font-extrabold text-primary">{bdt(p.deliveryInside)}</span></span>
+                  <span>{areaLabel("sub_dhaka")}: <span className="font-extrabold text-primary">{bdt(p.deliverySub)}</span></span>
+                  <span>{areaLabel("outside_dhaka")}: <span className="font-extrabold text-primary">{bdt(p.deliveryOutside)}</span></span>
                 </>
               )}
             </div>
