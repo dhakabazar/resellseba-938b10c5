@@ -7,7 +7,7 @@ import { ImagePickerButton } from "@/components/catalog/image-picker";
 import { ProductCodeChip } from "@/components/product-code";
 import { bdt } from "@/lib/finance-report";
 import { Pagination, usePaginated } from "@/components/data-list";
-import { Boxes, ChevronDown, Layers, Loader2, Search, Sparkles, Tag } from "lucide-react";
+import { ArrowRight, Boxes, ChevronDown, Layers, Loader2, Search, Sparkles, Tag, TrendingUp, X } from "lucide-react";
 
 type Search = { category?: string; brand?: string; q?: string; page?: number };
 
@@ -49,6 +49,9 @@ type Prod = {
   images: string[];
 };
 
+const TILE = ["brand-tile-1", "brand-tile-2", "brand-tile-3", "brand-tile-4"];
+const SOLID = ["brand-solid-1", "brand-solid-2", "brand-solid-3", "brand-solid-4"];
+
 function CatalogIndex() {
   const { category, brand, q, page } = Route.useSearch();
   const { banner, siteName } = useCatalogBrand();
@@ -58,8 +61,6 @@ function CatalogIndex() {
   const [term, setTerm] = useState(q ?? "");
   const [openSug, setOpenSug] = useState(false);
   const [catsOpen, setCatsOpen] = useState(false);
-  // Master catalog is a reseller-facing showcase: admin price & profit are always visible.
-  const showPrices = true;
   const [perPage, setPerPage] = useState(24);
   const currentPage = page ?? 1;
 
@@ -72,7 +73,6 @@ function CatalogIndex() {
   }, [data, term]);
   const suggestions = matches.slice(0, 6);
   const matchCount = matches.length;
-
 
   useEffect(() => {
     fetchCatalog().then((d) => setData(d as never));
@@ -97,45 +97,42 @@ function CatalogIndex() {
 
   return (
     <div>
-      <section className="relative isolate border-b border-border/60">
-        {banner ? (
-          <div className="pointer-events-none absolute inset-0 z-0">
-            <img src={banner} alt="" aria-hidden className="h-full w-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/45 to-black/65" />
-          </div>
-        ) : (
-          <div className="pointer-events-none absolute inset-0 z-0 bg-gradient-to-br from-primary/20 via-background to-accent/20" />
-        )}
-        <div className="relative z-10 mx-auto max-w-6xl px-4 py-14 text-center sm:px-6 sm:py-20">
-          <span
-            className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-semibold backdrop-blur ${
-              banner ? "border-white/30 bg-white/15 text-white" : "border-primary/25 bg-primary/10 text-primary"
-            }`}
-          >
-            <Sparkles className="h-3 w-3" /> Master Catalog
+      {/* ───────────── Hero ───────────── */}
+      <section className="relative isolate">
+        <div className="pointer-events-none absolute inset-0 z-0 catalog-hero">
+          {banner && <img src={banner} alt="" aria-hidden className="h-full w-full object-cover opacity-25 mix-blend-luminosity" />}
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background" />
+        </div>
+        <div className="relative z-10 mx-auto max-w-6xl px-4 pb-24 pt-12 text-center sm:px-6 sm:pb-28 sm:pt-16">
+          <span className="catalog-glass inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-widest">
+            <Sparkles className="h-3.5 w-3.5" /> Master Catalog
           </span>
           <h1
-            className={`mt-4 text-balance text-3xl font-extrabold tracking-tight sm:text-5xl ${banner ? "text-white" : ""}`}
-            style={banner ? { textShadow: "0 2px 20px rgba(0,0,0,.55)" } : undefined}
+            className="mt-5 text-balance text-4xl font-black tracking-tight text-white sm:text-6xl"
+            style={{ textShadow: "0 6px 30px rgba(0,0,0,.35)" }}
           >
-            {activeCat ? activeCat.name : `${siteName} প্রোডাক্ট ক্যাটালগ`}
+            {activeCat ? activeCat.name : (
+              <>
+                {siteName} <span className="brand-gradient-text" style={{ filter: "brightness(1.4)" }}>ক্যাটালগ</span>
+              </>
+            )}
           </h1>
-          <p className={`mx-auto mt-3 max-w-xl text-sm sm:text-base ${banner ? "text-white/90" : "text-muted-foreground"}`}>
+          <p className="mx-auto mt-4 max-w-xl text-sm text-white/80 sm:text-base">
             {activeCat
               ? `${rows.length} টি প্রোডাক্ট এই ক্যাটাগরিতে`
-              : "ছবি, বিবরণ ও রিসেল প্রাইস দেখুন — লিস্ট করার আগেই সম্পূর্ণ ধারণা নিন।"}
+              : "ছবি, বিবরণ, হোলসেল ও সেল প্রাইস — লিস্ট করার আগেই আপনার প্রফিট দেখে নিন।"}
           </p>
 
           <form
-            className="relative mx-auto mt-7 flex max-w-md items-center gap-2"
+            className="relative mx-auto mt-8 max-w-xl"
             onSubmit={(e) => {
               e.preventDefault();
               setOpenSug(false);
               void navigate({ to: "/catalog", search: { category, brand, q: term.trim() || undefined, page: undefined } });
             }}
           >
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <div className="relative flex items-center rounded-2xl bg-card p-1.5 shadow-[0_20px_60px_-20px_rgba(0,0,0,.5)] ring-1 ring-white/30">
+              <Search className="ml-3 h-5 w-5 shrink-0 text-muted-foreground" />
               <input
                 value={term}
                 onChange={(e) => {
@@ -144,40 +141,54 @@ function CatalogIndex() {
                 }}
                 onFocus={() => setOpenSug(true)}
                 onBlur={() => window.setTimeout(() => setOpenSug(false), 150)}
-                placeholder="প্রোডাক্ট খুঁজুন…"
+                placeholder="প্রোডাক্টের নাম বা ID লিখুন…"
                 aria-label="Search products"
-                className="w-full rounded-xl border bg-card/95 py-2.5 pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-primary/40"
+                className="min-w-0 flex-1 bg-transparent px-3 py-2.5 text-sm outline-none sm:text-base"
               />
-              {openSug && suggestions.length > 0 && (
-                <div className="absolute left-0 right-0 top-full z-30 mt-2 overflow-hidden rounded-xl border bg-card text-left shadow-xl">
-                  {suggestions.map((s) => (
-                    <Link
-                      key={s.id}
-                      to="/catalog/$slug"
-                      params={{ slug: s.slug }}
-                      className="flex items-center gap-3 border-b px-3 py-2 last:border-0 hover:bg-muted/60"
-                    >
-                      <span className="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-muted">
-                        {s.image ? <img src={s.image} alt={s.name} className="h-full w-full object-cover" /> : null}
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-xs font-bold">{s.name}</span>
-                        <span className="block text-[11px] text-muted-foreground">#{s.code} · {bdt(s.price)}</span>
-                      </span>
-                    </Link>
-                  ))}
-                  <button
-                    type="submit"
-                    className="block w-full bg-muted/50 px-3 py-2 text-[11px] font-bold text-primary hover:bg-muted"
-                  >
-                    সব রেজাল্ট দেখুন ({matchCount})
-                  </button>
-                </div>
+              {term && (
+                <button
+                  type="button"
+                  aria-label="Clear"
+                  onClick={() => {
+                    setTerm("");
+                    void navigate({ to: "/catalog", search: { category, brand, q: undefined, page: undefined } });
+                  }}
+                  className="mr-1 grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:bg-muted"
+                >
+                  <X className="h-4 w-4" />
+                </button>
               )}
+              <button type="submit" className="btn-brand-4 rounded-xl px-5 py-2.5 text-sm font-bold">
+                Search
+              </button>
             </div>
-            <button type="submit" className="btn-brand rounded-xl px-4 py-2.5 text-sm font-semibold">
-              Search
-            </button>
+            {openSug && suggestions.length > 0 && (
+              <div className="absolute left-0 right-0 top-full z-30 mt-2 overflow-hidden rounded-2xl border bg-card text-left shadow-2xl">
+                {suggestions.map((s, i) => (
+                  <Link
+                    key={s.id}
+                    to="/catalog/$slug"
+                    params={{ slug: s.slug }}
+                    className="flex items-center gap-3 border-b px-3 py-2.5 last:border-0 hover:bg-muted/60"
+                  >
+                    <span className={`h-11 w-11 shrink-0 overflow-hidden rounded-xl ${TILE[i % 4]}`}>
+                      {s.image ? <img src={s.image} alt={s.name} className="h-full w-full object-cover" /> : null}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-bold">{s.name}</span>
+                      <span className="block text-[11px] text-muted-foreground">#{s.code} · {bdt(s.price)}</span>
+                    </span>
+                    <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                  </Link>
+                ))}
+                <button
+                  type="submit"
+                  className="block w-full bg-muted/50 px-3 py-2.5 text-xs font-bold text-primary hover:bg-muted"
+                >
+                  সব রেজাল্ট দেখুন ({matchCount})
+                </button>
+              </div>
+            )}
           </form>
         </div>
       </section>
@@ -188,12 +199,13 @@ function CatalogIndex() {
         </div>
       ) : (
         <>
-          <section className="mx-auto max-w-6xl px-4 pt-10 sm:px-6">
+          {/* ───────────── Stats (overlapping hero) ───────────── */}
+          <section className="relative z-20 mx-auto -mt-14 max-w-6xl px-4 sm:-mt-16 sm:px-6">
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <Stat icon={<Boxes className="h-4 w-4" />} label="Products" value={data.products.length} />
-              <Stat icon={<Layers className="h-4 w-4" />} label="Categories" value={data.categories.length} />
-              <Stat icon={<Tag className="h-4 w-4" />} label="Brands" value={data.brands.length} />
-              <Stat icon={<Sparkles className="h-4 w-4" />} label="Showing" value={rows.length} />
+              <Stat i={0} icon={<Boxes className="h-5 w-5" />} label="Products" value={data.products.length} />
+              <Stat i={1} icon={<Layers className="h-5 w-5" />} label="Categories" value={data.categories.length} />
+              <Stat i={2} icon={<Tag className="h-5 w-5" />} label="Brands" value={data.brands.length} />
+              <Stat i={3} icon={<TrendingUp className="h-5 w-5" />} label="Showing" value={rows.length} />
             </div>
 
             {/* Mobile: one animated pill opens the whole category list. */}
@@ -201,23 +213,21 @@ function CatalogIndex() {
               type="button"
               onClick={() => setCatsOpen((v) => !v)}
               aria-expanded={catsOpen}
-              className="mt-6 flex w-full items-center justify-between gap-2 rounded-xl border border-primary/40 bg-[image:var(--gradient-brand)] px-4 py-3 text-sm font-bold text-primary-foreground shadow-[var(--shadow-elegant)] transition active:scale-[.99] sm:hidden"
+              className="btn-brand-4 mt-6 flex w-full items-center justify-between gap-2 rounded-2xl px-4 py-3.5 text-left sm:hidden"
             >
-              <span className="flex flex-col items-start gap-0.5 text-left">
-                <span className="flex items-center gap-2">
+              <span className="flex flex-col gap-0.5">
+                <span className="flex items-center gap-2 text-sm font-black">
                   <span className="relative flex h-2.5 w-2.5">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary-foreground/70" />
-                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-primary-foreground" />
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white/70" />
+                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-white" />
                   </span>
-                  <span className="text-sm font-bold">
-                    {activeCat ? activeCat.name : `All products (${data.products.length})`}
-                  </span>
+                  {activeCat ? activeCat.name : `All products (${data.products.length})`}
                 </span>
-                <span className="pl-4 text-[10px] font-medium opacity-90">
+                <span className="pl-4 text-[11px] font-medium opacity-90">
                   {activeCat ? "ক্যাটাগরি খোলা আছে" : "সব ক্যাটাগরি দেখুন"}
                 </span>
               </span>
-              <ChevronDown className={`h-4 w-4 transition-transform ${catsOpen ? "rotate-180" : ""}`} />
+              <ChevronDown className={`h-5 w-5 transition-transform ${catsOpen ? "rotate-180" : ""}`} />
             </button>
 
             <div
@@ -226,28 +236,29 @@ function CatalogIndex() {
               }`}
             >
               <div className="min-h-0">
-                <div className="mt-3 flex flex-wrap gap-2 sm:mt-6">
+                <div className="mt-3 flex flex-wrap gap-2 sm:mt-8 sm:justify-center">
                   <Link
                     to="/catalog"
                     search={{ page: undefined }}
                     onClick={() => setCatsOpen(false)}
-                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
-                      !category ? "border-primary bg-primary text-primary-foreground" : "hover:border-primary/50"
+                    className={`rounded-full border px-4 py-2 text-xs font-bold transition ${
+                      !category ? "catalog-chip-active" : "bg-card hover:-translate-y-0.5 hover:border-brand-1/50"
                     }`}
                   >
-                    সব ({data.products.length})
+                    সব <span className="opacity-70">({data.products.length})</span>
                   </Link>
-                  {data.categories.map((c) => (
+                  {data.categories.map((c, i) => (
                     <Link
                       key={c.id}
                       to="/catalog"
                       search={{ category: c.slug, page: undefined }}
                       onClick={() => setCatsOpen(false)}
-                      className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
-                        category === c.slug ? "border-primary bg-primary text-primary-foreground" : "hover:border-primary/50"
+                      className={`inline-flex items-center gap-2 rounded-full border px-3.5 py-2 text-xs font-bold transition ${
+                        category === c.slug ? "catalog-chip-active" : "bg-card hover:-translate-y-0.5 hover:border-brand-1/50"
                       }`}
                     >
-                      {c.name} ({c.count})
+                      <span className={`h-2 w-2 rounded-full ${category === c.slug ? "bg-white" : SOLID[i % 4]}`} />
+                      {c.name} <span className="opacity-70">({c.count})</span>
                     </Link>
                   ))}
                 </div>
@@ -255,88 +266,28 @@ function CatalogIndex() {
             </div>
           </section>
 
-          <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+          {/* ───────────── Products ───────────── */}
+          <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
             {rows.length === 0 ? (
-              <div className="surface-card grid place-items-center p-16 text-center text-sm text-muted-foreground">
+              <div className="catalog-card grid place-items-center p-16 text-center text-sm text-muted-foreground">
                 কোনো প্রোডাক্ট পাওয়া যায়নি।
               </div>
             ) : (
               <>
-                <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-                  {pagedRows.map((p) => (
-                    <div key={p.id} className="group surface-card flex flex-col overflow-hidden">
-                      <Link to="/catalog/$slug" params={{ slug: p.slug }} className="relative block aspect-square overflow-hidden bg-muted">
-                        {p.image ? (
-                          <img
-                            src={p.image}
-                            alt={p.name}
-                            loading="lazy"
-                            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                          />
-                        ) : (
-                          <div className="grid h-full w-full place-items-center text-xs text-muted-foreground">No image</div>
-                        )}
-                      </Link>
-                      <div className="flex flex-1 flex-col p-4">
-                        <div className="flex items-center justify-between gap-2">
-                          <ProductCodeChip code={p.code} />
-                          <Link
-                            to="/catalog/$slug"
-                            params={{ slug: p.slug }}
-                            className="rounded-lg border px-2.5 py-1 text-[11px] font-semibold hover:border-primary/50 hover:text-primary"
-                          >
-                            Details
-                          </Link>
-                        </div>
-                        <Link
-                          to="/catalog/$slug"
-                          params={{ slug: p.slug }}
-                          className="mt-2 line-clamp-2 text-sm font-bold leading-tight hover:text-primary"
-                        >
-                          {p.name}
-                        </Link>
-                        {showPrices ? (
-                          <div className="mt-3 grid grid-cols-3 gap-2 rounded-xl border bg-muted/40 p-2.5 text-[11px]">
-                            <div>
-                              <div className="font-bold uppercase tracking-wide text-muted-foreground">Wholesale</div>
-                              <div className="text-sm font-bold">{bdt(p.resellerPrice)}</div>
-                            </div>
-                            <div>
-                              <div className="font-bold uppercase tracking-wide text-muted-foreground">Sale</div>
-                              <div className="text-sm font-black text-primary">{bdt(p.price)}</div>
-                            </div>
-                            <div>
-                              <div className="font-bold uppercase tracking-wide text-muted-foreground">Profit</div>
-                              <div className="text-sm font-bold text-emerald-600">{bdt(Math.max(0, p.price - p.resellerPrice))}</div>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="mt-3">
-                            <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Sale price</div>
-                            <div className="text-base font-black text-primary">{bdt(p.price)}</div>
-                          </div>
-                        )}
-                        <div className="mt-3 flex flex-wrap gap-1.5 border-t pt-3">
-                          <CopyBtn text={p.name} title="Title" label="Title copied" />
-                          <CopyBtn text={`${p.name}\n\n${p.short}\n\nPrice: ${bdt(p.price)}`} title="Details" label="Details copied" />
-                          <ImagePickerButton images={p.images ?? (p.image ? [p.image] : [])} baseName={p.name} />
-                        </div>
-                      </div>
-
-                    </div>
+                <div className="grid gap-4 grid-cols-2 sm:gap-6 lg:grid-cols-4">
+                  {pagedRows.map((p, i) => (
+                    <ProductCard key={p.id} p={p} i={i} />
                   ))}
                 </div>
-                <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-                  <span className="text-xs text-muted-foreground">
-                    {rows.length} products
-                  </span>
+                <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+                  <span className="text-xs font-semibold text-muted-foreground">{rows.length} products</span>
                   <select
                     value={perPage}
                     onChange={(e) => {
                       setPerPage(Number(e.target.value));
                       setPage(1);
                     }}
-                    className="h-9 rounded-md border bg-background px-2 text-xs"
+                    className="h-9 rounded-lg border bg-card px-2 text-xs font-semibold"
                     aria-label="Products per page"
                   >
                     {[24, 48, 96, 200].map((n) => (
@@ -347,7 +298,6 @@ function CatalogIndex() {
                   </select>
                 </div>
                 <Pagination page={currentPage} perPage={perPage} total={rows.length} onPage={setPage} />
-
               </>
             )}
           </section>
@@ -357,13 +307,72 @@ function CatalogIndex() {
   );
 }
 
-function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: number }) {
+function ProductCard({ p, i }: { p: Prod; i: number }) {
+  const profit = Math.max(0, p.price - p.resellerPrice);
+  const pct = p.resellerPrice > 0 ? Math.round((profit / p.resellerPrice) * 100) : 0;
   return (
-    <div className="surface-card flex items-center gap-3 p-4">
-      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">{icon}</span>
+    <article className="catalog-card group flex flex-col overflow-hidden">
+      <Link to="/catalog/$slug" params={{ slug: p.slug }} className="relative block aspect-square overflow-hidden rounded-t-[1.2rem] bg-muted">
+        {p.image ? (
+          <img
+            src={p.image}
+            alt={p.name}
+            loading="lazy"
+            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+          />
+        ) : (
+          <div className={`grid h-full w-full place-items-center text-xs ${TILE[i % 4]}`}>No image</div>
+        )}
+        <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/45 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+        {profit > 0 && (
+          <span className={`absolute left-2 top-2 rounded-full px-2.5 py-1 text-[10px] font-black shadow-md ${SOLID[3]}`}>
+            +{pct}% profit
+          </span>
+        )}
+        <span className="absolute bottom-2 right-2 translate-y-2 rounded-full bg-white/95 px-3 py-1.5 text-[11px] font-bold text-foreground opacity-0 shadow-lg transition-all group-hover:translate-y-0 group-hover:opacity-100">
+          View details →
+        </span>
+      </Link>
+      <div className="flex flex-1 flex-col p-3 sm:p-4">
+        <ProductCodeChip code={p.code} />
+        <Link
+          to="/catalog/$slug"
+          params={{ slug: p.slug }}
+          className="mt-2 line-clamp-2 min-h-[2.4em] text-[13px] font-bold leading-tight hover:text-brand-1 sm:text-sm"
+        >
+          {p.name}
+        </Link>
+        <div className="mt-3 grid grid-cols-3 gap-1.5">
+          <div className={`price-tile ${TILE[0]}`}>
+            <div className="text-[9px] font-bold uppercase tracking-wider opacity-80">Wholesale</div>
+            <div className="mt-1 text-xs font-black sm:text-sm">{bdt(p.resellerPrice)}</div>
+          </div>
+          <div className={`price-tile ${TILE[3]}`}>
+            <div className="text-[9px] font-bold uppercase tracking-wider opacity-80">Sale</div>
+            <div className="mt-1 text-xs font-black sm:text-sm">{bdt(p.price)}</div>
+          </div>
+          <div className={`price-tile ${TILE[2]}`}>
+            <div className="text-[9px] font-bold uppercase tracking-wider opacity-80">Profit</div>
+            <div className="mt-1 text-xs font-black sm:text-sm">{bdt(profit)}</div>
+          </div>
+        </div>
+        <div className="mt-3 flex flex-wrap gap-1.5 border-t border-dashed pt-3">
+          <CopyBtn text={p.name} title="Title" label="Title copied" />
+          <CopyBtn text={`${p.name}\n\n${p.short}\n\nPrice: ${bdt(p.price)}`} title="Details" label="Details copied" />
+          <ImagePickerButton images={p.images ?? (p.image ? [p.image] : [])} baseName={p.name} />
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function Stat({ i, icon, label, value }: { i: number; icon: React.ReactNode; label: string; value: number }) {
+  return (
+    <div className="catalog-card flex items-center gap-3 p-4">
+      <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl ${SOLID[i % 4]} shadow-md`}>{icon}</span>
       <div className="min-w-0">
-        <div className="text-lg font-black leading-none">{value}</div>
-        <div className="truncate text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{label}</div>
+        <div className="text-xl font-black leading-none tabular-nums">{value}</div>
+        <div className="mt-1 truncate text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{label}</div>
       </div>
     </div>
   );
