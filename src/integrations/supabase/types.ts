@@ -2133,6 +2133,54 @@ export type Database = {
           },
         ]
       }
+      reseller_staff: {
+        Row: {
+          active: boolean
+          created_at: string
+          full_name: string | null
+          id: string
+          permissions: string[]
+          reseller_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          permissions?: string[]
+          reseller_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          permissions?: string[]
+          reseller_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reseller_staff_reseller_id_fkey"
+            columns: ["reseller_id"]
+            isOneToOne: false
+            referencedRelation: "public_stores"
+            referencedColumns: ["reseller_id"]
+          },
+          {
+            foreignKeyName: "reseller_staff_reseller_id_fkey"
+            columns: ["reseller_id"]
+            isOneToOne: false
+            referencedRelation: "resellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reseller_subscriptions: {
         Row: {
           amount: number
@@ -3219,6 +3267,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_reseller_owner: { Args: never; Returns: boolean }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
       log_store_visit: {
         Args: {
@@ -3278,6 +3327,39 @@ export type Database = {
           paid_out: number
           pending_payout: number
         }[]
+      }
+      reseller_staff_create: {
+        Args: {
+          _email: string
+          _full_name: string
+          _password: string
+          _permissions: string[]
+        }
+        Returns: string
+      }
+      reseller_staff_delete: { Args: { _id: string }; Returns: undefined }
+      reseller_staff_list: {
+        Args: never
+        Returns: {
+          active: boolean
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          permissions: string[]
+          user_id: string
+        }[]
+      }
+      reseller_staff_owner_id: { Args: never; Returns: string }
+      reseller_staff_update: {
+        Args: {
+          _active: boolean
+          _full_name: string
+          _id: string
+          _password: string
+          _permissions: string[]
+        }
+        Returns: undefined
       }
       reseller_wholesale_price: {
         Args: { _product_id: string; _reseller_id: string }
