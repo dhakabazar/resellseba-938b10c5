@@ -493,3 +493,59 @@
   background: color-mix(in oklab, var(--color-primary-foreground) 22%, transparent);
   border-color: color-mix(in oklab, var(--color-primary-foreground) 70%, transparent);
 }
+
+/* ── Catalog (landing) redesign: four-color brand surfaces ── */
+@utility catalog-hero {
+  background:
+    radial-gradient(ellipse at 10% 0%, color-mix(in oklab, var(--brand-1) 55%, transparent), transparent 55%),
+    radial-gradient(ellipse at 90% 10%, color-mix(in oklab, var(--brand-4) 50%, transparent), transparent 55%),
+    radial-gradient(ellipse at 60% 100%, color-mix(in oklab, var(--brand-3) 45%, transparent), transparent 60%),
+    radial-gradient(ellipse at 20% 100%, color-mix(in oklab, var(--brand-2) 40%, transparent), transparent 55%),
+    color-mix(in oklab, var(--brand-1) 85%, black);
+}
+@utility catalog-card {
+  position: relative;
+  border-radius: 1.25rem;
+  background: var(--color-card);
+  border: 1px solid color-mix(in oklab, var(--color-border) 70%, transparent);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 10px 30px -18px color-mix(in oklab, var(--brand-1) 40%, transparent);
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+.catalog-card::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: var(--gradient-brand-4);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+.catalog-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 44px -20px color-mix(in oklab, var(--brand-1) 55%, transparent),
+    0 8px 24px -16px color-mix(in oklab, var(--brand-4) 45%, transparent);
+}
+.catalog-card:hover::before { opacity: 1; }
+@utility catalog-chip-active {
+  background: var(--gradient-brand-4);
+  color: var(--color-primary-foreground);
+  border-color: transparent;
+  box-shadow: 0 8px 20px -10px color-mix(in oklab, var(--brand-1) 60%, transparent);
+}
+@utility catalog-glass {
+  background: color-mix(in oklab, white 14%, transparent);
+  border: 1px solid color-mix(in oklab, white 28%, transparent);
+  backdrop-filter: blur(12px);
+  color: white;
+}
+@utility price-tile {
+  border-radius: 0.9rem;
+  padding: 0.55rem 0.6rem;
+  line-height: 1.1;
+}
