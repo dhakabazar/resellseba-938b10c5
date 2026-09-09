@@ -4,10 +4,11 @@ import { useServerFn } from "@tanstack/react-start";
 import { getCatalogProduct } from "@/lib/catalog.functions";
 import { CopyBtn } from "@/components/catalog/shell";
 import { ImagePickerButton } from "@/components/catalog/image-picker";
+import { ProductCodeChip } from "@/components/product-code";
 import { bdt } from "@/lib/finance-report";
 import { areaLabel } from "@/lib/delivery";
 import { useAdvancedSettings } from "@/lib/advanced-settings";
-import { ArrowLeft, Loader2, Truck } from "lucide-react";
+import { ArrowLeft, Loader2, Package, Sparkles, Truck } from "lucide-react";
 
 export const Route = createFileRoute("/catalog/$slug")({
   head: ({ params }) => ({
@@ -31,8 +32,6 @@ function CatalogDetails() {
   const [state, setState] = useState<"loading" | "done">("loading");
   const [p, setP] = useState<P>(null);
   const [idx, setIdx] = useState(0);
-  // Master catalog is a reseller-facing showcase: admin price & profit are always visible.
-  const showPrices = true;
   const { settings } = useAdvancedSettings();
   const showStock = settings.resellerCatalogShowStock;
 
@@ -62,6 +61,9 @@ function CatalogDetails() {
       </div>
     );
 
+  const profit = Math.max(0, p.price - p.resellerPrice);
+  const pct = p.resellerPrice > 0 ? Math.round((profit / p.resellerPrice) * 100) : 0;
+
   const detailText = [
     p.name,
     p.short,
@@ -73,131 +75,157 @@ function CatalogDetails() {
     .join("\n\n");
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-      <Link
-        to="/catalog"
-        search={p.categorySlug ? { category: p.categorySlug } : {}}
-        className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-primary"
-      >
-        <ArrowLeft className="h-4 w-4" /> Catalog
-      </Link>
+    <div className="brand-mesh">
+      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+        <Link
+          to="/catalog"
+          search={p.categorySlug ? { category: p.categorySlug } : {}}
+          className="inline-flex items-center gap-1.5 rounded-full bg-card/80 px-3 py-1.5 text-xs font-bold text-muted-foreground shadow-sm backdrop-blur hover:text-brand-1"
+        >
+          <ArrowLeft className="h-4 w-4" /> Catalog
+        </Link>
 
-      <div className="mt-6 grid gap-8 lg:grid-cols-2">
-        <div>
-          <div className="surface-card aspect-square overflow-hidden">
-            {p.images[idx] ? (
-              <img src={p.images[idx]} alt={p.name} className="h-full w-full object-cover" />
-            ) : (
-              <div className="grid h-full w-full place-items-center text-sm text-muted-foreground">No image</div>
-            )}
-          </div>
-          {p.images.length > 1 && (
-            <div className="mt-3 flex flex-wrap gap-2">
-              {p.images.map((u, i) => (
-                <button
-                  key={u}
-                  type="button"
-                  onClick={() => setIdx(i)}
-                  className={`h-16 w-16 overflow-hidden rounded-lg border-2 ${i === idx ? "border-primary" : "border-transparent"}`}
-                >
-                  <img src={u} alt={`${p.name} ${i + 1}`} className="h-full w-full object-cover" />
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div>
-          <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold">
-            <span className="rounded-full bg-muted px-2.5 py-1">#{p.code}</span>
-            {p.category && <span className="rounded-full bg-primary/10 px-2.5 py-1 text-primary">{p.category}</span>}
-            {p.brand && <span className="rounded-full bg-accent/15 px-2.5 py-1">{p.brand}</span>}
-            {showStock && (
-              <span className={`rounded-full px-2.5 py-1 ${p.stock > 0 ? "bg-emerald-500/10 text-emerald-600" : "bg-rose-500/10 text-rose-600"}`}>
-                {p.stock > 0 ? `Stock ${p.stock}` : "Stock out"}
-              </span>
-            )}
-          </div>
-
-          <h1 className="mt-4 text-2xl font-extrabold tracking-tight sm:text-3xl">{p.name}</h1>
-          {p.short && <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{p.short}</p>}
-
-          <div className="surface-card mt-6 flex flex-wrap items-end gap-6 p-5">
-            <div>
-              <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Sale price (suggested)</div>
-              <div className="text-3xl font-black text-primary">{bdt(p.price)}</div>
-            </div>
-            {showPrices && (
-              <>
-                <div>
-                  <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Wholesale price</div>
-                  <div className="text-xl font-black">{bdt(p.resellerPrice)}</div>
-                </div>
-                <div>
-                  <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Your profit</div>
-                  <div className="text-xl font-black text-emerald-600">{bdt(Math.max(0, p.price - p.resellerPrice))}</div>
-                </div>
-              </>
-            )}
-            {p.weight ? (
-              <div>
-                <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Weight</div>
-                <div className="text-base font-bold">{p.weight} g</div>
-              </div>
-            ) : null}
-          </div>
-
-          <div className="surface-card mt-4 p-5">
-            <div className="flex items-center gap-2 text-base font-bold">
-              <Truck className="h-5 w-5 text-primary" /> Delivery charge
-            </div>
-            <div className="mt-3 grid gap-2 text-base font-bold text-foreground sm:grid-cols-2">
-              {p.deliveryMode === "free" ? (
-                <span className="text-lg font-extrabold text-emerald-600">Free delivery</span>
-              ) : p.deliveryMode === "flat" || p.deliveryMode === "custom" ? (
-                <span>{p.deliveryMode === "flat" ? "Flat" : "Custom"}: <span className="font-extrabold text-primary">{bdt(p.deliveryFlat)}</span></span>
+        <div className="mt-6 grid gap-8 lg:grid-cols-2">
+          {/* Gallery */}
+          <div>
+            <div className="catalog-card aspect-square overflow-hidden">
+              {p.images[idx] ? (
+                <img src={p.images[idx]} alt={p.name} className="h-full w-full rounded-[1.2rem] object-cover" />
               ) : (
-                <>
-                  <span>{areaLabel("inside_dhaka")}: <span className="font-extrabold text-primary">{bdt(p.deliveryInside)}</span></span>
-                  <span>{areaLabel("sub_dhaka")}: <span className="font-extrabold text-primary">{bdt(p.deliverySub)}</span></span>
-                  <span>{areaLabel("outside_dhaka")}: <span className="font-extrabold text-primary">{bdt(p.deliveryOutside)}</span></span>
-                </>
+                <div className="grid h-full w-full place-items-center text-sm text-muted-foreground">No image</div>
               )}
             </div>
+            {p.images.length > 1 && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {p.images.map((u, i) => (
+                  <button
+                    key={u}
+                    type="button"
+                    onClick={() => setIdx(i)}
+                    className={`h-16 w-16 overflow-hidden rounded-xl border-2 transition ${
+                      i === idx ? "border-brand-1 shadow-md" : "border-transparent opacity-75 hover:opacity-100"
+                    }`}
+                  >
+                    <img src={u} alt={`${p.name} ${i + 1}`} className="h-full w-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
-          <div className="surface-card mt-5 p-5">
-            <h2 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Reseller tools</h2>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <CopyBtn text={p.name} title="Title" label="Title copied" />
-              <CopyBtn text={detailText} title="Details" label="Details copied" />
-              <ImagePickerButton images={p.images} baseName={p.name} />
+          {/* Info */}
+          <div>
+            <div className="flex flex-wrap items-center gap-2 text-[11px] font-bold">
+              <ProductCodeChip code={p.code} size="md" />
+              {p.category && <span className="brand-tile-1 rounded-full px-3 py-1">{p.category}</span>}
+              {p.brand && <span className="brand-tile-2 rounded-full px-3 py-1">{p.brand}</span>}
+              {showStock && (
+                <span className={`rounded-full px-3 py-1 ${p.stock > 0 ? "brand-tile-3" : "bg-rose-500/10 text-rose-600"}`}>
+                  {p.stock > 0 ? `Stock ${p.stock}` : "Stock out"}
+                </span>
+              )}
+            </div>
+
+            <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-4xl">{p.name}</h1>
+            {p.short && <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{p.short}</p>}
+
+            {/* Price board */}
+            <div className="catalog-card mt-6 p-5">
+              <div className="grid grid-cols-3 gap-2.5">
+                <div className="price-tile brand-tile-1 !p-3">
+                  <div className="text-[10px] font-bold uppercase tracking-widest opacity-80">Wholesale</div>
+                  <div className="mt-1 text-lg font-black sm:text-xl">{bdt(p.resellerPrice)}</div>
+                </div>
+                <div className="price-tile brand-tile-4 !p-3">
+                  <div className="text-[10px] font-bold uppercase tracking-widest opacity-80">Sale price</div>
+                  <div className="mt-1 text-lg font-black sm:text-xl">{bdt(p.price)}</div>
+                </div>
+                <div className="price-tile brand-tile-3 !p-3">
+                  <div className="text-[10px] font-bold uppercase tracking-widest opacity-80">Your profit</div>
+                  <div className="mt-1 text-lg font-black sm:text-xl">{bdt(profit)}</div>
+                </div>
+              </div>
+              <div className="mt-3 flex flex-wrap items-center gap-3 text-xs font-bold text-muted-foreground">
+                {profit > 0 && (
+                  <span className="brand-solid-4 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px]">
+                    <Sparkles className="h-3.5 w-3.5" /> +{pct}% margin
+                  </span>
+                )}
+                {p.weight ? (
+                  <span className="inline-flex items-center gap-1">
+                    <Package className="h-3.5 w-3.5" /> {p.weight} g
+                  </span>
+                ) : null}
+              </div>
+            </div>
+
+            {/* Delivery */}
+            <div className="catalog-card mt-4 p-5">
+              <div className="flex items-center gap-2 text-base font-black">
+                <span className="brand-solid-3 grid h-8 w-8 place-items-center rounded-xl">
+                  <Truck className="h-4 w-4" />
+                </span>
+                Delivery charge
+              </div>
+              <div className="mt-3 grid gap-2 text-base font-bold sm:grid-cols-2">
+                {p.deliveryMode === "free" ? (
+                  <span className="text-lg font-black text-emerald-600">Free delivery</span>
+                ) : p.deliveryMode === "flat" || p.deliveryMode === "custom" ? (
+                  <span>
+                    {p.deliveryMode === "flat" ? "Flat" : "Custom"}:{" "}
+                    <span className="font-black text-brand-1">{bdt(p.deliveryFlat)}</span>
+                  </span>
+                ) : (
+                  <>
+                    <span>
+                      {areaLabel("inside_dhaka")}: <span className="font-black text-brand-1">{bdt(p.deliveryInside)}</span>
+                    </span>
+                    <span>
+                      {areaLabel("sub_dhaka")}: <span className="font-black text-brand-1">{bdt(p.deliverySub)}</span>
+                    </span>
+                    <span>
+                      {areaLabel("outside_dhaka")}: <span className="font-black text-brand-1">{bdt(p.deliveryOutside)}</span>
+                    </span>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Reseller tools */}
+            <div className="catalog-card mt-4 p-5">
+              <h2 className="text-xs font-black uppercase tracking-widest text-muted-foreground">Reseller tools</h2>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <CopyBtn text={p.name} title="Title" label="Title copied" />
+                <CopyBtn text={detailText} title="Details" label="Details copied" />
+                <ImagePickerButton images={p.images} baseName={p.name} />
+              </div>
+            </div>
+
+            <div className="catalog-hero mt-5 overflow-hidden rounded-2xl p-5 text-white">
+              <p className="text-base font-black">এই প্রোডাক্ট বিক্রি করতে চান?</p>
+              <p className="mt-1 text-sm text-white/85">রিসেলার হিসেবে সাইনআপ করে নিজের স্টোরে লিস্ট করুন।</p>
+              <Link
+                to="/login"
+                search={{ mode: "signup" }}
+                className="btn-invert-brand mt-4 inline-flex rounded-xl px-5 py-2.5 text-sm font-bold"
+              >
+                রিসেলার সাইনআপ
+              </Link>
             </div>
           </div>
-
-          <div className="surface-card mt-6 p-5 text-sm">
-            <p className="font-semibold">এই প্রোডাক্ট বিক্রি করতে চান?</p>
-            <p className="mt-1 text-muted-foreground">রিসেলার হিসেবে সাইনআপ করে নিজের স্টোরে লিস্ট করুন।</p>
-            <Link
-              to="/login"
-              search={{ mode: "signup" }}
-              className="btn-brand mt-4 inline-flex rounded-lg px-5 py-2.5 text-sm font-semibold"
-            >
-              রিসেলার সাইনআপ
-            </Link>
-          </div>
         </div>
-      </div>
 
-      {p.description && (
-        <section className="mt-10 lg:mt-14">
-          <h2 className="text-lg font-bold">Product details</h2>
-          <div
-            className="prose prose-sm mt-4 max-w-none text-sm leading-relaxed text-foreground/90 [&_img]:rounded-lg"
-            dangerouslySetInnerHTML={{ __html: p.description }}
-          />
-        </section>
-      )}
+        {p.description && (
+          <section className="catalog-card mt-10 p-5 sm:p-7 lg:mt-14">
+            <h2 className="text-lg font-black">Product details</h2>
+            <div className="brand-rule mt-3 h-1 w-16 rounded-full" />
+            <div
+              className="prose prose-sm mt-4 max-w-none text-sm leading-relaxed text-foreground/90 [&_img]:rounded-xl"
+              dangerouslySetInnerHTML={{ __html: p.description }}
+            />
+          </section>
+        )}
+      </div>
     </div>
   );
 }

@@ -36,6 +36,7 @@ import { Route as AuthenticatedResellerTransactionsRouteImport } from './routes/
 import { Route as AuthenticatedResellerThemeRouteImport } from './routes/_authenticated/reseller/theme'
 import { Route as AuthenticatedResellerSupportRouteImport } from './routes/_authenticated/reseller/support'
 import { Route as AuthenticatedResellerSubscriptionRouteImport } from './routes/_authenticated/reseller/subscription'
+import { Route as AuthenticatedResellerStaffRouteImport } from './routes/_authenticated/reseller/staff'
 import { Route as AuthenticatedResellerSettingsRouteImport } from './routes/_authenticated/reseller/settings'
 import { Route as AuthenticatedResellerProfileRouteImport } from './routes/_authenticated/reseller/profile'
 import { Route as AuthenticatedResellerPayoutsRouteImport } from './routes/_authenticated/reseller/payouts'
@@ -235,6 +236,12 @@ const AuthenticatedResellerSubscriptionRoute =
   AuthenticatedResellerSubscriptionRouteImport.update({
     id: '/subscription',
     path: '/subscription',
+    getParentRoute: () => AuthenticatedResellerRouteRoute,
+  } as any)
+const AuthenticatedResellerStaffRoute =
+  AuthenticatedResellerStaffRouteImport.update({
+    id: '/staff',
+    path: '/staff',
     getParentRoute: () => AuthenticatedResellerRouteRoute,
   } as any)
 const AuthenticatedResellerSettingsRoute =
@@ -638,6 +645,7 @@ export interface FileRoutesByFullPath {
   '/reseller/payouts': typeof AuthenticatedResellerPayoutsRoute
   '/reseller/profile': typeof AuthenticatedResellerProfileRoute
   '/reseller/settings': typeof AuthenticatedResellerSettingsRoute
+  '/reseller/staff': typeof AuthenticatedResellerStaffRoute
   '/reseller/subscription': typeof AuthenticatedResellerSubscriptionRoute
   '/reseller/support': typeof AuthenticatedResellerSupportRoute
   '/reseller/theme': typeof AuthenticatedResellerThemeRoute
@@ -720,6 +728,7 @@ export interface FileRoutesByTo {
   '/reseller/payouts': typeof AuthenticatedResellerPayoutsRoute
   '/reseller/profile': typeof AuthenticatedResellerProfileRoute
   '/reseller/settings': typeof AuthenticatedResellerSettingsRoute
+  '/reseller/staff': typeof AuthenticatedResellerStaffRoute
   '/reseller/subscription': typeof AuthenticatedResellerSubscriptionRoute
   '/reseller/support': typeof AuthenticatedResellerSupportRoute
   '/reseller/theme': typeof AuthenticatedResellerThemeRoute
@@ -808,6 +817,7 @@ export interface FileRoutesById {
   '/_authenticated/reseller/payouts': typeof AuthenticatedResellerPayoutsRoute
   '/_authenticated/reseller/profile': typeof AuthenticatedResellerProfileRoute
   '/_authenticated/reseller/settings': typeof AuthenticatedResellerSettingsRoute
+  '/_authenticated/reseller/staff': typeof AuthenticatedResellerStaffRoute
   '/_authenticated/reseller/subscription': typeof AuthenticatedResellerSubscriptionRoute
   '/_authenticated/reseller/support': typeof AuthenticatedResellerSupportRoute
   '/_authenticated/reseller/theme': typeof AuthenticatedResellerThemeRoute
@@ -896,6 +906,7 @@ export interface FileRouteTypes {
     | '/reseller/payouts'
     | '/reseller/profile'
     | '/reseller/settings'
+    | '/reseller/staff'
     | '/reseller/subscription'
     | '/reseller/support'
     | '/reseller/theme'
@@ -978,6 +989,7 @@ export interface FileRouteTypes {
     | '/reseller/payouts'
     | '/reseller/profile'
     | '/reseller/settings'
+    | '/reseller/staff'
     | '/reseller/subscription'
     | '/reseller/support'
     | '/reseller/theme'
@@ -1065,6 +1077,7 @@ export interface FileRouteTypes {
     | '/_authenticated/reseller/payouts'
     | '/_authenticated/reseller/profile'
     | '/_authenticated/reseller/settings'
+    | '/_authenticated/reseller/staff'
     | '/_authenticated/reseller/subscription'
     | '/_authenticated/reseller/support'
     | '/_authenticated/reseller/theme'
@@ -1303,6 +1316,13 @@ declare module '@tanstack/react-router' {
       path: '/subscription'
       fullPath: '/reseller/subscription'
       preLoaderRoute: typeof AuthenticatedResellerSubscriptionRouteImport
+      parentRoute: typeof AuthenticatedResellerRouteRoute
+    }
+    '/_authenticated/reseller/staff': {
+      id: '/_authenticated/reseller/staff'
+      path: '/staff'
+      fullPath: '/reseller/staff'
+      preLoaderRoute: typeof AuthenticatedResellerStaffRouteImport
       parentRoute: typeof AuthenticatedResellerRouteRoute
     }
     '/_authenticated/reseller/settings': {
@@ -1830,6 +1850,7 @@ interface AuthenticatedResellerRouteRouteChildren {
   AuthenticatedResellerPayoutsRoute: typeof AuthenticatedResellerPayoutsRoute
   AuthenticatedResellerProfileRoute: typeof AuthenticatedResellerProfileRoute
   AuthenticatedResellerSettingsRoute: typeof AuthenticatedResellerSettingsRoute
+  AuthenticatedResellerStaffRoute: typeof AuthenticatedResellerStaffRoute
   AuthenticatedResellerSubscriptionRoute: typeof AuthenticatedResellerSubscriptionRoute
   AuthenticatedResellerSupportRoute: typeof AuthenticatedResellerSupportRoute
   AuthenticatedResellerThemeRoute: typeof AuthenticatedResellerThemeRoute
@@ -1855,6 +1876,7 @@ const AuthenticatedResellerRouteRouteChildren: AuthenticatedResellerRouteRouteCh
     AuthenticatedResellerPayoutsRoute: AuthenticatedResellerPayoutsRoute,
     AuthenticatedResellerProfileRoute: AuthenticatedResellerProfileRoute,
     AuthenticatedResellerSettingsRoute: AuthenticatedResellerSettingsRoute,
+    AuthenticatedResellerStaffRoute: AuthenticatedResellerStaffRoute,
     AuthenticatedResellerSubscriptionRoute:
       AuthenticatedResellerSubscriptionRoute,
     AuthenticatedResellerSupportRoute: AuthenticatedResellerSupportRoute,
