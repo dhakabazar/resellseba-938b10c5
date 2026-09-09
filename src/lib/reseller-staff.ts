@@ -160,7 +160,7 @@ export async function updateResellerStaff(input: {
     _permissions: input.permissions ?? null,
     _active: input.active ?? null,
     _password: input.password ?? null,
-  });
+  } as never);
   if (error) throw new Error(error.message);
 }
 
