@@ -120,12 +120,43 @@ function ResellerLayout() {
   const { user, roles, loading } = useAuth();
   const { required: needsVerify, loading: verifyLoading } = useVerification();
   const nav = useNavigate();
+  const pathname = useLocation({ select: (l) => l.pathname });
+  const { isOwner, isStaff, staff, can } = useResellerAccess();
   const [storeName, setStoreName] = useState("My store");
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [storeCode, setStoreCode] = useState<string | null>(null);
   const [primary, setPrimary] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [approved, setApproved] = useState<boolean | null>(null);
+
+  const menu = filterNav(NAV, isOwner, can);
+  const firstAllowed = (() => {
+    for (const e of menu) {
+      const g = e as { items?: { to?: string }[] };
+      if (g.items) {
+        const hit = g.items.find((i) => i.to?.startsWith("/reseller"));
+        if (hit?.to) return hit.to;
+        continue;
+      }
+      const to = (e as { to?: string }).to;
+      if (to?.startsWith("/reseller")) return to;
+    }
+    return null;
+  })();
+
+  // Reseller staff may only open the menus their owner allowed.
+  useEffect(() => {
+    if (!isStaff || loading) return;
+    if (pathname === "/reseller/staff") {
+      nav({ to: (firstAllowed ?? "/reseller") as never, replace: true });
+      return;
+    }
+    const needed = RESELLER_ROUTE_PERMISSION[pathname];
+    if (needed && !can(needed) && firstAllowed && firstAllowed !== pathname) {
+      nav({ to: firstAllowed as never, replace: true });
+    }
+  }, [isStaff, loading, pathname, can, firstAllowed, nav]);
+
 
   useEffect(() => {
     if (loading || verifyLoading || !user) return;
