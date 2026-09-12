@@ -1,4 +1,4 @@
-import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { canAccessResellerPanel } from "@/lib/reseller-status";
 
@@ -25,6 +25,8 @@ import {
   ListTree,
   CreditCard,
   Crown,
+  UserCog,
+
 
 
 } from "lucide-react";
@@ -37,6 +39,7 @@ import { getGlobalSettings, getMyReseller } from "@/lib/app-data";
 import { getPanelBootstrapPayload } from "@/lib/panel-bootstrap";
 import { consumeImpersonationReturnTarget } from "@/lib/impersonation";
 import { SubscriptionGate } from "@/components/subscription-lock";
+import { RESELLER_ROUTE_PERMISSION, useResellerAccess } from "@/lib/reseller-staff";
 
 export const Route = createFileRoute("/_authenticated/reseller")({
   component: ResellerLayout,
@@ -85,22 +88,75 @@ const NAV: NavEntry[] = [
       { label: "Visitors", to: "/reseller/visitors", icon: <Activity className="h-4 w-4" /> },
     ],
   },
+  { label: "My staff", to: "/reseller/staff", icon: <UserCog className="h-4 w-4" />, ownerOnly: true } as NavEntry,
   { label: "My package", to: "/reseller/subscription", icon: <Crown className="h-4 w-4" /> },
   { label: "My profile", to: "/reseller/profile", icon: <UserCircle className="h-4 w-4" /> },
   { label: "Support", to: "/reseller/support", icon: <Headphones className="h-4 w-4" /> },
 ];
+
+/** Hides menu entries a reseller staff account has no permission for. */
+function filterNav(nav: NavEntry[], isOwner: boolean, can: (key?: string) => boolean): NavEntry[] {
+  const keep = (entry: any) => {
+    if (entry.ownerOnly) return isOwner;
+    if (entry.external) return true;
+    return can(RESELLER_ROUTE_PERMISSION[entry.to as string]);
+  };
+  const out: NavEntry[] = [];
+  for (const entry of nav) {
+    const group = entry as { items?: any[] };
+    if (group.items) {
+      const items = group.items.filter(keep);
+      if (items.length) out.push({ ...(entry as any), items } as NavEntry);
+      continue;
+    }
+    if (keep(entry)) out.push(entry);
+  }
+  return out;
+}
+
 
 
 function ResellerLayout() {
   const { user, roles, loading } = useAuth();
   const { required: needsVerify, loading: verifyLoading } = useVerification();
   const nav = useNavigate();
+  const pathname = useLocation({ select: (l) => l.pathname });
+  const { isOwner, isStaff, staff, can } = useResellerAccess();
   const [storeName, setStoreName] = useState("My store");
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [storeCode, setStoreCode] = useState<string | null>(null);
   const [primary, setPrimary] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [approved, setApproved] = useState<boolean | null>(null);
+
+  const menu = filterNav(NAV, isOwner, can);
+  const firstAllowed = (() => {
+    for (const e of menu) {
+      const g = e as { items?: { to?: string }[] };
+      if (g.items) {
+        const hit = g.items.find((i) => i.to?.startsWith("/reseller"));
+        if (hit?.to) return hit.to;
+        continue;
+      }
+      const to = (e as { to?: string }).to;
+      if (to?.startsWith("/reseller")) return to;
+    }
+    return null;
+  })();
+
+  // Reseller staff may only open the menus their owner allowed.
+  useEffect(() => {
+    if (!isStaff || loading) return;
+    if (pathname === "/reseller/staff") {
+      nav({ to: (firstAllowed ?? "/reseller") as never, replace: true });
+      return;
+    }
+    const needed = RESELLER_ROUTE_PERMISSION[pathname];
+    if (needed && !can(needed) && firstAllowed && firstAllowed !== pathname) {
+      nav({ to: firstAllowed as never, replace: true });
+    }
+  }, [isStaff, loading, pathname, can, firstAllowed, nav]);
+
 
   useEffect(() => {
     if (loading || verifyLoading || !user) return;
@@ -151,6 +207,21 @@ function ResellerLayout() {
   useBrandingTheme(primary);
 
 
+  // A staff login the owner switched off keeps a clear message instead of the
+  // reseller signup form.
+  if (!loading && user && isStaff && staff && !staff.active) {
+    return (
+      <div className="grid min-h-screen place-items-center px-4">
+        <div className="surface-card max-w-sm p-8 text-center">
+          <h1 className="text-lg font-semibold">Access turned off</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            আপনার স্টাফ অ্যাকাউন্টটি বন্ধ করা হয়েছে। স্টোর মালিকের সাথে যোগাযোগ করুন।
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   if (
     loading ||
     !user ||
@@ -167,9 +238,9 @@ function ResellerLayout() {
 
   return (
     <AppShell
-      title="Reseller panel"
+      title={isStaff ? "Store staff panel" : "Reseller panel"}
       brand={{ name: storeName, sub: storeCode ? `/${storeCode}` : "Reseller", logoUrl }}
-      nav={NAV}
+      nav={menu}
       user={{
         name: storeName || (user.user_metadata?.full_name ?? "Reseller"),
         email: user.email ?? "",

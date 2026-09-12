@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/use-auth";
+import { getMyReseller } from "@/lib/app-data";
 import { PageHeader, StatCard } from "@/components/ui-kit";
 import { Loader2, Wallet, TrendingUp, Clock, CheckCircle2, Pencil, Save, ShieldCheck, History, Banknote } from "lucide-react";
 import { toast } from "sonner";
@@ -57,11 +58,16 @@ function PayoutsPage() {
 
   async function load() {
     setLoading(true);
-    const { data: r } = await supabase
-      .from("resellers")
-      .select("id,payout_method,payout_account_name,payout_account_number,payout_bank_name,payout_branch,payout_routing")
-      .eq("user_id", user!.id)
-      .maybeSingle();
+    // Store staff accounts have no `resellers.user_id` row of their own — the
+    // shared lookup resolves the store they belong to.
+    const mine = await getMyReseller(user!.id);
+    const { data: r } = mine
+      ? await supabase
+          .from("resellers")
+          .select("id,payout_method,payout_account_name,payout_account_number,payout_bank_name,payout_branch,payout_routing")
+          .eq("id", mine.id)
+          .maybeSingle()
+      : { data: null };
     if (!r) return setLoading(false);
     setRid(r.id);
     setProfile({
