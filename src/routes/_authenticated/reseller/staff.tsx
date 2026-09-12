@@ -306,11 +306,11 @@ function ResellerStaffPage() {
       </AppModal>
 
       <ConfirmModal
-        open={!!removing}
+        isOpen={!!removing}
         onClose={() => setRemoving(null)}
         title="Delete staff account?"
         description={`${removing?.full_name || removing?.email} আর লগইন করতে পারবে না।`}
-        confirmLabel="Delete"
+        confirmText="Delete"
         onConfirm={async () => {
           if (!removing) return;
           try {
