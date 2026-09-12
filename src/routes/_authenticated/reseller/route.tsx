@@ -207,6 +207,21 @@ function ResellerLayout() {
   useBrandingTheme(primary);
 
 
+  // A staff login the owner switched off keeps a clear message instead of the
+  // reseller signup form.
+  if (!loading && user && isStaff && staff && !staff.active) {
+    return (
+      <div className="grid min-h-screen place-items-center px-4">
+        <div className="surface-card max-w-sm p-8 text-center">
+          <h1 className="text-lg font-semibold">Access turned off</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            আপনার স্টাফ অ্যাকাউন্টটি বন্ধ করা হয়েছে। স্টোর মালিকের সাথে যোগাযোগ করুন।
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   if (
     loading ||
     !user ||
@@ -223,9 +238,9 @@ function ResellerLayout() {
 
   return (
     <AppShell
-      title="Reseller panel"
+      title={isStaff ? "Store staff panel" : "Reseller panel"}
       brand={{ name: storeName, sub: storeCode ? `/${storeCode}` : "Reseller", logoUrl }}
-      nav={NAV}
+      nav={menu}
       user={{
         name: storeName || (user.user_metadata?.full_name ?? "Reseller"),
         email: user.email ?? "",

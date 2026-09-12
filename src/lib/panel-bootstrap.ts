@@ -50,6 +50,14 @@ export type PanelBootstrap = {
     grace_days?: number;
     trial_days?: number;
   } | null;
+  /** Set when the signed-in user is a staff account of a reseller store. */
+  reseller_staff?: {
+    id: string;
+    reseller_id: string;
+    full_name: string | null;
+    permissions: string[];
+    active: boolean;
+  } | null;
   reseller_settings: { logo_url: string | null; primary_color: string | null } | null;
   deposits: { id: string; amount: number; method: string | null; reference: string | null; note: string | null; created_at: string }[];
   notices: any[];
