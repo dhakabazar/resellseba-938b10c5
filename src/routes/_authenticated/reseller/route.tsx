@@ -85,10 +85,32 @@ const NAV: NavEntry[] = [
       { label: "Visitors", to: "/reseller/visitors", icon: <Activity className="h-4 w-4" /> },
     ],
   },
+  { label: "My staff", to: "/reseller/staff", icon: <UserCog className="h-4 w-4" />, ownerOnly: true },
   { label: "My package", to: "/reseller/subscription", icon: <Crown className="h-4 w-4" /> },
   { label: "My profile", to: "/reseller/profile", icon: <UserCircle className="h-4 w-4" /> },
   { label: "Support", to: "/reseller/support", icon: <Headphones className="h-4 w-4" /> },
 ];
+
+/** Hides menu entries a reseller staff account has no permission for. */
+function filterNav(nav: NavEntry[], isOwner: boolean, can: (key?: string) => boolean): NavEntry[] {
+  const keep = (entry: any) => {
+    if (entry.ownerOnly) return isOwner;
+    if (entry.external) return true;
+    return can(RESELLER_ROUTE_PERMISSION[entry.to as string]);
+  };
+  const out: NavEntry[] = [];
+  for (const entry of nav) {
+    const group = entry as { items?: any[] };
+    if (group.items) {
+      const items = group.items.filter(keep);
+      if (items.length) out.push({ ...(entry as any), items } as NavEntry);
+      continue;
+    }
+    if (keep(entry)) out.push(entry);
+  }
+  return out;
+}
+
 
 
 function ResellerLayout() {
