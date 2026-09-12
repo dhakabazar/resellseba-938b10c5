@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/use-auth";
+import { getMyReseller } from "@/lib/app-data";
 import { PageHeader, StatCard } from "@/components/ui-kit";
 import { Loader2, Wallet, TrendingUp, Clock, CheckCircle2, Pencil, Save, ShieldCheck, History, Banknote } from "lucide-react";
 import { toast } from "sonner";
