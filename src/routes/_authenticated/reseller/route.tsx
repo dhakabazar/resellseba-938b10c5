@@ -25,6 +25,8 @@ import {
   ListTree,
   CreditCard,
   Crown,
+  UserCog,
+
 
 
 } from "lucide-react";
@@ -37,6 +39,7 @@ import { getGlobalSettings, getMyReseller } from "@/lib/app-data";
 import { getPanelBootstrapPayload } from "@/lib/panel-bootstrap";
 import { consumeImpersonationReturnTarget } from "@/lib/impersonation";
 import { SubscriptionGate } from "@/components/subscription-lock";
+import { RESELLER_ROUTE_PERMISSION, useResellerAccess } from "@/lib/reseller-staff";
 
 export const Route = createFileRoute("/_authenticated/reseller")({
   component: ResellerLayout,
@@ -85,7 +88,7 @@ const NAV: NavEntry[] = [
       { label: "Visitors", to: "/reseller/visitors", icon: <Activity className="h-4 w-4" /> },
     ],
   },
-  { label: "My staff", to: "/reseller/staff", icon: <UserCog className="h-4 w-4" />, ownerOnly: true },
+  { label: "My staff", to: "/reseller/staff", icon: <UserCog className="h-4 w-4" />, ownerOnly: true } as NavEntry,
   { label: "My package", to: "/reseller/subscription", icon: <Crown className="h-4 w-4" /> },
   { label: "My profile", to: "/reseller/profile", icon: <UserCircle className="h-4 w-4" /> },
   { label: "Support", to: "/reseller/support", icon: <Headphones className="h-4 w-4" /> },
