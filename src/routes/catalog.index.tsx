@@ -116,7 +116,7 @@ function CatalogIndex() {
   return (
     <div>
       {/* ───────────── Hero ───────────── */}
-      <section className="relative isolate">
+      <section className="relative">
         <div className="pointer-events-none absolute inset-0 z-0 catalog-hero">
           {banner && <img src={banner} alt="" aria-hidden className="h-full w-full object-cover opacity-25 mix-blend-luminosity" />}
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background" />
@@ -139,7 +139,7 @@ function CatalogIndex() {
           </p>
 
           <form
-            className="relative mx-auto mt-8 max-w-xl"
+            className="relative z-20 mx-auto mt-8 max-w-xl"
             onSubmit={(e) => {
               e.preventDefault();
               setOpenSug(false);
