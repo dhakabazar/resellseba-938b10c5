@@ -116,7 +116,7 @@ export function Hero() {
           <div className="mt-8">{buttons}</div>
           {note && <p className={cx("mt-3 text-xs", muted)}>{note}</p>}
         </div>
-        <div className="aspect-[4/5] overflow-hidden rounded-[var(--st-radius)] bg-[var(--st-bg-alt)]">
+        <div className="aspect-[5/4] overflow-hidden rounded-[var(--st-radius)] bg-[var(--st-bg-alt)]">
           {media && <img src={media} alt={name} className="h-full w-full object-cover" />}
         </div>
       </section>
@@ -325,7 +325,7 @@ export function CategoryStrip() {
                   className="h-full w-full object-cover opacity-70 transition-all duration-700 group-hover:scale-105 group-hover:opacity-100"
                 />
               )}
-              <span className="absolute inset-0 grid place-items-center bg-black/25 text-center">
+              <span className="absolute inset-0 grid place-items-center bg-gradient-to-t from-black/85 via-black/45 to-black/20 text-center">
                 <span>
                   <span className="block text-[12px] uppercase tracking-[0.26em] text-white">{c.name}</span>
                   {c.product_count != null && (

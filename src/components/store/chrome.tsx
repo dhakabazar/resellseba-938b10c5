@@ -423,12 +423,14 @@ export function StoreHeader() {
         </header>
       ) : v === "editorial" ? (
         <header className={cx("border-b bg-[var(--st-bg)]", borderc)}>
-          <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-5">
-            <Logo />
-            <div className="hidden md:block">
+          <div className="mx-auto flex max-w-6xl items-center justify-between gap-6 px-5 py-5">
+            <div className="shrink-0">
+              <Logo />
+            </div>
+            <div className="hidden min-w-0 flex-1 justify-center md:flex">
               <CategoryNav variant="row" />
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex shrink-0 items-center gap-2">
               <SearchBox className="hidden w-56 lg:block" />
               <CartButton />
               <button className="md:hidden" aria-label="Menu" onClick={() => setOpen((o) => !o)}>
