@@ -36,7 +36,7 @@ export const Route = createFileRoute("/s/$code/")({
 function StoreHome() {
   const { q } = Route.useSearch();
   const store = useStore();
-  const { code, listings, theme, name, content } = store;
+  const { code, listings, name, content } = store;
   const [latestVisible, setLatestVisible] = useState(20);
 
   const results = useMemo(() => {

@@ -52,7 +52,6 @@ function CategoryPage() {
       <div className="mx-auto max-w-6xl px-4 py-10">
         <SectionHead
           title={category.name}
-          subtitle={`${rows.length} product${rows.length === 1 ? "" : "s"} available`}
           action={
             <select
               value={sort}
