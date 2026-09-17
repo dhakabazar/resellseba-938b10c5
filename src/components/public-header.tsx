@@ -115,27 +115,29 @@ export function PublicHeader({
           <Brand siteName={siteName} logoUrl={logoUrl} />
         </Link>
 
-        <nav className="hidden items-center gap-5 text-[13px] font-semibold lg:flex">
-          {navLinks.map((l) =>
-            l.to ? (
-              <Link
-                key={l.to}
-                to={l.to}
-                className={
-                  isCatalog
-                    ? "inline-flex items-center gap-1.5 rounded-lg border border-border px-4 py-2 text-sm font-semibold text-foreground hover:border-primary/50 hover:text-primary"
-                    : "font-bold text-primary hover:opacity-80"
-                }
-              >
-                {l.icon} {l.label}
-              </Link>
-            ) : (
-              <a key={l.href} href={l.href} className="whitespace-nowrap text-muted-foreground transition-colors hover:text-primary">
-                {l.icon} {l.label}
-              </a>
-            ),
-          )}
-        </nav>
+        {navLinks.length > 0 && (
+          <nav className="hidden items-center gap-5 text-[13px] font-semibold lg:flex">
+            {navLinks.map((l) =>
+              l.to ? (
+                <Link
+                  key={l.to}
+                  to={l.to}
+                  className={
+                    isCatalog
+                      ? "inline-flex items-center gap-1.5 rounded-lg border border-border px-4 py-2 text-sm font-semibold text-foreground hover:border-primary/50 hover:text-primary"
+                      : "font-bold text-primary hover:opacity-80"
+                  }
+                >
+                  {l.icon} {l.label}
+                </Link>
+              ) : (
+                <a key={l.href} href={l.href} className="whitespace-nowrap text-muted-foreground transition-colors hover:text-primary">
+                  {l.icon} {l.label}
+                </a>
+              ),
+            )}
+          </nav>
+        )}
 
 
 
