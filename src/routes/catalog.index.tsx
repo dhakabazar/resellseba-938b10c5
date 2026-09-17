@@ -1,13 +1,13 @@
-import { inCategory } from "@/lib/product-categories";
+
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { getCatalogFilters, getCatalogPage } from "@/lib/catalog.functions";
 import { CopyBtn, useCatalogBrand } from "@/components/catalog/shell";
 import { ImagePickerButton } from "@/components/catalog/image-picker";
 import { ProductCodeChip } from "@/components/product-code";
 import { bdt } from "@/lib/finance-report";
-import { Pagination, usePaginated } from "@/components/data-list";
+import { Pagination } from "@/components/data-list";
 import { ArrowRight, Check, ChevronDown, LayoutGrid, Loader2, Search, X } from "lucide-react";
 
 type Search = { category?: string; brand?: string; q?: string; page?: number };
@@ -154,7 +154,7 @@ function CatalogIndex() {
           </h1>
           <p className="mx-auto mt-4 max-w-xl text-sm text-white/80 sm:text-base">
             {activeCat
-              ? `${rows.length} টি প্রোডাক্ট এই ক্যাটাগরিতে`
+              ? `${total} টি প্রোডাক্ট এই ক্যাটাগরিতে`
               : "ছবি, বিবরণ, হোলসেল ও সেল প্রাইস — লিস্ট করার আগেই আপনার প্রফিট দেখে নিন।"}
           </p>
 
