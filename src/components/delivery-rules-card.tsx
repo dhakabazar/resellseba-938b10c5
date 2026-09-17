@@ -41,15 +41,15 @@ export function DeliveryRulesCard({
   useEffect(() => {
     (async () => {
       const [p, b, c] = await Promise.all([
-        supabase.from("products").select("id,name,product_code").order("name"),
-        supabase.from("brands").select("id,name").order("name"),
-        supabase.from("categories").select("id,name").order("name"),
+        fetchAllSafe(() => supabase.from("products").select("id,name,product_code").order("name")),
+        fetchAllSafe(() => supabase.from("brands").select("id,name").order("name")),
+        fetchAllSafe(() => supabase.from("categories").select("id,name").order("name")),
       ]);
       setProducts(
-        (p.data ?? []).map((r: any) => ({ id: r.id, label: r.product_code ? `${r.name} · ${r.product_code}` : r.name })),
+        p.map((r: any) => ({ id: r.id, label: r.product_code ? `${r.name} · ${r.product_code}` : r.name })),
       );
-      setBrands((b.data ?? []).map((r: any) => ({ id: r.id, label: r.name })));
-      setCategories((c.data ?? []).map((r: any) => ({ id: r.id, label: r.name })));
+      setBrands(b.map((r: any) => ({ id: r.id, label: r.name })));
+      setCategories(c.map((r: any) => ({ id: r.id, label: r.name })));
     })();
   }, []);
 

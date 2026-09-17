@@ -73,13 +73,15 @@ export function useDepositStatus(resellerId: string | null | undefined) {
         .select("deposit_required,deposit_required_amount,frozen_amount")
         .eq("id", resellerId)
         .maybeSingle(),
-      supabase
-        .from("reseller_deposits")
-        .select("id,amount,method,reference,note,created_at")
-        .eq("reseller_id", resellerId)
-        .order("created_at", { ascending: false }),
+      fetchAllSafe<DepositRow>(() =>
+        supabase
+          .from("reseller_deposits")
+          .select("id,amount,method,reference,note,created_at")
+          .eq("reseller_id", resellerId)
+          .order("created_at", { ascending: false }),
+      ),
     ]);
-    setStatus(buildDepositStatus(rRes.data as any, (dRes.data ?? []) as DepositRow[]));
+    setStatus(buildDepositStatus(rRes.data as any, dRes as DepositRow[]));
     setLoading(false);
   }, [resellerId]);
 

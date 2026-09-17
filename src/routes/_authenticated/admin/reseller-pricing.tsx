@@ -58,20 +58,20 @@ function ResellerPricingPage() {
 
   useEffect(() => {
     (async () => {
-      const [{ data: rs }, { data: ps }] = await Promise.all([
-        supabase
-          .from("resellers")
-          .select("id,business_name,code")
-          .order("business_name", { ascending: true }),
-        supabase
-          .from("products")
-          .select("id,name,product_code,og_image_url,reseller_price,packaging_cost,suggested_price")
-          .eq("is_active", true)
-          .order("created_at", { ascending: false })
-          ,
+      const [rs, ps] = await Promise.all([
+        fetchAllSafe(() =>
+          supabase.from("resellers").select("id,business_name,code").order("business_name", { ascending: true }),
+        ),
+        fetchAllSafe(() =>
+          supabase
+            .from("products")
+            .select("id,name,product_code,og_image_url,reseller_price,packaging_cost,suggested_price")
+            .eq("is_active", true)
+            .order("created_at", { ascending: false }),
+        ),
       ]);
-      setResellers((rs ?? []) as Reseller[]);
-      setProducts((ps ?? []) as Product[]);
+      setResellers(rs as Reseller[]);
+      setProducts(ps as Product[]);
       setLoading(false);
     })();
   }, []);
@@ -79,13 +79,11 @@ function ResellerPricingPage() {
   const loadOverrides = async (rid: string) => {
     if (!rid) return setOverrides([]);
     setRowLoading(true);
-    const { data, error } = await supabase
-      .from("reseller_product_prices")
-      .select("id,product_id,reseller_price,note")
-      .eq("reseller_id", rid);
+    const data = await fetchAllSafe(() =>
+      supabase.from("reseller_product_prices").select("id,product_id,reseller_price,note").eq("reseller_id", rid),
+    );
     setRowLoading(false);
-    if (error) return toast.error(error.message);
-    setOverrides((data ?? []) as Override[]);
+    setOverrides(data as Override[]);
     setDraft({});
   };
 
