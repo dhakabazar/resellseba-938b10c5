@@ -274,7 +274,7 @@ function CatalogIndex() {
         </div>
       </section>
 
-      {!data ? (
+      {!pageData ? (
         <div className="grid place-items-center py-24">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
