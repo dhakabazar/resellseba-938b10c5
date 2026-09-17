@@ -68,7 +68,7 @@ export const EXPENSE_CATEGORIES = [
 ] as const;
 
 export const ADMIN_PROFIT_HINT =
-  "Admin profit = money received for the order − what the reseller finally earns − admin buying price of the products the customer kept. Advance already collected counts as received (the same way the transaction report does it). Delivery charge and packaging are not deducted twice here — record them once in Expenses and the net profit takes them out.";
+  "Admin profit = money received for the order − the reseller's margin on that order − admin buying price of the products the customer kept. An advance is part of the order value, not extra income: if the reseller holds it, it is taken out of their payout only — it never adds to admin profit. Delivery charge and packaging are not deducted twice here — record them once in Expenses and the net profit takes them out.";
 
 /**
  * Quantity of an item the customer actually kept.
