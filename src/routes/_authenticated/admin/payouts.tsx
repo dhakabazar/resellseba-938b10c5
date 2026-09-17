@@ -8,7 +8,7 @@ import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
 import { useAuth } from "@/lib/use-auth";
 import { DataToolbar, Pagination, usePaginated } from "@/components/data-list";
 import { toast } from "sonner";
-import { PayoutOverview } from "@/components/payout-overview";
+import { PayoutOverview, ResellerPayoutSummary } from "@/components/payout-overview";
 
 export const Route = createFileRoute("/_authenticated/admin/payouts")({
   validateSearch: (s: Record<string, unknown>): { reseller?: string; status?: string } => ({
@@ -97,6 +97,8 @@ function AdminPayouts() {
   const [resellerFilter, setResellerFilter] = useState(sp.reseller ?? "");
   const [query, setQuery] = useState("");
   const [tab, setTab] = useState<"requests" | "report">("requests");
+  const [reportSearch, setReportSearch] = useState("");
+  const [openReport, setOpenReport] = useState<string | null>(null);
   const [perPage, setPerPage] = useState(20);
   const [page, setPage] = useState(1);
   const [action, setAction] = useState<{ row: Row; status: "approved" | "paid" | "rejected" } | null>(null);
