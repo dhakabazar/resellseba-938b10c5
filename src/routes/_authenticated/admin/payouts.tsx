@@ -187,6 +187,23 @@ function AdminPayouts() {
     <div>
       <PageHeader title="Payout Management" description="Review withdrawal requests, check payout accounts and process payments." />
 
+      <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
+        {([["requests", "Withdrawal requests"], ["report", "Reseller report"]] as const).map(([key, label]) => (
+          <button
+            key={key}
+            onClick={() => setTab(key)}
+            className={
+              "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors " +
+              (tab === key ? "border-transparent bg-primary text-primary-foreground" : "hover:bg-muted")
+            }
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "report" ? <PayoutOverview /> : <>
+
       <DataToolbar
         search={query}
         onSearch={setQuery}
