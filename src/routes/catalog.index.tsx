@@ -213,7 +213,7 @@ function CatalogIndex() {
               type="button"
               onClick={() => setCatsOpen((v) => !v)}
               aria-expanded={catsOpen}
-              className="btn-brand-4 mt-6 flex w-full items-center justify-between gap-2 rounded-2xl px-4 py-3.5 text-left sm:hidden"
+              className="btn-brand-4 mt-6 flex w-full items-center justify-between gap-2 rounded-2xl px-4 py-3.5 text-left"
             >
               <span className="flex flex-col gap-0.5">
                 <span className="flex items-center gap-2 text-sm font-black">
