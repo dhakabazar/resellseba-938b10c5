@@ -50,17 +50,15 @@ export function RiderFollowupPage({ showReseller }: { showReseller: boolean }) {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("orders")
-      .select(SELECT)
-      .not("rider_assigned_at", "is", null)
-      .order("rider_assigned_at", { ascending: true });
+    const data = await fetchAllSafe(() =>
+      supabase
+        .from("orders")
+        .select(SELECT)
+        .not("rider_assigned_at", "is", null)
+        .order("rider_assigned_at", { ascending: true }),
+    );
     setLoading(false);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    setRows((data ?? []) as unknown as RiderRow[]);
+    setRows(data as unknown as RiderRow[]);
   }, []);
 
   useEffect(() => {
