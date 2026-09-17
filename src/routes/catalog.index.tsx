@@ -294,7 +294,7 @@ function CatalogIndex() {
                   ))}
                 </div>
                 <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-                  <span className="text-xs font-semibold text-muted-foreground">{rows.length} products</span>
+                  <span className="text-xs font-semibold text-muted-foreground">{total} products</span>
                   <select
                     value={perPage}
                     onChange={(e) => {
@@ -311,7 +311,7 @@ function CatalogIndex() {
                     ))}
                   </select>
                 </div>
-                <Pagination page={currentPage} perPage={perPage} total={rows.length} onPage={setPage} />
+                <Pagination page={currentPage} perPage={perPage} total={total} onPage={setPage} />
               </>
             )}
           </section>
