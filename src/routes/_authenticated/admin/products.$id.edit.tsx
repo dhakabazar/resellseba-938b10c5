@@ -88,7 +88,7 @@ function EditProduct() {
       setSku(p.sku ?? "");
       setDescription(p.description ?? "");
       setBrandId(p.brand_id ?? "");
-      setCategoryId(p.category_id ?? "");
+      setCategoryIds(await loadProductCategories(id, p.category_id));
       setBuying(String(p.buying_price ?? 0));
       setResellerPrice(String(anyP.reseller_price ?? p.buying_price ?? 0));
       setPackaging(String(p.packaging_cost ?? 0));
