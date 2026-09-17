@@ -32,6 +32,7 @@ import {
   History,
 } from "lucide-react";
 import { toast } from "sonner";
+import { fetchAllSafe } from "@/lib/fetch-all";
 
 export const Route = createFileRoute("/_authenticated/admin/agent-payouts")({
   component: AgentPayoutsPage,
@@ -69,13 +70,14 @@ function AgentPayoutsPage() {
     setLoading(true);
     const [a, r, o, p] = await Promise.all([
       supabase.from("agents").select("*").order("display_name"),
-      supabase.from("resellers").select("id,business_name,code,status,contact_phone,agent_id"),
-      supabase
-        .from("orders")
-        .select("id,reseller_id,status,created_at,total,shipping_cost,sa_cost_total,received_amount,packaging_total")
-        .order("created_at", { ascending: false })
-        ,
-      supabase.from("agent_payouts").select("*").order("created_at", { ascending: false }),
+      fetchAllSafe(() => supabase.from("resellers").select("id,business_name,code,status,contact_phone,agent_id")).then((data) => ({ data, error: null })),
+      fetchAllSafe(() =>
+        supabase
+          .from("orders")
+          .select("id,reseller_id,status,created_at,total,shipping_cost,sa_cost_total,received_amount,packaging_total")
+          .order("created_at", { ascending: false }),
+      ).then((data) => ({ data, error: null as any })),
+      fetchAllSafe(() => supabase.from("agent_payouts").select("*").order("created_at", { ascending: false })).then((data) => ({ data, error: null })),
     ]);
     if (o.error) toast.error(o.error.message);
     const { data: unitRows } = await supabase.rpc("agent_order_units");
@@ -83,7 +85,7 @@ function AgentPayoutsPage() {
       ((unitRows ?? []) as Array<{ order_id: string; units: number }>).map((u) => [u.order_id, Number(u.units) || 0]),
     );
     const withUnits = ((o.data ?? []) as AgentOrder[]).map((row) => ({ ...row, units: unitMap.get(row.id) ?? 0 }));
-    if (p.error) toast.error(p.error.message);
+    if (p.error) toast.error(String((p.error as any).message));
     setAgents((a.data ?? []) as unknown as Agent[]);
     setResellers((r.data ?? []) as ResellerLite[]);
     setOrders(withUnits);

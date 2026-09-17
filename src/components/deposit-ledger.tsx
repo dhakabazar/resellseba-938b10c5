@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Loader2, Pencil, Trash2, Search, X, Wallet } from "lucide-react";
 import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
 import { SearchableSelect } from "@/components/searchable-select";
+import { fetchAllSafe } from "@/lib/fetch-all";
 
 export type DepositLedgerRow = {
   id: string;
@@ -50,9 +51,8 @@ export function DepositLedger({
       .order("created_at", { ascending: false })
       ;
     if (resellerId) q = q.eq("reseller_id", resellerId);
-    const { data, error } = await q;
-    if (error) toast.error(error.message);
-    setRows((data ?? []) as DepositLedgerRow[]);
+    const data = await fetchAllSafe(() => q);
+    setRows(data as DepositLedgerRow[]);
     setLoading(false);
   }
 
@@ -62,11 +62,7 @@ export function DepositLedger({
 
   useEffect(() => {
     if (resellerId) return;
-    void supabase
-      .from("resellers")
-      .select("id,business_name,code")
-      .order("business_name")
-      .then(({ data }) => {
+    void fetchAllSafe(() => supabase.from("resellers").select("id,business_name,code").order("business_name")).then((data) => {
         const map: Record<string, string> = {};
         const list = (data ?? []).map((r: any) => {
           map[r.id] = `${r.business_name} · ${r.code}`;
