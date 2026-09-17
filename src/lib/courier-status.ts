@@ -35,53 +35,73 @@ export type OrderStatus =
 
 export type CourierProvider = "steadfast" | "pathao" | "carrybee" | "manual";
 
-type StatusMapping = { ship: ShipmentStatus; order: OrderStatus; label: string };
+/**
+ * `order: null` means the courier event is recorded but the order status is NOT
+ * touched — only the four courier-driven states below ever move an order:
+ *   To Courier · Delivered · Pending Partial · Pending Return
+ * `rider: true` marks the rider-assignment phase (Rider Followup menu).
+ */
+type StatusMapping = {
+  ship: ShipmentStatus;
+  order: OrderStatus | null;
+  label: string;
+  rider?: boolean;
+};
 
 /** Steadfast delivery statuses (API v1). */
 export const STEADFAST_STATUS_MAP: Record<string, StatusMapping> = {
-  in_review: { ship: "booked", order: "shipped", label: "In review" },
+  "in-review": { ship: "booked", order: null, label: "In review" },
   pending: { ship: "in_transit", order: "shipped", label: "Pending / on the way" },
-  hold: { ship: "in_transit", order: "shipped", label: "On hold" },
-  delivered_approval_pending: { ship: "in_transit", order: "shipped", label: "Delivered (approval pending)" },
-  partial_delivered_approval_pending: {
+  hold: { ship: "in_transit", order: null, label: "On hold" },
+  "delivered-approval-pending": { ship: "in_transit", order: null, label: "Delivered (approval pending)" },
+  "partial-delivered-approval-pending": {
     ship: "in_transit",
-    order: "shipped",
+    order: null,
     label: "Partial delivered (approval pending)",
   },
-  cancelled_approval_pending: { ship: "in_transit", order: "pending_return", label: "Cancelled (approval pending)" },
-  unknown_approval_pending: { ship: "in_transit", order: "shipped", label: "Unknown (approval pending)" },
+  "cancelled-approval-pending": { ship: "in_transit", order: null, label: "Cancelled (approval pending)" },
+  "unknown-approval-pending": { ship: "in_transit", order: null, label: "Unknown (approval pending)" },
+  "assigned-for-delivery": { ship: "in_transit", order: null, label: "Assigned For Delivery", rider: true },
+  "assigned-to-rider": { ship: "in_transit", order: null, label: "Assigned to rider", rider: true },
+  "ready-for-delivery": { ship: "in_transit", order: null, label: "Ready For Delivery", rider: true },
   delivered: { ship: "delivered", order: "delivered", label: "Delivered" },
-  partial_delivered: { ship: "delivered", order: "pending_partial", label: "Partial delivered" },
+  // money changed but the parcel is not coming back -> Pending Partial
+  "partial-delivered": { ship: "delivered", order: "pending_partial", label: "Partial delivered" },
+  "paid-return": { ship: "in_transit", order: "pending_partial", label: "Paid return" },
   // courier side return — order waits in Pending Return until admin receives it
   cancelled: { ship: "returned", order: "pending_return", label: "Cancelled / returning" },
-  return_requested: { ship: "returned", order: "pending_return", label: "Return requested" },
-  unknown: { ship: "in_transit", order: "shipped", label: "Unknown" },
+  "return-requested": { ship: "returned", order: "pending_return", label: "Return requested" },
+  returned: { ship: "returned", order: "pending_return", label: "Returned (courier)" },
+  unknown: { ship: "in_transit", order: null, label: "Unknown" },
 };
 
 /** Carrybee webhook events (`order.*`), keyed without the `order.` prefix. */
 export const CARRYBEE_STATUS_MAP: Record<string, StatusMapping> = {
-  created: { ship: "booked", order: "shipped", label: "Order created" },
-  "create-failed": { ship: "failed", order: "ready_to_ship", label: "Create failed" },
-  updated: { ship: "booked", order: "shipped", label: "Order updated" },
-  "pickup-requested": { ship: "booked", order: "shipped", label: "Pickup requested" },
-  "assigned-for-pickup": { ship: "booked", order: "shipped", label: "Assigned for pickup" },
+  created: { ship: "booked", order: null, label: "Order created" },
+  "create-failed": { ship: "failed", order: null, label: "Create failed" },
+  updated: { ship: "booked", order: null, label: "Order updated" },
+  "pickup-requested": { ship: "booked", order: null, label: "Pickup requested" },
+  "assigned-for-pickup": { ship: "booked", order: null, label: "Assigned for pickup" },
   picked: { ship: "in_transit", order: "shipped", label: "Picked" },
-  "pickup-failed": { ship: "booked", order: "shipped", label: "Pickup failed" },
-  "pickup-cancelled": { ship: "cancelled", order: "ready_to_ship", label: "Pickup cancelled" },
+  sorted: { ship: "in_transit", order: "shipped", label: "Sorted" },
+  "pickup-failed": { ship: "booked", order: null, label: "Pickup failed" },
+  "pickup-cancelled": { ship: "cancelled", order: null, label: "Pickup cancelled" },
   "at-the-sorting-hub": { ship: "in_transit", order: "shipped", label: "At sorting hub" },
   "on-the-way-to-central-warehouse": { ship: "in_transit", order: "shipped", label: "On the way to central warehouse" },
   "at-central-warehouse": { ship: "in_transit", order: "shipped", label: "At central warehouse" },
-  "in-transit": { ship: "in_transit", order: "shipped", label: "In transit" },
+  "in-transit": { ship: "in_transit", order: "shipped", label: "In Transit" },
   "received-at-last-mile-hub": { ship: "in_transit", order: "shipped", label: "Received at last mile hub" },
-  "assigned-for-delivery": { ship: "in_transit", order: "shipped", label: "Assigned for delivery" },
-  "delivery-on-hold": { ship: "in_transit", order: "shipped", label: "Delivery on hold" },
+  "assigned-for-delivery": { ship: "in_transit", order: null, label: "Assigned For Delivery", rider: true },
+  "assigned-to-rider": { ship: "in_transit", order: null, label: "Assigned to rider", rider: true },
+  "ready-for-delivery": { ship: "in_transit", order: null, label: "Ready For Delivery", rider: true },
+  "delivery-on-hold": { ship: "in_transit", order: null, label: "Delivery on hold" },
   delivered: { ship: "delivered", order: "delivered", label: "Delivered" },
   "partial-delivery": { ship: "delivered", order: "pending_partial", label: "Partial delivered" },
-  "delivery-failed": { ship: "in_transit", order: "pending_return", label: "Delivery failed" },
-  returned: { ship: "returned", order: "pending_return", label: "Returned (courier)" },
-  "paid-return": { ship: "returned", order: "pending_return", label: "Paid return" },
-  exchange: { ship: "in_transit", order: "shipped", label: "Exchange" },
-  paid: { ship: "delivered", order: "delivered", label: "Paid / invoiced" },
+  "paid-return": { ship: "in_transit", order: "pending_partial", label: "Paid Return" },
+  "delivery-failed": { ship: "in_transit", order: null, label: "Delivery failed" },
+  returned: { ship: "returned", order: "pending_return", label: "Return" },
+  exchange: { ship: "in_transit", order: null, label: "Exchange" },
+  paid: { ship: "delivered", order: null, label: "Paid / invoiced" },
   "returned-at-sorting": { ship: "returned", order: "pending_return", label: "Returned at sorting" },
   "returned-in-transit": { ship: "returned", order: "pending_return", label: "Return in transit" },
   "returned-to-merchant": { ship: "returned", order: "pending_return", label: "Returned to merchant" },
@@ -92,45 +112,51 @@ export const CARRYBEE_STATUS_MAP: Record<string, StatusMapping> = {
  * values, keyed without the prefix and with `_`/spaces normalized to `-`.
  */
 export const PATHAO_STATUS_MAP: Record<string, StatusMapping> = {
-  created: { ship: "booked", order: "shipped", label: "Order created" },
-  pending: { ship: "booked", order: "shipped", label: "Pending" },
-  updated: { ship: "booked", order: "shipped", label: "Order updated" },
-  "pickup-requested": { ship: "booked", order: "shipped", label: "Pickup requested" },
-  "assigned-for-pickup": { ship: "booked", order: "shipped", label: "Assigned for pickup" },
+  created: { ship: "booked", order: null, label: "Order created" },
+  pending: { ship: "booked", order: null, label: "Pending" },
+  updated: { ship: "booked", order: null, label: "Order updated" },
+  "pickup-requested": { ship: "booked", order: null, label: "Pickup requested" },
+  "assigned-for-pickup": { ship: "booked", order: null, label: "Assigned for pickup" },
   picked: { ship: "in_transit", order: "shipped", label: "Picked" },
-  "pickup-failed": { ship: "booked", order: "shipped", label: "Pickup failed" },
-  "pickup-cancelled": { ship: "cancelled", order: "ready_to_ship", label: "Pickup cancelled" },
+  "pickup-failed": { ship: "booked", order: null, label: "Pickup failed" },
+  "pickup-cancelled": { ship: "cancelled", order: null, label: "Pickup cancelled" },
   "at-the-sorting-hub": { ship: "in_transit", order: "shipped", label: "At sorting hub" },
   "at-sorting-hub": { ship: "in_transit", order: "shipped", label: "At sorting hub" },
-  "in-transit": { ship: "in_transit", order: "shipped", label: "In transit" },
+  "in-transit": { ship: "in_transit", order: "shipped", label: "In-Transit" },
   "received-at-last-mile-hub": { ship: "in_transit", order: "shipped", label: "Received at last mile hub" },
-  "assigned-for-delivery": { ship: "in_transit", order: "shipped", label: "Assigned for delivery" },
+  "assigned-for-delivery": { ship: "in_transit", order: null, label: "Assigned For Delivery", rider: true },
+  "assigned-to-rider": { ship: "in_transit", order: null, label: "Assigned to rider", rider: true },
+  "ready-for-delivery": { ship: "in_transit", order: null, label: "Ready For Delivery", rider: true },
+  "delivery-man-assigned": { ship: "in_transit", order: null, label: "Assigned to rider", rider: true },
   delivered: { ship: "delivered", order: "delivered", label: "Delivered" },
   "partial-delivery": { ship: "delivered", order: "pending_partial", label: "Partial delivered" },
-  "delivery-failed": { ship: "in_transit", order: "pending_return", label: "Delivery failed" },
-  "on-hold": { ship: "in_transit", order: "shipped", label: "On hold" },
-  paid: { ship: "delivered", order: "delivered", label: "Paid / invoiced" },
-  exchanged: { ship: "in_transit", order: "shipped", label: "Exchanged" },
-  exchange: { ship: "in_transit", order: "shipped", label: "Exchange" },
+  "paid-return": { ship: "in_transit", order: "pending_partial", label: "Paid Return" },
+  "delivery-failed": { ship: "in_transit", order: null, label: "Delivery failed" },
+  "on-hold": { ship: "in_transit", order: null, label: "On hold" },
+  paid: { ship: "delivered", order: null, label: "Paid / invoiced" },
+  exchanged: { ship: "in_transit", order: null, label: "Exchanged" },
+  exchange: { ship: "in_transit", order: null, label: "Exchange" },
   // courier-side return family — order waits in Pending Return until admin receives it
-  returned: { ship: "returned", order: "pending_return", label: "Returned (courier)" },
-  return: { ship: "returned", order: "pending_return", label: "Returned (courier)" },
-  "paid-return": { ship: "returned", order: "pending_return", label: "Paid return" },
+  returned: { ship: "returned", order: "pending_return", label: "Return" },
+  return: { ship: "returned", order: "pending_return", label: "Return" },
+  "return-initiated": { ship: "returned", order: "pending_return", label: "Return initiated" },
   "return-id-created": { ship: "returned", order: "pending_return", label: "Return id created" },
   "return-in-transit": { ship: "returned", order: "pending_return", label: "Return in transit" },
   "returned-to-merchant": { ship: "returned", order: "pending_return", label: "Returned to merchant" },
 };
 
+/**
+ * Provider statuses arrive in every shape: `order.paid-return`, `Paid Return`,
+ * `partial_delivered`. Everything is lowercased and reduced to dashes so one
+ * key matches them all.
+ */
 export function normalizeCourierStatus(provider: string | null | undefined, raw: string | null | undefined) {
-  const key = String(raw ?? "")
+  return String(raw ?? "")
     .trim()
-    .toLowerCase();
-  if (provider === "carrybee") return key.replace(/^order\./, "");
-  if (provider === "pathao")
-    return key
-      .replace(/^(order|store)\./, "")
-      .replace(/[\s_]+/g, "-");
-  return key;
+    .toLowerCase()
+    .replace(/^(order|store|shipment)\./, "")
+    .replace(/[\s_]+/g, "-")
+    .replace(/-+/g, "-");
 }
 
 function statusTable(provider: string | null | undefined) {
@@ -147,8 +173,8 @@ export function mapCourierStatus(
   return (
     statusTable(provider)[key] ?? {
       ship: "in_transit" as ShipmentStatus,
-      order: "shipped" as OrderStatus,
-      label: key ? key.replace(/[-_]/g, " ") : "unknown",
+      order: null,
+      label: key ? key.replace(/-/g, " ") : "unknown",
     }
   );
 }
@@ -166,8 +192,28 @@ export function courierStatusLabel(raw: string | null | undefined, provider?: st
     PATHAO_STATUS_MAP[key]?.label ??
     CARRYBEE_STATUS_MAP[key]?.label ??
     STEADFAST_STATUS_MAP[key]?.label ??
-    key.replace(/[-_]/g, " ")
+    key.replace(/-/g, " ")
   );
+}
+
+/**
+ * Automatic status flow guard.
+ *  · Courier Handover / To Courier  →  To Courier
+ *  · Courier Handover / To Courier  →  Delivered | Pending Partial | Pending Return
+ * Anything else stays where it is — those steps are manual only.
+ */
+const AUTO_FROM_STATUSES: string[] = ["ready_to_ship", "processing", "shipped"];
+
+export function canAutoApplyStatus(current: string, target: OrderStatus | null): boolean {
+  if (!target) return false;
+  if (current === target) return false;
+  if (!AUTO_FROM_STATUSES.includes(current)) return false;
+  return ["shipped", "delivered", "pending_partial", "pending_return"].includes(target);
+}
+
+/** Rider-assignment phase (Rider Followup). */
+export function isRiderCourierStatus(provider: string | null | undefined, raw: string | null | undefined) {
+  return mapCourierStatus(provider, raw).rider === true;
 }
 
 

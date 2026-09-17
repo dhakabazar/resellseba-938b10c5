@@ -29,6 +29,7 @@ import {
 
 
 
+  Bike,
 } from "lucide-react";
 import { AppShell, type NavEntry } from "@/components/AppShell";
 import { ImpersonationBanner } from "@/components/impersonation-banner";
@@ -56,6 +57,7 @@ const NAV: NavEntry[] = [
     ],
   },
   { label: "Orders", to: "/reseller/orders", icon: <ClipboardList className="h-4 w-4" /> },
+  { label: "Rider Followup", to: "/reseller/rider-followup", icon: <Bike className="h-4 w-4" /> },
   { label: "Customers", to: "/reseller/customers", icon: <Users className="h-4 w-4" /> },
 
   {

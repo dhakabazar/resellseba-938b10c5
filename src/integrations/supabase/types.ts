@@ -1173,6 +1173,8 @@ export type Database = {
           reseller_id: string | null
           reseller_note: string | null
           reseller_profit: number
+          rider_assigned_at: string | null
+          rider_status: string | null
           sa_cost_total: number
           settled_at: string | null
           settled_by: string | null
@@ -1215,6 +1217,8 @@ export type Database = {
           reseller_id?: string | null
           reseller_note?: string | null
           reseller_profit?: number
+          rider_assigned_at?: string | null
+          rider_status?: string | null
           sa_cost_total?: number
           settled_at?: string | null
           settled_by?: string | null
@@ -1257,6 +1261,8 @@ export type Database = {
           reseller_id?: string | null
           reseller_note?: string | null
           reseller_profit?: number
+          rider_assigned_at?: string | null
+          rider_status?: string | null
           sa_cost_total?: number
           settled_at?: string | null
           settled_by?: string | null

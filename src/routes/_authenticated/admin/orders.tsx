@@ -666,6 +666,16 @@ function AdminOrdersPage() {
               <Truck className="h-3.5 w-3.5" /> {activeProviderLabel ? `Book ${activeProviderLabel}` : "Book Courier"}
             </button>
             )}
+            {canShip && (
+            <button
+              disabled={checkingCourier}
+              onClick={() => void bulkCheckCourierStatus()}
+              className="inline-flex h-9 items-center gap-2 rounded-md border bg-background px-3 text-xs font-medium hover:bg-accent disabled:opacity-50"
+              title="Ask the courier for the live status of every marked order"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${checkingCourier ? "animate-spin" : ""}`} /> Check Courier Status
+            </button>
+            )}
             {canDelete && (
             <button
               onClick={bulkDeleteOrders}
