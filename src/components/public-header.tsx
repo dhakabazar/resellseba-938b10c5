@@ -143,6 +143,16 @@ export function PublicHeader({
 
 
         <div className="flex shrink-0 items-center gap-2">
+          {telHref && (
+            <a
+              href={telHref}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm font-bold text-primary transition-colors hover:border-primary/50 sm:px-4"
+              dir="ltr"
+            >
+              <Phone className="h-4 w-4" />
+              <span className="hidden xs:inline sm:inline">{phone}</span>
+            </a>
+          )}
           <Link
             to="/login"
             className="hidden rounded-lg border border-border px-4 py-2 text-sm font-semibold hover:border-primary/50 hover:text-primary sm:inline-flex"
@@ -156,14 +166,16 @@ export function PublicHeader({
           >
             {c.nav.cta} <ArrowRight className="h-3.5 w-3.5" />
           </Link>
-          <button
-            type="button"
-            onClick={() => setMenu((v) => !v)}
-            aria-label="Menu"
-            className="grid h-10 w-10 place-items-center rounded-lg border border-border lg:hidden"
-          >
-            {menu ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
+          {navLinks.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setMenu((v) => !v)}
+              aria-label="Menu"
+              className="grid h-10 w-10 place-items-center rounded-lg border border-border lg:hidden"
+            >
+              {menu ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
+          )}
         </div>
       </div>
 
