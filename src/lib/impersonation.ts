@@ -79,6 +79,8 @@ export async function stopImpersonation(): Promise<string> {
   const snapshot = readImpersonation();
   if (!snapshot) return "/admin";
   rememberImpersonationReturnTarget(snapshot.returnTo || "/admin");
+  // Safety net in case the restore right after sign-in did not go through.
+  await restoreResellerPassword();
   const { error } = await supabase.auth.setSession({
     access_token: snapshot.access_token,
     refresh_token: snapshot.refresh_token,
