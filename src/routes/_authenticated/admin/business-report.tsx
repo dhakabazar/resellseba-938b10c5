@@ -197,7 +197,7 @@ function BusinessReportPage() {
             0,
           );
         }
-        adminProfit += orderReceived(ord) - orderProfit(ord) - orderBuyingCost(myItems, o.status, productMap);
+        adminProfit += orderReceived(ord) - orderMargin(ord) - orderBuyingCost(myItems, o.status, productMap);
       }
       const target = Number(ag.sale_target ?? 0) || 0;
       const rate = Number(ag.commission_rate ?? 0) || 0;
