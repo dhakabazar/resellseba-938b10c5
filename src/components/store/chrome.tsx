@@ -379,6 +379,9 @@ const CategoryNav = StoreNav;
 function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { code, name, settings } = useStore();
   const phone = settings?.support_phone?.trim();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
 
   useEffect(() => {
     if (!open) return;
@@ -389,7 +392,9 @@ function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void })
     return () => document.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <div className={cx("fixed inset-0 z-50 md:hidden", open ? "" : "pointer-events-none")}>
       {/* halka dark backdrop */}
       <div
