@@ -73,6 +73,7 @@ export const RESELLER_ROUTE_PERMISSION: Record<string, string> = {
   "/reseller/catalog": "catalog",
   "/reseller/listings": "listings",
   "/reseller/orders": "orders",
+  "/reseller/rider-followup": "orders",
   "/reseller/customers": "customers",
   "/reseller/transactions": "transactions",
   "/reseller/payouts": "payouts",

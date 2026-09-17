@@ -23,7 +23,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getActiveCouriers } from "@/lib/courier-config.functions";
 import { getOrderDetails, recheckCourierStatus } from "@/lib/order-details.functions";
-import { syncSteadfastStatus, syncPathaoStatus } from "@/lib/couriers.functions";
+import { recheckOrdersStatus } from "@/lib/courier-recheck.functions";
 import {
   orderProfit,
   orderReceived,
@@ -182,6 +182,8 @@ function AdminOrdersPage() {
   const [notesModal, setNotesModal] = useState<{ orderId: string; orderNumber?: string | null } | null>(null);
   
   const fetchActive = useServerFn(getActiveCouriers);
+  const recheckMany = useServerFn(recheckOrdersStatus);
+  const [checkingCourier, setCheckingCourier] = useState(false);
   const { data: activeProviders = [] } = useQuery({
     queryKey: ["active-couriers"],
     queryFn: () => fetchActive(),
@@ -359,6 +361,25 @@ function AdminOrdersPage() {
         setBusy(false);
       }
     });
+  }
+
+  /** Ask each courier for the live status of the marked orders. */
+  async function bulkCheckCourierStatus() {
+    if (marked.length === 0 || checkingCourier) return;
+    setCheckingCourier(true);
+    const targetIds = [...marked];
+    try {
+      const res = await recheckMany({ data: { orderIds: targetIds } });
+      const parts = [`${res.checked} checked`];
+      if (res.updated > 0) parts.push(`${res.updated} status updated`);
+      if (res.notBooked > 0) parts.push(`${res.notBooked} not booked`);
+      if (res.failed > 0) parts.push(`${res.failed} failed`);
+      toast.success(parts.join(" · "));
+      await syncOrders(targetIds);
+    } catch (e: any) {
+      toast.error(e?.message || "Courier status check failed");
+    }
+    setCheckingCourier(false);
   }
 
   async function bulkDeleteOrders() {
@@ -664,6 +685,16 @@ function AdminOrdersPage() {
               className="inline-flex h-9 items-center gap-2 rounded-md border bg-background px-3 text-xs font-medium hover:bg-accent"
             >
               <Truck className="h-3.5 w-3.5" /> {activeProviderLabel ? `Book ${activeProviderLabel}` : "Book Courier"}
+            </button>
+            )}
+            {canShip && (
+            <button
+              disabled={checkingCourier}
+              onClick={() => void bulkCheckCourierStatus()}
+              className="inline-flex h-9 items-center gap-2 rounded-md border bg-background px-3 text-xs font-medium hover:bg-accent disabled:opacity-50"
+              title="Ask the courier for the live status of every marked order"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${checkingCourier ? "animate-spin" : ""}`} /> Check Courier Status
             </button>
             )}
             {canDelete && (
@@ -1367,8 +1398,6 @@ function OrderDrawer({
 }) {
   const fetchDetails = useServerFn(getOrderDetails);
   const recheckStatus = useServerFn(recheckCourierStatus);
-  const syncSteadfast = useServerFn(syncSteadfastStatus);
-  const syncPathao = useServerFn(syncPathaoStatus);
   const queryClient = useQueryClient();
 
   const { data, isLoading, refetch } = useQuery({
@@ -1376,20 +1405,11 @@ function OrderDrawer({
     queryFn: () => fetchDetails({ data: { orderId } }),
   });
 
+  // One path for every courier — the server maps the live courier status to our order status.
   const recheckMutation = useMutation({
-    mutationFn: async () => {
-      const shipment = data?.shipments?.[0];
-      if (!shipment) return;
-
-      if (shipment.provider === "steadfast") {
-        return syncSteadfast({ data: { shipmentId: shipment.id } });
-      } else if (shipment.provider === "pathao") {
-        return syncPathao({ data: { shipmentId: shipment.id } });
-      }
-      return recheckStatus({ data: { orderId } });
-    },
-    onSuccess: () => {
-      toast.success("Courier status updated");
+    mutationFn: () => recheckStatus({ data: { orderId } }),
+    onSuccess: (res: any) => {
+      toast.success(res?.message || "Courier status updated");
       refetch();
       queryClient.invalidateQueries({ queryKey: ["orders"] });
     },

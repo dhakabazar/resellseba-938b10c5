@@ -1,4 +1,4 @@
-import { mapCourierStatus, normalizeCourierStatus } from "@/lib/courier-status";
+import { canAutoApplyStatus, mapCourierStatus, normalizeCourierStatus } from "@/lib/courier-status";
 
 export type Cfg = Record<string, string>;
 
@@ -97,9 +97,56 @@ export function fullAddress(order: {
   return parts.join(", ").slice(0, 250);
 }
 
+/** A courier tracking-log entry replayed into the order timeline. */
+export type CourierLogEntry = { status: string; at?: string | null; note?: string | null };
+
+/**
+ * Pull a tracking log out of whatever shape the provider returned, so the
+ * in-between steps (picked → sorted → in transit → delivered) stay visible in
+ * the order timeline even when the status is only checked once at the end.
+ */
+export function extractCourierLogs(payload: unknown): CourierLogEntry[] {
+  const root: any = payload ?? {};
+  const candidates = [
+    root?.logs,
+    root?.log,
+    root?.tracking,
+    root?.trackings,
+    root?.timeline,
+    root?.histories,
+    root?.history,
+    root?.order_logs,
+    root?.status_log,
+    root?.data?.logs,
+    root?.data?.tracking,
+    root?.data?.timeline,
+    root?.data?.histories,
+    root?.data?.order_logs,
+    root?.data?.status_log,
+  ];
+  const list = candidates.find((c) => Array.isArray(c) && c.length > 0) as any[] | undefined;
+  if (!list) return [];
+  return list
+    .map((row: any) => {
+      const status = row?.status ?? row?.order_status ?? row?.event ?? row?.transfer_status ?? row?.state;
+      if (!status) return null;
+      return {
+        status: String(status),
+        at: row?.updated_at ?? row?.created_at ?? row?.event_at ?? row?.time ?? row?.date ?? null,
+        note: row?.reason ?? row?.remarks ?? row?.note ?? row?.message ?? null,
+      } as CourierLogEntry;
+    })
+    .filter(Boolean) as CourierLogEntry[];
+}
+
 /**
  * Persist a courier status update: append a courier event, update the shipment
  * and move the order status accordingly. Used by both manual sync and webhook.
+ *
+ * Automatic status movement is deliberately narrow (see canAutoApplyStatus):
+ * Courier Handover / To Courier are the only starting points, and the only
+ * automatic destinations are To Courier, Delivered, Pending Partial and
+ * Pending Return. Every other courier event is only logged.
  */
 export async function applyCourierUpdate(
   db: any,
@@ -116,6 +163,8 @@ export async function applyCourierUpdate(
     note?: string | null;
     payload?: unknown;
     bypassFinalLock?: boolean;
+    /** Provider tracking log replayed so intermediate steps stay visible. */
+    logs?: CourierLogEntry[];
   },
 ) {
   let shipment: any = null;
@@ -151,6 +200,38 @@ export async function applyCourierUpdate(
   const mapped = mapCourierStatus(provider, args.courierStatus);
   const nowIso = new Date().toISOString();
 
+  // Replay the provider tracking log first (oldest → newest) so the timeline
+  // keeps the middle steps, skipping the ones already stored.
+  if (args.logs?.length) {
+    const { data: seen } = await db
+      .from("courier_events")
+      .select("courier_status")
+      .eq("order_id", orderId);
+    const known = new Set<string>((seen ?? []).map((r: any) => String(r.courier_status)));
+    const ordered = [...args.logs].sort(
+      (a, b) => new Date(a.at ?? 0).getTime() - new Date(b.at ?? 0).getTime(),
+    );
+    for (const entry of ordered) {
+      const key = normalizeCourierStatus(provider, entry.status);
+      if (!key || key === statusKey || known.has(key)) continue;
+      known.add(key);
+      const at = entry.at ? new Date(entry.at) : null;
+      await db.from("courier_events").insert({
+        order_id: orderId,
+        shipment_id: shipment?.id ?? null,
+        provider,
+        source: args.source,
+        notification_type: "tracking_log",
+        courier_status: key,
+        consignment_id: args.consignmentId ? String(args.consignmentId) : null,
+        tracking_code: args.trackingCode ? String(args.trackingCode) : null,
+        note: entry.note ?? null,
+        payload: entry as any,
+        event_at: at && !Number.isNaN(at.getTime()) ? at.toISOString() : nowIso,
+      });
+    }
+  }
+
   await db.from("courier_events").insert({
     order_id: orderId,
     shipment_id: shipment?.id ?? null,
@@ -183,29 +264,67 @@ export async function applyCourierUpdate(
       .eq("id", shipment.id);
   }
 
-  const { data: order } = await db.from("orders").select("status").eq("id", orderId).maybeSingle();
+  const { data: order } = await db
+    .from("orders")
+    .select("status, rider_assigned_at")
+    .eq("id", orderId)
+    .maybeSingle();
   // "returned" and "cancelled" are final, manually-confirmed states — courier
   // events must never overwrite them.
   const finalStates = ["returned", "cancelled"];
   const isLocked = order && finalStates.includes(order.status) && !args.bypassFinalLock;
-  
-  // Courier-collected money (partial delivery = less than the order total).
-  // Stored on the order so every profit/loss calculation uses what was really received.
-  if (order && !isLocked && args.codAmount != null && (mapped.order === "delivered" || mapped.order === "partial")) {
+
+  // Courier-collected money (partial delivery / paid return = less than the
+  // order total). Stored on the order so profit/loss uses what was really received.
+  if (
+    order &&
+    !isLocked &&
+    args.codAmount != null &&
+    (mapped.order === "delivered" || mapped.order === "pending_partial")
+  ) {
     await db.from("orders").update({ received_amount: args.codAmount }).eq("id", orderId);
   }
 
-  if (order && order.status !== mapped.order && !isLocked) {
-    await db.from("orders").update({ status: mapped.order }).eq("id", orderId);
+  const orderPatch: Record<string, unknown> = {};
+  // Rider Followup: parcel handed to a rider — remembered with the moment it happened.
+  if (mapped.rider) {
+    orderPatch["rider_status"] = mapped.label;
+    if (!order?.rider_assigned_at) orderPatch["rider_assigned_at"] = nowIso;
+  } else if (
+    order?.rider_assigned_at &&
+    (mapped.order === "delivered" || mapped.order === "pending_partial" || mapped.order === "pending_return")
+  ) {
+    orderPatch["rider_assigned_at"] = null;
+    orderPatch["rider_status"] = null;
+  }
+
+  const nextStatus =
+    order && !isLocked && canAutoApplyStatus(order.status, mapped.order) ? mapped.order : null;
+  if (nextStatus) orderPatch["status"] = nextStatus;
+
+  if (order && !isLocked && Object.keys(orderPatch).length > 0) {
+    await db.from("orders").update(orderPatch).eq("id", orderId);
+  }
+
+  // Every courier event is written to the timeline — even when the order status
+  // stays put — so the whole journey is visible, not just the final state.
+  if (order && !isLocked) {
     await db.from("order_status_history").insert({
       order_id: orderId,
-      status: mapped.order,
-      note: `${provider} update (${args.source}): ${statusKey}${args.bypassFinalLock ? " (Admin Override)" : ""}`,
+      status: nextStatus ?? order.status,
+      note: `${provider} ${mapped.label} (${args.source})${nextStatus ? "" : " · status unchanged"}${
+        args.bypassFinalLock && nextStatus ? " (Admin Override)" : ""
+      }`,
     });
   }
 
-
-  return { matched: true as const, orderId, shipmentId: shipment?.id ?? null, mapped };
+  return {
+    matched: true as const,
+    orderId,
+    shipmentId: shipment?.id ?? null,
+    mapped,
+    orderStatus: nextStatus,
+  };
 }
 
 

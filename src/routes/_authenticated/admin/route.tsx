@@ -43,6 +43,7 @@ import { BulkScanButton } from "@/components/BulkScanModal";
 import { useAuth } from "@/lib/use-auth";
 import { useBrandingTheme } from "@/lib/branding";
 import { getGlobalSettings } from "@/lib/app-data";
+import { Bike } from "lucide-react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -59,6 +60,7 @@ const ROUTE_PERMISSIONS: Record<string, string[]> = {
   "/admin/brands": ["brands.manage", "brands.view", "brands.create", "brands.edit", "brands.delete"],
   "/admin/categories": ["categories.manage", "categories.view", "categories.create", "categories.edit", "categories.delete"],
   "/admin/orders": ["orders.view", "orders.edit", "orders.create", "orders.delete", "orders.status", "orders.ship"],
+  "/admin/rider-followup": ["orders.view", "orders.edit", "orders.status", "orders.ship"],
   "/admin/customers": ["customers.view", "orders.view", "orders.edit", "reports.view"],
   "/admin/transactions": ["finance.view"],
   "/admin/business-report": ["reports.view"],
@@ -120,6 +122,7 @@ const NAV: NavEntry[] = [
     ],
   },
   { label: "Orders", to: "/admin/orders", icon: <ShoppingCart className="h-4 w-4" /> },
+  { label: "Rider Followup", to: "/admin/rider-followup", icon: <Bike className="h-4 w-4" /> },
   { label: "Customers", to: "/admin/customers", icon: <Contact className="h-4 w-4" /> },
 
   {
