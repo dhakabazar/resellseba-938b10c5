@@ -447,7 +447,8 @@ function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void })
         </div>
       </aside>
     </div>,
-    document.body
+    // portal inside the store root so the theme's --st-* variables still apply
+    document.querySelector("[data-store-theme]") ?? document.body
   );
 }
 
