@@ -73,6 +73,7 @@ export type LpBootstrap = {
     name: string;
     slug: string;
     category_id: string | null;
+    category_ids?: string[] | null;
     main_image: string | null;
     price: number;
     base_price: number;

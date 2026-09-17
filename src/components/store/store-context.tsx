@@ -22,6 +22,7 @@ export type StoreProduct = {
   product_code?: string | null;
   stock: number | null;
   category_id: string | null;
+  category_ids?: string[] | null;
   brand_id: string | null;
   is_featured: boolean | null;
   delivery_mode: string | null;
