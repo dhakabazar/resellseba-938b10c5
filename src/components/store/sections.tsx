@@ -244,11 +244,11 @@ export function BenefitStrip() {
       </section>
     );
 
-  /* সহজ শপ — কমলা সার্ভিস বার */
+  /* সহজ শপ — কমলা সার্ভিস বার (সেকশনের সমান প্রস্থ) */
   if (theme.id === "atelier")
     return (
-      <section className="bg-[var(--st-primary)] text-[var(--st-on-primary)]">
-        <div className="mx-auto grid max-w-6xl grid-cols-2 gap-x-4 gap-y-2 px-4 py-3 md:grid-cols-4">
+      <section className="mx-auto max-w-6xl px-4 pt-5">
+        <div className="grid grid-cols-2 gap-x-4 gap-y-2 rounded-[var(--st-radius)] bg-[var(--st-primary)] px-4 py-3 text-[var(--st-on-primary)] shadow-[var(--st-shadow)] md:grid-cols-4">
           {items.map(({ t, d, Icon }) => (
             <div key={t} className="flex items-center gap-2">
               <Icon className="h-4 w-4 shrink-0" />
