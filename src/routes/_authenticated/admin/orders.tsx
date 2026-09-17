@@ -182,6 +182,8 @@ function AdminOrdersPage() {
   const [notesModal, setNotesModal] = useState<{ orderId: string; orderNumber?: string | null } | null>(null);
   
   const fetchActive = useServerFn(getActiveCouriers);
+  const recheckMany = useServerFn(recheckOrdersStatus);
+  const [checkingCourier, setCheckingCourier] = useState(false);
   const { data: activeProviders = [] } = useQuery({
     queryKey: ["active-couriers"],
     queryFn: () => fetchActive(),
