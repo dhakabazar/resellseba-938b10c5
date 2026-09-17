@@ -57,8 +57,13 @@ function CatalogIndex() {
   const { category, brand, q, page } = Route.useSearch();
   const { banner, siteName } = useCatalogBrand();
   const navigate = useNavigate();
-  const fetchCatalog = useServerFn(getCatalog);
-  const [data, setData] = useState<{ categories: Cat[]; brands: { id: string; name: string; slug: string }[]; products: Prod[] } | null>(null);
+  const fetchFilters = useServerFn(getCatalogFilters);
+  const fetchPage = useServerFn(getCatalogPage);
+  const [data, setData] = useState<{ categories: Cat[]; brands: { id: string; name: string; slug: string }[] } | null>(null);
+  const [pageData, setPageData] = useState<{ total: number; products: Prod[] } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [suggestions, setSuggestions] = useState<Prod[]>([]);
+  const [matchCount, setMatchCount] = useState(0);
   const [term, setTerm] = useState(q ?? "");
   const [openSug, setOpenSug] = useState(false);
   const [openCat, setOpenCat] = useState(false);
