@@ -161,7 +161,7 @@ function CatalogIndex() {
                 </button>
                 {openCat && (
                   <div className="absolute left-0 top-full z-40 mt-2 w-60 max-w-[80vw] overflow-hidden rounded-2xl border bg-card shadow-[0_24px_60px_-16px_rgba(0,0,0,.45)]">
-                    <div className="max-h-72 overflow-y-auto overscroll-contain p-1.5">
+                    <div className="max-h-[min(18rem,55vh)] overflow-y-auto overscroll-contain p-1.5 [touch-action:pan-y]">
                       <button
                         type="button"
                         onClick={() => {
