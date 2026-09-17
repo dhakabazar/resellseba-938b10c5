@@ -5,6 +5,7 @@ import { bdt } from "@/lib/finance-report";
 import {
   ArrowRight,
   Boxes,
+  ChevronDown,
   Sparkles,
   Check,
   ShoppingBag,
@@ -229,6 +230,8 @@ function RootResolver() {
   const [siteName, setSiteName] = useState("Reseller");
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [stats, setStats] = useState<LandingStats | null>(null);
+  const [catsOpen, setCatsOpen] = useState(false);
+  const [activeCatId, setActiveCatId] = useState<string | null>(null);
   const [contact, setContact] = useState<{ phone: string | null; email: string | null }>({
     phone: null,
     email: null,
