@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { fetchAll, fetchAllIn } from "@/lib/fetch-all";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { MaskedCfConfig } from "@/lib/cloudflare.server";
 
