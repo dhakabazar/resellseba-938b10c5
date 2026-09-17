@@ -1398,8 +1398,6 @@ function OrderDrawer({
 }) {
   const fetchDetails = useServerFn(getOrderDetails);
   const recheckStatus = useServerFn(recheckCourierStatus);
-  const syncSteadfast = useServerFn(syncSteadfastStatus);
-  const syncPathao = useServerFn(syncPathaoStatus);
   const queryClient = useQueryClient();
 
   const { data, isLoading, refetch } = useQuery({
@@ -1407,20 +1405,11 @@ function OrderDrawer({
     queryFn: () => fetchDetails({ data: { orderId } }),
   });
 
+  // One path for every courier — the server maps the live courier status to our order status.
   const recheckMutation = useMutation({
-    mutationFn: async () => {
-      const shipment = data?.shipments?.[0];
-      if (!shipment) return;
-
-      if (shipment.provider === "steadfast") {
-        return syncSteadfast({ data: { shipmentId: shipment.id } });
-      } else if (shipment.provider === "pathao") {
-        return syncPathao({ data: { shipmentId: shipment.id } });
-      }
-      return recheckStatus({ data: { orderId } });
-    },
-    onSuccess: () => {
-      toast.success("Courier status updated");
+    mutationFn: () => recheckStatus({ data: { orderId } }),
+    onSuccess: (res: any) => {
+      toast.success(res?.message || "Courier status updated");
       refetch();
       queryClient.invalidateQueries({ queryKey: ["orders"] });
     },
