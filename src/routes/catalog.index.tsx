@@ -87,33 +87,48 @@ function CatalogIndex() {
     };
   }, [openCat]);
 
-  const matches = useMemo(() => {
-    const t = term.trim().toLowerCase();
-    if (!t) return [];
-    return (data?.products ?? []).filter(
-      (p) => p.name.toLowerCase().includes(t) || p.code.toLowerCase().includes(t),
-    );
-  }, [data, term]);
-  const suggestions = matches.slice(0, 6);
-  const matchCount = matches.length;
+  useEffect(() => {
+    void fetchFilters().then((d) => setData(d as never));
+  }, [fetchFilters]);
+
+  /* Search suggestions — debounced server lookup, no full catalog in memory. */
+  useEffect(() => {
+    const t = term.trim();
+    if (!t) {
+      setSuggestions([]);
+      setMatchCount(0);
+      return;
+    }
+    const id = window.setTimeout(() => {
+      void fetchPage({ data: { category, brand, q: t, page: 1, perPage: 6 } }).then((d) => {
+        setSuggestions((d as any).products as Prod[]);
+        setMatchCount((d as any).total as number);
+      });
+    }, 300);
+    return () => window.clearTimeout(id);
+  }, [term, category, brand, fetchPage]);
 
   useEffect(() => {
-    fetchCatalog().then((d) => setData(d as never));
-  }, [fetchCatalog]);
+    let alive = true;
+    setBusy(true);
+    void fetchPage({ data: { category, brand, q, page: currentPage, perPage } })
+      .then((d) => {
+        if (alive) setPageData(d as never);
+      })
+      .finally(() => {
+        if (alive) setBusy(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [fetchPage, category, brand, q, currentPage, perPage]);
 
   const activeCat = data?.categories.find((c) => c.slug === category) ?? null;
   const activeBrand = data?.brands.find((b) => b.slug === brand) ?? null;
 
-  const rows = useMemo(() => {
-    let list = data?.products ?? [];
-    if (activeCat) list = list.filter((p) => inCategory({ category_id: p.categoryId, category_ids: p.categoryIds }, activeCat.id));
-    if (activeBrand) list = list.filter((p) => p.brandId === activeBrand.id);
-    const t = (q ?? "").trim().toLowerCase();
-    if (t) list = list.filter((p) => p.name.toLowerCase().includes(t) || p.code.includes(t));
-    return list;
-  }, [data, activeCat, activeBrand, q]);
-
-  const pagedRows = usePaginated(rows, currentPage, perPage);
+  const rows = pageData?.products ?? [];
+  const total = pageData?.total ?? 0;
+  const pagedRows = rows;
 
   const setPage = (p: number) =>
     void navigate({ to: "/catalog", search: { category, brand, q, page: p > 1 ? p : undefined } });
