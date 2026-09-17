@@ -56,9 +56,22 @@ export async function startImpersonation(opts: { email: string; password: string
   });
   if (error) {
     clearImpersonation();
+    await restoreResellerPassword();
     throw new Error(error.message);
   }
+  // Put the reseller's own password back immediately — the temporary one was
+  // only needed to obtain this session, so their real password never changes.
+  await restoreResellerPassword();
   await refreshAuthState();
+}
+
+/** Restores the impersonated reseller's original password (safe to call twice). */
+async function restoreResellerPassword() {
+  try {
+    await supabase.rpc("admin_impersonation_restore" as never, {} as never);
+  } catch {
+    /* the next impersonation or admin action retries */
+  }
 }
 
 /** Restores the stored admin session and returns the page the admin left. */
