@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { SearchableSelect } from "@/components/searchable-select";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/ui-kit";
@@ -8,7 +8,7 @@ import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
 import { useAuth } from "@/lib/use-auth";
 import { DataToolbar, Pagination, usePaginated } from "@/components/data-list";
 import { toast } from "sonner";
-import { PayoutOverview } from "@/components/payout-overview";
+import { PayoutOverview, ResellerPayoutSummary } from "@/components/payout-overview";
 
 export const Route = createFileRoute("/_authenticated/admin/payouts")({
   validateSearch: (s: Record<string, unknown>): { reseller?: string; status?: string } => ({
@@ -97,6 +97,16 @@ function AdminPayouts() {
   const [resellerFilter, setResellerFilter] = useState(sp.reseller ?? "");
   const [query, setQuery] = useState("");
   const [tab, setTab] = useState<"requests" | "report">("requests");
+  const [reportSearch, setReportSearch] = useState("");
+  const [openReport, setOpenReport] = useState<string | null>(null);
+
+  /** code is unique, so it is the best search key for the report tab */
+  const searchKey = (r: Row) => r.reseller?.code || r.reseller?.business_name || "";
+  function openFullReport(r: Row) {
+    setReportSearch(searchKey(r));
+    setTab("report");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
   const [perPage, setPerPage] = useState(20);
   const [page, setPage] = useState(1);
   const [action, setAction] = useState<{ row: Row; status: "approved" | "paid" | "rejected" } | null>(null);
@@ -204,7 +214,7 @@ function AdminPayouts() {
         ))}
       </div>
 
-      {tab === "report" ? <PayoutOverview /> : <>
+      {tab === "report" ? <PayoutOverview initialSearch={reportSearch} /> : <>
 
       <DataToolbar
         search={query}
@@ -242,8 +252,23 @@ function AdminPayouts() {
               <div key={r.id} className="surface-card p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <div className="truncate font-semibold">{r.reseller?.business_name ?? "—"}</div>
+                    <button
+                      type="button"
+                      onClick={() => openFullReport(r)}
+                      title="Open full report for this reseller"
+                      className="max-w-full truncate font-semibold text-primary underline-offset-2 hover:underline"
+                    >
+                      {r.reseller?.business_name ?? "—"}
+                    </button>
                     <div className="text-[11px] text-muted-foreground">{new Date(r.created_at).toLocaleString()}</div>
+                    <button
+                      type="button"
+                      onClick={() => setOpenReport((id) => (id === r.id ? null : r.id))}
+                      className="mt-1 inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[11px] hover:bg-muted"
+                    >
+                      <ChevronDown className={"h-3 w-3 transition-transform " + (openReport === r.id ? "rotate-180" : "")} />
+                      {openReport === r.id ? "Hide report" : "Quick report"}
+                    </button>
                   </div>
                   <div className="text-right">
                     <div className="font-bold tabular-nums">৳{Number(r.amount).toLocaleString()}</div>
@@ -257,6 +282,11 @@ function AdminPayouts() {
                   <p className="mt-2 rounded-md border border-dashed p-2 text-[11px] text-muted-foreground">
                     <span className="font-medium text-foreground">Admin note:</span> {r.notes}
                   </p>
+                )}
+                {openReport === r.id && (
+                  <div className="mt-3 rounded-md border bg-muted/20 p-3">
+                    <ResellerPayoutSummary search={searchKey(r)} />
+                  </div>
                 )}
                 <div className="mt-3">{actions(r)}</div>
               </div>
@@ -279,9 +309,25 @@ function AdminPayouts() {
               </thead>
               <tbody>
                 {rows.map((r) => (
-                  <tr key={r.id} className="border-t align-top">
+                  <Fragment key={r.id}>
+                  <tr className="border-t align-top">
                     <td className="p-3">
-                      <div className="font-medium">{r.reseller?.business_name ?? "—"}</div>
+                      <button
+                        type="button"
+                        onClick={() => openFullReport(r)}
+                        title="Open full report for this reseller"
+                        className="font-medium text-primary underline-offset-2 hover:underline"
+                      >
+                        {r.reseller?.business_name ?? "—"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setOpenReport((id) => (id === r.id ? null : r.id))}
+                        className="mt-1 flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
+                      >
+                        <ChevronDown className={"h-3 w-3 transition-transform " + (openReport === r.id ? "rotate-180" : "")} />
+                        {openReport === r.id ? "Hide report" : "Quick report"}
+                      </button>
                     </td>
                     <td className="p-3 font-semibold tabular-nums">৳{Number(r.amount).toLocaleString()}</td>
                     <td className="p-3"><PayoutAccount r={r.reseller} fallback={r.reference} /></td>
@@ -290,6 +336,14 @@ function AdminPayouts() {
                     <td className="p-3 text-xs text-muted-foreground">{new Date(r.created_at).toLocaleDateString()}</td>
                     <td className="p-3">{actions(r)}</td>
                   </tr>
+                  {openReport === r.id && (
+                    <tr className="border-t bg-muted/20">
+                      <td colSpan={7} className="p-3">
+                        <ResellerPayoutSummary search={searchKey(r)} />
+                      </td>
+                    </tr>
+                  )}
+                  </Fragment>
                 ))}
               </tbody>
             </table>

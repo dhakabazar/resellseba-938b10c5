@@ -44,14 +44,93 @@ const num = (v: unknown) => Number(v ?? 0);
 type Totals = { profit: number; requested: number; pending: number; paid: number; available: number };
 const ZERO: Totals = { profit: 0, requested: 0, pending: 0, paid: 0, available: 0 };
 
-export function PayoutOverview() {
+/** Compact inline report for one reseller — used by the payout request collapse. */
+export function ResellerPayoutSummary({ search }: { search: string }) {
+  const [row, setRow] = useState<OverviewRow | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let alive = true;
+    setLoading(true);
+    void supabase
+      .rpc("admin_payout_overview" as any, {
+        _search: search || null,
+        _sort: "available",
+        _dir: "desc",
+        _limit: 1,
+        _offset: 0,
+        _active_only: false,
+      } as any)
+      .then(({ data, error }) => {
+        if (!alive) return;
+        const r = ((data as any)?.rows ?? [])[0];
+        if (error || !r) setRow(null);
+        else
+          setRow({
+            reseller_id: r.reseller_id,
+            code: r.code ?? null,
+            business_name: r.business_name ?? null,
+            owner_phone: r.owner_phone ?? null,
+            delivered_profit: num(r.delivered_profit),
+            deposit_balance: num(r.deposit_balance),
+            frozen_amount: num(r.frozen_amount),
+            requests_count: num(r.requests_count),
+            requested_total: num(r.requested_total),
+            pending_amount: num(r.pending_amount),
+            approved_amount: num(r.approved_amount),
+            paid_out: num(r.paid_out),
+            rejected_amount: num(r.rejected_amount),
+            available: num(r.available),
+            last_request_at: r.last_request_at ?? null,
+          });
+        setLoading(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [search]);
+
+  if (loading)
+    return (
+      <div className="grid place-items-center py-6">
+        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+      </div>
+    );
+  if (!row) return <p className="py-4 text-center text-xs text-muted-foreground">No report found for this reseller.</p>;
+
+  const cells: [string, string][] = [
+    ["Profit", bdt(row.delivered_profit)],
+    ["Deposit", bdt(row.deposit_balance)],
+    ["Frozen", bdt(row.frozen_amount)],
+    ["Requests", String(row.requests_count)],
+    ["Requested", bdt(row.requested_total)],
+    ["Pending", bdt(row.pending_amount)],
+    ["Approved", bdt(row.approved_amount)],
+    ["Withdrawn", bdt(row.paid_out)],
+    ["Rejected", bdt(row.rejected_amount)],
+    ["Balance left", bdt(row.available)],
+  ];
+
+  return (
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+      {cells.map(([label, value]) => (
+        <div key={label} className="rounded-md border bg-background p-2">
+          <div className="text-[10px] uppercase text-muted-foreground">{label}</div>
+          <div className="mt-0.5 text-sm font-semibold tabular-nums">{value}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function PayoutOverview({ initialSearch = "" }: { initialSearch?: string }) {
   const [rows, setRows] = useState<OverviewRow[]>([]);
   const [totals, setTotals] = useState<Totals>(ZERO);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
-  const [query, setQuery] = useState("");
-  const [search, setSearch] = useState("");
+  const [query, setQuery] = useState(initialSearch);
+  const [search, setSearch] = useState(initialSearch);
   const [activeOnly, setActiveOnly] = useState(true);
   const [perPage, setPerPage] = useState(50);
   const [page, setPage] = useState(1);
@@ -66,6 +145,12 @@ export function PayoutOverview() {
     }, 350);
     return () => clearTimeout(t);
   }, [query]);
+
+  // Following a reseller link from the requests tab pre-fills the search.
+  useEffect(() => {
+    setQuery(initialSearch);
+    setActiveOnly(initialSearch ? false : true);
+  }, [initialSearch]);
 
   const load = useCallback(async () => {
     const id = ++reqRef.current;
