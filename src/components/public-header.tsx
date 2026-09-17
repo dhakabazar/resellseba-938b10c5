@@ -92,6 +92,8 @@ export function PublicHeader({
   const siteName = siteNameProp ?? loadedBrand.siteName;
   const logoUrl = logoUrlProp ?? loadedBrand.logoUrl;
   const c = content ?? loadedContent ?? FALLBACK;
+  const phone = contactPhoneProp ?? loadedPhone;
+  const telHref = phone ? `tel:${phone.replace(/[^\d+]/g, "")}` : null;
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isCatalog = pathname === "/catalog" || pathname.startsWith("/catalog/");
 
