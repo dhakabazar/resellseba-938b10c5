@@ -214,7 +214,7 @@ function AdminPayouts() {
         ))}
       </div>
 
-      {tab === "report" ? <PayoutOverview /> : <>
+      {tab === "report" ? <PayoutOverview initialSearch={reportSearch} /> : <>
 
       <DataToolbar
         search={query}
