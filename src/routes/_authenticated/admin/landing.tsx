@@ -41,6 +41,7 @@ type LandingContent = {
   stories?: { title?: string; subtitle?: string; items: Story[] };
   contacts?: { badge?: string; title?: string; subtitle?: string; items: ContactPerson[] };
   cta: { badge: string; title: string; subtitle: string; button: string };
+  chat?: { enabled?: boolean; phone?: string; whatsapp?: string; messenger?: string; label?: string };
   footer: { tagline: string; address?: string; phone?: string; email?: string };
 };
 
@@ -56,6 +57,7 @@ const TABS = [
   { id: "faq", label: "FAQ" },
   { id: "stories", label: "Stories" },
   { id: "contacts", label: "Contacts" },
+  { id: "chat", label: "Chat bubble" },
   { id: "cta", label: "Call to action" },
   { id: "footer", label: "Footer" },
 ] as const;
@@ -383,6 +385,26 @@ function LandingEditor() {
             <Plus className="h-3.5 w-3.5" /> Contact add
           </button>
         </div>
+      </Section>
+      )}
+
+      {tab === "chat" && (
+      <Section title="Floating chat bubble (all devices)">
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={c.chat?.enabled !== false}
+            onChange={(e) => update((d) => { d.chat = { ...(d.chat ?? {}), enabled: e.target.checked }; })}
+          />
+          Show floating bubble on landing page
+        </label>
+        <Grid>
+          <F label="Call number (01XXXXXXXXX)"><I value={c.chat?.phone ?? ""} onChange={(v) => update((d) => { d.chat = { ...(d.chat ?? {}), phone: v }; })} /></F>
+          <F label="WhatsApp (8801XXXXXXXXX)"><I value={c.chat?.whatsapp ?? ""} onChange={(v) => update((d) => { d.chat = { ...(d.chat ?? {}), whatsapp: v }; })} /></F>
+          <F label="Messenger (page username or m.me link)"><I value={c.chat?.messenger ?? ""} onChange={(v) => update((d) => { d.chat = { ...(d.chat ?? {}), messenger: v }; })} /></F>
+          <F label="Bubble tooltip / label"><I value={c.chat?.label ?? ""} onChange={(v) => update((d) => { d.chat = { ...(d.chat ?? {}), label: v }; })} /></F>
+        </Grid>
+        <p className="text-xs text-muted-foreground">Jei field khali thakbe sei button bubble-e dekhabe na. Call number khali rakhle Settings-er contact phone use hobe.</p>
       </Section>
       )}
 
