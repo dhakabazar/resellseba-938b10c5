@@ -1,13 +1,13 @@
-import { inCategory } from "@/lib/product-categories";
+
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { getCatalog } from "@/lib/catalog.functions";
+import { getCatalogFilters, getCatalogPage } from "@/lib/catalog.functions";
 import { CopyBtn, useCatalogBrand } from "@/components/catalog/shell";
 import { ImagePickerButton } from "@/components/catalog/image-picker";
 import { ProductCodeChip } from "@/components/product-code";
 import { bdt } from "@/lib/finance-report";
-import { Pagination, usePaginated } from "@/components/data-list";
+import { Pagination } from "@/components/data-list";
 import { ArrowRight, Check, ChevronDown, LayoutGrid, Loader2, Search, X } from "lucide-react";
 
 type Search = { category?: string; brand?: string; q?: string; page?: number };
@@ -57,8 +57,13 @@ function CatalogIndex() {
   const { category, brand, q, page } = Route.useSearch();
   const { banner, siteName } = useCatalogBrand();
   const navigate = useNavigate();
-  const fetchCatalog = useServerFn(getCatalog);
-  const [data, setData] = useState<{ categories: Cat[]; brands: { id: string; name: string; slug: string }[]; products: Prod[] } | null>(null);
+  const fetchFilters = useServerFn(getCatalogFilters);
+  const fetchPage = useServerFn(getCatalogPage);
+  const [data, setData] = useState<{ categories: Cat[]; brands: { id: string; name: string; slug: string }[] } | null>(null);
+  const [pageData, setPageData] = useState<{ total: number; products: Prod[] } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [suggestions, setSuggestions] = useState<Prod[]>([]);
+  const [matchCount, setMatchCount] = useState(0);
   const [term, setTerm] = useState(q ?? "");
   const [openSug, setOpenSug] = useState(false);
   const [openCat, setOpenCat] = useState(false);
@@ -82,33 +87,48 @@ function CatalogIndex() {
     };
   }, [openCat]);
 
-  const matches = useMemo(() => {
-    const t = term.trim().toLowerCase();
-    if (!t) return [];
-    return (data?.products ?? []).filter(
-      (p) => p.name.toLowerCase().includes(t) || p.code.toLowerCase().includes(t),
-    );
-  }, [data, term]);
-  const suggestions = matches.slice(0, 6);
-  const matchCount = matches.length;
+  useEffect(() => {
+    void fetchFilters().then((d) => setData(d as never));
+  }, [fetchFilters]);
+
+  /* Search suggestions — debounced server lookup, no full catalog in memory. */
+  useEffect(() => {
+    const t = term.trim();
+    if (!t) {
+      setSuggestions([]);
+      setMatchCount(0);
+      return;
+    }
+    const id = window.setTimeout(() => {
+      void fetchPage({ data: { category, brand, q: t, page: 1, perPage: 6 } }).then((d) => {
+        setSuggestions((d as any).products as Prod[]);
+        setMatchCount((d as any).total as number);
+      });
+    }, 300);
+    return () => window.clearTimeout(id);
+  }, [term, category, brand, fetchPage]);
 
   useEffect(() => {
-    fetchCatalog().then((d) => setData(d as never));
-  }, [fetchCatalog]);
+    let alive = true;
+    setBusy(true);
+    void fetchPage({ data: { category, brand, q, page: currentPage, perPage } })
+      .then((d) => {
+        if (alive) setPageData(d as never);
+      })
+      .finally(() => {
+        if (alive) setBusy(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [fetchPage, category, brand, q, currentPage, perPage]);
 
   const activeCat = data?.categories.find((c) => c.slug === category) ?? null;
   const activeBrand = data?.brands.find((b) => b.slug === brand) ?? null;
 
-  const rows = useMemo(() => {
-    let list = data?.products ?? [];
-    if (activeCat) list = list.filter((p) => inCategory({ category_id: p.categoryId, category_ids: p.categoryIds }, activeCat.id));
-    if (activeBrand) list = list.filter((p) => p.brandId === activeBrand.id);
-    const t = (q ?? "").trim().toLowerCase();
-    if (t) list = list.filter((p) => p.name.toLowerCase().includes(t) || p.code.includes(t));
-    return list;
-  }, [data, activeCat, activeBrand, q]);
-
-  const pagedRows = usePaginated(rows, currentPage, perPage);
+  const rows = pageData?.products ?? [];
+  const total = pageData?.total ?? 0;
+  const pagedRows = rows;
 
   const setPage = (p: number) =>
     void navigate({ to: "/catalog", search: { category, brand, q, page: p > 1 ? p : undefined } });
@@ -134,7 +154,7 @@ function CatalogIndex() {
           </h1>
           <p className="mx-auto mt-4 max-w-xl text-sm text-white/80 sm:text-base">
             {activeCat
-              ? `${rows.length} টি প্রোডাক্ট এই ক্যাটাগরিতে`
+              ? `${total} টি প্রোডাক্ট এই ক্যাটাগরিতে`
               : "ছবি, বিবরণ, হোলসেল ও সেল প্রাইস — লিস্ট করার আগেই আপনার প্রফিট দেখে নিন।"}
           </p>
 
@@ -254,14 +274,14 @@ function CatalogIndex() {
         </div>
       </section>
 
-      {!data ? (
+      {!pageData ? (
         <div className="grid place-items-center py-24">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       ) : (
         <>
           {/* ───────────── Products ───────────── */}
-          <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+          <section className={`mx-auto max-w-6xl px-4 py-10 transition-opacity sm:px-6 ${busy ? "opacity-60" : ""}`}>
             {rows.length === 0 ? (
               <div className="catalog-card grid place-items-center p-16 text-center text-sm text-muted-foreground">
                 কোনো প্রোডাক্ট পাওয়া যায়নি।
@@ -274,7 +294,7 @@ function CatalogIndex() {
                   ))}
                 </div>
                 <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-                  <span className="text-xs font-semibold text-muted-foreground">{rows.length} products</span>
+                  <span className="text-xs font-semibold text-muted-foreground">{total} products</span>
                   <select
                     value={perPage}
                     onChange={(e) => {
@@ -291,7 +311,7 @@ function CatalogIndex() {
                     ))}
                   </select>
                 </div>
-                <Pagination page={currentPage} perPage={perPage} total={rows.length} onPage={setPage} />
+                <Pagination page={currentPage} perPage={perPage} total={total} onPage={setPage} />
               </>
             )}
           </section>
