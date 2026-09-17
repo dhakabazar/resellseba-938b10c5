@@ -682,7 +682,6 @@ function Landing({
                   </div>
                   <div className="flex flex-1 flex-col p-3">
                     <h3 className="line-clamp-2 text-sm font-bold leading-tight group-hover:text-primary">{p.name}</h3>
-                    <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{p.description}</p>
                     <div className="mt-auto pt-3">
                       <span className="text-sm font-black text-primary">{bdt(p.price)}</span>
                     </div>

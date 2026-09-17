@@ -358,7 +358,7 @@ function ProductCard({ p, i }: { p: Prod; i: number }) {
         </div>
         <div className="mt-3 flex flex-wrap gap-1.5 border-t border-dashed pt-3">
           <CopyBtn text={p.name} title="Title" label="Title copied" />
-          <CopyBtn text={`${p.name}\n\n${p.short}\n\nPrice: ${bdt(p.price)}`} title="Details" label="Details copied" />
+          <CopyBtn text={`${p.name}\n\nPrice: ${bdt(p.price)}`} title="Details" label="Details copied" />
           <ImagePickerButton images={p.images ?? (p.image ? [p.image] : [])} baseName={p.name} />
         </div>
       </div>
