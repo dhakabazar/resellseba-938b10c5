@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { MessageCircle, Phone, X } from "lucide-react";
 
 export type ChatBubbleConfig = {
