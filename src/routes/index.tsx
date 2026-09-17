@@ -5,7 +5,6 @@ import { bdt } from "@/lib/finance-report";
 import {
   ArrowRight,
   Boxes,
-  ChevronDown,
   Sparkles,
   Check,
   ShoppingBag,
@@ -323,7 +322,6 @@ function Landing({
   const videoEmbed = videoUrl ? youtubeEmbed(videoUrl) : null;
   const poster = banner || (videoUrl ? youtubeThumb(videoUrl) : null);
   const [videoOpen, setVideoOpen] = useState(false);
-  const [catsOpen, setCatsOpen] = useState(false);
 
   const statIcons = [Boxes, Layers, ShoppingBag, Users];
   const customStats = c.stats?.items?.filter((s) => s.value?.trim() || s.label?.trim()) ?? [];
@@ -661,43 +659,6 @@ function Landing({
               <div className="brand-rule mx-auto mt-4 h-1 w-24 rounded-full" />
             </div>
 
-            {/* Collapsible category filter — default "All". */}
-            {!!stats?.categories?.length && (
-              <div className="mx-auto mt-6 max-w-3xl">
-                <button
-                  type="button"
-                  onClick={() => setCatsOpen((v) => !v)}
-                  aria-expanded={catsOpen}
-                  className="flex w-full items-center justify-between gap-2 rounded-2xl border border-border/60 bg-card px-4 py-3 text-left transition hover:border-primary/40"
-                >
-                  <span className="flex items-center gap-2 text-sm font-bold">
-                    <Layers className="h-4 w-4 text-primary" />
-                    সব প্রোডাক্টস ({stats.products.length})
-                  </span>
-                  <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform ${catsOpen ? "rotate-180" : ""}`} />
-                </button>
-                <div
-                  className={`grid overflow-hidden transition-all duration-300 ${
-                    catsOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-                  }`}
-                >
-                  <div className="min-h-0">
-                    <div className="mt-3 flex flex-wrap justify-center gap-2">
-                      {(stats.categories as any[]).map((c) => (
-                        <Link
-                          key={c.id}
-                          to="/catalog"
-                          search={{ category: c.slug }}
-                          className="rounded-full border bg-card px-3.5 py-2 text-xs font-bold transition hover:border-primary/50"
-                        >
-                          {c.name} <span className="opacity-70">({c.product_count})</span>
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
 
             <div className="mt-8 grid grid-cols-2 gap-3 lg:grid-cols-5">
               {stats.products.slice(0, 20).map((p: any, i: number) => (
@@ -722,7 +683,7 @@ function Landing({
                     )}
                   </div>
                   <div className="flex flex-1 flex-col p-3">
-                    <h3 className="line-clamp-2 text-sm font-bold leading-tight group-hover:text-primary">{p.name}</h3>
+                    <h3 className="truncate text-sm font-bold leading-tight group-hover:text-primary">{p.name}</h3>
                     <div className="mt-auto pt-3">
                       <span className="text-sm font-black text-primary">{bdt(p.price)}</span>
                     </div>
