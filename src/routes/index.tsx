@@ -34,6 +34,7 @@ import { CountUp } from "@/components/count-up";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { youtubeEmbed, youtubeThumb } from "@/lib/tutorials";
 import { PublicHeader, Brand } from "@/components/public-header";
+import { FloatingChat, type ChatBubbleConfig } from "@/components/floating-chat";
 
 export const Route = createFileRoute("/")({
   head: () => ({
