@@ -153,10 +153,10 @@ function AuthPage() {
           <form onSubmit={onSubmit} className="mt-6 space-y-3">
             {isSignup && (
               <>
-                <Field label="আপনার নাম">
+                <Field label="আপনার নাম / Store নাম">
                   <input
                     className={inp}
-                    placeholder="যেমনঃ রফিকুল ইসলাম"
+                    placeholder="যেমনঃ রফিকুল ইসলাম / রফিক স্টোর"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     required
