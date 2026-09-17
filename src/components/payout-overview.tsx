@@ -146,6 +146,12 @@ export function PayoutOverview({ initialSearch = "" }: { initialSearch?: string 
     return () => clearTimeout(t);
   }, [query]);
 
+  // Following a reseller link from the requests tab pre-fills the search.
+  useEffect(() => {
+    setQuery(initialSearch);
+    setActiveOnly(initialSearch ? false : true);
+  }, [initialSearch]);
+
   const load = useCallback(async () => {
     const id = ++reqRef.current;
     setBusy(true);
