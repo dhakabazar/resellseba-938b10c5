@@ -74,7 +74,6 @@ function baseGroups(): ContentGroup[] {
         t("hero_cta", "Primary button text", "Shop now"),
         t("hero_cta2", "Secondary button text", "Order on WhatsApp"),
         img("hero_image", "Hero image", "Leave empty to use your top product image."),
-        t("hero_note", "Small note under buttons", "Delivery in 1–3 days • Easy return within 24h"),
       ],
     },
     {
@@ -106,18 +105,6 @@ function baseGroups(): ContentGroup[] {
         t("featured_sub", "Featured section subtitle", "Most ordered products this month"),
         t("latest_title", "New arrivals title", "New arrivals"),
         t("latest_sub", "New arrivals subtitle", "Freshly added to the store"),
-      ],
-    },
-    {
-      id: "promo",
-      title: "Promo banner",
-      description: "Offer strip between sections — great for discounts or bundles.",
-      fields: [
-        on("promo_show", "Show promo banner", true),
-        t("promo_title", "Promo title", "Order today, pay on delivery"),
-        area("promo_text", "Promo text", "No advance payment needed. Confirm your order and pay the courier when the parcel reaches you."),
-        t("promo_cta", "Promo button text", "Browse products"),
-        img("promo_image", "Promo image"),
       ],
     },
     {
@@ -185,7 +172,6 @@ function baseGroups(): ContentGroup[] {
       fields: [
         t("co_headline", "Checkout headline", "Complete your order"),
         area("co_note", "Note above the form", "Fill in your delivery details. Our team will call to confirm before dispatch."),
-        t("co_trust", "Trust line under the button", "No advance payment • Pay the courier on delivery"),
         t("co_success", "Thank-you headline", "Order received!"),
         area("co_success_note", "Thank-you note", "We will call you shortly to confirm the order and share courier tracking."),
       ],

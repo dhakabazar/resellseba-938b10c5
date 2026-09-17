@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ChevronDown, Loader2, Minus, Plus, ShieldCheck, Trash2, Truck } from "lucide-react";
+import { ChevronDown, Loader2, Minus, Plus, Trash2, Truck } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -414,10 +414,6 @@ function Checkout() {
               {busy && <Loader2 className="h-4 w-4 animate-spin" />} Place order — {bdt(totals.total)}
             </PrimaryButton>
           </div>
-          <p className={cx("flex items-center justify-center gap-2 text-xs sm:justify-start", muted)}>
-            <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-[var(--st-primary)]" /> {store.content.text("co_trust")}
-          </p>
-
           {/* Sticky mobile CTA — same form submit, always in thumb reach. */}
           <div
             className={cx(

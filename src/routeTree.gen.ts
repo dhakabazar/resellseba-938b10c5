@@ -27,6 +27,7 @@ import { Route as SCodeIndexRouteImport } from './routes/s.$code.index'
 import { Route as AuthenticatedResellerIndexRouteImport } from './routes/_authenticated/reseller/index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
 import { Route as SCodeThanksRouteImport } from './routes/s.$code.thanks'
+import { Route as SCodeShopRouteImport } from './routes/s.$code.shop'
 import { Route as SCodeCheckoutRouteImport } from './routes/s.$code.checkout'
 import { Route as ApiPublicRobotsRouteImport } from './routes/api/public/robots'
 import { Route as ApiPublicProductRouteImport } from './routes/api/public/product'
@@ -187,6 +188,11 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
 const SCodeThanksRoute = SCodeThanksRouteImport.update({
   id: '/thanks',
   path: '/thanks',
+  getParentRoute: () => SCodeRoute,
+} as any)
+const SCodeShopRoute = SCodeShopRouteImport.update({
+  id: '/shop',
+  path: '/shop',
   getParentRoute: () => SCodeRoute,
 } as any)
 const SCodeCheckoutRoute = SCodeCheckoutRouteImport.update({
@@ -671,6 +677,7 @@ export interface FileRoutesByFullPath {
   '/api/public/product': typeof ApiPublicProductRoute
   '/api/public/robots': typeof ApiPublicRobotsRoute
   '/s/$code/checkout': typeof SCodeCheckoutRoute
+  '/s/$code/shop': typeof SCodeShopRoute
   '/s/$code/thanks': typeof SCodeThanksRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/reseller/': typeof AuthenticatedResellerIndexRoute
@@ -756,6 +763,7 @@ export interface FileRoutesByTo {
   '/api/public/product': typeof ApiPublicProductRoute
   '/api/public/robots': typeof ApiPublicRobotsRoute
   '/s/$code/checkout': typeof SCodeCheckoutRoute
+  '/s/$code/shop': typeof SCodeShopRoute
   '/s/$code/thanks': typeof SCodeThanksRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/reseller': typeof AuthenticatedResellerIndexRoute
@@ -847,6 +855,7 @@ export interface FileRoutesById {
   '/api/public/product': typeof ApiPublicProductRoute
   '/api/public/robots': typeof ApiPublicRobotsRoute
   '/s/$code/checkout': typeof SCodeCheckoutRoute
+  '/s/$code/shop': typeof SCodeShopRoute
   '/s/$code/thanks': typeof SCodeThanksRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/reseller/': typeof AuthenticatedResellerIndexRoute
@@ -938,6 +947,7 @@ export interface FileRouteTypes {
     | '/api/public/product'
     | '/api/public/robots'
     | '/s/$code/checkout'
+    | '/s/$code/shop'
     | '/s/$code/thanks'
     | '/admin/'
     | '/reseller/'
@@ -1023,6 +1033,7 @@ export interface FileRouteTypes {
     | '/api/public/product'
     | '/api/public/robots'
     | '/s/$code/checkout'
+    | '/s/$code/shop'
     | '/s/$code/thanks'
     | '/admin'
     | '/reseller'
@@ -1113,6 +1124,7 @@ export interface FileRouteTypes {
     | '/api/public/product'
     | '/api/public/robots'
     | '/s/$code/checkout'
+    | '/s/$code/shop'
     | '/s/$code/thanks'
     | '/_authenticated/admin/'
     | '/_authenticated/reseller/'
@@ -1279,6 +1291,13 @@ declare module '@tanstack/react-router' {
       path: '/thanks'
       fullPath: '/s/$code/thanks'
       preLoaderRoute: typeof SCodeThanksRouteImport
+      parentRoute: typeof SCodeRoute
+    }
+    '/s/$code/shop': {
+      id: '/s/$code/shop'
+      path: '/shop'
+      fullPath: '/s/$code/shop'
+      preLoaderRoute: typeof SCodeShopRouteImport
       parentRoute: typeof SCodeRoute
     }
     '/s/$code/checkout': {
@@ -1972,6 +1991,7 @@ const CatalogRouteWithChildren =
 
 interface SCodeRouteChildren {
   SCodeCheckoutRoute: typeof SCodeCheckoutRoute
+  SCodeShopRoute: typeof SCodeShopRoute
   SCodeThanksRoute: typeof SCodeThanksRoute
   SCodeIndexRoute: typeof SCodeIndexRoute
   SCodeCSlugRoute: typeof SCodeCSlugRoute
@@ -1980,6 +2000,7 @@ interface SCodeRouteChildren {
 
 const SCodeRouteChildren: SCodeRouteChildren = {
   SCodeCheckoutRoute: SCodeCheckoutRoute,
+  SCodeShopRoute: SCodeShopRoute,
   SCodeThanksRoute: SCodeThanksRoute,
   SCodeIndexRoute: SCodeIndexRoute,
   SCodeCSlugRoute: SCodeCSlugRoute,

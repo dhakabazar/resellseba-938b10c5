@@ -1,12 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useStore } from "@/components/store/store-context";
 import {
   BenefitStrip,
   CategoryStrip,
   Faq,
   Hero,
-  PromoBanner,
   Reviews,
   ThemeSignature,
   WhyUs,
@@ -21,6 +20,7 @@ import {
   ProductGrid,
   SectionHead,
 } from "@/components/store/ui";
+import { Button } from "@/components/ui/button";
 
 type Search = { q?: string; theme?: string; palette?: string };
 
@@ -36,7 +36,8 @@ export const Route = createFileRoute("/s/$code/")({
 function StoreHome() {
   const { q } = Route.useSearch();
   const store = useStore();
-  const { code, listings, theme, name, content } = store;
+  const { code, listings, name, content } = store;
+  const [latestVisible, setLatestVisible] = useState(20);
 
   const results = useMemo(() => {
     if (!q) return listings;
@@ -49,7 +50,7 @@ function StoreHome() {
   }, [q, listings, store]);
 
   const featured = listings.filter((l) => l.product?.is_featured).slice(0, 8);
-  const latest = listings.slice(0, theme.layout.grid === "dense" ? 10 : 8);
+  const latest = listings.slice(0, latestVisible);
 
   if (q)
     return (
@@ -88,12 +89,17 @@ function StoreHome() {
       )}
 
       <ThemeSignature />
-      <PromoBanner />
-
       <section className="mx-auto max-w-6xl px-4 py-12">
         <SectionHead title={content.text("latest_title")} subtitle={content.text("latest_sub")} />
         {latest.length ? (
-          <ProductGrid listings={latest} />
+          <>
+            <ProductGrid listings={latest} />
+            {latestVisible < listings.length && (
+              <div className="mt-8 flex justify-center">
+                <Button onClick={() => setLatestVisible((count) => count + 20)}>Load more</Button>
+              </div>
+            )}
+          </>
         ) : (
           <EmptyState title="No products listed yet" hint="Come back soon." />
         )}
