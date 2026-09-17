@@ -199,7 +199,8 @@ function CatalogIndex() {
         </div>
       ) : (
         <>
-          {/* Mobile: one animated pill opens the whole category list. */}
+          {/* Category pill (overlapping hero): one tap opens the whole category list. */}
+          <section className="relative z-20 mx-auto -mt-14 max-w-6xl px-4 sm:-mt-16 sm:px-6">
             <button
               type="button"
               onClick={() => setCatsOpen((v) => !v)}
