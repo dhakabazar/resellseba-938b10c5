@@ -587,12 +587,7 @@ export function StoreHeader() {
               </button>
             </div>
           </div>
-          {open && (
-            <div className={cx("border-t px-5 py-4 md:hidden", borderc)}>
-              <SearchBox className="mb-3" />
-              <CategoryNav variant="stack" />
-            </div>
-          )}
+          <MobileDrawer open={open} onClose={() => setOpen(false)} />
         </header>
       ) : (
         <header className={cx("border-b bg-[var(--st-bg)]/80 backdrop-blur-xl", borderc)}>
