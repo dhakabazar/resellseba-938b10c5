@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
+import { fetchAllSafe } from "@/lib/fetch-all";
 
 export const Route = createFileRoute("/api/public/sitemap/$code")({
   server: {
@@ -30,16 +31,18 @@ export const Route = createFileRoute("/api/public/sitemap/$code")({
           .maybeSingle();
         const custom = dom?.hostname ?? null;
 
-        const { data: listings } = await supabase
-          .from("reseller_listings")
-          .select("updated_at, products(slug, updated_at)")
-          .eq("reseller_id", r.id)
-          .eq("is_active", true);
+        const listings = await fetchAllSafe<{ updated_at: string; products: any }>(() =>
+          supabase
+            .from("reseller_listings")
+            .select("updated_at, products(slug, updated_at)")
+            .eq("reseller_id", r.id)
+            .eq("is_active", true),
+        );
 
         const base = custom ? `https://${custom}` : `${origin}/s/${r.code}`;
         const urls = [
           `<url><loc>${base}</loc><changefreq>daily</changefreq><priority>1.0</priority></url>`,
-          ...(listings ?? []).map((l) => {
+          ...listings.map((l) => {
             const p = (Array.isArray(l.products) ? l.products[0] : l.products) as { slug: string; updated_at: string } | null;
             if (!p) return "";
             const path = custom ? `/p/${p.slug}` : `/s/${r.code}/p/${p.slug}`;

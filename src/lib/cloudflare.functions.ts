@@ -186,15 +186,12 @@ export const listDomains = createServerFn({ method: "GET" })
     } else {
       query = query.eq("reseller_id", await resolveReseller(ctx, data.resellerId));
     }
-    const { data: rows, error } = await query;
-    if (error) throw new Response(error.message, { status: 400 });
+    const rows = await fetchAll<any>(() => query);
 
-    const ids = [...new Set((rows ?? []).map((r: any) => r.reseller_id))];
-    const { data: resellers } = ids.length
-      ? await db.from("resellers").select("id, business_name, code").in("id", ids)
-      : { data: [] as any[] };
-    const byId = new Map((resellers ?? []).map((r: any) => [r.id, r]));
-    return (rows ?? []).map((r: any) => mapRow(r, byId.get(r.reseller_id)));
+    const ids = [...new Set(rows.map((r: any) => r.reseller_id))];
+    const resellers = ids.length ? await fetchAllIn<any>((chunk) => db.from("resellers").select("id, business_name, code").in("id", chunk), ids) : [];
+    const byId = new Map(resellers.map((r: any) => [r.id, r]));
+    return rows.map((r: any) => mapRow(r, byId.get(r.reseller_id)));
   });
 
 /** Add a hostname and provision it on Cloudflare. */
