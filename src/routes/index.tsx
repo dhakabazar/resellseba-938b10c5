@@ -981,6 +981,13 @@ function Landing({
           © {new Date().getFullYear()} {siteName}. All rights reserved.
         </div>
       </footer>
+
+      <FloatingChat
+        config={{
+          ...(c.chat ?? {}),
+          phone: c.chat?.phone?.trim() || c.footer.phone || contact.phone || "",
+        }}
+      />
     </div>
   );
 }
