@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { pickImage, type ImgRow } from "@/lib/catalog.server";
 import { mergeDeliverySettings, resolveDelivery } from "@/lib/delivery";
+import { fetchAllSafe } from "@/lib/fetch-all";
 
 const PRODUCT_COLS =
   "id, brand_id, category_id, name, slug, product_code, short_description, suggested_price, reseller_price, is_featured, created_at, product_images(url, is_primary, sort_order), product_categories(category_id)";
@@ -62,12 +63,10 @@ export const getCatalogPage = createServerFn({ method: "GET" })
         .eq("slug", data.category)
         .maybeSingle();
       if (!cat) return { total: 0, products: [] as ReturnType<typeof mapProduct>[] };
-      const { data: links } = await supabase
-        .from("product_categories")
-        .select("product_id")
-        .eq("category_id", (cat as any).id)
-        ;
-      productIds = (links ?? []).map((l: any) => l.product_id);
+      const links = await fetchAllSafe(() =>
+        supabase.from("product_categories").select("product_id").eq("category_id", (cat as any).id),
+      );
+      productIds = links.map((l: any) => l.product_id);
       if (productIds.length === 0) return { total: 0, products: [] as ReturnType<typeof mapProduct>[] };
     }
 

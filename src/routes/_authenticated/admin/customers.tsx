@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/ui-kit";
 import { CustomersReport } from "@/components/customers-report";
+import { fetchAllSafe } from "@/lib/fetch-all";
 
 export const Route = createFileRoute("/_authenticated/admin/customers")({
   component: AdminCustomersPage,
@@ -13,9 +14,9 @@ function AdminCustomersPage() {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase.from("resellers").select("id, code, business_name").order("business_name");
+      const data = await fetchAllSafe(() => supabase.from("resellers").select("id, code, business_name").order("business_name"));
       const m = new Map<string, string>();
-      for (const r of (data ?? []) as { id: string; code: string; business_name: string }[]) {
+      for (const r of data as { id: string; code: string; business_name: string }[]) {
         m.set(r.id, `${r.business_name} (${r.code})`);
       }
       setNames(m);

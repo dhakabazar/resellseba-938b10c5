@@ -25,6 +25,7 @@ import {
   type PlanKey,
 } from "@/lib/subscription";
 import { Check, Crown, Loader2, Save, Sliders, Tags, Wallet, X } from "lucide-react";
+import { fetchAllSafe } from "@/lib/fetch-all";
 
 export const Route = createFileRoute("/_authenticated/admin/subscriptions")({
   component: AdminSubscriptionsPage,
@@ -132,9 +133,8 @@ function RequestsTab() {
       .order("created_at", { ascending: false })
       ;
     if (filter === "pending") q = q.eq("status", "pending");
-    const { data, error } = await q;
-    if (error) toast.error(error.message);
-    setRows((data ?? []) as unknown as RequestRow[]);
+    const data = await fetchAllSafe(() => q);
+    setRows(data as unknown as RequestRow[]);
     setPage(1);
     setLoading(false);
   }

@@ -15,6 +15,7 @@ import { resolveRange, rangeLabel, type DateRangeState } from "@/components/date
 import { DATE_PRESET_OPTIONS, type DatePreset } from "@/components/order-filters";
 import { bdt, toCsv, downloadCsv, PROFIT_FORMULA_HINT } from "@/lib/finance-report";
 import { orderStatusLabel, orderStatusTone } from "@/lib/courier-status";
+import { fetchAllSafe } from "@/lib/fetch-all";
 
 export type TxRow = {
   at: string;
@@ -174,11 +175,7 @@ export function TransactionReport({
 
   useEffect(() => {
     if (!admin) return;
-    void supabase
-      .from("resellers")
-      .select("id,business_name,code,avatar_url")
-      .order("business_name")
-      .then(({ data }) => setResellers(data ?? []));
+    void fetchAllSafe(() => supabase.from("resellers").select("id,business_name,code,avatar_url").order("business_name")).then((data) => setResellers(data as any));
   }, [admin]);
 
   useEffect(() => {
