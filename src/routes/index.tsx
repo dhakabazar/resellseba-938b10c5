@@ -97,6 +97,7 @@ type LandingContent = {
   stories?: { title?: string; subtitle?: string; items: Story[] };
   contacts?: { badge?: string; title?: string; subtitle?: string; items: ContactPerson[] };
   cta: { badge: string; title: string; subtitle: string; button: string };
+  chat?: ChatBubbleConfig;
 
   footer: { tagline: string; address?: string; phone?: string; email?: string };
 };
