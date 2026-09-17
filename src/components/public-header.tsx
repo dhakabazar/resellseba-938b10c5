@@ -51,10 +51,12 @@ export function Brand({
 export function PublicHeader({
   siteName: siteNameProp,
   logoUrl: logoUrlProp,
+  contactPhone: contactPhoneProp,
   content,
 }: {
   siteName?: string;
   logoUrl?: string | null;
+  contactPhone?: string | null;
   content?: PublicHeaderContent;
 }) {
   const [menu, setMenu] = useState(false);
