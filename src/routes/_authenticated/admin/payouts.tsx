@@ -301,8 +301,8 @@ function AdminPayouts() {
               </thead>
               <tbody>
                 {rows.map((r) => (
-                  <>
-                  <tr key={r.id} className="border-t align-top">
+                  <Fragment key={r.id}>
+                  <tr className="border-t align-top">
                     <td className="p-3">
                       <button
                         type="button"
@@ -328,6 +328,14 @@ function AdminPayouts() {
                     <td className="p-3 text-xs text-muted-foreground">{new Date(r.created_at).toLocaleDateString()}</td>
                     <td className="p-3">{actions(r)}</td>
                   </tr>
+                  {openReport === r.id && (
+                    <tr className="border-t bg-muted/20">
+                      <td colSpan={7} className="p-3">
+                        <ResellerPayoutSummary search={searchKey(r)} />
+                      </td>
+                    </tr>
+                  )}
+                  </Fragment>
                 ))}
               </tbody>
             </table>
