@@ -29,18 +29,40 @@ function Logo() {
   );
 }
 
-function SearchBox({ className }: { className?: string }) {
+function SearchBox({ className, variant = "default" }: { className?: string; variant?: "default" | "sohoj" }) {
   const { code } = useStore();
   const nav = useNavigate();
   const [q, setQ] = useState("");
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    nav({ to: "/s/$code", params: { code }, search: { q: q || undefined } });
+  };
+
+  if (variant === "sohoj")
+    return (
+      <form onSubmit={submit} className={cx("relative", className)}>
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="পণ্য খুঁজুন…"
+          aria-label="Search products"
+          className={cx(
+            "w-full rounded-[var(--st-radius)] border bg-[var(--st-surface)] py-2.5 pl-4 pr-14 text-sm text-[var(--st-fg)] outline-none placeholder:text-[var(--st-muted)] focus:border-[var(--st-primary)]",
+            borderc,
+          )}
+        />
+        <button
+          type="submit"
+          aria-label="Search"
+          className="absolute right-0 top-0 grid h-full w-12 place-items-center rounded-r-[var(--st-radius)] bg-[var(--st-fg)] text-[var(--st-surface)]"
+        >
+          <Search className="h-4 w-4" />
+        </button>
+      </form>
+    );
+
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        nav({ to: "/s/$code", params: { code }, search: { q: q || undefined } });
-      }}
-      className={cx("relative", className)}
-    >
+    <form onSubmit={submit} className={cx("relative", className)}>
       <Search className={cx("pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2", muted)} />
       <input
         value={q}
@@ -55,6 +77,7 @@ function SearchBox({ className }: { className?: string }) {
     </form>
   );
 }
+
 
 function CartButton() {
   const { code, cartCount } = useStore();
