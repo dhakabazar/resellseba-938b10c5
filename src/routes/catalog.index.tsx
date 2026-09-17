@@ -231,7 +231,7 @@ function CatalogIndex() {
             </button>
 
             <div
-              className={`grid overflow-hidden transition-all duration-300 sm:!grid-rows-[1fr] sm:!opacity-100 ${
+              className={`grid overflow-hidden transition-all duration-300 ${
                 catsOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
               }`}
             >
