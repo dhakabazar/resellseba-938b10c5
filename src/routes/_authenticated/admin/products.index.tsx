@@ -1,3 +1,4 @@
+import { categoryIdsOf, inCategory } from "@/lib/product-categories";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,9 +31,10 @@ type Row = {
   og_image_url: string | null;
   brand_id: string | null;
   category_id: string | null;
+  category_ids?: string[] | null;
 };
 
-type Opt = { id: string; name: string };
+type Opt = { id: string; name: string; product_count?: number };
 
 type ProductSearch = { status?: string; stock?: string; category?: string; brand?: string };
 
@@ -143,7 +145,7 @@ function ProductsPage() {
         if (!i.name.toLowerCase().includes(t) && !i.product_code.includes(t)) return false;
       }
       if (brand && i.brand_id !== brand) return false;
-      if (category && i.category_id !== category) return false;
+      if (category && !inCategory(i, category)) return false;
       if (status === "active" && !i.is_active) return false;
       if (status === "hidden" && i.is_active) return false;
       if (status === "featured" && !i.is_featured) return false;
@@ -170,7 +172,7 @@ function ProductsPage() {
       label: "Category",
       value: category,
       onChange: setCategory,
-      options: categories.map((c) => ({ value: c.id, label: c.name })),
+      options: categories.map((c) => ({ value: c.id, label: c.product_count != null ? `${c.name} (${c.product_count})` : c.name })),
     },
     {
       key: "status",
@@ -369,11 +371,11 @@ function ProductsPage() {
                                 {brands.find((b) => b.id === p.brand_id)!.name}
                               </span>
                             )}
-                            {p.category_id && categories.find((c) => c.id === p.category_id) && (
-                              <span className="inline-flex items-center rounded bg-muted px-1.5 py-0.5">
-                                {categories.find((c) => c.id === p.category_id)!.name}
+                            {categoryIdsOf(p).map((cid) => categories.find((c) => c.id === cid)).filter(Boolean).map((c) => (
+                              <span key={c!.id} className="inline-flex items-center rounded bg-muted px-1.5 py-0.5">
+                                {c!.name}
                               </span>
-                            )}
+                            ))}
                           </div>
                         </div>
                       </div>
@@ -489,7 +491,7 @@ function ProductDetailModal({
   if (!p) return null;
 
   const brandName = brands.find(b => b.id === p.brand_id)?.name;
-  const categoryName = categories.find(c => c.id === p.category_id)?.name;
+  const categoryName = categoryIdsOf(p).map((cid) => categories.find((c) => c.id === cid)?.name).filter(Boolean).join(', ');
   const imageUrls = [p.og_image_url, ...images.map(i => i.url)].filter(Boolean) as string[];
   const detailsText = stripHtml([p.short_description, p.description].filter(Boolean).join("\n\n"));
 
