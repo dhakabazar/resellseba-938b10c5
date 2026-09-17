@@ -661,8 +661,62 @@ function Landing({
               <p className="mt-2 text-sm text-muted-foreground">আমাদের ক্যাটালগ থেকে বাছাই করা প্রোডাক্টস — রিসেল করে শুরু করুন আজই</p>
               <div className="brand-rule mx-auto mt-4 h-1 w-24 rounded-full" />
             </div>
+
+            {/* Collapsible category filter — default "All". */}
+            {!!stats?.categories?.length && (
+              <div className="mx-auto mt-6 max-w-3xl">
+                <button
+                  type="button"
+                  onClick={() => setCatsOpen((v) => !v)}
+                  aria-expanded={catsOpen}
+                  className="flex w-full items-center justify-between gap-2 rounded-2xl border border-border/60 bg-card px-4 py-3 text-left transition hover:border-primary/40"
+                >
+                  <span className="flex items-center gap-2 text-sm font-bold">
+                    <Layers className="h-4 w-4 text-primary" />
+                    {activeCatId
+                      ? stats.categories.find((c: any) => c.id === activeCatId)?.name
+                      : `সব প্রোডাক্টস (${stats.products.length})`}
+                  </span>
+                  <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform ${catsOpen ? "rotate-180" : ""}`} />
+                </button>
+                <div
+                  className={`grid overflow-hidden transition-all duration-300 ${
+                    catsOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+                  }`}
+                >
+                  <div className="min-h-0">
+                    <div className="mt-3 flex flex-wrap justify-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setActiveCatId(null)}
+                        className={`rounded-full border px-4 py-2 text-xs font-bold transition ${
+                          !activeCatId ? "bg-primary text-primary-foreground" : "bg-card hover:border-primary/50"
+                        }`}
+                      >
+                        সব
+                      </button>
+                      {(stats.categories as any[]).map((c) => (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={() => setActiveCatId(activeCatId === c.id ? null : c.id)}
+                          className={`rounded-full border px-3.5 py-2 text-xs font-bold transition ${
+                            activeCatId === c.id ? "bg-primary text-primary-foreground" : "bg-card hover:border-primary/50"
+                          }`}
+                        >
+                          {c.name} <span className="opacity-70">({c.product_count})</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="mt-8 grid grid-cols-2 gap-3 lg:grid-cols-5">
-              {stats.products.slice(0, 20).map((p: any, i: number) => (
+              {(activeCatId ? stats.products.filter((p) => p.category_id === activeCatId) : stats.products)
+                .slice(0, 20)
+                .map((p: any, i: number) => (
                 <Link
                   key={p.id}
                   to="/catalog/$slug"
