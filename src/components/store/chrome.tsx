@@ -29,18 +29,40 @@ function Logo() {
   );
 }
 
-function SearchBox({ className }: { className?: string }) {
+function SearchBox({ className, variant = "default" }: { className?: string; variant?: "default" | "sohoj" }) {
   const { code } = useStore();
   const nav = useNavigate();
   const [q, setQ] = useState("");
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    nav({ to: "/s/$code", params: { code }, search: { q: q || undefined } });
+  };
+
+  if (variant === "sohoj")
+    return (
+      <form onSubmit={submit} className={cx("relative", className)}>
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="পণ্য খুঁজুন…"
+          aria-label="Search products"
+          className={cx(
+            "w-full rounded-[var(--st-radius)] border bg-[var(--st-surface)] py-2.5 pl-4 pr-14 text-sm text-[var(--st-fg)] outline-none placeholder:text-[var(--st-muted)] focus:border-[var(--st-primary)]",
+            borderc,
+          )}
+        />
+        <button
+          type="submit"
+          aria-label="Search"
+          className="absolute right-0 top-0 grid h-full w-12 place-items-center rounded-r-[var(--st-radius)] bg-[var(--st-fg)] text-[var(--st-surface)]"
+        >
+          <Search className="h-4 w-4" />
+        </button>
+      </form>
+    );
+
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        nav({ to: "/s/$code", params: { code }, search: { q: q || undefined } });
-      }}
-      className={cx("relative", className)}
-    >
+    <form onSubmit={submit} className={cx("relative", className)}>
       <Search className={cx("pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2", muted)} />
       <input
         value={q}
@@ -55,6 +77,7 @@ function SearchBox({ className }: { className?: string }) {
     </form>
   );
 }
+
 
 function CartButton() {
   const { code, cartCount } = useStore();
@@ -352,11 +375,80 @@ const CategoryNav = StoreNav;
 
 
 export function StoreHeader() {
-  const { settings, theme } = useStore();
+  const { settings, theme, content } = useStore();
   const [open, setOpen] = useState(false);
   const v = theme.layout.header;
 
   const announcement = settings?.announcement?.trim();
+
+  /* ------------------------- সহজ শপ: সাদা টপ বার + কমলা ক্যাটাগরি মেনু */
+  if (v === "sohoj") {
+    const phone = settings?.support_phone?.trim();
+    return (
+      <div className="sticky top-0 z-40">
+        {announcement && (
+          <div className="bg-[var(--st-accent)] px-4 py-1.5 text-center text-[12px] font-medium text-[var(--st-on-accent)]">
+            {announcement}
+          </div>
+        )}
+        <header className={cx("border-b bg-[var(--st-surface)]", borderc)}>
+          <div className="mx-auto max-w-6xl px-3 py-2.5">
+            <div className="flex items-center gap-3">
+              <button
+                className="md:hidden"
+                aria-label="Menu"
+                onClick={() => setOpen((o) => !o)}
+              >
+                {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              </button>
+              <div className="mx-auto md:mx-0">
+                <Logo />
+              </div>
+              <SearchBox variant="sohoj" className="mx-auto hidden w-full max-w-md md:block" />
+              {phone && (
+                <a href={`tel:${phone}`} className="ml-auto hidden text-right leading-tight sm:block">
+                  <span className={cx("block text-[11px]", muted)}>
+                    {content.text("sohoj_call_label") || "অর্ডার করতে কল করুন"}
+                  </span>
+                  <span className="flex items-center justify-end gap-1 text-sm font-extrabold text-[var(--st-primary)]">
+                    <Phone className="h-3.5 w-3.5" /> {phone}
+                  </span>
+                </a>
+              )}
+              <div className={cx("shrink-0", phone ? "ml-2" : "ml-auto")}>
+                <CartButton />
+              </div>
+            </div>
+            <div className="mt-2.5 md:hidden">
+              <SearchBox variant="sohoj" />
+            </div>
+          </div>
+
+          <div className="hidden bg-[var(--st-primary)] md:block">
+            <div className="mx-auto max-w-6xl px-3 text-[var(--st-on-primary)] [&_a:hover]:!opacity-80 [&_a]:!border-transparent [&_a]:!font-bold [&_a]:!text-[var(--st-on-primary)]">
+              <CategoryNav variant="row" />
+            </div>
+          </div>
+
+          {open && (
+            <div className={cx("border-t px-4 py-3 md:hidden", borderc)}>
+              {phone && (
+                <a
+                  href={`tel:${phone}`}
+                  className="mb-2 flex items-center gap-2 rounded-[var(--st-radius)] bg-[var(--st-primary)] px-3 py-2 text-sm font-bold text-[var(--st-on-primary)]"
+                >
+                  <Phone className="h-4 w-4" /> {phone}
+                </a>
+              )}
+              <CategoryNav variant="stack" />
+            </div>
+          )}
+        </header>
+      </div>
+    );
+  }
+
+
 
   return (
     <div className="sticky top-0 z-40">
@@ -647,56 +739,49 @@ export function StoreFooter() {
       </footer>
     );
 
-  /* --------------------------------- Atelier: editorial masthead footer */
+  /* ------------------------- সহজ শপ: সরু কমলা ফুটার বার + ছোট লিংক রো */
   if (theme.id === "atelier")
     return (
-      <footer className={cx("mt-24 border-t", borderc)}>
-        <div className="mx-auto max-w-6xl px-4 py-16">
-          <div className="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr]">
-            <div>
-              <Heading className="text-4xl leading-none md:text-5xl">{name}</Heading>
-              <p className={cx("mt-5 max-w-md text-sm leading-relaxed", muted)}>{about}</p>
-            </div>
-            <div>
-              <div className={cx("mb-4 border-b pb-2 text-[11px] uppercase tracking-[0.26em]", borderc, muted)}>Shop</div>
-              <div className="flex flex-col gap-2.5">
-                <Link to="/s/$code" params={{ code }} className="text-sm hover:text-[var(--st-primary)]">
-                  All products
-                </Link>
-                {catLinks.map((c) => (
-                  <Link
-                    key={c.id}
-                    to="/s/$code/c/$slug"
-                    params={{ code, slug: c.slug }}
-                    className="text-sm hover:text-[var(--st-primary)]"
-                  >
-                    {c.name}
-                  </Link>
-                ))}
-              </div>
-            </div>
-            <div>
-              <div className={cx("mb-4 border-b pb-2 text-[11px] uppercase tracking-[0.26em]", borderc, muted)}>Contact</div>
-              <div className="flex flex-col gap-2.5 text-sm">
-                {settings?.support_phone && <a href={`tel:${settings.support_phone}`}>{settings.support_phone}</a>}
-                {wa && (
-                  <a href={wa} target="_blank" rel="noreferrer">
-                    WhatsApp
-                  </a>
-                )}
-                {socials.map((s) => (
-                  <a key={s.label} href={s.href} target="_blank" rel="noreferrer">
-                    {s.label}
-                  </a>
-                ))}
-                <span className={muted}>Cash on delivery available</span>
-              </div>
-            </div>
+      <footer className="mt-8">
+        <div className={cx("border-t bg-[var(--st-surface)]", borderc)}>
+          <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-5 gap-y-2 px-4 py-4 text-[12px] font-medium">
+            <Link to="/s/$code" params={{ code }} className="hover:text-[var(--st-primary)]">
+              সব প্রোডাক্ট
+            </Link>
+            {catLinks.slice(0, 4).map((c) => (
+              <Link
+                key={c.id}
+                to="/s/$code/c/$slug"
+                params={{ code, slug: c.slug }}
+                className="hover:text-[var(--st-primary)]"
+              >
+                {c.name}
+              </Link>
+            ))}
+            {settings?.support_phone && (
+              <a href={`tel:${settings.support_phone}`} className="font-bold text-[var(--st-primary)]">
+                কল করুন {settings.support_phone}
+              </a>
+            )}
+            {wa && (
+              <a href={wa} target="_blank" rel="noreferrer" className="hover:text-[var(--st-primary)]">
+                WhatsApp
+              </a>
+            )}
+            {socials.map((s) => (
+              <a key={s.label} href={s.href} target="_blank" rel="noreferrer" className="hover:text-[var(--st-primary)]">
+                {s.label}
+              </a>
+            ))}
           </div>
-          <div className={cx("mt-12 border-t pt-5 text-[11px] uppercase tracking-[0.2em]", borderc, muted)}>{copy}</div>
+        </div>
+        <div className="bg-[var(--st-primary)] px-4 py-3 text-center text-[12px] font-semibold text-[var(--st-on-primary)]">
+          {copy}
         </div>
       </footer>
     );
+
+
 
   /* ------------------------------------------- Aurora: soft gradient footer */
   return (

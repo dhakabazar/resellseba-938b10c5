@@ -237,13 +237,21 @@ const THEME_GROUP: Record<StoreThemeId, ContentGroup> = {
   },
   atelier: {
     id: "theme-atelier",
-    title: "Atelier editorial quote",
-    description: "Large editorial quote band placed between the product sections.",
+    title: "সহজ শপ — অর্ডার ও কল",
+    description: "কল করে অর্ডারের লেখা, অর্ডার বাটনের লেখা আর রিটার্ন পলিসি।",
     fields: [
-      t("atelier_quote", "Editorial quote", "Fewer, better things."),
-      t("atelier_credit", "Quote credit", "— our studio promise"),
+      t("sohoj_call_label", "কল করার উপরের ছোট লেখা", "অর্ডার করতে কল করুন"),
+      t("sohoj_order_label", "অর্ডার বাটনের লেখা", "অর্ডার করুন"),
+      t("sohoj_free_label", "ফ্রি ডেলিভারি বাটনের লেখা", "ফ্রী ডেলিভারিতে অর্ডার করুন"),
+      t("sohoj_free_note", "ফ্রি ডেলিভারির নোটিশ", "এই পণ্যটি পাচ্ছেন সম্পূর্ণ ফ্রি ডেলিভারিতে!"),
+      area(
+        "sohoj_return",
+        "রিটার্ন পলিসি",
+        "পণ্য হাতে পাওয়ার ২৪ ঘণ্টার মধ্যে সমস্যা জানালে রিটার্ন বা রিপ্লেসমেন্ট করা হবে। ডেলিভারি ম্যানের সামনেই পণ্য চেক করে নিন।",
+      ),
     ],
   },
+
 };
 
 export function themeContentGroups(themeId: StoreThemeId): ContentGroup[] {
