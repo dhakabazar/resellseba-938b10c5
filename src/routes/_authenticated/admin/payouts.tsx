@@ -8,6 +8,7 @@ import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
 import { useAuth } from "@/lib/use-auth";
 import { DataToolbar, Pagination, usePaginated } from "@/components/data-list";
 import { toast } from "sonner";
+import { PayoutOverview } from "@/components/payout-overview";
 
 export const Route = createFileRoute("/_authenticated/admin/payouts")({
   validateSearch: (s: Record<string, unknown>): { reseller?: string; status?: string } => ({
@@ -95,6 +96,7 @@ function AdminPayouts() {
   );
   const [resellerFilter, setResellerFilter] = useState(sp.reseller ?? "");
   const [query, setQuery] = useState("");
+  const [tab, setTab] = useState<"requests" | "report">("requests");
   const [perPage, setPerPage] = useState(20);
   const [page, setPage] = useState(1);
   const [action, setAction] = useState<{ row: Row; status: "approved" | "paid" | "rejected" } | null>(null);
@@ -187,6 +189,23 @@ function AdminPayouts() {
     <div>
       <PageHeader title="Payout Management" description="Review withdrawal requests, check payout accounts and process payments." />
 
+      <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
+        {([["requests", "Withdrawal requests"], ["report", "Reseller report"]] as const).map(([key, label]) => (
+          <button
+            key={key}
+            onClick={() => setTab(key)}
+            className={
+              "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors " +
+              (tab === key ? "border-transparent bg-primary text-primary-foreground" : "hover:bg-muted")
+            }
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "report" ? <PayoutOverview /> : <>
+
       <DataToolbar
         search={query}
         onSearch={setQuery}
@@ -278,6 +297,7 @@ function AdminPayouts() {
           <Pagination page={page} perPage={perPage} total={filteredRows.length} onPage={setPage} />
         </>
       )}
+      </>}
 
       <ConfirmModal
         isOpen={!!toDelete}
