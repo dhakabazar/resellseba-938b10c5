@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { fetchAll } from "@/lib/fetch-all";
 import { sharedLoad } from "@/lib/bootstrap";
 import { Loader2, Search, Phone, MessageCircle, FileSpreadsheet, FileText} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
