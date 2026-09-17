@@ -913,19 +913,22 @@ export function ThemeSignature({ slot = "mid" }: { slot?: "top" | "mid" }) {
     );
   }
 
+  /* সহজ শপ — কল করে অর্ডারের বার */
   if (theme.id === "atelier") {
-    const quote = content.text("atelier_quote");
-    const credit = content.text("atelier_credit");
-    if (!quote) return null;
+    const phone = settings?.support_phone?.trim();
+    if (!phone) return null;
     return (
-      <section className="mx-auto max-w-4xl px-4 py-16 text-center">
-        <Heading as="h2" className="text-3xl leading-tight md:text-5xl">
-          {quote}
-        </Heading>
-        {credit && <p className={cx("mt-4 text-xs uppercase tracking-[0.3em]", muted)}>{credit}</p>}
+      <section className="mx-auto max-w-6xl px-3 py-3">
+        <a
+          href={`tel:${phone}`}
+          className="flex flex-wrap items-center justify-center gap-2 rounded-[var(--st-radius)] bg-[var(--st-accent)] px-4 py-3 text-center text-sm font-extrabold text-[var(--st-on-accent)]"
+        >
+          {content.text("sohoj_call_label") || "অর্ডার করতে কল করুন"} — {phone}
+        </a>
       </section>
     );
   }
+
 
   return null;
 }
