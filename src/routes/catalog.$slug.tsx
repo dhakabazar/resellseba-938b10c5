@@ -66,7 +66,6 @@ function CatalogDetails() {
 
   const detailText = [
     p.name,
-    p.short,
     p.description?.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim(),
     `Price: ${bdt(p.price)}`,
     `Code: #${p.code}`,
@@ -127,7 +126,6 @@ function CatalogDetails() {
             </div>
 
             <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-4xl">{p.name}</h1>
-            {p.short && <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{p.short}</p>}
 
             {/* Price board */}
             <div className="catalog-card mt-6 p-5">
