@@ -67,7 +67,7 @@ export type StoreSettings = {
   theme_settings?: Record<string, ThemeContentValues> | null;
 };
 
-export type StoreCategory = { id: string; name: string; slug: string; image_url: string | null };
+export type StoreCategory = { id: string; name: string; slug: string; image_url: string | null; product_count?: number };
 
 export type StoreData = {
   code: string;
