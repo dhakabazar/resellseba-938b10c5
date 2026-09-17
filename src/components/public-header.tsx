@@ -150,7 +150,7 @@ export function PublicHeader({
               dir="ltr"
             >
               <Phone className="h-4 w-4" />
-              <span className="hidden xs:inline sm:inline">{phone}</span>
+              <span className="hidden sm:inline">{phone}</span>
             </a>
           )}
           <Link
