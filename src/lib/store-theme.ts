@@ -17,9 +17,9 @@ export type StoreThemeId = "aurora" | "noir" | "bazaar" | "atelier";
 
 export type StoreThemeLayout = {
   /** header composition */
-  header: "glass" | "bar" | "classic" | "editorial";
+  header: "glass" | "bar" | "classic" | "editorial" | "sohoj";
   /** home hero composition */
-  hero: "gradient" | "spotlight" | "banner" | "split";
+  hero: "gradient" | "spotlight" | "banner" | "split" | "sohoj";
   /** product card composition */
   card: "soft" | "frame" | "compact" | "bare";
   /** category strip composition */
@@ -29,6 +29,7 @@ export type StoreThemeLayout = {
   uppercaseNav: boolean;
   trustBar: boolean;
 };
+
 
 /** A complete color set. Every field is required so no color can be missing. */
 export type StorePalette = {
