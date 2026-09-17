@@ -351,7 +351,7 @@ function Landing({
         <div className="pointer-events-none absolute top-10 right-1/4 -z-10 h-72 w-72 rounded-full bg-brand-3/20 blur-3xl animate-blob-drift-slow" />
         <div className="pointer-events-none absolute bottom-0 left-1/3 -z-10 h-64 w-64 rounded-full bg-brand-4/20 blur-3xl animate-blob-drift" />
 
-        <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 pt-12 pb-14 sm:px-6 sm:pt-20 sm:pb-20 lg:grid-cols-[1.05fr_.95fr] lg:gap-14">
+        <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 pt-12 pb-16 sm:px-6 sm:pt-20 sm:pb-24 lg:grid-cols-[1.05fr_.95fr] lg:gap-14">
           <div className="text-center lg:text-left">
             <div className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-4 py-2 text-sm font-semibold text-primary sm:text-base animate-fade-in-up animation-delay-100">
               <Sparkles className="h-4 w-4 shrink-0" />
