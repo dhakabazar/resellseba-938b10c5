@@ -11,6 +11,8 @@ import { Hint } from "@/components/Hint";
 import { AdminProductCalc } from "@/components/price-breakdown";
 import { areaLabel, deliverySettingsSummary, globalDelivery, resolveDelivery, resolvedCharge, type ProductDeliveryMode } from "@/lib/delivery";
 import { confirmAction } from "@/lib/confirm";
+import { CategoryPicker } from "@/components/category-picker";
+import { loadProductCategories, saveProductCategories } from "@/lib/product-categories";
 
 export const Route = createFileRoute("/_authenticated/admin/products/$id/edit")({
   component: EditProduct,
