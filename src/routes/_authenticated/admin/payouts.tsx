@@ -244,8 +244,23 @@ function AdminPayouts() {
               <div key={r.id} className="surface-card p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <div className="truncate font-semibold">{r.reseller?.business_name ?? "—"}</div>
+                    <button
+                      type="button"
+                      onClick={() => openFullReport(r)}
+                      title="Open full report for this reseller"
+                      className="max-w-full truncate font-semibold text-primary underline-offset-2 hover:underline"
+                    >
+                      {r.reseller?.business_name ?? "—"}
+                    </button>
                     <div className="text-[11px] text-muted-foreground">{new Date(r.created_at).toLocaleString()}</div>
+                    <button
+                      type="button"
+                      onClick={() => setOpenReport((id) => (id === r.id ? null : r.id))}
+                      className="mt-1 inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[11px] hover:bg-muted"
+                    >
+                      <ChevronDown className={"h-3 w-3 transition-transform " + (openReport === r.id ? "rotate-180" : "")} />
+                      {openReport === r.id ? "Hide report" : "Quick report"}
+                    </button>
                   </div>
                   <div className="text-right">
                     <div className="font-bold tabular-nums">৳{Number(r.amount).toLocaleString()}</div>
@@ -259,6 +274,11 @@ function AdminPayouts() {
                   <p className="mt-2 rounded-md border border-dashed p-2 text-[11px] text-muted-foreground">
                     <span className="font-medium text-foreground">Admin note:</span> {r.notes}
                   </p>
+                )}
+                {openReport === r.id && (
+                  <div className="mt-3 rounded-md border bg-muted/20 p-3">
+                    <ResellerPayoutSummary search={searchKey(r)} />
+                  </div>
                 )}
                 <div className="mt-3">{actions(r)}</div>
               </div>
@@ -281,9 +301,25 @@ function AdminPayouts() {
               </thead>
               <tbody>
                 {rows.map((r) => (
+                  <>
                   <tr key={r.id} className="border-t align-top">
                     <td className="p-3">
-                      <div className="font-medium">{r.reseller?.business_name ?? "—"}</div>
+                      <button
+                        type="button"
+                        onClick={() => openFullReport(r)}
+                        title="Open full report for this reseller"
+                        className="font-medium text-primary underline-offset-2 hover:underline"
+                      >
+                        {r.reseller?.business_name ?? "—"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setOpenReport((id) => (id === r.id ? null : r.id))}
+                        className="mt-1 flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
+                      >
+                        <ChevronDown className={"h-3 w-3 transition-transform " + (openReport === r.id ? "rotate-180" : "")} />
+                        {openReport === r.id ? "Hide report" : "Quick report"}
+                      </button>
                     </td>
                     <td className="p-3 font-semibold tabular-nums">৳{Number(r.amount).toLocaleString()}</td>
                     <td className="p-3"><PayoutAccount r={r.reseller} fallback={r.reference} /></td>
