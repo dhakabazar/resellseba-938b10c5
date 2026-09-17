@@ -725,6 +725,24 @@ export type Database = {
         }
         Relationships: []
       }
+      impersonation_password_holds: {
+        Row: {
+          created_at: string
+          old_password: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          old_password: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          old_password?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       leader_commissions: {
         Row: {
           amount: number
@@ -2997,6 +3015,10 @@ export type Database = {
         Returns: {
           email: string
         }[]
+      }
+      admin_impersonation_restore: {
+        Args: { _user_id?: string }
+        Returns: boolean
       }
       admin_lookups: { Args: never; Returns: Json }
       admin_orders_page: { Args: { _statuses?: string[] }; Returns: Json }
