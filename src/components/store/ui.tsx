@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useMemo } from "react";
-import { ShoppingBag } from "lucide-react";
+import { Flame, ShoppingBag } from "lucide-react";
 import { bdt } from "@/lib/store-cart";
 import { deliveryLabel, resolveDelivery } from "@/lib/delivery";
 import { useStore, type StoreListing } from "./store-context";
@@ -45,13 +45,58 @@ export function SectionHead({
   action?: React.ReactNode;
 }) {
   const { theme } = useStore();
+
+  /* Bazaar — marketplace ribbon: colored bar + uppercase label */
+  if (theme.id === "bazaar")
+    return (
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <span className="h-6 w-1.5 rounded-full bg-[var(--st-primary)]" />
+          <div>
+            <Heading className="text-lg font-extrabold uppercase tracking-wide md:text-xl">{title}</Heading>
+            {subtitle && <p className={cx("text-[12px]", muted)}>{subtitle}</p>}
+          </div>
+        </div>
+        {action}
+      </div>
+    );
+
+  /* Noir — centered, hairline rules, wide letterspacing */
+  if (theme.id === "noir")
+    return (
+      <div className="mb-8 text-center">
+        <div className="mx-auto mb-4 h-px w-16 bg-[var(--st-primary)]" />
+        <Heading className="text-2xl md:text-3xl">{title}</Heading>
+        {subtitle && (
+          <p className={cx("mx-auto mt-2 max-w-xl text-[11px] uppercase tracking-[0.28em]", muted)}>{subtitle}</p>
+        )}
+        {action && <div className="mt-4 flex justify-center">{action}</div>}
+      </div>
+    );
+
+  /* Atelier — editorial: oversized serif with a full-width rule */
+  if (theme.id === "atelier")
+    return (
+      <div className="mb-8">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <Heading className="max-w-2xl text-3xl leading-[1.1] md:text-5xl">{title}</Heading>
+          {action}
+        </div>
+        {subtitle && <p className={cx("mt-3 max-w-xl text-sm leading-relaxed", muted)}>{subtitle}</p>}
+        <div className={cx("mt-6 border-t", borderc)} />
+      </div>
+    );
+
+  /* Aurora — soft modern with a gradient underline */
   return (
     <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
       <div>
-        <Heading className={theme.layout.card === "bare" ? "text-3xl md:text-4xl" : "text-xl md:text-2xl"}>
-          {title}
-        </Heading>
-        {subtitle && <p className={cx("mt-1 text-sm", muted)}>{subtitle}</p>}
+        <Heading className="text-xl md:text-2xl">{title}</Heading>
+        <span
+          className="mt-2 block h-1 w-12 rounded-full"
+          style={{ background: "linear-gradient(90deg, var(--st-primary), var(--st-accent))" }}
+        />
+        {subtitle && <p className={cx("mt-2 text-sm", muted)}>{subtitle}</p>}
       </div>
       {action}
     </div>
@@ -109,83 +154,151 @@ export function Price({ value, className }: { value: number; className?: string 
   );
 }
 
+/** Deterministic "sold" count so the social proof never jumps between renders. */
+function soldCount(id: string) {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) {
+    hash = (hash << 5) - hash + id.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash % 200) + 15;
+}
+
 export function ProductCard({ listing }: { listing: StoreListing }) {
   const { code, theme, title, image } = useStore();
-  const variant = theme.layout.card;
   const img = image(listing);
   const p = listing.product!;
   const free = resolveDelivery(p).mode === "free";
+  const sold = useMemo(() => soldCount(p.id), [p.id]);
+  const price = Number(listing.selling_price);
+  const to = { to: "/s/$code/p/$slug" as const, params: { code, slug: p.slug } };
 
-  const shell =
-    variant === "soft"
-      ? "rounded-[var(--st-radius)] bg-[var(--st-surface)] shadow-[var(--st-shadow)] border border-transparent hover:border-[var(--st-primary)]/40"
-      : variant === "frame"
-        ? "rounded-[var(--st-radius)] border border-[var(--st-border)] bg-[var(--st-surface)] hover:border-[var(--st-primary)]"
-        : variant === "compact"
-          ? "rounded-[var(--st-radius)] border border-[var(--st-border)] bg-[var(--st-surface)]"
-          : "bg-transparent";
+  const Img = ({ className }: { className?: string }) =>
+    img ? (
+      <img
+        src={img}
+        alt={title(listing)}
+        loading="lazy"
+        className={cx("h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.07]", className)}
+      />
+    ) : (
+      <div className={cx("grid h-full w-full place-items-center text-xs", muted)}>No image</div>
+    );
 
-  const saleCount = useMemo(() => {
-    // Basic deterministic hash from product id for consistent visual sale counts
-    let hash = 0;
-    const str = p.id;
-    for (let i = 0; i < str.length; i++) {
-      hash = (hash << 5) - hash + str.charCodeAt(i);
-      hash |= 0;
-    }
-    return Math.abs(hash % 200) + 15;
-  }, [p.id]);
-
-  return (
-    <Link
-      to="/s/$code/p/$slug"
-      params={{ code, slug: p.slug }}
-      className={cx("group block overflow-hidden transition-all", shell, variant === "bare" && "hover:opacity-90")}
-    >
-      <div
+  /* ---------------------------------------------- Bazaar: dense deal card */
+  if (theme.id === "bazaar")
+    return (
+      <Link
+        {...to}
         className={cx(
-          "relative overflow-hidden bg-[var(--st-bg-alt)]",
-          variant === "bare" ? "aspect-[4/5] rounded-[var(--st-radius)]" : "aspect-square",
+          "group flex flex-col overflow-hidden rounded-[var(--st-radius)] border bg-[var(--st-surface)] transition-shadow hover:shadow-lg",
+          borderc,
         )}
       >
-        {img ? (
-          <img
-            src={img}
-            alt={title(listing)}
-            loading="lazy"
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.06]"
-          />
-        ) : (
-          <div className={cx("grid h-full w-full place-items-center text-xs", muted)}>No image</div>
-        )}
-        <div className="absolute left-2 top-2 flex flex-col gap-1.5">
+        <div className="relative aspect-square overflow-hidden bg-[var(--st-bg-alt)]">
+          <Img />
           {free && (
-            <span className="rounded-full bg-[var(--st-primary)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--st-on-primary)]">
+            <span className="absolute bottom-0 left-0 right-0 bg-black/65 py-0.5 text-center text-[10px] font-bold uppercase text-white">
               Free delivery
             </span>
           )}
-          <span className="inline-flex items-center gap-1 rounded-full bg-black/60 backdrop-blur-sm px-2 py-0.5 text-[10px] font-bold text-white">
-            <ShoppingBag className="h-2.5 w-2.5" /> {saleCount} Sold
+        </div>
+        <div className="flex flex-1 flex-col p-2.5">
+          <h3 className="line-clamp-2 text-[13px] leading-snug text-[var(--st-fg)]">{title(listing)}</h3>
+          <div className="mt-1.5 flex items-baseline gap-2">
+            <Price value={price} className="text-base font-extrabold" />
+          </div>
+          <div className={cx("mt-1 flex items-center gap-1 text-[10px] font-semibold", muted)}>
+            <Flame className="h-3 w-3 text-[var(--st-primary)]" /> {sold} sold
+          </div>
+          <span className="mt-2 block rounded-[var(--st-radius-sm)] bg-[var(--st-primary)] py-2 text-center text-[12px] font-bold text-[var(--st-on-primary)]">
+            Order now
           </span>
         </div>
-      </div>
+      </Link>
+    );
 
-      <div className={cx(variant === "bare" ? "pt-3" : variant === "compact" ? "p-2.5" : "p-4")}>
+  /* ------------------------------------------------- Noir: gallery frame */
+  if (theme.id === "noir")
+    return (
+      <Link {...to} className="group block">
+        <div className={cx("relative aspect-[3/4] overflow-hidden border bg-[var(--st-bg-alt)]", borderc)}>
+          <Img className="opacity-95 group-hover:opacity-100" />
+          <span className="absolute inset-x-0 bottom-0 translate-y-full bg-[var(--st-primary)] py-2.5 text-center text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--st-on-primary)] transition-transform duration-300 group-hover:translate-y-0">
+            Order now
+          </span>
+        </div>
         <h3
-          className={cx(
-            "line-clamp-2 text-[var(--st-fg)]",
-            variant === "compact" ? "text-[13px] leading-snug" : "text-sm",
-            variant === "bare" && "text-base",
-          )}
-          style={variant === "bare" ? { fontFamily: "var(--st-font-head)" } : undefined}
+          className="mt-4 line-clamp-2 text-[13px] uppercase tracking-[0.16em] text-[var(--st-fg)]"
+          style={{ fontFamily: "var(--st-font-body)" }}
         >
           {title(listing)}
         </h3>
-        <div className="mt-2 flex items-baseline justify-between gap-2">
-          <Price value={Number(listing.selling_price)} className={variant === "compact" ? "text-sm" : "text-base"} />
-          {!free && variant !== "compact" && (
-            <span className={cx("text-[11px]", muted)}>{deliveryLabel(p)}</span>
+        <div className="mt-1.5 flex items-baseline gap-2">
+          <Price value={price} className="text-sm tracking-widest" />
+        </div>
+        <div className={cx("mt-1 text-[10px] uppercase tracking-[0.22em]", muted)}>{sold} sold</div>
+      </Link>
+    );
+
+  /* -------------------------------------------- Atelier: editorial plate */
+  if (theme.id === "atelier")
+    return (
+      <Link {...to} className="group block">
+        <div className="relative aspect-[4/5] overflow-hidden bg-[var(--st-bg-alt)]">
+          <Img />
+          {free && (
+            <span className={cx("absolute left-3 top-3 border bg-[var(--st-surface)] px-2 py-0.5 text-[10px] uppercase tracking-[0.2em]", borderc)}>
+              Free delivery
+            </span>
           )}
+        </div>
+        <div className={cx("mt-4 border-t pt-3", borderc)}>
+          <h3 className="line-clamp-2 text-base leading-snug text-[var(--st-fg)]" style={{ fontFamily: "var(--st-font-head)" }}>
+            {title(listing)}
+          </h3>
+          <div className="mt-2 flex items-end justify-between gap-2">
+            <div className="flex items-baseline gap-2">
+              <Price value={price} className="text-base" />
+            </div>
+            <span className="border-b border-[var(--st-primary)] pb-0.5 text-[11px] uppercase tracking-[0.2em] text-[var(--st-primary)]">
+              Order
+            </span>
+          </div>
+          <div className={cx("mt-1 text-[11px]", muted)}>{sold} sold · {deliveryLabel(p)}</div>
+        </div>
+      </Link>
+    );
+
+  /* --------------------------------------------------- Aurora: soft card */
+  return (
+    <Link
+      {...to}
+      className="group block overflow-hidden rounded-[var(--st-radius)] border border-transparent bg-[var(--st-surface)] shadow-[var(--st-shadow)] transition-all hover:-translate-y-1 hover:border-[var(--st-primary)]/40"
+    >
+      <div className="relative aspect-square overflow-hidden bg-[var(--st-bg-alt)]">
+        <Img />
+        <div className="absolute left-2 top-2 flex flex-col items-start gap-1.5">
+          {free && (
+            <span className="rounded-full bg-[var(--st-accent)] px-2 py-0.5 text-[10px] font-semibold text-[var(--st-on-accent)]">
+              Free delivery
+            </span>
+          )}
+        </div>
+        <span className="absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-full bg-black/55 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur-sm">
+          <ShoppingBag className="h-2.5 w-2.5" /> {sold} sold
+        </span>
+      </div>
+      <div className="p-4">
+        <h3 className="line-clamp-2 text-sm text-[var(--st-fg)]">{title(listing)}</h3>
+        <div className="mt-2 flex items-baseline gap-2">
+          <Price value={price} className="text-base" />
+        </div>
+        <div className="mt-3 flex items-center justify-between gap-2">
+          <span className={cx("text-[11px]", muted)}>{free ? "Cash on delivery" : deliveryLabel(p)}</span>
+          <span className="rounded-full bg-[var(--st-primary)]/12 px-3 py-1 text-[11px] font-semibold text-[var(--st-primary)] transition-colors group-hover:bg-[var(--st-primary)] group-hover:text-[var(--st-on-primary)]">
+            Order now
+          </span>
         </div>
       </div>
     </Link>
@@ -195,11 +308,13 @@ export function ProductCard({ listing }: { listing: StoreListing }) {
 export function ProductGrid({ listings }: { listings: StoreListing[] }) {
   const { theme } = useStore();
   const cols =
-    theme.layout.grid === "dense"
+    theme.id === "bazaar"
       ? "grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5"
-      : theme.layout.grid === "airy"
-        ? "grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3"
-        : "grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4";
+      : theme.id === "noir"
+        ? "grid-cols-2 gap-5 md:gap-8 lg:grid-cols-4"
+        : theme.id === "atelier"
+          ? "grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-3"
+          : "grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4";
   return (
     <div className={cx("grid", cols)}>
       {listings.map((l) => (

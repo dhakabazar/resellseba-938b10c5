@@ -423,12 +423,14 @@ export function StoreHeader() {
         </header>
       ) : v === "editorial" ? (
         <header className={cx("border-b bg-[var(--st-bg)]", borderc)}>
-          <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-5">
-            <Logo />
-            <div className="hidden md:block">
+          <div className="mx-auto flex max-w-6xl items-center justify-between gap-6 px-5 py-5">
+            <div className="shrink-0">
+              <Logo />
+            </div>
+            <div className="hidden min-w-0 flex-1 justify-center md:flex">
               <CategoryNav variant="row" />
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex shrink-0 items-center gap-2">
               <SearchBox className="hidden w-56 lg:block" />
               <CartButton />
               <button className="md:hidden" aria-label="Menu" onClick={() => setOpen((o) => !o)}>
@@ -478,6 +480,17 @@ export function TrustBar() {
     .filter((i) => i.t);
   if (!items.length) return null;
 
+  if (theme.id === "bazaar")
+    return (
+      <section className="bg-[var(--st-primary)] text-[var(--st-on-primary)]">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-6 gap-y-1 px-4 py-2 text-[12px] font-semibold uppercase">
+          {items.map((i) => (
+            <span key={i.t}>{i.t}</span>
+          ))}
+        </div>
+      </section>
+    );
+
   return (
     <section className={cx("border-y bg-[var(--st-bg-alt)]", borderc)}>
       <div className="mx-auto grid max-w-6xl grid-cols-2 gap-4 px-4 py-5 md:grid-cols-4">
@@ -493,7 +506,7 @@ export function TrustBar() {
 }
 
 export function StoreFooter() {
-  const { code, name, settings, categories } = useStore();
+  const { code, name, settings, categories, theme } = useStore();
   const year = new Date().getFullYear();
   const socials = [
     settings?.facebook_url && { label: "Facebook", href: settings.facebook_url },
@@ -501,69 +514,282 @@ export function StoreFooter() {
     settings?.tiktok_url && { label: "TikTok", href: settings.tiktok_url },
   ].filter(Boolean) as { label: string; href: string }[];
 
-  return (
-    <footer className={cx("mt-16 border-t bg-[var(--st-bg-alt)]", borderc)}>
-      <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 md:grid-cols-4">
-        <div className="md:col-span-2">
-          <Heading className="text-lg">{name}</Heading>
-          <p className={cx("mt-2 max-w-md text-sm leading-relaxed", muted)}>
-            {settings?.about_text ||
-              settings?.meta_description ||
-              `${name} — genuine products, honest pricing and cash-on-delivery across Bangladesh.`}
-          </p>
-          {socials.length > 0 && (
-            <div className="mt-4 flex flex-wrap gap-2">
-              {socials.map((s) => (
-                <a
-                  key={s.label}
-                  href={s.href}
-                  target="_blank"
-                  rel="noreferrer"
-                  className={cx("rounded-[var(--st-radius-sm)] border px-3 py-1.5 text-xs hover:border-[var(--st-primary)]", borderc)}
-                >
-                  {s.label}
-                </a>
-              ))}
-            </div>
-          )}
-        </div>
+  const about =
+    settings?.about_text ||
+    settings?.meta_description ||
+    `${name} — genuine products, honest pricing and cash-on-delivery across Bangladesh.`;
+  const wa = settings?.whatsapp ? `https://wa.me/${settings.whatsapp.replace(/[^\d]/g, "")}` : undefined;
+  const catLinks = categories.slice(0, 6);
+  const copy = settings?.footer_text || `© ${year} ${name}. All rights reserved.`;
 
-        <div>
-          <div className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--st-fg)]">Shop</div>
-          <div className="flex flex-col gap-2">
-            <Link to="/s/$code" params={{ code }} className={cx("text-sm hover:text-[var(--st-primary)]", muted)}>
+  /* ------------------------------------------- Bazaar: dense utility footer */
+  if (theme.id === "bazaar")
+    return (
+      <footer className="mt-10">
+        <div className="bg-[var(--st-accent)] px-4 py-5 text-center text-[var(--st-on-accent)]">
+          <div className="text-base font-extrabold uppercase">Order now — cash on delivery</div>
+          <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+            {settings?.support_phone && (
+              <a
+                href={`tel:${settings.support_phone}`}
+                className="rounded-full bg-[var(--st-primary)] px-5 py-2 text-sm font-bold text-[var(--st-on-primary)]"
+              >
+                Call {settings.support_phone}
+              </a>
+            )}
+            {wa && (
+              <a
+                href={wa}
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-full border border-current px-5 py-2 text-sm font-bold"
+              >
+                WhatsApp
+              </a>
+            )}
+          </div>
+        </div>
+        <div className={cx("border-t bg-[var(--st-surface)]", borderc)}>
+          <div className="mx-auto grid max-w-6xl gap-6 px-4 py-8 sm:grid-cols-2 md:grid-cols-4">
+            <div>
+              <div className="text-sm font-extrabold uppercase text-[var(--st-fg)]">{name}</div>
+              <p className={cx("mt-2 text-[12px] leading-relaxed", muted)}>{about}</p>
+            </div>
+            <div>
+              <div className="mb-2 text-[11px] font-bold uppercase tracking-wider text-[var(--st-fg)]">Shop</div>
+              <div className="flex flex-col gap-1.5">
+                <Link to="/s/$code" params={{ code }} className={cx("text-[12px] hover:text-[var(--st-primary)]", muted)}>
+                  All products
+                </Link>
+                {catLinks.map((c) => (
+                  <Link
+                    key={c.id}
+                    to="/s/$code/c/$slug"
+                    params={{ code, slug: c.slug }}
+                    className={cx("text-[12px] hover:text-[var(--st-primary)]", muted)}
+                  >
+                    {c.name}
+                  </Link>
+                ))}
+              </div>
+            </div>
+            <div>
+              <div className="mb-2 text-[11px] font-bold uppercase tracking-wider text-[var(--st-fg)]">Support</div>
+              <div className={cx("flex flex-col gap-1.5 text-[12px]", muted)}>
+                {settings?.support_phone && <a href={`tel:${settings.support_phone}`}>Call {settings.support_phone}</a>}
+                {wa && (
+                  <a href={wa} target="_blank" rel="noreferrer">
+                    WhatsApp chat
+                  </a>
+                )}
+                <span>Cash on delivery available</span>
+                <span>Delivery: 1–3 days Dhaka, 2–5 days outside</span>
+              </div>
+            </div>
+            <div>
+              <div className="mb-2 text-[11px] font-bold uppercase tracking-wider text-[var(--st-fg)]">Follow</div>
+              <div className="flex flex-wrap gap-2">
+                {socials.map((s) => (
+                  <a
+                    key={s.label}
+                    href={s.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="rounded-[var(--st-radius-sm)] bg-[var(--st-bg-alt)] px-3 py-1.5 text-[11px] font-semibold"
+                  >
+                    {s.label}
+                  </a>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className={cx("border-t px-4 py-4 text-center text-[11px]", borderc, muted)}>{copy}</div>
+        </div>
+      </footer>
+    );
+
+  /* --------------------------------------------- Noir: centered luxe footer */
+  if (theme.id === "noir")
+    return (
+      <footer className={cx("mt-20 border-t bg-[var(--st-bg-alt)]", borderc)}>
+        <div className="mx-auto max-w-3xl px-4 py-16 text-center">
+          <Heading className="text-2xl tracking-[0.16em]">{name}</Heading>
+          <p className={cx("mx-auto mt-4 max-w-lg text-sm leading-relaxed", muted)}>{about}</p>
+          <div className={cx("mt-8 flex flex-wrap items-center justify-center gap-x-7 gap-y-3 text-[10px] uppercase tracking-[0.28em]", muted)}>
+            <Link to="/s/$code" params={{ code }} className="hover:text-[var(--st-primary)]">
               All products
             </Link>
-            {categories.slice(0, 6).map((c) => (
+            {catLinks.slice(0, 4).map((c) => (
               <Link
                 key={c.id}
                 to="/s/$code/c/$slug"
                 params={{ code, slug: c.slug }}
-                className={cx("text-sm hover:text-[var(--st-primary)]", muted)}
+                className="hover:text-[var(--st-primary)]"
               >
                 {c.name}
               </Link>
             ))}
+            {settings?.support_phone && <a href={`tel:${settings.support_phone}`}>{settings.support_phone}</a>}
+            {wa && (
+              <a href={wa} target="_blank" rel="noreferrer">
+                WhatsApp
+              </a>
+            )}
+            {socials.map((s) => (
+              <a key={s.label} href={s.href} target="_blank" rel="noreferrer">
+                {s.label}
+              </a>
+            ))}
+          </div>
+          <div className={cx("mx-auto mt-10 h-px w-24 bg-[var(--st-primary)]")} />
+          <div className={cx("mt-6 text-[11px]", muted)}>{copy}</div>
+        </div>
+      </footer>
+    );
+
+  /* --------------------------------- Atelier: editorial masthead footer */
+  if (theme.id === "atelier")
+    return (
+      <footer className={cx("mt-24 border-t", borderc)}>
+        <div className="mx-auto max-w-6xl px-4 py-16">
+          <div className="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr]">
+            <div>
+              <Heading className="text-4xl leading-none md:text-5xl">{name}</Heading>
+              <p className={cx("mt-5 max-w-md text-sm leading-relaxed", muted)}>{about}</p>
+            </div>
+            <div>
+              <div className={cx("mb-4 border-b pb-2 text-[11px] uppercase tracking-[0.26em]", borderc, muted)}>Shop</div>
+              <div className="flex flex-col gap-2.5">
+                <Link to="/s/$code" params={{ code }} className="text-sm hover:text-[var(--st-primary)]">
+                  All products
+                </Link>
+                {catLinks.map((c) => (
+                  <Link
+                    key={c.id}
+                    to="/s/$code/c/$slug"
+                    params={{ code, slug: c.slug }}
+                    className="text-sm hover:text-[var(--st-primary)]"
+                  >
+                    {c.name}
+                  </Link>
+                ))}
+              </div>
+            </div>
+            <div>
+              <div className={cx("mb-4 border-b pb-2 text-[11px] uppercase tracking-[0.26em]", borderc, muted)}>Contact</div>
+              <div className="flex flex-col gap-2.5 text-sm">
+                {settings?.support_phone && <a href={`tel:${settings.support_phone}`}>{settings.support_phone}</a>}
+                {wa && (
+                  <a href={wa} target="_blank" rel="noreferrer">
+                    WhatsApp
+                  </a>
+                )}
+                {socials.map((s) => (
+                  <a key={s.label} href={s.href} target="_blank" rel="noreferrer">
+                    {s.label}
+                  </a>
+                ))}
+                <span className={muted}>Cash on delivery available</span>
+              </div>
+            </div>
+          </div>
+          <div className={cx("mt-12 border-t pt-5 text-[11px] uppercase tracking-[0.2em]", borderc, muted)}>{copy}</div>
+        </div>
+      </footer>
+    );
+
+  /* ------------------------------------------- Aurora: soft gradient footer */
+  return (
+    <footer className={cx("relative mt-16 overflow-hidden border-t bg-[var(--st-bg-alt)]", borderc)}>
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.14]"
+        style={{ background: "radial-gradient(700px 260px at 15% 0%, var(--st-primary), transparent 62%)" }}
+      />
+      <div className="relative mx-auto max-w-6xl px-4 py-12">
+        <div
+          className="mb-10 flex flex-col items-center gap-3 rounded-[var(--st-radius)] p-6 text-center text-[var(--st-on-primary)] md:flex-row md:justify-between md:text-left"
+          style={{ background: "linear-gradient(135deg, var(--st-primary), var(--st-accent))" }}
+        >
+          <div>
+            <div className="text-lg font-bold">Need help choosing?</div>
+            <div className="text-sm opacity-90">We reply fast — cash on delivery all over Bangladesh.</div>
+          </div>
+          <div className="flex flex-wrap justify-center gap-2">
+            {settings?.support_phone && (
+              <a
+                href={`tel:${settings.support_phone}`}
+                className="rounded-full bg-[var(--st-surface)] px-5 py-2 text-sm font-semibold text-[var(--st-fg)]"
+              >
+                Call {settings.support_phone}
+              </a>
+            )}
+            {wa && (
+              <a
+                href={wa}
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-full border border-current px-5 py-2 text-sm font-semibold"
+              >
+                WhatsApp
+              </a>
+            )}
           </div>
         </div>
 
-        <div>
-          <div className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--st-fg)]">Support</div>
-          <div className={cx("flex flex-col gap-2 text-sm", muted)}>
-            {settings?.support_phone && <a href={`tel:${settings.support_phone}`}>Call {settings.support_phone}</a>}
-            {settings?.whatsapp && (
-              <a href={`https://wa.me/${settings.whatsapp.replace(/[^\d]/g, "")}`} target="_blank" rel="noreferrer">
-                WhatsApp chat
-              </a>
+        <div className="grid gap-8 md:grid-cols-4">
+          <div className="md:col-span-2">
+            <Heading className="text-lg">{name}</Heading>
+            <p className={cx("mt-2 max-w-md text-sm leading-relaxed", muted)}>{about}</p>
+            {socials.length > 0 && (
+              <div className="mt-4 flex flex-wrap gap-2">
+                {socials.map((s) => (
+                  <a
+                    key={s.label}
+                    href={s.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="rounded-full bg-[var(--st-surface)] px-4 py-1.5 text-xs shadow-[var(--st-shadow)]"
+                  >
+                    {s.label}
+                  </a>
+                ))}
+              </div>
             )}
-            <span>Cash on delivery available</span>
-            <span>Delivery: 1–3 days (Dhaka), 2–5 days (outside)</span>
+          </div>
+          <div>
+            <div className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--st-fg)]">Shop</div>
+            <div className="flex flex-col gap-2">
+              <Link to="/s/$code" params={{ code }} className={cx("text-sm hover:text-[var(--st-primary)]", muted)}>
+                All products
+              </Link>
+              {catLinks.map((c) => (
+                <Link
+                  key={c.id}
+                  to="/s/$code/c/$slug"
+                  params={{ code, slug: c.slug }}
+                  className={cx("text-sm hover:text-[var(--st-primary)]", muted)}
+                >
+                  {c.name}
+                </Link>
+              ))}
+            </div>
+          </div>
+          <div>
+            <div className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--st-fg)]">Support</div>
+            <div className={cx("flex flex-col gap-2 text-sm", muted)}>
+              {settings?.support_phone && <a href={`tel:${settings.support_phone}`}>Call {settings.support_phone}</a>}
+              {wa && (
+                <a href={wa} target="_blank" rel="noreferrer">
+                  WhatsApp chat
+                </a>
+              )}
+              <span>Cash on delivery available</span>
+              <span>Delivery: 1–3 days (Dhaka), 2–5 days (outside)</span>
+            </div>
           </div>
         </div>
       </div>
-      <div className={cx("border-t px-4 py-5 text-center text-xs", borderc, muted)}>
-        {settings?.footer_text || `© ${year} ${name}. All rights reserved.`}
-      </div>
+      <div className={cx("relative border-t px-4 py-5 text-center text-xs", borderc, muted)}>{copy}</div>
     </footer>
   );
 }
