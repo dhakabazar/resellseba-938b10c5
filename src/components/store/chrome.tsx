@@ -375,11 +375,80 @@ const CategoryNav = StoreNav;
 
 
 export function StoreHeader() {
-  const { settings, theme } = useStore();
+  const { settings, theme, content } = useStore();
   const [open, setOpen] = useState(false);
   const v = theme.layout.header;
 
   const announcement = settings?.announcement?.trim();
+
+  /* ------------------------- সহজ শপ: সাদা টপ বার + কমলা ক্যাটাগরি মেনু */
+  if (v === "sohoj") {
+    const phone = settings?.support_phone?.trim();
+    return (
+      <div className="sticky top-0 z-40">
+        {announcement && (
+          <div className="bg-[var(--st-accent)] px-4 py-1.5 text-center text-[12px] font-medium text-[var(--st-on-accent)]">
+            {announcement}
+          </div>
+        )}
+        <header className={cx("border-b bg-[var(--st-surface)]", borderc)}>
+          <div className="mx-auto max-w-6xl px-3 py-2.5">
+            <div className="flex items-center gap-3">
+              <button
+                className="md:hidden"
+                aria-label="Menu"
+                onClick={() => setOpen((o) => !o)}
+              >
+                {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              </button>
+              <div className="mx-auto md:mx-0">
+                <Logo />
+              </div>
+              <SearchBox variant="sohoj" className="mx-auto hidden w-full max-w-md md:block" />
+              {phone && (
+                <a href={`tel:${phone}`} className="ml-auto hidden text-right leading-tight sm:block">
+                  <span className={cx("block text-[11px]", muted)}>
+                    {content.text("sohoj_call_label") || "অর্ডার করতে কল করুন"}
+                  </span>
+                  <span className="flex items-center justify-end gap-1 text-sm font-extrabold text-[var(--st-primary)]">
+                    <Phone className="h-3.5 w-3.5" /> {phone}
+                  </span>
+                </a>
+              )}
+              <div className={cx("shrink-0", phone ? "ml-2" : "ml-auto")}>
+                <CartButton />
+              </div>
+            </div>
+            <div className="mt-2.5 md:hidden">
+              <SearchBox variant="sohoj" />
+            </div>
+          </div>
+
+          <div className="hidden bg-[var(--st-primary)] md:block">
+            <div className="mx-auto max-w-6xl px-3 text-[var(--st-on-primary)] [&_a:hover]:!opacity-80 [&_a]:!border-transparent [&_a]:!font-bold [&_a]:!text-[var(--st-on-primary)]">
+              <CategoryNav variant="row" />
+            </div>
+          </div>
+
+          {open && (
+            <div className={cx("border-t px-4 py-3 md:hidden", borderc)}>
+              {phone && (
+                <a
+                  href={`tel:${phone}`}
+                  className="mb-2 flex items-center gap-2 rounded-[var(--st-radius)] bg-[var(--st-primary)] px-3 py-2 text-sm font-bold text-[var(--st-on-primary)]"
+                >
+                  <Phone className="h-4 w-4" /> {phone}
+                </a>
+              )}
+              <CategoryNav variant="stack" />
+            </div>
+          )}
+        </header>
+      </div>
+    );
+  }
+
+
 
   return (
     <div className="sticky top-0 z-40">
