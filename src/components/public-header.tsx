@@ -88,7 +88,7 @@ export function PublicHeader({
       }
       setLoadedPhone((d.contact_phone as string | null) ?? null);
     })();
-  }, [siteNameProp, logoUrlProp, content]);
+  }, [siteNameProp, logoUrlProp, contactPhoneProp, content]);
 
   const siteName = siteNameProp ?? loadedBrand.siteName;
   const logoUrl = logoUrlProp ?? loadedBrand.logoUrl;
