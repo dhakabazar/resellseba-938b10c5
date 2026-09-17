@@ -371,6 +371,7 @@ export function buildPnL(
     received += orderReceived(ord);
     advance += Math.max(n(o.advance_amount), 0);
     resellerPayout += orderProfit(ord);
+    resellerMargin += orderMargin(ord);
     buyCost += buy;
     delivery += orderDeliveryCost(o);
     packaging += orderPackaging(o);
@@ -381,7 +382,7 @@ export function buildPnL(
     expenseTotal += n(e.amount);
     catMap.set(e.category, (catMap.get(e.category) ?? 0) + n(e.amount));
   }
-  const grossProfit = received - resellerPayout - buyCost;
+  const grossProfit = received - resellerMargin - buyCost;
   return {
     orders: orders.length,
     value,

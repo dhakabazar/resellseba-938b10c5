@@ -118,7 +118,9 @@ export function ResellerTotalCell({ order }: { order: ProfitOrder; showProfit?: 
 /** Admin side: revenue = money received − what the reseller finally earns. */
 export function AdminTotalCell({ order, buyingCost }: { order: ProfitOrder; buyingCost: number }) {
   const advance = orderAdvance(order);
-  const revenue = orderReceived(order) - orderProfit(order);
+  // Reseller margin BEFORE the advance settlement — a reseller-held advance is part
+  // of the order value, so it must not be counted as admin revenue.
+  const revenue = orderReceived(order) - orderMargin(order);
   const delivery = orderDeliveryCost(order);
   const packaging = orderPackaging(order);
   const profit = revenue - buyingCost - delivery - packaging;
