@@ -119,9 +119,13 @@ export function orderBuyingCost(items: BizItem[], status: string, products: Map<
   return cost;
 }
 
-/** Admin profit of one order (see ADMIN_PROFIT_HINT). */
+/**
+ * Admin profit of one order (see ADMIN_PROFIT_HINT).
+ * Uses the reseller margin BEFORE the advance settlement — an advance held by the
+ * reseller is part of the order value, not extra admin income.
+ */
 export function adminOrderProfit(o: BizOrder, buyingCost: number) {
-  return orderReceived(o) - orderProfit(o) - buyingCost;
+  return orderReceived(o) - orderMargin(o) - buyingCost;
 }
 
 /* ----------------------------- product report ---------------------------- */
