@@ -281,7 +281,7 @@ function CatalogIndex() {
       ) : (
         <>
           {/* ───────────── Products ───────────── */}
-          <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+          <section className={`mx-auto max-w-6xl px-4 py-10 transition-opacity sm:px-6 ${busy ? "opacity-60" : ""}`}>
             {rows.length === 0 ? (
               <div className="catalog-card grid place-items-center p-16 text-center text-sm text-muted-foreground">
                 কোনো প্রোডাক্ট পাওয়া যায়নি।
