@@ -14,6 +14,8 @@ import {
   stripHtml,
   useResellerTools,
 } from "@/components/store/reseller-tools";
+import { SohojProductPage } from "@/components/store/sohoj-pdp";
+
 import {
   borderc,
   cx,
@@ -105,7 +107,31 @@ function ProductPage() {
     else toast.success("Added to cart");
   }
 
+  if (store.theme.id === "atelier")
+    return (
+      <>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+        <SohojProductPage
+          listing={listing}
+          detailsText={detailsText}
+          related={related}
+          tools={!!tools}
+          onOrder={(q) => {
+            addToCart(code, listing.id, q);
+            trackAddToCart({ id: p.id, name: title, price, qty: q });
+            nav({ to: "/s/$code/checkout", params: { code } });
+          }}
+          onAddToCart={(q) => {
+            addToCart(code, listing.id, q);
+            trackAddToCart({ id: p.id, name: title, price, qty: q });
+            toast.success("কার্টে যোগ হয়েছে");
+          }}
+        />
+      </>
+    );
+
   return (
+
     <div className="mx-auto max-w-6xl px-4 pb-24 pt-8 lg:pb-10">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
