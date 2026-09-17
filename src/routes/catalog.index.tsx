@@ -61,8 +61,26 @@ function CatalogIndex() {
   const [data, setData] = useState<{ categories: Cat[]; brands: { id: string; name: string; slug: string }[]; products: Prod[] } | null>(null);
   const [term, setTerm] = useState(q ?? "");
   const [openSug, setOpenSug] = useState(false);
+  const [openCat, setOpenCat] = useState(false);
+  const catRef = useRef<HTMLDivElement>(null);
   const [perPage, setPerPage] = useState(24);
   const currentPage = page ?? 1;
+
+  useEffect(() => {
+    if (!openCat) return;
+    const close = (e: MouseEvent) => {
+      if (catRef.current && !catRef.current.contains(e.target as Node)) setOpenCat(false);
+    };
+    const esc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpenCat(false);
+    };
+    document.addEventListener("mousedown", close);
+    document.addEventListener("keydown", esc);
+    return () => {
+      document.removeEventListener("mousedown", close);
+      document.removeEventListener("keydown", esc);
+    };
+  }, [openCat]);
 
   const matches = useMemo(() => {
     const t = term.trim().toLowerCase();
