@@ -34,6 +34,7 @@ import { CountUp } from "@/components/count-up";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { youtubeEmbed, youtubeThumb } from "@/lib/tutorials";
 import { PublicHeader, Brand } from "@/components/public-header";
+import { FloatingChat, type ChatBubbleConfig } from "@/components/floating-chat";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -97,6 +98,7 @@ type LandingContent = {
   stories?: { title?: string; subtitle?: string; items: Story[] };
   contacts?: { badge?: string; title?: string; subtitle?: string; items: ContactPerson[] };
   cta: { badge: string; title: string; subtitle: string; button: string };
+  chat?: ChatBubbleConfig;
 
   footer: { tagline: string; address?: string; phone?: string; email?: string };
 };
@@ -212,6 +214,7 @@ const FALLBACK: LandingContent = {
   cta: { badge: "", title: "শুরু করুন", subtitle: "", button: "সাইনআপ" },
 
   footer: { tagline: "বাংলাদেশের সেরা রিসেলার প্ল্যাটফর্ম", address: "", phone: "", email: "" },
+  chat: { enabled: true, phone: "", whatsapp: "", messenger: "", label: "আমাদের সাথে কথা বলুন" },
 };
 
 type LandingStats = LpBootstrap["stats"] & {
@@ -978,6 +981,13 @@ function Landing({
           © {new Date().getFullYear()} {siteName}. All rights reserved.
         </div>
       </footer>
+
+      <FloatingChat
+        config={{
+          ...(c.chat ?? {}),
+          phone: c.chat?.phone?.trim() || c.footer.phone || contact.phone || "",
+        }}
+      />
     </div>
   );
 }
