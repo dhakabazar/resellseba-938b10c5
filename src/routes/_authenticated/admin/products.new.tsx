@@ -146,6 +146,8 @@ function NewProduct() {
         throw new Error(error.message || "Failed to create product in database");
       }
 
+      if (p && categoryIds.length) await saveProductCategories(p.id, categoryIds);
+
       if (images.length && p) {
         const { error: ie } = await supabase.from("product_images").insert(
           images.map((im, i) => ({

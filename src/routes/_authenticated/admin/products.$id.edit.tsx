@@ -46,7 +46,8 @@ function EditProduct() {
   const [sku, setSku] = useState("");
   const [description, setDescription] = useState("");
   const [brandId, setBrandId] = useState("");
-  const [categoryId, setCategoryId] = useState("");
+  const [categoryIds, setCategoryIds] = useState<string[]>([]);
+  const categoryId = categoryIds[0] ?? "";
   const [buying, setBuying] = useState("");
   const [resellerPrice, setResellerPrice] = useState("");
   const [packaging, setPackaging] = useState("0");
@@ -264,13 +265,10 @@ function EditProduct() {
                   {brands.map((b) => (<option key={b.id} value={b.id}>{b.name}</option>))}
                 </select>
               </Field>
-              <Field label="Category">
-                <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className={inputCls}>
-                  <option value="">— None —</option>
-                  {cats.map((c) => (<option key={c.id} value={c.id}>{c.name}</option>))}
-                </select>
-              </Field>
             </div>
+            <Field label="Categories">
+              <CategoryPicker cats={cats} value={categoryIds} onChange={setCategoryIds} />
+            </Field>
             <Field label="Description">
               <RichTextEditor value={description} onChange={setDescription} />
             </Field>
