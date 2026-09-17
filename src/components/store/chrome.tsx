@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ChevronDown, Menu, Phone, Search, ShoppingBag, X } from "lucide-react";
 import { menuTarget, type MenuNode } from "@/lib/store-menu";
 
@@ -374,6 +374,75 @@ function StoreNav({ variant }: { variant: "row" | "stack" }) {
 }
 
 const CategoryNav = StoreNav;
+
+function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { code, name, settings } = useStore();
+  const phone = settings?.support_phone?.trim();
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
+  return (
+    <div className={cx("fixed inset-0 z-50 md:hidden", open ? "" : "pointer-events-none")}>
+      {/* halka dark backdrop */}
+      <div
+        className={cx(
+          "absolute inset-0 bg-black/50 transition-opacity duration-300",
+          open ? "opacity-100" : "opacity-0"
+        )}
+        onClick={onClose}
+      />
+      {/* side drawer */}
+      <aside
+        className={cx(
+          "absolute left-0 top-0 flex h-full w-[84%] max-w-xs flex-col bg-[var(--st-surface)] shadow-2xl transition-transform duration-300",
+          open ? "translate-x-0" : "-translate-x-full"
+        )}
+      >
+        <div className={cx("flex items-center justify-between border-b px-4 py-3", borderc)}>
+          <Link to="/s/$code" params={{ code }} onClick={onClose} className="flex min-w-0 items-center gap-2">
+            {settings?.logo_url ? (
+              <img src={settings.logo_url} alt={name} className="h-8 w-auto max-w-[140px] object-contain" />
+            ) : (
+              <>
+                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[var(--st-radius-sm)] bg-[var(--st-primary)] text-sm font-bold text-[var(--st-on-primary)]">
+                  {name.charAt(0).toUpperCase()}
+                </span>
+                <span className="truncate text-sm font-bold">{name}</span>
+              </>
+            )}
+          </Link>
+          <button aria-label="Close menu" onClick={onClose} className={cx("rounded-full p-1.5", muted)}>
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <div
+          className="flex-1 overflow-y-auto overscroll-contain px-4 py-4"
+          onClick={(e) => {
+            if ((e.target as HTMLElement).closest("a")) onClose();
+          }}
+        >
+          <SearchBox className="mb-3" />
+          {phone && (
+            <a
+              href={`tel:${phone}`}
+              className="mb-3 flex items-center justify-center gap-2 rounded-[var(--st-radius)] bg-[var(--st-primary)] px-3 py-2.5 text-sm font-bold text-[var(--st-on-primary)]"
+            >
+              <Phone className="h-4 w-4" /> {phone}
+            </a>
+          )}
+          <CategoryNav variant="stack" />
+        </div>
+      </aside>
+    </div>
+  );
+}
 
 
 export function StoreHeader() {
