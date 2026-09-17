@@ -12,7 +12,7 @@ import {
 import { ReportCard, ReportTabs, SortTh, toneOf } from "@/components/report-blocks";
 import { Pagination, usePaginated } from "@/components/data-list";
 import { ResellerAvatar } from "@/components/reseller-avatar";
-import { bdt, toCsv, downloadCsv, orderProfit, orderReceived } from "@/lib/finance-report";
+import { bdt, toCsv, downloadCsv, orderMargin, orderProfit, orderReceived } from "@/lib/finance-report";
 import { agentCommissionFor, commissionMode, isCommissionOrder, AGENT_COMMISSION_HINT } from "@/lib/agents";
 import {
   ADMIN_PROFIT_HINT,
