@@ -514,7 +514,7 @@ function AdminOrdersPage() {
               className="h-10 w-[76px] shrink-0 rounded-md border bg-background px-1 text-xs font-medium outline-none focus:ring-1 focus:ring-primary"
               title="Per page"
             >
-              {[10, 20, 50, 100].map((n) => (
+              {[10, 20, 50, 100, 200, 500, 1000].map((n) => (
                 <option key={n} value={n}>{n}</option>
               ))}
               <option value={-1}>All</option>
