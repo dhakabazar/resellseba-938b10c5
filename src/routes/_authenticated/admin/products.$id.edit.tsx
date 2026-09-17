@@ -188,6 +188,8 @@ function EditProduct() {
         throw new Error(error.message || "Failed to update product details");
       }
 
+      await saveProductCategories(id, categoryIds);
+
       const { error: de } = await supabase.from("product_images").delete().eq("product_id", id);
       if (de) console.warn("Failed to clean old images:", de);
 
