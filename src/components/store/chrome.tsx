@@ -11,20 +11,22 @@ function Logo() {
   return (
     <Link to="/s/$code" params={{ code }} className="flex min-w-0 items-center gap-2.5">
       {settings?.logo_url ? (
-        <img src={settings.logo_url} alt={name} className="h-10 w-auto max-w-[150px] object-contain" />
+        <img src={settings.logo_url} alt={name} className="h-10 w-auto max-w-[180px] object-contain" />
       ) : (
-        <span
-          className="grid h-10 w-10 shrink-0 place-items-center rounded-[var(--st-radius-sm)] bg-[var(--st-primary)] text-base font-bold text-[var(--st-on-primary)]"
-        >
-          {name.charAt(0).toUpperCase()}
-        </span>
+        <>
+          <span
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-[var(--st-radius-sm)] bg-[var(--st-primary)] text-base font-bold text-[var(--st-on-primary)]"
+          >
+            {name.charAt(0).toUpperCase()}
+          </span>
+          <span className="min-w-0">
+            <Heading as="h1" className={cx("truncate text-base leading-tight", theme.layout.header === "editorial" && "text-lg")}>
+              {name}
+            </Heading>
+            {settings?.tagline && <span className={cx("block truncate text-[11px]", muted)}>{settings.tagline}</span>}
+          </span>
+        </>
       )}
-      <span className="min-w-0">
-        <Heading as="h1" className={cx("truncate text-base leading-tight", theme.layout.header === "editorial" && "text-lg")}>
-          {name}
-        </Heading>
-        {settings?.tagline && <span className={cx("block truncate text-[11px]", muted)}>{settings.tagline}</span>}
-      </span>
     </Link>
   );
 }
