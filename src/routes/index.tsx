@@ -230,8 +230,6 @@ function RootResolver() {
   const [siteName, setSiteName] = useState("Reseller");
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [stats, setStats] = useState<LandingStats | null>(null);
-  const [catsOpen, setCatsOpen] = useState(false);
-  const [activeCatId, setActiveCatId] = useState<string | null>(null);
   const [contact, setContact] = useState<{ phone: string | null; email: string | null }>({
     phone: null,
     email: null,
@@ -325,6 +323,8 @@ function Landing({
   const videoEmbed = videoUrl ? youtubeEmbed(videoUrl) : null;
   const poster = banner || (videoUrl ? youtubeThumb(videoUrl) : null);
   const [videoOpen, setVideoOpen] = useState(false);
+  const [catsOpen, setCatsOpen] = useState(false);
+  const [activeCatId, setActiveCatId] = useState<string | null>(null);
 
   const statIcons = [Boxes, Layers, ShoppingBag, Users];
   const customStats = c.stats?.items?.filter((s) => s.value?.trim() || s.label?.trim()) ?? [];
