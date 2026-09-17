@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAllSafe, fetchAllIn } from "@/lib/fetch-all";
 import { ResellerAvatar } from "@/components/reseller-avatar";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
 import { DataToolbar, Pagination, usePaginated } from "@/components/data-list";
@@ -523,7 +524,7 @@ function ResellersPage() {
       setNoteAuthors({});
     }
 
-    const metrics = (metricsRes.data ?? []) as Array<{
+    const metrics = metricRows as Array<{
       reseller_id: string;
       orders: number;
       delivered_profit: number;
