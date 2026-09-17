@@ -1,6 +1,6 @@
 import { inCategory } from "@/lib/product-categories";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { getCatalog } from "@/lib/catalog.functions";
 import { CopyBtn, useCatalogBrand } from "@/components/catalog/shell";
@@ -8,7 +8,7 @@ import { ImagePickerButton } from "@/components/catalog/image-picker";
 import { ProductCodeChip } from "@/components/product-code";
 import { bdt } from "@/lib/finance-report";
 import { Pagination, usePaginated } from "@/components/data-list";
-import { ArrowRight, ChevronDown, Loader2, Search, X } from "lucide-react";
+import { ArrowRight, Check, ChevronDown, LayoutGrid, Loader2, Search, X } from "lucide-react";
 
 type Search = { category?: string; brand?: string; q?: string; page?: number };
 
