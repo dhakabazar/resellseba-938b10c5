@@ -3029,24 +3029,15 @@ export type Database = {
       admin_lookups: { Args: never; Returns: Json }
       admin_orders_page: { Args: { _statuses?: string[] }; Returns: Json }
       admin_payout_overview: {
-        Args: never
-        Returns: {
-          approved_amount: number
-          available: number
-          business_name: string
-          code: string
-          delivered_profit: number
-          deposit_balance: number
-          frozen_amount: number
-          last_request_at: string
-          owner_phone: string
-          paid_out: number
-          pending_amount: number
-          rejected_amount: number
-          requested_total: number
-          requests_count: number
-          reseller_id: string
-        }[]
+        Args: {
+          _active_only?: boolean
+          _dir?: string
+          _limit?: number
+          _offset?: number
+          _search?: string
+          _sort?: string
+        }
+        Returns: Json
       }
       admin_reseller_metrics: {
         Args: never
