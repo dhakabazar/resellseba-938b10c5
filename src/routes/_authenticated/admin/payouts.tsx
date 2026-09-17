@@ -295,6 +295,7 @@ function AdminPayouts() {
           <Pagination page={page} perPage={perPage} total={filteredRows.length} onPage={setPage} />
         </>
       )}
+      </>}
 
       <ConfirmModal
         isOpen={!!toDelete}
