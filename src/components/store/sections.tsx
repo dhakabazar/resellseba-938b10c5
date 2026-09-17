@@ -325,7 +325,7 @@ export function CategoryStrip() {
                   className="h-full w-full object-cover opacity-70 transition-all duration-700 group-hover:scale-105 group-hover:opacity-100"
                 />
               )}
-              <span className="absolute inset-0 grid place-items-center bg-gradient-to-t from-black/85 via-black/45 to-black/20 text-center">
+              <span className="absolute inset-0 flex flex-col items-center justify-end bg-gradient-to-t from-black/90 via-black/40 to-transparent pb-4 text-center">
                 <span>
                   <span className="block text-[12px] uppercase tracking-[0.26em] text-white">{c.name}</span>
                   {c.product_count != null && (
