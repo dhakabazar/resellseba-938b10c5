@@ -63,6 +63,7 @@ export function PublicHeader({
     logoUrl: null,
   });
   const [loadedContent, setLoadedContent] = useState<PublicHeaderContent | null>(null);
+  const [loadedPhone, setLoadedPhone] = useState<string | null>(null);
 
   useEffect(() => {
     const needsBrand = siteNameProp === undefined || logoUrlProp === undefined;
@@ -71,7 +72,7 @@ export function PublicHeader({
     (async () => {
       const { data } = await supabase
         .from("global_settings")
-        .select("site_name, logo_url, landing_content")
+        .select("site_name, logo_url, landing_content, contact_phone")
         .eq("id", 1)
         .maybeSingle();
       if (!data) return;
@@ -82,6 +83,7 @@ export function PublicHeader({
       if (needsContent && d.landing_content?.nav) {
         setLoadedContent(d.landing_content);
       }
+      setLoadedPhone((d.contact_phone as string | null) ?? null);
     })();
   }, [siteNameProp, logoUrlProp, content]);
 
