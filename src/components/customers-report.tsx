@@ -64,7 +64,10 @@ export function useCustomers(resellerId?: string | null) {
         .order("created_at", { ascending: false })
         ;
       if (resellerId) q = q.eq("reseller_id", resellerId);
-        return Promise.resolve(q).then((r) => ({ data: r.data as OrderRow[] | null, error: r.error }));
+        // Data API caps one response at 1000 rows — page through everything.
+        return fetchAll<OrderRow>(() => q)
+          .then((data) => ({ data, error: null as any }))
+          .catch((error) => ({ data: null as OrderRow[] | null, error }));
       };
       // Shared across remounts so a double mount costs one request.
       const { data, error } = await sharedLoad(`customers:${resellerId ?? "all"}`, load);
