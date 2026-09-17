@@ -146,9 +146,19 @@ export function orderShortfall(o: ProfitOrder) {
  * advance taken by admin stays with admin, so nothing extra is deducted.
  */
 export function orderProfit(o: ProfitOrder) {
+  return orderMargin(o) - resellerHeldAdvance(o);
+}
+
+/**
+ * Reseller margin BEFORE the advance settlement.
+ * An advance is only a part of the order value the reseller already holds in cash —
+ * it changes who is holding the money, not how much the order earned. Admin-side
+ * figures must use this, otherwise a reseller-held advance inflates admin profit.
+ */
+export function orderMargin(o: ProfitOrder) {
   if (o.status === "cancelled") return 0;
   if (isFailedOrder(o)) return -(orderDeliveryCost(o) + orderPackaging(o));
-  return orderReceived(o) - orderCost(o) - resellerHeldAdvance(o);
+  return orderReceived(o) - orderCost(o);
 }
 
 /** Reusable hint shown on every profit report/card so the math is transparent. */

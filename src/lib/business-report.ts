@@ -2,6 +2,7 @@ import {
   isFailedOrder,
   isRealizedStatus,
   orderProfit,
+  orderMargin,
   orderReceived,
   orderPackaging,
   orderDeliveryCost,
@@ -67,7 +68,7 @@ export const EXPENSE_CATEGORIES = [
 ] as const;
 
 export const ADMIN_PROFIT_HINT =
-  "Admin profit = money received for the order − what the reseller finally earns − admin buying price of the products the customer kept. Advance already collected counts as received (the same way the transaction report does it). Delivery charge and packaging are not deducted twice here — record them once in Expenses and the net profit takes them out.";
+  "Admin profit = money received for the order − the reseller's margin on that order − admin buying price of the products the customer kept. An advance is part of the order value, not extra income: if the reseller holds it, it is taken out of their payout only — it never adds to admin profit. Delivery charge and packaging are not deducted twice here — record them once in Expenses and the net profit takes them out.";
 
 /**
  * Quantity of an item the customer actually kept.
@@ -119,9 +120,13 @@ export function orderBuyingCost(items: BizItem[], status: string, products: Map<
   return cost;
 }
 
-/** Admin profit of one order (see ADMIN_PROFIT_HINT). */
+/**
+ * Admin profit of one order (see ADMIN_PROFIT_HINT).
+ * Uses the reseller margin BEFORE the advance settlement — an advance held by the
+ * reseller is part of the order value, not extra admin income.
+ */
 export function adminOrderProfit(o: BizOrder, buyingCost: number) {
-  return orderReceived(o) - orderProfit(o) - buyingCost;
+  return orderReceived(o) - orderMargin(o) - buyingCost;
 }
 
 /* ----------------------------- product report ---------------------------- */
@@ -354,6 +359,7 @@ export function buildPnL(
   let received = 0;
   let advance = 0;
   let resellerPayout = 0;
+  let resellerMargin = 0;
   let buyCost = 0;
   let delivery = 0;
   let packaging = 0;
@@ -365,6 +371,7 @@ export function buildPnL(
     received += orderReceived(ord);
     advance += Math.max(n(o.advance_amount), 0);
     resellerPayout += orderProfit(ord);
+    resellerMargin += orderMargin(ord);
     buyCost += buy;
     delivery += orderDeliveryCost(o);
     packaging += orderPackaging(o);
@@ -375,7 +382,7 @@ export function buildPnL(
     expenseTotal += n(e.amount);
     catMap.set(e.category, (catMap.get(e.category) ?? 0) + n(e.amount));
   }
-  const grossProfit = received - resellerPayout - buyCost;
+  const grossProfit = received - resellerMargin - buyCost;
   return {
     orders: orders.length,
     value,
