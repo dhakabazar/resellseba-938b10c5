@@ -501,23 +501,14 @@ export function StoreHeader() {
             </div>
           </div>
 
-          {open && (
-            <div className={cx("border-t px-4 py-3 md:hidden", borderc)}>
-              {phone && (
-                <a
-                  href={`tel:${phone}`}
-                  className="mb-2 flex items-center gap-2 rounded-[var(--st-radius)] bg-[var(--st-primary)] px-3 py-2 text-sm font-bold text-[var(--st-on-primary)]"
-                >
-                  <Phone className="h-4 w-4" /> {phone}
-                </a>
-              )}
-              <CategoryNav variant="stack" />
-            </div>
-          )}
+          <MobileDrawer open={open} onClose={() => setOpen(false)} />
         </header>
       </div>
     );
   }
+
+
+
 
 
 
