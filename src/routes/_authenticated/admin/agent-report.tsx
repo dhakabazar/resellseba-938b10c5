@@ -61,7 +61,7 @@ function AgentReportPage() {
         .from("orders")
         .select("id,reseller_id,status,created_at,total,shipping_cost,sa_cost_total,received_amount,packaging_total")
         .order("created_at", { ascending: false })
-        .limit(5000),
+        ,
     ]);
     if (o.error) toast.error(o.error.message);
     const { data: unitRows } = await supabase.rpc("agent_order_units");

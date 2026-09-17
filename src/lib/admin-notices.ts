@@ -54,7 +54,7 @@ export function useLiveNotices(userId: string | undefined, resellerId: string | 
     }
     setLoading(true);
     const [noticeRes, seenRes] = await Promise.all([
-      supabase.from("admin_notices").select("*").order("created_at", { ascending: false }).limit(50),
+      supabase.from("admin_notices").select("*").order("created_at", { ascending: false }),
       supabase.from("admin_notice_dismissals").select("notice_id").eq("user_id", userId),
     ]);
     const seen = new Set((seenRes.data ?? []).map((d) => d.notice_id));

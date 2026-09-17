@@ -191,7 +191,7 @@ export function TransactionReport({
         _reseller_id: (admin ? reseller : resellerId) || null,
         _from: fromTs != null ? new Date(fromTs).toISOString() : null,
         _to: toTs != null ? new Date(toTs).toISOString() : null,
-        _limit: 200000,
+        _limit: 0,
       } as never)
       .then(({ data, error }) => {
         if (error) setError(error.message);

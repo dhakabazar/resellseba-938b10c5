@@ -74,7 +74,7 @@ function AgentPayoutsPage() {
         .from("orders")
         .select("id,reseller_id,status,created_at,total,shipping_cost,sa_cost_total,received_amount,packaging_total")
         .order("created_at", { ascending: false })
-        .limit(5000),
+        ,
       supabase.from("agent_payouts").select("*").order("created_at", { ascending: false }),
     ]);
     if (o.error) toast.error(o.error.message);
