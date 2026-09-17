@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowRight, Home, Menu, X } from "lucide-react";
+import { ArrowRight, Home, Menu, Phone, X } from "lucide-react";
 
 type NavContent = {
   features?: string;
@@ -51,10 +51,12 @@ export function Brand({
 export function PublicHeader({
   siteName: siteNameProp,
   logoUrl: logoUrlProp,
+  contactPhone: contactPhoneProp,
   content,
 }: {
   siteName?: string;
   logoUrl?: string | null;
+  contactPhone?: string | null;
   content?: PublicHeaderContent;
 }) {
   const [menu, setMenu] = useState(false);
@@ -63,15 +65,17 @@ export function PublicHeader({
     logoUrl: null,
   });
   const [loadedContent, setLoadedContent] = useState<PublicHeaderContent | null>(null);
+  const [loadedPhone, setLoadedPhone] = useState<string | null>(null);
 
   useEffect(() => {
     const needsBrand = siteNameProp === undefined || logoUrlProp === undefined;
     const needsContent = !content;
-    if (!needsBrand && !needsContent) return;
+    const needsPhone = contactPhoneProp === undefined;
+    if (!needsBrand && !needsContent && !needsPhone) return;
     (async () => {
       const { data } = await supabase
         .from("global_settings")
-        .select("site_name, logo_url, landing_content")
+        .select("site_name, logo_url, landing_content, contact_phone")
         .eq("id", 1)
         .maybeSingle();
       if (!data) return;
@@ -82,12 +86,15 @@ export function PublicHeader({
       if (needsContent && d.landing_content?.nav) {
         setLoadedContent(d.landing_content);
       }
+      setLoadedPhone((d.contact_phone as string | null) ?? null);
     })();
-  }, [siteNameProp, logoUrlProp, content]);
+  }, [siteNameProp, logoUrlProp, contactPhoneProp, content]);
 
   const siteName = siteNameProp ?? loadedBrand.siteName;
   const logoUrl = logoUrlProp ?? loadedBrand.logoUrl;
   const c = content ?? loadedContent ?? FALLBACK;
+  const phone = contactPhoneProp ?? loadedPhone;
+  const telHref = phone ? `tel:${phone.replace(/[^\d+]/g, "")}` : null;
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isCatalog = pathname === "/catalog" || pathname.startsWith("/catalog/");
 
@@ -96,15 +103,7 @@ export function PublicHeader({
         { to: "/tutorials", label: "টিউটোরিয়াল" },
         { to: "/", label: "হোমে ফিরুন", icon: <Home className="h-4 w-4" /> },
       ]
-    : [
-        { href: "#features", label: c.nav.features },
-        { href: "#about", label: c.nav.how },
-        { href: "#categories", label: c.nav.categories || "ক্যাটাগরি" },
-        { to: "/catalog", label: "প্রোডাক্টস" },
-        { to: "/tutorials", label: "টিউটোরিয়াল" },
-        { href: "#stories", label: c.nav.stories || "সাকসেস স্টোরি" },
-        { href: "#faq", label: c.nav.faq || "FAQ" },
-      ];
+    : [];
 
 
 
@@ -117,32 +116,44 @@ export function PublicHeader({
           <Brand siteName={siteName} logoUrl={logoUrl} />
         </Link>
 
-        <nav className="hidden items-center gap-5 text-[13px] font-semibold lg:flex">
-          {navLinks.map((l) =>
-            l.to ? (
-              <Link
-                key={l.to}
-                to={l.to}
-                className={
-                  isCatalog
-                    ? "inline-flex items-center gap-1.5 rounded-lg border border-border px-4 py-2 text-sm font-semibold text-foreground hover:border-primary/50 hover:text-primary"
-                    : "font-bold text-primary hover:opacity-80"
-                }
-              >
-                {l.icon} {l.label}
-              </Link>
-            ) : (
-              <a key={l.href} href={l.href} className="whitespace-nowrap text-muted-foreground transition-colors hover:text-primary">
-                {l.icon} {l.label}
-              </a>
-            ),
-          )}
-        </nav>
+        {navLinks.length > 0 && (
+          <nav className="hidden items-center gap-5 text-[13px] font-semibold lg:flex">
+            {navLinks.map((l) =>
+              l.to ? (
+                <Link
+                  key={l.to}
+                  to={l.to}
+                  className={
+                    isCatalog
+                      ? "inline-flex items-center gap-1.5 rounded-lg border border-border px-4 py-2 text-sm font-semibold text-foreground hover:border-primary/50 hover:text-primary"
+                      : "font-bold text-primary hover:opacity-80"
+                  }
+                >
+                  {l.icon} {l.label}
+                </Link>
+              ) : (
+                <a key={l.href} href={l.href} className="whitespace-nowrap text-muted-foreground transition-colors hover:text-primary">
+                  {l.icon} {l.label}
+                </a>
+              ),
+            )}
+          </nav>
+        )}
 
 
 
 
         <div className="flex shrink-0 items-center gap-2">
+          {telHref && (
+            <a
+              href={telHref}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm font-bold text-primary transition-colors hover:border-primary/50 sm:px-4"
+              dir="ltr"
+            >
+              <Phone className="h-4 w-4" />
+              <span className="hidden sm:inline">{phone}</span>
+            </a>
+          )}
           <Link
             to="/login"
             className="hidden rounded-lg border border-border px-4 py-2 text-sm font-semibold hover:border-primary/50 hover:text-primary sm:inline-flex"
@@ -156,14 +167,16 @@ export function PublicHeader({
           >
             {c.nav.cta} <ArrowRight className="h-3.5 w-3.5" />
           </Link>
-          <button
-            type="button"
-            onClick={() => setMenu((v) => !v)}
-            aria-label="Menu"
-            className="grid h-10 w-10 place-items-center rounded-lg border border-border lg:hidden"
-          >
-            {menu ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
+          {navLinks.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setMenu((v) => !v)}
+              aria-label="Menu"
+              className="grid h-10 w-10 place-items-center rounded-lg border border-border lg:hidden"
+            >
+              {menu ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
+          )}
         </div>
       </div>
 
