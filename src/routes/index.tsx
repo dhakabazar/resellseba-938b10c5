@@ -324,7 +324,6 @@ function Landing({
   const poster = banner || (videoUrl ? youtubeThumb(videoUrl) : null);
   const [videoOpen, setVideoOpen] = useState(false);
   const [catsOpen, setCatsOpen] = useState(false);
-  const [activeCatId, setActiveCatId] = useState<string | null>(null);
 
   const statIcons = [Boxes, Layers, ShoppingBag, Users];
   const customStats = c.stats?.items?.filter((s) => s.value?.trim() || s.label?.trim()) ?? [];
