@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Bike, Clock, Loader2, Phone, RefreshCw, Search } from "lucide-react";
 import { toast } from "sonner";
+import { fetchAllSafe } from "@/lib/fetch-all";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/ui-kit";
 import { CourierLogo } from "@/components/courier-brand";
@@ -50,17 +51,15 @@ export function RiderFollowupPage({ showReseller }: { showReseller: boolean }) {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("orders")
-      .select(SELECT)
-      .not("rider_assigned_at", "is", null)
-      .order("rider_assigned_at", { ascending: true });
+    const data = await fetchAllSafe(() =>
+      supabase
+        .from("orders")
+        .select(SELECT)
+        .not("rider_assigned_at", "is", null)
+        .order("rider_assigned_at", { ascending: true }),
+    );
     setLoading(false);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    setRows((data ?? []) as unknown as RiderRow[]);
+    setRows(data as unknown as RiderRow[]);
   }, []);
 
   useEffect(() => {

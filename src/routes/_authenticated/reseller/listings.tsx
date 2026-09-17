@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState , useRef} from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAllSafe } from "@/lib/fetch-all";
 import { getMyReseller } from "@/lib/app-data";
 import { deliveryLabel } from "@/lib/delivery";
 import { useAuth } from "@/lib/use-auth";
@@ -59,14 +60,16 @@ function ListingsPage() {
     setLoading(true);
     const r = await getMyReseller(user.id);
     if (!r) return setLoading(false);
-    const [{ data }, priceMap] = await Promise.all([
-      supabase
-        .from("reseller_listings")
-        .select(
-          "id,selling_price,is_active,products(id,brand_id,category_id,name,slug,product_code,reseller_price,packaging_cost,delivery_inside,delivery_outside,delivery_sub,delivery_mode,delivery_flat,og_image_url)",
-        )
-        .eq("reseller_id", r.id)
-        .order("created_at", { ascending: false }),
+    const [data, priceMap] = await Promise.all([
+      fetchAllSafe(() =>
+        supabase
+          .from("reseller_listings")
+          .select(
+            "id,selling_price,is_active,products(id,brand_id,category_id,name,slug,product_code,reseller_price,packaging_cost,delivery_inside,delivery_outside,delivery_sub,delivery_mode,delivery_flat,og_image_url)",
+          )
+          .eq("reseller_id", r.id)
+          .order("created_at", { ascending: false }),
+      ),
       fetchResellerPriceMap(r.id),
     ]);
     // Admin may have set a reseller specific admin price — it replaces the master one.
