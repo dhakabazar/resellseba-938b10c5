@@ -672,9 +672,7 @@ function Landing({
                 >
                   <span className="flex items-center gap-2 text-sm font-bold">
                     <Layers className="h-4 w-4 text-primary" />
-                    {activeCatId
-                      ? stats.categories.find((c: any) => c.id === activeCatId)?.name
-                      : `সব প্রোডাক্টস (${stats.products.length})`}
+                    সব প্রোডাক্টস ({stats.products.length})
                   </span>
                   <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform ${catsOpen ? "rotate-180" : ""}`} />
                 </button>
@@ -685,26 +683,15 @@ function Landing({
                 >
                   <div className="min-h-0">
                     <div className="mt-3 flex flex-wrap justify-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setActiveCatId(null)}
-                        className={`rounded-full border px-4 py-2 text-xs font-bold transition ${
-                          !activeCatId ? "bg-primary text-primary-foreground" : "bg-card hover:border-primary/50"
-                        }`}
-                      >
-                        সব
-                      </button>
                       {(stats.categories as any[]).map((c) => (
-                        <button
+                        <Link
                           key={c.id}
-                          type="button"
-                          onClick={() => setActiveCatId(activeCatId === c.id ? null : c.id)}
-                          className={`rounded-full border px-3.5 py-2 text-xs font-bold transition ${
-                            activeCatId === c.id ? "bg-primary text-primary-foreground" : "bg-card hover:border-primary/50"
-                          }`}
+                          to="/catalog"
+                          search={{ category: c.slug }}
+                          className="rounded-full border bg-card px-3.5 py-2 text-xs font-bold transition hover:border-primary/50"
                         >
                           {c.name} <span className="opacity-70">({c.product_count})</span>
-                        </button>
+                        </Link>
                       ))}
                     </div>
                   </div>
@@ -713,9 +700,7 @@ function Landing({
             )}
 
             <div className="mt-8 grid grid-cols-2 gap-3 lg:grid-cols-5">
-              {(activeCatId ? stats.products.filter((p) => p.category_id === activeCatId) : stats.products)
-                .slice(0, 20)
-                .map((p: any, i: number) => (
+              {stats.products.slice(0, 20).map((p: any, i: number) => (
                 <Link
                   key={p.id}
                   to="/catalog/$slug"
