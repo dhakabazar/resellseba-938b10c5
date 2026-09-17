@@ -96,6 +96,7 @@ function AdminPayouts() {
   );
   const [resellerFilter, setResellerFilter] = useState(sp.reseller ?? "");
   const [query, setQuery] = useState("");
+  const [tab, setTab] = useState<"requests" | "report">("requests");
   const [perPage, setPerPage] = useState(20);
   const [page, setPage] = useState(1);
   const [action, setAction] = useState<{ row: Row; status: "approved" | "paid" | "rejected" } | null>(null);
