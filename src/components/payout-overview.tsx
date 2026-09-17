@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, ArrowUp, ArrowDown, Search, RefreshCw } from "lucide-react";
+import { Loader2, ArrowUp, ArrowDown, Search, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 
 export type OverviewRow = {
@@ -21,7 +21,7 @@ export type OverviewRow = {
   last_request_at: string | null;
 };
 
-type SortKey = keyof Omit<OverviewRow, "reseller_id">;
+type SortKey = keyof Omit<OverviewRow, "reseller_id" | "code" | "owner_phone">;
 
 const COLS: { key: SortKey; label: string; money?: boolean; num?: boolean }[] = [
   { key: "business_name", label: "Reseller" },
@@ -39,61 +39,92 @@ const COLS: { key: SortKey; label: string; money?: boolean; num?: boolean }[] = 
 ];
 
 const bdt = (n: number) => `৳${Number(n || 0).toLocaleString()}`;
+const num = (v: unknown) => Number(v ?? 0);
+
+type Totals = { profit: number; requested: number; pending: number; paid: number; available: number };
+const ZERO: Totals = { profit: 0, requested: 0, pending: 0, paid: 0, available: 0 };
 
 export function PayoutOverview() {
   const [rows, setRows] = useState<OverviewRow[]>([]);
+  const [totals, setTotals] = useState<Totals>(ZERO);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
   const [query, setQuery] = useState("");
+  const [search, setSearch] = useState("");
+  const [activeOnly, setActiveOnly] = useState(true);
+  const [perPage, setPerPage] = useState(50);
+  const [page, setPage] = useState(1);
   const [sort, setSort] = useState<{ key: SortKey; dir: "asc" | "desc" }>({ key: "available", dir: "desc" });
+  const reqRef = useRef(0);
 
-  useEffect(() => { load(); }, []);
+  // Debounce typing so each keystroke doesn't hit the database.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setSearch(query.trim());
+      setPage(1);
+    }, 350);
+    return () => clearTimeout(t);
+  }, [query]);
 
-  async function load() {
-    setLoading(true);
-    const { data, error } = await supabase.rpc("admin_payout_overview" as any);
-    if (error) toast.error(error.message);
-    setRows(((data ?? []) as any[]).map((r) => ({
-      ...r,
-      delivered_profit: Number(r.delivered_profit ?? 0),
-      deposit_balance: Number(r.deposit_balance ?? 0),
-      frozen_amount: Number(r.frozen_amount ?? 0),
-      requests_count: Number(r.requests_count ?? 0),
-      requested_total: Number(r.requested_total ?? 0),
-      pending_amount: Number(r.pending_amount ?? 0),
-      approved_amount: Number(r.approved_amount ?? 0),
-      paid_out: Number(r.paid_out ?? 0),
-      rejected_amount: Number(r.rejected_amount ?? 0),
-      available: Number(r.available ?? 0),
-    })) as OverviewRow[]);
+  const load = useCallback(async () => {
+    const id = ++reqRef.current;
+    setBusy(true);
+    const { data, error } = await supabase.rpc("admin_payout_overview" as any, {
+      _search: search || null,
+      _sort: sort.key,
+      _dir: sort.dir,
+      _limit: perPage,
+      _offset: (page - 1) * perPage,
+      _active_only: activeOnly,
+    } as any);
+    if (id !== reqRef.current) return;
+    if (error) {
+      toast.error(error.message);
+      setRows([]);
+      setTotals(ZERO);
+      setTotal(0);
+    } else {
+      const payload = (data ?? {}) as any;
+      setRows(((payload.rows ?? []) as any[]).map((r) => ({
+        reseller_id: r.reseller_id,
+        code: r.code ?? null,
+        business_name: r.business_name ?? null,
+        owner_phone: r.owner_phone ?? null,
+        delivered_profit: num(r.delivered_profit),
+        deposit_balance: num(r.deposit_balance),
+        frozen_amount: num(r.frozen_amount),
+        requests_count: num(r.requests_count),
+        requested_total: num(r.requested_total),
+        pending_amount: num(r.pending_amount),
+        approved_amount: num(r.approved_amount),
+        paid_out: num(r.paid_out),
+        rejected_amount: num(r.rejected_amount),
+        available: num(r.available),
+        last_request_at: r.last_request_at ?? null,
+      })));
+      const t = payload.totals ?? {};
+      setTotals({
+        profit: num(t.profit),
+        requested: num(t.requested),
+        pending: num(t.pending),
+        paid: num(t.paid),
+        available: num(t.available),
+      });
+      setTotal(num(payload.total));
+    }
+    setBusy(false);
     setLoading(false);
-  }
+  }, [search, sort.key, sort.dir, perPage, page, activeOnly]);
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    const list = q
-      ? rows.filter((r) => [r.business_name, r.code, r.owner_phone].join(" ").toLowerCase().includes(q))
-      : rows;
-    const { key, dir } = sort;
-    const mul = dir === "asc" ? 1 : -1;
-    return [...list].sort((a, b) => {
-      const av = a[key];
-      const bv = b[key];
-      if (typeof av === "number" && typeof bv === "number") return (av - bv) * mul;
-      return String(av ?? "").localeCompare(String(bv ?? "")) * mul;
-    });
-  }, [rows, query, sort]);
-
-  const totals = useMemo(() => filtered.reduce((t, r) => ({
-    profit: t.profit + r.delivered_profit,
-    requested: t.requested + r.requested_total,
-    pending: t.pending + r.pending_amount + r.approved_amount,
-    paid: t.paid + r.paid_out,
-    available: t.available + r.available,
-  }), { profit: 0, requested: 0, pending: 0, paid: 0, available: 0 }), [filtered]);
+  useEffect(() => { void load(); }, [load]);
 
   function toggle(key: SortKey) {
-    setSort((s) => (s.key === key ? { key, dir: s.dir === "asc" ? "desc" : "asc" } : { key, dir: typeof rows[0]?.[key] === "number" ? "desc" : "asc" }));
+    setPage(1);
+    setSort((s) => (s.key === key ? { key, dir: s.dir === "asc" ? "desc" : "asc" } : { key, dir: key === "business_name" ? "asc" : "desc" }));
   }
+
+  const pages = Math.max(1, Math.ceil(total / perPage));
 
   if (loading) return <div className="grid place-items-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
 
@@ -124,12 +155,30 @@ export function PayoutOverview() {
             className="w-full rounded-md border bg-background py-2 pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-ring"
           />
         </div>
-        <button onClick={load} className="inline-flex items-center gap-1.5 rounded-md border px-3 py-2 text-xs hover:bg-muted">
-          <RefreshCw className="h-3.5 w-3.5" /> Refresh
+        <label className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-xs">
+          <input
+            type="checkbox"
+            checked={activeOnly}
+            onChange={(e) => { setActiveOnly(e.target.checked); setPage(1); }}
+            className="h-3.5 w-3.5"
+          />
+          Only resellers with activity
+        </label>
+        <select
+          value={perPage}
+          onChange={(e) => { setPerPage(Number(e.target.value)); setPage(1); }}
+          className="h-9 rounded-md border bg-background px-2 text-xs"
+          aria-label="Rows per page"
+        >
+          {[25, 50, 100, 200].map((n) => <option key={n} value={n}>{n} / page</option>)}
+        </select>
+        <button onClick={() => void load()} disabled={busy} className="inline-flex items-center gap-1.5 rounded-md border px-3 py-2 text-xs hover:bg-muted disabled:opacity-60">
+          {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />} Refresh
         </button>
       </div>
 
-      <div className="surface-card overflow-x-auto">
+      <div className="surface-card relative overflow-x-auto">
+        {busy && <div className="absolute inset-0 z-10 grid place-items-center bg-background/50"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>}
         <table className="w-full text-sm">
           <thead className="bg-muted/40 text-left text-xs uppercase text-muted-foreground">
             <tr>
@@ -148,7 +197,7 @@ export function PayoutOverview() {
             </tr>
           </thead>
           <tbody>
-            {filtered.map((r) => (
+            {rows.map((r) => (
               <tr key={r.reseller_id} className="border-t">
                 <td className="p-3">
                   <div className="font-medium">{r.business_name || "—"}</div>
@@ -174,7 +223,30 @@ export function PayoutOverview() {
           </tbody>
         </table>
       </div>
-      {filtered.length === 0 && <p className="py-8 text-center text-sm text-muted-foreground">No resellers found.</p>}
+
+      {rows.length === 0 ? (
+        <p className="py-8 text-center text-sm text-muted-foreground">No resellers found.</p>
+      ) : (
+        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+          <span>{total.toLocaleString()} resellers · page {page} of {pages}</span>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page <= 1 || busy}
+              className="inline-flex items-center gap-1 rounded-md border px-2 py-1.5 hover:bg-muted disabled:opacity-50"
+            >
+              <ChevronLeft className="h-3.5 w-3.5" /> Prev
+            </button>
+            <button
+              onClick={() => setPage((p) => Math.min(pages, p + 1))}
+              disabled={page >= pages || busy}
+              className="inline-flex items-center gap-1 rounded-md border px-2 py-1.5 hover:bg-muted disabled:opacity-50"
+            >
+              Next <ChevronRight className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
