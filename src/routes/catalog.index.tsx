@@ -8,7 +8,7 @@ import { ImagePickerButton } from "@/components/catalog/image-picker";
 import { ProductCodeChip } from "@/components/product-code";
 import { bdt } from "@/lib/finance-report";
 import { Pagination, usePaginated } from "@/components/data-list";
-import { ArrowRight, ChevronDown, Loader2, Search, Sparkles, X } from "lucide-react";
+import { ArrowRight, ChevronDown, Loader2, Search, X } from "lucide-react";
 
 type Search = { category?: string; brand?: string; q?: string; page?: number };
 
@@ -52,7 +52,6 @@ type Prod = {
 };
 
 const TILE = ["brand-tile-1", "brand-tile-2", "brand-tile-3", "brand-tile-4"];
-const SOLID = ["brand-solid-1", "brand-solid-2", "brand-solid-3", "brand-solid-4"];
 
 function CatalogIndex() {
   const { category, brand, q, page } = Route.useSearch();
@@ -62,7 +61,6 @@ function CatalogIndex() {
   const [data, setData] = useState<{ categories: Cat[]; brands: { id: string; name: string; slug: string }[]; products: Prod[] } | null>(null);
   const [term, setTerm] = useState(q ?? "");
   const [openSug, setOpenSug] = useState(false);
-  const [catsOpen, setCatsOpen] = useState(false);
   const [perPage, setPerPage] = useState(24);
   const currentPage = page ?? 1;
 
@@ -106,9 +104,6 @@ function CatalogIndex() {
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background" />
         </div>
         <div className="relative z-10 mx-auto max-w-6xl px-4 pb-24 pt-12 text-center sm:px-6 sm:pb-28 sm:pt-16">
-          <span className="catalog-glass inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-widest">
-            <Sparkles className="h-3.5 w-3.5" /> Master Catalog
-          </span>
           <h1
             className="mt-5 text-balance text-4xl font-black tracking-tight text-white sm:text-6xl"
             style={{ textShadow: "0 6px 30px rgba(0,0,0,.35)" }}
@@ -134,7 +129,26 @@ function CatalogIndex() {
             }}
           >
             <div className="relative flex items-center rounded-2xl bg-card p-1.5 shadow-[0_20px_60px_-20px_rgba(0,0,0,.5)] ring-1 ring-white/30">
-              <Search className="ml-3 h-5 w-5 shrink-0 text-muted-foreground" />
+              <div className="relative ml-1 flex shrink-0 items-center border-r pr-1 sm:ml-2 sm:pr-2">
+                <select
+                  aria-label="Category"
+                  value={category ?? ""}
+                  onChange={(e) => {
+                    const slug = e.target.value || undefined;
+                    void navigate({ to: "/catalog", search: { category: slug, brand, q: q, page: undefined } });
+                  }}
+                  className="max-w-[104px] cursor-pointer appearance-none truncate rounded-xl bg-transparent py-2.5 pl-2 pr-6 text-xs font-bold outline-none sm:max-w-[180px] sm:text-sm"
+                >
+                  <option value="">All category</option>
+                  {(data?.categories ?? []).map((c) => (
+                    <option key={c.id} value={c.slug}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-1 h-4 w-4 text-muted-foreground" />
+              </div>
+              <Search className="ml-2 h-5 w-5 shrink-0 text-muted-foreground" />
               <input
                 value={term}
                 onChange={(e) => {
@@ -201,65 +215,6 @@ function CatalogIndex() {
         </div>
       ) : (
         <>
-          {/* Category pill (overlapping hero): one tap opens the whole category list. */}
-          <section className="relative z-20 mx-auto -mt-14 max-w-6xl px-4 sm:-mt-16 sm:px-6">
-            <button
-              type="button"
-              onClick={() => setCatsOpen((v) => !v)}
-              aria-expanded={catsOpen}
-              className="btn-brand-4 mt-6 flex w-full items-center justify-between gap-2 rounded-2xl px-4 py-3.5 text-left"
-            >
-              <span className="flex flex-col gap-0.5">
-                <span className="flex items-center gap-2 text-sm font-black">
-                  <span className="relative flex h-2.5 w-2.5">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white/70" />
-                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-white" />
-                  </span>
-                  {activeCat ? activeCat.name : `All products (${data.products.length})`}
-                </span>
-                <span className="pl-4 text-[11px] font-medium opacity-90">
-                  {activeCat ? "ক্যাটাগরি খোলা আছে" : "সব ক্যাটাগরি দেখুন"}
-                </span>
-              </span>
-              <ChevronDown className={`h-5 w-5 transition-transform ${catsOpen ? "rotate-180" : ""}`} />
-            </button>
-
-            <div
-              className={`grid overflow-hidden transition-all duration-300 ${
-                catsOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-              }`}
-            >
-              <div className="min-h-0">
-                <div className="mt-3 flex flex-wrap gap-2 sm:mt-8 sm:justify-center">
-                  <Link
-                    to="/catalog"
-                    search={{ page: undefined }}
-                    onClick={() => setCatsOpen(false)}
-                    className={`rounded-full border px-4 py-2 text-xs font-bold transition ${
-                      !category ? "catalog-chip-active" : "bg-card hover:-translate-y-0.5 hover:border-brand-1/50"
-                    }`}
-                  >
-                    সব <span className="opacity-70">({data.products.length})</span>
-                  </Link>
-                  {data.categories.map((c, i) => (
-                    <Link
-                      key={c.id}
-                      to="/catalog"
-                      search={{ category: c.slug, page: undefined }}
-                      onClick={() => setCatsOpen(false)}
-                      className={`inline-flex items-center gap-2 rounded-full border px-3.5 py-2 text-xs font-bold transition ${
-                        category === c.slug ? "catalog-chip-active" : "bg-card hover:-translate-y-0.5 hover:border-brand-1/50"
-                      }`}
-                    >
-                      <span className={`h-2 w-2 rounded-full ${category === c.slug ? "bg-white" : SOLID[i % 4]}`} />
-                      {c.name} <span className="opacity-70">({c.count})</span>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </section>
-
           {/* ───────────── Products ───────────── */}
           <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
             {rows.length === 0 ? (
