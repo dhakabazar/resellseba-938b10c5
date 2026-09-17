@@ -446,7 +446,8 @@ function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void })
           <CategoryNav variant="stack" />
         </div>
       </aside>
-    </div>
+    </div>,
+    document.body
   );
 }
 
