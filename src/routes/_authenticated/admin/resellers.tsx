@@ -467,21 +467,23 @@ function ResellersPage() {
 
   async function load() {
     setLoading(true);
-    const [listRes, metricsRes, agentsRes] = await Promise.all([
-      supabase
-        .from("resellers")
-        .select(
-          "id,user_id,avatar_url,business_name,code,contact_phone,address,nid_number,status,commission_rate,leader_id,agent_id,notes,notes_by,notes_at,approved_at,created_at,payout_method,payout_account_name,payout_account_number,payout_bank_name,payout_branch,payout_routing,deposit_required,deposit_required_amount,frozen_amount,subscription_plan,subscription_expires_at,subscription_trial_ends_at,subscription_exempt,subscription_enrolled,subscription_enrolled_at",
-        )
-        .order("created_at", { ascending: false }),
-      supabase.rpc("admin_reseller_metrics"),
+    const [listRows, metricRows, agentsRes] = await Promise.all([
+      fetchAllSafe<Reseller>(() =>
+        supabase
+          .from("resellers")
+          .select(
+            "id,user_id,avatar_url,business_name,code,contact_phone,address,nid_number,status,commission_rate,leader_id,agent_id,notes,notes_by,notes_at,approved_at,created_at,payout_method,payout_account_name,payout_account_number,payout_bank_name,payout_branch,payout_routing,deposit_required,deposit_required_amount,frozen_amount,subscription_plan,subscription_expires_at,subscription_trial_ends_at,subscription_exempt,subscription_enrolled,subscription_enrolled_at",
+          )
+          .order("created_at", { ascending: false }),
+      ),
+      fetchAllSafe<any>(() => supabase.rpc("admin_reseller_metrics")),
       supabase.from("agents").select("id,display_name,user_id").order("display_name"),
     ]);
 
     const agentRows = (agentsRes.data ?? []) as Array<{ id: string; display_name: string; user_id: string }>;
     setAgents(agentRows.map((a) => ({ id: a.id, display_name: a.display_name })));
 
-    let rows = (listRes.data ?? []) as Reseller[];
+    let rows = listRows;
     if (scopeOwn) {
       const mine = new Set(agentRows.filter((a) => a.user_id === user?.id).map((a) => a.id));
       rows = rows.filter((r) => r.agent_id && mine.has(r.agent_id));
@@ -491,13 +493,13 @@ function ResellersPage() {
     // App-level verification lives on profiles (auth email confirm is separate).
     const ids = rows.map((r) => r.user_id);
     if (ids.length) {
-      const { data: profRows } = await supabase
-        .from("profiles")
-        .select("id,email_verified_at,phone_verified_at")
-        .in("id", ids);
+      const profRows = await fetchAllIn<any>(
+        (part) => supabase.from("profiles").select("id,email_verified_at,phone_verified_at").in("id", part),
+        ids,
+      );
       setProfileVerify(
         Object.fromEntries(
-          (profRows ?? []).map((p: any) => [
+          profRows.map((p: any) => [
             p.id,
             { email: Boolean(p.email_verified_at), phone: Boolean(p.phone_verified_at) },
           ]),
@@ -508,13 +510,13 @@ function ResellersPage() {
     // Who wrote each internal note (staff profiles).
     const authorIds = Array.from(new Set(rows.map((r) => r.notes_by).filter(Boolean))) as string[];
     if (authorIds.length) {
-      const { data: authorRows } = await supabase
-        .from("profiles")
-        .select("id,full_name")
-        .in("id", authorIds);
+      const authorRows = await fetchAllIn<any>(
+        (part) => supabase.from("profiles").select("id,full_name").in("id", part),
+        authorIds,
+      );
       setNoteAuthors(
         Object.fromEntries(
-          (authorRows ?? []).map((p: any) => [p.id, (p.full_name as string | null) || "Staff"]),
+          authorRows.map((p: any) => [p.id, (p.full_name as string | null) || "Staff"]),
         ),
       );
     } else {
