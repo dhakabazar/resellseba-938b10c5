@@ -651,12 +651,12 @@ function Landing({
         <section id="products" className="brand-mesh border-y border-border/60 py-10 sm:py-14">
           <div className="mx-auto max-w-7xl px-4 sm:px-6">
             <div className="mx-auto max-w-2xl text-center">
-              <h2 className="text-xl font-extrabold sm:text-3xl">ফিচার্ড প্রোডাক্টস</h2>
-              <p className="mt-2 text-sm text-muted-foreground">এই মাসের সেরা ও সবচেয়ে বেশি সেল হওয়া প্রোডাক্টস</p>
+              <h2 className="text-xl font-extrabold sm:text-3xl">আমাদের প্রোডাক্টস</h2>
+              <p className="mt-2 text-sm text-muted-foreground">আমাদের ক্যাটালগ থেকে বাছাই করা প্রোডাক্টস — রিসেল করে শুরু করুন আজই</p>
               <div className="brand-rule mx-auto mt-4 h-1 w-24 rounded-full" />
             </div>
-            <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-              {stats.products.map((p: any, i: number) => (
+            <div className="mt-8 grid grid-cols-2 gap-3 lg:grid-cols-5">
+              {stats.products.slice(0, 20).map((p: any, i: number) => (
                 <Link
                   key={p.id}
                   to="/catalog/$slug"
