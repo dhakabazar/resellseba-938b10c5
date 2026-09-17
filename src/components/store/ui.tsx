@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useMemo } from "react";
-import { Flame, ShoppingBag } from "lucide-react";
+import { Flame, ShoppingBag, ShoppingBasket } from "lucide-react";
 import { bdt } from "@/lib/store-cart";
 import { deliveryLabel, resolveDelivery } from "@/lib/delivery";
 import { useStore, type StoreListing } from "./store-context";
@@ -74,18 +74,20 @@ export function SectionHead({
       </div>
     );
 
-  /* Atelier — editorial: oversized serif with a full-width rule */
-  if (theme.id === "atelier")
+  /* সহজ শপ — bold heading, last word in the brand color, action on the right */
+  if (theme.id === "atelier") {
+    const words = title.trim().split(" ");
+    const last = words.length > 1 ? words.pop()! : "";
     return (
-      <div className="mb-8">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <Heading className="max-w-2xl text-3xl leading-[1.1] md:text-5xl">{title}</Heading>
-          {action}
-        </div>
-        {subtitle && <p className={cx("mt-3 max-w-xl text-sm leading-relaxed", muted)}>{subtitle}</p>}
-        <div className={cx("mt-6 border-t", borderc)} />
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <Heading className="text-xl font-extrabold leading-tight md:text-2xl">
+          {words.join(" ")} {last && <span className="text-[var(--st-primary)]">{last}</span>}
+        </Heading>
+        {action}
       </div>
     );
+  }
+
 
   /* Aurora — soft modern with a gradient underline */
   return (
@@ -165,7 +167,7 @@ function soldCount(id: string) {
 }
 
 export function ProductCard({ listing }: { listing: StoreListing }) {
-  const { code, theme, title, image } = useStore();
+  const { code, theme, title, image, content } = useStore();
   const img = image(listing);
   const p = listing.product!;
   const free = resolveDelivery(p).mode === "free";
@@ -241,34 +243,46 @@ export function ProductCard({ listing }: { listing: StoreListing }) {
       </Link>
     );
 
-  /* -------------------------------------------- Atelier: editorial plate */
-  if (theme.id === "atelier")
+  /* --------------------------- সহজ শপ: বাংলা ডিল কার্ড, বড় অর্ডার বাটন */
+  if (theme.id === "atelier") {
+    const label = free
+      ? content.text("sohoj_free_label") || "ফ্রী ডেলিভারিতে অর্ডার করুন"
+      : content.text("sohoj_order_label") || "অর্ডার করুন";
     return (
-      <Link {...to} className="group block">
-        <div className="relative aspect-[4/5] overflow-hidden bg-[var(--st-bg-alt)]">
+      <Link
+        {...to}
+        className={cx(
+          "group flex flex-col overflow-hidden rounded-[var(--st-radius)] border bg-[var(--st-surface)] transition-shadow hover:shadow-[0_12px_28px_-18px_rgba(0,0,0,0.45)]",
+          borderc,
+        )}
+      >
+        <div className="relative aspect-square overflow-hidden bg-[var(--st-bg-alt)]">
           <Img />
           {free && (
-            <span className={cx("absolute left-3 top-3 border bg-[var(--st-surface)] px-2 py-0.5 text-[10px] uppercase tracking-[0.2em]", borderc)}>
-              Free delivery
+            <span className="absolute left-2 top-2 rounded-md bg-[#e11d48] px-2 py-1 text-[10px] font-extrabold leading-none text-white shadow-sm">
+              ফ্রি ডেলিভারি
             </span>
           )}
         </div>
-        <div className={cx("mt-4 border-t pt-3", borderc)}>
-          <h3 className="line-clamp-2 text-base leading-snug text-[var(--st-fg)]" style={{ fontFamily: "var(--st-font-head)" }}>
-            {title(listing)}
-          </h3>
-          <div className="mt-2 flex items-end justify-between gap-2">
-            <div className="flex items-baseline gap-2">
-              <Price value={price} className="text-base" />
-            </div>
-            <span className="border-b border-[var(--st-primary)] pb-0.5 text-[11px] uppercase tracking-[0.2em] text-[var(--st-primary)]">
-              Order
-            </span>
+        <div className="flex flex-1 flex-col px-2.5 pb-2.5 pt-2">
+          <h3 className="line-clamp-2 text-[13px] font-semibold leading-snug text-[var(--st-fg)]">{title(listing)}</h3>
+          <div className="mt-1.5 flex items-baseline gap-2">
+            <Price value={price} className="text-[16px] font-extrabold" />
           </div>
-          <div className={cx("mt-1 text-[11px]", muted)}>{sold} sold · {deliveryLabel(p)}</div>
+          <div className={cx("mt-0.5 text-[11px]", muted)}>{sold} জন কিনেছেন</div>
         </div>
+        <span
+          className={cx(
+            "flex items-center justify-center gap-1.5 px-2 py-2.5 text-center text-[12px] font-bold leading-snug text-white",
+            free ? "bg-[#0f8a4d]" : "bg-[var(--st-primary)]",
+          )}
+        >
+          <ShoppingBasket className="h-3.5 w-3.5 shrink-0" /> {label}
+        </span>
       </Link>
     );
+  }
+
 
   /* --------------------------------------------------- Aurora: soft card */
   return (
@@ -313,7 +327,8 @@ export function ProductGrid({ listings }: { listings: StoreListing[] }) {
       : theme.id === "noir"
         ? "grid-cols-2 gap-5 md:gap-8 lg:grid-cols-4"
         : theme.id === "atelier"
-          ? "grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-3"
+          ? "grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5"
+
           : "grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4";
   return (
     <div className={cx("grid", cols)}>
