@@ -147,24 +147,51 @@ function CatalogIndex() {
             }}
           >
             <div className="relative flex items-center rounded-2xl bg-card p-1.5 shadow-[0_20px_60px_-20px_rgba(0,0,0,.5)] ring-1 ring-white/30">
-              <div className="relative ml-1 flex shrink-0 items-center border-r pr-1 sm:ml-2 sm:pr-2">
-                <select
+              <div ref={catRef} className="relative shrink-0 border-r pr-1.5 sm:pr-2.5">
+                <button
+                  type="button"
                   aria-label="Category"
-                  value={category ?? ""}
-                  onChange={(e) => {
-                    const slug = e.target.value || undefined;
-                    void navigate({ to: "/catalog", search: { category: slug, brand, q: q, page: undefined } });
-                  }}
-                  className="max-w-[104px] cursor-pointer appearance-none truncate rounded-xl bg-transparent py-2.5 pl-2 pr-6 text-xs font-bold outline-none sm:max-w-[180px] sm:text-sm"
+                  aria-expanded={openCat}
+                  onClick={() => setOpenCat((v) => !v)}
+                  className={`flex max-w-[108px] items-center gap-1.5 rounded-xl bg-muted/70 py-2 pl-2.5 pr-2 text-xs font-bold outline-none transition-colors hover:bg-muted sm:max-w-[190px] sm:py-2.5 sm:pl-3 sm:text-sm ${openCat ? "ring-2 ring-primary/40" : ""}`}
                 >
-                  <option value="">All category</option>
-                  {(data?.categories ?? []).map((c) => (
-                    <option key={c.id} value={c.slug}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-1 h-4 w-4 text-muted-foreground" />
+                  <LayoutGrid className="h-3.5 w-3.5 shrink-0 text-primary sm:h-4 sm:w-4" />
+                  <span className="truncate">{activeCat ? activeCat.name : "All category"}</span>
+                  <ChevronDown className={`h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform duration-200 ${openCat ? "rotate-180" : ""}`} />
+                </button>
+                {openCat && (
+                  <div className="absolute left-0 top-full z-40 mt-2 w-60 max-w-[80vw] overflow-hidden rounded-2xl border bg-card shadow-[0_24px_60px_-16px_rgba(0,0,0,.45)]">
+                    <div className="max-h-72 overflow-y-auto overscroll-contain p-1.5">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setOpenCat(false);
+                          void navigate({ to: "/catalog", search: { category: undefined, brand, q, page: undefined } });
+                        }}
+                        className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-xs font-bold transition-colors hover:bg-muted/70 sm:text-sm ${!activeCat ? "bg-primary/10 text-primary" : ""}`}
+                      >
+                        <LayoutGrid className="h-4 w-4 shrink-0 opacity-70" />
+                        <span className="flex-1">All category</span>
+                        {!activeCat && <Check className="h-4 w-4 shrink-0" />}
+                      </button>
+                      <div className="mx-2 my-1 border-t border-dashed" />
+                      {(data?.categories ?? []).map((c) => (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={() => {
+                            setOpenCat(false);
+                            void navigate({ to: "/catalog", search: { category: c.slug, brand, q, page: undefined } });
+                          }}
+                          className={`flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2 text-left text-xs font-semibold transition-colors hover:bg-muted/70 sm:text-sm ${activeCat?.id === c.id ? "bg-primary/10 text-primary" : ""}`}
+                        >
+                          <span className="truncate">{c.name}</span>
+                          {activeCat?.id === c.id && <Check className="h-4 w-4 shrink-0" />}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
               <Search className="ml-2 h-5 w-5 shrink-0 text-muted-foreground" />
               <input
