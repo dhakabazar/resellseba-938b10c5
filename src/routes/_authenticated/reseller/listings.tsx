@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState , useRef} from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAllSafe } from "@/lib/fetch-all";
 import { getMyReseller } from "@/lib/app-data";
 import { deliveryLabel } from "@/lib/delivery";
 import { useAuth } from "@/lib/use-auth";

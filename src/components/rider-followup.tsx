@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Bike, Clock, Loader2, Phone, RefreshCw, Search } from "lucide-react";
 import { toast } from "sonner";
+import { fetchAllSafe } from "@/lib/fetch-all";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/ui-kit";
 import { CourierLogo } from "@/components/courier-brand";
