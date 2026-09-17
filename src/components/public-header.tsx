@@ -98,15 +98,7 @@ export function PublicHeader({
         { to: "/tutorials", label: "টিউটোরিয়াল" },
         { to: "/", label: "হোমে ফিরুন", icon: <Home className="h-4 w-4" /> },
       ]
-    : [
-        { href: "#features", label: c.nav.features },
-        { href: "#about", label: c.nav.how },
-        { href: "#categories", label: c.nav.categories || "ক্যাটাগরি" },
-        { to: "/catalog", label: "প্রোডাক্টস" },
-        { to: "/tutorials", label: "টিউটোরিয়াল" },
-        { href: "#stories", label: c.nav.stories || "সাকসেস স্টোরি" },
-        { href: "#faq", label: c.nav.faq || "FAQ" },
-      ];
+    : [];
 
 
 
