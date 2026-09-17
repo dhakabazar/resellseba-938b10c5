@@ -739,56 +739,49 @@ export function StoreFooter() {
       </footer>
     );
 
-  /* --------------------------------- Atelier: editorial masthead footer */
+  /* ------------------------- সহজ শপ: সরু কমলা ফুটার বার + ছোট লিংক রো */
   if (theme.id === "atelier")
     return (
-      <footer className={cx("mt-24 border-t", borderc)}>
-        <div className="mx-auto max-w-6xl px-4 py-16">
-          <div className="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr]">
-            <div>
-              <Heading className="text-4xl leading-none md:text-5xl">{name}</Heading>
-              <p className={cx("mt-5 max-w-md text-sm leading-relaxed", muted)}>{about}</p>
-            </div>
-            <div>
-              <div className={cx("mb-4 border-b pb-2 text-[11px] uppercase tracking-[0.26em]", borderc, muted)}>Shop</div>
-              <div className="flex flex-col gap-2.5">
-                <Link to="/s/$code" params={{ code }} className="text-sm hover:text-[var(--st-primary)]">
-                  All products
-                </Link>
-                {catLinks.map((c) => (
-                  <Link
-                    key={c.id}
-                    to="/s/$code/c/$slug"
-                    params={{ code, slug: c.slug }}
-                    className="text-sm hover:text-[var(--st-primary)]"
-                  >
-                    {c.name}
-                  </Link>
-                ))}
-              </div>
-            </div>
-            <div>
-              <div className={cx("mb-4 border-b pb-2 text-[11px] uppercase tracking-[0.26em]", borderc, muted)}>Contact</div>
-              <div className="flex flex-col gap-2.5 text-sm">
-                {settings?.support_phone && <a href={`tel:${settings.support_phone}`}>{settings.support_phone}</a>}
-                {wa && (
-                  <a href={wa} target="_blank" rel="noreferrer">
-                    WhatsApp
-                  </a>
-                )}
-                {socials.map((s) => (
-                  <a key={s.label} href={s.href} target="_blank" rel="noreferrer">
-                    {s.label}
-                  </a>
-                ))}
-                <span className={muted}>Cash on delivery available</span>
-              </div>
-            </div>
+      <footer className="mt-8">
+        <div className={cx("border-t bg-[var(--st-surface)]", borderc)}>
+          <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-5 gap-y-2 px-4 py-4 text-[12px] font-medium">
+            <Link to="/s/$code" params={{ code }} className="hover:text-[var(--st-primary)]">
+              সব প্রোডাক্ট
+            </Link>
+            {catLinks.slice(0, 4).map((c) => (
+              <Link
+                key={c.id}
+                to="/s/$code/c/$slug"
+                params={{ code, slug: c.slug }}
+                className="hover:text-[var(--st-primary)]"
+              >
+                {c.name}
+              </Link>
+            ))}
+            {settings?.support_phone && (
+              <a href={`tel:${settings.support_phone}`} className="font-bold text-[var(--st-primary)]">
+                কল করুন {settings.support_phone}
+              </a>
+            )}
+            {wa && (
+              <a href={wa} target="_blank" rel="noreferrer" className="hover:text-[var(--st-primary)]">
+                WhatsApp
+              </a>
+            )}
+            {socials.map((s) => (
+              <a key={s.label} href={s.href} target="_blank" rel="noreferrer" className="hover:text-[var(--st-primary)]">
+                {s.label}
+              </a>
+            ))}
           </div>
-          <div className={cx("mt-12 border-t pt-5 text-[11px] uppercase tracking-[0.2em]", borderc, muted)}>{copy}</div>
+        </div>
+        <div className="bg-[var(--st-primary)] px-4 py-3 text-center text-[12px] font-semibold text-[var(--st-on-primary)]">
+          {copy}
         </div>
       </footer>
     );
+
+
 
   /* ------------------------------------------- Aurora: soft gradient footer */
   return (
