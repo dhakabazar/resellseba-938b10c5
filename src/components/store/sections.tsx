@@ -873,7 +873,7 @@ export function Faq() {
  * panel has a matching place on the storefront.
  */
 export function ThemeSignature({ slot = "mid" }: { slot?: "top" | "mid" }) {
-  const { theme, content } = useStore();
+  const { theme, content, settings } = useStore();
 
   if (theme.id === "bazaar" && slot === "top") {
     const title = content.text("bazaar_deal_title");
