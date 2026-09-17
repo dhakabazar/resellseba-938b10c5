@@ -70,7 +70,8 @@ export function PublicHeader({
   useEffect(() => {
     const needsBrand = siteNameProp === undefined || logoUrlProp === undefined;
     const needsContent = !content;
-    if (!needsBrand && !needsContent) return;
+    const needsPhone = contactPhoneProp === undefined;
+    if (!needsBrand && !needsContent && !needsPhone) return;
     (async () => {
       const { data } = await supabase
         .from("global_settings")
