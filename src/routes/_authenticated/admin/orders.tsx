@@ -361,6 +361,25 @@ function AdminOrdersPage() {
     });
   }
 
+  /** Ask each courier for the live status of the marked orders. */
+  async function bulkCheckCourierStatus() {
+    if (marked.length === 0 || checkingCourier) return;
+    setCheckingCourier(true);
+    const targetIds = [...marked];
+    try {
+      const res = await recheckMany({ data: { orderIds: targetIds } });
+      const parts = [`${res.checked} checked`];
+      if (res.updated > 0) parts.push(`${res.updated} status updated`);
+      if (res.notBooked > 0) parts.push(`${res.notBooked} not booked`);
+      if (res.failed > 0) parts.push(`${res.failed} failed`);
+      toast.success(parts.join(" · "));
+      await syncOrders(targetIds);
+    } catch (e: any) {
+      toast.error(e?.message || "Courier status check failed");
+    }
+    setCheckingCourier(false);
+  }
+
   async function bulkDeleteOrders() {
     if (marked.length === 0) return;
     const bookedIds = shipments.filter(s => s.consignment_id || s.tracking_id).map(s => s.order_id);
