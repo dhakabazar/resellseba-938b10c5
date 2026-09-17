@@ -14,7 +14,7 @@ import { ProductImportModal } from "@/components/ProductImportModal";
 import { takeImportDraft } from "@/lib/product-import";
 import { CloudDownload } from "lucide-react";
 import { CategoryPicker } from "@/components/category-picker";
-import { saveProductCategories } from "@/lib/product-categories";
+import { saveProductCategories } from "@/lib/product-categories.client";
 
 export const Route = createFileRoute("/_authenticated/admin/products/new")({
   component: NewProduct,
