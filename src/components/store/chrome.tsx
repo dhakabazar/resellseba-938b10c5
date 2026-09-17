@@ -568,12 +568,7 @@ export function StoreHeader() {
               <CategoryNav variant="row" />
             </div>
           </div>
-          {open && (
-            <div className={cx("border-t px-4 py-3 md:hidden", borderc)}>
-              <SearchBox className="mb-3" />
-              <CategoryNav variant="stack" />
-            </div>
-          )}
+          <MobileDrawer open={open} onClose={() => setOpen(false)} />
         </header>
       ) : v === "editorial" ? (
         <header className={cx("border-b bg-[var(--st-bg)]", borderc)}>
@@ -614,12 +609,7 @@ export function StoreHeader() {
           <div className={cx("mx-auto hidden max-w-6xl px-4 pb-3 md:block")}>
             <CategoryNav variant="row" />
           </div>
-          {open && (
-            <div className={cx("border-t px-4 py-3 md:hidden", borderc)}>
-              <SearchBox className="mb-3" />
-              <CategoryNav variant="stack" />
-            </div>
-          )}
+          <MobileDrawer open={open} onClose={() => setOpen(false)} />
         </header>
       )}
     </div>
