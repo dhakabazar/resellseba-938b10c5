@@ -7,7 +7,7 @@ import { ImagePickerButton } from "@/components/catalog/image-picker";
 import { ProductCodeChip } from "@/components/product-code";
 import { bdt } from "@/lib/finance-report";
 import { Pagination, usePaginated } from "@/components/data-list";
-import { ArrowRight, Boxes, ChevronDown, Layers, Loader2, Search, Sparkles, Tag, TrendingUp, X } from "lucide-react";
+import { ArrowRight, ChevronDown, Loader2, Search, Sparkles, X } from "lucide-react";
 
 type Search = { category?: string; brand?: string; q?: string; page?: number };
 
@@ -199,16 +199,8 @@ function CatalogIndex() {
         </div>
       ) : (
         <>
-          {/* ───────────── Stats (overlapping hero) ───────────── */}
+          {/* Category pill (overlapping hero): one tap opens the whole category list. */}
           <section className="relative z-20 mx-auto -mt-14 max-w-6xl px-4 sm:-mt-16 sm:px-6">
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <Stat i={0} icon={<Boxes className="h-5 w-5" />} label="Products" value={data.products.length} />
-              <Stat i={1} icon={<Layers className="h-5 w-5" />} label="Categories" value={data.categories.length} />
-              <Stat i={2} icon={<Tag className="h-5 w-5" />} label="Brands" value={data.brands.length} />
-              <Stat i={3} icon={<TrendingUp className="h-5 w-5" />} label="Showing" value={rows.length} />
-            </div>
-
-            {/* Mobile: one animated pill opens the whole category list. */}
             <button
               type="button"
               onClick={() => setCatsOpen((v) => !v)}
@@ -360,14 +352,3 @@ function ProductCard({ p, i }: { p: Prod; i: number }) {
   );
 }
 
-function Stat({ i, icon, label, value }: { i: number; icon: React.ReactNode; label: string; value: number }) {
-  return (
-    <div className="catalog-card flex items-center gap-3 p-4">
-      <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl ${SOLID[i % 4]} shadow-md`}>{icon}</span>
-      <div className="min-w-0">
-        <div className="text-xl font-black leading-none tabular-nums">{value}</div>
-        <div className="mt-1 truncate text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{label}</div>
-      </div>
-    </div>
-  );
-}
