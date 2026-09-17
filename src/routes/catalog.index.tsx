@@ -309,7 +309,6 @@ function CatalogIndex() {
 
 function ProductCard({ p, i }: { p: Prod; i: number }) {
   const profit = Math.max(0, p.price - p.resellerPrice);
-  const pct = p.resellerPrice > 0 ? Math.round((profit / p.resellerPrice) * 100) : 0;
   return (
     <article className="catalog-card group flex flex-col overflow-hidden">
       <Link to="/catalog/$slug" params={{ slug: p.slug }} className="relative block aspect-square overflow-hidden rounded-t-[1.2rem] bg-muted">
@@ -324,11 +323,6 @@ function ProductCard({ p, i }: { p: Prod; i: number }) {
           <div className={`grid h-full w-full place-items-center text-xs ${TILE[i % 4]}`}>No image</div>
         )}
         <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/45 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
-        {profit > 0 && (
-          <span className={`absolute left-2 top-2 rounded-full px-2.5 py-1 text-[10px] font-black shadow-md ${SOLID[3]}`}>
-            +{pct}% profit
-          </span>
-        )}
         <span className="absolute bottom-2 right-2 translate-y-2 rounded-full bg-white/95 px-3 py-1.5 text-[11px] font-bold text-foreground opacity-0 shadow-lg transition-all group-hover:translate-y-0 group-hover:opacity-100">
           View details →
         </span>
