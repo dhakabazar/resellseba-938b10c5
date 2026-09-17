@@ -130,7 +130,7 @@ function RequestsTab() {
         "id,reseller_id,plan,months,amount,method,reference,note,status,admin_note,created_at,resellers(code,business_name)",
       )
       .order("created_at", { ascending: false })
-      .limit(1000);
+      ;
     if (filter === "pending") q = q.eq("status", "pending");
     const { data, error } = await q;
     if (error) toast.error(error.message);

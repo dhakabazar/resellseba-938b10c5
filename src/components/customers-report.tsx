@@ -62,7 +62,7 @@ export function useCustomers(resellerId?: string | null) {
           "id, reseller_id, customer_name, customer_phone, customer_email, address_line, city, area, status, total, received_amount, created_at",
         )
         .order("created_at", { ascending: false })
-        .limit(5000);
+        ;
       if (resellerId) q = q.eq("reseller_id", resellerId);
         return Promise.resolve(q).then((r) => ({ data: r.data as OrderRow[] | null, error: r.error }));
       };

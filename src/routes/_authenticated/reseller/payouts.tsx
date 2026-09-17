@@ -89,7 +89,7 @@ function PayoutsPage() {
     });
     const { data: p } = await supabase.from("payouts").select("*").eq("reseller_id", r.id).order("created_at", { ascending: false });
     setRows((p ?? []) as Payout[]);
-    const { data: lg } = await supabase.rpc("reseller_ledger", { _reseller_id: r.id, _limit: 100000 } as any);
+    const { data: lg } = await supabase.rpc("reseller_ledger", { _reseller_id: r.id, _limit: 0 } as any);
     setLedger(((lg ?? []) as any[]).map((x) => ({ ...x, amount: Number(x.amount), running: Number(x.running) })) as LedgerRow[]);
     setLoading(false);
   }

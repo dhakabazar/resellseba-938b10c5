@@ -67,7 +67,7 @@ function ResellerPricingPage() {
           .select("id,name,product_code,og_image_url,reseller_price,packaging_cost,suggested_price")
           .eq("is_active", true)
           .order("created_at", { ascending: false })
-          .limit(1000),
+          ,
       ]);
       setResellers((rs ?? []) as Reseller[]);
       setProducts((ps ?? []) as Product[]);

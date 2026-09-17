@@ -79,7 +79,7 @@ export function StoreVisitsReport({
       const [s, d, p] = await Promise.all([
         rpc("store_visit_summary", args),
         rpc("store_visit_daily", args),
-        rpc("store_visit_pages", { ...args, _limit: 12 }),
+        rpc("store_visit_pages", { ...args, _limit: 0 }),
       ]);
       const srow = (s.data as Summary[] | null)?.[0] ?? null;
       setSummary(srow);
@@ -197,7 +197,7 @@ export function useLeaderboard(range: VisitRange) {
   const [rows, setRows] = useState<Leader[]>([]);
   const bounds = useMemo(() => visitRangeBounds(range), [range]);
   const load = useCallback(async () => {
-    const { data } = await rpc("store_visit_leaderboard", { _from: bounds.from, _to: bounds.to, _limit: 100 });
+    const { data } = await rpc("store_visit_leaderboard", { _from: bounds.from, _to: bounds.to, _limit: 0 });
     setRows((data as Leader[] | null) ?? []);
   }, [bounds.from, bounds.to]);
   useEffect(() => {

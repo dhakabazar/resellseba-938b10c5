@@ -48,7 +48,7 @@ export function DepositLedger({
       .from("reseller_deposits")
       .select("id,reseller_id,amount,method,reference,note,created_at")
       .order("created_at", { ascending: false })
-      .limit(500);
+      ;
     if (resellerId) q = q.eq("reseller_id", resellerId);
     const { data, error } = await q;
     if (error) toast.error(error.message);

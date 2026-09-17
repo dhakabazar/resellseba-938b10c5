@@ -40,7 +40,7 @@ export function DeliveryRulesCard({
   useEffect(() => {
     (async () => {
       const [p, b, c] = await Promise.all([
-        supabase.from("products").select("id,name,product_code").order("name").limit(2000),
+        supabase.from("products").select("id,name,product_code").order("name"),
         supabase.from("brands").select("id,name").order("name"),
         supabase.from("categories").select("id,name").order("name"),
       ]);

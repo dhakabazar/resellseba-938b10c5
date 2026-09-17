@@ -66,7 +66,7 @@ export const getCatalogPage = createServerFn({ method: "GET" })
         .from("product_categories")
         .select("product_id")
         .eq("category_id", (cat as any).id)
-        .limit(5000);
+        ;
       productIds = (links ?? []).map((l: any) => l.product_id);
       if (productIds.length === 0) return { total: 0, products: [] as ReturnType<typeof mapProduct>[] };
     }

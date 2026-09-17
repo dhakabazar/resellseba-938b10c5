@@ -255,7 +255,8 @@ export function PayoutOverview({ initialSearch = "" }: { initialSearch?: string 
           className="h-9 rounded-md border bg-background px-2 text-xs"
           aria-label="Rows per page"
         >
-          {[25, 50, 100, 200].map((n) => <option key={n} value={n}>{n} / page</option>)}
+          {[25, 50, 100, 200, 500, 1000, 5000].map((n) => <option key={n} value={n}>{n} / page</option>)}
+          <option value={1000000}>All</option>
         </select>
         <button onClick={() => void load()} disabled={busy} className="inline-flex items-center gap-1.5 rounded-md border px-3 py-2 text-xs hover:bg-muted disabled:opacity-60">
           {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />} Refresh

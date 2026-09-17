@@ -38,7 +38,7 @@ export function DepositRequestsAdmin({ onChanged }: { onChanged?: () => void }) 
       .from("deposit_requests")
       .select("id,reseller_id,amount,method,reference,note,status,admin_note,created_at,resellers(code,business_name)")
       .order("created_at", { ascending: false })
-      .limit(200);
+      ;
     if (tab === "pending") q = q.eq("status", "pending");
     const { data, error } = await q;
     if (error) toast.error(error.message);
