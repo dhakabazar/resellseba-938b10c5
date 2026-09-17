@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { SearchableSelect } from "@/components/searchable-select";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/ui-kit";
@@ -99,6 +99,14 @@ function AdminPayouts() {
   const [tab, setTab] = useState<"requests" | "report">("requests");
   const [reportSearch, setReportSearch] = useState("");
   const [openReport, setOpenReport] = useState<string | null>(null);
+
+  /** code is unique, so it is the best search key for the report tab */
+  const searchKey = (r: Row) => r.reseller?.code || r.reseller?.business_name || "";
+  function openFullReport(r: Row) {
+    setReportSearch(searchKey(r));
+    setTab("report");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
   const [perPage, setPerPage] = useState(20);
   const [page, setPage] = useState(1);
   const [action, setAction] = useState<{ row: Row; status: "approved" | "paid" | "rejected" } | null>(null);
