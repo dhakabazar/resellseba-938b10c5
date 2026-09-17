@@ -22,7 +22,7 @@ export function DataToolbar({
   filters = [],
   perPage,
   onPerPage,
-  perPageOptions = [10, 20, 50, 100],
+  perPageOptions = [10, 20, 50, 100, 200, 500, 1000],
   right,
   middle,
   inline = false,

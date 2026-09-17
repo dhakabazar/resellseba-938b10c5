@@ -383,7 +383,7 @@ export function OrderFilterBar({
               className={isReport ? "lg:w-[70px]" : "lg:w-[80px]"}
               onChange={(v) => set({ perPage: Number(v) })}
             >
-              {[10, 20, 50, 100].map((n) => (
+              {[10, 20, 50, 100, 200, 500, 1000].map((n) => (
                 <option key={n} value={n}>
                   {n}
                 </option>
