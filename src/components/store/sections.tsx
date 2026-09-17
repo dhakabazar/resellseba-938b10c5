@@ -42,7 +42,6 @@ export function Hero() {
   const sub = content.text("hero_sub");
   const cta = content.text("hero_cta");
   const cta2 = content.text("hero_cta2");
-  const note = content.text("hero_note");
 
   const buttons = (
     <div className="flex flex-wrap items-center gap-3">
@@ -83,7 +82,6 @@ export function Hero() {
             banner
           )}
         </div>
-        {note && <p className={cx("mt-2 text-center text-[12px]", muted)}>{note}</p>}
       </section>
     );
   }
@@ -105,7 +103,6 @@ export function Hero() {
               </Heading>
               <p className={cx("mt-3 max-w-md text-sm", muted)}>{sub}</p>
               <div className="mt-5">{buttons}</div>
-              {note && <p className={cx("mt-3 text-xs", muted)}>{note}</p>}
             </div>
             <div className="min-h-[220px] bg-[var(--st-bg-alt)]">
               {media && <img src={media} alt={name} className="h-full w-full object-cover" />}
@@ -127,7 +124,6 @@ export function Hero() {
           </Heading>
           <p className={cx("mx-auto mt-5 max-w-xl text-sm md:text-base", muted)}>{sub}</p>
           <div className="mt-8 flex justify-center">{buttons}</div>
-          {note && <p className={cx("mt-4 text-xs", muted)}>{note}</p>}
         </div>
       </section>
     );
@@ -142,7 +138,6 @@ export function Hero() {
           </Heading>
           <p className={cx("mt-5 max-w-md text-base leading-relaxed", muted)}>{sub}</p>
           <div className="mt-8">{buttons}</div>
-          {note && <p className={cx("mt-3 text-xs", muted)}>{note}</p>}
         </div>
         <div className="aspect-[5/4] overflow-hidden rounded-[var(--st-radius)] bg-[var(--st-bg-alt)]">
           {media && <img src={media} alt={name} className="h-full w-full object-cover" />}
@@ -176,7 +171,6 @@ export function Hero() {
           </Heading>
           <p className={cx("mt-4 max-w-md text-sm md:text-base", muted)}>{sub}</p>
           <div className="mt-7">{buttons}</div>
-          {note && <p className={cx("mt-3 text-xs", muted)}>{note}</p>}
           {(stat1 || stat2) && (
             <div className="mt-7 flex flex-wrap items-center gap-6">
               {[stat1, stat2].filter(Boolean).map((s) => (

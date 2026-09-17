@@ -650,7 +650,7 @@ export function StoreFooter() {
             <div>
               <div className="mb-2 text-[11px] font-bold uppercase tracking-wider text-[var(--st-fg)]">Shop</div>
               <div className="flex flex-col gap-1.5">
-                <Link to="/s/$code" params={{ code }} className={cx("text-[12px] hover:text-[var(--st-primary)]", muted)}>
+                <Link to="/s/$code/shop" params={{ code }} className={cx("text-[12px] hover:text-[var(--st-primary)]", muted)}>
                   All products
                 </Link>
                 {catLinks.map((c) => (
@@ -708,7 +708,7 @@ export function StoreFooter() {
           <Heading className="text-2xl tracking-[0.16em]">{name}</Heading>
           <p className={cx("mx-auto mt-4 max-w-lg text-sm leading-relaxed", muted)}>{about}</p>
           <div className={cx("mt-8 flex flex-wrap items-center justify-center gap-x-7 gap-y-3 text-[10px] uppercase tracking-[0.28em]", muted)}>
-            <Link to="/s/$code" params={{ code }} className="hover:text-[var(--st-primary)]">
+            <Link to="/s/$code/shop" params={{ code }} className="hover:text-[var(--st-primary)]">
               All products
             </Link>
             {catLinks.slice(0, 4).map((c) => (
@@ -745,7 +745,7 @@ export function StoreFooter() {
       <footer className="mt-8">
         <div className={cx("border-t bg-[var(--st-surface)]", borderc)}>
           <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-5 gap-y-2 px-4 py-4 text-[12px] font-medium">
-            <Link to="/s/$code" params={{ code }} className="hover:text-[var(--st-primary)]">
+            <Link to="/s/$code/shop" params={{ code }} className="hover:text-[var(--st-primary)]">
               সব প্রোডাক্ট
             </Link>
             {catLinks.slice(0, 4).map((c) => (
@@ -844,7 +844,7 @@ export function StoreFooter() {
           <div>
             <div className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--st-fg)]">Shop</div>
             <div className="flex flex-col gap-2">
-              <Link to="/s/$code" params={{ code }} className={cx("text-sm hover:text-[var(--st-primary)]", muted)}>
+              <Link to="/s/$code/shop" params={{ code }} className={cx("text-sm hover:text-[var(--st-primary)]", muted)}>
                 All products
               </Link>
               {catLinks.map((c) => (

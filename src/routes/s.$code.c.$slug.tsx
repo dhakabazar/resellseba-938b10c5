@@ -49,12 +49,6 @@ function CategoryPage() {
 
   return (
     <div>
-      {category.image_url && (
-        <div className="relative h-48 overflow-hidden md:h-64">
-          <img src={category.image_url} alt={category.name} className="h-full w-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[var(--st-bg)] to-transparent" />
-        </div>
-      )}
       <div className="mx-auto max-w-6xl px-4 py-10">
         <SectionHead
           title={category.name}
