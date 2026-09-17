@@ -85,7 +85,7 @@ function AgentPayoutsPage() {
       ((unitRows ?? []) as Array<{ order_id: string; units: number }>).map((u) => [u.order_id, Number(u.units) || 0]),
     );
     const withUnits = ((o.data ?? []) as AgentOrder[]).map((row) => ({ ...row, units: unitMap.get(row.id) ?? 0 }));
-    if (p.error) toast.error(p.error.message);
+    if (p.error) toast.error(String((p.error as any).message));
     setAgents((a.data ?? []) as unknown as Agent[]);
     setResellers((r.data ?? []) as ResellerLite[]);
     setOrders(withUnits);
