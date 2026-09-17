@@ -26,7 +26,7 @@ export function FloatingChat({ config }: { config?: ChatBubbleConfig | null }) {
       : `https://m.me/${messenger.replace(/^\/+/, "")}`
     : null;
 
-  const items: { key: string; href: string; label: string; className: string; icon: JSX.Element }[] = [];
+  const items: { key: string; href: string; label: string; className: string; icon: ReactNode }[] = [];
   if (whatsapp)
     items.push({
       key: "wa",
