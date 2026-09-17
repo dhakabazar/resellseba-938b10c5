@@ -214,6 +214,7 @@ const FALLBACK: LandingContent = {
   cta: { badge: "", title: "শুরু করুন", subtitle: "", button: "সাইনআপ" },
 
   footer: { tagline: "বাংলাদেশের সেরা রিসেলার প্ল্যাটফর্ম", address: "", phone: "", email: "" },
+  chat: { enabled: true, phone: "", whatsapp: "", messenger: "", label: "আমাদের সাথে কথা বলুন" },
 };
 
 type LandingStats = LpBootstrap["stats"] & {
