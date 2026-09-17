@@ -22,6 +22,7 @@ export type StoreProduct = {
   product_code?: string | null;
   stock: number | null;
   category_id: string | null;
+  category_ids?: string[] | null;
   brand_id: string | null;
   is_featured: boolean | null;
   delivery_mode: string | null;
@@ -66,7 +67,7 @@ export type StoreSettings = {
   theme_settings?: Record<string, ThemeContentValues> | null;
 };
 
-export type StoreCategory = { id: string; name: string; slug: string; image_url: string | null };
+export type StoreCategory = { id: string; name: string; slug: string; image_url: string | null; product_count?: number };
 
 export type StoreData = {
   code: string;

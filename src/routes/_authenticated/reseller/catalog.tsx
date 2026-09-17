@@ -1,3 +1,4 @@
+import { categoryIdsOf, inCategory } from "@/lib/product-categories";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,12 +33,13 @@ type P = {
   og_image_url: string | null;
   brand_id: string | null;
   category_id: string | null;
+  category_ids?: string[] | null;
   /** master admin price, kept when a reseller specific price applies */
   base_reseller_price?: number | null;
   /** true when admin set a reseller specific admin price for this product */
   has_custom_price?: boolean | null;
 };
-type Opt = { id: string; name: string };
+type Opt = { id: string; name: string; product_count?: number };
 
 export const Route = createFileRoute("/_authenticated/reseller/catalog")({
   component: CatalogPage,
@@ -100,7 +102,7 @@ function CatalogPage() {
             return false;
         }
         if (brand && i.brand_id !== brand) return false;
-        if (category && i.category_id !== category) return false;
+        if (category && !inCategory(i, category)) return false;
         if (avail === "listed" && !listed.has(i.id)) return false;
         if (avail === "unlisted" && listed.has(i.id)) return false;
         if (avail === "instock" && i.stock <= 0) return false;
@@ -112,7 +114,7 @@ function CatalogPage() {
 
   const filters: FilterDef[] = [
     { key: "brand", label: "Brand", value: brand, onChange: setBrand, options: brands.map((b) => ({ value: b.id, label: b.name })) },
-    { key: "category", label: "Category", value: category, onChange: setCategory, options: categories.map((c) => ({ value: c.id, label: c.name })) },
+    { key: "category", label: "Category", value: category, onChange: setCategory, options: categories.map((c) => ({ value: c.id, label: c.product_count != null ? `${c.name} (${c.product_count})` : c.name })) },
     {
       key: "avail",
       label: "Show",
@@ -510,7 +512,7 @@ function ProductDetailModal({ id, onClose, brands, categories }: { id: string; o
   if (!p) return null;
 
   const brandName = brands.find(b => b.id === p.brand_id)?.name;
-  const categoryName = categories.find(c => c.id === p.category_id)?.name;
+  const categoryName = categoryIdsOf(p).map((cid) => categories.find((c) => c.id === cid)?.name).filter(Boolean).join(', ');
   const imageUrls = [
     ...new Set(
       [p.og_image_url, ...(p.product_images?.map((i: any) => i.url) || [])].filter(Boolean) as string[],

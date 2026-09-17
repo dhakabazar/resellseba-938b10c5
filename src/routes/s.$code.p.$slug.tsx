@@ -1,3 +1,4 @@
+import { categoryIdsOf, inCategory } from "@/lib/product-categories";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ChevronLeft, Minus, Plus, ShieldCheck, ShoppingBag, Truck, Zap } from "lucide-react";
@@ -81,7 +82,7 @@ function ProductPage() {
   const detailsText = stripHtml(
     [listing.custom_description || p.short_description || "", p.description || ""].filter(Boolean).join("\n\n"),
   );
-  const related = store.listings.filter((l) => l.id !== listing.id && l.product?.category_id === p.category_id).slice(0, 4);
+  const related = store.listings.filter((l) => l.id !== listing.id && l.product && categoryIdsOf(p).some((cid) => inCategory(l.product!, cid))).slice(0, 4);
 
   const jsonLd = {
     "@context": "https://schema.org/",

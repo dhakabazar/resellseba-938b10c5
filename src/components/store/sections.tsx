@@ -252,8 +252,13 @@ export function CategoryStrip() {
               )}
             </div>
             <div className="flex items-center justify-between px-3 py-2.5 text-sm font-medium">
-              {c.name}
-              <ArrowRight className="h-3.5 w-3.5 opacity-0 transition-opacity group-hover:opacity-100" />
+              <span className="flex items-center gap-1.5 truncate">
+                {c.name}
+                {c.product_count != null && (
+                  <span className={cx("shrink-0 text-xs font-normal", muted)}>({c.product_count})</span>
+                )}
+              </span>
+              <ArrowRight className="h-3.5 w-3.5 shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
             </div>
           </Link>
         ))}

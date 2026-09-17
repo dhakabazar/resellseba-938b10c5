@@ -1,3 +1,4 @@
+import { inCategory } from "@/lib/product-categories";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useStore } from "@/components/store/store-context";
@@ -27,7 +28,7 @@ function CategoryPage() {
   const category = categories.find((c) => c.slug === slug);
 
   const rows = useMemo(() => {
-    const base = listings.filter((l) => l.product?.category_id === category?.id);
+    const base = listings.filter((l) => l.product && category && inCategory(l.product, category.id));
     const sorted = [...base];
     if (sort === "low") sorted.sort((a, b) => Number(a.selling_price) - Number(b.selling_price));
     if (sort === "high") sorted.sort((a, b) => Number(b.selling_price) - Number(a.selling_price));

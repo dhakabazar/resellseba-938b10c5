@@ -11,6 +11,8 @@ import { Hint } from "@/components/Hint";
 import { AdminProductCalc } from "@/components/price-breakdown";
 import { areaLabel, deliverySettingsSummary, globalDelivery, resolveDelivery, resolvedCharge, type ProductDeliveryMode } from "@/lib/delivery";
 import { confirmAction } from "@/lib/confirm";
+import { CategoryPicker } from "@/components/category-picker";
+import { loadProductCategories, saveProductCategories } from "@/lib/product-categories.client";
 
 export const Route = createFileRoute("/_authenticated/admin/products/$id/edit")({
   component: EditProduct,
@@ -46,7 +48,8 @@ function EditProduct() {
   const [sku, setSku] = useState("");
   const [description, setDescription] = useState("");
   const [brandId, setBrandId] = useState("");
-  const [categoryId, setCategoryId] = useState("");
+  const [categoryIds, setCategoryIds] = useState<string[]>([]);
+  const categoryId = categoryIds[0] ?? "";
   const [buying, setBuying] = useState("");
   const [resellerPrice, setResellerPrice] = useState("");
   const [packaging, setPackaging] = useState("0");
@@ -87,7 +90,7 @@ function EditProduct() {
       setSku(p.sku ?? "");
       setDescription(p.description ?? "");
       setBrandId(p.brand_id ?? "");
-      setCategoryId(p.category_id ?? "");
+      setCategoryIds(await loadProductCategories(id, p.category_id));
       setBuying(String(p.buying_price ?? 0));
       setResellerPrice(String(anyP.reseller_price ?? p.buying_price ?? 0));
       setPackaging(String(p.packaging_cost ?? 0));
@@ -185,6 +188,8 @@ function EditProduct() {
         throw new Error(error.message || "Failed to update product details");
       }
 
+      await saveProductCategories(id, categoryIds);
+
       const { error: de } = await supabase.from("product_images").delete().eq("product_id", id);
       if (de) console.warn("Failed to clean old images:", de);
 
@@ -264,13 +269,10 @@ function EditProduct() {
                   {brands.map((b) => (<option key={b.id} value={b.id}>{b.name}</option>))}
                 </select>
               </Field>
-              <Field label="Category">
-                <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className={inputCls}>
-                  <option value="">— None —</option>
-                  {cats.map((c) => (<option key={c.id} value={c.id}>{c.name}</option>))}
-                </select>
-              </Field>
             </div>
+            <Field label="Categories">
+              <CategoryPicker cats={cats} value={categoryIds} onChange={setCategoryIds} />
+            </Field>
             <Field label="Description">
               <RichTextEditor value={description} onChange={setDescription} />
             </Field>

@@ -1,3 +1,4 @@
+import { inCategory } from "@/lib/product-categories";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
@@ -44,6 +45,7 @@ type Prod = {
   price: number;
   resellerPrice: number;
   categoryId: string | null;
+  categoryIds?: string[] | null;
   brandId: string | null;
   image: string | null;
   images: string[];
@@ -83,7 +85,7 @@ function CatalogIndex() {
 
   const rows = useMemo(() => {
     let list = data?.products ?? [];
-    if (activeCat) list = list.filter((p) => p.categoryId === activeCat.id);
+    if (activeCat) list = list.filter((p) => inCategory({ category_id: p.categoryId, category_ids: p.categoryIds }, activeCat.id));
     if (activeBrand) list = list.filter((p) => p.brandId === activeBrand.id);
     const t = (q ?? "").trim().toLowerCase();
     if (t) list = list.filter((p) => p.name.toLowerCase().includes(t) || p.code.includes(t));
