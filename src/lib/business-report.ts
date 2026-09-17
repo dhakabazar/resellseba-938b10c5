@@ -2,6 +2,7 @@ import {
   isFailedOrder,
   isRealizedStatus,
   orderProfit,
+  orderMargin,
   orderReceived,
   orderPackaging,
   orderDeliveryCost,
@@ -358,6 +359,7 @@ export function buildPnL(
   let received = 0;
   let advance = 0;
   let resellerPayout = 0;
+  let resellerMargin = 0;
   let buyCost = 0;
   let delivery = 0;
   let packaging = 0;
