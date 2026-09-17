@@ -180,24 +180,79 @@ export function Hero() {
 /* ----------------------------------------------------------- benefit strip */
 
 export function BenefitStrip() {
-  const { content } = useStore();
+  const { content, theme } = useStore();
   if (!content.flag("usp_show")) return null;
   const icons = [Truck, ShieldCheck, BadgeCheck, Undo2];
   const items = [1, 2, 3, 4]
-    .map((i, n) => ({
-      t: content.text(`usp${i}_t`),
-      d: content.text(`usp${i}_d`),
-      Icon: icons[n],
-    }))
+    .map((i, n) => ({ t: content.text(`usp${i}_t`), d: content.text(`usp${i}_d`), Icon: icons[n] }))
     .filter((i) => i.t);
   if (!items.length) return null;
 
+  /* Bazaar — flat colored service bar, marketplace style */
+  if (theme.id === "bazaar")
+    return (
+      <section className="bg-[var(--st-primary)] text-[var(--st-on-primary)]">
+        <div className="mx-auto grid max-w-6xl grid-cols-2 gap-x-4 gap-y-3 px-4 py-3 md:grid-cols-4">
+          {items.map(({ t, d, Icon }) => (
+            <div key={t} className="flex items-center gap-2">
+              <Icon className="h-4 w-4 shrink-0" />
+              <div className="min-w-0">
+                <div className="truncate text-[12px] font-bold uppercase">{t}</div>
+                {d && <div className="truncate text-[11px] opacity-85">{d}</div>}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+
+  /* Noir — hairline divided row, no icons, wide tracking */
+  if (theme.id === "noir")
+    return (
+      <section className={cx("border-y", borderc)}>
+        <div className={cx("mx-auto grid max-w-6xl divide-y px-4 md:grid-cols-4 md:divide-x md:divide-y-0", borderc)}>
+          {items.map(({ t, d }, n) => (
+            <div key={t} className="px-0 py-7 text-center md:px-5">
+              <div className="text-[10px] tracking-[0.3em] text-[var(--st-primary)]">0{n + 1}</div>
+              <div className="mt-3 text-[12px] uppercase tracking-[0.22em] text-[var(--st-fg)]">{t}</div>
+              {d && <div className={cx("mt-1.5 text-xs leading-relaxed", muted)}>{d}</div>}
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+
+  /* Atelier — editorial index rows */
+  if (theme.id === "atelier")
+    return (
+      <section className="mx-auto max-w-6xl px-4 py-12">
+        <div className={cx("divide-y border-y", borderc)}>
+          {items.map(({ t, d }, n) => (
+            <div key={t} className="grid gap-1 py-5 md:grid-cols-[80px_1fr_1fr] md:items-baseline md:gap-6">
+              <span className={cx("text-[11px] tracking-[0.3em]", muted)}>{String(n + 1).padStart(2, "0")}</span>
+              <Heading className="text-xl md:text-2xl">{t}</Heading>
+              {d && <p className={cx("text-sm leading-relaxed", muted)}>{d}</p>}
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+
+  /* Aurora — glass cards with gradient icon pills */
   return (
-    <section className={cx("border-y bg-[var(--st-bg-alt)]", borderc)}>
-      <div className="mx-auto grid max-w-6xl grid-cols-2 gap-4 px-4 py-6 md:grid-cols-4">
+    <section className="mx-auto -mt-6 max-w-6xl px-4">
+      <div
+        className={cx(
+          "grid grid-cols-2 gap-3 rounded-[var(--st-radius)] border bg-[var(--st-surface)] p-4 shadow-[var(--st-shadow)] md:grid-cols-4",
+          borderc,
+        )}
+      >
         {items.map(({ t, d, Icon }) => (
           <div key={t} className="flex items-start gap-3">
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[var(--st-primary)]/12 text-[var(--st-primary)]">
+            <span
+              className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl text-[var(--st-on-primary)]"
+              style={{ background: "linear-gradient(135deg, var(--st-primary), var(--st-accent))" }}
+            >
               <Icon className="h-4 w-4" />
             </span>
             <div className="min-w-0">
@@ -216,26 +271,113 @@ export function BenefitStrip() {
 export function CategoryStrip() {
   const { code, categories, content, theme } = useStore();
   if (!content.flag("cat_show") || !categories.length) return null;
+  const title = content.text("cat_title");
+  const sub = content.text("cat_sub");
+
+  /* Bazaar — round icon rail, scrollable like a marketplace */
+  if (theme.id === "bazaar")
+    return (
+      <section className="mx-auto max-w-6xl px-4 py-6">
+        <SectionHead title={title} subtitle={sub} />
+        <div className={cx("rounded-[var(--st-radius)] border bg-[var(--st-surface)] p-3", borderc)}>
+          <div className="grid grid-cols-4 gap-3 sm:grid-cols-6 lg:grid-cols-8">
+            {categories.map((c) => (
+              <Link
+                key={c.id}
+                to="/s/$code/c/$slug"
+                params={{ code, slug: c.slug }}
+                className="group flex flex-col items-center gap-1.5 text-center"
+              >
+                <span className="grid h-16 w-16 place-items-center overflow-hidden rounded-full bg-[var(--st-bg-alt)] ring-2 ring-transparent transition-all group-hover:ring-[var(--st-primary)]">
+                  {c.image_url ? (
+                    <img src={c.image_url} alt={c.name} loading="lazy" className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="text-lg font-bold text-[var(--st-primary)]">{c.name.charAt(0)}</span>
+                  )}
+                </span>
+                <span className="line-clamp-2 text-[11px] font-medium leading-tight text-[var(--st-fg)]">{c.name}</span>
+                {c.product_count != null && <span className={cx("text-[10px]", muted)}>{c.product_count}</span>}
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+
+  /* Noir — full-bleed image tiles with overlay captions */
+  if (theme.id === "noir")
+    return (
+      <section className="mx-auto max-w-6xl px-4 py-16">
+        <SectionHead title={title} subtitle={sub} />
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+          {categories.map((c) => (
+            <Link
+              key={c.id}
+              to="/s/$code/c/$slug"
+              params={{ code, slug: c.slug }}
+              className={cx("group relative aspect-[4/3] overflow-hidden border bg-[var(--st-bg-alt)]", borderc)}
+            >
+              {c.image_url && (
+                <img
+                  src={c.image_url}
+                  alt={c.name}
+                  loading="lazy"
+                  className="h-full w-full object-cover opacity-70 transition-all duration-700 group-hover:scale-105 group-hover:opacity-100"
+                />
+              )}
+              <span className="absolute inset-0 grid place-items-center bg-black/25 text-center">
+                <span>
+                  <span className="block text-[12px] uppercase tracking-[0.26em] text-white">{c.name}</span>
+                  {c.product_count != null && (
+                    <span className="mt-1 block text-[10px] tracking-[0.2em] text-white/70">{c.product_count} items</span>
+                  )}
+                </span>
+              </span>
+            </Link>
+          ))}
+        </div>
+      </section>
+    );
+
+  /* Atelier — typographic index, image only on hover-free minimal tiles */
+  if (theme.id === "atelier")
+    return (
+      <section className="mx-auto max-w-6xl px-4 py-16">
+        <SectionHead title={title} subtitle={sub} />
+        <div className={cx("divide-y border-b", borderc)}>
+          {categories.map((c, n) => (
+            <Link
+              key={c.id}
+              to="/s/$code/c/$slug"
+              params={{ code, slug: c.slug }}
+              className="group flex items-center gap-4 py-4"
+            >
+              <span className={cx("w-8 text-[11px] tracking-[0.3em]", muted)}>{String(n + 1).padStart(2, "0")}</span>
+              {c.image_url && (
+                <img src={c.image_url} alt={c.name} loading="lazy" className="h-12 w-12 shrink-0 object-cover" />
+              )}
+              <Heading className="flex-1 truncate text-xl transition-colors group-hover:text-[var(--st-primary)] md:text-2xl">
+                {c.name}
+              </Heading>
+              {c.product_count != null && <span className={cx("text-xs", muted)}>{c.product_count}</span>}
+              <ArrowRight className="h-4 w-4 -translate-x-1 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
+            </Link>
+          ))}
+        </div>
+      </section>
+    );
+
+  /* Aurora — soft rounded cards */
   return (
     <section className="mx-auto max-w-6xl px-4 py-12">
-      <SectionHead title={content.text("cat_title")} subtitle={content.text("cat_sub")} />
-      <div
-        className={cx(
-          "grid gap-4",
-          theme.layout.grid === "dense"
-            ? "grid-cols-3 sm:grid-cols-4 lg:grid-cols-6"
-            : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4",
-        )}
-      >
+      <SectionHead title={title} subtitle={sub} />
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
         {categories.map((c) => (
           <Link
             key={c.id}
             to="/s/$code/c/$slug"
             params={{ code, slug: c.slug }}
-            className={cx(
-              "group overflow-hidden rounded-[var(--st-radius)] border bg-[var(--st-surface)] transition-all hover:-translate-y-0.5 hover:border-[var(--st-primary)]",
-              borderc,
-            )}
+            className="group overflow-hidden rounded-[var(--st-radius)] bg-[var(--st-surface)] shadow-[var(--st-shadow)] transition-all hover:-translate-y-1"
           >
             <div className="aspect-[4/3] bg-[var(--st-bg-alt)]">
               {c.image_url ? (
@@ -251,14 +393,9 @@ export function CategoryStrip() {
                 </div>
               )}
             </div>
-            <div className="flex items-center justify-between px-3 py-2.5 text-sm font-medium">
-              <span className="flex items-center gap-1.5 truncate">
-                {c.name}
-                {c.product_count != null && (
-                  <span className={cx("shrink-0 text-xs font-normal", muted)}>({c.product_count})</span>
-                )}
-              </span>
-              <ArrowRight className="h-3.5 w-3.5 shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
+            <div className="flex items-center justify-between gap-2 px-3 py-3 text-sm font-medium">
+              <span className="truncate">{c.name}</span>
+              {c.product_count != null && <span className={cx("shrink-0 text-xs", muted)}>{c.product_count}</span>}
             </div>
           </Link>
         ))}
@@ -270,7 +407,7 @@ export function CategoryStrip() {
 /* ------------------------------------------------------------ promo banner */
 
 export function PromoBanner() {
-  const { code, content, settings } = useStore();
+  const { code, content, settings, theme } = useStore();
   if (!content.flag("promo_show")) return null;
   const title = content.text("promo_title");
   const text = content.text("promo_text");
@@ -278,30 +415,93 @@ export function PromoBanner() {
   const image = content.text("promo_image");
   if (!title && !text) return null;
 
+  const shopLink = (label: string, primary = true) => (
+    <Link to="/s/$code" params={{ code }}>
+      {primary ? <PrimaryButton>{label}</PrimaryButton> : <GhostButton>{label}</GhostButton>}
+    </Link>
+  );
+
+  /* Bazaar — loud full-width offer band */
+  if (theme.id === "bazaar")
+    return (
+      <section className="mx-auto max-w-6xl px-4 py-4">
+        <div className="flex flex-col items-center gap-3 rounded-[var(--st-radius)] bg-[var(--st-accent)] px-5 py-5 text-center text-[var(--st-on-accent)] md:flex-row md:text-left">
+          {image && <img src={image} alt={title} loading="lazy" className="h-20 w-20 rounded-lg object-cover" />}
+          <div className="flex-1">
+            <div className="text-lg font-extrabold uppercase">{title}</div>
+            <p className="mt-1 text-sm opacity-90">{text}</p>
+          </div>
+          {cta && (
+            <Link
+              to="/s/$code"
+              params={{ code }}
+              className="rounded-full bg-[var(--st-primary)] px-6 py-2.5 text-sm font-bold text-[var(--st-on-primary)]"
+            >
+              {cta}
+            </Link>
+          )}
+        </div>
+      </section>
+    );
+
+  /* Noir — cinematic image with centered copy */
+  if (theme.id === "noir")
+    return (
+      <section className="relative overflow-hidden">
+        {image && <img src={image} alt={title} loading="lazy" className="absolute inset-0 h-full w-full object-cover opacity-30" />}
+        <div className="absolute inset-0 bg-[var(--st-bg)]/60" />
+        <div className="relative mx-auto max-w-2xl px-4 py-20 text-center">
+          <Heading className="text-2xl leading-snug md:text-4xl">{title}</Heading>
+          <p className={cx("mt-4 text-sm leading-relaxed", muted)}>{text}</p>
+          <div className="mt-7 flex justify-center">{cta && shopLink(cta)}</div>
+        </div>
+      </section>
+    );
+
+  /* Atelier — asymmetric editorial spread */
+  if (theme.id === "atelier")
+    return (
+      <section className="mx-auto max-w-6xl px-4 py-16">
+        <div className="grid items-center gap-8 md:grid-cols-[1fr_1.1fr]">
+          <div>
+            <Heading className="text-3xl leading-[1.1] md:text-5xl">{title}</Heading>
+            <p className={cx("mt-5 max-w-md text-sm leading-relaxed", muted)}>{text}</p>
+            <div className="mt-7 flex flex-wrap gap-3">
+              {cta && shopLink(cta)}
+              {settings?.support_phone && (
+                <a href={`tel:${settings.support_phone}`}>
+                  <GhostButton>Call {settings.support_phone}</GhostButton>
+                </a>
+              )}
+            </div>
+          </div>
+          {image && (
+            <div className="aspect-[5/4] overflow-hidden bg-[var(--st-bg-alt)]">
+              <img src={image} alt={title} loading="lazy" className="h-full w-full object-cover" />
+            </div>
+          )}
+        </div>
+      </section>
+    );
+
+  /* Aurora — glowing gradient card */
   return (
-    <section className="mx-auto max-w-6xl px-4 py-6">
+    <section className="mx-auto max-w-6xl px-4 py-8">
       <div
         className={cx(
-          "grid overflow-hidden rounded-[var(--st-radius)] border bg-[var(--st-surface)] md:grid-cols-[1.2fr_1fr]",
-          borderc,
+          "grid overflow-hidden rounded-[var(--st-radius)] bg-[var(--st-surface)] shadow-[var(--st-shadow)] md:grid-cols-[1.2fr_1fr]",
         )}
       >
         <div className="relative p-6 md:p-9">
           <div
-            className="pointer-events-none absolute inset-0 opacity-[0.12]"
-            style={{
-              background: "radial-gradient(600px 240px at 0% 0%, var(--st-primary), transparent 60%)",
-            }}
+            className="pointer-events-none absolute inset-0 opacity-[0.16]"
+            style={{ background: "radial-gradient(600px 260px at 0% 0%, var(--st-primary), transparent 62%)" }}
           />
           <div className="relative">
             <Heading className="text-xl md:text-2xl">{title}</Heading>
             <p className={cx("mt-2 max-w-md text-sm leading-relaxed", muted)}>{text}</p>
             <div className="mt-5 flex flex-wrap gap-3">
-              {cta && (
-                <Link to="/s/$code" params={{ code }}>
-                  <PrimaryButton>{cta}</PrimaryButton>
-                </Link>
-              )}
+              {cta && shopLink(cta)}
               {settings?.support_phone && (
                 <a href={`tel:${settings.support_phone}`}>
                   <GhostButton>Call {settings.support_phone}</GhostButton>
@@ -323,28 +523,93 @@ export function PromoBanner() {
 /* ------------------------------------------------------------------ why us */
 
 export function WhyUs() {
-  const { content } = useStore();
+  const { content, theme } = useStore();
   if (!content.flag("why_show")) return null;
   const items = [1, 2, 3].map((i) => ({ t: content.text(`why${i}_t`), d: content.text(`why${i}_d`) })).filter((i) => i.t);
   if (!items.length) return null;
-  return (
-    <section className={cx("border-y bg-[var(--st-bg-alt)]", borderc)}>
-      <div className="mx-auto max-w-6xl px-4 py-14">
-        <SectionHead title={content.text("why_title")} />
-        <div className="grid gap-4 md:grid-cols-3">
+  const title = content.text("why_title");
+
+  /* Bazaar — numbered flat tiles on a tinted band */
+  if (theme.id === "bazaar")
+    return (
+      <section className={cx("border-y bg-[var(--st-bg-alt)]", borderc)}>
+        <div className="mx-auto max-w-6xl px-4 py-10">
+          <SectionHead title={title} />
+          <div className="grid gap-3 md:grid-cols-3">
+            {items.map((i, n) => (
+              <div key={i.t} className={cx("flex gap-3 rounded-[var(--st-radius)] border bg-[var(--st-surface)] p-4", borderc)}>
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[var(--st-radius-sm)] bg-[var(--st-primary)] text-sm font-extrabold text-[var(--st-on-primary)]">
+                  {n + 1}
+                </span>
+                <div>
+                  <div className="text-sm font-bold text-[var(--st-fg)]">{i.t}</div>
+                  <p className={cx("mt-1 text-[12px] leading-relaxed", muted)}>{i.d}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+
+  /* Noir — three centered columns split by hairlines */
+  if (theme.id === "noir")
+    return (
+      <section className="mx-auto max-w-6xl px-4 py-20">
+        <SectionHead title={title} />
+        <div className={cx("grid divide-y md:grid-cols-3 md:divide-x md:divide-y-0", borderc)}>
           {items.map((i, n) => (
-            <div
-              key={i.t}
-              className={cx("rounded-[var(--st-radius)] border bg-[var(--st-surface)] p-5", borderc)}
-            >
-              <span className="grid h-9 w-9 place-items-center rounded-full bg-[var(--st-primary)] text-sm font-bold text-[var(--st-on-primary)]">
-                {n + 1}
-              </span>
-              <div className="mt-3 text-base font-semibold text-[var(--st-fg)]">{i.t}</div>
-              <p className={cx("mt-1.5 text-sm leading-relaxed", muted)}>{i.d}</p>
+            <div key={i.t} className="px-0 py-8 text-center md:px-8 md:py-0">
+              <div className="text-[10px] tracking-[0.34em] text-[var(--st-primary)]">0{n + 1}</div>
+              <Heading className="mt-4 text-lg md:text-xl">{i.t}</Heading>
+              <p className={cx("mt-3 text-sm leading-relaxed", muted)}>{i.d}</p>
             </div>
           ))}
         </div>
+      </section>
+    );
+
+  /* Atelier — big serif numbers, generous whitespace */
+  if (theme.id === "atelier")
+    return (
+      <section className={cx("border-y bg-[var(--st-bg-alt)]", borderc)}>
+        <div className="mx-auto max-w-6xl px-4 py-20">
+          <SectionHead title={title} />
+          <div className="grid gap-12 md:grid-cols-3">
+            {items.map((i, n) => (
+              <div key={i.t}>
+                <Heading className="text-5xl leading-none text-[var(--st-primary)]">
+                  {String(n + 1).padStart(2, "0")}
+                </Heading>
+                <Heading className="mt-5 text-xl">{i.t}</Heading>
+                <p className={cx("mt-3 text-sm leading-relaxed", muted)}>{i.d}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+
+  /* Aurora — floating soft cards */
+  return (
+    <section className="mx-auto max-w-6xl px-4 py-14">
+      <SectionHead title={title} />
+      <div className="grid gap-4 md:grid-cols-3">
+        {items.map((i, n) => (
+          <div
+            key={i.t}
+            className="rounded-[var(--st-radius)] bg-[var(--st-surface)] p-6 shadow-[var(--st-shadow)] transition-transform hover:-translate-y-1"
+          >
+            <span
+              className="grid h-11 w-11 place-items-center rounded-2xl text-base font-bold text-[var(--st-on-primary)]"
+              style={{ background: "linear-gradient(135deg, var(--st-primary), var(--st-accent))" }}
+            >
+              {n + 1}
+            </span>
+            <div className="mt-4 text-base font-semibold text-[var(--st-fg)]">{i.t}</div>
+            <p className={cx("mt-1.5 text-sm leading-relaxed", muted)}>{i.d}</p>
+          </div>
+        ))}
       </div>
     </section>
   );
@@ -353,26 +618,97 @@ export function WhyUs() {
 /* ----------------------------------------------------------------- reviews */
 
 export function Reviews() {
-  const { content } = useStore();
+  const { content, theme } = useStore();
   if (!content.flag("review_show")) return null;
   const items = [1, 2, 3]
     .map((i) => ({ text: content.text(`review${i}_text`), name: content.text(`review${i}_name`) }))
     .filter((i) => i.text);
   if (!items.length) return null;
+  const title = content.text("review_title");
+  const stars = (cls = "h-3.5 w-3.5") => (
+    <div className="flex items-center gap-0.5 text-[var(--st-primary)]">
+      {[0, 1, 2, 3, 4].map((s) => (
+        <Star key={s} className={cx(cls, "fill-current")} />
+      ))}
+    </div>
+  );
+
+  /* Bazaar — rating summary + compact review chips */
+  if (theme.id === "bazaar")
+    return (
+      <section className="mx-auto max-w-6xl px-4 py-10">
+        <SectionHead title={title} />
+        <div className="grid gap-3 md:grid-cols-[220px_1fr]">
+          <div className={cx("rounded-[var(--st-radius)] border bg-[var(--st-surface)] p-4 text-center", borderc)}>
+            <div className="text-4xl font-extrabold text-[var(--st-primary)]">4.9</div>
+            <div className="mt-1 flex justify-center">{stars()}</div>
+            <div className={cx("mt-1 text-[11px]", muted)}>Verified buyers</div>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-3">
+            {items.map((i) => (
+              <figure key={i.name + i.text} className={cx("rounded-[var(--st-radius)] border bg-[var(--st-surface)] p-3.5", borderc)}>
+                {stars("h-3 w-3")}
+                <blockquote className="mt-2 text-[12px] leading-relaxed text-[var(--st-fg)]">{i.text}</blockquote>
+                {i.name && <figcaption className={cx("mt-2 text-[11px] font-semibold", muted)}>— {i.name}</figcaption>}
+              </figure>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+
+  /* Noir — single large quote block per row, centered */
+  if (theme.id === "noir")
+    return (
+      <section className={cx("border-y bg-[var(--st-bg-alt)]", borderc)}>
+        <div className="mx-auto max-w-4xl px-4 py-20">
+          <SectionHead title={title} />
+          <div className={cx("divide-y", borderc)}>
+            {items.map((i) => (
+              <figure key={i.name + i.text} className="py-10 text-center">
+                <Quote className="mx-auto h-5 w-5 text-[var(--st-primary)]" />
+                <blockquote>
+                  <Heading as="h3" className="mt-5 text-xl leading-relaxed md:text-2xl">
+                    “{i.text}”
+                  </Heading>
+                </blockquote>
+                {i.name && (
+                  <figcaption className={cx("mt-5 text-[10px] uppercase tracking-[0.32em]", muted)}>{i.name}</figcaption>
+                )}
+              </figure>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+
+  /* Atelier — magazine columns with hanging quotes */
+  if (theme.id === "atelier")
+    return (
+      <section className="mx-auto max-w-6xl px-4 py-20">
+        <SectionHead title={title} />
+        <div className="grid gap-10 md:grid-cols-3">
+          {items.map((i) => (
+            <figure key={i.name + i.text}>
+              <Heading className="text-4xl leading-none text-[var(--st-primary)]">“</Heading>
+              <blockquote className={cx("mt-2 text-base leading-relaxed text-[var(--st-fg)]")}>{i.text}</blockquote>
+              <figcaption className={cx("mt-5 border-t pt-3 text-[11px] uppercase tracking-[0.24em]", borderc, muted)}>
+                {i.name}
+              </figcaption>
+            </figure>
+          ))}
+        </div>
+      </section>
+    );
+
+  /* Aurora — soft shadow cards */
   return (
     <section className="mx-auto max-w-6xl px-4 py-14">
-      <SectionHead title={content.text("review_title")} />
+      <SectionHead title={title} />
       <div className="grid gap-4 md:grid-cols-3">
         {items.map((i) => (
-          <figure
-            key={i.name + i.text}
-            className={cx("rounded-[var(--st-radius)] border bg-[var(--st-surface)] p-5", borderc)}
-          >
-            <div className="flex items-center gap-1 text-[var(--st-primary)]">
-              {[0, 1, 2, 3, 4].map((s) => (
-                <Star key={s} className="h-3.5 w-3.5 fill-current" />
-              ))}
-            </div>
+          <figure key={i.name + i.text} className="rounded-[var(--st-radius)] bg-[var(--st-surface)] p-5 shadow-[var(--st-shadow)]">
+            {stars()}
             <Quote className={cx("mt-3 h-4 w-4", muted)} />
             <blockquote className="mt-2 text-sm leading-relaxed text-[var(--st-fg)]">{i.text}</blockquote>
             {i.name && <figcaption className={cx("mt-3 text-xs font-medium", muted)}>{i.name}</figcaption>}
@@ -386,7 +722,7 @@ export function Reviews() {
 /* --------------------------------------------------------------------- faq */
 
 export function Faq() {
-  const { content } = useStore();
+  const { content, theme } = useStore();
   const [open, setOpen] = useState(0);
   if (!content.flag("faq_show")) return null;
   const items = [1, 2, 3].map((i) => ({ q: content.text(`faq${i}_q`), a: content.text(`faq${i}_a`) })).filter((i) => i.q);
@@ -401,23 +737,98 @@ export function Faq() {
       acceptedAnswer: { "@type": "Answer", text: i.a },
     })),
   };
+  const schema = <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />;
+  const title = content.text("faq_title");
 
-  return (
-    <section className={cx("border-t bg-[var(--st-bg-alt)]", borderc)}>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <div className="mx-auto max-w-3xl px-4 py-14">
-        <SectionHead title={content.text("faq_title")} />
-        <div className={cx("divide-y overflow-hidden rounded-[var(--st-radius)] border bg-[var(--st-surface)]", borderc)}>
+  /* Bazaar — compact two-column accordion */
+  if (theme.id === "bazaar")
+    return (
+      <section className={cx("border-t bg-[var(--st-bg-alt)]", borderc)}>
+        {schema}
+        <div className="mx-auto max-w-6xl px-4 py-10">
+          <SectionHead title={title} />
+          <div className="grid gap-3 md:grid-cols-2">
+            {items.map((i, n) => (
+              <div key={i.q} className={cx("rounded-[var(--st-radius)] border bg-[var(--st-surface)]", borderc)}>
+                <button
+                  onClick={() => setOpen(open === n ? -1 : n)}
+                  className="flex w-full items-center justify-between gap-3 px-3.5 py-3 text-left text-[13px] font-bold"
+                >
+                  {i.q}
+                  <ChevronDown className={cx("h-4 w-4 shrink-0 transition-transform", open === n && "rotate-180")} />
+                </button>
+                {open === n && <p className={cx("px-3.5 pb-3.5 text-[12px] leading-relaxed", muted)}>{i.a}</p>}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+
+  /* Noir — bordered rows, plus/minus marks */
+  if (theme.id === "noir")
+    return (
+      <section className="mx-auto max-w-3xl px-4 py-20">
+        {schema}
+        <SectionHead title={title} />
+        <div className={cx("divide-y border-y", borderc)}>
           {items.map((i, n) => (
             <div key={i.q}>
               <button
                 onClick={() => setOpen(open === n ? -1 : n)}
-                className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left text-sm font-medium"
+                className="flex w-full items-center justify-between gap-4 py-5 text-left text-[12px] uppercase tracking-[0.2em] text-[var(--st-fg)]"
               >
                 {i.q}
-                <ChevronDown className={cx("h-4 w-4 transition-transform", open === n && "rotate-180")} />
+                <span className="text-[var(--st-primary)]">{open === n ? "—" : "+"}</span>
               </button>
-              {open === n && <p className={cx("px-4 pb-4 text-sm leading-relaxed", muted)}>{i.a}</p>}
+              {open === n && <p className={cx("pb-6 text-sm leading-relaxed", muted)}>{i.a}</p>}
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+
+  /* Atelier — numbered editorial list, all answers visible on open */
+  if (theme.id === "atelier")
+    return (
+      <section className="mx-auto max-w-4xl px-4 py-20">
+        {schema}
+        <SectionHead title={title} />
+        <div className={cx("divide-y border-t", borderc)}>
+          {items.map((i, n) => (
+            <div key={i.q} className="py-6">
+              <button
+                onClick={() => setOpen(open === n ? -1 : n)}
+                className="flex w-full items-start gap-4 text-left"
+              >
+                <span className={cx("mt-1 text-[11px] tracking-[0.3em]", muted)}>{String(n + 1).padStart(2, "0")}</span>
+                <Heading className="flex-1 text-xl md:text-2xl">{i.q}</Heading>
+                <ChevronDown className={cx("mt-1 h-4 w-4 shrink-0 transition-transform", open === n && "rotate-180")} />
+              </button>
+              {open === n && <p className={cx("mt-3 pl-0 text-sm leading-relaxed md:pl-12", muted)}>{i.a}</p>}
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+
+  /* Aurora — rounded soft accordion card */
+  return (
+    <section className={cx("border-t bg-[var(--st-bg-alt)]", borderc)}>
+      {schema}
+      <div className="mx-auto max-w-3xl px-4 py-14">
+        <SectionHead title={title} />
+        <div className="divide-y divide-[var(--st-border)] overflow-hidden rounded-[var(--st-radius)] bg-[var(--st-surface)] shadow-[var(--st-shadow)]">
+          {items.map((i, n) => (
+            <div key={i.q}>
+              <button
+                onClick={() => setOpen(open === n ? -1 : n)}
+                className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left text-sm font-semibold"
+              >
+                {i.q}
+                <ChevronDown className={cx("h-4 w-4 shrink-0 transition-transform", open === n && "rotate-180")} />
+              </button>
+              {open === n && <p className={cx("px-5 pb-5 text-sm leading-relaxed", muted)}>{i.a}</p>}
             </div>
           ))}
         </div>
