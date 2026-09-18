@@ -167,8 +167,12 @@ export function AppShell({
                 aria-expanded={isOpen}
               >
                 <span className="text-current">{entry.icon}</span>
-                <span className="flex-1 text-left">{entry.label}</span>
+                <span className="text-left">{entry.label}</span>
+                <NavBadge count={groupBadge} />
                 <ChevronDown
+                  className={cn("ml-auto h-3.5 w-3.5 transition-transform", isOpen ? "rotate-0" : "-rotate-90")}
+                />
+                <span className="hidden"><ChevronDown
                   className={cn("h-3.5 w-3.5 transition-transform", isOpen ? "rotate-0" : "-rotate-90")}
                 />
               </button>
