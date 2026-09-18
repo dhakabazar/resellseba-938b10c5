@@ -332,8 +332,11 @@ function LeafLink({ item, nested = false, collapsed = false }: { item: NavItem; 
       }}
     >
       <span className="text-current">{item.icon}</span>
-      <span className="flex-1">{item.label}</span>
-      <ChevronRight className="h-3.5 w-3.5 opacity-0 group-hover:opacity-60" />
+      <span className={item.badge && item.badge > 0 ? "" : "flex-1"}>{item.label}</span>
+      <NavBadge count={item.badge} />
+      <ChevronRight
+        className={cn("h-3.5 w-3.5 opacity-0 group-hover:opacity-60", item.badge && item.badge > 0 ? "" : "")}
+      />
     </Link>
   );
 }
