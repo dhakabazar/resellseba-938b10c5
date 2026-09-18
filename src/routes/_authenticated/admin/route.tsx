@@ -38,7 +38,7 @@ import {
   ExternalLink,
   Home,
 } from "lucide-react";
-import { AppShell, type NavEntry } from "@/components/AppShell";
+import { AppShell, type NavEntry, type NavGroup, type NavItem } from "@/components/AppShell";
 import { BulkScanButton } from "@/components/BulkScanModal";
 import { useAuth } from "@/lib/use-auth";
 import { useBrandingTheme } from "@/lib/branding";
