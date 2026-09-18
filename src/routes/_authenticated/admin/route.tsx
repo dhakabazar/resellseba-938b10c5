@@ -390,7 +390,7 @@ function AdminLayout() {
         </div>
       }
       brand={{ name: brand.name, sub: isSuperAdmin ? "Admin panel" : "Staff panel", logoUrl: brand.logoUrl }}
-      nav={filterNav(NAV, permissions, isSuperAdmin)}
+      nav={withBadges(filterNav(NAV, permissions, isSuperAdmin), navCounts)}
       user={{
         name: user.user_metadata?.full_name ?? (isSuperAdmin ? "Admin" : "Staff"),
         email: user.email ?? "",
