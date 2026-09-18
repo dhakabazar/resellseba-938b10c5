@@ -336,6 +336,8 @@ function AdminLayout() {
 
   useBrandingTheme(brand.primary);
 
+  const navCounts = useNavCounts(!loading && !!user && canEnter);
+
   // Staff account that has zero openable pages: show a message instead of a
   // spinner that never resolves.
   if (!loading && user && canEnter && !canViewRoute && !landing) {
