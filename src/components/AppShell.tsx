@@ -14,18 +14,36 @@ export interface NavItem {
   end?: boolean;
   /** Open in a new browser tab instead of client-side navigation. */
   external?: boolean;
+  /** Pending-work counter shown as a badge next to the label. */
+  badge?: number;
 }
 
 export interface NavGroup {
   label: string;
   icon: ReactNode;
   items: NavItem[];
+  badge?: number;
 }
 
 export type NavEntry = NavItem | NavGroup;
 
 function isGroup(entry: NavEntry): entry is NavGroup {
   return (entry as NavGroup).items !== undefined;
+}
+
+/** Small red counter chip used in the sidebar. */
+function NavBadge({ count, dot = false }: { count?: number; dot?: boolean }) {
+  if (!count || count < 1) return null;
+  if (dot) {
+    return (
+      <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-destructive ring-2 ring-sidebar" aria-hidden />
+    );
+  }
+  return (
+    <span className="ml-auto inline-flex min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 py-0.5 text-[10px] font-bold leading-none text-destructive-foreground tabular-nums">
+      {count > 999 ? "999+" : count}
+    </span>
+  );
 }
 
 export function AppShell({
