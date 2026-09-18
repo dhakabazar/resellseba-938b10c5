@@ -38,7 +38,7 @@ import {
   ExternalLink,
   Home,
 } from "lucide-react";
-import { AppShell, type NavEntry } from "@/components/AppShell";
+import { AppShell, type NavEntry, type NavGroup, type NavItem } from "@/components/AppShell";
 import { BulkScanButton } from "@/components/BulkScanModal";
 import { useAuth } from "@/lib/use-auth";
 import { useBrandingTheme } from "@/lib/branding";
@@ -182,6 +182,58 @@ const NAV: NavEntry[] = [
   },
 ];
 
+type NavCounts = { payouts: number; forwarded: number; rider: number };
+
+/** Live pending-work counters shown as sidebar badges. */
+function useNavCounts(enabled: boolean): NavCounts {
+  const [counts, setCounts] = useState<NavCounts>({ payouts: 0, forwarded: 0, rider: 0 });
+
+  useEffect(() => {
+    if (!enabled) return;
+    let alive = true;
+    const load = async () => {
+      const [payouts, forwarded, rider] = await Promise.all([
+        supabase.from("payouts").select("id", { count: "exact", head: true }).eq("status", "pending"),
+        supabase.from("orders").select("id", { count: "exact", head: true }).eq("status", "forwarded"),
+        supabase.from("orders").select("id", { count: "exact", head: true }).not("rider_assigned_at", "is", null),
+      ]);
+      if (!alive) return;
+      setCounts({
+        payouts: payouts.count ?? 0,
+        forwarded: forwarded.count ?? 0,
+        rider: rider.count ?? 0,
+      });
+    };
+    void load();
+    const timer = setInterval(() => void load(), 60000);
+    return () => {
+      alive = false;
+      clearInterval(timer);
+    };
+  }, [enabled]);
+
+  return counts;
+}
+
+/** Attach badge counts to the nav entries that track pending work. */
+function withBadges(nav: NavEntry[], counts: NavCounts): NavEntry[] {
+  return nav.map((entry) => {
+    const group = entry as NavGroup;
+    if (group.items) {
+      return {
+        ...group,
+        items: group.items.map((item) =>
+          item.to === "/admin/payouts" ? { ...item, badge: counts.payouts } : item,
+        ),
+      };
+    }
+    const item = entry as NavItem;
+    if (item.to === "/admin/orders") return { ...item, badge: counts.forwarded };
+    if (item.to === "/admin/rider-followup") return { ...item, badge: counts.rider };
+    return item;
+  });
+}
+
 function allowed(to: string | undefined, permissions: string[], isSuperAdmin: boolean) {
   if (isSuperAdmin) return true;
   if (!to) return true;
@@ -284,6 +336,8 @@ function AdminLayout() {
 
   useBrandingTheme(brand.primary);
 
+  const navCounts = useNavCounts(!loading && !!user && canEnter);
+
   // Staff account that has zero openable pages: show a message instead of a
   // spinner that never resolves.
   if (!loading && user && canEnter && !canViewRoute && !landing) {
@@ -338,7 +392,7 @@ function AdminLayout() {
         </div>
       }
       brand={{ name: brand.name, sub: isSuperAdmin ? "Admin panel" : "Staff panel", logoUrl: brand.logoUrl }}
-      nav={filterNav(NAV, permissions, isSuperAdmin)}
+      nav={withBadges(filterNav(NAV, permissions, isSuperAdmin), navCounts)}
       user={{
         name: user.user_metadata?.full_name ?? (isSuperAdmin ? "Admin" : "Staff"),
         email: user.email ?? "",

@@ -14,18 +14,36 @@ export interface NavItem {
   end?: boolean;
   /** Open in a new browser tab instead of client-side navigation. */
   external?: boolean;
+  /** Pending-work counter shown as a badge next to the label. */
+  badge?: number;
 }
 
 export interface NavGroup {
   label: string;
   icon: ReactNode;
   items: NavItem[];
+  badge?: number;
 }
 
 export type NavEntry = NavItem | NavGroup;
 
 function isGroup(entry: NavEntry): entry is NavGroup {
   return (entry as NavGroup).items !== undefined;
+}
+
+/** Small red counter chip used in the sidebar. */
+function NavBadge({ count, dot = false }: { count?: number; dot?: boolean }) {
+  if (!count || count < 1) return null;
+  if (dot) {
+    return (
+      <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-destructive ring-2 ring-sidebar" aria-hidden />
+    );
+  }
+  return (
+    <span className="ml-auto inline-flex min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 py-0.5 text-[10px] font-bold leading-none text-destructive-foreground tabular-nums">
+      {count > 999 ? "999+" : count}
+    </span>
+  );
 }
 
 export function AppShell({
@@ -115,6 +133,8 @@ export function AppShell({
           const hasActive = entry.items.some(
             (it) => currentPath === it.to || (!it.end && currentPath.startsWith(it.to + "/")),
           );
+          const groupBadge =
+            entry.badge ?? entry.items.reduce((sum, it) => sum + (it.badge && it.badge > 0 ? it.badge : 0), 0);
           if (collapsed) {
             return (
               <button
@@ -126,11 +146,12 @@ export function AppShell({
                 }}
                 title={entry.label}
                 className={cn(
-                  "mb-1 flex w-full items-center justify-center rounded-md p-2 text-sidebar-foreground/90 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                  "relative mb-1 flex w-full items-center justify-center rounded-md p-2 text-sidebar-foreground/90 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                   hasActive && "bg-sidebar-accent/60 text-sidebar-accent-foreground",
                 )}
               >
                 {entry.icon}
+                <NavBadge count={groupBadge} dot />
               </button>
             );
           }
@@ -146,9 +167,14 @@ export function AppShell({
                 aria-expanded={isOpen}
               >
                 <span className="text-current">{entry.icon}</span>
-                <span className="flex-1 text-left">{entry.label}</span>
+                <span className="text-left">{entry.label}</span>
+                <NavBadge count={groupBadge} />
                 <ChevronDown
-                  className={cn("h-3.5 w-3.5 transition-transform", isOpen ? "rotate-0" : "-rotate-90")}
+                  className={cn(
+                    "h-3.5 w-3.5 transition-transform",
+                    groupBadge > 0 ? "" : "ml-auto",
+                    isOpen ? "rotate-0" : "-rotate-90",
+                  )}
                 />
               </button>
               {isOpen && (
@@ -285,10 +311,11 @@ function LeafLink({ item, nested = false, collapsed = false }: { item: NavItem; 
         to={item.to}
         activeOptions={{ exact: item.end }}
         title={item.label}
-        className="mb-1 flex items-center justify-center rounded-md p-2 text-sidebar-foreground/90 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+        className="relative mb-1 flex items-center justify-center rounded-md p-2 text-sidebar-foreground/90 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
         activeProps={{ className: "bg-sidebar-accent text-sidebar-accent-foreground" }}
       >
         {item.icon}
+        <NavBadge count={item.badge} dot />
       </Link>
     );
   }
@@ -305,8 +332,11 @@ function LeafLink({ item, nested = false, collapsed = false }: { item: NavItem; 
       }}
     >
       <span className="text-current">{item.icon}</span>
-      <span className="flex-1">{item.label}</span>
-      <ChevronRight className="h-3.5 w-3.5 opacity-0 group-hover:opacity-60" />
+      <span className={item.badge && item.badge > 0 ? "" : "flex-1"}>{item.label}</span>
+      <NavBadge count={item.badge} />
+      <ChevronRight
+        className={cn("h-3.5 w-3.5 opacity-0 group-hover:opacity-60", item.badge && item.badge > 0 ? "" : "")}
+      />
     </Link>
   );
 }
