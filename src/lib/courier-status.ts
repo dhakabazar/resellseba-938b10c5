@@ -50,8 +50,18 @@ type StatusMapping = {
 
 /** Steadfast delivery statuses (API v1). */
 export const STEADFAST_STATUS_MAP: Record<string, StatusMapping> = {
+  // Booking-only phase: the parcel is still with the merchant, so the order
+  // status is never touched (same rule as Carrybee/Pathao "created/pending").
   "in-review": { ship: "booked", order: null, label: "In review" },
-  pending: { ship: "in_transit", order: "shipped", label: "Pending / on the way" },
+  pending: { ship: "booked", order: null, label: "Pending (booked, not picked)" },
+  "pickup-pending": { ship: "booked", order: null, label: "Pickup pending" },
+  "pickup-requested": { ship: "booked", order: null, label: "Pickup requested" },
+  // Parcel actually moving with the courier -> To Courier
+  picked: { ship: "in_transit", order: "shipped", label: "Picked" },
+  "picked-up": { ship: "in_transit", order: "shipped", label: "Picked" },
+  "in-transit": { ship: "in_transit", order: "shipped", label: "In transit" },
+  "on-the-way": { ship: "in_transit", order: "shipped", label: "On the way" },
+  "at-sorting-hub": { ship: "in_transit", order: "shipped", label: "At sorting hub" },
   hold: { ship: "in_transit", order: null, label: "On hold" },
   "delivered-approval-pending": { ship: "in_transit", order: null, label: "Delivered (approval pending)" },
   "partial-delivered-approval-pending": {
