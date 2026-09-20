@@ -297,6 +297,8 @@ function RootResolver() {
 }
 
 
+const LP_TILE = ["brand-tile-1", "brand-tile-2", "brand-tile-3", "brand-tile-4"];
+
 function Landing({
   c,
   siteName,
