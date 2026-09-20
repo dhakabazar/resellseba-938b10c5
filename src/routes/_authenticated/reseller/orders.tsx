@@ -63,6 +63,7 @@ import {
 } from "@/components/order-filters";
 import { Check, Ban, Search, ListChecks, SlidersHorizontal, ChevronDown, Printer, CheckSquare } from "lucide-react";
 import { CourierLogo, courierLabel } from "@/components/courier-brand";
+import { CourierRecheckButton } from "@/components/courier-recheck-button";
 import { printShippingLabels } from "@/lib/labels";
 
 
@@ -965,6 +966,7 @@ function OrdersPage() {
                                   </button>
                                 </>
                               )}
+                              <CourierRecheckButton orderId={o.id} onDone={() => syncOrders([o.id])} />
                             </div>
                           ))}
                         </div>
@@ -1121,6 +1123,7 @@ function OrdersPage() {
                                 <Copy className="h-2.5 w-2.5" />
                               </button>
                             )}
+                            <CourierRecheckButton orderId={o.id} onDone={() => syncOrders([o.id])} />
                           </div>
                         </div>
                       ) : (
