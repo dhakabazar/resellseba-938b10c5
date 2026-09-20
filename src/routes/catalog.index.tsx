@@ -288,7 +288,7 @@ function CatalogIndex() {
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-3 gap-2 sm:gap-4 sm:grid-cols-3 lg:grid-cols-4">
+                <div className="grid grid-cols-2 gap-2 sm:gap-4 sm:grid-cols-3 lg:grid-cols-4">
                   {pagedRows.map((p, i) => (
                     <ProductCard key={p.id} p={p} i={i} />
                   ))}
@@ -341,43 +341,41 @@ function ProductCard({ p, i }: { p: Prod; i: number }) {
           View details →
         </span>
       </Link>
-      <div className="flex flex-1 flex-col p-1.5 sm:p-4">
+      <div className="flex flex-1 flex-col p-2 sm:p-4">
         <ProductCodeChip code={p.code} />
         <Link
           to="/catalog/$slug"
           params={{ slug: p.slug }}
-          className="mt-1 line-clamp-2 min-h-[2.2em] text-[10px] font-bold leading-tight hover:text-brand-1 sm:mt-2 sm:min-h-[2.4em] sm:text-sm"
+          className="mt-1 line-clamp-2 min-h-[2.2em] text-[11px] font-bold leading-tight hover:text-brand-1 sm:mt-2 sm:min-h-[2.4em] sm:text-sm"
         >
           {p.name}
         </Link>
         <div className="mt-1 grid grid-cols-3 gap-0.5 sm:mt-3 sm:gap-1.5">
           <div className={`price-tile ${TILE[0]}`}>
-            <div className="truncate text-[6px] font-bold uppercase tracking-wide opacity-80 sm:text-[9px] sm:tracking-wider">Wholesale</div>
-            <div className="mt-0.5 whitespace-nowrap text-[9px] font-black leading-none sm:mt-1 sm:text-sm">{bdt(p.resellerPrice)}</div>
+            <div className="truncate text-[7px] font-bold uppercase tracking-wide opacity-80 sm:text-[9px] sm:tracking-wider">Wholesale</div>
+            <div className="mt-0.5 whitespace-nowrap text-[10px] font-black leading-none sm:mt-1 sm:text-sm">{bdt(p.resellerPrice)}</div>
           </div>
           <div className={`price-tile ${TILE[3]}`}>
-            <div className="truncate text-[6px] font-bold uppercase tracking-wide opacity-80 sm:text-[9px] sm:tracking-wider">Sale</div>
-            <div className="mt-0.5 whitespace-nowrap text-[9px] font-black leading-none sm:mt-1 sm:text-sm">{bdt(p.price)}</div>
+            <div className="truncate text-[7px] font-bold uppercase tracking-wide opacity-80 sm:text-[9px] sm:tracking-wider">Sale</div>
+            <div className="mt-0.5 whitespace-nowrap text-[10px] font-black leading-none sm:mt-1 sm:text-sm">{bdt(p.price)}</div>
           </div>
           <div className={`price-tile ${TILE[2]}`}>
-            <div className="truncate text-[6px] font-bold uppercase tracking-wide opacity-80 sm:text-[9px] sm:tracking-wider">Profit</div>
-            <div className="mt-0.5 whitespace-nowrap text-[9px] font-black leading-none sm:mt-1 sm:text-sm">{bdt(profit)}</div>
+            <div className="truncate text-[7px] font-bold uppercase tracking-wide opacity-80 sm:text-[9px] sm:tracking-wider">Profit</div>
+            <div className="mt-0.5 whitespace-nowrap text-[10px] font-black leading-none sm:mt-1 sm:text-sm">{bdt(profit)}</div>
           </div>
         </div>
         <div className="mt-1.5 flex items-stretch gap-0.5 border-t border-dashed pt-1.5 sm:mt-3 sm:gap-1.5 sm:pt-3">
-          <CopyBtn text={p.name} title="Title" label="Title copied" className="min-w-0 flex-1" labelClassName="hidden sm:inline" />
+          <CopyBtn text={p.name} title="Title" label="Title copied" className="min-w-0 flex-1" />
           <CopyBtn
             text={`${p.name}\n\nPrice: ${bdt(p.price)}`}
             title="Details"
             label="Details copied"
             className="min-w-0 flex-1"
-            labelClassName="hidden sm:inline"
           />
           <ImagePickerButton
             images={p.images ?? (p.image ? [p.image] : [])}
             baseName={p.name}
             className="min-w-0 flex-1"
-            labelClassName="hidden sm:inline"
           />
         </div>
       </div>
