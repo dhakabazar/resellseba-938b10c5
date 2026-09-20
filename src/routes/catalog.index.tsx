@@ -288,7 +288,7 @@ function CatalogIndex() {
               </div>
             ) : (
               <>
-                <div className="grid gap-4 grid-cols-2 sm:gap-6 lg:grid-cols-4">
+                <div className="grid grid-cols-3 gap-2 sm:gap-4 sm:grid-cols-3 lg:grid-cols-4">
                   {pagedRows.map((p, i) => (
                     <ProductCard key={p.id} p={p} i={i} />
                   ))}
