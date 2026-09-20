@@ -42,9 +42,9 @@ export function CourierRecheckButton({
           setBusy(false);
         }
       }}
-      className={`shrink-0 opacity-60 transition-opacity hover:opacity-100 disabled:opacity-40 ${className}`}
+      className={`inline-flex shrink-0 items-center justify-center rounded-full p-1 text-primary ring-1 ring-inset ring-primary/30 transition-all hover:bg-primary/10 hover:ring-primary/60 disabled:opacity-40 ${className}`}
     >
-      <RefreshCw className={`h-2.5 w-2.5 ${busy ? "animate-spin" : ""}`} />
+      <RefreshCw className={`h-3.5 w-3.5 ${busy ? "animate-spin" : ""}`} />
     </button>
   );
 }
