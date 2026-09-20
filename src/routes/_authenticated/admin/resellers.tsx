@@ -420,7 +420,7 @@ function BulkBar({
 function ResellersPage() {
   const nav = useNavigate();
   const { can, canAny, isSuperAdmin } = usePermissions();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   /** `resellers.view_own` limits the list to resellers assigned to this staff agent. */
   const ownOnly = !isSuperAdmin && can("resellers.view_own") && !can("resellers.view_all") && !can("resellers.manage");
   const canViewAll = !ownOnly && (isSuperAdmin || can("resellers.view_all") || can("resellers.view") || can("resellers.manage"));
@@ -574,9 +574,11 @@ function ResellersPage() {
 
 
   useEffect(() => {
+    // Wait until the permission scope / signed-in user is known so the heavy
+    // list is fetched exactly once instead of twice.
+    if (authLoading) return;
     load();
-    // reload once the permission scope / signed-in user is known
-  }, [scopeOwn, user?.id]);
+  }, [authLoading, scopeOwn, user?.id]);
 
   useEffect(() => {
     const s = searchParams.status;
