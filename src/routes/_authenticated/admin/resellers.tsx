@@ -466,90 +466,57 @@ function ResellersPage() {
   const autoApprove = advanced.resellerAutoApprove;
 
 
+  /**
+   * One bootstrap RPC carries the list, account/verification status, note
+   * authors, money metrics and agents — a single round trip with no 1000-row
+   * Data API cap, instead of six chained requests.
+   */
   async function load() {
     setLoading(true);
-    const [listRows, metricRows, agentsRes] = await Promise.all([
-      fetchAllSafe<Reseller>(() =>
-        supabase
-          .from("resellers")
-          .select(
-            "id,user_id,avatar_url,business_name,code,contact_phone,address,nid_number,status,commission_rate,leader_id,agent_id,notes,notes_by,notes_at,approved_at,created_at,payout_method,payout_account_name,payout_account_number,payout_bank_name,payout_branch,payout_routing,deposit_required,deposit_required_amount,frozen_amount,subscription_plan,subscription_expires_at,subscription_trial_ends_at,subscription_exempt,subscription_enrolled,subscription_enrolled_at",
-          )
-          .order("created_at", { ascending: false }),
-      ),
-      fetchAllSafe<any>(() => supabase.rpc("admin_reseller_metrics")),
-      supabase.from("agents").select("id,display_name,user_id").order("display_name"),
-    ]);
-
-    const agentRows = (agentsRes.data ?? []) as Array<{ id: string; display_name: string; user_id: string }>;
+    const { data, error } = await supabase.rpc("admin_resellers_bootstrap");
+    if (error) {
+      toast.error(error.message);
+      setLoading(false);
+      return;
+    }
+    const boot = (data ?? {}) as {
+      resellers?: any[];
+      agents?: Array<{ id: string; display_name: string; user_id: string }>;
+    };
+    const agentRows = boot.agents ?? [];
     setAgents(agentRows.map((a) => ({ id: a.id, display_name: a.display_name })));
 
-    let rows = listRows;
+    let rows = (boot.resellers ?? []) as Array<Reseller & Record<string, any>>;
     if (scopeOwn) {
       const mine = new Set(agentRows.filter((a) => a.user_id === user?.id).map((a) => a.id));
       rows = rows.filter((r) => r.agent_id && mine.has(r.agent_id));
     }
-    setItems(rows);
+    setItems(rows as Reseller[]);
 
-    // App-level verification lives on profiles (auth email confirm is separate).
-    const ids = rows.map((r) => r.user_id);
-    if (ids.length) {
-      const profRows = await fetchAllIn<any>(
-        (part) => supabase.from("profiles").select("id,email_verified_at,phone_verified_at").in("id", part),
-        ids,
-      );
-      setProfileVerify(
-        Object.fromEntries(
-          profRows.map((p: any) => [
-            p.id,
-            { email: Boolean(p.email_verified_at), phone: Boolean(p.phone_verified_at) },
-          ]),
-        ),
-      );
+    const verify: Record<string, { email: boolean; phone: boolean }> = {};
+    const emails: Record<string, { email: string | null; verified: boolean }> = {};
+    const authors: Record<string, string> = {};
+    const sums: Record<string, Summary> = {};
+    const counts: Record<string, number> = {};
+    for (const r of rows) {
+      verify[r.user_id] = { email: Boolean(r.email_verified), phone: Boolean(r.phone_verified) };
+      emails[r.user_id] = { email: (r.email as string | null) ?? null, verified: Boolean(r.email_confirmed) };
+      if (r.notes_by) authors[r.notes_by] = (r.notes_author as string | null) || "Staff";
+      sums[r.id] = {
+        delivered_profit: Number(r.delivered_profit ?? 0),
+        pending_payout: Number(r.pending_payout ?? 0),
+        paid_out: Number(r.paid_out ?? 0),
+        available: Number(r.available ?? 0),
+        deposit_balance: Number(r.deposit_balance ?? 0),
+        frozen_amount: Number(r.frozen_amount ?? 0),
+      };
+      counts[r.id] = Number(r.orders ?? 0);
     }
-
-    // Who wrote each internal note (staff profiles).
-    const authorIds = Array.from(new Set(rows.map((r) => r.notes_by).filter(Boolean))) as string[];
-    if (authorIds.length) {
-      const authorRows = await fetchAllIn<any>(
-        (part) => supabase.from("profiles").select("id,full_name").in("id", part),
-        authorIds,
-      );
-      setNoteAuthors(
-        Object.fromEntries(
-          authorRows.map((p: any) => [p.id, (p.full_name as string | null) || "Staff"]),
-        ),
-      );
-    } else {
-      setNoteAuthors({});
-    }
-
-    const metrics = metricRows as Array<{
-      reseller_id: string;
-      orders: number;
-      delivered_profit: number;
-      pending_payout: number;
-      paid_out: number;
-      available: number;
-      deposit_balance: number;
-      frozen_amount: number;
-    }>;
-    setSummaries(
-      Object.fromEntries(
-        metrics.map((m) => [
-          m.reseller_id,
-          {
-            delivered_profit: Number(m.delivered_profit ?? 0),
-            pending_payout: Number(m.pending_payout ?? 0),
-            paid_out: Number(m.paid_out ?? 0),
-            available: Number(m.available ?? 0),
-            deposit_balance: Number(m.deposit_balance ?? 0),
-            frozen_amount: Number(m.frozen_amount ?? 0),
-          } as Summary,
-        ]),
-      ),
-    );
-    setOrderCounts(Object.fromEntries(metrics.map((m) => [m.reseller_id, Number(m.orders ?? 0)])));
+    setProfileVerify(verify);
+    setEmailStatus(emails);
+    setNoteAuthors(authors);
+    setSummaries(sums);
+    setOrderCounts(counts);
     setLoading(false);
   }
 
