@@ -379,7 +379,12 @@ function Landing({
               >
                 {c.hero.ctaSecondary}
               </Link>
-
+              <Link
+                to="/tutorials"
+                className="btn-ghost-brand btn-live inline-flex items-center justify-center gap-2 rounded-xl px-7 py-3.5 text-sm font-bold sm:text-base"
+              >
+                <Play className="h-4 w-4 fill-current" /> টিউটোরিয়াল দেখুন
+              </Link>
             </div>
 
             {c.hero.badges.length > 0 && (
@@ -684,8 +689,19 @@ function Landing({
                   </div>
                   <div className="flex flex-1 flex-col p-3">
                     <h3 className="truncate text-sm font-bold leading-tight group-hover:text-primary">{p.name}</h3>
-                    <div className="mt-auto pt-3">
-                      <span className="text-sm font-black text-primary">{bdt(p.price)}</span>
+                    <div className="mt-auto grid grid-cols-3 gap-1.5 pt-3">
+                      <div className={`price-tile ${LP_TILE[0]}`}>
+                        <div className="text-[8px] font-bold uppercase tracking-wider opacity-80">Wholesale</div>
+                        <div className="mt-0.5 text-[11px] font-black sm:text-xs">{bdt(p.base_price)}</div>
+                      </div>
+                      <div className={`price-tile ${LP_TILE[3]}`}>
+                        <div className="text-[8px] font-bold uppercase tracking-wider opacity-80">Sale</div>
+                        <div className="mt-0.5 text-[11px] font-black sm:text-xs">{bdt(p.price)}</div>
+                      </div>
+                      <div className={`price-tile ${LP_TILE[2]}`}>
+                        <div className="text-[8px] font-bold uppercase tracking-wider opacity-80">Profit</div>
+                        <div className="mt-0.5 text-[11px] font-black sm:text-xs">{bdt(Math.max(0, (p.price || 0) - (p.base_price || 0)))}</div>
+                      </div>
                     </div>
                   </div>
                 </Link>
