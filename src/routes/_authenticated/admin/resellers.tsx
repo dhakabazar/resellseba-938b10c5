@@ -799,7 +799,10 @@ function ResellersPage() {
       const res = await confirmEmailFn({ data: { userId: r.user_id } });
       if (res.alreadyConfirmed) toast.info("Email already confirmed");
       else toast.success(`Email confirmed for ${res.email ?? r.business_name}`);
-      loadEmailStatus();
+      setEmailStatus((prev) => ({
+        ...prev,
+        [r.user_id]: { email: res.email ?? prev[r.user_id]?.email ?? null, verified: true },
+      }));
     } catch (e: any) {
       toast.error(e?.message ?? "Failed to confirm email");
     }
@@ -953,7 +956,6 @@ function ResellersPage() {
     if (done) toast.success(`${done} reseller${done > 1 ? "s" : ""} updated`);
     if (failed) toast.error(`${failed} failed`);
     await load();
-    await loadEmailStatus();
   }
 
   function copyStoreLink(r: Reseller) {
