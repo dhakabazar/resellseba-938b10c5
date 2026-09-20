@@ -63,10 +63,10 @@ export function ImagePickerButton({
           e.stopPropagation();
           setOpen(true);
         }}
-        className={
-          className ??
-          "inline-flex items-center justify-center gap-1 rounded-lg border bg-card/90 px-1 py-1 text-[10px] font-semibold shadow-sm backdrop-blur hover:border-primary/50 hover:text-primary sm:px-2 sm:py-1.5 sm:text-[11px]"
-        }
+        className={[
+          "inline-flex items-center justify-center gap-1 rounded-lg border bg-card/90 px-1 py-1 text-[10px] font-semibold shadow-sm backdrop-blur hover:border-primary/50 hover:text-primary sm:px-2 sm:py-1.5 sm:text-[11px]",
+          className ?? "",
+        ].join(" ")}
       >
         <Download className="h-3.5 w-3.5 shrink-0" /> {compact ? null : <span className={labelClassName}>Image</span>}
       </button>
