@@ -26,21 +26,41 @@ export const recheckOrdersStatus = createServerFn({ method: "POST" })
 
     const seen = new Set<string>();
     const results: { orderId: string; courierStatus?: string; orderStatus?: string | null; error?: string }[] = [];
+    const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
     for (const sh of (shipments ?? []) as any[]) {
       if (seen.has(sh.order_id)) continue;
       seen.add(sh.order_id);
-      try {
-        const { courierStatus, result } = await recheckShipment(supabase, sh);
-        results.push({
-          orderId: sh.order_id,
-          courierStatus,
-          orderStatus: result.matched ? (result.orderStatus ?? null) : null,
-        });
-      } catch (e) {
-        const { bookingErrorText } = await import("@/lib/couriers.server");
-        results.push({ orderId: sh.order_id, error: await bookingErrorText(e) });
+
+      // Couriers rate-limit / time out on rapid back-to-back calls, which made
+      // some orders fail in bulk even though a single check worked. Retry a few
+      // times with a growing pause before giving up on an order.
+      let lastError: unknown = null;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          const { courierStatus, result } = await recheckShipment(supabase, sh);
+          results.push({
+            orderId: sh.order_id,
+            courierStatus,
+            orderStatus: result.matched ? (result.orderStatus ?? null) : null,
+          });
+          lastError = null;
+          break;
+        } catch (e) {
+          lastError = e;
+          // Permanent problems (not booked / bad credentials) are not worth retrying.
+          const status = e instanceof Response ? e.status : 0;
+          if (status === 400 || status === 401 || status === 403) break;
+          if (attempt < 2) await sleep(600 * (attempt + 1));
+        }
       }
+      if (lastError) {
+        const { bookingErrorText } = await import("@/lib/couriers.server");
+        results.push({ orderId: sh.order_id, error: await bookingErrorText(lastError) });
+      }
+
+      // Small gap between orders keeps the courier APIs from throttling us.
+      await sleep(150);
     }
 
     const notBooked = data.orderIds.filter((id) => !seen.has(id));

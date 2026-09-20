@@ -24,6 +24,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getActiveCouriers } from "@/lib/courier-config.functions";
 import { getOrderDetails, recheckCourierStatus } from "@/lib/order-details.functions";
 import { recheckOrdersStatus } from "@/lib/courier-recheck.functions";
+import { CourierRecheckButton } from "@/components/courier-recheck-button";
 import {
   orderProfit,
   orderReceived,
@@ -914,6 +915,7 @@ function AdminOrdersPage() {
                                     </button>
                                   </>
                                 )}
+                                <CourierRecheckButton orderId={o.id} onDone={() => syncOrders([o.id])} />
                               </div>
                             );
                           })}
@@ -1130,6 +1132,7 @@ function AdminOrdersPage() {
                                       <Copy className="h-2.5 w-2.5" />
                                     </button>
                                   )}
+                                  <CourierRecheckButton orderId={o.id} onDone={() => syncOrders([o.id])} />
                                 </div>
                               </div>
                             ))}
