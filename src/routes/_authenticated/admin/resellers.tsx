@@ -1,7 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchAllSafe, fetchAllIn } from "@/lib/fetch-all";
 import { ResellerAvatar } from "@/components/reseller-avatar";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
 import { DataToolbar, Pagination, usePaginated } from "@/components/data-list";
@@ -47,7 +46,7 @@ import {
 import { toast } from "sonner";
 import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
 import { useServerFn } from "@tanstack/react-start";
-import { confirmUserEmail, listResellerEmailStatus, deleteAuthUser } from "@/lib/admin-users.functions";
+import { confirmUserEmail, deleteAuthUser } from "@/lib/admin-users.functions";
 import { impersonateReseller, resetResellerPassword } from "@/lib/reseller-access.functions";
 import { startImpersonation } from "@/lib/impersonation";
 import {
@@ -421,13 +420,12 @@ function BulkBar({
 function ResellersPage() {
   const nav = useNavigate();
   const { can, canAny, isSuperAdmin } = usePermissions();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   /** `resellers.view_own` limits the list to resellers assigned to this staff agent. */
   const ownOnly = !isSuperAdmin && can("resellers.view_own") && !can("resellers.view_all") && !can("resellers.manage");
   const canViewAll = !ownOnly && (isSuperAdmin || can("resellers.view_all") || can("resellers.view") || can("resellers.manage"));
   const scopeOwn = ownOnly;
   const confirmEmailFn = useServerFn(confirmUserEmail);
-  const listEmailStatusFn = useServerFn(listResellerEmailStatus);
   const deleteAuthUserFn = useServerFn(deleteAuthUser);
   const resetPasswordFn = useServerFn(resetResellerPassword);
   const impersonateFn = useServerFn(impersonateReseller);
@@ -466,90 +464,57 @@ function ResellersPage() {
   const autoApprove = advanced.resellerAutoApprove;
 
 
+  /**
+   * One bootstrap RPC carries the list, account/verification status, note
+   * authors, money metrics and agents — a single round trip with no 1000-row
+   * Data API cap, instead of six chained requests.
+   */
   async function load() {
     setLoading(true);
-    const [listRows, metricRows, agentsRes] = await Promise.all([
-      fetchAllSafe<Reseller>(() =>
-        supabase
-          .from("resellers")
-          .select(
-            "id,user_id,avatar_url,business_name,code,contact_phone,address,nid_number,status,commission_rate,leader_id,agent_id,notes,notes_by,notes_at,approved_at,created_at,payout_method,payout_account_name,payout_account_number,payout_bank_name,payout_branch,payout_routing,deposit_required,deposit_required_amount,frozen_amount,subscription_plan,subscription_expires_at,subscription_trial_ends_at,subscription_exempt,subscription_enrolled,subscription_enrolled_at",
-          )
-          .order("created_at", { ascending: false }),
-      ),
-      fetchAllSafe<any>(() => supabase.rpc("admin_reseller_metrics")),
-      supabase.from("agents").select("id,display_name,user_id").order("display_name"),
-    ]);
-
-    const agentRows = (agentsRes.data ?? []) as Array<{ id: string; display_name: string; user_id: string }>;
+    const { data, error } = await supabase.rpc("admin_resellers_bootstrap");
+    if (error) {
+      toast.error(error.message);
+      setLoading(false);
+      return;
+    }
+    const boot = (data ?? {}) as {
+      resellers?: any[];
+      agents?: Array<{ id: string; display_name: string; user_id: string }>;
+    };
+    const agentRows = boot.agents ?? [];
     setAgents(agentRows.map((a) => ({ id: a.id, display_name: a.display_name })));
 
-    let rows = listRows;
+    let rows = (boot.resellers ?? []) as Array<Reseller & Record<string, any>>;
     if (scopeOwn) {
       const mine = new Set(agentRows.filter((a) => a.user_id === user?.id).map((a) => a.id));
       rows = rows.filter((r) => r.agent_id && mine.has(r.agent_id));
     }
-    setItems(rows);
+    setItems(rows as Reseller[]);
 
-    // App-level verification lives on profiles (auth email confirm is separate).
-    const ids = rows.map((r) => r.user_id);
-    if (ids.length) {
-      const profRows = await fetchAllIn<any>(
-        (part) => supabase.from("profiles").select("id,email_verified_at,phone_verified_at").in("id", part),
-        ids,
-      );
-      setProfileVerify(
-        Object.fromEntries(
-          profRows.map((p: any) => [
-            p.id,
-            { email: Boolean(p.email_verified_at), phone: Boolean(p.phone_verified_at) },
-          ]),
-        ),
-      );
+    const verify: Record<string, { email: boolean; phone: boolean }> = {};
+    const emails: Record<string, { email: string | null; verified: boolean }> = {};
+    const authors: Record<string, string> = {};
+    const sums: Record<string, Summary> = {};
+    const counts: Record<string, number> = {};
+    for (const r of rows) {
+      verify[r.user_id] = { email: Boolean(r.email_verified), phone: Boolean(r.phone_verified) };
+      emails[r.user_id] = { email: (r.email as string | null) ?? null, verified: Boolean(r.email_confirmed) };
+      if (r.notes_by) authors[r.notes_by] = (r.notes_author as string | null) || "Staff";
+      sums[r.id] = {
+        delivered_profit: Number(r.delivered_profit ?? 0),
+        pending_payout: Number(r.pending_payout ?? 0),
+        paid_out: Number(r.paid_out ?? 0),
+        available: Number(r.available ?? 0),
+        deposit_balance: Number(r.deposit_balance ?? 0),
+        frozen_amount: Number(r.frozen_amount ?? 0),
+      };
+      counts[r.id] = Number(r.orders ?? 0);
     }
-
-    // Who wrote each internal note (staff profiles).
-    const authorIds = Array.from(new Set(rows.map((r) => r.notes_by).filter(Boolean))) as string[];
-    if (authorIds.length) {
-      const authorRows = await fetchAllIn<any>(
-        (part) => supabase.from("profiles").select("id,full_name").in("id", part),
-        authorIds,
-      );
-      setNoteAuthors(
-        Object.fromEntries(
-          authorRows.map((p: any) => [p.id, (p.full_name as string | null) || "Staff"]),
-        ),
-      );
-    } else {
-      setNoteAuthors({});
-    }
-
-    const metrics = metricRows as Array<{
-      reseller_id: string;
-      orders: number;
-      delivered_profit: number;
-      pending_payout: number;
-      paid_out: number;
-      available: number;
-      deposit_balance: number;
-      frozen_amount: number;
-    }>;
-    setSummaries(
-      Object.fromEntries(
-        metrics.map((m) => [
-          m.reseller_id,
-          {
-            delivered_profit: Number(m.delivered_profit ?? 0),
-            pending_payout: Number(m.pending_payout ?? 0),
-            paid_out: Number(m.paid_out ?? 0),
-            available: Number(m.available ?? 0),
-            deposit_balance: Number(m.deposit_balance ?? 0),
-            frozen_amount: Number(m.frozen_amount ?? 0),
-          } as Summary,
-        ]),
-      ),
-    );
-    setOrderCounts(Object.fromEntries(metrics.map((m) => [m.reseller_id, Number(m.orders ?? 0)])));
+    setProfileVerify(verify);
+    setEmailStatus(emails);
+    setNoteAuthors(authors);
+    setSummaries(sums);
+    setOrderCounts(counts);
     setLoading(false);
   }
 
@@ -608,22 +573,12 @@ function ResellersPage() {
 
 
 
-  async function loadEmailStatus() {
-    try {
-      const list = await listEmailStatusFn();
-      const map: Record<string, { email: string | null; verified: boolean }> = {};
-      for (const u of list) map[u.user_id] = { email: u.email, verified: u.email_confirmed };
-      setEmailStatus(map);
-    } catch {
-      // non-critical
-    }
-  }
-
   useEffect(() => {
+    // Wait until the permission scope / signed-in user is known so the heavy
+    // list is fetched exactly once instead of twice.
+    if (authLoading) return;
     load();
-    loadEmailStatus();
-    // reload once the permission scope / signed-in user is known
-  }, [scopeOwn, user?.id]);
+  }, [authLoading, scopeOwn, user?.id]);
 
   useEffect(() => {
     const s = searchParams.status;
@@ -844,7 +799,10 @@ function ResellersPage() {
       const res = await confirmEmailFn({ data: { userId: r.user_id } });
       if (res.alreadyConfirmed) toast.info("Email already confirmed");
       else toast.success(`Email confirmed for ${res.email ?? r.business_name}`);
-      loadEmailStatus();
+      setEmailStatus((prev) => ({
+        ...prev,
+        [r.user_id]: { email: res.email ?? prev[r.user_id]?.email ?? null, verified: true },
+      }));
     } catch (e: any) {
       toast.error(e?.message ?? "Failed to confirm email");
     }
@@ -998,7 +956,6 @@ function ResellersPage() {
     if (done) toast.success(`${done} reseller${done > 1 ? "s" : ""} updated`);
     if (failed) toast.error(`${failed} failed`);
     await load();
-    await loadEmailStatus();
   }
 
   function copyStoreLink(r: Reseller) {
