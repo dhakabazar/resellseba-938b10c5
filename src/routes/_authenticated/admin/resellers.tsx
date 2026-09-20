@@ -1,7 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchAllSafe, fetchAllIn } from "@/lib/fetch-all";
 import { ResellerAvatar } from "@/components/reseller-avatar";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
 import { DataToolbar, Pagination, usePaginated } from "@/components/data-list";
@@ -47,7 +46,7 @@ import {
 import { toast } from "sonner";
 import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
 import { useServerFn } from "@tanstack/react-start";
-import { confirmUserEmail, listResellerEmailStatus, deleteAuthUser } from "@/lib/admin-users.functions";
+import { confirmUserEmail, deleteAuthUser } from "@/lib/admin-users.functions";
 import { impersonateReseller, resetResellerPassword } from "@/lib/reseller-access.functions";
 import { startImpersonation } from "@/lib/impersonation";
 import {
@@ -427,7 +426,6 @@ function ResellersPage() {
   const canViewAll = !ownOnly && (isSuperAdmin || can("resellers.view_all") || can("resellers.view") || can("resellers.manage"));
   const scopeOwn = ownOnly;
   const confirmEmailFn = useServerFn(confirmUserEmail);
-  const listEmailStatusFn = useServerFn(listResellerEmailStatus);
   const deleteAuthUserFn = useServerFn(deleteAuthUser);
   const resetPasswordFn = useServerFn(resetResellerPassword);
   const impersonateFn = useServerFn(impersonateReseller);
