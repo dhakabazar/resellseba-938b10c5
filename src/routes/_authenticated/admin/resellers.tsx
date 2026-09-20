@@ -575,20 +575,8 @@ function ResellersPage() {
 
 
 
-  async function loadEmailStatus() {
-    try {
-      const list = await listEmailStatusFn();
-      const map: Record<string, { email: string | null; verified: boolean }> = {};
-      for (const u of list) map[u.user_id] = { email: u.email, verified: u.email_confirmed };
-      setEmailStatus(map);
-    } catch {
-      // non-critical
-    }
-  }
-
   useEffect(() => {
     load();
-    loadEmailStatus();
     // reload once the permission scope / signed-in user is known
   }, [scopeOwn, user?.id]);
 
