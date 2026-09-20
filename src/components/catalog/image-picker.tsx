@@ -41,11 +41,13 @@ export function ImagePickerButton({
   baseName,
   className,
   compact,
+  labelClassName = "",
 }: {
   images: string[];
   baseName: string;
   className?: string;
   compact?: boolean;
+  labelClassName?: string;
 }) {
   const [open, setOpen] = useState(false);
   const list = images.filter(Boolean);
@@ -66,7 +68,7 @@ export function ImagePickerButton({
           "inline-flex items-center justify-center gap-1 rounded-lg border bg-card/90 px-1 py-1 text-[10px] font-semibold shadow-sm backdrop-blur hover:border-primary/50 hover:text-primary sm:px-2 sm:py-1.5 sm:text-[11px]"
         }
       >
-        <Download className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> {compact ? null : "Image"}
+        <Download className="h-3.5 w-3.5 shrink-0" /> {compact ? null : <span className={labelClassName}>Image</span>}
       </button>
       {open && <ImagePickerModal images={list} baseName={baseName} onClose={() => setOpen(false)} />}
     </>

@@ -365,14 +365,20 @@ function ProductCard({ p, i }: { p: Prod; i: number }) {
           </div>
         </div>
         <div className="mt-1.5 flex items-stretch gap-0.5 border-t border-dashed pt-1.5 sm:mt-3 sm:gap-1.5 sm:pt-3">
-          <CopyBtn text={p.name} title="Title" label="Title copied" className="min-w-0 flex-1 justify-center" />
+          <CopyBtn text={p.name} title="Title" label="Title copied" className="min-w-0 flex-1" labelClassName="hidden sm:inline" />
           <CopyBtn
             text={`${p.name}\n\nPrice: ${bdt(p.price)}`}
             title="Details"
             label="Details copied"
-            className="min-w-0 flex-1 justify-center"
+            className="min-w-0 flex-1"
+            labelClassName="hidden sm:inline"
           />
-          <ImagePickerButton images={p.images ?? (p.image ? [p.image] : [])} baseName={p.name} className="min-w-0 flex-1 justify-center" />
+          <ImagePickerButton
+            images={p.images ?? (p.image ? [p.image] : [])}
+            baseName={p.name}
+            className="min-w-0 flex-1"
+            labelClassName="hidden sm:inline"
+          />
         </div>
       </div>
     </article>
