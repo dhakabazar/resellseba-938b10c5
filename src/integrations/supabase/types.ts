@@ -3088,6 +3088,7 @@ export type Database = {
           reseller_id: string
         }[]
       }
+      admin_resellers_bootstrap: { Args: never; Returns: Json }
       admin_set_phone_verified: {
         Args: { _user_id: string; _verified?: boolean }
         Returns: string
