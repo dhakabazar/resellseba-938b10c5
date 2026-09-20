@@ -78,7 +78,17 @@ export function copyText(text: string, label = "Copied") {
   );
 }
 
-export function CopyBtn({ text, label, title }: { text: string; label?: string; title: string }) {
+export function CopyBtn({
+  text,
+  label,
+  title,
+  className = "",
+}: {
+  text: string;
+  label?: string;
+  title: string;
+  className?: string;
+}) {
   return (
     <button
       type="button"
@@ -88,9 +98,9 @@ export function CopyBtn({ text, label, title }: { text: string; label?: string; 
         e.stopPropagation();
         copyText(text, label ?? "Copied");
       }}
-      className="inline-flex items-center gap-1 rounded-lg border bg-card/90 px-2 py-1.5 text-[11px] font-semibold shadow-sm backdrop-blur hover:border-primary/50 hover:text-primary"
+      className={`inline-flex items-center gap-1 rounded-lg border bg-card/90 px-1 py-1 text-[10px] font-semibold shadow-sm backdrop-blur hover:border-primary/50 hover:text-primary sm:px-2 sm:py-1.5 sm:text-[11px] ${className}`}
     >
-      <Copy className="h-3.5 w-3.5" /> {title}
+      <Copy className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> {title}
     </button>
   );
 }
