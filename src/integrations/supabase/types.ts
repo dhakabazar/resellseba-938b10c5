@@ -3136,6 +3136,17 @@ export type Database = {
         Args: { _permissions: string[] }
         Returns: undefined
       }
+      backup_auth_users: {
+        Args: { _limit?: number; _offset?: number }
+        Returns: Json
+      }
+      backup_guard: { Args: never; Returns: undefined }
+      backup_manifest: { Args: never; Returns: Json }
+      backup_rows: {
+        Args: { _limit?: number; _offset?: number; _table: string }
+        Returns: Json
+      }
+      backup_table_order: { Args: never; Returns: string[] }
       calculate_delivery_charge: {
         Args: { _area: string; _product_id: string }
         Returns: number
@@ -3464,6 +3475,10 @@ export type Database = {
         }
         Returns: number
       }
+      restore_auth_users: { Args: { _rows: Json }; Returns: number }
+      restore_rows: { Args: { _rows: Json; _table: string }; Returns: number }
+      restore_set_triggers: { Args: { _enabled: boolean }; Returns: undefined }
+      restore_wipe: { Args: { _tables: string[] }; Returns: undefined }
       seed_reseller_store: { Args: { _reseller_id: string }; Returns: number }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
