@@ -19,6 +19,7 @@ import {
   Shield,
   ShieldCheck,
   Eraser,
+  DatabaseBackup,
   Globe,
 
   Bell,
@@ -94,6 +95,7 @@ const ROUTE_PERMISSIONS: Record<string, string[]> = {
   "/admin/payments": ["payments.manage"],
   "/admin/staff": ["staff.manage"],
   "/admin/maintenance": ["maintenance.manage", "settings.manage"],
+  "/admin/backup": ["backup.manage", "settings.manage"],
   "/admin/advanced": ["settings.advanced", "settings.manage"],
   "/admin/domains": ["domains.manage", "settings.manage"],
   "/admin/deposits": ["deposits.manage", "deposits.view", "settings.manage", "resellers.manage", "finance.view"],
@@ -173,6 +175,7 @@ const NAV: NavEntry[] = [
       { label: "Staff & Permissions", to: "/admin/staff", icon: <Users className="h-4 w-4" /> },
       { label: "Custom domains", to: "/admin/domains", icon: <Globe className="h-4 w-4" /> },
       { label: "Cache & cleanup", to: "/admin/maintenance", icon: <Eraser className="h-4 w-4" /> },
+      { label: "Backup & restore", to: "/admin/backup", icon: <DatabaseBackup className="h-4 w-4" /> },
       { label: "Advanced settings", to: "/admin/advanced", icon: <Sliders className="h-4 w-4" /> },
 
       { label: "Privacy policy", to: "/admin/privacy", icon: <Shield className="h-4 w-4" /> },
