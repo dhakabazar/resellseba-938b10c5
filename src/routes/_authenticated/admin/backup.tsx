@@ -252,7 +252,7 @@ function BackupPage() {
       const entries: Record<string, Uint8Array> = {
         "_buckets.json": strToU8(JSON.stringify(list.buckets.map((b) => ({ id: b.id, public: b.public })))),
       };
-      await pool(tasks, 5, async (t) => {
+      await pool(tasks, 12, async (t) => {
         const res = await readImage({ data: { bucket: t.bucket, path: t.path } });
         entries[`${t.bucket}/${t.path}`] = fromBase64(res.base64);
         setProgress({ label: "Downloading images", done: ++done, total });
@@ -285,7 +285,7 @@ function BackupPage() {
       const total = names.length || 1;
       let done = 0;
       setProgress({ label: "Uploading images", done, total });
-      await pool(names, 5, async (key) => {
+      await pool(names, 12, async (key) => {
         const slash = key.indexOf("/");
         const bucket = key.slice(0, slash);
         const path = key.slice(slash + 1);
