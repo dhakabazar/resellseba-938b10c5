@@ -102,18 +102,23 @@ export const imageManifest = createServerFn({ method: "GET" })
   .handler(async ({ context }): Promise<ImageManifest> => {
     await assertAnyPermission(context.supabase, context.userId, PERMS);
     const db = context.supabase as any;
-    const [buckets, objects] = await Promise.all([
-      db.rpc("backup_storage_buckets"),
-      db.rpc("backup_storage_objects"),
-    ]);
+    const buckets = await db.rpc("backup_storage_buckets");
     if (buckets.error) throw new Response(buckets.error.message, { status: 400 });
-    if (objects.error) throw new Response(objects.error.message, { status: 400 });
 
     const map = new Map<string, { id: string; public: boolean; files: { path: string; size: number }[] }>();
     for (const b of buckets.data ?? []) map.set(b.id, { id: b.id, public: !!b.is_public, files: [] });
-    for (const o of objects.data ?? []) {
-      if (!map.has(o.bucket_id)) map.set(o.bucket_id, { id: o.bucket_id, public: !!o.is_public, files: [] });
-      map.get(o.bucket_id)!.files.push({ path: o.name, size: Number(o.size ?? 0) });
+
+    // The data API returns at most 1000 rows per request, so page through every file.
+    const PAGE_SIZE = 1000;
+    for (let from = 0; ; from += PAGE_SIZE) {
+      const { data, error } = await db.rpc("backup_storage_objects").range(from, from + PAGE_SIZE - 1);
+      if (error) throw new Response(error.message, { status: 400 });
+      const rows = data ?? [];
+      for (const o of rows) {
+        if (!map.has(o.bucket_id)) map.set(o.bucket_id, { id: o.bucket_id, public: !!o.is_public, files: [] });
+        map.get(o.bucket_id)!.files.push({ path: o.name, size: Number(o.size ?? 0) });
+      }
+      if (rows.length < PAGE_SIZE) break;
     }
     return { buckets: Array.from(map.values()) };
   });
