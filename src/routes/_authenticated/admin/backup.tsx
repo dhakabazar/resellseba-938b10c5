@@ -112,16 +112,31 @@ function BackupPage() {
   const dbInput = useRef<HTMLInputElement>(null);
   const imgInput = useRef<HTMLInputElement>(null);
 
+  const [imgLoading, setImgLoading] = useState(false);
+
   async function load() {
     setLoading(true);
     try {
-      const [m, i] = await Promise.all([getManifest({}), getImages({})]);
-      setManifest(m);
-      setImages(i);
+      setManifest(await getManifest({}));
     } catch (e: any) {
       toast.error(e?.message ?? "Could not read backup info");
     }
     setLoading(false);
+  }
+
+  /** Scanning image folders can take a while, so it runs on its own. */
+  async function scanImages(): Promise<ImageManifest | null> {
+    setImgLoading(true);
+    try {
+      const i = await getImages({});
+      setImages(i);
+      return i;
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not read image folders");
+      return null;
+    } finally {
+      setImgLoading(false);
+    }
   }
 
   useEffect(() => {
@@ -223,11 +238,13 @@ function BackupPage() {
 
   /* ---------------------------- image backup ----------------------------- */
   async function downloadImages() {
-    if (!images) return;
     setBusy("img-backup");
     try {
+      setProgress({ label: "Scanning image folders", done: 0, total: 1 });
+      const list = images ?? (await scanImages());
+      if (!list) throw new Error("Could not read image folders");
       const tasks: { bucket: string; path: string }[] = [];
-      for (const b of images.buckets) for (const f of b.files) tasks.push({ bucket: b.id, path: f.path });
+      for (const b of list.buckets) for (const f of b.files) tasks.push({ bucket: b.id, path: f.path });
       const total = tasks.length || 1;
       let done = 0;
       setProgress({ label: "Downloading images", done, total });
