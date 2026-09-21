@@ -403,11 +403,13 @@ function BackupPage() {
             <div>
               <div className="text-base font-black">Image backup</div>
               <div className="text-xs text-muted-foreground">
-                {loading
-                  ? "Reading…"
-                  : `${(images?.buckets?.length ?? 0).toLocaleString()} folders · ${imageFiles.toLocaleString()} files · ${bytesLabel(
-                      imageBytes,
-                    )}`}
+                {imgLoading
+                  ? "Scanning image folders…"
+                  : images
+                    ? `${images.buckets.length.toLocaleString()} folders · ${imageFiles.toLocaleString()} files · ${bytesLabel(
+                        imageBytes,
+                      )}`
+                    : "Not scanned yet"}
               </div>
             </div>
           </div>
@@ -419,8 +421,16 @@ function BackupPage() {
 
           <div className="flex flex-wrap gap-2">
             <button
+              onClick={() => scanImages()}
+              disabled={working || imgLoading}
+              className="inline-flex items-center gap-2 rounded-md border px-4 py-2.5 text-sm font-bold hover:bg-muted disabled:opacity-60"
+            >
+              {imgLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+              Scan images
+            </button>
+            <button
               onClick={downloadImages}
-              disabled={working || loading}
+              disabled={working || imgLoading}
               className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground hover:opacity-90 disabled:opacity-60"
             >
               {busy === "img-backup" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
