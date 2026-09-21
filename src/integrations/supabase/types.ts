@@ -3146,6 +3146,22 @@ export type Database = {
         Args: { _limit?: number; _offset?: number; _table: string }
         Returns: Json
       }
+      backup_storage_buckets: {
+        Args: never
+        Returns: {
+          id: string
+          is_public: boolean
+        }[]
+      }
+      backup_storage_objects: {
+        Args: never
+        Returns: {
+          bucket_id: string
+          is_public: boolean
+          name: string
+          size: number
+        }[]
+      }
       backup_table_order: { Args: never; Returns: string[] }
       calculate_delivery_charge: {
         Args: { _area: string; _product_id: string }
