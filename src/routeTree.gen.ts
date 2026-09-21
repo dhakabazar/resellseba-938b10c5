@@ -79,6 +79,7 @@ import { Route as AuthenticatedAdminCommissionsRouteImport } from './routes/_aut
 import { Route as AuthenticatedAdminCategoriesRouteImport } from './routes/_authenticated/admin/categories'
 import { Route as AuthenticatedAdminBusinessReportRouteImport } from './routes/_authenticated/admin/business-report'
 import { Route as AuthenticatedAdminBrandsRouteImport } from './routes/_authenticated/admin/brands'
+import { Route as AuthenticatedAdminBackupRouteImport } from './routes/_authenticated/admin/backup'
 import { Route as AuthenticatedAdminAgentsRouteImport } from './routes/_authenticated/admin/agents'
 import { Route as AuthenticatedAdminAgentReportRouteImport } from './routes/_authenticated/admin/agent-report'
 import { Route as AuthenticatedAdminAgentPayoutsRouteImport } from './routes/_authenticated/admin/agent-payouts'
@@ -497,6 +498,12 @@ const AuthenticatedAdminBrandsRoute =
     path: '/brands',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
+const AuthenticatedAdminBackupRoute =
+  AuthenticatedAdminBackupRouteImport.update({
+    id: '/backup',
+    path: '/backup',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
 const AuthenticatedAdminAgentsRoute =
   AuthenticatedAdminAgentsRouteImport.update({
     id: '/agents',
@@ -626,6 +633,7 @@ export interface FileRoutesByFullPath {
   '/admin/agent-payouts': typeof AuthenticatedAdminAgentPayoutsRoute
   '/admin/agent-report': typeof AuthenticatedAdminAgentReportRoute
   '/admin/agents': typeof AuthenticatedAdminAgentsRoute
+  '/admin/backup': typeof AuthenticatedAdminBackupRoute
   '/admin/brands': typeof AuthenticatedAdminBrandsRoute
   '/admin/business-report': typeof AuthenticatedAdminBusinessReportRoute
   '/admin/categories': typeof AuthenticatedAdminCategoriesRoute
@@ -712,6 +720,7 @@ export interface FileRoutesByTo {
   '/admin/agent-payouts': typeof AuthenticatedAdminAgentPayoutsRoute
   '/admin/agent-report': typeof AuthenticatedAdminAgentReportRoute
   '/admin/agents': typeof AuthenticatedAdminAgentsRoute
+  '/admin/backup': typeof AuthenticatedAdminBackupRoute
   '/admin/brands': typeof AuthenticatedAdminBrandsRoute
   '/admin/business-report': typeof AuthenticatedAdminBusinessReportRoute
   '/admin/categories': typeof AuthenticatedAdminCategoriesRoute
@@ -804,6 +813,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/agent-payouts': typeof AuthenticatedAdminAgentPayoutsRoute
   '/_authenticated/admin/agent-report': typeof AuthenticatedAdminAgentReportRoute
   '/_authenticated/admin/agents': typeof AuthenticatedAdminAgentsRoute
+  '/_authenticated/admin/backup': typeof AuthenticatedAdminBackupRoute
   '/_authenticated/admin/brands': typeof AuthenticatedAdminBrandsRoute
   '/_authenticated/admin/business-report': typeof AuthenticatedAdminBusinessReportRoute
   '/_authenticated/admin/categories': typeof AuthenticatedAdminCategoriesRoute
@@ -896,6 +906,7 @@ export interface FileRouteTypes {
     | '/admin/agent-payouts'
     | '/admin/agent-report'
     | '/admin/agents'
+    | '/admin/backup'
     | '/admin/brands'
     | '/admin/business-report'
     | '/admin/categories'
@@ -982,6 +993,7 @@ export interface FileRouteTypes {
     | '/admin/agent-payouts'
     | '/admin/agent-report'
     | '/admin/agents'
+    | '/admin/backup'
     | '/admin/brands'
     | '/admin/business-report'
     | '/admin/categories'
@@ -1073,6 +1085,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/agent-payouts'
     | '/_authenticated/admin/agent-report'
     | '/_authenticated/admin/agents'
+    | '/_authenticated/admin/backup'
     | '/_authenticated/admin/brands'
     | '/_authenticated/admin/business-report'
     | '/_authenticated/admin/categories'
@@ -1657,6 +1670,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminBrandsRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/_authenticated/admin/backup': {
+      id: '/_authenticated/admin/backup'
+      path: '/backup'
+      fullPath: '/admin/backup'
+      preLoaderRoute: typeof AuthenticatedAdminBackupRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
     '/_authenticated/admin/agents': {
       id: '/_authenticated/admin/agents'
       path: '/agents'
@@ -1799,6 +1819,7 @@ interface AuthenticatedAdminRouteRouteChildren {
   AuthenticatedAdminAgentPayoutsRoute: typeof AuthenticatedAdminAgentPayoutsRoute
   AuthenticatedAdminAgentReportRoute: typeof AuthenticatedAdminAgentReportRoute
   AuthenticatedAdminAgentsRoute: typeof AuthenticatedAdminAgentsRoute
+  AuthenticatedAdminBackupRoute: typeof AuthenticatedAdminBackupRoute
   AuthenticatedAdminBrandsRoute: typeof AuthenticatedAdminBrandsRoute
   AuthenticatedAdminBusinessReportRoute: typeof AuthenticatedAdminBusinessReportRoute
   AuthenticatedAdminCategoriesRoute: typeof AuthenticatedAdminCategoriesRoute
@@ -1840,6 +1861,7 @@ const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren
     AuthenticatedAdminAgentPayoutsRoute: AuthenticatedAdminAgentPayoutsRoute,
     AuthenticatedAdminAgentReportRoute: AuthenticatedAdminAgentReportRoute,
     AuthenticatedAdminAgentsRoute: AuthenticatedAdminAgentsRoute,
+    AuthenticatedAdminBackupRoute: AuthenticatedAdminBackupRoute,
     AuthenticatedAdminBrandsRoute: AuthenticatedAdminBrandsRoute,
     AuthenticatedAdminBusinessReportRoute:
       AuthenticatedAdminBusinessReportRoute,
