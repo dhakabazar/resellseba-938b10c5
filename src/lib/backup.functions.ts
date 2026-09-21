@@ -101,8 +101,21 @@ export const imageManifest = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<ImageManifest> => {
     await assertAnyPermission(context.supabase, context.userId, PERMS);
-    const { listAllFiles } = await import("@/lib/backup-storage.server");
-    return await listAllFiles();
+    const db = context.supabase as any;
+    const [buckets, objects] = await Promise.all([
+      db.rpc("backup_storage_buckets"),
+      db.rpc("backup_storage_objects"),
+    ]);
+    if (buckets.error) throw new Response(buckets.error.message, { status: 400 });
+    if (objects.error) throw new Response(objects.error.message, { status: 400 });
+
+    const map = new Map<string, { id: string; public: boolean; files: { path: string; size: number }[] }>();
+    for (const b of buckets.data ?? []) map.set(b.id, { id: b.id, public: !!b.is_public, files: [] });
+    for (const o of objects.data ?? []) {
+      if (!map.has(o.bucket_id)) map.set(o.bucket_id, { id: o.bucket_id, public: !!o.is_public, files: [] });
+      map.get(o.bucket_id)!.files.push({ path: o.name, size: Number(o.size ?? 0) });
+    }
+    return { buckets: Array.from(map.values()) };
   });
 
 export const imageRead = createServerFn({ method: "POST" })
