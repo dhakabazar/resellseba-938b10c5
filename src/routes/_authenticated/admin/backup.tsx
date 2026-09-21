@@ -250,7 +250,7 @@ function BackupPage() {
       setProgress({ label: "Downloading images", done, total });
 
       const entries: Record<string, Uint8Array> = {
-        "_buckets.json": strToU8(JSON.stringify(images.buckets.map((b) => ({ id: b.id, public: b.public })))),
+        "_buckets.json": strToU8(JSON.stringify(list.buckets.map((b) => ({ id: b.id, public: b.public })))),
       };
       await pool(tasks, 5, async (t) => {
         const res = await readImage({ data: { bucket: t.bucket, path: t.path } });
