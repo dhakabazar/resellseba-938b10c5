@@ -1,0 +1,135 @@
+import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertAnyPermission } from "@/lib/admin-users.server";
+
+const PERMS = ["backup.manage", "settings.manage"];
+
+export type BackupManifest = {
+  version: number;
+  generated_at: string;
+  users: number;
+  tables: { name: string; rows: number }[];
+};
+
+export type ImageManifest = {
+  buckets: { id: string; public: boolean; files: { path: string; size: number }[] }[];
+};
+
+/** Every table with its row count — read live from the database, so new tables are included automatically. */
+export const backupManifest = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<BackupManifest> => {
+    await assertAnyPermission(context.supabase, context.userId, PERMS);
+    const { data, error } = await (context.supabase as any).rpc("backup_manifest");
+    if (error) throw new Response(error.message, { status: 400 });
+    return data as BackupManifest;
+  });
+
+export const backupRows = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { table: string; offset: number; limit: number }) => d)
+  .handler(async ({ data, context }): Promise<any[]> => {
+    await assertAnyPermission(context.supabase, context.userId, PERMS);
+    const { data: rows, error } = await (context.supabase as any).rpc("backup_rows", {
+      _table: data.table,
+      _offset: data.offset,
+      _limit: data.limit,
+    });
+    if (error) throw new Response(error.message, { status: 400 });
+    return (rows ?? []) as any[];
+  });
+
+export const backupUsers = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { offset: number; limit: number }) => d)
+  .handler(async ({ data, context }): Promise<any[]> => {
+    await assertAnyPermission(context.supabase, context.userId, PERMS);
+    const { data: rows, error } = await (context.supabase as any).rpc("backup_auth_users", {
+      _offset: data.offset,
+      _limit: data.limit,
+    });
+    if (error) throw new Response(error.message, { status: 400 });
+    return (rows ?? []) as any[];
+  });
+
+export const restoreTriggers = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { enabled: boolean }) => d)
+  .handler(async ({ data, context }) => {
+    await assertAnyPermission(context.supabase, context.userId, PERMS);
+    const { error } = await (context.supabase as any).rpc("restore_set_triggers", { _enabled: data.enabled });
+    if (error) throw new Response(error.message, { status: 400 });
+    return { ok: true };
+  });
+
+export const restoreWipe = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { tables: string[] | null }) => d)
+  .handler(async ({ data, context }) => {
+    await assertAnyPermission(context.supabase, context.userId, PERMS);
+    const { error } = await (context.supabase as any).rpc("restore_wipe", { _tables: data.tables });
+    if (error) throw new Response(error.message, { status: 400 });
+    return { ok: true };
+  });
+
+export const restoreRows = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { table: string; rows: any[] }) => d)
+  .handler(async ({ data, context }): Promise<{ written: number }> => {
+    await assertAnyPermission(context.supabase, context.userId, PERMS);
+    const { data: n, error } = await (context.supabase as any).rpc("restore_rows", {
+      _table: data.table,
+      _rows: data.rows,
+    });
+    if (error) throw new Response(error.message, { status: 400 });
+    return { written: Number(n ?? 0) };
+  });
+
+export const restoreUsers = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { rows: any[] }) => d)
+  .handler(async ({ data, context }): Promise<{ written: number }> => {
+    await assertAnyPermission(context.supabase, context.userId, PERMS);
+    const { data: n, error } = await (context.supabase as any).rpc("restore_auth_users", { _rows: data.rows });
+    if (error) throw new Response(error.message, { status: 400 });
+    return { written: Number(n ?? 0) };
+  });
+
+/* ------------------------------- images ---------------------------------- */
+
+export const imageManifest = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<ImageManifest> => {
+    await assertAnyPermission(context.supabase, context.userId, PERMS);
+    const { listAllFiles } = await import("@/lib/backup-storage.server");
+    return await listAllFiles();
+  });
+
+export const imageRead = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { bucket: string; path: string }) => d)
+  .handler(async ({ data, context }): Promise<{ base64: string; contentType: string }> => {
+    await assertAnyPermission(context.supabase, context.userId, PERMS);
+    const { readFile } = await import("@/lib/backup-storage.server");
+    return await readFile(data.bucket, data.path);
+  });
+
+export const imageEnsureBuckets = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { buckets: { id: string; public: boolean }[] }) => d)
+  .handler(async ({ data, context }) => {
+    await assertAnyPermission(context.supabase, context.userId, PERMS);
+    const { ensureBuckets } = await import("@/lib/backup-storage.server");
+    await ensureBuckets(data.buckets);
+    return { ok: true };
+  });
+
+export const imageWrite = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { bucket: string; path: string; base64: string; contentType?: string }) => d)
+  .handler(async ({ data, context }) => {
+    await assertAnyPermission(context.supabase, context.userId, PERMS);
+    const { writeFile } = await import("@/lib/backup-storage.server");
+    await writeFile(data.bucket, data.path, data.base64, data.contentType);
+    return { ok: true };
+  });
