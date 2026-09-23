@@ -41,7 +41,7 @@ export function PoripatiChrome({ children }: { children: ReactNode }) {
     {settings?.announcement && <div className="bg-[var(--st-fg)] px-4 py-2 text-center text-[11px] font-semibold text-[var(--st-surface)]">{settings.announcement}</div>}
     <header className="sticky top-0 z-40 border-b border-[var(--st-border)] bg-[var(--st-surface)]/95 backdrop-blur">
       <div className="mx-auto max-w-7xl px-4">
-        <div className="hidden h-8 items-center justify-between border-b border-[var(--st-border)] text-[11px] text-[var(--st-muted)] md:flex"><span>Curated products. Clear choices.</span>{phone && <a href={`tel:${phone}`}>Call {phone}</a>}</div>
+        <div className="hidden h-8 items-center justify-end border-b border-[var(--st-border)] text-[11px] text-[var(--st-muted)] md:flex">{phone && <a href={`tel:${phone}`} className="transition-colors hover:text-[var(--st-primary)]">Call {phone}</a>}</div>
         <div className="grid h-16 grid-cols-[auto_1fr_auto] items-center gap-5 md:h-20 md:grid-cols-[1fr_auto_1fr]">
           <button aria-label="Open menu" onClick={() => setOpen(true)} className="md:hidden"><Menu className="h-5 w-5" /></button>
           <div className="hidden max-w-xs md:block"><SearchForm /></div><div className="justify-self-center"><Brand /></div>
