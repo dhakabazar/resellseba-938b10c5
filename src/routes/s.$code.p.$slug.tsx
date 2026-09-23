@@ -267,17 +267,6 @@ function ProductPage() {
             <p className={cx("mt-3 text-xs leading-relaxed", muted)}>{store.content.text("pdp_returns")}</p>
           )}
 
-          <Link
-            to="/login"
-            search={{ mode: "signup" }}
-            className={cx(
-              "mt-6 flex items-center justify-center gap-2 rounded-[var(--st-radius)] border px-4 py-3 text-sm font-medium",
-              "bg-[var(--st-bg-alt)] hover:border-[var(--st-primary)] hover:text-[var(--st-primary)]",
-              borderc,
-            )}
-          >
-            এই প্রোডাক্ট বিক্রি করতে চান?
-          </Link>
         </div>
       </div>
 

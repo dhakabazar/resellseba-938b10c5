@@ -164,17 +164,6 @@ export function SohojProductPage({
             </div>
           )}
 
-          <Link
-            to="/login"
-            search={{ mode: "signup" }}
-            className={cx(
-              "mt-4 flex items-center justify-center gap-2 rounded-[var(--st-radius-sm)] border px-4 py-2.5 text-sm font-medium",
-              borderc,
-              "bg-[var(--st-bg-alt)] hover:border-[var(--st-primary)] hover:text-[var(--st-primary)]",
-            )}
-          >
-            এই প্রোডাক্ট বিক্রি করতে চান?
-          </Link>
         </div>
       </div>
 
