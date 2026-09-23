@@ -679,18 +679,18 @@ export function Reviews() {
       </section>
     );
 
-  /* Noir — single large quote block per row, centered */
+  /* Noir — review grid, centered quote cards */
   if (theme.id === "noir")
     return (
       <section className={cx("border-y bg-[var(--st-bg-alt)]", borderc)}>
-        <div className="mx-auto max-w-4xl px-4 py-20">
+        <div className="mx-auto max-w-6xl px-4 py-20">
           <SectionHead title={title} />
-          <div className={cx("divide-y", borderc)}>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {items.map((i) => (
-              <figure key={i.name + i.text} className="py-10 text-center">
-                <Quote className="mx-auto h-5 w-5 text-[var(--st-primary)]" />
+              <figure key={i.name + i.text} className="flex flex-col items-center border bg-[var(--st-surface)] p-8 text-center">
+                <Quote className="h-5 w-5 text-[var(--st-primary)]" />
                 <blockquote>
-                  <Heading as="h3" className="mt-5 text-xl leading-relaxed md:text-2xl">
+                  <Heading as="h3" className="mt-5 text-base leading-relaxed md:text-lg">
                     “{i.text}”
                   </Heading>
                 </blockquote>
