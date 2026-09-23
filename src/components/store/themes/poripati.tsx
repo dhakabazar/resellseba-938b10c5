@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { ArrowRight, Check, ChevronDown, Menu, Minus, Plus, Search, ShoppingBag, Truck, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { ArrowRight, Check, ChevronDown, ChevronLeft, ChevronRight, Menu, Minus, Plus, Search, ShoppingBag, Truck, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { inCategory, categoryIdsOf } from "@/lib/product-categories";
 import { addToCart, bdt } from "@/lib/store-cart";
