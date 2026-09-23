@@ -885,25 +885,7 @@ export function ThemeSignature({ slot = "mid" }: { slot?: "top" | "mid" }) {
 
   if (slot === "top") return null;
 
-  if (theme.id === "noir") {
-    const eyebrow = content.text("noir_eyebrow");
-    const story = content.text("noir_story");
-    if (!eyebrow && !story) return null;
-    return (
-      <section className={cx("border-y bg-[var(--st-bg-alt)]", borderc)}>
-        <div className="mx-auto max-w-3xl px-4 py-16 text-center">
-          {eyebrow && (
-            <span className="text-[11px] uppercase tracking-[0.4em] text-[var(--st-primary)]">{eyebrow}</span>
-          )}
-          {story && (
-            <Heading as="h2" className="mt-5 text-2xl leading-snug md:text-3xl">
-              {story}
-            </Heading>
-          )}
-        </div>
-      </section>
-    );
-  }
+
 
   /* সহজ শপ — কল করে অর্ডারের বার */
   if (theme.id === "atelier") {

@@ -192,7 +192,7 @@ function baseGroups(): ContentGroup[] {
  * Theme-specific groups. Only the active theme's group is shown in the panel,
  * and every field here is rendered by that theme on the storefront.
  */
-const THEME_GROUP: Record<StoreThemeId, ContentGroup> = {
+const THEME_GROUP: Partial<Record<StoreThemeId, ContentGroup>> = {
   aurora: {
     id: "theme-aurora",
     title: "Aurora highlights",
@@ -201,15 +201,6 @@ const THEME_GROUP: Record<StoreThemeId, ContentGroup> = {
       t("aurora_stat1", "Highlight 1 (next to hero buttons)", "10k+ orders delivered"),
       t("aurora_stat2", "Highlight 2 (next to hero buttons)", "4.8★ average rating"),
       t("aurora_offer", "Offer chip on hero image", "Free delivery over ৳2000"),
-    ],
-  },
-  noir: {
-    id: "theme-noir",
-    title: "Noir brand story",
-    description: "Eyebrow line above the hero headline and the boutique story band.",
-    fields: [
-      t("noir_eyebrow", "Collection eyebrow text", "The signature collection"),
-      area("noir_story", "Brand story paragraph", "Curated pieces, made for people who notice the details."),
     ],
   },
   bazaar: {
