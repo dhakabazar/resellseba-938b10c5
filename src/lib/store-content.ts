@@ -192,7 +192,7 @@ function baseGroups(): ContentGroup[] {
  * Theme-specific groups. Only the active theme's group is shown in the panel,
  * and every field here is rendered by that theme on the storefront.
  */
-const THEME_GROUP: Record<StoreThemeId, ContentGroup> = {
+const THEME_GROUP: Partial<Record<StoreThemeId, ContentGroup>> = {
   aurora: {
     id: "theme-aurora",
     title: "Aurora highlights",
