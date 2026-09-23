@@ -356,14 +356,12 @@
    --------------------------------------------------------------- */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--color-foreground) transparent;
+  scrollbar-color: color-mix(in oklab, var(--color-foreground) 22%, transparent) transparent;
 }
 
 /* Opt-out wins over the global rule (unlayered, so it beats @layer utilities). */
 .no-scrollbar {
   scrollbar-width: none;
-}
-  scrollbar-color: color-mix(in oklab, var(--color-foreground) 22%, transparent) transparent;
 }
 
 ::-webkit-scrollbar {
