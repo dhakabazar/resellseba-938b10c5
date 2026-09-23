@@ -187,11 +187,6 @@ export function Hero() {
               {media && <img src={media} alt={name} className="h-full w-full object-cover" />}
             </div>
           </div>
-          {offer && (
-            <span className="absolute -bottom-3 left-4 rounded-full bg-[var(--st-primary)] px-4 py-2 text-xs font-semibold text-[var(--st-on-primary)] shadow-[var(--st-shadow)]">
-              {offer}
-            </span>
-          )}
         </div>
       </div>
     </section>
