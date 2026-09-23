@@ -200,7 +200,6 @@ const THEME_GROUP: Partial<Record<StoreThemeId, ContentGroup>> = {
     fields: [
       t("aurora_stat1", "Highlight 1 (next to hero buttons)", "10k+ orders delivered"),
       t("aurora_stat2", "Highlight 2 (next to hero buttons)", "4.8★ average rating"),
-      t("aurora_offer", "Offer chip on hero image", "Free delivery over ৳2000"),
     ],
   },
   bazaar: {
