@@ -55,6 +55,34 @@ export function PoripatiChrome({ children }: { children: ReactNode }) {
   </>;
 }
 
+function CategoryCarousel({ kicker, title }: { kicker?: string; title: string }) {
+  const { categories, code } = useStore();
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const t = setInterval(() => {
+      const el = ref.current;
+      if (!el || el.matches(":hover")) return;
+      const max = el.scrollWidth - el.clientWidth;
+      if (max <= 4) return;
+      if (el.scrollLeft >= max - 4) el.scrollTo({ left: 0, behavior: "smooth" });
+      else el.scrollBy({ left: Math.max(260, el.clientWidth * 0.5), behavior: "smooth" });
+    }, 3200);
+    return () => clearInterval(t);
+  }, [categories.length]);
+  const nudge = (dir: number) => { const el = ref.current; if (el) el.scrollBy({ left: dir * Math.max(260, el.clientWidth * 0.5), behavior: "smooth" }); };
+  if (!categories.length) return null;
+  return <section className="mx-auto max-w-7xl px-4 py-14">
+    <SectionTitle kicker={kicker} title={title} />
+    <div className="relative">
+      <button aria-label="আগের ক্যাটাগরি" onClick={() => nudge(-1)} className="absolute -left-3 top-1/2 z-10 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-[var(--st-border)] bg-[var(--st-surface)] text-[var(--st-fg)] shadow-sm transition-colors hover:border-[var(--st-primary)] hover:text-[var(--st-primary)] md:-left-5"><ChevronLeft className="h-5 w-5" /></button>
+      <button aria-label="পরের ক্যাটাগরি" onClick={() => nudge(1)} className="absolute -right-3 top-1/2 z-10 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-[var(--st-border)] bg-[var(--st-surface)] text-[var(--st-fg)] shadow-sm transition-colors hover:border-[var(--st-primary)] hover:text-[var(--st-primary)] md:-right-5"><ChevronRight className="h-5 w-5" /></button>
+      <div ref={ref} className="flex gap-4 overflow-x-auto scroll-smooth pb-2 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+        {categories.map(c => <Link key={c.id} to="/s/$code/c/$slug" params={{ code, slug: c.slug }} className="group w-[45%] shrink-0 sm:w-[220px]"><div className="aspect-[4/3] overflow-hidden bg-[var(--st-bg-alt)]">{c.image_url ? <img src={c.image_url} alt={c.name} className="h-full w-full object-cover transition-transform group-hover:scale-105" /> : <div className="grid h-full place-items-center text-2xl font-bold text-[var(--st-muted)]">{c.name[0]}</div>}</div><div className="mt-2 flex items-center justify-between text-sm font-semibold"><span>{c.name}</span><ArrowRight className="h-3.5 w-3.5" /></div></Link>)}
+      </div>
+    </div>
+  </section>;
+}
+
 function SectionTitle({ kicker, title, action }: { kicker?: string; title: string; action?: ReactNode }) {
   return <div className="mb-7 flex items-end justify-between gap-4"><div>{kicker && <div className="mb-2 text-[10px] font-bold uppercase text-[var(--st-primary)]">{kicker}</div>}<h2 className="text-2xl font-bold md:text-3xl">{title}</h2></div>{action}</div>;
 }
