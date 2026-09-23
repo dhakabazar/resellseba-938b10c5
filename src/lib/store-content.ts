@@ -203,15 +203,6 @@ const THEME_GROUP: Record<StoreThemeId, ContentGroup> = {
       t("aurora_offer", "Offer chip on hero image", "Free delivery over ৳2000"),
     ],
   },
-  noir: {
-    id: "theme-noir",
-    title: "Noir brand story",
-    description: "Eyebrow line above the hero headline and the boutique story band.",
-    fields: [
-      t("noir_eyebrow", "Collection eyebrow text", "The signature collection"),
-      area("noir_story", "Brand story paragraph", "Curated pieces, made for people who notice the details."),
-    ],
-  },
   bazaar: {
     id: "theme-bazaar",
     title: "Bazaar deal strip",
