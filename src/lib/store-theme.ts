@@ -13,13 +13,13 @@
  * Tracking (GA4 / Meta / TikTok) is theme-independent and stays global.
  */
 
-export type StoreThemeId = "aurora" | "noir" | "bazaar" | "atelier";
+export type StoreThemeId = "aurora" | "noir" | "bazaar" | "atelier" | "poripati";
 
 export type StoreThemeLayout = {
   /** header composition */
-  header: "glass" | "bar" | "classic" | "editorial" | "sohoj";
+  header: "glass" | "bar" | "classic" | "editorial" | "sohoj" | "poripati";
   /** home hero composition */
-  hero: "gradient" | "spotlight" | "banner" | "split" | "sohoj";
+  hero: "gradient" | "spotlight" | "banner" | "split" | "sohoj" | "poripati";
   /** product card composition */
   card: "soft" | "frame" | "compact" | "bare";
   /** category strip composition */
@@ -338,6 +338,46 @@ export const STORE_THEMES: StoreTheme[] = [
         border: "rgba(31,22,24,0.12)",
         primary: "#e02440",
         accent: "#7a1020",
+      }),
+    ],
+  },
+  {
+    id: "poripati",
+    name: "পরিপাটি",
+    description: "Clean editorial shop — image-led banner, horizontal categories, refined product grid and focused checkout.",
+    vars: {
+      "--st-radius": "2px",
+      "--st-radius-sm": "2px",
+      "--st-font-head": SYS_SANS,
+      "--st-font-body": SYS_SANS,
+      "--st-head-weight": "750",
+      "--st-track": "0",
+    },
+    layout: {
+      header: "poripati",
+      hero: "poripati",
+      card: "bare",
+      nav: "links",
+      grid: "airy",
+      uppercaseNav: false,
+      trustBar: false,
+    },
+    palettes: [
+      pal("ink-coral", "Ink & Coral", false, {
+        bg: "#f8f8f5", bgAlt: "#eeeeea", surface: "#ffffff", fg: "#18201c", muted: "#68716c",
+        border: "rgba(24,32,28,0.14)", primary: "#d94b36", accent: "#1f6650",
+      }),
+      pal("forest-red", "Forest & Red", false, {
+        bg: "#f4f7f4", bgAlt: "#e8eee9", surface: "#ffffff", fg: "#15231c", muted: "#617067",
+        border: "rgba(21,35,28,0.14)", primary: "#176b4a", accent: "#c74632",
+      }),
+      pal("cobalt-lemon", "Cobalt & Lemon", false, {
+        bg: "#f6f7fa", bgAlt: "#eaedf4", surface: "#ffffff", fg: "#172033", muted: "#657086",
+        border: "rgba(23,32,51,0.14)", primary: "#2357b6", accent: "#9a7600",
+      }),
+      pal("night-coral", "Night & Coral", true, {
+        bg: "#111715", bgAlt: "#19221f", surface: "#202a27", fg: "#f5f6f3", muted: "#a8b4ae",
+        border: "rgba(245,246,243,0.14)", primary: "#f06b55", accent: "#65c39f",
       }),
     ],
   },

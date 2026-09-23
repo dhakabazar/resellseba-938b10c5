@@ -3,6 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useStore } from "@/components/store/store-context";
 import { borderc, cx, EmptyState, GhostButton, muted, ProductGrid, SectionHead } from "@/components/store/ui";
+import { PoripatiListingBoundary, usePoripati } from "@/components/store/theme-loader";
 
 export const Route = createFileRoute("/s/$code/c/$slug")({
   component: CategoryPage,
@@ -24,6 +25,7 @@ function CategoryPage() {
   const { code, slug } = Route.useParams();
   const { categories, listings } = useStore();
   const [sort, setSort] = useState<Sort>("new");
+  const poripati = usePoripati();
 
   const category = categories.find((c) => c.slug === slug);
 
@@ -46,6 +48,8 @@ function CategoryPage() {
         </div>
       </div>
     );
+
+  if (poripati) return <PoripatiListingBoundary title={category.name} listings={listings} categoryId={category.id} />;
 
   return (
     <div>

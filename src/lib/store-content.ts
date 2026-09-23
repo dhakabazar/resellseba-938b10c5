@@ -237,6 +237,16 @@ const THEME_GROUP: Record<StoreThemeId, ContentGroup> = {
       ),
     ],
   },
+  poripati: {
+    id: "theme-poripati",
+    title: "পরিপাটি — editorial details",
+    description: "Banner kicker, collection note and the focused story band.",
+    fields: [
+      t("poripati_kicker", "Banner kicker", "Thoughtfully selected for everyday life"),
+      t("poripati_collection", "Collection label", "The current edit"),
+      area("poripati_story", "Story band", "Useful things, clearly presented — so choosing feels simple."),
+    ],
+  },
 
 };
 
