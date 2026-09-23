@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { ArrowRight, Check, ChevronDown, Menu, Minus, Plus, Search, ShoppingBag, Truck, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { ArrowRight, Check, ChevronDown, ChevronLeft, ChevronRight, Menu, Minus, Plus, Search, ShoppingBag, Truck, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { inCategory, categoryIdsOf } from "@/lib/product-categories";
 import { addToCart, bdt } from "@/lib/store-cart";
@@ -55,6 +55,34 @@ export function PoripatiChrome({ children }: { children: ReactNode }) {
   </>;
 }
 
+function CategoryCarousel({ kicker, title }: { kicker?: string; title: string }) {
+  const { categories, code } = useStore();
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const t = setInterval(() => {
+      const el = ref.current;
+      if (!el || el.matches(":hover")) return;
+      const max = el.scrollWidth - el.clientWidth;
+      if (max <= 4) return;
+      if (el.scrollLeft >= max - 4) el.scrollTo({ left: 0, behavior: "smooth" });
+      else el.scrollBy({ left: Math.max(260, el.clientWidth * 0.5), behavior: "smooth" });
+    }, 3200);
+    return () => clearInterval(t);
+  }, [categories.length]);
+  const nudge = (dir: number) => { const el = ref.current; if (el) el.scrollBy({ left: dir * Math.max(260, el.clientWidth * 0.5), behavior: "smooth" }); };
+  if (!categories.length) return null;
+  return <section className="mx-auto max-w-7xl px-4 py-14">
+    <SectionTitle kicker={kicker} title={title} />
+    <div className="relative">
+      <button aria-label="আগের ক্যাটাগরি" onClick={() => nudge(-1)} className="absolute -left-3 top-1/2 z-10 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-[var(--st-border)] bg-[var(--st-surface)] text-[var(--st-fg)] shadow-sm transition-colors hover:border-[var(--st-primary)] hover:text-[var(--st-primary)] md:-left-5"><ChevronLeft className="h-5 w-5" /></button>
+      <button aria-label="পরের ক্যাটাগরি" onClick={() => nudge(1)} className="absolute -right-3 top-1/2 z-10 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-[var(--st-border)] bg-[var(--st-surface)] text-[var(--st-fg)] shadow-sm transition-colors hover:border-[var(--st-primary)] hover:text-[var(--st-primary)] md:-right-5"><ChevronRight className="h-5 w-5" /></button>
+      <div ref={ref} className="no-scrollbar flex gap-4 overflow-x-auto scroll-smooth pb-2">
+        {categories.map(c => <Link key={c.id} to="/s/$code/c/$slug" params={{ code, slug: c.slug }} className="group w-[45%] shrink-0 sm:w-[220px]"><div className="aspect-[4/3] overflow-hidden bg-[var(--st-bg-alt)]">{c.image_url ? <img src={c.image_url} alt={c.name} className="h-full w-full object-cover transition-transform group-hover:scale-105" /> : <div className="grid h-full place-items-center text-2xl font-bold text-[var(--st-muted)]">{c.name[0]}</div>}</div><div className="mt-2 flex items-center justify-between text-sm font-semibold"><span>{c.name}</span><ArrowRight className="h-3.5 w-3.5" /></div></Link>)}
+      </div>
+    </div>
+  </section>;
+}
+
 function SectionTitle({ kicker, title, action }: { kicker?: string; title: string; action?: ReactNode }) {
   return <div className="mb-7 flex items-end justify-between gap-4"><div>{kicker && <div className="mb-2 text-[10px] font-bold uppercase text-[var(--st-primary)]">{kicker}</div>}<h2 className="text-2xl font-bold md:text-3xl">{title}</h2></div>{action}</div>;
 }
@@ -76,7 +104,7 @@ export function PoripatiHome({ query }: { query?: string }) {
   return <div>
     {content.flag("hero_show") && <section className="relative min-h-[430px] overflow-hidden bg-[var(--st-fg)] md:min-h-[560px]">{media && <img src={media} alt={name} className="absolute inset-0 h-full w-full object-cover opacity-60 md:opacity-75" />}<div className="absolute inset-0 bg-[var(--st-fg)]/45 md:bg-transparent" /><div className="absolute inset-0 bg-gradient-to-r from-[var(--st-fg)]/90 via-[var(--st-fg)]/65 to-[var(--st-fg)]/20 md:from-[var(--st-fg)]/85 md:via-[var(--st-fg)]/25 md:to-transparent" /><div className="relative mx-auto flex min-h-[430px] max-w-7xl items-end px-4 pb-12 pt-20 text-[var(--st-surface)] md:min-h-[560px] md:items-center md:pb-20"><div className="max-w-xl"><div className="text-[11px] font-bold uppercase opacity-80">{content.text("poripati_kicker")}</div><h1 className="mt-4 text-4xl font-bold leading-tight md:text-6xl">{content.text("hero_headline")}</h1><p className="mt-4 max-w-lg text-sm leading-relaxed opacity-85 md:text-base">{content.text("hero_sub")}</p><Link to="/s/$code/shop" params={{ code }} className="mt-7 inline-flex items-center gap-2 bg-[var(--st-primary)] px-6 py-3 text-sm font-bold text-[var(--st-on-primary)]">{content.text("hero_cta")} <ArrowRight className="h-4 w-4" /></Link></div></div></section>}
     {content.flag("usp_show") && <section className="border-b border-[var(--st-border)] bg-[var(--st-surface)]"><div className="mx-auto grid max-w-7xl grid-cols-2 md:grid-cols-4">{features.map((f,i) => <div key={f.t} className="border-r border-[var(--st-border)] px-4 py-5 last:border-r-0"><div className="text-[10px] font-bold text-[var(--st-primary)]">0{i+1}</div><div className="mt-1 text-sm font-semibold">{f.t}</div><div className="text-xs text-[var(--st-muted)]">{f.d}</div></div>)}</div></section>}
-    {content.flag("cat_show") && categories.length > 0 && <section className="mx-auto max-w-7xl px-4 py-14"><SectionTitle kicker={content.text("cat_sub")} title={content.text("cat_title")} /><div className="flex snap-x gap-4 overflow-x-auto pb-2">{categories.map(c => <Link key={c.id} to="/s/$code/c/$slug" params={{ code, slug: c.slug }} className="group min-w-[145px] flex-1 snap-start md:min-w-[180px]"><div className="aspect-[4/3] overflow-hidden bg-[var(--st-bg-alt)]">{c.image_url ? <img src={c.image_url} alt={c.name} className="h-full w-full object-cover transition-transform group-hover:scale-105" /> : <div className="grid h-full place-items-center text-2xl font-bold text-[var(--st-muted)]">{c.name[0]}</div>}</div><div className="mt-2 flex items-center justify-between text-sm font-semibold"><span>{c.name}</span><ArrowRight className="h-3.5 w-3.5" /></div></Link>)}</div></section>}
+    {content.flag("cat_show") && <CategoryCarousel kicker={content.text("cat_sub")} title={content.text("cat_title")} />}
     <section className="border-y border-[var(--st-border)] bg-[var(--st-surface)]"><div className="mx-auto max-w-7xl px-4 py-14"><SectionTitle kicker={content.text("poripati_collection")} title={content.text("latest_title")} action={<Link to="/s/$code/shop" params={{ code }} className="text-xs font-bold text-[var(--st-primary)]">VIEW ALL</Link>} /><PoripatiGrid listings={listings.slice(0, visible)} />{visible < listings.length && <div className="mt-10 text-center"><Button variant="outline" onClick={() => setVisible(v => v + 20)}>Load more</Button></div>}</div></section>
     {content.text("poripati_story") && <section className="mx-auto max-w-5xl px-4 py-20 text-center"><div className="text-[10px] font-bold uppercase text-[var(--st-primary)]">Our point of view</div><p className="mt-5 text-2xl font-semibold leading-relaxed md:text-4xl">{content.text("poripati_story")}</p></section>}
     <PoripatiProof />
