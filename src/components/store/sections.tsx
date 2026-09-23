@@ -145,10 +145,9 @@ export function Hero() {
       </section>
     );
 
-  /* Aurora — gradient hero with product card, stats and offer chip */
+  /* Aurora — gradient hero with product card and stats */
   const stat1 = content.text("aurora_stat1");
   const stat2 = content.text("aurora_stat2");
-  const offer = content.text("aurora_offer");
 
   return (
     <section className="relative overflow-hidden">
