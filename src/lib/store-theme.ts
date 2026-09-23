@@ -87,7 +87,7 @@ const pal = (
 export const STORE_THEMES: StoreTheme[] = [
   {
     id: "aurora",
-    name: "Aurora",
+    name: "অরোরা",
     description: "Modern gradient commerce — soft cards, glass header, bold hero.",
     vars: {
       "--st-radius": "16px",
@@ -151,7 +151,7 @@ export const STORE_THEMES: StoreTheme[] = [
   },
   {
     id: "noir",
-    name: "Noir Luxe",
+    name: "নোয়ার লাক্স",
     description: "Dark premium boutique — serif headlines, metallic accents, spotlight hero.",
     vars: {
       "--st-radius": "4px",

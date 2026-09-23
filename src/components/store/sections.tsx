@@ -329,35 +329,33 @@ export function CategoryStrip() {
       </section>
     );
 
-  /* Noir — full-bleed image tiles with overlay captions */
+  /* Noir — compact, softly squared category tiles */
   if (theme.id === "noir")
     return (
-      <section className="mx-auto max-w-6xl px-4 py-16">
+      <section className="mx-auto max-w-6xl px-4 py-10">
         <SectionHead title={title} subtitle={sub} />
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+        <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8">
           {categories.map((c) => (
             <Link
               key={c.id}
               to="/s/$code/c/$slug"
               params={{ code, slug: c.slug }}
-              className={cx("group relative aspect-[4/3] overflow-hidden border bg-[var(--st-bg-alt)]", borderc)}
-            >
-              {c.image_url && (
-                <img
-                  src={c.image_url}
-                  alt={c.name}
-                  loading="lazy"
-                  className="h-full w-full object-cover opacity-70 transition-all duration-700 group-hover:scale-105 group-hover:opacity-100"
-                />
+              className={cx(
+                "group overflow-hidden rounded-[var(--st-radius)] border bg-[var(--st-surface)] transition-colors hover:border-[var(--st-primary)]",
+                borderc,
               )}
-              <span className="absolute inset-0 flex flex-col items-center justify-end bg-gradient-to-t from-black/90 via-black/40 to-transparent pb-4 text-center">
-                <span>
-                  <span className="block text-[12px] uppercase tracking-[0.26em] text-white">{c.name}</span>
-                  {c.product_count != null && (
-                    <span className="mt-1 block text-[10px] tracking-[0.2em] text-white/70">{c.product_count} items</span>
-                  )}
-                </span>
-              </span>
+            >
+              <div className="aspect-square overflow-hidden bg-[var(--st-bg-alt)]">
+                {c.image_url ? (
+                  <img src={c.image_url} alt={c.name} loading="lazy" className="h-full w-full object-cover opacity-80 transition-all duration-500 group-hover:scale-105 group-hover:opacity-100" />
+                ) : (
+                  <div className="grid h-full place-items-center text-lg text-[var(--st-primary)]">{c.name.charAt(0)}</div>
+                )}
+              </div>
+              <div className="px-1.5 py-2 text-center">
+                <span className="block truncate text-[11px] font-medium text-[var(--st-fg)]">{c.name}</span>
+                {c.product_count != null && <span className={cx("mt-0.5 block text-[9px]", muted)}>{c.product_count} পণ্য</span>}
+              </div>
             </Link>
           ))}
         </div>
@@ -387,19 +385,19 @@ export function CategoryStrip() {
     );
 
 
-  /* Aurora — soft rounded cards */
+  /* Aurora — compact circular category portraits */
   return (
-    <section className="mx-auto max-w-6xl px-4 py-12">
+    <section className="mx-auto max-w-6xl px-4 py-10">
       <SectionHead title={title} subtitle={sub} />
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+      <div className="grid grid-cols-4 gap-x-3 gap-y-5 sm:grid-cols-6 lg:grid-cols-8">
         {categories.map((c) => (
           <Link
             key={c.id}
             to="/s/$code/c/$slug"
             params={{ code, slug: c.slug }}
-            className="group overflow-hidden rounded-[var(--st-radius)] bg-[var(--st-surface)] shadow-[var(--st-shadow)] transition-all hover:-translate-y-1"
+            className="group flex min-w-0 flex-col items-center text-center"
           >
-            <div className="aspect-[4/3] bg-[var(--st-bg-alt)]">
+            <div className="aspect-square w-full overflow-hidden rounded-full border-2 border-[var(--st-surface)] bg-[var(--st-bg-alt)] shadow-[var(--st-shadow)] ring-1 ring-[var(--st-border)] transition-all group-hover:-translate-y-1 group-hover:ring-[var(--st-primary)]">
               {c.image_url ? (
                 <img
                   src={c.image_url}
@@ -408,14 +406,14 @@ export function CategoryStrip() {
                   className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
               ) : (
-                <div className={cx("grid h-full w-full place-items-center text-2xl font-semibold", muted)}>
+                <div className={cx("grid h-full w-full place-items-center text-xl font-semibold", muted)}>
                   {c.name.charAt(0)}
                 </div>
               )}
             </div>
-            <div className="flex items-center justify-between gap-2 px-3 py-3 text-sm font-medium">
-              <span className="truncate">{c.name}</span>
-              {c.product_count != null && <span className={cx("shrink-0 text-xs", muted)}>{c.product_count}</span>}
+            <div className="mt-2 w-full px-0.5">
+              <span className="block truncate text-[11px] font-semibold text-[var(--st-fg)] sm:text-xs">{c.name}</span>
+              {c.product_count != null && <span className={cx("mt-0.5 block text-[9px]", muted)}>{c.product_count} পণ্য</span>}
             </div>
           </Link>
         ))}
