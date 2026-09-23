@@ -24,9 +24,11 @@ function SearchForm({ close }: { close?: () => void }) {
   const { code } = useStore();
   const navigate = useNavigate();
   const [q, setQ] = useState("");
-  return <form className="relative" onSubmit={(e) => { e.preventDefault(); close?.(); navigate({ to: "/s/$code", params: { code }, search: { q: q || undefined } }); }}>
-    <input aria-label="Search products" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search the collection" className="h-10 w-full border-b border-[var(--st-border)] bg-transparent pl-0 pr-9 text-sm outline-none focus:border-[var(--st-primary)]" />
-    <button aria-label="Search" className="absolute right-0 top-0 grid h-10 w-8 place-items-center"><Search className="h-4 w-4" /></button>
+  return <form className="flex items-center overflow-hidden rounded-full border border-[var(--st-border)] bg-[var(--st-bg-alt)] transition-colors focus-within:border-[var(--st-primary)] focus-within:bg-[var(--st-surface)]" onSubmit={(e) => { e.preventDefault(); close?.(); navigate({ to: "/s/$code", params: { code }, search: { q: q || undefined } }); }}>
+    <Search className="ml-3.5 h-4 w-4 shrink-0 text-[var(--st-muted)]" />
+    <input aria-label="Search products" value={q} onChange={(e) => setQ(e.target.value)} placeholder="প্রোডাক্ট খুঁজুন…" className="h-10 min-w-0 flex-1 bg-transparent px-2.5 text-sm outline-none placeholder:text-[var(--st-muted)]" />
+    {q && <button type="button" aria-label="Clear search" onClick={() => setQ("")} className="grid h-10 w-8 shrink-0 place-items-center text-[var(--st-muted)] hover:text-[var(--st-fg)]"><X className="h-4 w-4" /></button>}
+    <button type="submit" aria-label="Search" className="mr-1 flex h-8 shrink-0 items-center gap-1.5 rounded-full bg-[var(--st-primary)] px-3.5 text-xs font-bold text-[var(--st-on-primary)] sm:px-4">খুঁজুন</button>
   </form>;
 }
 
