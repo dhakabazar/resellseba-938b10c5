@@ -146,7 +146,7 @@ function ThemePage() {
             </span>
           )}
         </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           {STORE_THEMES.map((t) => {
             const active = theme === t.id;
             const savedPaletteId = (all[t.id]?.palette as string) ?? null;

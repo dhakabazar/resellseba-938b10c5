@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useStore } from "@/components/store/store-context";
 import { EmptyState, ProductGrid, SectionHead } from "@/components/store/ui";
 import { Button } from "@/components/ui/button";
+import { PoripatiListingBoundary, usePoripati } from "@/components/store/theme-loader";
 
 const PAGE_SIZE = 20;
 
@@ -22,8 +23,11 @@ export const Route = createFileRoute("/s/$code/shop")({
 
 function ShopPage() {
   const { listings } = useStore();
+  const poripati = usePoripati();
   const [visible, setVisible] = useState(PAGE_SIZE);
   const rows = listings.slice(0, visible);
+
+  if (poripati) return <PoripatiListingBoundary title="All products" listings={listings} />;
 
   return (
     <section className="mx-auto max-w-6xl px-4 py-10">

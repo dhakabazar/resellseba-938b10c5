@@ -15,6 +15,7 @@ import {
   useResellerTools,
 } from "@/components/store/reseller-tools";
 import { SohojProductPage } from "@/components/store/sohoj-pdp";
+import { PoripatiProductBoundary } from "@/components/store/theme-loader";
 
 import {
   borderc,
@@ -106,6 +107,8 @@ function ProductPage() {
     if (goCheckout) nav({ to: "/s/$code/checkout", params: { code } });
     else toast.success("Added to cart");
   }
+
+  if (store.theme.id === "poripati") return <PoripatiProductBoundary listing={listing} />;
 
   if (store.theme.id === "atelier")
     return (

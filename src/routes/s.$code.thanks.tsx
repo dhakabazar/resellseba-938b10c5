@@ -34,7 +34,9 @@ function Thanks() {
   const { code } = Route.useParams();
   const { n, pay, txn } = Route.useSearch();
   const fired = useRef(false);
-  const { content } = useStore();
+  const store = useStore();
+  const { content } = store;
+  const poripati = store.theme.id === "poripati";
   const capi = useServerFn(trackPurchaseServer);
   const verifyPayment = useServerFn(verifyGatewayPayment);
   const [payState, setPayState] = useState<"idle" | "checking" | "paid" | "partial" | "failed" | "cancelled">(
@@ -83,8 +85,8 @@ function Thanks() {
 
 
   return (
-    <div className="mx-auto max-w-md px-4 py-20 text-center">
-      <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-[var(--st-primary)]/15 text-[var(--st-primary)]">
+    <div className={cx("mx-auto max-w-md px-4 py-20 text-center", poripati && "my-10 border-y border-[var(--st-border)]")}>
+      <div className={cx("mx-auto grid h-16 w-16 place-items-center bg-[var(--st-primary)]/15 text-[var(--st-primary)]", !poripati && "rounded-full")}>
         <CheckCircle2 className="h-8 w-8" />
       </div>
       <Heading as="h1" className="mt-5 text-2xl md:text-3xl">

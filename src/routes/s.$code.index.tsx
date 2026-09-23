@@ -21,6 +21,7 @@ import {
   SectionHead,
 } from "@/components/store/ui";
 import { Button } from "@/components/ui/button";
+import { PoripatiHomeBoundary } from "@/components/store/theme-loader";
 
 type Search = { q?: string; theme?: string; palette?: string };
 
@@ -38,6 +39,8 @@ function StoreHome() {
   const store = useStore();
   const { code, listings, name, content } = store;
   const [latestVisible, setLatestVisible] = useState(20);
+
+  if (store.theme.id === "poripati") return <PoripatiHomeBoundary query={q} />;
 
   const results = useMemo(() => {
     if (!q) return listings;

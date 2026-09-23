@@ -50,6 +50,7 @@ function Checkout() {
   const { l: directListing, q: directQty, pay: payFlag } = Route.useSearch();
   const nav = useNavigate();
   const store = useStore();
+  const poripati = store.theme.id === "poripati";
   /** Manual methods arrive with the storefront bootstrap payload — no extra call. */
   const methods: PayMethod[] = store.paymentMethods.map((m) => ({
     method: m.method,
@@ -231,19 +232,20 @@ function Checkout() {
     );
 
   return (
-    <div className="mx-auto max-w-6xl px-4 pb-28 pt-6 sm:pb-10 sm:pt-8">
-      <div className="text-center sm:text-left">
+    <div className={cx("mx-auto px-4 pb-28 pt-6 sm:pb-10 sm:pt-8", poripati ? "max-w-7xl" : "max-w-6xl")}>
+      <div className={poripati ? "border-b border-[var(--st-border)] pb-7" : "text-center sm:text-left"}>
+        {poripati && <div className="mb-2 text-[10px] font-bold uppercase text-[var(--st-primary)]">Secure checkout</div>}
         <Heading as="h1" className="text-2xl sm:text-3xl">
           {store.content.text("co_headline")}
         </Heading>
         <p className={cx("mx-auto mt-1.5 max-w-xl text-sm sm:mx-0", muted)}>{store.content.text("co_note")}</p>
       </div>
 
-      <div className="mt-6 grid gap-5 lg:grid-cols-[1fr_380px]">
+      <div className={cx("mt-6 grid gap-5", poripati ? "lg:grid-cols-[1.15fr_.85fr] lg:gap-12" : "lg:grid-cols-[1fr_380px]")}>
         <form
           onSubmit={submit}
           noValidate
-          className={cx("space-y-4 rounded-[var(--st-radius)] border bg-[var(--st-surface)] p-4 sm:p-5", borderc)}
+          className={cx("space-y-4 border bg-[var(--st-surface)] p-4 sm:p-5", borderc, !poripati && "rounded-[var(--st-radius)]")}
         >
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Your name" required error={touched.name ? errors.name : null}>
@@ -427,7 +429,7 @@ function Checkout() {
           </div>
         </form>
 
-        <aside className={cx("h-fit space-y-4 rounded-[var(--st-radius)] border bg-[var(--st-surface)] p-4 sm:p-5", borderc)}>
+        <aside className={cx("h-fit space-y-4 border bg-[var(--st-surface)] p-4 sm:p-5", borderc, !poripati && "rounded-[var(--st-radius)]", poripati && "lg:sticky lg:top-32")}>
           <Heading className="text-base">Your cart ({store.cartCount})</Heading>
           <div className="space-y-3">
             {lines.map(({ line, listing }) => {
