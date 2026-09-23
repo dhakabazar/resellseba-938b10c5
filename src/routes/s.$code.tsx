@@ -4,7 +4,7 @@ import { Loader2 } from "lucide-react";
 import { useStoreVisitLog } from "@/lib/store-visits";
 import { storeThemeStyle } from "@/lib/store-theme";
 import { useStoreLoader } from "@/components/store/store-context";
-import { LegacyChromeBoundary, PoripatiChromeBoundary } from "@/components/store/theme-loader";
+import { LegacyChromeBoundary, NogoriChromeBoundary, PoripatiChromeBoundary } from "@/components/store/theme-loader";
 
 
 export const Route = createFileRoute("/s/$code")({
@@ -70,6 +70,8 @@ function StoreLayout() {
   const style = storeThemeStyle(store.theme, store.palette.id);
   const body = store.theme.id === "poripati" ? (
     <PoripatiChromeBoundary><Outlet /></PoripatiChromeBoundary>
+  ) : store.theme.id === "nogori" ? (
+    <NogoriChromeBoundary><Outlet /></NogoriChromeBoundary>
   ) : (
     <LegacyChromeBoundary><Outlet /></LegacyChromeBoundary>
   );
