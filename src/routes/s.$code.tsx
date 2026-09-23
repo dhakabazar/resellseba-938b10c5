@@ -4,8 +4,7 @@ import { Loader2 } from "lucide-react";
 import { useStoreVisitLog } from "@/lib/store-visits";
 import { storeThemeStyle } from "@/lib/store-theme";
 import { useStoreLoader } from "@/components/store/store-context";
-import { StoreFooter, StoreHeader } from "@/components/store/chrome";
-import { PoripatiChromeBoundary } from "@/components/store/theme-loader";
+import { LegacyChromeBoundary, PoripatiChromeBoundary } from "@/components/store/theme-loader";
 
 
 export const Route = createFileRoute("/s/$code")({
@@ -72,7 +71,7 @@ function StoreLayout() {
   const body = store.theme.id === "poripati" ? (
     <PoripatiChromeBoundary><Outlet /></PoripatiChromeBoundary>
   ) : (
-    <><StoreHeader /><main><Outlet /></main><StoreFooter /></>
+    <LegacyChromeBoundary><Outlet /></LegacyChromeBoundary>
   );
 
   return (
