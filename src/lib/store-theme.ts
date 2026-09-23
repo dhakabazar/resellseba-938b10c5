@@ -13,7 +13,7 @@
  * Tracking (GA4 / Meta / TikTok) is theme-independent and stays global.
  */
 
-export type StoreThemeId = "aurora" | "noir" | "bazaar" | "atelier" | "poripati" | "nogori";
+export type StoreThemeId = "aurora" | "noir" | "bazaar" | "atelier" | "poripati";
 
 export type StoreThemeLayout = {
   /** header composition */
@@ -381,47 +381,6 @@ export const STORE_THEMES: StoreTheme[] = [
       }),
     ],
   },
-  {
-    id: "nogori",
-    name: "নগরী",
-    description: "Bright modern marketplace — bold offer banner, quick categories, sale-led cards and effortless ordering.",
-    vars: {
-      "--st-radius": "8px",
-      "--st-radius-sm": "6px",
-      "--st-font-head": SYS_SANS,
-      "--st-font-body": SYS_SANS,
-      "--st-head-weight": "800",
-      "--st-track": "0",
-    },
-    layout: {
-      header: "bar",
-      hero: "banner",
-      card: "compact",
-      nav: "tabs",
-      grid: "dense",
-      uppercaseNav: false,
-      trustBar: true,
-    },
-    palettes: [
-      pal("market-coral", "Coral Market", false, {
-        bg: "#f6f7f4", bgAlt: "#edf0e9", surface: "#ffffff", fg: "#18211d", muted: "#66716b",
-        border: "rgba(24,33,29,0.13)", primary: "#dc4f3d", accent: "#176b52",
-      }),
-      pal("leaf-sun", "Leaf & Sun", false, {
-        bg: "#f5f7ef", bgAlt: "#e9efdc", surface: "#ffffff", fg: "#1d281d", muted: "#687467",
-        border: "rgba(29,40,29,0.13)", primary: "#26764d", accent: "#c17d0b",
-      }),
-      pal("blue-mango", "Blue & Mango", false, {
-        bg: "#f4f6f9", bgAlt: "#e8edf5", surface: "#ffffff", fg: "#172136", muted: "#667086",
-        border: "rgba(23,33,54,0.13)", primary: "#245eb5", accent: "#bd6b10",
-      }),
-      pal("charcoal-mint", "Charcoal & Mint", true, {
-        bg: "#111815", bgAlt: "#19241f", surface: "#202c27", fg: "#f5f7f3", muted: "#a7b4ad",
-        border: "rgba(245,247,243,0.14)", primary: "#f06b57", accent: "#69c59d",
-      }),
-    ],
-  },
-
 ];
 
 export const DEFAULT_THEME_ID: StoreThemeId = "aurora";

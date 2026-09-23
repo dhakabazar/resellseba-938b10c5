@@ -15,7 +15,7 @@ import {
   useResellerTools,
 } from "@/components/store/reseller-tools";
 import { SohojProductPage } from "@/components/store/sohoj-pdp";
-import { NogoriProductBoundary, PoripatiProductBoundary } from "@/components/store/theme-loader";
+import { PoripatiProductBoundary } from "@/components/store/theme-loader";
 
 import {
   borderc,
@@ -109,7 +109,6 @@ function ProductPage() {
   }
 
   if (store.theme.id === "poripati") return <PoripatiProductBoundary listing={listing} />;
-  if (store.theme.id === "nogori") return <NogoriProductBoundary listing={listing} />;
 
   if (store.theme.id === "atelier")
     return (

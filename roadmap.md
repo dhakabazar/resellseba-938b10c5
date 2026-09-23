@@ -4,4 +4,3 @@
 - [ ] Catalog redesign (LP /catalog + /catalog/$slug) — gorgeous, PC + mobile, use 4 global brand colors
 - [ ] Reseller staff: reseller can add staff accounts with simple per-menu permissions; reseller panel gates menus/routes
 - [x] Add a fifth clean storefront theme with fully distinct pages and load only the active theme bundle; keep tracking global
-- [ ] Add a sixth sidebar-free storefront theme inspired by HT Bazar, with distinct home, catalog, product, checkout, and success pages
