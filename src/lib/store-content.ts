@@ -68,11 +68,11 @@ function baseGroups(): ContentGroup[] {
       description: "First screen customers see — the strongest conversion spot.",
       fields: [
         on("hero_show", "Show hero banner", true),
-        t("hero_badge", "Small badge above headline", "Cash on delivery all over Bangladesh"),
-        t("hero_headline", "Headline", "Shop smart at {store}"),
-        area("hero_sub", "Sub headline", "Handpicked products, honest prices and delivery to your door. Pay only when you receive."),
-        t("hero_cta", "Primary button text", "Shop now"),
-        t("hero_cta2", "Secondary button text", "Order on WhatsApp"),
+        t("hero_badge", "Small badge above headline", "সারা বাংলাদেশে ক্যাশ অন ডেলিভারি"),
+        t("hero_headline", "Headline", "স্মার্ট শপিং করুন {store} এ"),
+        area("hero_sub", "Sub headline", "বাছাই করা পণ্য, সঠিক দাম আর ঘরে বসে ডেলিভারি — পণ্য হাতে পেয়ে টাকা দিন।"),
+        t("hero_cta", "Primary button text", "কেনাকাটা করুন"),
+        t("hero_cta2", "Secondary button text", "WhatsApp এ অর্ডার করুন"),
         img("hero_image", "Hero image", "Leave empty to use your top product image."),
       ],
     },
@@ -217,8 +217,8 @@ const THEME_GROUP: Record<StoreThemeId, ContentGroup> = {
     title: "Bazaar deal strip",
     description: "Colored deal strip shown between the hero and the product sections.",
     fields: [
-      t("bazaar_deal_title", "Flash deal strip title", "Today's deals"),
-      t("bazaar_deal_note", "Flash deal note", "Limited stock — first come, first served"),
+      t("bazaar_deal_title", "Flash deal strip title", "আজকের ডিল"),
+      t("bazaar_deal_note", "Flash deal note", "স্টক সীমিত — আগে অর্ডার করলেই পাবেন"),
     ],
   },
   atelier: {
