@@ -247,6 +247,16 @@ const THEME_GROUP: Record<StoreThemeId, ContentGroup> = {
       area("poripati_story", "Story band", "Useful things, clearly presented — so choosing feels simple."),
     ],
   },
+  nogori: {
+    id: "theme-nogori",
+    title: "নগরী — marketplace details",
+    description: "Offer label, product collection label and promotional message.",
+    fields: [
+      t("nogori_offer", "Banner offer label", "আজকের বিশেষ আয়োজন"),
+      t("nogori_collection", "Product collection label", "জনপ্রিয় পছন্দ"),
+      area("nogori_promo", "Promotional message", "পছন্দের পণ্য অর্ডার করুন সহজে — সারা দেশে দ্রুত ডেলিভারি।"),
+    ],
+  },
 
 };
 
