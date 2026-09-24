@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { pickImage, type ImgRow } from "@/lib/catalog.server";
-import { mergeDeliverySettings, resolveDelivery } from "@/lib/delivery";
+import { mergeDeliverySettings, resolveDelivery, type DeliveryArea } from "@/lib/delivery";
 import { fetchAllSafe } from "@/lib/fetch-all";
 
 const PRODUCT_COLS =
