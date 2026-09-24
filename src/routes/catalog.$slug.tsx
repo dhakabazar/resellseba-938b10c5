@@ -165,26 +165,30 @@ function CatalogDetails() {
                 </span>
                 Delivery charge
               </div>
-              <div className="mt-3 grid gap-2 text-base font-bold sm:grid-cols-2">
+              <div className="mt-3 text-base font-bold">
                 {p.deliveryMode === "free" ? (
                   <span className="text-lg font-black text-emerald-600">Free delivery</span>
                 ) : p.deliveryMode === "flat" || p.deliveryMode === "custom" ? (
-                  <span>
-                    {p.deliveryMode === "flat" ? "Flat" : "Custom"}:{" "}
+                  <div className="flex items-center justify-between">
+                    <span>{p.deliveryMode === "flat" ? "Flat" : "Custom"}</span>
                     <span className="font-black text-brand-1">{bdt(p.deliveryFlat)}</span>
-                  </span>
+                  </div>
                 ) : (
-                  <>
-                    <span>
-                      {areaLabel("inside_dhaka")}: <span className="font-black text-brand-1">{bdt(p.deliveryInside)}</span>
-                    </span>
-                    <span>
-                      {areaLabel("sub_dhaka")}: <span className="font-black text-brand-1">{bdt(p.deliverySub)}</span>
-                    </span>
-                    <span>
-                      {areaLabel("outside_dhaka")}: <span className="font-black text-brand-1">{bdt(p.deliveryOutside)}</span>
-                    </span>
-                  </>
+                  <div className="grid gap-2.5">
+                    {([
+                      ["inside_dhaka", p.deliveryInside],
+                      ["sub_dhaka", p.deliverySub],
+                      ["outside_dhaka", p.deliveryOutside],
+                    ] as const).map(([area, charge]) => (
+                      <div
+                        key={area}
+                        className="flex items-center justify-between border-b border-border/60 pb-2.5 last:border-0 last:pb-0"
+                      >
+                        <span>{areaLabel(area)}:</span>
+                        <span className="font-black text-brand-1 tabular-nums">{bdt(charge)}</span>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
             </div>
