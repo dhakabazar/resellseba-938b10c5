@@ -128,8 +128,10 @@ export const imageRead = createServerFn({ method: "POST" })
   .inputValidator((d: { bucket: string; path: string }) => d)
   .handler(async ({ data, context }): Promise<{ base64: string; contentType: string }> => {
     await assertAnyPermission(context.supabase, context.userId, PERMS);
-    const { readFile } = await import("@/lib/backup-storage.server");
-    return await readFile(data.bucket, data.path);
+    const { data: file, error } = await context.supabase.storage.from(data.bucket).download(data.path);
+    if (error) throw new Response(error.message, { status: 400 });
+    const bytes = Buffer.from(await file.arrayBuffer());
+    return { base64: bytes.toString("base64"), contentType: file.type || "application/octet-stream" };
   });
 
 export const imageEnsureBuckets = createServerFn({ method: "POST" })
@@ -137,8 +139,13 @@ export const imageEnsureBuckets = createServerFn({ method: "POST" })
   .inputValidator((d: { buckets: { id: string; public: boolean }[] }) => d)
   .handler(async ({ data, context }) => {
     await assertAnyPermission(context.supabase, context.userId, PERMS);
-    const { ensureBuckets } = await import("@/lib/backup-storage.server");
-    await ensureBuckets(data.buckets);
+    const { data: current, error } = await (context.supabase as any).rpc("backup_storage_buckets");
+    if (error) throw new Response(error.message, { status: 400 });
+    const existing = new Set((current ?? []).map((bucket: { id: string }) => bucket.id));
+    const missing = data.buckets.map((bucket) => bucket.id).filter((id) => !existing.has(id));
+    if (missing.length > 0) {
+      throw new Response(`Missing image folder(s): ${missing.join(", ")}`, { status: 400 });
+    }
     return { ok: true };
   });
 
@@ -147,7 +154,11 @@ export const imageWrite = createServerFn({ method: "POST" })
   .inputValidator((d: { bucket: string; path: string; base64: string; contentType?: string }) => d)
   .handler(async ({ data, context }) => {
     await assertAnyPermission(context.supabase, context.userId, PERMS);
-    const { writeFile } = await import("@/lib/backup-storage.server");
-    await writeFile(data.bucket, data.path, data.base64, data.contentType);
+    const bytes = Buffer.from(data.base64, "base64");
+    const { error } = await context.supabase.storage.from(data.bucket).upload(data.path, bytes, {
+      contentType: data.contentType || "application/octet-stream",
+      upsert: true,
+    });
+    if (error) throw new Response(error.message, { status: 400 });
     return { ok: true };
   });
