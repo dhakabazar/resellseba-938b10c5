@@ -280,7 +280,10 @@ function BackupPage() {
         ? JSON.parse(strFromU8(bucketsRaw))
         : Array.from(new Set(names.map((n) => n.split("/")[0]!))).map((id) => ({ id, public: false }));
 
-      await ensureBuckets({ data: { buckets: bucketList } });
+      const ensured = (await ensureBuckets({ data: { buckets: bucketList } })) as { created?: string[] } | undefined;
+      if (ensured?.created?.length) {
+        toast.info(`নতুন folder তৈরি হয়েছে: ${ensured.created.join(", ")}`);
+      }
 
       const total = names.length || 1;
       let done = 0;
