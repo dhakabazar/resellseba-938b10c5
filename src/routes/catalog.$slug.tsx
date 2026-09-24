@@ -128,18 +128,18 @@ function CatalogDetails() {
 
             {/* Price board */}
             <div className="catalog-card mt-6 p-5">
-              <div className="grid grid-cols-3 gap-2.5">
-                <div className="price-tile brand-tile-1 !p-3">
-                  <div className="text-[10px] font-bold uppercase tracking-widest opacity-80">Wholesale</div>
-                  <div className="mt-1 text-lg font-black sm:text-xl">{bdt(p.resellerPrice)}</div>
+              <div className="grid grid-cols-3 gap-1.5 sm:gap-2.5">
+                <div className="price-tile brand-tile-1 !px-1">
+                  <div className="truncate text-[10px] font-bold uppercase tracking-wide opacity-80">Wholesale</div>
+                  <div className="mt-1 text-lg font-black tabular-nums sm:text-xl">{bdt(p.resellerPrice)}</div>
                 </div>
-                <div className="price-tile brand-tile-4 !p-3">
-                  <div className="text-[10px] font-bold uppercase tracking-widest opacity-80">Sale price</div>
-                  <div className="mt-1 text-lg font-black sm:text-xl">{bdt(p.price)}</div>
+                <div className="price-tile brand-tile-4 !px-1">
+                  <div className="truncate text-[10px] font-bold uppercase tracking-wide opacity-80">Sale price</div>
+                  <div className="mt-1 text-lg font-black tabular-nums sm:text-xl">{bdt(p.price)}</div>
                 </div>
-                <div className="price-tile brand-tile-3 !p-3">
-                  <div className="text-[10px] font-bold uppercase tracking-widest opacity-80">Your profit</div>
-                  <div className="mt-1 text-lg font-black sm:text-xl">{bdt(profit)}</div>
+                <div className="price-tile brand-tile-3 !px-1">
+                  <div className="truncate text-[10px] font-bold uppercase tracking-wide opacity-80">Your profit</div>
+                  <div className="mt-1 text-lg font-black tabular-nums sm:text-xl">{bdt(profit)}</div>
                 </div>
               </div>
               <div className="mt-3 flex flex-wrap items-center gap-3 text-xs font-bold text-muted-foreground">
