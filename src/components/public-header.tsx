@@ -169,9 +169,10 @@ export function PublicHeader({
           <Link
             to="/login"
             search={{ mode: "signup" }}
-            className="btn-brand btn-live inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-bold"
+            aria-label={c.nav.cta}
+            className="btn-brand btn-live inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-bold sm:px-4"
           >
-            {c.nav.cta} <ArrowRight className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">{c.nav.cta}</span> <ArrowRight className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
           </Link>
           {navLinks.length > 0 && (
             <button
