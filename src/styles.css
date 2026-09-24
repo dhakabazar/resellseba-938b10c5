@@ -429,7 +429,7 @@
 @utility brand-tile-1 { background: color-mix(in oklab, var(--brand-1) 14%, var(--color-card)); color: var(--brand-1); }
 @utility brand-tile-2 { background: color-mix(in oklab, var(--brand-2) 18%, var(--color-card)); color: color-mix(in oklab, var(--brand-2) 70%, black); }
 @utility brand-tile-3 { background: color-mix(in oklab, var(--brand-3) 16%, var(--color-card)); color: color-mix(in oklab, var(--brand-3) 80%, black); }
-@utility brand-tile-4 { background: color-mix(in oklab, var(--brand-4) 16%, var(--color-card)); color: color-mix(in oklab, var(--brand-4) 80%, black); }
+@utility brand-tile-4 { background: color-mix(in oklab, var(--brand-4) 30%, var(--color-card)); color: color-mix(in oklab, var(--brand-4) 75%, black); }
 @utility brand-solid-1 { background: var(--brand-1); color: var(--color-primary-foreground); }
 @utility brand-solid-2 { background: var(--brand-2); color: var(--color-accent-foreground); }
 @utility brand-solid-3 { background: var(--brand-3); color: var(--brand-3-foreground); }
