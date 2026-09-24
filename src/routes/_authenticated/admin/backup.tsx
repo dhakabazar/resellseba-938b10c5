@@ -280,7 +280,10 @@ function BackupPage() {
         ? JSON.parse(strFromU8(bucketsRaw))
         : Array.from(new Set(names.map((n) => n.split("/")[0]!))).map((id) => ({ id, public: false }));
 
-      await ensureBuckets({ data: { buckets: bucketList } });
+      const ensured = (await ensureBuckets({ data: { buckets: bucketList } })) as { created?: string[] } | undefined;
+      if (ensured?.created?.length) {
+        toast.info(`নতুন folder তৈরি হয়েছে: ${ensured.created.join(", ")}`);
+      }
 
       const total = names.length || 1;
       let done = 0;
@@ -414,9 +417,20 @@ function BackupPage() {
             </div>
           </div>
 
-          <p className="text-xs text-muted-foreground">
-            Separate option, so you can back up images on their own and restore them into the existing image folders.
-          </p>
+          <div className="space-y-1.5 text-xs text-muted-foreground">
+            <p>Separate option, so you can back up images on their own and restore them into the image folders.</p>
+            <ul className="list-disc space-y-1 pl-4">
+              <li>
+                <span className="font-semibold text-foreground">নতুন সার্ভারে restore:</span> image folder (bucket) না
+                থাকলে restore-এর সময় আপনাআপনি তৈরি হয়ে যাবে — কিছু করতে হবে না।
+              </li>
+              <li>
+                কোনো কারণে folder তৈরি না হলে কোন কোন folder বানাতে হবে, নামসহ message দেখাবে — সেগুলো Storage থেকে
+                বানিয়ে আবার restore চাপুন।
+              </li>
+              <li>একই নামের image আবার restore করলে নতুনটা দিয়ে বদলে যায় (upsert)।</li>
+            </ul>
+          </div>
 
           <div className="flex flex-wrap gap-2">
             <button
