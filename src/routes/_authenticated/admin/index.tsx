@@ -215,7 +215,7 @@ function AdminDashboard() {
       />
 
       <section className="mb-6">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-2 lg:grid-cols-4">
           <StatCard
             label="Total Revenue"
             tone="primary"
@@ -326,7 +326,7 @@ function AdminDashboard() {
 
 
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Orders" value={stats.orders} tone="sky" icon={<ShoppingCart className="h-4 w-4" />} hint="Range er sob order" />
         <StatCard
           label="Revenue (delivered)"
