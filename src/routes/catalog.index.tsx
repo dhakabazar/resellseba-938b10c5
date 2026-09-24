@@ -3,8 +3,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { getCatalogFilters, getCatalogPage } from "@/lib/catalog.functions";
-import { CopyBtn, useCatalogBrand } from "@/components/catalog/shell";
-import { ImagePickerButton } from "@/components/catalog/image-picker";
+import { useCatalogBrand } from "@/components/catalog/shell";
 import { ProductCodeChip } from "@/components/product-code";
 import { bdt } from "@/lib/finance-report";
 import { Pagination } from "@/components/data-list";
@@ -363,20 +362,6 @@ function ProductCard({ p, i }: { p: Prod; i: number }) {
             <div className="truncate text-[7px] font-bold uppercase tracking-wide opacity-80 sm:text-[9px] sm:tracking-wider">Profit</div>
             <div className="mt-0.5 whitespace-nowrap text-[10px] font-black leading-none sm:mt-1 sm:text-sm">{bdt(profit)}</div>
           </div>
-        </div>
-        <div className="mt-1.5 flex items-stretch gap-0.5 border-t border-dashed pt-1.5 sm:mt-3 sm:gap-1.5 sm:pt-3">
-          <CopyBtn text={p.name} title="Title" label="Title copied" className="min-w-0 flex-1" />
-          <CopyBtn
-            text={`${p.name}\n\nPrice: ${bdt(p.price)}`}
-            title="Details"
-            label="Details copied"
-            className="min-w-0 flex-1"
-          />
-          <ImagePickerButton
-            images={p.images ?? (p.image ? [p.image] : [])}
-            baseName={p.name}
-            className="min-w-0 flex-1"
-          />
         </div>
       </div>
     </article>
