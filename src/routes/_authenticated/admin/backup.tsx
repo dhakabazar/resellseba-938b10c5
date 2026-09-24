@@ -308,7 +308,7 @@ function BackupPage() {
     <div className="space-y-5">
       <PageHeader
         title="Backup & restore"
-        description="Download everything — all tables, all accounts with their existing passwords, and all images — then restore it into this or a brand-new project. New tables and fields are picked up automatically, and missing image buckets are created during restore."
+        description="Download everything — all tables, all accounts with their existing passwords, and all images — then restore it into this or a brand-new project. New tables and fields are picked up automatically."
         actions={
           <button
             onClick={load}
@@ -415,8 +415,7 @@ function BackupPage() {
           </div>
 
           <p className="text-xs text-muted-foreground">
-            Separate option, so you can back up images on their own. On restore any missing image folder is created
-            automatically — nothing to set up in a new project.
+            Separate option, so you can back up images on their own and restore them into the existing image folders.
           </p>
 
           <div className="flex flex-wrap gap-2">
@@ -495,7 +494,7 @@ function BackupPage() {
         description={
           pending?.kind === "db"
             ? "All current data and accounts are replaced by the backup. Users keep their existing passwords. This cannot be undone."
-            : "Images from the archive are written back. Files with the same name are overwritten, and missing folders are created."
+            : "Images from the archive are written back to existing image folders. Files with the same name are overwritten."
         }
         detail={pending?.file.name}
         confirmText="Start restore"
