@@ -551,10 +551,11 @@
 }
 @utility price-tile {
   border-radius: 0.6rem;
-  padding: 0.45rem 0.15rem;
+  padding: 0.35rem 0.1rem;
   line-height: 1.1;
+  text-align: center;
   @media (min-width: 640px) {
     border-radius: 0.9rem;
-    padding: 0.55rem 0.6rem;
+    padding: 0.55rem 0.4rem;
   }
 }
