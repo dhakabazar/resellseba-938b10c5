@@ -2,6 +2,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getCatalogFilters, getCatalogPage } from "@/lib/catalog.functions";
 import { useCatalogBrand } from "@/components/catalog/shell";
 import { ProductCodeChip } from "@/components/product-code";
@@ -58,9 +59,7 @@ function CatalogIndex() {
   const navigate = useNavigate();
   const fetchFilters = useServerFn(getCatalogFilters);
   const fetchPage = useServerFn(getCatalogPage);
-  const [data, setData] = useState<{ categories: Cat[]; brands: { id: string; name: string; slug: string }[] } | null>(null);
-  const [pageData, setPageData] = useState<{ total: number; products: Prod[] } | null>(null);
-  const [busy, setBusy] = useState(false);
+  const qc = useQueryClient();
   const [suggestions, setSuggestions] = useState<Prod[]>([]);
   const [matchCount, setMatchCount] = useState(0);
   const [term, setTerm] = useState(q ?? "");
@@ -86,9 +85,12 @@ function CatalogIndex() {
     };
   }, [openCat]);
 
-  useEffect(() => {
-    void fetchFilters().then((d) => setData(d as never));
-  }, [fetchFilters]);
+  const filtersQ = useQuery({
+    queryKey: ["catalog-filters"],
+    queryFn: () => fetchFilters(),
+    staleTime: 5 * 60_000,
+  });
+  const data = (filtersQ.data ?? null) as { categories: Cat[]; brands: { id: string; name: string; slug: string }[] } | null;
 
   /* Search suggestions — debounced server lookup, no full catalog in memory. */
   useEffect(() => {
@@ -99,28 +101,41 @@ function CatalogIndex() {
       return;
     }
     const id = window.setTimeout(() => {
-      void fetchPage({ data: { category, brand, q: t, page: 1, perPage: 6 } }).then((d) => {
-        setSuggestions((d as any).products as Prod[]);
-        setMatchCount((d as any).total as number);
-      });
-    }, 300);
+      void qc
+        .fetchQuery({
+          queryKey: ["catalog-page", category, brand, t, 1, 6],
+          queryFn: () => fetchPage({ data: { category, brand, q: t, page: 1, perPage: 6 } }),
+          staleTime: 60_000,
+        })
+        .then((d) => {
+          setSuggestions((d as any).products as Prod[]);
+          setMatchCount((d as any).total as number);
+        });
+    }, 250);
     return () => window.clearTimeout(id);
-  }, [term, category, brand, fetchPage]);
+  }, [term, category, brand, fetchPage, qc]);
 
+  const pageKey = (p: number) => ["catalog-page", category, brand, q, p, perPage] as const;
+  const pageQ = useQuery({
+    queryKey: pageKey(currentPage),
+    queryFn: () => fetchPage({ data: { category, brand, q, page: currentPage, perPage } }),
+    staleTime: 60_000,
+    placeholderData: keepPreviousData,
+  });
+  const pageData = (pageQ.data ?? null) as { total: number; products: Prod[] } | null;
+  const busy = pageQ.isFetching && pageQ.isPlaceholderData;
+
+  // Prefetch the next page so paging feels instant.
   useEffect(() => {
-    let alive = true;
-    setBusy(true);
-    void fetchPage({ data: { category, brand, q, page: currentPage, perPage } })
-      .then((d) => {
-        if (alive) setPageData(d as never);
-      })
-      .finally(() => {
-        if (alive) setBusy(false);
-      });
-    return () => {
-      alive = false;
-    };
-  }, [fetchPage, category, brand, q, currentPage, perPage]);
+    if (!pageData || currentPage * perPage >= pageData.total) return;
+    const next = currentPage + 1;
+    void qc.prefetchQuery({
+      queryKey: pageKey(next),
+      queryFn: () => fetchPage({ data: { category, brand, q, page: next, perPage } }),
+      staleTime: 60_000,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageData, currentPage, perPage, category, brand, q]);
 
   const activeCat = data?.categories.find((c) => c.slug === category) ?? null;
   const activeBrand = data?.brands.find((b) => b.slug === brand) ?? null;

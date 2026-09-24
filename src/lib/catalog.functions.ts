@@ -54,38 +54,29 @@ export const getCatalogPage = createServerFn({ method: "GET" })
     perPage: Math.min(200, Math.max(1, Number(d.perPage ?? 24))),
   }))
   .handler(async ({ data }) => {
-    let productIds: string[] | null = null;
+    const empty = { total: 0, products: [] as ReturnType<typeof mapProduct>[] };
+    // Resolve slugs in parallel (tiny indexed lookups).
+    const [catRes, brandRes] = await Promise.all([
+      data.category
+        ? supabase.from("categories").select("id").eq("slug", data.category).maybeSingle()
+        : Promise.resolve({ data: null }),
+      data.brand
+        ? supabase.from("brands").select("id").eq("slug", data.brand).maybeSingle()
+        : Promise.resolve({ data: null }),
+    ]);
+    if (data.category && !catRes.data) return empty;
+    if (data.brand && !brandRes.data) return empty;
+    const catId = (catRes.data as any)?.id as string | undefined;
+    const brandId = (brandRes.data as any)?.id as string | undefined;
 
-    if (data.category) {
-      const { data: cat } = await supabase
-        .from("categories")
-        .select("id")
-        .eq("slug", data.category)
-        .maybeSingle();
-      if (!cat) return { total: 0, products: [] as ReturnType<typeof mapProduct>[] };
-      const links = await fetchAllSafe(() =>
-        supabase.from("product_categories").select("product_id").eq("category_id", (cat as any).id),
-      );
-      productIds = links.map((l: any) => l.product_id);
-      if (productIds.length === 0) return { total: 0, products: [] as ReturnType<typeof mapProduct>[] };
-    }
+    // Category filter via inner join — one round trip, no id list.
+    const cols = catId ? `${PRODUCT_COLS}, pc_filter:product_categories!inner(category_id)` : PRODUCT_COLS;
+    let query = supabase.from("products").select(cols, { count: "exact" }).eq("is_active", true);
 
-    let brandId: string | null = null;
-    if (data.brand) {
-      const { data: b } = await supabase.from("brands").select("id").eq("slug", data.brand).maybeSingle();
-      if (!b) return { total: 0, products: [] as ReturnType<typeof mapProduct>[] };
-      brandId = (b as any).id as string;
-    }
-
-    let query = supabase
-      .from("products")
-      .select(PRODUCT_COLS, { count: "exact" })
-      .eq("is_active", true);
-
-    if (productIds) query = query.in("id", productIds);
+    if (catId) query = query.eq("pc_filter.category_id", catId);
     if (brandId) query = query.eq("brand_id", brandId);
     if (data.q) {
-      const term = data.q.replace(/[%,]/g, " ");
+      const term = data.q.replace(/[%,()]/g, " ");
       query = query.or(`name.ilike.%${term}%,product_code.ilike.%${term}%`);
     }
 
