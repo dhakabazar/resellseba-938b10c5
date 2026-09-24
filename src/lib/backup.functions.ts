@@ -142,11 +142,36 @@ export const imageEnsureBuckets = createServerFn({ method: "POST" })
     const { data: current, error } = await (context.supabase as any).rpc("backup_storage_buckets");
     if (error) throw new Response(error.message, { status: 400 });
     const existing = new Set((current ?? []).map((bucket: { id: string }) => bucket.id));
-    const missing = data.buckets.map((bucket) => bucket.id).filter((id) => !existing.has(id));
-    if (missing.length > 0) {
-      throw new Response(`Missing image folder(s): ${missing.join(", ")}`, { status: 400 });
+    const missing = data.buckets.filter((bucket) => !existing.has(bucket.id));
+    if (missing.length === 0) return { ok: true, created: [] as string[], missing: [] as string[] };
+
+    // Try to create missing buckets with the privileged key (works on a fresh server
+    // with full env access; custom domains forward here too via the platform origin).
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const created: string[] = [];
+      const failed: string[] = [];
+      for (const bucket of missing) {
+        const res = await supabaseAdmin.storage.createBucket(bucket.id, { public: !!bucket.public });
+        if (res.error) failed.push(bucket.id);
+        else created.push(bucket.id);
+      }
+      if (failed.length > 0) {
+        throw new Response(
+          `Could not create image folder(s): ${failed.join(", ")}. Create them manually from Storage, then restore again.`,
+          { status: 400 },
+        );
+      }
+      return { ok: true, created, missing: [] as string[] };
+    } catch (e) {
+      if (e instanceof Response) throw e;
+      // No privileged key on this host — tell the admin exactly what to create.
+      const names = missing.map((bucket) => `${bucket.id}${bucket.public ? " (public)" : ""}`).join(", ");
+      throw new Response(
+        `নতুন সার্ভারে এই image folder গুলো নেই: ${names}. আগে Storage থেকে folder গুলো বানিয়ে আবার restore করুন।`,
+        { status: 400 },
+      );
     }
-    return { ok: true };
   });
 
 export const imageWrite = createServerFn({ method: "POST" })
