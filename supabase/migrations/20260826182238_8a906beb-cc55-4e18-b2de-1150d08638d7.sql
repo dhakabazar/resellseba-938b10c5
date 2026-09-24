@@ -1,2 +1,2 @@
 ALTER TABLE public.global_settings ADD COLUMN IF NOT EXISTS callback_base_url text;
-UPDATE public.global_settings SET callback_base_url = 'https://resellseba.lovable.app' WHERE id = 1 AND (callback_base_url IS NULL OR callback_base_url = '');
+-- callback_base_url is configured from admin settings; empty = request origin.

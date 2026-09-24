@@ -1,2 +1,2 @@
 ALTER TABLE public.global_settings ADD COLUMN IF NOT EXISTS allowed_origins text[] NOT NULL DEFAULT '{}';
-UPDATE public.global_settings SET allowed_origins = ARRAY['ecomsellerbd.com'] WHERE id = 1 AND coalesce(array_length(allowed_origins,1),0) = 0;
+-- allowed_origins is configured from admin settings (no hardcoded domain).
