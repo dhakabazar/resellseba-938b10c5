@@ -103,7 +103,7 @@ export function AppShell({
             {brand.name.charAt(0)}
           </div>
         )}
-        {!collapsed && (
+        {!collapsed && !brand.logoUrl && (
           <div className="min-w-0 flex-1">
             <div className="truncate text-base font-semibold leading-tight text-sidebar-foreground">
               {brand.name}
