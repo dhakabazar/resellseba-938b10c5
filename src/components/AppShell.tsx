@@ -95,9 +95,9 @@ export function AppShell({
 
   const renderSidebar = (collapsed: boolean) => (
     <>
-      <div className={cn("flex min-h-24 items-center gap-3 border-b border-sidebar-border py-4", collapsed ? "px-3 justify-center" : "px-5")}>
+      <div className={cn("flex h-16 shrink-0 items-center gap-3 border-b border-sidebar-border", collapsed ? "px-3 justify-center" : "px-5")}>
         {brand.logoUrl ? (
-          <img src={brand.logoUrl} alt={brand.name} className={cn("shrink-0 object-contain", collapsed ? "h-10 w-10" : "h-12 max-w-28")} />
+          <img src={brand.logoUrl} alt={brand.name} className={cn("shrink-0 object-contain", collapsed ? "h-11 w-11" : "h-12 max-w-40")} />
         ) : (
           <div className={cn("grid shrink-0 place-items-center rounded-lg bg-gradient-to-br from-primary to-primary/70 font-bold text-primary-foreground", collapsed ? "h-10 w-10 text-base" : "h-14 w-14 text-xl")}>
             {brand.name.charAt(0)}
