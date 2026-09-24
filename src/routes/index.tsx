@@ -624,7 +624,7 @@ function Landing({
               <p className="mt-2 text-sm text-muted-foreground">আপনার নিশ অনুযায়ী ক্যাটাগরি বেছে নিয়ে প্রোডাক্ট লিস্ট করুন</p>
               <div className="brand-rule mx-auto mt-4 h-1 w-24 rounded-full" />
             </div>
-            <div className="mt-8 grid grid-cols-5 gap-2 sm:grid-cols-6 sm:gap-3 md:grid-cols-8 lg:grid-cols-10">
+            <div className="mt-8 grid grid-cols-4 gap-2 sm:grid-cols-6 sm:gap-3 md:grid-cols-8 lg:grid-cols-10">
               {(stats?.categories ?? []).map((cat: any) => (
                 <Link
                   key={cat.id}
