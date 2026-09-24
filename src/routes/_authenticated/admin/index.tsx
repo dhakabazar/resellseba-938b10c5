@@ -345,25 +345,29 @@ function AdminDashboard() {
 
 
       <div className="mt-8 grid gap-4 lg:grid-cols-[2fr_1fr]">
-        <div className="surface-card group p-6 hover:border-primary/50">
+        <div className="surface-card group relative overflow-hidden p-6 hover:border-primary/50">
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-sky-400 via-violet-500 to-emerald-400" />
           <div className="mb-4 flex items-center justify-between border-b pb-2">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground/80">Activity & Revenue</h3>
+            <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-muted-foreground/80">
+              <span className="inline-block h-2.5 w-2.5 rounded-full bg-gradient-to-r from-sky-400 to-violet-500" />
+              Activity & Revenue
+            </h3>
           </div>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={daily} margin={{ top: 8, right: 8, left: -8, bottom: 0 }}>
                 <defs>
+                  <linearGradient id="gradOrders" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.55} />
+                    <stop offset="95%" stopColor="#38bdf8" stopOpacity={0.04} />
+                  </linearGradient>
                   <linearGradient id="gradRevenue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.45} />
-                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.04} />
+                    <stop offset="5%" stopColor="#a855f7" stopOpacity={0.5} />
+                    <stop offset="95%" stopColor="#a855f7" stopOpacity={0.04} />
                   </linearGradient>
                   <linearGradient id="gradProfit" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(var(--success))" stopOpacity={0.5} />
-                    <stop offset="95%" stopColor="hsl(var(--success))" stopOpacity={0.04} />
-                  </linearGradient>
-                  <linearGradient id="gradOrders" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(var(--accent))" stopOpacity={0.55} />
-                    <stop offset="95%" stopColor="hsl(var(--accent))" stopOpacity={0.06} />
+                    <stop offset="5%" stopColor="#34d399" stopOpacity={0.55} />
+                    <stop offset="95%" stopColor="#34d399" stopOpacity={0.04} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
@@ -373,10 +377,10 @@ function AdminDashboard() {
                   contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "0.75rem" }}
                   itemStyle={{ fontSize: 12, fontWeight: 600 }}
                 />
-                <Legend iconType="circle" wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
-                <Area type="monotone" dataKey="orders" stroke="hsl(var(--accent))" strokeWidth={2.5} fill="url(#gradOrders)" name="Orders" />
-                <Area type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" strokeWidth={2.5} fill="url(#gradRevenue)" name="Revenue ৳" />
-                <Area type="monotone" dataKey="profit" stroke="hsl(var(--success))" strokeWidth={2.5} fill="url(#gradProfit)" name="Reseller profit ৳" />
+                <Legend iconType="circle" iconSize={9} wrapperStyle={{ fontSize: 12, paddingTop: 8, fontWeight: 600 }} />
+                <Area type="monotone" dataKey="orders" stroke="#38bdf8" strokeWidth={2.5} fill="url(#gradOrders)" name="Orders" />
+                <Area type="monotone" dataKey="revenue" stroke="#a855f7" strokeWidth={2.5} fill="url(#gradRevenue)" name="Revenue ৳" />
+                <Area type="monotone" dataKey="profit" stroke="#34d399" strokeWidth={2.5} fill="url(#gradProfit)" name="Reseller profit ৳" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
