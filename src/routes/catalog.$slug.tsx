@@ -6,7 +6,6 @@ import { CopyBtn } from "@/components/catalog/shell";
 import { ImagePickerButton } from "@/components/catalog/image-picker";
 import { ProductCodeChip } from "@/components/product-code";
 import { bdt } from "@/lib/finance-report";
-import { areaLabel } from "@/lib/delivery";
 import { useAdvancedSettings } from "@/lib/advanced-settings";
 import { ArrowLeft, Loader2, Package, Sparkles, Truck } from "lucide-react";
 
@@ -184,7 +183,7 @@ function CatalogDetails() {
                         key={area}
                         className="flex items-center justify-between border-b border-border/60 pb-2.5 last:border-0 last:pb-0"
                       >
-                        <span>{areaLabel(area)}:</span>
+                        <span>{p.deliveryLabels?.[area] ?? area}:</span>
                         <span className="font-black text-brand-1 tabular-nums">{bdt(charge)}</span>
                       </div>
                     ))}

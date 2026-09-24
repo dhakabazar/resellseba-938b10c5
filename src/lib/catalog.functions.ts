@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { pickImage, type ImgRow } from "@/lib/catalog.server";
-import { mergeDeliverySettings, resolveDelivery } from "@/lib/delivery";
+import { mergeDeliverySettings, resolveDelivery, type DeliveryArea } from "@/lib/delivery";
 import { fetchAllSafe } from "@/lib/fetch-all";
 
 const PRODUCT_COLS =
@@ -140,6 +140,12 @@ export const getCatalogProduct = createServerFn({ method: "GET" })
       deliverySub: resolved.charges.sub_dhaka,
       deliveryOutside: resolved.charges.outside_dhaka,
       deliveryFlat: resolved.mode === "custom" ? resolved.custom : resolved.flat,
+      /** Admin-renamed area labels straight from the global rule. */
+      deliveryLabels: {
+        inside_dhaka: globalDelivery.areas.inside_dhaka.label,
+        sub_dhaka: globalDelivery.areas.sub_dhaka.label,
+        outside_dhaka: globalDelivery.areas.outside_dhaka.label,
+      } as Record<DeliveryArea, string>,
       category: p.categories?.name ?? null,
       categorySlug: p.categories?.slug ?? null,
       brand: p.brands?.name ?? null,
