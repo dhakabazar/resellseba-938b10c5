@@ -3063,7 +3063,10 @@ export type Database = {
         Returns: boolean
       }
       admin_lookups: { Args: never; Returns: Json }
-      admin_orders_page: { Args: { _statuses?: string[] }; Returns: Json }
+      admin_orders_page: {
+        Args: { _from_ts?: number; _statuses?: string[]; _to_ts?: number }
+        Returns: Json
+      }
       admin_payout_overview: {
         Args: {
           _active_only?: boolean
