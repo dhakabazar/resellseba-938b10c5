@@ -4,6 +4,7 @@ import { Pagination, usePaginated, type FilterOption } from "@/components/data-l
 import {
   applyOrderFilters,
   filterByCourier,
+  resolveDateRange,
   DEFAULT_ORDER_FILTERS,
   AREA_FILTER_OPTIONS,
   COURIER_FILTER_OPTIONS,
@@ -216,10 +217,11 @@ function AdminOrdersPage() {
     "order_id,product_id,product_name,product_image,quantity,returned_qty,reseller_price,line_total,sa_price,buying_price,packaging_cost";
   const SHIPMENT_SELECT = "id,order_id,provider,tracking_id,consignment_id";
 
-  // A remount with the same tab within a moment must not refetch the same payload.
+  // A remount with the same tab/range within a moment must not refetch the same payload.
   const lastLoad = useRef<{ key: string; at: number } | null>(null);
   async function load(opts?: { silent?: boolean }) {
-    const loadKey = `${tab}`;
+    const { fromTs, toTs } = resolveDateRange(filters);
+    const loadKey = `${tab}|${fromTs ?? ""}|${toTs ?? ""}`;
     if (!opts?.silent) {
       const prev = lastLoad.current;
       if (prev && prev.key === loadKey && Date.now() - prev.at < 1500) return;
@@ -228,8 +230,13 @@ function AdminOrdersPage() {
     if (!opts?.silent) setLoading(true);
     const statuses = (ORDER_TABS.find((t) => t.key === tab)?.statuses ?? []) as string[];
     // One backend call carries orders, items, shipments, status counts and reseller options.
+    // Status counts respect the active date range so tab numbers follow the date filter.
     const [{ data: page }, lookups] = await Promise.all([
-      supabase.rpc("admin_orders_page", { _statuses: statuses.length > 0 ? statuses : undefined }),
+      supabase.rpc("admin_orders_page", {
+        _statuses: statuses.length > 0 ? statuses : undefined,
+        _from_ts: fromTs ?? undefined,
+        _to_ts: toTs ?? undefined,
+      }),
       getAdminLookups(),
     ]);
     const pl = (page ?? {}) as any;
@@ -255,14 +262,22 @@ function AdminOrdersPage() {
     if (list.length === 0) return;
     const statuses = (ORDER_TABS.find((t) => t.key === tab)?.statuses ?? []) as string[];
     const inTab = (s: string) => statuses.length === 0 || statuses.includes(s);
+    const { fromTs, toTs } = resolveDateRange(filters);
+    const inRange = (created_at: string | null | undefined) => {
+      const ts = new Date(created_at ?? "").getTime();
+      if (Number.isNaN(ts)) return fromTs == null && toTs == null;
+      if (fromTs != null && ts < fromTs) return false;
+      if (toTs != null && ts > toTs) return false;
+      return true;
+    };
     const [{ data: rows }, { data: its }, { data: sh }, { data: allStats }] = await Promise.all([
       supabase.from("orders").select(ORDER_SELECT).in("id", list),
       supabase.from("order_items").select(ITEM_SELECT).in("order_id", list),
       supabase.from("shipments").select(SHIPMENT_SELECT).in("order_id", list),
-      supabase.from("orders").select("status"),
+      supabase.from("orders").select("status,created_at"),
     ]);
     const fetched = ((rows ?? []) as unknown) as OrderRow[];
-    setAllOrders(allStats ?? []);
+    setAllOrders(((allStats ?? []) as { status: string; created_at: string }[]).filter((o) => inRange(o.created_at)));
     setOrders((prev) => {
       let next = prev
         .map((o) => fetched.find((f) => f.id === o.id) ?? o)
