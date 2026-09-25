@@ -640,10 +640,7 @@ function OrdersPage() {
                 tab={tab}
                 onChange={setTab}
                 highlight
-                count={(key) => {
-                  const sts = ORDER_TABS.find((t) => t.key === key)?.statuses ?? [];
-                  return sts.length === 0 ? orders.length : orders.filter((o) => (sts as string[]).includes(o.status)).length;
-                }}
+                count={tabCount}
                 className="w-full min-w-0"
               />
             </div>
@@ -738,10 +735,7 @@ function OrdersPage() {
         <OrderTabs
           tab={tab}
           onChange={setTab}
-          count={(key) => {
-            const sts = ORDER_TABS.find((t) => t.key === key)?.statuses ?? [];
-            return sts.length === 0 ? orders.length : orders.filter((o) => (sts as string[]).includes(o.status)).length;
-          }}
+          count={tabCount}
         />
       </div>
 
