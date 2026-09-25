@@ -58,6 +58,7 @@ import {
   applyOrderFilters,
   filterByCourier,
   activeFilterCount,
+  resolveDateRange,
   DEFAULT_ORDER_FILTERS,
   type OrderFilterState,
 } from "@/components/order-filters";
@@ -323,8 +324,23 @@ function OrdersPage() {
   );
 
   const tabStatuses = ORDER_TABS.find((t) => t.key === tab)?.statuses ?? [];
+  const dateRange = useMemo(
+    () => resolveDateRange(filters),
+    [filters.datePreset, filters.from, filters.to],
+  );
+  const countedOrders = useMemo(() => {
+    if (dateRange.fromTs == null && dateRange.toTs == null) return orders;
+    return orders.filter((o) => {
+      const ts = new Date(o.created_at).getTime();
+      if (dateRange.fromTs != null && ts < dateRange.fromTs) return false;
+      if (dateRange.toTs != null && ts > dateRange.toTs) return false;
+      return true;
+    });
+  }, [orders, dateRange]);
   const inTab =
-    tabStatuses.length === 0 ? orders : orders.filter((o) => (tabStatuses as string[]).includes(o.status));
+    tabStatuses.length === 0
+      ? countedOrders
+      : countedOrders.filter((o) => (tabStatuses as string[]).includes(o.status));
 
   /** One search box, mode decides target: order fields or product name. */
   const visible = useMemo(() => {
@@ -481,9 +497,10 @@ function OrdersPage() {
 
 
   const tabCount = (key: OrderTabKey) => {
-
     const sts = ORDER_TABS.find((t) => t.key === key)?.statuses ?? [];
-    return sts.length === 0 ? orders.length : orders.filter((o) => (sts as string[]).includes(o.status)).length;
+    return sts.length === 0
+      ? countedOrders.length
+      : countedOrders.filter((o) => (sts as string[]).includes(o.status)).length;
   };
 
 
@@ -623,10 +640,7 @@ function OrdersPage() {
                 tab={tab}
                 onChange={setTab}
                 highlight
-                count={(key) => {
-                  const sts = ORDER_TABS.find((t) => t.key === key)?.statuses ?? [];
-                  return sts.length === 0 ? orders.length : orders.filter((o) => (sts as string[]).includes(o.status)).length;
-                }}
+                count={tabCount}
                 className="w-full min-w-0"
               />
             </div>
@@ -721,10 +735,7 @@ function OrdersPage() {
         <OrderTabs
           tab={tab}
           onChange={setTab}
-          count={(key) => {
-            const sts = ORDER_TABS.find((t) => t.key === key)?.statuses ?? [];
-            return sts.length === 0 ? orders.length : orders.filter((o) => (sts as string[]).includes(o.status)).length;
-          }}
+          count={tabCount}
         />
       </div>
 
