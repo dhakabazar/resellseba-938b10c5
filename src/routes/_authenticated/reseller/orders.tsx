@@ -496,21 +496,6 @@ function OrdersPage() {
   };
 
 
-  // Status tab counts follow the active date filter.
-  const dateRange = useMemo(
-    () => resolveDateRange(filters),
-    [filters.datePreset, filters.from, filters.to],
-  );
-  const countedOrders = useMemo(() => {
-    if (dateRange.fromTs == null && dateRange.toTs == null) return orders;
-    return orders.filter((o) => {
-      const ts = new Date(o.created_at).getTime();
-      if (dateRange.fromTs != null && ts < dateRange.fromTs) return false;
-      if (dateRange.toTs != null && ts > dateRange.toTs) return false;
-      return true;
-    });
-  }, [orders, dateRange]);
-
   const tabCount = (key: OrderTabKey) => {
     const sts = ORDER_TABS.find((t) => t.key === key)?.statuses ?? [];
     return sts.length === 0
