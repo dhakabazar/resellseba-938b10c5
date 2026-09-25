@@ -297,8 +297,15 @@ function AdminOrdersPage() {
     setShipments((prev) => prev.filter((s) => !ids.includes(s.order_id)));
     setMarked((prev) => prev.filter((id) => !ids.includes(id)));
     setExpandedOrders((prev) => prev.filter((id) => !ids.includes(id)));
-    const { data: allStats } = await supabase.from("orders").select("status");
-    setAllOrders(allStats ?? []);
+    const { fromTs, toTs } = resolveDateRange(filters);
+    const inR = (created_at: string | null | undefined) => {
+      const ts = new Date(created_at ?? "").getTime();
+      if (fromTs != null && ts < fromTs) return false;
+      if (toTs != null && ts > toTs) return false;
+      return true;
+    };
+    const { data: allStats } = await supabase.from("orders").select("status,created_at");
+    setAllOrders(((allStats ?? []) as { status: string; created_at: string }[]).filter((o) => inR(o.created_at)));
   }
 
 
@@ -424,9 +431,10 @@ function AdminOrdersPage() {
       }
     });
   }
+  // Reload when the tab or the active date range changes so status counts follow the filter.
   useEffect(() => {
     load();
-  }, [tab]);
+  }, [tab, filters.datePreset, filters.from, filters.to]);
 
   const itemsByOrder = useMemo(() => {
     const m = new Map<string, OrderItemLite[]>();
