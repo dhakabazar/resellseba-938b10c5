@@ -41,9 +41,9 @@ const num = (v: unknown) => Number(v ?? 0) || 0;
 
 /** Partial receive kinds — admin picks one when settling a Pending Partial order. */
 const PARTIAL_KINDS: { key: string; label: string; hint: string }[] = [
-  { key: "partial_full", label: "Partial (Full item)", hint: "Customer kept all items, paid less" },
-  { key: "partial_item", label: "Partial (Item)", hint: "Some items returned" },
-  { key: "partial_delivery", label: "Partial (Delivery Charge)", hint: "All items returned, delivery paid" },
+  { key: "partial_full", label: "Partial (Full Received)", hint: "Customer kept all items, paid less" },
+  { key: "partial_item", label: "Partial (Item Received)", hint: "Some items returned" },
+  { key: "partial_delivery", label: "Partial (Delivery Charge only)", hint: "All items returned, delivery paid" },
 ];
 
 export function OrderSettleModal({
@@ -123,10 +123,7 @@ export function OrderSettleModal({
   const calc = useMemo(() => {
     const fullProduct = Math.max(num(order?.sa_cost_total) - num(order?.packaging_total), 0);
     const fullItemCost = items.reduce((s, i) => s + num(i.sa_price) * i.quantity, 0);
-    const keptItemCost = items.reduce(
-      (s, i) => s + num(i.sa_price) * Math.max(i.quantity - num(i.returned_qty), 0),
-      0,
-    );
+    const keptItemCost = items.reduce((s, i) => s + num(i.sa_price) * Math.max(i.quantity - num(i.returned_qty), 0), 0);
     const productCost =
       failed || deliveryOnly
         ? 0
@@ -165,7 +162,10 @@ export function OrderSettleModal({
     }
     if (itemPartial) {
       for (const i of items) {
-        await supabase.from("order_items").update({ returned_qty: num(i.returned_qty) }).eq("id", i.id);
+        await supabase
+          .from("order_items")
+          .update({ returned_qty: num(i.returned_qty) })
+          .eq("id", i.id);
       }
     }
     await supabase.from("order_status_history").insert({
@@ -212,14 +212,10 @@ export function OrderSettleModal({
                       type="button"
                       onClick={() => setTarget(k.key)}
                       className={`rounded-lg border px-3 py-2 text-left transition-colors ${
-                        target === k.key
-                          ? "border-primary bg-primary/5 ring-1 ring-primary/20"
-                          : "hover:bg-accent"
+                        target === k.key ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "hover:bg-accent"
                       }`}
                     >
-                      <div className={`text-xs font-semibold ${target === k.key ? "text-primary" : ""}`}>
-                        {k.label}
-                      </div>
+                      <div className={`text-xs font-semibold ${target === k.key ? "text-primary" : ""}`}>{k.label}</div>
                       <div className="text-[10px] text-muted-foreground">{k.hint}</div>
                     </button>
                   ))}
