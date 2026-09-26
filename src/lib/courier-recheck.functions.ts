@@ -40,7 +40,7 @@ export const recheckOrdersStatus = createServerFn({ method: "POST" })
       // some orders fail in bulk even though a single check worked. Retry a few
       // times with a growing pause before giving up on an order.
       let lastError: unknown = null;
-      for (let attempt = 0; attempt < 3; attempt++) {
+      for (let attempt = 0; attempt < 2; attempt++) {
         try {
           const { courierStatus, result } = await recheckShipment(supabase, sh, configCache);
           results.push({
@@ -55,7 +55,7 @@ export const recheckOrdersStatus = createServerFn({ method: "POST" })
           // Permanent problems (not booked / bad credentials) are not worth retrying.
           const status = e instanceof Response ? e.status : 0;
           if (status === 400 || status === 401 || status === 403) break;
-          if (attempt < 2) await sleep(600 * (attempt + 1));
+          if (attempt < 1) await sleep(600);
         }
       }
       if (lastError) {

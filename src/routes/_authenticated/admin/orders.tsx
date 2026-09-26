@@ -395,8 +395,8 @@ function AdminOrdersPage() {
       const totals = { checked: 0, updated: 0, notBooked: 0, failed: 0 };
       // Keep each server request short. This avoids a large selection being cut
       // off by the hosting request limit before later orders are checked.
-      for (let start = 0; start < targetIds.length; start += 8) {
-        const batch = targetIds.slice(start, start + 8);
+      for (let start = 0; start < targetIds.length; start += 4) {
+        const batch = targetIds.slice(start, start + 4);
         try {
           const res = await recheckMany({ data: { orderIds: batch } });
           totals.checked += res.checked;
