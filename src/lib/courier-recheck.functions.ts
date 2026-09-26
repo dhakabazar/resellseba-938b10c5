@@ -27,10 +27,14 @@ export const recheckOrdersStatus = createServerFn({ method: "POST" })
     const seen = new Set<string>();
     const results: { orderId: string; courierStatus?: string; orderStatus?: string | null; error?: string }[] = [];
     const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
-    for (const sh of (shipments ?? []) as any[]) {
-      if (seen.has(sh.order_id)) continue;
+    const latestShipments = ((shipments ?? []) as any[]).filter((sh) => {
+      if (seen.has(sh.order_id)) return false;
       seen.add(sh.order_id);
+      return true;
+    });
+    const configCache = new Map<string, Promise<Record<string, string>>>();
+
+    async function checkOne(sh: any) {
 
       // Couriers rate-limit / time out on rapid back-to-back calls, which made
       // some orders fail in bulk even though a single check worked. Retry a few
@@ -38,7 +42,7 @@ export const recheckOrdersStatus = createServerFn({ method: "POST" })
       let lastError: unknown = null;
       for (let attempt = 0; attempt < 3; attempt++) {
         try {
-          const { courierStatus, result } = await recheckShipment(supabase, sh);
+          const { courierStatus, result } = await recheckShipment(supabase, sh, configCache);
           results.push({
             orderId: sh.order_id,
             courierStatus,
@@ -58,10 +62,23 @@ export const recheckOrdersStatus = createServerFn({ method: "POST" })
         const { bookingErrorText } = await import("@/lib/couriers.server");
         results.push({ orderId: sh.order_id, error: await bookingErrorText(lastError) });
       }
-
-      // Small gap between orders keeps the courier APIs from throttling us.
-      await sleep(150);
     }
+
+    // Four workers keep a large selection fast without flooding courier APIs.
+    // A slow or failed parcel no longer blocks every order behind it.
+    let cursor = 0;
+    const workerCount = Math.min(4, latestShipments.length);
+    await Promise.all(
+      Array.from({ length: workerCount }, async () => {
+        while (cursor < latestShipments.length) {
+          const index = cursor++;
+          const shipment = latestShipments[index];
+          if (!shipment) continue;
+          await checkOne(shipment);
+          await sleep(100);
+        }
+      }),
+    );
 
     const notBooked = data.orderIds.filter((id) => !seen.has(id));
     return {

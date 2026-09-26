@@ -392,11 +392,25 @@ function AdminOrdersPage() {
     setCheckingCourier(true);
     const targetIds = [...marked];
     try {
-      const res = await recheckMany({ data: { orderIds: targetIds } });
-      const parts = [`${res.checked} checked`];
-      if (res.updated > 0) parts.push(`${res.updated} status updated`);
-      if (res.notBooked > 0) parts.push(`${res.notBooked} not booked`);
-      if (res.failed > 0) parts.push(`${res.failed} failed`);
+      const totals = { checked: 0, updated: 0, notBooked: 0, failed: 0 };
+      // Keep each server request short. This avoids a large selection being cut
+      // off by the hosting request limit before later orders are checked.
+      for (let start = 0; start < targetIds.length; start += 8) {
+        const batch = targetIds.slice(start, start + 8);
+        try {
+          const res = await recheckMany({ data: { orderIds: batch } });
+          totals.checked += res.checked;
+          totals.updated += res.updated;
+          totals.notBooked += res.notBooked;
+          totals.failed += res.failed;
+        } catch {
+          totals.failed += batch.length;
+        }
+      }
+      const parts = [`${totals.checked} checked`];
+      if (totals.updated > 0) parts.push(`${totals.updated} status updated`);
+      if (totals.notBooked > 0) parts.push(`${totals.notBooked} not booked`);
+      if (totals.failed > 0) parts.push(`${totals.failed} failed`);
       toast.success(parts.join(" · "));
       await syncOrders(targetIds);
     } catch (e: any) {

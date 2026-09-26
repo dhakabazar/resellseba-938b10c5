@@ -21,6 +21,7 @@ export function carrybeeHeaders(conf: Cfg) {
 export async function carrybeeRequest(conf: Cfg, path: string, init?: RequestInit) {
   const res = await fetch(`${carrybeeBase(conf)}${path}`, {
     ...init,
+    signal: init?.signal ?? AbortSignal.timeout(12_000),
     headers: { ...carrybeeHeaders(conf), ...(init?.headers ?? {}) },
   });
   const text = await res.text();
