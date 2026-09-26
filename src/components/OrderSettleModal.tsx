@@ -43,7 +43,7 @@ const num = (v: unknown) => Number(v ?? 0) || 0;
 const PARTIAL_KINDS: { key: string; label: string; hint: string }[] = [
   { key: "partial_full", label: "Partial (Full Received)", hint: "Customer kept all items, paid less" },
   { key: "partial_item", label: "Partial (Item Received)", hint: "Some items returned" },
-  { key: "partial_delivery", label: "Partial (Delivery Charge only)", hint: "All items returned, delivery paid" },
+  { key: "partial_delivery", label: "Partial (Delivery Charge Only)", hint: "All items returned, delivery paid" },
 ];
 
 export function OrderSettleModal({
