@@ -17,6 +17,7 @@ type TokenBody = {
 async function issueToken(conf: Cfg, body: Record<string, unknown>): Promise<TokenBody> {
   const res = await fetch(`${pathaoBase(conf)}/aladdin/api/v1/issue-token`, {
     method: "POST",
+    signal: AbortSignal.timeout(8_000),
     headers: { "Content-Type": "application/json", Accept: "application/json" },
     body: JSON.stringify(body),
   });
@@ -95,6 +96,7 @@ export async function pathaoRequest(db: any, conf: Cfg, path: string, init?: Req
   const token = await pathaoAccessToken(db, conf);
   const res = await fetch(`${pathaoBase(conf)}${path}`, {
     ...init,
+    signal: init?.signal ?? AbortSignal.timeout(8_000),
     headers: {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json; charset=UTF-8",

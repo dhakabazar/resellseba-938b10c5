@@ -49,6 +49,7 @@ export function steadfastHeaders(conf: Cfg) {
 export async function steadfastRequest(conf: Cfg, path: string, init?: RequestInit) {
   const res = await fetch(`${steadfastBase(conf)}${path}`, {
     ...init,
+    signal: init?.signal ?? AbortSignal.timeout(8_000),
     headers: { ...steadfastHeaders(conf), ...(init?.headers ?? {}) },
   });
   const text = await res.text();

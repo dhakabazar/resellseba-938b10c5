@@ -3,6 +3,7 @@ import {
   extractCourierLogs,
   getCourierConfig,
   steadfastRequest,
+  type Cfg,
 } from "@/lib/couriers.server";
 
 export type RecheckShipment = {
@@ -19,13 +20,25 @@ export type RecheckShipment = {
  * The provider tracking log (when it sends one) is replayed too, so the order
  * timeline shows every step instead of jumping straight to the last one.
  */
-export async function recheckShipment(supabase: any, sh: RecheckShipment) {
+export async function recheckShipment(
+  supabase: any,
+  sh: RecheckShipment,
+  configCache?: Map<string, Promise<Cfg>>,
+) {
   const provider = sh.provider ?? "steadfast";
   const cid = sh.consignment_id || sh.tracking_id;
   const invoice = sh.orders?.order_number ?? null;
+  const configFor = (name: string) => {
+    if (!configCache) return getCourierConfig(supabase, name);
+    const cached = configCache.get(name);
+    if (cached) return cached;
+    const pending = getCourierConfig(supabase, name);
+    configCache.set(name, pending);
+    return pending;
+  };
 
   if (provider === "steadfast") {
-    const conf = await getCourierConfig(supabase, "steadfast");
+    const conf = await configFor("steadfast");
     const path = sh.consignment_id
       ? `/status_by_cid/${sh.consignment_id}`
       : sh.tracking_id
@@ -51,7 +64,7 @@ export async function recheckShipment(supabase: any, sh: RecheckShipment) {
   if (provider === "pathao") {
     if (!cid) throw new Response("Shipment is not booked with Pathao", { status: 400 });
     const { pathaoRequest } = await import("@/lib/pathao.server");
-    const conf = await getCourierConfig(supabase, "pathao");
+    const conf = await configFor("pathao");
     const body = await pathaoRequest(
       supabase,
       conf,
@@ -79,7 +92,7 @@ export async function recheckShipment(supabase: any, sh: RecheckShipment) {
   if (provider === "carrybee") {
     if (!cid) throw new Response("Shipment is not booked with Carrybee", { status: 400 });
     const { carrybeeRequest } = await import("@/lib/carrybee.server");
-    const conf = await getCourierConfig(supabase, "carrybee");
+    const conf = await configFor("carrybee");
     const body = await carrybeeRequest(conf, `/api/v2/orders/${encodeURIComponent(cid)}/details`);
     const d = body?.data ?? {};
     const courierStatus = String(d.transfer_status ?? d.status ?? "unknown");
