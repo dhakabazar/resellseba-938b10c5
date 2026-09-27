@@ -4,7 +4,7 @@ Goal: courier-er por ja ghote (delivered / partial / return / damage) tar jonno 
 
 ## 1. Status flow (new)
 
-##
+#
 
 ```text
 reseller:  pending ──"Send to admin"──> forwarded   (edit/delete/status only while pending)
