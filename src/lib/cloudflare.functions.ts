@@ -45,7 +45,7 @@ export const getCloudflareConfig = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<MaskedCfConfig> => {
     const { assertAnyPermission } = await import("@/lib/admin-users.server");
-    await assertAnyPermission(context.supabase, context.userId, ["settings.manage"]);
+    await assertAnyPermission(context.supabase, context.userId, ["settings.manage", "domains.manage"]);
     const { loadConfigAsCaller, maskConfig } = await import("@/lib/cloudflare.server");
     return maskConfig(await loadConfigAsCaller(context.supabase));
   });
@@ -75,7 +75,7 @@ export const saveCloudflareConfig = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }): Promise<MaskedCfConfig> => {
     const { assertAnyPermission } = await import("@/lib/admin-users.server");
-    await assertAnyPermission(context.supabase, context.userId, ["settings.manage"]);
+    await assertAnyPermission(context.supabase, context.userId, ["settings.manage", "domains.manage"]);
     const { loadConfigAsCaller, maskConfig } = await import("@/lib/cloudflare.server");
 
     const { error } = await context.supabase.rpc("cf_config_save", {
@@ -103,7 +103,7 @@ export const testCloudflareConfig = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<{ token: boolean; zone: string | null; account: string | null }> => {
     const { assertAnyPermission } = await import("@/lib/admin-users.server");
-    await assertAnyPermission(context.supabase, context.userId, ["settings.manage"]);
+    await assertAnyPermission(context.supabase, context.userId, ["settings.manage", "domains.manage"]);
     const { loadConfigAsCaller, requireActiveConfig, verifyToken } = await import("@/lib/cloudflare.server");
     const conf = await loadConfigAsCaller(context.supabase);
     if (!conf.api_token) throw new Response("Save an API token first", { status: 400 });
@@ -124,7 +124,7 @@ type Ctx = { supabase: any; userId: string };
 async function isAdmin(ctx: Ctx) {
   const { data } = await ctx.supabase.rpc("has_any_permission", {
     _user_id: ctx.userId,
-    _permissions: ["settings.manage", "resellers.manage"],
+    _permissions: ["settings.manage", "domains.manage", "resellers.manage"],
   });
   return !!data;
 }

@@ -92,12 +92,34 @@ export async function loadConfigForProvisioning(supabase: any): Promise<CfConfig
   return { ...EMPTY_CONFIG, ...row, api_token: envToken() } as CfConfig;
 }
 
-/** Admin config when permitted, otherwise the non-secret + env-token config. */
+/**
+ * Full config — including the real API token saved in Admin → Custom domains —
+ * loaded through the service-role client. This never touches the caller's own
+ * RLS/permission grant, so it works for a plain reseller provisioning their own
+ * hostname, not just staff with settings/domains permissions. Safe to use here
+ * because it only ever runs inside a trusted server-function handler; the token
+ * is used to call the Cloudflare API and is never included in what these
+ * handlers return to the browser (see mapRow / DomainRow, which carry no token).
+ */
+export async function loadConfigTrusted(): Promise<CfConfig> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data, error } = await supabaseAdmin.from("cloudflare_config").select("*").eq("id", 1).maybeSingle();
+  if (error) throw new Response(error.message, { status: 400 });
+  const row = (data as any) ?? {};
+  return { ...EMPTY_CONFIG, ...row, api_token: row.api_token ?? envToken() } as CfConfig;
+}
+
+/**
+ * Admin config when the caller has settings/domains permissions (fast path,
+ * respects their own RLS grant); otherwise the full trusted config so a
+ * reseller's own domain actions still run against the admin-configured
+ * Cloudflare account instead of silently missing the token.
+ */
 export async function loadConfigFlexible(supabase: any): Promise<CfConfig> {
   try {
     return await loadConfigAsCaller(supabase);
   } catch {
-    return loadConfigForProvisioning(supabase);
+    return loadConfigTrusted();
   }
 }
 
