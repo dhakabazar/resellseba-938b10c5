@@ -116,11 +116,9 @@ export async function loadConfigTrusted(): Promise<CfConfig> {
  * Cloudflare account instead of silently missing the token.
  */
 export async function loadConfigFlexible(supabase: any): Promise<CfConfig> {
-  try {
-    return await loadConfigAsCaller(supabase);
-  } catch {
-    return loadConfigTrusted();
-  }
+  // Uses the caller's own session (admins + resellers are allowed by cf_config_get),
+  // so no service-role key is needed on custom domains / Cloudflare Workers.
+  return loadConfigAsCaller(supabase);
 }
 
 /** Public-safe DNS guide values for any signed-in user. */
