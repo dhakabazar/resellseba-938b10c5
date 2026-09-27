@@ -129,26 +129,36 @@ async function isAdmin(ctx: Ctx) {
   return !!data;
 }
 
+/** The reseller store the caller belongs to (owner or active staff member). */
+async function callerResellerId(ctx: Ctx): Promise<string | null> {
+  const { data: own } = await ctx.supabase.from("resellers").select("id").eq("user_id", ctx.userId).maybeSingle();
+  if (own?.id) return own.id as string;
+  const { data: viaRpc } = await ctx.supabase.rpc("current_reseller_id");
+  const id = Array.isArray(viaRpc) ? viaRpc[0] : viaRpc;
+  return (typeof id === "string" && id) || null;
+}
+
 /** Which reseller the caller may act on. */
 async function resolveReseller(ctx: Ctx, resellerId?: string) {
-  const { data: own } = await ctx.supabase.from("resellers").select("id").eq("user_id", ctx.userId).maybeSingle();
-  if (resellerId && own?.id === resellerId) return resellerId;
+  const own = await callerResellerId(ctx);
+  if (resellerId && own === resellerId) return resellerId;
   if (resellerId) {
     if (!(await isAdmin(ctx))) throw new Response("Forbidden", { status: 403 });
     return resellerId;
   }
-  if (!own?.id) throw new Response("No reseller store found for this account", { status: 400 });
-  return own.id as string;
+  if (!own) throw new Response("No reseller store found for this account", { status: 400 });
+  return own;
 }
 
 async function loadDomainForCaller(ctx: Ctx, id: string) {
   const { data: row, error } = await ctx.supabase.from("reseller_domains").select("*").eq("id", id).maybeSingle();
   if (error) throw new Response(error.message, { status: 400 });
   if (!row) throw new Response("Domain not found", { status: 404 });
-  const { data: own } = await ctx.supabase.from("resellers").select("id").eq("user_id", ctx.userId).maybeSingle();
-  if (own?.id !== row.reseller_id && !(await isAdmin(ctx))) throw new Response("Forbidden", { status: 403 });
+  const own = await callerResellerId(ctx);
+  if (own !== row.reseller_id && !(await isAdmin(ctx))) throw new Response("Forbidden", { status: 403 });
   return row as any;
 }
+
 
 function mapRow(row: any, reseller?: { business_name?: string | null; code?: string | null } | null): DomainRow {
   return {

@@ -21,9 +21,24 @@ export const Route = createFileRoute("/_authenticated/reseller/domain")({
 });
 
 function errorText(err: unknown) {
-  if (err instanceof Response) return `Failed (${err.status})`;
-  return err instanceof Error ? err.message : "Something went wrong";
+  if (err instanceof Response) return `অনুরোধটি ব্যর্থ হয়েছে (${err.status})`;
+  const raw = err instanceof Error ? err.message : typeof err === "string" ? err : "";
+  // Server-side field validation comes back as raw JSON — show something readable instead.
+  const trimmed = raw.trim();
+  if (trimmed.startsWith("[") || trimmed.startsWith("{")) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      const list = Array.isArray(parsed) ? parsed : [parsed];
+      if (list.some((i: any) => Array.isArray(i?.path) && i.path.includes("id")))
+        return "ডোমেইনটি খুঁজে পাওয়া যায়নি — পেজটি রিফ্রেশ করে আবার চেষ্টা করুন।";
+      return "দেওয়া তথ্যটি সঠিক নয় — আবার চেক করুন।";
+    } catch {
+      /* fall through */
+    }
+  }
+  return trimmed || "কিছু একটা সমস্যা হয়েছে";
 }
+
 
 function CopyChip({ value }: { value: string }) {
   return (
@@ -56,11 +71,16 @@ function DomainPage() {
   const [busy, setBusy] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<DomainRow | null>(null);
 
+  async function reload() {
+    const fresh = await load({ data: {} });
+    setRows(fresh.filter((r) => !!r.id));
+  }
+
   useEffect(() => {
     (async () => {
       try {
         const [d, g] = await Promise.all([load({ data: {} }), guideFn({})]);
-        setRows(d);
+        setRows(d.filter((r) => !!r.id));
         setGuide(g);
         setMode(g.cfReady ? "cloudflare" : g.dnsReady ? "dns" : "cloudflare");
       } catch (err) {
@@ -72,14 +92,22 @@ function DomainPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  /** Every row action needs a saved domain id; without it the request cannot be made. */
+  function ensureId(row: DomainRow | null): string | null {
+    if (row?.id) return row.id;
+    toast.error("ডোমেইনটি এখনো সেভ হয়নি — পেজটি রিফ্রেশ করে আবার চেষ্টা করুন।");
+    void reload().catch(() => {});
+    return null;
+  }
+
   async function add(e: React.FormEvent) {
     e.preventDefault();
     setBusy("add");
     try {
-      const row = await connect({ data: { hostname, mode } });
-      setRows((rs) => [...rs, row]);
+      await connect({ data: { hostname, mode } });
+      await reload();
       setHostname("");
-      toast.success("Domain connected — now add the DNS records below");
+      toast.success("ডোমেইন যুক্ত হয়েছে — এখন নিচের DNS রেকর্ডগুলো যোগ করুন");
     } catch (err) {
       toast.error(errorText(err));
     } finally {
@@ -88,11 +116,13 @@ function DomainPage() {
   }
 
   async function check(row: DomainRow) {
-    setBusy(row.id);
+    const id = ensureId(row);
+    if (!id) return;
+    setBusy(id);
     try {
-      const updated = await refresh({ data: { id: row.id } });
+      const updated = await refresh({ data: { id } });
       setRows((rs) => rs.map((r) => (r.id === updated.id ? updated : r)));
-      toast.success(updated.verified_at ? "Domain is live" : `Still ${updated.ownership_status ?? "pending"} · SSL ${updated.ssl_status}`);
+      toast.success(updated.verified_at ? "ডোমেইন লাইভ হয়েছে" : `এখনো ${updated.ownership_status ?? "pending"} · SSL ${updated.ssl_status}`);
     } catch (err) {
       toast.error(errorText(err));
     } finally {
@@ -101,11 +131,13 @@ function DomainPage() {
   }
 
   async function makePrimary(row: DomainRow) {
-    setBusy(row.id);
+    const id = ensureId(row);
+    if (!id) return;
+    setBusy(id);
     try {
-      await makePrimaryFn({ data: { id: row.id } });
-      setRows((rs) => rs.map((r) => ({ ...r, is_primary: r.id === row.id })));
-      toast.success("Primary domain updated");
+      await makePrimaryFn({ data: { id } });
+      setRows((rs) => rs.map((r) => ({ ...r, is_primary: r.id === id })));
+      toast.success("প্রাইমারি ডোমেইন আপডেট হয়েছে");
     } catch (err) {
       toast.error(errorText(err));
     } finally {
@@ -114,12 +146,16 @@ function DomainPage() {
   }
 
   async function onDelete() {
-    if (!confirm) return;
-    setBusy(confirm.id);
+    const id = ensureId(confirm);
+    if (!id) {
+      setConfirm(null);
+      return;
+    }
+    setBusy(id);
     try {
-      await remove({ data: { id: confirm.id } });
-      setRows((rs) => rs.filter((r) => r.id !== confirm.id));
-      toast.success("Domain removed");
+      await remove({ data: { id } });
+      setRows((rs) => rs.filter((r) => r.id !== id));
+      toast.success("ডোমেইন সরানো হয়েছে");
       setConfirm(null);
     } catch (err) {
       toast.error(errorText(err));
@@ -127,6 +163,7 @@ function DomainPage() {
       setBusy(null);
     }
   }
+
 
   if (loading)
     return (
