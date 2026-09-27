@@ -93,31 +93,12 @@ export async function loadConfigForProvisioning(supabase: any): Promise<CfConfig
 }
 
 /**
- * Full config — including the real API token saved in Admin → Custom domains —
- * loaded through the service-role client. This never touches the caller's own
- * RLS/permission grant, so it works for a plain reseller provisioning their own
- * hostname, not just staff with settings/domains permissions. Safe to use here
- * because it only ever runs inside a trusted server-function handler; the token
- * is used to call the Cloudflare API and is never included in what these
- * handlers return to the browser (see mapRow / DomainRow, which carry no token).
- */
-export async function loadConfigTrusted(): Promise<CfConfig> {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data, error } = await supabaseAdmin.from("cloudflare_config").select("*").eq("id", 1).maybeSingle();
-  if (error) throw new Response(error.message, { status: 400 });
-  const row = (data as any) ?? {};
-  return { ...EMPTY_CONFIG, ...row, api_token: row.api_token ?? envToken() } as CfConfig;
-}
-
-/**
- * Admin config when the caller has settings/domains permissions (fast path,
- * respects their own RLS grant); otherwise the full trusted config so a
- * reseller's own domain actions still run against the admin-configured
- * Cloudflare account instead of silently missing the token.
+ * Admin config when permitted (settings.manage / domains.manage), or the
+ * reseller's own config when they're provisioning their own hostname —
+ * cf_config_get() itself allows both cases via current_reseller_id(), so no
+ * service-role bypass is needed here.
  */
 export async function loadConfigFlexible(supabase: any): Promise<CfConfig> {
-  // Uses the caller's own session (admins + resellers are allowed by cf_config_get),
-  // so no service-role key is needed on custom domains / Cloudflare Workers.
   return loadConfigAsCaller(supabase);
 }
 
