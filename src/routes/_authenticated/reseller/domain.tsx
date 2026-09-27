@@ -21,9 +21,24 @@ export const Route = createFileRoute("/_authenticated/reseller/domain")({
 });
 
 function errorText(err: unknown) {
-  if (err instanceof Response) return `Failed (${err.status})`;
-  return err instanceof Error ? err.message : "Something went wrong";
+  if (err instanceof Response) return `অনুরোধটি ব্যর্থ হয়েছে (${err.status})`;
+  const raw = err instanceof Error ? err.message : typeof err === "string" ? err : "";
+  // Server-side field validation comes back as raw JSON — show something readable instead.
+  const trimmed = raw.trim();
+  if (trimmed.startsWith("[") || trimmed.startsWith("{")) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      const list = Array.isArray(parsed) ? parsed : [parsed];
+      if (list.some((i: any) => Array.isArray(i?.path) && i.path.includes("id")))
+        return "ডোমেইনটি খুঁজে পাওয়া যায়নি — পেজটি রিফ্রেশ করে আবার চেষ্টা করুন।";
+      return "দেওয়া তথ্যটি সঠিক নয় — আবার চেক করুন।";
+    } catch {
+      /* fall through */
+    }
+  }
+  return trimmed || "কিছু একটা সমস্যা হয়েছে";
 }
+
 
 function CopyChip({ value }: { value: string }) {
   return (
