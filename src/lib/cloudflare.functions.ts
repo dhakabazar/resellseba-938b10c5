@@ -195,6 +195,70 @@ export const listDomains = createServerFn({ method: "GET" })
     return rows.map((r: any) => mapRow(r, byId.get(r.reseller_id)));
   });
 
+/** Best-effort: when connecting a bare apex domain, also provision "www." for
+ * it, so a reseller who adds "abc.com" doesn't end up with a broken
+ * www.abc.com. Failure here must never fail the apex connect that triggered it. */
+async function tryAutoWww(
+  cf: typeof import("@/lib/cloudflare.server"),
+  db: any,
+  resellerId: string,
+  apexHostname: string,
+  mode: "cloudflare" | "dns",
+  conf: any,
+) {
+  const { isApexHostname } = await import("@/lib/hostname-utils");
+  if (!isApexHostname(apexHostname)) return;
+  const wwwHost = `www.${apexHostname}`;
+  try {
+    const { data: dupe } = await db.from("reseller_domains").select("id").eq("hostname", wwwHost).maybeSingle();
+    if (dupe) return;
+
+    if (mode === "dns") {
+      await db.from("reseller_domains").insert({
+        reseller_id: resellerId,
+        hostname: wwwHost,
+        mode: "dns",
+        is_primary: false,
+        ssl_status: "pending",
+        ownership_status: "dns_pending",
+        dns_target: cf.dnsTargetFor(conf),
+        last_checked_at: new Date().toISOString(),
+        last_error: null,
+      });
+      return;
+    }
+
+    const state = await cf.createCustomHostname(conf, wwwHost);
+    let workerDomainId: string | null = null;
+    try {
+      workerDomainId = await cf.attachWorkerDomain(conf, wwwHost);
+    } catch (err) {
+      console.error("worker domain attach failed (auto www)", err);
+    }
+    await db.from("reseller_domains").insert({
+      reseller_id: resellerId,
+      hostname: wwwHost,
+      mode: "cloudflare",
+      is_primary: false,
+      ssl_status: state.sslStatus,
+      ownership_status: state.ownershipStatus,
+      cloudflare_hostname_id: state.id,
+      worker_domain_id: workerDomainId,
+      dns_target: state.dnsTarget,
+      verification_txt_name: state.txtName,
+      verification_txt_value: state.txtValue,
+      verified_at: state.active ? new Date().toISOString() : null,
+      last_checked_at: new Date().toISOString(),
+      last_error: null,
+    });
+  } catch (err) {
+    // Apex connect must still succeed even if the www counterpart could not
+    // be auto-added (e.g. already taken by someone else) — reseller can add
+    // it manually the same way as any other hostname.
+    console.error("auto www provisioning failed", err);
+  }
+}
+
 /** Add a hostname and provision it on Cloudflare. */
 export const connectDomain = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -249,6 +313,7 @@ export const connectDomain = createServerFn({ method: "POST" })
         const dup = (error as any).code === "23505";
         throw new Response(dup ? "This domain is already connected" : error.message, { status: 400 });
       }
+      await tryAutoWww(cf, db, resellerId, hostname, "dns", conf);
       return mapRow(row);
     }
 
@@ -286,6 +351,7 @@ export const connectDomain = createServerFn({ method: "POST" })
       const dup = (error as any).code === "23505";
       throw new Response(dup ? "This domain is already connected" : error.message, { status: 400 });
     }
+    await tryAutoWww(cf, db, resellerId, hostname, "cloudflare", conf);
     return mapRow(row);
   });
 

@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/ui-kit";
 import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
 import { Globe, Loader2, Plus, Trash2, CheckCircle2, AlertCircle, RefreshCw, Copy } from "lucide-react";
 import { toast } from "sonner";
+import { dnsHostLabel, isApexHostname } from "@/lib/hostname-utils";
 import {
   listDomains,
   connectDomain,
@@ -38,6 +39,18 @@ function CopyChip({ value }: { value: string }) {
       {value} <Copy className="h-3 w-3" />
     </button>
   );
+}
+
+/** The single DNS record this row needs — type/host/value, ready to copy. */
+function recordFor(row: DomainRow, guide: DnsGuide | null): { type: "A" | "CNAME"; host: string; value: string } {
+  const host = dnsHostLabel(row.hostname);
+  const apex = isApexHostname(row.hostname);
+  if (row.mode === "dns") {
+    if (apex && guide?.serverIp) return { type: "A", host, value: guide.serverIp };
+    return { type: "CNAME", host, value: guide?.serverCname || row.dns_target || "" };
+  }
+  if (apex && guide?.aRecordIp) return { type: "A", host, value: guide.aRecordIp };
+  return { type: "CNAME", host, value: row.dns_target || guide?.cnameTarget || "" };
 }
 
 function DomainPage() {
@@ -76,10 +89,13 @@ function DomainPage() {
     e.preventDefault();
     setBusy("add");
     try {
-      const row = await connect({ data: { hostname, mode } });
-      setRows((rs) => [...rs, row]);
+      await connect({ data: { hostname, mode } });
+      // Re-fetch (not just append) — connecting an apex domain also auto-adds
+      // its "www." counterpart, so the list can gain more than one new row.
+      const fresh = await load({ data: {} });
+      setRows(fresh);
       setHostname("");
-      toast.success("Domain connected — now add the DNS records below");
+      toast.success("Domain connected — DNS record is ready to copy below");
     } catch (err) {
       toast.error(errorText(err));
     } finally {
@@ -135,7 +151,6 @@ function DomainPage() {
       </div>
     );
 
-  const cname = guide?.cnameTarget || guide?.zoneName || "";
   const both = !!guide?.cfReady && !!guide?.dnsReady;
 
   return (
@@ -188,45 +203,6 @@ function DomainPage() {
       </div>
       </form>
 
-      <div className="surface-card mb-5 p-5 text-sm">
-        <div className="mb-2 flex items-center gap-2 font-semibold">
-          <Globe className="h-4 w-4 text-primary" /> DNS setup instructions
-        </div>
-        {mode === "cloudflare" ? (
-          <ol className="ml-4 list-decimal space-y-1.5 text-muted-foreground">
-            <li>Open your domain provider&apos;s DNS settings (GoDaddy, Namecheap, Cloudflare…).</li>
-            <li>
-              Subdomain: add a <code className="rounded bg-muted px-1 text-xs">CNAME</code> record pointing to{" "}
-              {cname ? <CopyChip value={cname} /> : <span className="italic">target will appear once admin sets it up</span>}
-            </li>
-            {guide?.aRecordIp && (
-              <li>
-                Root domain: add an <code className="rounded bg-muted px-1 text-xs">A</code> record to <CopyChip value={guide.aRecordIp} />
-              </li>
-            )}
-            <li>DNS can take 5–60 minutes. Then press “Check status” — SSL is issued automatically.</li>
-          </ol>
-        ) : (
-          <ol className="ml-4 list-decimal space-y-1.5 text-muted-foreground">
-            <li>Open your domain provider&apos;s DNS settings.</li>
-            {guide?.serverIp && (
-              <li>
-                Root domain: add an <code className="rounded bg-muted px-1 text-xs">A</code> record to <CopyChip value={guide.serverIp} />
-              </li>
-            )}
-            {guide?.serverCname && (
-              <li>
-                Subdomain: add a <code className="rounded bg-muted px-1 text-xs">CNAME</code> record to{" "}
-                <CopyChip value={guide.serverCname} />
-              </li>
-            )}
-            <li>Keep the record un-proxied (grey cloud) if your provider is Cloudflare.</li>
-            <li>DNS can take 5–60 minutes. Then press “Check status” — we verify the record live.</li>
-            {guide?.serverNote && <li className="text-foreground">{guide.serverNote}</li>}
-          </ol>
-        )}
-      </div>
-
       <div className="grid gap-3">
         {rows.map((r) => (
           <div key={r.id} className="surface-card p-4">
@@ -275,10 +251,40 @@ function DomainPage() {
               </button>
             </div>
 
+            <div className="mt-3 rounded-md border bg-muted/30 p-3 text-xs">
+              <div className="mb-1.5 font-medium text-foreground/80">DNS record to add</div>
+              {(() => {
+                const rec = recordFor(r, guide);
+                return (
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="rounded bg-primary-soft px-1.5 py-0.5 font-mono font-semibold text-primary">{rec.type}</span>
+                    <span className="text-muted-foreground">Host</span>
+                    <CopyChip value={rec.host} />
+                    <span className="text-muted-foreground">→ Value</span>
+                    {rec.value ? (
+                      <CopyChip value={rec.value} />
+                    ) : (
+                      <span className="italic text-muted-foreground">not set up yet — contact admin</span>
+                    )}
+                  </div>
+                );
+              })()}
+              <div className="mt-1.5 text-[11px] text-muted-foreground">
+                DNS can take 5–60 minutes to update. Then press “Check status”
+                {r.mode === "dns" ? " to verify." : " — SSL is issued automatically."}
+              </div>
+            </div>
+
             {r.verification_txt_name && !r.verified_at && (
-              <div className="mt-3 rounded-md bg-muted/50 p-3 text-xs">
-                Ownership check pending. Add TXT record <CopyChip value={r.verification_txt_name} /> with value{" "}
-                <CopyChip value={r.verification_txt_value ?? ""} />
+              <div className="mt-2 rounded-md bg-muted/50 p-3 text-xs">
+                <div className="mb-1.5 font-medium text-foreground/80">Ownership check pending — also add this TXT record</div>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="rounded bg-muted px-1.5 py-0.5 font-mono font-semibold">TXT</span>
+                  <span className="text-muted-foreground">Host</span>
+                  <CopyChip value={r.verification_txt_name} />
+                  <span className="text-muted-foreground">→ Value</span>
+                  <CopyChip value={r.verification_txt_value ?? ""} />
+                </div>
               </div>
             )}
             {r.last_error && <div className="mt-2 text-[11px] text-destructive">{r.last_error}</div>}
