@@ -16,6 +16,7 @@ import {
   savePlatformOrigins,
   type DomainRow,
 } from "@/lib/cloudflare.functions";
+import { groupDomainRows } from "@/lib/hostname-utils";
 
 export const Route = createFileRoute("/_authenticated/admin/domains")({
   component: DomainsAdmin,
@@ -74,7 +75,7 @@ function DomainsAdmin() {
   const [rows, setRows] = useState<DomainRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
-  const [confirm, setConfirm] = useState<DomainRow | null>(null);
+  const [confirmGroup, setConfirmGroup] = useState<DomainRow[] | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -123,12 +124,22 @@ function DomainsAdmin() {
     }
   }
 
-  async function onRefresh(row: DomainRow) {
-    setBusy(row.id);
+  async function onRefreshGroup(group: DomainRow[]) {
+    const busyKey = group[0].id;
+    setBusy(busyKey);
     try {
-      const updated = await refresh({ data: { id: row.id } });
-      setRows((rs) => rs.map((r) => (r.id === updated.id ? { ...updated, reseller_name: r.reseller_name, reseller_code: r.reseller_code } : r)));
-      toast.success(`${updated.hostname}: ${updated.ownership_status ?? "pending"} · SSL ${updated.ssl_status}`);
+      const settled = await Promise.allSettled(group.map((r) => refresh({ data: { id: r.id } })));
+      setRows((rs) =>
+        rs.map((r) => {
+          const i = group.findIndex((g) => g.id === r.id);
+          if (i === -1) return r;
+          const s = settled[i];
+          return s.status === "fulfilled" ? { ...s.value, reseller_name: r.reseller_name, reseller_code: r.reseller_code } : r;
+        }),
+      );
+      const failed = settled.filter((s) => s.status === "rejected").length;
+      if (failed > 0) toast.error(`${failed} ta hostname check kora jayni`);
+      else toast.success(`${group.map((r) => r.hostname).join(", ")}: checked`);
     } catch (err) {
       toast.error(errorText(err));
     } finally {
@@ -137,13 +148,18 @@ function DomainsAdmin() {
   }
 
   async function onDelete() {
-    if (!confirm) return;
-    setBusy(confirm.id);
+    if (!confirmGroup) return;
+    const busyKey = confirmGroup[0].id;
+    setBusy(busyKey);
     try {
-      await remove({ data: { id: confirm.id } });
-      setRows((rs) => rs.filter((r) => r.id !== confirm.id));
-      toast.success("Domain disconnected from Cloudflare");
-      setConfirm(null);
+      const ids = confirmGroup.map((r) => r.id);
+      const settled = await Promise.allSettled(ids.map((id) => remove({ data: { id } })));
+      const removedIds = new Set(ids.filter((_, i) => settled[i].status === "fulfilled"));
+      setRows((rs) => rs.filter((r) => !removedIds.has(r.id)));
+      const failed = settled.filter((s) => s.status === "rejected").length;
+      if (failed > 0) toast.error(`${failed} ta hostname remove kora jayni`);
+      else toast.success("Domain disconnected from Cloudflare");
+      setConfirmGroup(null);
     } catch (err) {
       toast.error(errorText(err));
     } finally {
@@ -318,61 +334,86 @@ function DomainsAdmin() {
       </div>
 
       <div className="grid gap-3">
-        {rows.map((r) => (
-          <div key={r.id} className="surface-card flex flex-wrap items-center gap-3 p-4">
-            <div className="min-w-[220px] flex-1">
-              <div className="flex items-center gap-2 font-medium">
-                {r.hostname}
-                {r.is_primary && <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] text-primary">Primary</span>}
-                <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
-                  {r.mode === "dns" ? "Server DNS" : "Cloudflare"}
-                </span>
+        {groupDomainRows(rows).map((group) => {
+          const busyKey = group[0].id;
+          const primaryRow = group.find((r) => r.is_primary) ?? group[0];
+          const allVerified = group.every((r) => r.verified_at);
+          return (
+            <div key={group.map((r) => r.id).join("+")} className="surface-card p-4">
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="min-w-[220px] flex-1">
+                  <div className="flex items-center gap-2 font-medium">
+                    {group[0].hostname}
+                    {group.length > 1 && <span className="text-xs font-normal text-muted-foreground">+ www</span>}
+                    {primaryRow.is_primary && <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] text-primary">Primary</span>}
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
+                      {group[0].mode === "dns" ? "Server DNS" : "Cloudflare"}
+                    </span>
+                  </div>
+                  <div className="mt-0.5 text-xs text-muted-foreground">
+                    {group[0].reseller_name ?? "—"} {group[0].reseller_code ? `· ${group[0].reseller_code}` : ""}
+                  </div>
+                  <div className="mt-1 flex items-center gap-1 text-xs">
+                    {allVerified ? (
+                      <span className="inline-flex items-center gap-1 text-success">
+                        <CheckCircle2 className="h-3 w-3" /> Active
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-warning">
+                        <AlertCircle className="h-3 w-3" /> {group.some((r) => r.verified_at) ? "Partially active" : "Pending"}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <button
+                  onClick={() => onRefreshGroup(group)}
+                  disabled={busy === busyKey}
+                  className="inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs hover:bg-muted"
+                >
+                  {busy === busyKey ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />} Check status
+                </button>
+                <button
+                  onClick={() => setConfirmGroup(group)}
+                  className="rounded-md border p-1.5 text-muted-foreground hover:bg-muted"
+                  aria-label="Disconnect domain"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
               </div>
-              <div className="mt-0.5 text-xs text-muted-foreground">
-                {r.reseller_name ?? "—"} {r.reseller_code ? `· ${r.reseller_code}` : ""}
-              </div>
-              <div className="mt-1 flex items-center gap-1 text-xs">
-                {r.verified_at ? (
-                  <span className="inline-flex items-center gap-1 text-success">
-                    <CheckCircle2 className="h-3 w-3" /> Active · SSL {r.ssl_status}
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1 text-warning">
-                    <AlertCircle className="h-3 w-3" /> {r.ownership_status ?? "pending"} · SSL {r.ssl_status}
-                  </span>
-                )}
-              </div>
-              {r.last_error && <div className="mt-1 text-[11px] text-destructive">{r.last_error}</div>}
+              {group.length > 1 && (
+                <div className="mt-2 space-y-1 border-t pt-2 text-xs text-muted-foreground">
+                  {group.map((r) => (
+                    <div key={r.id} className="flex items-center gap-1.5">
+                      {r.verified_at ? (
+                        <CheckCircle2 className="h-3 w-3 text-success" />
+                      ) : (
+                        <AlertCircle className="h-3 w-3 text-warning" />
+                      )}
+                      {r.hostname} — {r.verified_at ? "Live" : (r.ownership_status ?? "pending")} · SSL {r.ssl_status}
+                      {r.last_error && <span className="text-destructive"> · {r.last_error}</span>}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {group.length === 1 && group[0].last_error && (
+                <div className="mt-1 text-[11px] text-destructive">{group[0].last_error}</div>
+              )}
             </div>
-            <button
-              onClick={() => onRefresh(r)}
-              disabled={busy === r.id}
-              className="inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs hover:bg-muted"
-            >
-              {busy === r.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />} Check status
-            </button>
-            <button
-              onClick={() => setConfirm(r)}
-              className="rounded-md border p-1.5 text-muted-foreground hover:bg-muted"
-              aria-label="Disconnect domain"
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        ))}
+          );
+        })}
         {rows.length === 0 && (
           <div className="rounded-lg border p-8 text-center text-sm text-muted-foreground">No reseller domain connected yet.</div>
         )}
       </div>
 
       <ConfirmModal
-        isOpen={!!confirm}
+        isOpen={!!confirmGroup}
         title="Disconnect domain?"
         description="The hostname will be removed and the store will stop serving on it."
-        detail={confirm?.hostname}
+        detail={confirmGroup?.map((r) => r.hostname).join(", ")}
         confirmText="Disconnect"
-        isLoading={busy === confirm?.id}
-        onClose={() => setConfirm(null)}
+        isLoading={!!confirmGroup && busy === confirmGroup[0].id}
+        onClose={() => setConfirmGroup(null)}
         onConfirm={onDelete}
       />
     </div>

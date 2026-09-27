@@ -28,3 +28,25 @@ export function isApexHostname(hostname: string): boolean {
 export function dnsHostLabel(hostname: string): string {
   return isApexHostname(hostname) ? "@" : hostname.split(".")[0];
 }
+
+/** Groups an apex hostname with its auto-added "www." counterpart under one
+ * key, so the UI can show them as a single domain card instead of two. */
+export function domainGroupKey(hostname: string): string {
+  return hostname.replace(/^www\./, "");
+}
+
+/** Groups rows into one card per base domain (apex + its "www." row together),
+ * apex/non-www first within each group. Preserves first-seen group order. */
+export function groupDomainRows<T extends { hostname: string }>(rows: T[]): T[][] {
+  const map = new Map<string, T[]>();
+  for (const r of rows) {
+    const key = domainGroupKey(r.hostname);
+    const arr = map.get(key);
+    if (arr) arr.push(r);
+    else map.set(key, [r]);
+  }
+  for (const arr of map.values()) {
+    arr.sort((a, b) => Number(a.hostname.startsWith("www.")) - Number(b.hostname.startsWith("www.")));
+  }
+  return [...map.values()];
+}

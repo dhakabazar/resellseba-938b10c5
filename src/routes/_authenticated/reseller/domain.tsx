@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/ui-kit";
 import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
 import { Globe, Loader2, Plus, Trash2, CheckCircle2, AlertCircle, RefreshCw, Copy } from "lucide-react";
 import { toast } from "sonner";
-import { dnsHostLabel, isApexHostname } from "@/lib/hostname-utils";
+import { dnsHostLabel, isApexHostname, groupDomainRows } from "@/lib/hostname-utils";
 import {
   listDomains,
   connectDomain,
@@ -82,7 +82,7 @@ function DomainPage() {
   const [mode, setMode] = useState<"cloudflare" | "dns">("cloudflare");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
-  const [confirm, setConfirm] = useState<DomainRow | null>(null);
+  const [confirmGroup, setConfirmGroup] = useState<DomainRow[] | null>(null);
 
   async function reload() {
     const fresh = await load({ data: {} });
@@ -106,8 +106,9 @@ function DomainPage() {
   }, []);
 
   /** Every row action needs a saved domain id; without it the request cannot be made. */
-  function ensureId(row: DomainRow | null): string | null {
-    if (row?.id) return row.id;
+  function ensureIds(group: DomainRow[]): string[] | null {
+    const ids = group.map((r) => r.id).filter(Boolean);
+    if (ids.length === group.length) return ids;
     toast.error("ডোমেইনটি এখনো সেভ হয়নি — পেজটি রিফ্রেশ করে আবার চেষ্টা করুন।");
     void reload().catch(() => {});
     return null;
@@ -130,14 +131,22 @@ function DomainPage() {
     }
   }
 
-  async function check(row: DomainRow) {
-    const id = ensureId(row);
-    if (!id) return;
-    setBusy(id);
+  /** Checks every hostname in the group (apex + its www) in one go. */
+  async function checkGroup(group: DomainRow[]) {
+    const ids = ensureIds(group);
+    if (!ids) return;
+    const busyKey = group[0].id;
+    setBusy(busyKey);
     try {
-      const updated = await refresh({ data: { id } });
-      setRows((rs) => rs.map((r) => (r.id === updated.id ? updated : r)));
-      toast.success(updated.verified_at ? "ডোমেইন লাইভ হয়েছে" : `এখনো ${updated.ownership_status ?? "pending"} · SSL ${updated.ssl_status}`);
+      const settled = await Promise.allSettled(ids.map((id) => refresh({ data: { id } })));
+      const updated = new Map<string, DomainRow>();
+      settled.forEach((s) => {
+        if (s.status === "fulfilled") updated.set(s.value.id, s.value);
+      });
+      setRows((rs) => rs.map((r) => updated.get(r.id) ?? r));
+      const failed = settled.filter((s) => s.status === "rejected").length;
+      if (failed > 0) toast.error(`${failed} টা রেকর্ড চেক করা যায়নি`);
+      else toast.success(group.every((r) => updated.get(r.id)?.verified_at) ? "ডোমেইন লাইভ হয়েছে" : "স্ট্যাটাস আপডেট হয়েছে");
     } catch (err) {
       toast.error(errorText(err));
     } finally {
@@ -145,9 +154,10 @@ function DomainPage() {
     }
   }
 
-  async function makePrimary(row: DomainRow) {
-    const id = ensureId(row);
-    if (!id) return;
+  async function makePrimary(group: DomainRow[]) {
+    const ids = ensureIds(group);
+    if (!ids) return;
+    const id = ids[0];
     setBusy(id);
     try {
       await makePrimaryFn({ data: { id } });
@@ -161,17 +171,22 @@ function DomainPage() {
   }
 
   async function onDelete() {
-    const id = ensureId(confirm);
-    if (!id) {
-      setConfirm(null);
+    if (!confirmGroup) return;
+    const ids = ensureIds(confirmGroup);
+    if (!ids) {
+      setConfirmGroup(null);
       return;
     }
-    setBusy(id);
+    const busyKey = confirmGroup[0].id;
+    setBusy(busyKey);
     try {
-      await remove({ data: { id } });
-      setRows((rs) => rs.filter((r) => r.id !== id));
-      toast.success("ডোমেইন সরানো হয়েছে");
-      setConfirm(null);
+      const settled = await Promise.allSettled(ids.map((id) => remove({ data: { id } })));
+      const removedIds = new Set(ids.filter((_, i) => settled[i].status === "fulfilled"));
+      setRows((rs) => rs.filter((r) => !removedIds.has(r.id)));
+      const failed = settled.filter((s) => s.status === "rejected").length;
+      if (failed > 0) toast.error(`${failed} টা রেকর্ড সরানো যায়নি`);
+      else toast.success("ডোমেইন সরানো হয়েছে");
+      setConfirmGroup(null);
     } catch (err) {
       toast.error(errorText(err));
     } finally {
@@ -240,103 +255,117 @@ function DomainPage() {
       </form>
 
       <div className="grid gap-3">
-        {rows.map((r) => (
-          <div key={r.id} className="surface-card p-4">
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="grid h-9 w-9 place-items-center rounded-md bg-primary-soft text-primary">
-                <Globe className="h-4 w-4" />
-              </div>
-              <div className="min-w-[200px] flex-1">
-                <div className="flex items-center gap-2 font-medium">
-                  {r.hostname}
-                  {r.is_primary && <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] text-primary">Primary</span>}
-                  <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
-                    {r.mode === "dns" ? "Server DNS" : "Cloudflare"}
-                  </span>
+        {groupDomainRows(rows).map((group) => {
+          const primaryRow = group.find((r) => r.is_primary) ?? group[0];
+          const allVerified = group.every((r) => r.verified_at);
+          const busyKey = group[0].id;
+          return (
+            <div key={group.map((r) => r.id).join("+")} className="surface-card p-4">
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="grid h-9 w-9 place-items-center rounded-md bg-primary-soft text-primary">
+                  <Globe className="h-4 w-4" />
                 </div>
-                <div className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
-                  {r.verified_at ? (
-                    <>
-                      <CheckCircle2 className="h-3 w-3 text-success" /> Live · SSL {r.ssl_status}
-                    </>
-                  ) : (
-                    <>
-                      <AlertCircle className="h-3 w-3 text-warning" /> {r.ownership_status ?? "pending"} · SSL {r.ssl_status}
-                    </>
-                  )}
-                </div>
-              </div>
-              <button
-                onClick={() => check(r)}
-                disabled={busy === r.id}
-                className="inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs hover:bg-muted"
-              >
-                {busy === r.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />} Check status
-              </button>
-              {!r.is_primary && (
-                <button onClick={() => makePrimary(r)} className="rounded-md border px-2.5 py-1.5 text-xs hover:bg-muted">
-                  Make primary
-                </button>
-              )}
-              <button
-                onClick={() => setConfirm(r)}
-                className="rounded-md border p-1.5 text-muted-foreground hover:bg-muted"
-                aria-label="Remove domain"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
-            </div>
-
-            <div className="mt-3 rounded-md border bg-muted/30 p-3 text-xs">
-              <div className="mb-1.5 font-medium text-foreground/80">DNS record to add</div>
-              {(() => {
-                const rec = recordFor(r, guide);
-                return (
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="rounded bg-primary-soft px-1.5 py-0.5 font-mono font-semibold text-primary">{rec.type}</span>
-                    <span className="text-muted-foreground">Host</span>
-                    <CopyChip value={rec.host} />
-                    <span className="text-muted-foreground">→ Value</span>
-                    {rec.value ? (
-                      <CopyChip value={rec.value} />
+                <div className="min-w-[200px] flex-1">
+                  <div className="flex items-center gap-2 font-medium">
+                    {group[0].hostname}
+                    {group.length > 1 && <span className="text-xs font-normal text-muted-foreground">+ www</span>}
+                    {primaryRow.is_primary && <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] text-primary">Primary</span>}
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
+                      {group[0].mode === "dns" ? "Server DNS" : "Cloudflare"}
+                    </span>
+                  </div>
+                  <div className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
+                    {allVerified ? (
+                      <>
+                        <CheckCircle2 className="h-3 w-3 text-success" /> Live
+                      </>
                     ) : (
-                      <span className="italic text-muted-foreground">not set up yet — contact admin</span>
+                      <>
+                        <AlertCircle className="h-3 w-3 text-warning" /> {group.some((r) => r.verified_at) ? "Partially live" : "Pending"}
+                      </>
                     )}
                   </div>
-                );
-              })()}
-              <div className="mt-1.5 text-[11px] text-muted-foreground">
-                DNS can take 5–60 minutes to update. Then press “Check status”
-                {r.mode === "dns" ? " to verify." : " — SSL is issued automatically."}
+                </div>
+                <button
+                  onClick={() => checkGroup(group)}
+                  disabled={busy === busyKey}
+                  className="inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs hover:bg-muted"
+                >
+                  {busy === busyKey ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />} Check status
+                </button>
+                {!primaryRow.is_primary && (
+                  <button onClick={() => makePrimary(group)} className="rounded-md border px-2.5 py-1.5 text-xs hover:bg-muted">
+                    Make primary
+                  </button>
+                )}
+                <button
+                  onClick={() => setConfirmGroup(group)}
+                  className="rounded-md border p-1.5 text-muted-foreground hover:bg-muted"
+                  aria-label="Remove domain"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
               </div>
-            </div>
 
-            {r.verification_txt_name && !r.verified_at && (
-              <div className="mt-2 rounded-md bg-muted/50 p-3 text-xs">
-                <div className="mb-1.5 font-medium text-foreground/80">Ownership check pending — also add this TXT record</div>
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <span className="rounded bg-muted px-1.5 py-0.5 font-mono font-semibold">TXT</span>
-                  <span className="text-muted-foreground">Host</span>
-                  <CopyChip value={r.verification_txt_name} />
-                  <span className="text-muted-foreground">→ Value</span>
-                  <CopyChip value={r.verification_txt_value ?? ""} />
+              <div className="mt-3 space-y-2">
+                {group.map((r) => {
+                  const rec = recordFor(r, guide);
+                  return (
+                    <div key={r.id} className="rounded-md border bg-muted/30 p-3 text-xs">
+                      <div className="mb-1.5 flex items-center gap-1.5 font-medium text-foreground/80">
+                        {r.hostname}
+                        {r.verified_at ? (
+                          <CheckCircle2 className="h-3 w-3 text-success" />
+                        ) : (
+                          <AlertCircle className="h-3 w-3 text-warning" />
+                        )}
+                        <span className="font-normal text-muted-foreground">
+                          {r.verified_at ? "Live" : (r.ownership_status ?? "pending")} · SSL {r.ssl_status}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span className="rounded bg-primary-soft px-1.5 py-0.5 font-mono font-semibold text-primary">{rec.type}</span>
+                        <span className="text-muted-foreground">Host</span>
+                        <CopyChip value={rec.host} />
+                        <span className="text-muted-foreground">→ Value</span>
+                        {rec.value ? (
+                          <CopyChip value={rec.value} />
+                        ) : (
+                          <span className="italic text-muted-foreground">not set up yet — contact admin</span>
+                        )}
+                      </div>
+                      {r.verification_txt_name && !r.verified_at && (
+                        <div className="mt-1.5 flex flex-wrap items-center gap-1.5 border-t pt-1.5">
+                          <span className="rounded bg-muted px-1.5 py-0.5 font-mono font-semibold">TXT</span>
+                          <span className="text-muted-foreground">Host</span>
+                          <CopyChip value={r.verification_txt_name} />
+                          <span className="text-muted-foreground">→ Value</span>
+                          <CopyChip value={r.verification_txt_value ?? ""} />
+                        </div>
+                      )}
+                      {r.last_error && <div className="mt-1.5 text-[11px] text-destructive">{r.last_error}</div>}
+                    </div>
+                  );
+                })}
+                <div className="text-[11px] text-muted-foreground">
+                  DNS can take 5–60 minutes to update. Then press "Check status"
+                  {group[0].mode === "dns" ? " to verify." : " — SSL is issued automatically."}
                 </div>
               </div>
-            )}
-            {r.last_error && <div className="mt-2 text-[11px] text-destructive">{r.last_error}</div>}
-          </div>
-        ))}
+            </div>
+          );
+        })}
         {rows.length === 0 && <div className="rounded-lg border p-8 text-center text-sm text-muted-foreground">No custom domains yet.</div>}
       </div>
 
       <ConfirmModal
-        isOpen={!!confirm}
+        isOpen={!!confirmGroup}
         title="Remove this domain?"
         description="Your store will stop working on this domain and the SSL certificate will be deleted."
-        detail={confirm?.hostname}
+        detail={confirmGroup?.map((r) => r.hostname).join(", ")}
         confirmText="Remove"
-        isLoading={busy === confirm?.id}
-        onClose={() => setConfirm(null)}
+        isLoading={!!confirmGroup && busy === confirmGroup[0].id}
+        onClose={() => setConfirmGroup(null)}
         onConfirm={onDelete}
       />
     </div>
