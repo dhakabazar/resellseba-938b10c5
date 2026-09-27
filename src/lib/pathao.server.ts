@@ -35,6 +35,16 @@ async function issueToken(conf: Cfg, body: Record<string, unknown>): Promise<Tok
   return parsed as TokenBody;
 }
 
+// Pathao invalidates the previous access/refresh token the instant a new one is
+// issued for the same account. Bulk courier-status checks run several shipments
+// concurrently (see courier-recheck.functions.ts's worker pool); if the cached
+// token happens to be expired at that moment, every concurrent worker would
+// independently see "expired" and race to refresh it, and the "losing" workers'
+// tokens get invalidated mid-flight — they receive 401s that look permanent, so
+// those orders silently never get checked. A single in-flight promise makes every
+// concurrent caller await the *same* refresh instead of each starting their own.
+let pendingPathaoToken: Promise<string> | null = null;
+
 /**
  * Get a valid Pathao access token. The token (and refresh token) is persisted in
  * `courier_configs.config` so it is reused across requests; it is refreshed with
@@ -51,48 +61,68 @@ export async function pathaoAccessToken(db: any, conf: Cfg): Promise<string> {
   // keep a 5 minute safety window
   if (conf.access_token && expiresAt > Date.now() + 5 * 60 * 1000) return conf.access_token;
 
-  let token: TokenBody = {};
-  if (conf.refresh_token) {
-    token = await issueToken(conf, {
-      client_id,
-      client_secret,
-      grant_type: "refresh_token",
-      refresh_token: conf.refresh_token,
-    });
-  }
-  if (!token.access_token) {
-    token = await issueToken(conf, {
-      client_id,
-      client_secret,
-      grant_type: "password",
-      username,
-      password,
-    });
-  }
-  if (!token.access_token) throw new Response("Pathao auth failed", { status: 502 });
+  // Someone else (another concurrent worker in this same bulk check) is
+  // already refreshing — reuse that result instead of racing it.
+  if (pendingPathaoToken) return pendingPathaoToken;
 
-  const nextConfig: Cfg = {
-    ...conf,
-    access_token: token.access_token,
-    refresh_token: token.refresh_token ?? conf.refresh_token ?? "",
-    token_expires_at: String(Date.now() + Number(token.expires_in ?? 432000) * 1000),
-  };
-  // Persist the cached token through the permission-checked helper so staff
-  // without direct table access can still refresh it.
-  await patchCourierConfig(db, "pathao", {
-    access_token: nextConfig.access_token,
-    refresh_token: nextConfig.refresh_token,
-    token_expires_at: nextConfig.token_expires_at,
-  });
+  pendingPathaoToken = (async () => {
+    try {
+      let token: TokenBody = {};
+      if (conf.refresh_token) {
+        token = await issueToken(conf, {
+          client_id,
+          client_secret,
+          grant_type: "refresh_token",
+          refresh_token: conf.refresh_token,
+        });
+      }
+      if (!token.access_token) {
+        token = await issueToken(conf, {
+          client_id,
+          client_secret,
+          grant_type: "password",
+          username,
+          password,
+        });
+      }
+      if (!token.access_token) throw new Response("Pathao auth failed", { status: 502 });
 
-  // mutate the in-memory copy so later calls in the same request reuse it
-  conf.access_token = nextConfig.access_token!;
-  conf.refresh_token = nextConfig.refresh_token!;
-  conf.token_expires_at = nextConfig.token_expires_at!;
-  return token.access_token;
+      const nextConfig: Cfg = {
+        ...conf,
+        access_token: token.access_token,
+        refresh_token: token.refresh_token ?? conf.refresh_token ?? "",
+        token_expires_at: String(Date.now() + Number(token.expires_in ?? 432000) * 1000),
+      };
+      // Persist the cached token through the permission-checked helper so staff
+      // without direct table access can still refresh it.
+      await patchCourierConfig(db, "pathao", {
+        access_token: nextConfig.access_token,
+        refresh_token: nextConfig.refresh_token,
+        token_expires_at: nextConfig.token_expires_at,
+      });
+
+      // mutate the in-memory copy so later calls in the same request reuse it
+      conf.access_token = nextConfig.access_token!;
+      conf.refresh_token = nextConfig.refresh_token!;
+      conf.token_expires_at = nextConfig.token_expires_at!;
+      return token.access_token!;
+    } finally {
+      // Clear once settled (success or failure) so a later, genuinely-expired
+      // token can trigger a fresh refresh instead of reusing a dead promise.
+      pendingPathaoToken = null;
+    }
+  })();
+
+  return pendingPathaoToken;
 }
 
-export async function pathaoRequest(db: any, conf: Cfg, path: string, init?: RequestInit) {
+export async function pathaoRequest(
+  db: any,
+  conf: Cfg,
+  path: string,
+  init?: RequestInit,
+  retried = false,
+): Promise<any> {
   const token = await pathaoAccessToken(db, conf);
   const res = await fetch(`${pathaoBase(conf)}${path}`, {
     ...init,
@@ -112,6 +142,14 @@ export async function pathaoRequest(db: any, conf: Cfg, path: string, init?: Req
     body = { raw: text };
   }
   if (!res.ok) {
+    // A locally "valid" token can still be rejected — e.g. it was invalidated
+    // by a concurrent refresh elsewhere, or clock drift on our safety window.
+    // Force one fresh token and retry once before giving up as a real failure.
+    if (res.status === 401 && !retried) {
+      conf.access_token = "";
+      conf.token_expires_at = "0";
+      return pathaoRequest(db, conf, path, init, true);
+    }
     console.error(`Pathao ${path} failed [${res.status}]: ${text}`);
     const errors = body?.errors ? ` ${JSON.stringify(body.errors)}` : "";
     throw new Response(`${body?.message || `Pathao request failed (${res.status})`}${errors}`, {
