@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { PageHeader } from "@/components/ui-kit";
 import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
-import { Globe, Loader2, Plus, Trash2, CheckCircle2, AlertCircle, RefreshCw, Copy } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Globe2, Loader2, Plus, Trash2, CheckCircle2, AlertCircle, RefreshCw, Copy, ArrowRight, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { dnsHostLabel, isApexHostname, groupDomainRows } from "@/lib/hostname-utils";
 import {
@@ -11,13 +12,23 @@ import {
   connectDomain,
   refreshDomain,
   setPrimaryDomain,
-  disconnectDomain,
+  disconnectDomainGroup,
   getDnsGuide,
   type DomainRow,
   type DnsGuide,
 } from "@/lib/cloudflare.functions";
 
 export const Route = createFileRoute("/_authenticated/reseller/domain")({
+  head: () => ({
+    meta: [
+      { title: "Custom Domain | Ecom Seller BD" },
+      { name: "description", content: "Connect and manage your reseller store's custom domain and SSL status." },
+      { property: "og:title", content: "Custom Domain | Ecom Seller BD" },
+      { property: "og:description", content: "Connect and manage your reseller store's custom domain and SSL status." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: DomainPage,
 });
 
@@ -43,16 +54,18 @@ function errorText(err: unknown) {
 
 function CopyChip({ value }: { value: string }) {
   return (
-    <button
+    <Button
       type="button"
+      variant="ghost"
+      size="sm"
       onClick={() => {
         navigator.clipboard.writeText(value);
         toast.success("Copied");
       }}
-      className="inline-flex items-center gap-1 rounded bg-muted px-1.5 py-0.5 text-xs font-mono hover:bg-muted/70"
+      className="h-7 max-w-full gap-1.5 bg-muted px-2 font-mono text-[11px]"
     >
-      {value} <Copy className="h-3 w-3" />
-    </button>
+      <span className="truncate">{value}</span><Copy className="h-3 w-3" />
+    </Button>
   );
 }
 
@@ -74,7 +87,7 @@ function DomainPage() {
   const connect = useServerFn(connectDomain);
   const refresh = useServerFn(refreshDomain);
   const makePrimaryFn = useServerFn(setPrimaryDomain);
-  const remove = useServerFn(disconnectDomain);
+  const removeGroup = useServerFn(disconnectDomainGroup);
 
   const [rows, setRows] = useState<DomainRow[]>([]);
   const [guide, setGuide] = useState<DnsGuide | null>(null);
@@ -180,13 +193,16 @@ function DomainPage() {
     const busyKey = confirmGroup[0].id;
     setBusy(busyKey);
     try {
-      const settled = await Promise.allSettled(ids.map((id) => remove({ data: { id } })));
-      const removedIds = new Set(ids.filter((_, i) => settled[i].status === "fulfilled"));
+      const result = await removeGroup({ data: { id: ids[0] } });
+      const removedIds = new Set(result.removedIds);
       setRows((rs) => rs.filter((r) => !removedIds.has(r.id)));
-      const failed = settled.filter((s) => s.status === "rejected").length;
-      if (failed > 0) toast.error(`${failed} টা রেকর্ড সরানো যায়নি`);
-      else toast.success("ডোমেইন সরানো হয়েছে");
-      setConfirmGroup(null);
+      if (result.failures.length > 0) {
+        toast.error(`${result.failures.length}টি Cloudflare রেকর্ড সরানো যায়নি — আবার চেষ্টা করুন`);
+        await reload();
+      } else {
+        toast.success("ডোমেইন ও www Cloudflare থেকে সরানো হয়েছে");
+        setConfirmGroup(null);
+      }
     } catch (err) {
       toast.error(errorText(err));
     } finally {
@@ -205,8 +221,8 @@ function DomainPage() {
   const both = !!guide?.cfReady && !!guide?.dnsReady;
 
   return (
-    <div>
-      <PageHeader title="Custom domain" description="Connect your own domain (e.g. shop.brand.com). Free SSL is issued automatically after DNS points to us." />
+    <div className="mx-auto max-w-5xl">
+      <PageHeader title="Custom domain" description="নিজের ডোমেইনে স্টোর চালু করুন। মূল ডোমেইন ও www একসাথে পরিচালিত হবে।" />
 
       {!guide?.active && (
         <div className="mb-5 rounded-lg border border-warning/40 bg-warning/10 p-4 text-sm">
@@ -214,44 +230,51 @@ function DomainPage() {
         </div>
       )}
 
-      <form onSubmit={add} className="surface-card mb-5 space-y-3 p-4">
+      <form onSubmit={add} className="surface-card mb-6 overflow-hidden">
+        <div className="border-b bg-muted/30 px-4 py-3 sm:px-5">
+          <div className="flex items-center gap-2 text-sm font-semibold"><Globe2 className="h-4 w-4 text-primary" /> নতুন ডোমেইন যুক্ত করুন</div>
+          <p className="mt-1 text-xs text-muted-foreground">abc.com লিখলে www.abc.com-ও একই সাথে যুক্ত হবে।</p>
+        </div>
+        <div className="space-y-4 p-4 sm:p-5">
         {both && (
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-2 gap-2 rounded-md bg-muted/50 p-1">
             {([
               { key: "cloudflare", label: "Cloudflare (auto SSL)" },
               { key: "dns", label: "Server DNS" },
             ] as const).map((o) => (
-              <button
+              <Button
                 type="button"
+                variant="ghost"
                 key={o.key}
                 onClick={() => setMode(o.key)}
-                className={`rounded-md border px-3 py-1.5 text-xs font-medium transition ${
-                  mode === o.key ? "border-primary bg-primary-soft text-primary" : "hover:bg-muted"
+                className={`h-8 text-xs ${
+                  mode === o.key ? "bg-background text-primary shadow-sm hover:bg-background" : "text-muted-foreground"
                 }`}
               >
                 {o.label}
-              </button>
+              </Button>
             ))}
           </div>
         )}
-      <div className="flex flex-wrap items-end gap-2">
-        <div className="min-w-[220px] flex-1">
-          <label className="mb-1 block text-xs font-medium">Hostname</label>
+       <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+         <div>
+           <label className="mb-1.5 block text-xs font-semibold">Domain name</label>
           <input
             required
             value={hostname}
             onChange={(e) => setHostname(e.target.value)}
-            className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-            placeholder="shop.yourbrand.com"
+             className="h-10 w-full rounded-md border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+             placeholder="yourbrand.com"
           />
         </div>
-        <button
+         <Button
           disabled={busy === "add" || !guide?.active}
-          className="btn-brand inline-flex items-center gap-1.5 rounded-md px-4 py-2 text-sm font-medium disabled:opacity-60"
+           className="h-10 px-5"
         >
           {busy === "add" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />} Connect
-        </button>
+         </Button>
       </div>
+       </div>
       </form>
 
       <div className="grid gap-3">
@@ -260,99 +283,104 @@ function DomainPage() {
           const allVerified = group.every((r) => r.verified_at);
           const busyKey = group[0].id;
           return (
-            <div key={group.map((r) => r.id).join("+")} className="surface-card p-4">
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="grid h-9 w-9 place-items-center rounded-md bg-primary-soft text-primary">
-                  <Globe className="h-4 w-4" />
+            <article key={group.map((r) => r.id).join("+")} className="surface-card overflow-hidden">
+              <div className="flex flex-col gap-4 border-b p-4 sm:flex-row sm:items-center sm:p-5">
+                <div className="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-primary-soft text-primary">
+                  <Globe2 className="h-5 w-5" />
                 </div>
-                <div className="min-w-[200px] flex-1">
-                  <div className="flex items-center gap-2 font-medium">
-                    {group[0].hostname}
-                    {group.length > 1 && <span className="text-xs font-normal text-muted-foreground">+ www</span>}
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2 font-semibold">
+                    <span className="break-all">{group[0].hostname.replace(/^www\./, "")}</span>
+                    {group.length > 1 && <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">সাথে www</span>}
                     {primaryRow.is_primary && <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] text-primary">Primary</span>}
-                    <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
-                      {group[0].mode === "dns" ? "Server DNS" : "Cloudflare"}
-                    </span>
                   </div>
-                  <div className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
+                  <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                    <span>{group[0].mode === "dns" ? "Server DNS" : "Cloudflare"}</span><span>·</span>
                     {allVerified ? (
-                      <>
-                        <CheckCircle2 className="h-3 w-3 text-success" /> Live
-                      </>
+                      <span className="inline-flex items-center gap-1 text-success"><CheckCircle2 className="h-3 w-3" /> Live</span>
                     ) : (
-                      <>
-                        <AlertCircle className="h-3 w-3 text-warning" /> {group.some((r) => r.verified_at) ? "Partially live" : "Pending"}
-                      </>
+                      <span className="inline-flex items-center gap-1 text-warning"><AlertCircle className="h-3 w-3" /> {group.some((r) => r.verified_at) ? "Partially live" : "Pending"}</span>
                     )}
                   </div>
                 </div>
-                <button
+                <div className="flex flex-wrap gap-2 sm:justify-end">
+                <Button
+                  type="button"
                   onClick={() => checkGroup(group)}
                   disabled={busy === busyKey}
-                  className="inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs hover:bg-muted"
+                  variant="outline"
+                  size="sm"
                 >
                   {busy === busyKey ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />} Check status
-                </button>
+                </Button>
                 {!primaryRow.is_primary && (
-                  <button onClick={() => makePrimary(group)} className="rounded-md border px-2.5 py-1.5 text-xs hover:bg-muted">
+                  <Button type="button" variant="outline" size="sm" onClick={() => makePrimary(group)}>
                     Make primary
-                  </button>
+                  </Button>
                 )}
-                <button
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
                   onClick={() => setConfirmGroup(group)}
-                  className="rounded-md border p-1.5 text-muted-foreground hover:bg-muted"
+                  className="h-8 w-8 text-destructive hover:text-destructive"
                   aria-label="Remove domain"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
-                </button>
+                </Button>
+                </div>
               </div>
 
-              <div className="mt-3 space-y-2">
+              <div className="p-4 sm:p-5">
+                <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase text-muted-foreground"><ShieldCheck className="h-3.5 w-3.5" /> DNS records</div>
+                <div className="overflow-hidden rounded-md border">
+                  <div className="hidden grid-cols-[minmax(130px,1fr)_70px_90px_minmax(170px,1.4fr)] gap-3 border-b bg-muted/40 px-3 py-2 text-[10px] font-semibold uppercase text-muted-foreground sm:grid">
+                    <span>Domain</span><span>Type</span><span>Host</span><span>Value</span>
+                  </div>
                 {group.map((r) => {
                   const rec = recordFor(r, guide);
                   return (
-                    <div key={r.id} className="rounded-md border bg-muted/30 p-3 text-xs">
-                      <div className="mb-1.5 flex items-center gap-1.5 font-medium text-foreground/80">
-                        {r.hostname}
+                    <div key={r.id} className="grid gap-2 border-b p-3 text-xs last:border-b-0 sm:grid-cols-[minmax(130px,1fr)_70px_90px_minmax(170px,1.4fr)] sm:items-center sm:gap-3">
+                      <div className="flex min-w-0 items-center gap-1.5 font-medium">
                         {r.verified_at ? (
                           <CheckCircle2 className="h-3 w-3 text-success" />
                         ) : (
                           <AlertCircle className="h-3 w-3 text-warning" />
                         )}
-                        <span className="font-normal text-muted-foreground">
-                          {r.verified_at ? "Live" : (r.ownership_status ?? "pending")} · SSL {r.ssl_status}
-                        </span>
+                        <span className="truncate">{r.hostname}</span>
                       </div>
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        <span className="rounded bg-primary-soft px-1.5 py-0.5 font-mono font-semibold text-primary">{rec.type}</span>
-                        <span className="text-muted-foreground">Host</span>
-                        <CopyChip value={rec.host} />
-                        <span className="text-muted-foreground">→ Value</span>
+                      <span className="w-fit rounded bg-primary-soft px-1.5 py-0.5 font-mono font-semibold text-primary">{rec.type}</span>
+                      <CopyChip value={rec.host} />
+                      <div className="min-w-0">
                         {rec.value ? (
                           <CopyChip value={rec.value} />
                         ) : (
                           <span className="italic text-muted-foreground">not set up yet — contact admin</span>
                         )}
                       </div>
+                      <div className="col-span-full flex flex-wrap items-center gap-1 text-[10px] text-muted-foreground">
+                        <span>{r.verified_at ? "Live" : (r.ownership_status ?? "pending")}</span><span>·</span><span>SSL {r.ssl_status}</span>
+                      </div>
                       {r.verification_txt_name && !r.verified_at && (
-                        <div className="mt-1.5 flex flex-wrap items-center gap-1.5 border-t pt-1.5">
+                        <div className="col-span-full flex flex-wrap items-center gap-1.5 rounded bg-muted/40 p-2">
                           <span className="rounded bg-muted px-1.5 py-0.5 font-mono font-semibold">TXT</span>
                           <span className="text-muted-foreground">Host</span>
                           <CopyChip value={r.verification_txt_name} />
-                          <span className="text-muted-foreground">→ Value</span>
+                          <ArrowRight className="h-3 w-3 text-muted-foreground" />
                           <CopyChip value={r.verification_txt_value ?? ""} />
                         </div>
                       )}
-                      {r.last_error && <div className="mt-1.5 text-[11px] text-destructive">{r.last_error}</div>}
+                      {r.last_error && <div className="col-span-full text-[11px] text-destructive">{r.last_error}</div>}
                     </div>
                   );
                 })}
+                </div>
                 <div className="text-[11px] text-muted-foreground">
                   DNS can take 5–60 minutes to update. Then press "Check status"
                   {group[0].mode === "dns" ? " to verify." : " — SSL is issued automatically."}
                 </div>
               </div>
-            </div>
+            </article>
           );
         })}
         {rows.length === 0 && <div className="rounded-lg border p-8 text-center text-sm text-muted-foreground">No custom domains yet.</div>}
@@ -361,7 +389,7 @@ function DomainPage() {
       <ConfirmModal
         isOpen={!!confirmGroup}
         title="Remove this domain?"
-        description="Your store will stop working on this domain and the SSL certificate will be deleted."
+        description="মূল ডোমেইন ও www—দুটিই Cloudflare থেকে সরানো হবে এবং স্টোর এই ঠিকানায় বন্ধ হবে।"
         detail={confirmGroup?.map((r) => r.hostname).join(", ")}
         confirmText="Remove"
         isLoading={!!confirmGroup && busy === confirmGroup[0].id}
