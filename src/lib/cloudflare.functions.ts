@@ -219,6 +219,8 @@ async function tryAutoWww(
   const { isApexHostname } = await import("@/lib/hostname-utils");
   if (!isApexHostname(apexHostname)) return;
   const wwwHost = `www.${apexHostname}`;
+  let createdHostnameId: string | null = null;
+  let createdWorkerDomainId: string | null = null;
   try {
     const { data: dupe } = await db.from("reseller_domains").select("id").eq("hostname", wwwHost).maybeSingle();
     if (dupe) return;
@@ -239,13 +241,15 @@ async function tryAutoWww(
     }
 
     const state = await cf.createCustomHostname(conf, wwwHost);
+    createdHostnameId = state.id;
     let workerDomainId: string | null = null;
     try {
       workerDomainId = await cf.attachWorkerDomain(conf, wwwHost);
+      createdWorkerDomainId = workerDomainId;
     } catch (err) {
       console.error("worker domain attach failed (auto www)", err);
     }
-    await db.from("reseller_domains").insert({
+    const { error } = await db.from("reseller_domains").insert({
       reseller_id: resellerId,
       hostname: wwwHost,
       mode: "cloudflare",
@@ -261,11 +265,23 @@ async function tryAutoWww(
       last_checked_at: new Date().toISOString(),
       last_error: null,
     });
+    if (error) throw new Error(error.message);
   } catch (err) {
-    // Apex connect must still succeed even if the www counterpart could not
-    // be auto-added (e.g. already taken by someone else) — reseller can add
-    // it manually the same way as any other hostname.
-    console.error("auto www provisioning failed", err);
+    if (createdWorkerDomainId) {
+      try {
+        await cf.detachWorkerDomain(conf, createdWorkerDomainId);
+      } catch (cleanupError) {
+        console.error("auto www worker cleanup failed", cleanupError);
+      }
+    }
+    if (createdHostnameId) {
+      try {
+        await cf.deleteCustomHostname(conf, createdHostnameId);
+      } catch (cleanupError) {
+        console.error("auto www hostname cleanup failed", cleanupError);
+      }
+    }
+    throw err;
   }
 }
 
@@ -323,7 +339,12 @@ export const connectDomain = createServerFn({ method: "POST" })
         const dup = (error as any).code === "23505";
         throw new Response(dup ? "This domain is already connected" : error.message, { status: 400 });
       }
-      await tryAutoWww(cf, db, resellerId, hostname, "dns", conf);
+      try {
+        await tryAutoWww(cf, db, resellerId, hostname, "dns", conf);
+      } catch (err) {
+        await db.from("reseller_domains").delete().eq("id", row.id);
+        throw err;
+      }
       return mapRow(row);
     }
 
@@ -361,7 +382,24 @@ export const connectDomain = createServerFn({ method: "POST" })
       const dup = (error as any).code === "23505";
       throw new Response(dup ? "This domain is already connected" : error.message, { status: 400 });
     }
-    await tryAutoWww(cf, db, resellerId, hostname, "cloudflare", conf);
+    try {
+      await tryAutoWww(cf, db, resellerId, hostname, "cloudflare", conf);
+    } catch (err) {
+      if (workerDomainId) {
+        try {
+          await cf.detachWorkerDomain(conf, workerDomainId);
+        } catch (cleanupError) {
+          console.error("apex worker cleanup failed", cleanupError);
+        }
+      }
+      try {
+        await cf.deleteCustomHostname(conf, state.id);
+      } catch (cleanupError) {
+        console.error("apex hostname cleanup failed", cleanupError);
+      }
+      await db.from("reseller_domains").delete().eq("id", row.id);
+      throw err;
+    }
     return mapRow(row);
   });
 
@@ -446,6 +484,16 @@ export const setPrimaryDomain = createServerFn({ method: "POST" })
   });
 
 /** Remove the domain from Cloudflare (hostname + worker domain) and from the DB. */
+async function removeDomainRow(cf: typeof import("@/lib/cloudflare.server"), db: any, conf: any, row: any) {
+  if (row.mode !== "dns" && conf.api_token && conf.zone_id && row.cloudflare_hostname_id)
+    await cf.deleteCustomHostname(conf, row.cloudflare_hostname_id);
+  if (row.mode !== "dns" && conf.api_token && row.worker_domain_id)
+    await cf.detachWorkerDomain(conf, row.worker_domain_id);
+
+  const { error } = await db.from("reseller_domains").delete().eq("id", row.id);
+  if (error) throw new Response(error.message, { status: 400 });
+}
+
 export const disconnectDomain = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
@@ -455,13 +503,7 @@ export const disconnectDomain = createServerFn({ method: "POST" })
     const row = await loadDomainForCaller({ supabase: context.supabase, userId: context.userId }, data.id);
     const conf = await cf.loadConfigFlexible(db);
 
-    if (row.mode !== "dns" && conf.api_token && conf.zone_id && row.cloudflare_hostname_id)
-      await cf.deleteCustomHostname(conf, row.cloudflare_hostname_id);
-    if (row.mode !== "dns" && conf.api_token && row.worker_domain_id)
-      await cf.detachWorkerDomain(conf, row.worker_domain_id);
-
-    const { error } = await db.from("reseller_domains").delete().eq("id", row.id);
-    if (error) throw new Response(error.message, { status: 400 });
+    await removeDomainRow(cf, db, conf, row);
 
     // Keep exactly one primary domain per store.
     const { data: rest } = await db
@@ -472,6 +514,51 @@ export const disconnectDomain = createServerFn({ method: "POST" })
     if ((rest ?? []).length > 0 && !(rest ?? []).some((r: any) => r.is_primary))
       await db.from("reseller_domains").update({ is_primary: true }).eq("id", rest![0].id);
     return { ok: true };
+  });
+
+/** Remove an apex + www pair as one user action, keeping failed rows retryable. */
+export const disconnectDomainGroup = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }): Promise<{ removedIds: string[]; failures: string[] }> => {
+    const cf = await import("@/lib/cloudflare.server");
+    const { domainGroupKey } = await import("@/lib/hostname-utils");
+    const ctx = { supabase: context.supabase, userId: context.userId };
+    const db = context.supabase;
+    const selected = await loadDomainForCaller(ctx, data.id);
+    const resellerId = await resolveReseller(ctx, selected.reseller_id);
+    const { data: allRows, error: listError } = await db
+      .from("reseller_domains")
+      .select("*")
+      .eq("reseller_id", resellerId)
+      .order("created_at");
+    if (listError) throw new Response(listError.message, { status: 400 });
+
+    const key = domainGroupKey(selected.hostname);
+    const group = (allRows ?? []).filter((row: any) => domainGroupKey(row.hostname) === key);
+    const conf = await cf.loadConfigFlexible(db);
+    const removedIds: string[] = [];
+    const failures: string[] = [];
+
+    for (const row of group) {
+      try {
+        await removeDomainRow(cf, db, conf, row);
+        removedIds.push(row.id);
+      } catch (err) {
+        const detail = err instanceof Response ? await err.clone().text() : err instanceof Error ? err.message : String(err);
+        failures.push(`${row.hostname}: ${detail || "remove failed"}`);
+      }
+    }
+
+    const { data: rest } = await db
+      .from("reseller_domains")
+      .select("id, is_primary")
+      .eq("reseller_id", resellerId)
+      .order("created_at");
+    if ((rest ?? []).length > 0 && !(rest ?? []).some((row: any) => row.is_primary))
+      await db.from("reseller_domains").update({ is_primary: true }).eq("id", rest?.[0]?.id);
+
+    return { removedIds, failures };
   });
 
 /* --------------------------------------------- platform domains (payment redirects) */
