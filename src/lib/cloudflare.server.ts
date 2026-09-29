@@ -251,6 +251,7 @@ export async function verifyToken(c: CfConfig) {
 
 export type HostnameState = {
   id: string;
+  created: boolean;
   sslStatus: string;
   ownershipStatus: string;
   dnsTarget: string;
@@ -259,11 +260,12 @@ export type HostnameState = {
   active: boolean;
 };
 
-function readHostname(c: CfConfig, r: any): HostnameState {
+function readHostname(c: CfConfig, r: any, created = false): HostnameState {
   const ssl = r?.ssl ?? {};
   const ov = r?.ownership_verification ?? {};
   return {
     id: String(r?.id ?? ""),
+    created,
     sslStatus: String(ssl?.status ?? "pending"),
     ownershipStatus: String(r?.status ?? "pending"),
     dnsTarget: c.cname_target || c.zone_name || "",
@@ -276,7 +278,7 @@ function readHostname(c: CfConfig, r: any): HostnameState {
 export async function createCustomHostname(c: CfConfig, hostname: string): Promise<HostnameState> {
   // Re-use an existing hostname entry when Cloudflare already knows this domain.
   const existing = await cf(c, `/zones/${c.zone_id}/custom_hostnames?hostname=${encodeURIComponent(hostname)}`);
-  if (Array.isArray(existing) && existing.length > 0) return readHostname(c, existing[0]);
+  if (Array.isArray(existing) && existing.length > 0) return readHostname(c, existing[0], false);
 
   const result = await cf(c, `/zones/${c.zone_id}/custom_hostnames`, {
     method: "POST",
@@ -285,7 +287,7 @@ export async function createCustomHostname(c: CfConfig, hostname: string): Promi
       ssl: { method: "http", type: "dv", settings: { min_tls_version: "1.2" }, wildcard: false },
     }),
   });
-  return readHostname(c, result);
+  return readHostname(c, result, true);
 }
 
 export async function getCustomHostname(c: CfConfig, id: string): Promise<HostnameState> {

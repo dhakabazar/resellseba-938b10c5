@@ -241,7 +241,7 @@ async function tryAutoWww(
     }
 
     const state = await cf.createCustomHostname(conf, wwwHost);
-    createdHostnameId = state.id;
+    createdHostnameId = state.created ? state.id : null;
     let workerDomainId: string | null = null;
     try {
       workerDomainId = await cf.attachWorkerDomain(conf, wwwHost);
@@ -378,7 +378,14 @@ export const connectDomain = createServerFn({ method: "POST" })
       .select("*")
       .single();
     if (error) {
-      await cf.deleteCustomHostname(conf, state.id);
+      if (workerDomainId) {
+        try {
+          await cf.detachWorkerDomain(conf, workerDomainId);
+        } catch (cleanupError) {
+          console.error("worker cleanup after insert failure failed", cleanupError);
+        }
+      }
+      if (state.created) await cf.deleteCustomHostname(conf, state.id);
       const dup = (error as any).code === "23505";
       throw new Response(dup ? "This domain is already connected" : error.message, { status: 400 });
     }
@@ -393,7 +400,7 @@ export const connectDomain = createServerFn({ method: "POST" })
         }
       }
       try {
-        await cf.deleteCustomHostname(conf, state.id);
+        if (state.created) await cf.deleteCustomHostname(conf, state.id);
       } catch (cleanupError) {
         console.error("apex hostname cleanup failed", cleanupError);
       }
