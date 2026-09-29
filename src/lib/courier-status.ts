@@ -208,18 +208,36 @@ export function courierStatusLabel(raw: string | null | undefined, provider?: st
 
 /**
  * Automatic status flow guard.
- *  · Courier Handover / To Courier  →  To Courier
- *  · Courier Handover / To Courier  →  Delivered | Pending Partial | Pending Return
- * Anything else stays where it is — those steps are manual only.
+ * Once a parcel is booked with a courier, the order does not need to sit in
+ * Courier Handover for the courier events to move it. Any pre-delivery status
+ * (new / send to admin / confirmed / packaging / handover / to courier) can
+ * jump straight to To Courier · Delivered · Pending Partial · Pending Return —
+ * so a skipped middle step never leaves the order stuck.
+ * Settled states (partial family, returned, damaged, cancelled) stay manual.
  */
-const AUTO_FROM_STATUSES: string[] = ["ready_to_ship", "processing", "shipped"];
+const AUTO_FROM_STATUSES: string[] = [
+  "draft",
+  "pending",
+  "forwarded",
+  "confirmed",
+  "packaging",
+  "ready_to_ship",
+  "processing",
+  "shipped",
+  "pending_return",
+  "pending_partial",
+];
 
 export function canAutoApplyStatus(current: string, target: OrderStatus | null): boolean {
   if (!target) return false;
   if (current === target) return false;
   if (!AUTO_FROM_STATUSES.includes(current)) return false;
+  // Pending Partial / Pending Return are already courier end-states — they only
+  // move on to a real delivery/partial result, never back to To Courier.
+  if ((current === "pending_partial" || current === "pending_return") && target === "shipped") return false;
   return ["shipped", "delivered", "pending_partial", "pending_return"].includes(target);
 }
+
 
 /** Rider-assignment phase (Rider Followup). */
 export function isRiderCourierStatus(provider: string | null | undefined, raw: string | null | undefined) {
