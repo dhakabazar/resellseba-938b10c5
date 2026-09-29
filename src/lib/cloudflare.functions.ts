@@ -205,9 +205,8 @@ export const listDomains = createServerFn({ method: "GET" })
     return rows.map((r: any) => mapRow(r, byId.get(r.reseller_id)));
   });
 
-/** Best-effort: when connecting a bare apex domain, also provision "www." for
- * it, so a reseller who adds "abc.com" doesn't end up with a broken
- * www.abc.com. Failure here must never fail the apex connect that triggered it. */
+/** When connecting a bare apex domain, provision "www." as the second half of
+ * the same user-facing domain pair. Either both rows succeed or both are cleaned up. */
 async function tryAutoWww(
   cf: typeof import("@/lib/cloudflare.server"),
   db: any,
@@ -226,7 +225,7 @@ async function tryAutoWww(
     if (dupe) return;
 
     if (mode === "dns") {
-      await db.from("reseller_domains").insert({
+      const { error } = await db.from("reseller_domains").insert({
         reseller_id: resellerId,
         hostname: wwwHost,
         mode: "dns",
@@ -237,11 +236,12 @@ async function tryAutoWww(
         last_checked_at: new Date().toISOString(),
         last_error: null,
       });
+      if (error) throw new Error(error.message);
       return;
     }
 
     const state = await cf.createCustomHostname(conf, wwwHost);
-    createdHostnameId = state.id;
+    createdHostnameId = state.created ? state.id : null;
     let workerDomainId: string | null = null;
     try {
       workerDomainId = await cf.attachWorkerDomain(conf, wwwHost);
@@ -378,7 +378,14 @@ export const connectDomain = createServerFn({ method: "POST" })
       .select("*")
       .single();
     if (error) {
-      await cf.deleteCustomHostname(conf, state.id);
+      if (workerDomainId) {
+        try {
+          await cf.detachWorkerDomain(conf, workerDomainId);
+        } catch (cleanupError) {
+          console.error("worker cleanup after insert failure failed", cleanupError);
+        }
+      }
+      if (state.created) await cf.deleteCustomHostname(conf, state.id);
       const dup = (error as any).code === "23505";
       throw new Response(dup ? "This domain is already connected" : error.message, { status: 400 });
     }
@@ -393,7 +400,7 @@ export const connectDomain = createServerFn({ method: "POST" })
         }
       }
       try {
-        await cf.deleteCustomHostname(conf, state.id);
+        if (state.created) await cf.deleteCustomHostname(conf, state.id);
       } catch (cleanupError) {
         console.error("apex hostname cleanup failed", cleanupError);
       }
@@ -555,8 +562,9 @@ export const disconnectDomainGroup = createServerFn({ method: "POST" })
       .select("id, is_primary")
       .eq("reseller_id", resellerId)
       .order("created_at");
-    if ((rest ?? []).length > 0 && !(rest ?? []).some((row: any) => row.is_primary))
-      await db.from("reseller_domains").update({ is_primary: true }).eq("id", rest?.[0]?.id);
+    const firstRemaining = rest?.[0];
+    if (firstRemaining && !(rest ?? []).some((row: any) => row.is_primary))
+      await db.from("reseller_domains").update({ is_primary: true }).eq("id", firstRemaining.id);
 
     return { removedIds, failures };
   });
