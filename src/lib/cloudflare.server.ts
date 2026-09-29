@@ -212,7 +212,8 @@ async function cf(c: CfConfig, path: string, init?: RequestInit) {
       body?.error ||
       `Cloudflare request failed (${res.status})`;
     console.error(`Cloudflare ${path} failed [${res.status}]: ${text.slice(0, 500)}`);
-    throw new Response(msg, { status: 502 });
+    const status = res.status >= 400 && res.status <= 599 ? res.status : 502;
+    throw new Response(msg, { status });
   }
   return body?.result ?? body;
 }
@@ -296,8 +297,10 @@ export async function deleteCustomHostname(c: CfConfig, id: string) {
   try {
     await cf(c, `/zones/${c.zone_id}/custom_hostnames/${id}`, { method: "DELETE" });
   } catch (err) {
-    // A hostname deleted on Cloudflare's side must not block removal in our DB.
-    console.error("Cloudflare hostname delete failed", err);
+    // A record that is already gone is the desired end state. Other failures
+    // must remain visible so the DB row is retained and cleanup can be retried.
+    if (err instanceof Response && err.status === 404) return;
+    throw err;
   }
 }
 
@@ -317,6 +320,7 @@ export async function detachWorkerDomain(c: CfConfig, id: string) {
   try {
     await cf(c, `/accounts/${c.account_id}/workers/domains/${id}`, { method: "DELETE" });
   } catch (err) {
-    console.error("Cloudflare worker domain delete failed", err);
+    if (err instanceof Response && err.status === 404) return;
+    throw err;
   }
 }
