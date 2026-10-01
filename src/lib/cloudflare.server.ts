@@ -334,14 +334,13 @@ export async function detachWorkerDomain(c: CfConfig, id: string) {
 
 /**
  * Automatically create or sync a Cloudflare Worker Route for a domain.
- * Pattern: `hostname/*` pointing to script `c.worker_name`
+ * Pattern: `hostname/*` pointing to script `c.worker_name || 'saas-proxy'`
  */
 export async function createWorkerRoute(c: CfConfig, hostname: string): Promise<string | null> {
-  const isAutoEnabled = Boolean(c.auto_worker_routes ?? c.auto_worker_domain);
-  if (!isAutoEnabled || !c.zone_id || !c.worker_name || !c.api_token) return null;
+  if (!c.zone_id || !c.api_token) return null;
 
   const pattern = `${hostname}/*`;
-  const scriptName = c.worker_name.trim();
+  const scriptName = (c.worker_name && c.worker_name.trim()) || "saas-proxy";
 
   // Check if a route already exists for this pattern
   try {

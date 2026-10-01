@@ -65,8 +65,8 @@ const EMPTY: Form = {
   worker_name: "",
   cname_target: "",
   a_record_ip: "",
-  auto_worker_domain: false,
-  is_active: false,
+  auto_worker_domain: true,
+  is_active: true,
 };
 
 function errorText(err: unknown) {
