@@ -533,11 +533,18 @@ function DomainPage() {
                 </div>
 
                 {/* Compact Helpful Hint */}
-                <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-muted/30 p-2.5 text-[11px] text-muted-foreground">
-                  <Info className="h-4 w-4 shrink-0 text-primary" />
-                  <span>
-                    আপনার ডোমেইন প্যানেলে (Namecheap / GoDaddy / cPanel) DNS Management এ গিয়ে <strong>@</strong> এর জন্য <strong>A Record</strong> এবং <strong>www</strong> এর জন্য <strong>CNAME</strong> বসান। ৫-১৫ মিনিট পর উপরে <strong>"Check status"</strong> বাটনে চাপুন।
-                  </span>
+                <div className="space-y-1.5 rounded-lg border border-border/60 bg-muted/30 p-3 text-[11px] text-muted-foreground">
+                  <div className="flex items-start gap-2">
+                    <Info className="h-4 w-4 shrink-0 text-primary mt-0.5" />
+                    <span>
+                      আপনার ডোমেইন প্যানেলে (Namecheap / GoDaddy / cPanel) DNS Management এ গিয়ে <strong>@</strong> এর জন্য <strong>A Record</strong> এবং <strong>www</strong> এর জন্য <strong>CNAME</strong> বসান।
+                    </span>
+                  </div>
+                  <div className="flex items-start gap-1.5 pl-6 text-[11px] text-muted-foreground">
+                    <span>
+                      💡 <strong>Cloudflare ব্যবহারকারীদের জন্য:</strong> আপনার ডোমেইন যদি Cloudflare-এ অ্যাড করা থাকে, তবে রেকর্ড যোগ করার সময় <strong>Proxy Status অবশ্যই OFF (DNS Only / ধূসর মেঘ আইকন)</strong> রাখবেন। এরপর ৫-১৫ মিনিট অপেক্ষা করে <strong>"Check status"</strong> চাপুন।
+                    </span>
+                  </div>
                 </div>
               </div>
             </article>
