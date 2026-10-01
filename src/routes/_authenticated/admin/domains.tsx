@@ -336,7 +336,7 @@ function DomainsAdmin() {
                   <Cpu className="h-4 w-4 text-primary" /> Worker Route Automation
                 </div>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Business domain add/remove korle Worker route auto add/delete hobe. API Token e Zone → Workers Routes → Edit permission lagbe.
+                  Business domain add/remove korle Cloudflare Worker route (`domain.com/*` ও `www.domain.com/*`) স্বয়ংক্রিয়ভাবে Add ও Delete হবে। API Token e Zone → Workers Routes → Edit permission lagbe.
                 </p>
               </div>
 
@@ -352,19 +352,6 @@ function DomainsAdmin() {
                 <span className="text-[11px] text-muted-foreground">
                   Cloudflare → Workers & Pages → apnar proxy worker er script name (URL er moddhe je name dekhen)
                 </span>
-              </div>
-
-              <div className="flex items-center justify-between gap-4 rounded-lg border bg-muted/20 p-3">
-                <div className="space-y-0.5">
-                  <div className="text-sm font-medium">Auto-create Worker routes</div>
-                  <div className="text-xs text-muted-foreground">
-                    On thakle prottek custom domain er jonno domain.com/* + www.domain.com/* route auto add hobe
-                  </div>
-                </div>
-                <Switch
-                  checked={form.auto_worker_domain}
-                  onCheckedChange={(checked) => setForm((f) => ({ ...f, auto_worker_domain: checked }))}
-                />
               </div>
             </div>
           </>
