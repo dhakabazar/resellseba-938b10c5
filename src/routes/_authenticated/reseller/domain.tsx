@@ -328,15 +328,63 @@ function DomainPage() {
 
         {groupDomainRows(rows).map((group) => {
           const apexRow = group.find((r) => isApexHostname(r.hostname)) || group[0];
+          const wwwRow = group.find((r) => r.hostname.startsWith("www."));
           const primaryRow = group.find((r) => r.is_primary) ?? apexRow;
           const allVerified = group.every((r) => !!r.verified_at);
           const busyKey = group[0].id;
           const baseDomain = group[0].hostname.replace(/^www\./, "");
           
-          // Single TXT record extracted from root apex
+          const apexRec = apexRow ? recordFor(apexRow, guide) : null;
+          const wwwRec = wwwRow ? recordFor(wwwRow, guide) : null;
+
+          // Single TXT record for verification
           const txtHost = apexRow?.verification_txt_name || group.find((r) => r.verification_txt_name)?.verification_txt_name;
           const txtVal = apexRow?.verification_txt_value || group.find((r) => r.verification_txt_value)?.verification_txt_value;
-          const hasPendingTxt = !allVerified && !!txtHost && !!txtVal;
+
+          const tableRecords = [
+            ...(apexRec
+              ? [
+                  {
+                    id: "apex-a",
+                    type: "A" as const,
+                    badgeClass: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
+                    host: apexRec.host,
+                    hostLabel: baseDomain,
+                    value: apexRec.value,
+                    isLive: !!apexRow?.verified_at,
+                    statusText: apexRow?.verified_at ? "Live" : "Pending",
+                  },
+                ]
+              : []),
+            ...(wwwRec
+              ? [
+                  {
+                    id: "www-cname",
+                    type: "CNAME" as const,
+                    badgeClass: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+                    host: wwwRec.host,
+                    hostLabel: `www.${baseDomain}`,
+                    value: wwwRec.value,
+                    isLive: !!wwwRow?.verified_at,
+                    statusText: wwwRow?.verified_at ? "Live" : "Pending",
+                  },
+                ]
+              : []),
+            ...(txtHost && txtVal
+              ? [
+                  {
+                    id: "txt-verify",
+                    type: "TXT" as const,
+                    badgeClass: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
+                    host: txtHost,
+                    hostLabel: "Verification",
+                    value: txtVal,
+                    isLive: allVerified,
+                    statusText: allVerified ? "Verified" : "Verify",
+                  },
+                ]
+              : []),
+          ];
 
           return (
             <article
@@ -345,43 +393,43 @@ function DomainPage() {
             >
               {/* Header Section */}
               <div className="flex flex-col gap-4 border-b bg-muted/10 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
-                <div className="flex items-center gap-3.5">
-                  <div className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl transition-colors ${
-                    allVerified ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-amber-500/10 text-amber-600 dark:text-amber-400"
-                  }`}>
-                    <Globe2 className="h-6 w-6" />
+                <div className="space-y-2">
+                  {/* Both domains presented side-by-side with equal visual weight */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="inline-flex items-center gap-1.5 rounded-lg border border-border/80 bg-background px-3 py-1.5 shadow-2xs">
+                      <Globe2 className="h-4 w-4 text-primary" />
+                      <span className="font-bold text-foreground text-sm">{baseDomain}</span>
+                    </div>
+
+                    <div className="inline-flex items-center gap-1.5 rounded-lg border border-border/80 bg-background px-3 py-1.5 shadow-2xs">
+                      <Globe2 className="h-4 w-4 text-primary" />
+                      <span className="font-bold text-foreground text-sm">www.{baseDomain}</span>
+                    </div>
+
+                    {primaryRow.is_primary && (
+                      <span className="rounded-full bg-primary/15 px-2.5 py-1 text-[10px] font-semibold text-primary">
+                        Primary
+                      </span>
+                    )}
                   </div>
 
-                  <div className="space-y-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-base font-bold text-foreground">{baseDomain}</span>
-                      <span className="rounded bg-muted/80 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-                        + www.{baseDomain}
+                  {/* Status row */}
+                  <div className="flex flex-wrap items-center gap-3 text-xs">
+                    {allVerified ? (
+                      <span className="inline-flex items-center gap-1 font-medium text-emerald-600 dark:text-emerald-400">
+                        <CheckCircle2 className="h-3.5 w-3.5" /> Live
                       </span>
-                      {primaryRow.is_primary && (
-                        <span className="rounded-full bg-primary/15 px-2.5 py-0.5 text-[10px] font-semibold text-primary">
-                          Primary Store
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-3 text-xs">
-                      {allVerified ? (
-                        <span className="inline-flex items-center gap-1 font-medium text-emerald-600 dark:text-emerald-400">
-                          <CheckCircle2 className="h-3.5 w-3.5" /> Live & Protected
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 font-medium text-amber-600 dark:text-amber-400">
-                          <Clock className="h-3.5 w-3.5" /> DNS / Verification Pending
-                        </span>
-                      )}
-                      <span className="text-muted-foreground/40">•</span>
-                      <span className="inline-flex items-center gap-1 text-muted-foreground">
-                        <Lock className="h-3 w-3" /> SSL: {group.every((r) => r.ssl_status === "active") ? "Active" : "Auto-provisioning"}
+                    ) : (
+                      <span className="inline-flex items-center gap-1 font-medium text-amber-600 dark:text-amber-400">
+                        <Clock className="h-3.5 w-3.5" /> Pending DNS
                       </span>
-                      <span className="text-muted-foreground/40">•</span>
-                      <span className="text-muted-foreground">{group[0].mode === "dns" ? "Server DNS" : "Cloudflare"}</span>
-                    </div>
+                    )}
+                    <span className="text-muted-foreground/40">•</span>
+                    <span className="inline-flex items-center gap-1 text-muted-foreground">
+                      <Lock className="h-3 w-3" /> SSL: {group.every((r) => r.ssl_status === "active") ? "Active" : "Auto"}
+                    </span>
+                    <span className="text-muted-foreground/40">•</span>
+                    <span className="text-muted-foreground">{group[0].mode === "dns" ? "Server DNS" : "Cloudflare"}</span>
                   </div>
                 </div>
 
@@ -428,100 +476,53 @@ function DomainPage() {
                 </div>
               </div>
 
-              {/* DNS Records Body */}
-              <div className="p-4 sm:p-5 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    <ShieldCheck className="h-4 w-4 text-primary" />
-                    <span>প্রয়োজনীয় DNS রেকর্ডসমূহ (আপনার ডোমেইন প্রোভাইডারে সেট করুন)</span>
-                  </div>
-                </div>
-
-                {/* Clean Unified Records Table */}
+              {/* All 3 DNS Records Consolidated in One Single Clean Table */}
+              <div className="p-4 sm:p-5">
                 <div className="overflow-hidden rounded-lg border border-border/80 bg-card">
                   {/* Table Header */}
-                  <div className="grid grid-cols-[80px_100px_minmax(180px,1fr)_100px] items-center gap-3 border-b bg-muted/40 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  <div className="grid grid-cols-[75px_120px_minmax(180px,1fr)_90px] items-center gap-3 border-b bg-muted/40 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                     <span>Type</span>
                     <span>Host / Name</span>
-                    <span>Value / Points To</span>
+                    <span>Target Value</span>
                     <span className="text-right">Status</span>
                   </div>
 
-                  {/* Rows for A Record (@) and CNAME Record (www) */}
-                  {group.map((r) => {
-                    const rec = recordFor(r, guide);
-                    const isApex = isApexHostname(r.hostname);
-                    const isRowLive = !!r.verified_at;
+                  {/* 3 DNS Rows (A, CNAME, TXT) */}
+                  {tableRecords.map((rec) => (
+                    <div
+                      key={rec.id}
+                      className="grid grid-cols-[75px_120px_minmax(180px,1fr)_90px] items-center gap-3 border-b border-border/50 px-4 py-3 text-xs last:border-b-0 hover:bg-muted/20 transition-colors"
+                    >
+                      <div>
+                        <span className={`inline-block rounded border px-2 py-0.5 font-mono text-[11px] font-bold ${rec.badgeClass}`}>
+                          {rec.type}
+                        </span>
+                      </div>
 
-                    return (
-                      <div
-                        key={r.id}
-                        className="grid grid-cols-[80px_100px_minmax(180px,1fr)_100px] items-center gap-3 border-b border-border/50 px-4 py-3 text-xs last:border-b-0 hover:bg-muted/20 transition-colors"
-                      >
-                        <div>
-                          <span className="inline-block rounded bg-primary/10 px-2 py-0.5 font-mono text-[11px] font-bold text-primary">
-                            {rec.type}
+                      <div>
+                        <CopyableField value={rec.host} label="Host" />
+                        <div className="mt-0.5 text-[10px] text-muted-foreground font-mono truncate">
+                          {rec.hostLabel}
+                        </div>
+                      </div>
+
+                      <div className="min-w-0 pr-2">
+                        <CopyableField value={rec.value} label="Value" />
+                      </div>
+
+                      <div className="text-right">
+                        {rec.isLive ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                            <CheckCircle2 className="h-3 w-3" /> {rec.statusText}
                           </span>
-                        </div>
-
-                        <div>
-                          <CopyableField value={rec.host} label="Host" />
-                          <div className="mt-0.5 text-[10px] text-muted-foreground font-mono truncate">
-                            {isApex ? baseDomain : `www.${baseDomain}`}
-                          </div>
-                        </div>
-
-                        <div className="min-w-0 pr-2">
-                          <CopyableField value={rec.value} label="Target Value" />
-                        </div>
-
-                        <div className="text-right">
-                          {isRowLive ? (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
-                              <CheckCircle2 className="h-3 w-3" /> Live
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
-                              <Clock className="h-3 w-3" /> Pending
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Single 1-TXT Record Box (Only shown if pending verification) */}
-                {hasPendingTxt && (
-                  <div className="rounded-lg border border-border/70 bg-muted/20 p-3.5 space-y-2">
-                    <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
-                      <span className="rounded bg-primary/10 px-1.5 py-0.5 font-mono text-[10px] font-bold text-primary">
-                        TXT
-                      </span>
-                      <span>ওনারশিপ ভেরিফিকেশন রেকর্ড (১টি TXT রেকর্ড - ঐচ্ছিক)</span>
-                    </div>
-                    <p className="text-[11px] text-muted-foreground">
-                      সাধারণত উপরের A ও CNAME রেকর্ড সেট করলেই ডোমেইন অটো-ভেরিফাই হয়ে যায়। যদি ভেরিফিকেশনে বিলম্ব হয়, তবে আপনার DNS প্যানেলে নিচের <strong>১টি TXT রেকর্ড</strong> যোগ করুন:
-                    </p>
-                    <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[11px] font-medium text-muted-foreground">Host:</span>
-                        <CopyableField value={txtHost!} label="TXT Host" />
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[11px] font-medium text-muted-foreground">Value:</span>
-                        <CopyableField value={txtVal!} label="TXT Value" />
+                        ) : (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
+                            <Clock className="h-3 w-3" /> {rec.statusText}
+                          </span>
+                        )}
                       </div>
                     </div>
-                  </div>
-                )}
-
-                {/* Quick Instruction Banner */}
-                <div className="flex items-start gap-2 rounded-lg bg-muted/40 p-3 text-xs text-muted-foreground">
-                  <Info className="h-4 w-4 shrink-0 text-primary mt-0.5" />
-                  <p>
-                    DNS রেকর্ড যোগ করার পর কার্যকর হতে সাধারণত ৫ থেকে ৩০ মিনিট সময় লাগতে পারে। রেকর্ডগুলো সেট করা সম্পন্ন হলে উপরে <strong>"Check status"</strong> বাটনে চাপুন।
-                  </p>
+                  ))}
                 </div>
               </div>
             </article>
@@ -552,4 +553,5 @@ function DomainPage() {
     </div>
   );
 }
+
 
