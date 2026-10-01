@@ -265,7 +265,7 @@ async function tryAutoWww(
       console.error("worker domain attach failed (auto www)", err);
     }
 
-    const { error } = await db.from("reseller_domains").insert({
+    const insertPayload: any = {
       reseller_id: resellerId,
       hostname: wwwHost,
       mode: "cloudflare",
@@ -273,16 +273,22 @@ async function tryAutoWww(
       ssl_status: state.sslStatus,
       ownership_status: state.ownershipStatus,
       cloudflare_hostname_id: state.id,
-      worker_domain_id: workerDomainId,
-      worker_route_id: workerRouteId,
+      worker_domain_id: workerRouteId || workerDomainId,
       dns_target: state.dnsTarget,
       verification_txt_name: state.txtName,
       verification_txt_value: state.txtValue,
       verified_at: state.active ? new Date().toISOString() : null,
       last_checked_at: new Date().toISOString(),
       last_error: null,
-    });
-    if (error) throw new Error(error.message);
+    };
+    if (workerRouteId) insertPayload.worker_route_id = workerRouteId;
+
+    let insertRes = await db.from("reseller_domains").insert(insertPayload);
+    if (insertRes.error && insertPayload.worker_route_id) {
+      delete insertPayload.worker_route_id;
+      insertRes = await db.from("reseller_domains").insert(insertPayload);
+    }
+    if (insertRes.error) throw new Error(insertRes.error.message);
   } catch (err) {
     if (createdWorkerRouteId) {
       try {
@@ -389,27 +395,40 @@ export const connectDomain = createServerFn({ method: "POST" })
       console.error("worker domain attach failed", err);
     }
 
-    const { data: row, error } = await db
+    const insertPayload: any = {
+      reseller_id: resellerId,
+      hostname,
+      mode: "cloudflare",
+      is_primary: isPrimary,
+      ssl_status: state.sslStatus,
+      ownership_status: state.ownershipStatus,
+      cloudflare_hostname_id: state.id,
+      worker_domain_id: workerRouteId || workerDomainId,
+      dns_target: state.dnsTarget,
+      verification_txt_name: state.txtName,
+      verification_txt_value: state.txtValue,
+      verified_at: state.active ? new Date().toISOString() : null,
+      last_checked_at: new Date().toISOString(),
+      last_error: null,
+    };
+    if (workerRouteId) insertPayload.worker_route_id = workerRouteId;
+
+    let { data: row, error } = await db
       .from("reseller_domains")
-      .insert({
-        reseller_id: resellerId,
-        hostname,
-        mode: "cloudflare",
-        is_primary: isPrimary,
-        ssl_status: state.sslStatus,
-        ownership_status: state.ownershipStatus,
-        cloudflare_hostname_id: state.id,
-        worker_domain_id: workerDomainId,
-        worker_route_id: workerRouteId,
-        dns_target: state.dnsTarget,
-        verification_txt_name: state.txtName,
-        verification_txt_value: state.txtValue,
-        verified_at: state.active ? new Date().toISOString() : null,
-        last_checked_at: new Date().toISOString(),
-        last_error: null,
-      })
+      .insert(insertPayload)
       .select("*")
       .single();
+
+    if (error && insertPayload.worker_route_id) {
+      delete insertPayload.worker_route_id;
+      const retry = await db
+        .from("reseller_domains")
+        .insert(insertPayload)
+        .select("*")
+        .single();
+      row = retry.data;
+      error = retry.error;
+    }
     if (error) {
       if (workerRouteId) {
         try {
@@ -514,23 +533,38 @@ export const refreshDomain = createServerFn({ method: "POST" })
       }
     }
 
-    const { data: updated, error } = await db
+    const updatePayload: any = {
+      cloudflare_hostname_id: state.id,
+      worker_domain_id: workerRouteId || row.worker_domain_id,
+      ssl_status: state.sslStatus,
+      ownership_status: state.ownershipStatus,
+      dns_target: state.dnsTarget,
+      verification_txt_name: state.txtName,
+      verification_txt_value: state.txtValue,
+      verified_at: state.active ? (row.verified_at ?? new Date().toISOString()) : null,
+      last_checked_at: new Date().toISOString(),
+      last_error: null,
+    };
+    if (workerRouteId) updatePayload.worker_route_id = workerRouteId;
+
+    let { data: updated, error } = await db
       .from("reseller_domains")
-      .update({
-        cloudflare_hostname_id: state.id,
-        worker_route_id: workerRouteId || row.worker_route_id,
-        ssl_status: state.sslStatus,
-        ownership_status: state.ownershipStatus,
-        dns_target: state.dnsTarget,
-        verification_txt_name: state.txtName,
-        verification_txt_value: state.txtValue,
-        verified_at: state.active ? (row.verified_at ?? new Date().toISOString()) : null,
-        last_checked_at: new Date().toISOString(),
-        last_error: null,
-      })
+      .update(updatePayload)
       .eq("id", row.id)
       .select("*")
       .single();
+
+    if (error && updatePayload.worker_route_id) {
+      delete updatePayload.worker_route_id;
+      const retry = await db
+        .from("reseller_domains")
+        .update(updatePayload)
+        .eq("id", row.id)
+        .select("*")
+        .single();
+      updated = retry.data;
+      error = retry.error;
+    }
     if (error) throw new Response(error.message, { status: 400 });
     return mapRow(updated);
   });
