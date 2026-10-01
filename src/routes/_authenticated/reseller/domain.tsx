@@ -477,7 +477,7 @@ function DomainPage() {
               </div>
 
               {/* All 3 DNS Records Consolidated in One Single Clean Table */}
-              <div className="p-4 sm:p-5">
+              <div className="p-4 sm:p-5 space-y-3">
                 <div className="overflow-hidden rounded-lg border border-border/80 bg-card">
                   {/* Table Header */}
                   <div className="grid grid-cols-[75px_120px_minmax(180px,1fr)_90px] items-center gap-3 border-b bg-muted/40 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -523,6 +523,14 @@ function DomainPage() {
                       </div>
                     </div>
                   ))}
+                </div>
+
+                {/* Compact Helpful Hint */}
+                <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                  <Info className="h-3.5 w-3.5 shrink-0 text-primary" />
+                  <span>
+                    ডোমেইন প্যানেলে <strong>@</strong> এর জন্য <strong>A Record</strong> এবং <strong>www</strong> এর জন্য <strong>CNAME</strong> বসান। ৫-১৫ মিনিট পর <strong>"Check status"</strong> চাপুন।
+                  </span>
                 </div>
               </div>
             </article>
