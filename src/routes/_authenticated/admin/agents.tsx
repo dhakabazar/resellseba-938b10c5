@@ -21,6 +21,7 @@ import {
   Power,
 } from "lucide-react";
 import { toast } from "sonner";
+import { matchesResellerSearch } from "@/lib/phone-search";
 
 export const Route = createFileRoute("/_authenticated/admin/agents")({
   component: AgentsPage,
@@ -469,15 +470,8 @@ function AssignModal({
   const [busy, setBusy] = useState(false);
 
   const list = useMemo(() => {
-    const t = q.trim().toLowerCase();
-    const rows = t
-      ? resellers.filter(
-          (r) =>
-            r.business_name.toLowerCase().includes(t) ||
-            r.code.toLowerCase().includes(t) ||
-            (r.contact_phone ?? "").includes(t),
-        )
-      : resellers;
+    const t = q.trim();
+    const rows = t ? resellers.filter((r) => matchesResellerSearch(r, t)) : resellers;
     return [...rows].sort((a, b) => Number(selected.includes(b.id)) - Number(selected.includes(a.id)));
   }, [resellers, q]);
 

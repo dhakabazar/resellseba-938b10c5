@@ -7,6 +7,7 @@ import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
 import { ProductCodeChip } from "@/components/product-code";
 import { Loader2, Search, Save, Trash2, Tag, Handshake, Package } from "lucide-react";
 import { toast } from "sonner";
+import { matchesResellerSearch } from "@/lib/phone-search";
 
 export const Route = createFileRoute("/_authenticated/admin/reseller-pricing")({
   component: ResellerPricingPage,
@@ -26,7 +27,7 @@ export const Route = createFileRoute("/_authenticated/admin/reseller-pricing")({
   }),
 });
 
-type Reseller = { id: string; business_name: string; code: string | null };
+type Reseller = { id: string; business_name: string; code: string | null; contact_phone?: string | null };
 type Product = {
   id: string;
   name: string;
@@ -60,7 +61,7 @@ function ResellerPricingPage() {
     (async () => {
       const [rs, ps] = await Promise.all([
         fetchAllSafe(() =>
-          supabase.from("resellers").select("id,business_name,code").order("business_name", { ascending: true }),
+          supabase.from("resellers").select("id,business_name,code,contact_phone").order("business_name", { ascending: true }),
         ),
         fetchAllSafe(() =>
           supabase
@@ -98,10 +99,10 @@ function ResellerPricingPage() {
   }, [overrides]);
 
   const filteredResellers = useMemo(() => {
-    const s = resellerSearch.trim().toLowerCase();
+    const s = resellerSearch.trim();
     if (!s) return resellers.slice(0, 30);
     return resellers
-      .filter((r) => r.business_name.toLowerCase().includes(s) || (r.code ?? "").toLowerCase().includes(s))
+      .filter((r) => matchesResellerSearch(r, s))
       .slice(0, 30);
   }, [resellers, resellerSearch]);
 

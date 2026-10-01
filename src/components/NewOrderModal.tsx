@@ -2,15 +2,14 @@ import { useState, useMemo, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { areaOptions, productDeliveryCharge, deliveryLabel, deliveryMode, type DeliveryArea } from "@/lib/delivery";
 import { addressError, nameError, normalizePhone, phoneError, sanitizeName } from "@/lib/checkout-validate";
-import { Loader2, Plus, Minus, X, Trash2, Search } from "lucide-react";
+import { Loader2, Plus, Minus, X, Trash2, Search, CheckCircle2, UserCheck } from "lucide-react";
 import { toast } from "sonner";
 import { ProductCodeChip } from "@/components/product-code";
 import { AdvanceByToggle, MoneyField, SectionLabel } from "@/components/order-form-fields";
 import { packagingModeHint, packagingTotal } from "@/lib/packaging";
 import { useAdvancedSettings } from "@/lib/advanced-settings";
 import { useResellerPriceMap, wholesalePrice, hasCustomPrice, type ResellerPriceMap } from "@/lib/reseller-prices";
-
-
+import { matchesResellerSearch } from "@/lib/phone-search";
 
 type Line = { listing_id?: string; product_id?: string; qty: number; name?: string; price?: number; cost?: number; image?: string; delivery?: any };
 
@@ -38,8 +37,6 @@ function StockChip({ stock }: { stock: number | null | undefined }) {
     </span>
   );
 }
-
-
 
 interface NewOrderModalProps {
   listings: any[];
@@ -85,20 +82,21 @@ export function NewOrderModal({
   /** Per-reseller admin price overrides for the selected reseller. */
   const prices = useResellerPriceMap(resellerId);
 
-
-
+  const selectedReseller = useMemo(() => {
+    if (!resellerId) return null;
+    return resellers.find((r) => r.id === resellerId) || null;
+  }, [resellers, resellerId]);
 
   const trendingResellers = useMemo(() => {
     return resellers.slice(0, 5);
   }, [resellers]);
 
   const filteredResellers = useMemo(() => {
-    const q = resellerSearch.trim().toLowerCase();
+    const q = resellerSearch.trim();
     if (!q) return [];
-    return resellers.filter(r => 
-      r.business_name.toLowerCase().includes(q) || 
-      (r.code && r.code.toLowerCase().includes(q))
-    ).slice(0, 5);
+    return resellers
+      .filter((r) => matchesResellerSearch(r, q))
+      .slice(0, 10);
   }, [resellers, resellerSearch]);
 
   const results = useMemo(() => {
@@ -358,43 +356,87 @@ export function NewOrderModal({
 
               {isAdmin && (
                 <div className="space-y-3">
-                  <label className="text-[13px] font-bold uppercase tracking-wide text-foreground/80">Reseller Selection</label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-[13px] font-bold uppercase tracking-wide text-foreground/80">
+                      Reseller Selection
+                    </label>
+                    <span className="text-[11px] text-muted-foreground">
+                      {selectedReseller ? (
+                        <span className="text-primary font-semibold flex items-center gap-1">
+                          <CheckCircle2 className="h-3 w-3 text-primary" /> Reseller Selected
+                        </span>
+                      ) : (
+                        <span>Direct / No Reseller</span>
+                      )}
+                    </span>
+                  </div>
+
+                  {/* Active Selected Reseller Display */}
+                  {selectedReseller ? (
+                    <div className="flex items-center justify-between gap-3 rounded-xl border border-primary/40 bg-primary/5 p-3 shadow-2xs">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-xs">
+                          <UserCheck className="h-5 w-5" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 font-bold text-xs text-foreground truncate">
+                            <span className="truncate">{selectedReseller.business_name}</span>
+                            {selectedReseller.code && (
+                              <span className="rounded bg-primary/15 px-1.5 py-0.5 text-[10px] text-primary font-mono uppercase">
+                                /{selectedReseller.code}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-[11px] text-muted-foreground font-mono mt-0.5">
+                            {selectedReseller.contact_phone ? (
+                              <span>📞 {selectedReseller.contact_phone}</span>
+                            ) : (
+                              <span>No phone attached</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setResellerId(null)}
+                        className="rounded-lg border border-border/80 bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-destructive hover:border-destructive transition-colors shrink-0"
+                      >
+                        Change / Direct
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="rounded-xl border border-dashed border-border/80 bg-muted/20 px-3.5 py-2.5 text-xs flex items-center justify-between text-muted-foreground">
+                      <span>🛒 <strong>Direct Order:</strong> কোনো রিসেলার সিলেক্ট করা হয়নি (সরাসরি অ্যাডমিন অর্ডার)।</span>
+                    </div>
+                  )}
+
+                  {/* Search & Select Card */}
                   <div className="rounded-xl border bg-muted/30 p-3 space-y-3">
                     <div className="relative">
                       <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/60" />
                       <input
                         value={resellerSearch}
                         onChange={(e) => setResellerSearch(e.target.value)}
-                        placeholder="Search reseller..."
-                        className="w-full rounded-lg border bg-background px-9 py-1.5 text-xs focus:ring-2 focus:ring-primary/20"
+                        placeholder="Search reseller by name, code (/RS01) or phone (017... / +88)..."
+                        className="w-full rounded-lg border bg-background px-9 py-2 text-xs focus:ring-2 focus:ring-primary/20 outline-none"
                       />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        <span className="text-[9px] font-bold text-muted-foreground mr-1">Trending:</span>
+                      {resellerSearch && (
                         <button
                           type="button"
-                          onClick={() => setResellerId(null)}
-                          className={`rounded-md px-2.5 py-1 text-[10px] font-bold transition-all border ${!resellerId ? 'bg-primary text-primary-foreground border-primary' : 'bg-background hover:bg-accent'}`}
+                          onClick={() => setResellerSearch("")}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                         >
-                          Direct
+                          <X className="h-3.5 w-3.5" />
                         </button>
-                        {trendingResellers.map(r => (
-                          <button
-                            key={r.id}
-                            type="button"
-                            onClick={() => setResellerId(r.id)}
-                            className={`rounded-md px-2.5 py-1 text-[10px] font-bold transition-all border ${resellerId === r.id ? 'bg-primary text-primary-foreground border-primary' : 'bg-background hover:bg-accent'}`}
-                          >
-                            {r.business_name}
-                          </button>
-                        ))}
-                      </div>
-
-                      {resellerSearch && filteredResellers.length > 0 && (
-                        <div className="rounded-lg border bg-background shadow-sm divide-y overflow-hidden animate-in fade-in slide-in-from-top-1">
-                          {filteredResellers.map(r => (
+                      )}
+                    </div>
+                    
+                    {/* Search Dropdown Results */}
+                    {resellerSearch && (
+                      <div className="rounded-lg border bg-background shadow-lg divide-y overflow-hidden max-h-52 overflow-y-auto animate-in fade-in slide-in-from-top-1">
+                        {filteredResellers.length > 0 ? (
+                          filteredResellers.map((r) => (
                             <button
                               key={r.id}
                               type="button"
@@ -402,14 +444,61 @@ export function NewOrderModal({
                                 setResellerId(r.id);
                                 setResellerSearch("");
                               }}
-                              className="flex w-full items-center justify-between p-2 text-left hover:bg-primary/5 transition-colors"
+                              className={`flex w-full items-center justify-between p-2.5 text-left transition-colors hover:bg-primary/10 ${
+                                resellerId === r.id ? "bg-primary/10 font-bold" : ""
+                              }`}
                             >
-                              <span className="text-[10px] font-bold">{r.business_name}</span>
-                              <span className="text-[9px] text-muted-foreground uppercase">{r.code}</span>
+                              <div className="min-w-0 pr-2">
+                                <div className="text-xs font-bold text-foreground truncate">{r.business_name}</div>
+                                <div className="text-[11px] text-muted-foreground font-mono">
+                                  {r.contact_phone || "No phone"}
+                                </div>
+                              </div>
+                              {r.code && (
+                                <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground font-mono uppercase shrink-0">
+                                  /{r.code}
+                                </span>
+                              )}
                             </button>
-                          ))}
-                        </div>
-                      )}
+                          ))
+                        ) : (
+                          <div className="p-3 text-center text-xs text-muted-foreground">
+                            কোনো রিসেলার পাওয়া যায়নি
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Quick Select Buttons */}
+                    <div className="space-y-1.5">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span className="text-[9px] font-bold text-muted-foreground mr-1">Quick Select:</span>
+                        <button
+                          type="button"
+                          onClick={() => setResellerId(null)}
+                          className={`rounded-md px-2.5 py-1 text-[10px] font-bold transition-all border ${
+                            !resellerId
+                              ? "bg-primary text-primary-foreground border-primary shadow-2xs"
+                              : "bg-background hover:bg-accent text-muted-foreground"
+                          }`}
+                        >
+                          Direct
+                        </button>
+                        {trendingResellers.map((r) => (
+                          <button
+                            key={r.id}
+                            type="button"
+                            onClick={() => setResellerId(r.id)}
+                            className={`rounded-md px-2.5 py-1 text-[10px] font-bold transition-all border ${
+                              resellerId === r.id
+                                ? "bg-primary text-primary-foreground border-primary shadow-2xs"
+                                : "bg-background hover:bg-accent text-foreground"
+                            }`}
+                          >
+                            {r.business_name}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>

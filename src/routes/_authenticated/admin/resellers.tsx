@@ -89,6 +89,7 @@ import {
   resellerStatusLabel,
   type ResellerStatus,
 } from "@/lib/reseller-status";
+import { matchesResellerSearch } from "@/lib/phone-search";
 
 type Status = ResellerStatus;
 
@@ -645,14 +646,12 @@ function ResellersPage() {
         const st = subStates[r.id];
         return Boolean(st && st.plan === planFilter && !st.locked);
       });
-    const q = query.trim().toLowerCase();
+    const q = query.trim();
     if (q)
       out = out.filter(
         (r) =>
-          r.business_name.toLowerCase().includes(q) ||
-          r.code.toLowerCase().includes(q) ||
-          (r.contact_phone ?? "").toLowerCase().includes(q) ||
-          (emailStatus[r.user_id]?.email ?? "").toLowerCase().includes(q),
+          matchesResellerSearch(r, q) ||
+          (emailStatus[r.user_id]?.email ?? "").toLowerCase().includes(q.toLowerCase()),
       );
     return out;
   }, [

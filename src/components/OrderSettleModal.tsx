@@ -254,15 +254,18 @@ export function OrderSettleModal({
                         min={0}
                         max={i.quantity}
                         value={i.returned_qty}
-                        onChange={(e) =>
+                        onFocus={(e) => e.target.select()}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          const n = val === "" ? 0 : Math.min(Math.max(Number(val) || 0, 0), i.quantity);
                           setItems((prev) =>
                             prev.map((x) =>
                               x.id === i.id
-                                ? { ...x, returned_qty: Math.min(Math.max(num(e.target.value), 0), x.quantity) }
+                                ? { ...x, returned_qty: n }
                                 : x,
                             ),
-                          )
-                        }
+                          );
+                        }}
                         className="w-20 rounded-md border bg-background px-2 py-1 text-right text-xs tabular-nums"
                       />
                       <span className="text-[11px] text-muted-foreground">returned</span>
@@ -331,15 +334,41 @@ function Field({
   hint?: string;
   disabled?: boolean;
 }) {
+  const [text, setText] = useState(String(value ?? 0));
+
+  useEffect(() => {
+    setText(String(value ?? 0));
+  }, [value]);
+
   return (
     <div>
       <label className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</label>
       <input
-        type="number"
-        min={0}
-        value={value}
+        type="text"
+        inputMode="decimal"
+        value={text}
         disabled={disabled}
-        onChange={(e) => onChange(num(e.target.value))}
+        onFocus={(e) => {
+          if (text === "0") {
+            setText("");
+          } else {
+            e.target.select();
+          }
+        }}
+        onBlur={() => {
+          const parsed = parseFloat(text);
+          const finalVal = isNaN(parsed) || parsed < 0 ? 0 : parsed;
+          setText(String(finalVal));
+          onChange(finalVal);
+        }}
+        onChange={(e) => {
+          const val = e.target.value;
+          if (val === "" || /^\d*\.?\d*$/.test(val)) {
+            setText(val);
+            const parsed = parseFloat(val);
+            onChange(isNaN(parsed) || parsed < 0 ? 0 : parsed);
+          }
+        }}
         className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm tabular-nums disabled:opacity-60"
       />
       {hint && <p className="mt-0.5 text-[10px] text-muted-foreground">{hint}</p>}
