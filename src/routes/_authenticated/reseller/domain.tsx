@@ -4,7 +4,22 @@ import { useServerFn } from "@tanstack/react-start";
 import { PageHeader } from "@/components/ui-kit";
 import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
 import { Button } from "@/components/ui/button";
-import { Globe2, Loader2, Plus, Trash2, CheckCircle2, AlertCircle, RefreshCw, Copy, ArrowRight, ShieldCheck } from "lucide-react";
+import {
+  Globe2,
+  Loader2,
+  Plus,
+  Trash2,
+  CheckCircle2,
+  AlertCircle,
+  RefreshCw,
+  Copy,
+  Check,
+  ShieldCheck,
+  ExternalLink,
+  Info,
+  Clock,
+  Lock,
+} from "lucide-react";
 import { toast } from "sonner";
 import { dnsHostLabel, isApexHostname, groupDomainRows } from "@/lib/hostname-utils";
 import {
@@ -35,7 +50,6 @@ export const Route = createFileRoute("/_authenticated/reseller/domain")({
 function errorText(err: unknown) {
   if (err instanceof Response) return `অনুরোধটি ব্যর্থ হয়েছে (${err.status})`;
   const raw = err instanceof Error ? err.message : typeof err === "string" ? err : "";
-  // Server-side field validation comes back as raw JSON — show something readable instead.
   const trimmed = raw.trim();
   if (trimmed.startsWith("[") || trimmed.startsWith("{")) {
     try {
@@ -51,25 +65,38 @@ function errorText(err: unknown) {
   return trimmed || "কিছু একটা সমস্যা হয়েছে";
 }
 
+function CopyableField({ value, label }: { value: string; label?: string }) {
+  const [copied, setCopied] = useState(false);
 
-function CopyChip({ value }: { value: string }) {
+  if (!value) {
+    return <span className="text-xs italic text-muted-foreground">Admin not configured</span>;
+  }
+
+  const handleCopy = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(value);
+    setCopied(true);
+    toast.success(`${label || "Value"} কপি করা হয়েছে!`);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
-    <Button
+    <button
       type="button"
-      variant="ghost"
-      size="sm"
-      onClick={() => {
-        navigator.clipboard.writeText(value);
-        toast.success("Copied");
-      }}
-      className="h-7 max-w-full gap-1.5 bg-muted px-2 font-mono text-[11px]"
+      onClick={handleCopy}
+      title="কপি করতে ক্লিক করুন"
+      className="group inline-flex max-w-full items-center justify-between gap-1.5 rounded-md border border-border/70 bg-muted/40 px-2 py-1 font-mono text-xs text-foreground transition-all hover:border-primary/40 hover:bg-muted focus:outline-none"
     >
-      <span className="truncate">{value}</span><Copy className="h-3 w-3" />
-    </Button>
+      <span className="truncate">{value}</span>
+      {copied ? (
+        <Check className="h-3 w-3 shrink-0 text-emerald-600 dark:text-emerald-400" />
+      ) : (
+        <Copy className="h-3 w-3 shrink-0 text-muted-foreground transition-colors group-hover:text-primary" />
+      )}
+    </button>
   );
 }
 
-/** The single DNS record this row needs — type/host/value, ready to copy. */
 function recordFor(row: DomainRow, guide: DnsGuide | null): { type: "A" | "CNAME"; host: string; value: string } {
   const host = dnsHostLabel(row.hostname);
   const apex = isApexHostname(row.hostname);
@@ -118,7 +145,6 @@ function DomainPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /** Every row action needs a saved domain id; without it the request cannot be made. */
   function ensureIds(group: DomainRow[]): string[] | null {
     const ids = group.map((r) => r.id).filter(Boolean);
     if (ids.length === group.length) return ids;
@@ -132,11 +158,9 @@ function DomainPage() {
     setBusy("add");
     try {
       await connect({ data: { hostname, mode } });
-      // Re-fetch (not just append) — connecting an apex domain also auto-adds
-      // its "www." counterpart, so the list can gain more than one new row.
       await reload();
       setHostname("");
-      toast.success("ডোমেইন যুক্ত হয়েছে — এখন নিচের DNS রেকর্ডগুলো যোগ করুন");
+      toast.success("ডোমেইন যুক্ত হয়েছে — এখন নিচের DNS রেকর্ডগুলো সেট করুন");
     } catch (err) {
       toast.error(errorText(err));
     } finally {
@@ -144,7 +168,6 @@ function DomainPage() {
     }
   }
 
-  /** Checks every hostname in the group (apex + its www) in one go. */
   async function checkGroup(group: DomainRow[]) {
     const ids = ensureIds(group);
     if (!ids) return;
@@ -158,8 +181,11 @@ function DomainPage() {
       });
       setRows((rs) => rs.map((r) => updated.get(r.id) ?? r));
       const failed = settled.filter((s) => s.status === "rejected").length;
-      if (failed > 0) toast.error(`${failed} টা রেকর্ড চেক করা যায়নি`);
-      else toast.success(group.every((r) => updated.get(r.id)?.verified_at) ? "ডোমেইন লাইভ হয়েছে" : "স্ট্যাটাস আপডেট হয়েছে");
+      if (failed > 0) toast.error(`${failed}টি রেকর্ড চেক করা যায়নি`);
+      else {
+        const isLive = group.every((r) => updated.get(r.id)?.verified_at);
+        toast.success(isLive ? "অভিনন্দন! ডোমেইন সফলভাবে সক্রিয় হয়েছে" : "স্ট্যাটাস আপডেট হয়েছে — DNS কার্যকর হতে কিছু সময় লাগতে পারে");
+      }
     } catch (err) {
       toast.error(errorText(err));
     } finally {
@@ -197,10 +223,10 @@ function DomainPage() {
       const removedIds = new Set(result.removedIds);
       setRows((rs) => rs.filter((r) => !removedIds.has(r.id)));
       if (result.failures.length > 0) {
-        toast.error(`${result.failures.length}টি Cloudflare রেকর্ড সরানো যায়নি — আবার চেষ্টা করুন`);
+        toast.error(`${result.failures.length}টি রেকর্ড সরানো যায়নি — আবার চেষ্টা করুন`);
         await reload();
       } else {
-        toast.success("ডোমেইন ও www Cloudflare থেকে সরানো হয়েছে");
+        toast.success("ডোমেইন সফলভাবে মুছে ফেলা হয়েছে");
         setConfirmGroup(null);
       }
     } catch (err) {
@@ -210,188 +236,315 @@ function DomainPage() {
     }
   }
 
-
   if (loading)
     return (
-      <div className="grid place-items-center py-12">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      <div className="grid place-items-center py-16">
+        <Loader2 className="h-7 w-7 animate-spin text-primary" />
       </div>
     );
 
   const both = !!guide?.cfReady && !!guide?.dnsReady;
 
   return (
-    <div className="mx-auto max-w-5xl">
-      <PageHeader title="Custom domain" description="নিজের ডোমেইনে স্টোর চালু করুন। মূল ডোমেইন ও www একসাথে পরিচালিত হবে।" />
+    <div className="mx-auto max-w-5xl space-y-6">
+      <PageHeader
+        title="Custom Domain"
+        description="আপনার রিসেলার স্টোরের জন্য কাস্টম ডোমেইন যুক্ত করুন ও SSL স্ট্যাটাস ম্যানেজ করুন।"
+      />
 
       {!guide?.active && (
-        <div className="mb-5 rounded-lg border border-warning/40 bg-warning/10 p-4 text-sm">
-          Custom domain connection is not enabled yet. Please contact the admin team.
+        <div className="flex items-center gap-3 rounded-lg border border-warning/40 bg-warning/10 p-4 text-sm text-warning-foreground">
+          <AlertCircle className="h-5 w-5 shrink-0 text-warning" />
+          <span>কাস্টম ডোমেইন ফিচারটি বর্তমানে অ্যাডমিন কর্তৃক সক্রিয় করা হয়নি। বিস্তারিত জানতে অ্যাডমিন টিমের সাথে যোগাযোগ করুন।</span>
         </div>
       )}
 
-      <form onSubmit={add} className="surface-card mb-6 overflow-hidden">
-        <div className="border-b bg-muted/30 px-4 py-3 sm:px-5">
-          <div className="flex items-center gap-2 text-sm font-semibold"><Globe2 className="h-4 w-4 text-primary" /> নতুন ডোমেইন যুক্ত করুন</div>
-          <p className="mt-1 text-xs text-muted-foreground">abc.com লিখলে www.abc.com-ও একই সাথে যুক্ত হবে।</p>
-        </div>
-        <div className="space-y-4 p-4 sm:p-5">
-        {both && (
-          <div className="grid grid-cols-2 gap-2 rounded-md bg-muted/50 p-1">
-            {([
-              { key: "cloudflare", label: "Cloudflare (auto SSL)" },
-              { key: "dns", label: "Server DNS" },
-            ] as const).map((o) => (
-              <Button
-                type="button"
-                variant="ghost"
-                key={o.key}
-                onClick={() => setMode(o.key)}
-                className={`h-8 text-xs ${
-                  mode === o.key ? "bg-background text-primary shadow-sm hover:bg-background" : "text-muted-foreground"
-                }`}
-              >
-                {o.label}
-              </Button>
-            ))}
+      {/* Add Domain Form Card */}
+      <form onSubmit={add} className="surface-card overflow-hidden rounded-xl border border-border/80 shadow-sm">
+        <div className="border-b bg-muted/20 px-5 py-4">
+          <div className="flex items-center gap-2 text-base font-semibold text-foreground">
+            <Globe2 className="h-5 w-5 text-primary" />
+            <span>নতুন ডোমেইন যুক্ত করুন</span>
           </div>
-        )}
-       <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
-         <div>
-           <label className="mb-1.5 block text-xs font-semibold">Domain name</label>
-          <input
-            required
-            value={hostname}
-            onChange={(e) => setHostname(e.target.value)}
-             className="h-10 w-full rounded-md border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
-             placeholder="yourbrand.com"
-          />
+          <p className="mt-1 text-xs text-muted-foreground">
+            শুধু মূল ডোমেইন (যেমন: <strong className="font-semibold text-foreground">yourbrand.com</strong>) লিখুন। 
+            সিস্টেম স্বয়ংক্রিয়ভাবে <strong className="font-semibold text-foreground">www.yourbrand.com</strong> সহ পেয়ার করে কানেক্ট করবে।
+          </p>
         </div>
-         <Button
-          disabled={busy === "add" || !guide?.active}
-           className="h-10 px-5"
-        >
-          {busy === "add" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />} Connect
-         </Button>
-      </div>
-       </div>
+
+        <div className="space-y-4 p-5">
+          {both && (
+            <div className="flex max-w-xs gap-1 rounded-lg bg-muted/60 p-1">
+              {([
+                { key: "cloudflare", label: "Cloudflare (Auto SSL)" },
+                { key: "dns", label: "Server DNS" },
+              ] as const).map((o) => (
+                <button
+                  type="button"
+                  key={o.key}
+                  onClick={() => setMode(o.key)}
+                  className={`flex-1 rounded-md py-1.5 text-xs font-medium transition-all ${
+                    mode === o.key
+                      ? "bg-background text-primary shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-foreground">ডোমেইন নাম</label>
+              <div className="relative">
+                <input
+                  required
+                  value={hostname}
+                  onChange={(e) => setHostname(e.target.value)}
+                  className="h-10 w-full rounded-lg border border-border/80 bg-background px-3.5 text-sm font-medium outline-none transition-all placeholder:text-muted-foreground/60 focus:border-primary focus:ring-2 focus:ring-primary/20"
+                  placeholder="yourbrand.com"
+                />
+              </div>
+            </div>
+            <Button
+              disabled={busy === "add" || !guide?.active || !hostname.trim()}
+              className="h-10 gap-2 px-6 font-medium shadow-sm"
+            >
+              {busy === "add" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+              <span>ডোমেইন যোগ করুন</span>
+            </Button>
+          </div>
+        </div>
       </form>
 
-      <div className="grid gap-3">
+      {/* Connected Domains List */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">সংযুক্ত ডোমেইন তালিকা</h2>
+          <span className="text-xs text-muted-foreground">{groupDomainRows(rows).length}টি ডোমেইন সেটআপ</span>
+        </div>
+
         {groupDomainRows(rows).map((group) => {
-          const primaryRow = group.find((r) => r.is_primary) ?? group[0];
-          const allVerified = group.every((r) => r.verified_at);
+          const apexRow = group.find((r) => isApexHostname(r.hostname)) || group[0];
+          const primaryRow = group.find((r) => r.is_primary) ?? apexRow;
+          const allVerified = group.every((r) => !!r.verified_at);
           const busyKey = group[0].id;
+          const baseDomain = group[0].hostname.replace(/^www\./, "");
+          
+          // Single TXT record extracted from root apex
+          const txtHost = apexRow?.verification_txt_name || group.find((r) => r.verification_txt_name)?.verification_txt_name;
+          const txtVal = apexRow?.verification_txt_value || group.find((r) => r.verification_txt_value)?.verification_txt_value;
+          const hasPendingTxt = !allVerified && !!txtHost && !!txtVal;
+
           return (
-            <article key={group.map((r) => r.id).join("+")} className="surface-card overflow-hidden">
-              <div className="flex flex-col gap-4 border-b p-4 sm:flex-row sm:items-center sm:p-5">
-                <div className="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-primary-soft text-primary">
-                  <Globe2 className="h-5 w-5" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2 font-semibold">
-                    <span className="break-all">{group[0].hostname.replace(/^www\./, "")}</span>
-                    {group.length > 1 && <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">সাথে www</span>}
-                    {primaryRow.is_primary && <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] text-primary">Primary</span>}
+            <article
+              key={group.map((r) => r.id).join("+")}
+              className="surface-card overflow-hidden rounded-xl border border-border/80 shadow-sm transition-all hover:border-border"
+            >
+              {/* Header Section */}
+              <div className="flex flex-col gap-4 border-b bg-muted/10 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+                <div className="flex items-center gap-3.5">
+                  <div className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl transition-colors ${
+                    allVerified ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                  }`}>
+                    <Globe2 className="h-6 w-6" />
                   </div>
-                  <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                    <span>{group[0].mode === "dns" ? "Server DNS" : "Cloudflare"}</span><span>·</span>
-                    {allVerified ? (
-                      <span className="inline-flex items-center gap-1 text-success"><CheckCircle2 className="h-3 w-3" /> Live</span>
+
+                  <div className="space-y-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-base font-bold text-foreground">{baseDomain}</span>
+                      <span className="rounded bg-muted/80 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                        + www.{baseDomain}
+                      </span>
+                      {primaryRow.is_primary && (
+                        <span className="rounded-full bg-primary/15 px-2.5 py-0.5 text-[10px] font-semibold text-primary">
+                          Primary Store
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-3 text-xs">
+                      {allVerified ? (
+                        <span className="inline-flex items-center gap-1 font-medium text-emerald-600 dark:text-emerald-400">
+                          <CheckCircle2 className="h-3.5 w-3.5" /> Live & Protected
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 font-medium text-amber-600 dark:text-amber-400">
+                          <Clock className="h-3.5 w-3.5" /> DNS / Verification Pending
+                        </span>
+                      )}
+                      <span className="text-muted-foreground/40">•</span>
+                      <span className="inline-flex items-center gap-1 text-muted-foreground">
+                        <Lock className="h-3 w-3" /> SSL: {group.every((r) => r.ssl_status === "active") ? "Active" : "Auto-provisioning"}
+                      </span>
+                      <span className="text-muted-foreground/40">•</span>
+                      <span className="text-muted-foreground">{group[0].mode === "dns" ? "Server DNS" : "Cloudflare"}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Header Actions */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    type="button"
+                    onClick={() => checkGroup(group)}
+                    disabled={busy === busyKey}
+                    variant="outline"
+                    size="sm"
+                    className="h-8 gap-1.5 text-xs font-medium"
+                  >
+                    {busy === busyKey ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
                     ) : (
-                      <span className="inline-flex items-center gap-1 text-warning"><AlertCircle className="h-3 w-3" /> {group.some((r) => r.verified_at) ? "Partially live" : "Pending"}</span>
+                      <RefreshCw className="h-3.5 w-3.5 text-muted-foreground" />
                     )}
-                  </div>
-                </div>
-                <div className="flex flex-wrap gap-2 sm:justify-end">
-                <Button
-                  type="button"
-                  onClick={() => checkGroup(group)}
-                  disabled={busy === busyKey}
-                  variant="outline"
-                  size="sm"
-                >
-                  {busy === busyKey ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />} Check status
-                </Button>
-                {!primaryRow.is_primary && (
-                  <Button type="button" variant="outline" size="sm" onClick={() => makePrimary(group)}>
-                    Make primary
+                    <span>Check status</span>
                   </Button>
-                )}
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setConfirmGroup(group)}
-                  className="h-8 w-8 text-destructive hover:text-destructive"
-                  aria-label="Remove domain"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
+
+                  {!primaryRow.is_primary && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => makePrimary(group)}
+                      className="h-8 text-xs text-muted-foreground hover:text-foreground"
+                    >
+                      Make primary
+                    </Button>
+                  )}
+
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setConfirmGroup(group)}
+                    className="h-8 w-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                    title="ডোমেইন রিমুভ করুন"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
                 </div>
               </div>
 
-              <div className="p-4 sm:p-5">
-                <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase text-muted-foreground"><ShieldCheck className="h-3.5 w-3.5" /> DNS records</div>
-                <div className="overflow-hidden rounded-md border">
-                  <div className="hidden grid-cols-[minmax(130px,1fr)_70px_90px_minmax(170px,1.4fr)] gap-3 border-b bg-muted/40 px-3 py-2 text-[10px] font-semibold uppercase text-muted-foreground sm:grid">
-                    <span>Domain</span><span>Type</span><span>Host</span><span>Value</span>
+              {/* DNS Records Body */}
+              <div className="p-4 sm:p-5 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    <ShieldCheck className="h-4 w-4 text-primary" />
+                    <span>প্রয়োজনীয় DNS রেকর্ডসমূহ (আপনার ডোমেইন প্রোভাইডারে সেট করুন)</span>
                   </div>
-                {group.map((r) => {
-                  const rec = recordFor(r, guide);
-                  return (
-                    <div key={r.id} className="grid gap-2 border-b p-3 text-xs last:border-b-0 sm:grid-cols-[minmax(130px,1fr)_70px_90px_minmax(170px,1.4fr)] sm:items-center sm:gap-3">
-                      <div className="flex min-w-0 items-center gap-1.5 font-medium">
-                        {r.verified_at ? (
-                          <CheckCircle2 className="h-3 w-3 text-success" />
-                        ) : (
-                          <AlertCircle className="h-3 w-3 text-warning" />
-                        )}
-                        <span className="truncate">{r.hostname}</span>
-                      </div>
-                      <span className="w-fit rounded bg-primary-soft px-1.5 py-0.5 font-mono font-semibold text-primary">{rec.type}</span>
-                      <CopyChip value={rec.host} />
-                      <div className="min-w-0">
-                        {rec.value ? (
-                          <CopyChip value={rec.value} />
-                        ) : (
-                          <span className="italic text-muted-foreground">not set up yet — contact admin</span>
-                        )}
-                      </div>
-                      <div className="col-span-full flex flex-wrap items-center gap-1 text-[10px] text-muted-foreground">
-                        <span>{r.verified_at ? "Live" : (r.ownership_status ?? "pending")}</span><span>·</span><span>SSL {r.ssl_status}</span>
-                      </div>
-                      {r.verification_txt_name && !r.verified_at && (
-                        <div className="col-span-full flex flex-wrap items-center gap-1.5 rounded bg-muted/40 p-2">
-                          <span className="rounded bg-muted px-1.5 py-0.5 font-mono font-semibold">TXT</span>
-                          <span className="text-muted-foreground">Host</span>
-                          <CopyChip value={r.verification_txt_name} />
-                          <ArrowRight className="h-3 w-3 text-muted-foreground" />
-                          <CopyChip value={r.verification_txt_value ?? ""} />
-                        </div>
-                      )}
-                      {r.last_error && <div className="col-span-full text-[11px] text-destructive">{r.last_error}</div>}
-                    </div>
-                  );
-                })}
                 </div>
-                <div className="text-[11px] text-muted-foreground">
-                  DNS can take 5–60 minutes to update. Then press "Check status"
-                  {group[0].mode === "dns" ? " to verify." : " — SSL is issued automatically."}
+
+                {/* Clean Unified Records Table */}
+                <div className="overflow-hidden rounded-lg border border-border/80 bg-card">
+                  {/* Table Header */}
+                  <div className="grid grid-cols-[80px_100px_minmax(180px,1fr)_100px] items-center gap-3 border-b bg-muted/40 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    <span>Type</span>
+                    <span>Host / Name</span>
+                    <span>Value / Points To</span>
+                    <span className="text-right">Status</span>
+                  </div>
+
+                  {/* Rows for A Record (@) and CNAME Record (www) */}
+                  {group.map((r) => {
+                    const rec = recordFor(r, guide);
+                    const isApex = isApexHostname(r.hostname);
+                    const isRowLive = !!r.verified_at;
+
+                    return (
+                      <div
+                        key={r.id}
+                        className="grid grid-cols-[80px_100px_minmax(180px,1fr)_100px] items-center gap-3 border-b border-border/50 px-4 py-3 text-xs last:border-b-0 hover:bg-muted/20 transition-colors"
+                      >
+                        <div>
+                          <span className="inline-block rounded bg-primary/10 px-2 py-0.5 font-mono text-[11px] font-bold text-primary">
+                            {rec.type}
+                          </span>
+                        </div>
+
+                        <div>
+                          <CopyableField value={rec.host} label="Host" />
+                          <div className="mt-0.5 text-[10px] text-muted-foreground font-mono truncate">
+                            {isApex ? baseDomain : `www.${baseDomain}`}
+                          </div>
+                        </div>
+
+                        <div className="min-w-0 pr-2">
+                          <CopyableField value={rec.value} label="Target Value" />
+                        </div>
+
+                        <div className="text-right">
+                          {isRowLive ? (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                              <CheckCircle2 className="h-3 w-3" /> Live
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
+                              <Clock className="h-3 w-3" /> Pending
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Single 1-TXT Record Box (Only shown if pending verification) */}
+                {hasPendingTxt && (
+                  <div className="rounded-lg border border-border/70 bg-muted/20 p-3.5 space-y-2">
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+                      <span className="rounded bg-primary/10 px-1.5 py-0.5 font-mono text-[10px] font-bold text-primary">
+                        TXT
+                      </span>
+                      <span>ওনারশিপ ভেরিফিকেশন রেকর্ড (১টি TXT রেকর্ড - ঐচ্ছিক)</span>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground">
+                      সাধারণত উপরের A ও CNAME রেকর্ড সেট করলেই ডোমেইন অটো-ভেরিফাই হয়ে যায়। যদি ভেরিফিকেশনে বিলম্ব হয়, তবে আপনার DNS প্যানেলে নিচের <strong>১টি TXT রেকর্ড</strong> যোগ করুন:
+                    </p>
+                    <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[11px] font-medium text-muted-foreground">Host:</span>
+                        <CopyableField value={txtHost!} label="TXT Host" />
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[11px] font-medium text-muted-foreground">Value:</span>
+                        <CopyableField value={txtVal!} label="TXT Value" />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Quick Instruction Banner */}
+                <div className="flex items-start gap-2 rounded-lg bg-muted/40 p-3 text-xs text-muted-foreground">
+                  <Info className="h-4 w-4 shrink-0 text-primary mt-0.5" />
+                  <p>
+                    DNS রেকর্ড যোগ করার পর কার্যকর হতে সাধারণত ৫ থেকে ৩০ মিনিট সময় লাগতে পারে। রেকর্ডগুলো সেট করা সম্পন্ন হলে উপরে <strong>"Check status"</strong> বাটনে চাপুন।
+                  </p>
                 </div>
               </div>
             </article>
           );
         })}
-        {rows.length === 0 && <div className="rounded-lg border p-8 text-center text-sm text-muted-foreground">No custom domains yet.</div>}
+
+        {rows.length === 0 && (
+          <div className="rounded-xl border border-dashed border-border/80 p-12 text-center">
+            <Globe2 className="mx-auto h-10 w-10 text-muted-foreground/40" />
+            <h3 className="mt-3 text-sm font-semibold text-foreground">কোনো কাস্টম ডোমেইন যুক্ত করা হয়নি</h3>
+            <p className="mt-1 text-xs text-muted-foreground">
+              আপনার স্টোরের জন্য নিজের ব্র্যান্ড ডোমেইন যুক্ত করতে উপরের ফর্মটি পূরণ করুন।
+            </p>
+          </div>
+        )}
       </div>
 
       <ConfirmModal
         isOpen={!!confirmGroup}
-        title="Remove this domain?"
-        description="মূল ডোমেইন ও www—দুটিই Cloudflare থেকে সরানো হবে এবং স্টোর এই ঠিকানায় বন্ধ হবে।"
+        title="ডোমেইন মুছে ফেলতে চান?"
+        description="মূল ডোমেইন এবং www উভয় রেকর্ডই Cloudflare ও সিস্টেম থেকে সরানো হবে। এতে কাস্টম ডোমেইনে স্টোর ভিজিট বন্ধ হয়ে যাবে।"
         detail={confirmGroup?.map((r) => r.hostname).join(", ")}
-        confirmText="Remove"
+        confirmText="ডিলিট করুন"
         isLoading={!!confirmGroup && busy === confirmGroup[0].id}
         onClose={() => setConfirmGroup(null)}
         onConfirm={onDelete}
@@ -399,3 +552,4 @@ function DomainPage() {
     </div>
   );
 }
+
