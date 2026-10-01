@@ -21,6 +21,7 @@ export type DomainRow = {
   verification_txt_value: string | null;
   cloudflare_hostname_id: string | null;
   worker_domain_id: string | null;
+  worker_route_id: string | null;
   last_error: string | null;
   last_checked_at: string | null;
   verified_at: string | null;
@@ -64,6 +65,7 @@ export const saveCloudflareConfig = createServerFn({ method: "POST" })
         cname_target: z.string().max(253).default(""),
         a_record_ip: z.string().max(64).default(""),
         auto_worker_domain: z.boolean().default(false),
+        auto_worker_routes: z.boolean().optional(),
         is_active: z.boolean().default(false),
         mode: z.enum(["cloudflare", "dns", "both"]).default("both"),
         server_a_ip: z.string().max(64).default(""),
@@ -78,6 +80,8 @@ export const saveCloudflareConfig = createServerFn({ method: "POST" })
     await assertAnyPermission(context.supabase, context.userId, ["settings.manage", "domains.manage"]);
     const { loadConfigAsCaller, maskConfig } = await import("@/lib/cloudflare.server");
 
+    const autoRoutes = data.auto_worker_routes ?? data.auto_worker_domain;
+
     const { error } = await context.supabase.rpc("cf_config_save", {
       _api_token: (data.api_token ?? "").trim(),
       _account_id: data.account_id.trim(),
@@ -86,13 +90,14 @@ export const saveCloudflareConfig = createServerFn({ method: "POST" })
       _worker_name: data.worker_name.trim(),
       _cname_target: data.cname_target.trim(),
       _a_record_ip: data.a_record_ip.trim(),
-      _auto_worker_domain: data.auto_worker_domain,
+      _auto_worker_domain: autoRoutes,
       _is_active: data.is_active,
       _mode: data.mode,
       _server_a_ip: data.server_a_ip.trim(),
       _server_cname: data.server_cname.trim(),
       _server_note: data.server_note.trim(),
       _dns_active: data.dns_active,
+      _auto_worker_routes: autoRoutes,
     });
     if (error) throw new Response(error.message, { status: 400 });
     return maskConfig(await loadConfigAsCaller(context.supabase));
@@ -176,6 +181,7 @@ function mapRow(row: any, reseller?: { business_name?: string | null; code?: str
     verification_txt_value: row.verification_txt_value ?? null,
     cloudflare_hostname_id: row.cloudflare_hostname_id ?? null,
     worker_domain_id: row.worker_domain_id ?? null,
+    worker_route_id: row.worker_route_id ?? row.worker_domain_id ?? null,
     last_error: row.last_error ?? null,
     last_checked_at: row.last_checked_at ?? null,
     verified_at: row.verified_at ?? null,
@@ -219,6 +225,7 @@ async function tryAutoWww(
   if (!isApexHostname(apexHostname)) return;
   const wwwHost = `www.${apexHostname}`;
   let createdHostnameId: string | null = null;
+  let createdWorkerRouteId: string | null = null;
   let createdWorkerDomainId: string | null = null;
   try {
     const { data: dupe } = await db.from("reseller_domains").select("id").eq("hostname", wwwHost).maybeSingle();
@@ -242,6 +249,15 @@ async function tryAutoWww(
 
     const state = await cf.createCustomHostname(conf, wwwHost);
     createdHostnameId = state.created ? state.id : null;
+
+    let workerRouteId: string | null = null;
+    try {
+      workerRouteId = await cf.createWorkerRoute(conf, wwwHost);
+      createdWorkerRouteId = workerRouteId;
+    } catch (err) {
+      console.error("auto www worker route create failed", err);
+    }
+
     let workerDomainId: string | null = null;
     try {
       workerDomainId = await cf.attachWorkerDomain(conf, wwwHost);
@@ -249,6 +265,7 @@ async function tryAutoWww(
     } catch (err) {
       console.error("worker domain attach failed (auto www)", err);
     }
+
     const { error } = await db.from("reseller_domains").insert({
       reseller_id: resellerId,
       hostname: wwwHost,
@@ -258,6 +275,7 @@ async function tryAutoWww(
       ownership_status: state.ownershipStatus,
       cloudflare_hostname_id: state.id,
       worker_domain_id: workerDomainId,
+      worker_route_id: workerRouteId,
       dns_target: state.dnsTarget,
       verification_txt_name: state.txtName,
       verification_txt_value: state.txtValue,
@@ -267,6 +285,13 @@ async function tryAutoWww(
     });
     if (error) throw new Error(error.message);
   } catch (err) {
+    if (createdWorkerRouteId) {
+      try {
+        await cf.deleteWorkerRoute(conf, { routeId: createdWorkerRouteId, hostname: wwwHost });
+      } catch (cleanupError) {
+        console.error("auto www worker route cleanup failed", cleanupError);
+      }
+    }
     if (createdWorkerDomainId) {
       try {
         await cf.detachWorkerDomain(conf, createdWorkerDomainId);
@@ -350,6 +375,14 @@ export const connectDomain = createServerFn({ method: "POST" })
 
     const conf = cf.requireActiveConfig(await cf.loadConfigFlexible(db));
     const state = await cf.createCustomHostname(conf, hostname);
+
+    let workerRouteId: string | null = null;
+    try {
+      workerRouteId = await cf.createWorkerRoute(conf, hostname);
+    } catch (err) {
+      console.error("worker route create failed", err);
+    }
+
     let workerDomainId: string | null = null;
     try {
       workerDomainId = await cf.attachWorkerDomain(conf, hostname);
@@ -368,6 +401,7 @@ export const connectDomain = createServerFn({ method: "POST" })
         ownership_status: state.ownershipStatus,
         cloudflare_hostname_id: state.id,
         worker_domain_id: workerDomainId,
+        worker_route_id: workerRouteId,
         dns_target: state.dnsTarget,
         verification_txt_name: state.txtName,
         verification_txt_value: state.txtValue,
@@ -378,6 +412,13 @@ export const connectDomain = createServerFn({ method: "POST" })
       .select("*")
       .single();
     if (error) {
+      if (workerRouteId) {
+        try {
+          await cf.deleteWorkerRoute(conf, { routeId: workerRouteId, hostname });
+        } catch (cleanupError) {
+          console.error("worker route cleanup after insert failure failed", cleanupError);
+        }
+      }
       if (workerDomainId) {
         try {
           await cf.detachWorkerDomain(conf, workerDomainId);
@@ -392,6 +433,13 @@ export const connectDomain = createServerFn({ method: "POST" })
     try {
       await tryAutoWww(cf, db, resellerId, hostname, "cloudflare", conf);
     } catch (err) {
+      if (workerRouteId) {
+        try {
+          await cf.deleteWorkerRoute(conf, { routeId: workerRouteId, hostname });
+        } catch (cleanupError) {
+          console.error("apex worker route cleanup failed", cleanupError);
+        }
+      }
       if (workerDomainId) {
         try {
           await cf.detachWorkerDomain(conf, workerDomainId);
@@ -457,10 +505,21 @@ export const refreshDomain = createServerFn({ method: "POST" })
       throw err;
     }
 
+    // If auto worker routes enabled and worker_route_id is missing, sync worker route
+    let workerRouteId = row.worker_route_id;
+    if ((conf.auto_worker_domain || conf.auto_worker_routes) && conf.worker_name && conf.zone_id) {
+      try {
+        workerRouteId = await cf.createWorkerRoute(conf, row.hostname);
+      } catch (err) {
+        console.error("Refresh worker route sync failed:", err);
+      }
+    }
+
     const { data: updated, error } = await db
       .from("reseller_domains")
       .update({
         cloudflare_hostname_id: state.id,
+        worker_route_id: workerRouteId || row.worker_route_id,
         ssl_status: state.sslStatus,
         ownership_status: state.ownershipStatus,
         dns_target: state.dnsTarget,
@@ -490,12 +549,27 @@ export const setPrimaryDomain = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-/** Remove the domain from Cloudflare (hostname + worker domain) and from the DB. */
+/** Remove the domain from Cloudflare (hostname + worker route / worker domain) and from the DB. */
 async function removeDomainRow(cf: typeof import("@/lib/cloudflare.server"), db: any, conf: any, row: any) {
-  if (row.mode !== "dns" && conf.api_token && conf.zone_id && row.cloudflare_hostname_id)
-    await cf.deleteCustomHostname(conf, row.cloudflare_hostname_id);
-  if (row.mode !== "dns" && conf.api_token && row.worker_domain_id)
-    await cf.detachWorkerDomain(conf, row.worker_domain_id);
+  if (row.mode !== "dns" && conf.api_token && conf.zone_id) {
+    if (row.worker_route_id || row.hostname) {
+      try {
+        await cf.deleteWorkerRoute(conf, { routeId: row.worker_route_id, hostname: row.hostname });
+      } catch (err) {
+        console.error("deleteWorkerRoute failed:", err);
+      }
+    }
+    if (row.worker_domain_id) {
+      try {
+        await cf.detachWorkerDomain(conf, row.worker_domain_id);
+      } catch (err) {
+        console.error("detachWorkerDomain failed:", err);
+      }
+    }
+    if (row.cloudflare_hostname_id) {
+      await cf.deleteCustomHostname(conf, row.cloudflare_hostname_id);
+    }
+  }
 
   const { error } = await db.from("reseller_domains").delete().eq("id", row.id);
   if (error) throw new Response(error.message, { status: 400 });

@@ -2,7 +2,20 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Globe, Loader2, RefreshCw, Save, Server, ShieldCheck, Trash2, Plug, CheckCircle2, AlertCircle } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import {
+  Globe,
+  Loader2,
+  RefreshCw,
+  Save,
+  Server,
+  ShieldCheck,
+  Trash2,
+  Plug,
+  CheckCircle2,
+  AlertCircle,
+  Cpu,
+} from "lucide-react";
 import { PageHeader } from "@/components/ui-kit";
 import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
 import {
@@ -253,63 +266,103 @@ function DomainsAdmin() {
         )}
 
         {form.mode !== "dns" && (
-        <div className="surface-card space-y-4 p-5">
-        <div className="flex items-center gap-2 text-sm font-semibold">
-          <ShieldCheck className="h-4 w-4 text-primary" /> Cloudflare credentials
-        </div>
+          <>
+            <div className="surface-card space-y-4 p-5">
+              <div className="flex items-center gap-2 text-sm font-semibold">
+                <ShieldCheck className="h-4 w-4 text-primary" /> Cloudflare credentials
+              </div>
 
-        <label className="flex flex-col gap-1">
-          <span className="text-xs font-medium text-muted-foreground">
-            API token {hasToken && <span className="ml-1 rounded bg-muted px-1.5 py-0.5 text-[10px]">saved: {tokenHint}</span>}
-          </span>
-          <input
-            type="password"
-            autoComplete="new-password"
-            value={form.api_token}
-            placeholder={hasToken ? "Leave blank to keep the saved token" : "Cloudflare API token"}
-            onChange={(e) => setForm((f) => ({ ...f, api_token: e.target.value }))}
-            className="rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-          />
-          <span className="text-[11px] text-muted-foreground">
-            Needs: Zone → SSL and Certificates (Edit), Zone → Zone (Read), Account → Workers Scripts (Edit).
-          </span>
-        </label>
+              <label className="flex flex-col gap-1">
+                <span className="text-xs font-medium text-muted-foreground">
+                  API token {hasToken && <span className="ml-1 rounded bg-muted px-1.5 py-0.5 text-[10px]">saved: {tokenHint}</span>}
+                </span>
+                <input
+                  type="password"
+                  autoComplete="new-password"
+                  value={form.api_token}
+                  placeholder={hasToken ? "Leave blank to keep the saved token" : "Cloudflare API token"}
+                  onChange={(e) => setForm((f) => ({ ...f, api_token: e.target.value }))}
+                  className="rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                />
+                <span className="text-[11px] text-muted-foreground">
+                  Needs: Zone → SSL and Certificates (Edit), Zone → Zone (Read), Zone → Workers Routes (Edit), Account → Workers Scripts (Edit).
+                </span>
+              </label>
 
-        <div className="flex flex-wrap gap-3">
-          {field("account_id", "Account ID", "cf account id")}
-          {field("zone_id", "Zone ID", "cf zone id")}
-        </div>
-        <div className="flex flex-wrap gap-3">
-          {field("zone_name", "Zone name", "yourplatform.com")}
-          {field("worker_name", "Worker script name", "resellhub-worker")}
-        </div>
-        <div className="flex flex-wrap gap-3">
-          {field("cname_target", "CNAME target for resellers", "proxy.yourplatform.com")}
-          {field("a_record_ip", "A record IP (root domains)", "203.0.113.10")}
-        </div>
+              <div className="flex flex-wrap gap-3">
+                {field("account_id", "Account ID", "cf account id")}
+                {field("zone_id", "Zone ID", "cf zone id")}
+              </div>
+              <div className="flex flex-wrap gap-3">
+                {field("zone_name", "Zone name", "yourplatform.com")}
+                {field("a_record_ip", "A record IP (root domains)", "203.0.113.10")}
+              </div>
 
-        <div className="flex flex-wrap items-center gap-4">
-          <label className="inline-flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={form.is_active}
-              onChange={(e) => setForm((f) => ({ ...f, is_active: e.target.checked }))}
-              className="h-4 w-4 rounded border"
-            />
-            Integration active
-          </label>
-          <label className="inline-flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={form.auto_worker_domain}
-              onChange={(e) => setForm((f) => ({ ...f, auto_worker_domain: e.target.checked }))}
-              className="h-4 w-4 rounded border"
-            />
-            Auto-attach worker domain (same zone only)
-          </label>
-        </div>
+              <div className="flex flex-col gap-1">
+                <span className="text-xs font-medium text-muted-foreground">Fallback Hostname</span>
+                <input
+                  type="text"
+                  value={form.cname_target}
+                  placeholder="fallback.ecomseba.com"
+                  onChange={(e) => setForm((f) => ({ ...f, cname_target: e.target.value }))}
+                  className="rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                />
+                <span className="text-[11px] text-muted-foreground">
+                  Business-der domain ei hostname-e CNAME korbe; eta apnar SaaS zone-er moddhe thakte hobe
+                </span>
+              </div>
 
-        </div>
+              <div className="flex flex-wrap items-center gap-4 pt-1">
+                <label className="inline-flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={form.is_active}
+                    onChange={(e) => setForm((f) => ({ ...f, is_active: e.target.checked }))}
+                    className="h-4 w-4 rounded border"
+                  />
+                  Integration active
+                </label>
+              </div>
+            </div>
+
+            <div className="surface-card space-y-4 p-5">
+              <div>
+                <div className="flex items-center gap-2 text-sm font-semibold">
+                  <Cpu className="h-4 w-4 text-primary" /> Worker Route Automation
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Business domain add/remove korle Worker route auto add/delete hobe. API Token e Zone → Workers Routes → Edit permission lagbe.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <span className="text-xs font-medium text-muted-foreground">Worker Script Name</span>
+                <input
+                  type="text"
+                  value={form.worker_name}
+                  placeholder="saas-proxy"
+                  onChange={(e) => setForm((f) => ({ ...f, worker_name: e.target.value }))}
+                  className="rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                />
+                <span className="text-[11px] text-muted-foreground">
+                  Cloudflare → Workers & Pages → apnar proxy worker er script name (URL er moddhe je name dekhen)
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between gap-4 rounded-lg border bg-muted/20 p-3">
+                <div className="space-y-0.5">
+                  <div className="text-sm font-medium">Auto-create Worker routes</div>
+                  <div className="text-xs text-muted-foreground">
+                    On thakle prottek custom domain er jonno domain.com/* + www.domain.com/* route auto add hobe
+                  </div>
+                </div>
+                <Switch
+                  checked={form.auto_worker_domain}
+                  onCheckedChange={(checked) => setForm((f) => ({ ...f, auto_worker_domain: checked }))}
+                />
+              </div>
+            </div>
+          </>
         )}
 
         <div className="flex flex-wrap gap-2">

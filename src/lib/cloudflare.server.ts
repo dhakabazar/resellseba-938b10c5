@@ -14,6 +14,7 @@ export type CfConfig = {
   cname_target: string | null;
   a_record_ip: string | null;
   auto_worker_domain: boolean;
+  auto_worker_routes?: boolean;
   is_active: boolean;
   updated_at: string;
   /** Which setups are allowed: cloudflare only, server DNS only, or both. */
@@ -36,6 +37,7 @@ export async function loadConfig(db: any): Promise<CfConfig> {
     cname_target: null,
     a_record_ip: null,
     auto_worker_domain: false,
+    auto_worker_routes: false,
     is_active: false,
     updated_at: new Date().toISOString(),
     mode: "both",
@@ -55,6 +57,7 @@ const EMPTY_CONFIG: CfConfig = {
   cname_target: null,
   a_record_ip: null,
   auto_worker_domain: false,
+  auto_worker_routes: false,
   is_active: false,
   updated_at: new Date().toISOString(),
   mode: "both",
@@ -124,6 +127,7 @@ export async function loadDnsGuideAsCaller(supabase: any) {
 /** Config that is safe to send to the admin UI — token is masked. */
 export function maskConfig(c: CfConfig) {
   const token = c.api_token ?? "";
+  const autoRoutes = Boolean(c.auto_worker_routes ?? c.auto_worker_domain);
   return {
     hasToken: token.length > 0,
     tokenHint: token ? `${token.slice(0, 4)}••••${token.slice(-4)}` : "",
@@ -133,7 +137,8 @@ export function maskConfig(c: CfConfig) {
     worker_name: c.worker_name ?? "",
     cname_target: c.cname_target ?? "",
     a_record_ip: c.a_record_ip ?? "",
-    auto_worker_domain: !!c.auto_worker_domain,
+    auto_worker_domain: autoRoutes,
+    auto_worker_routes: autoRoutes,
     is_active: !!c.is_active,
     updated_at: c.updated_at,
     mode: c.mode ?? "both",
@@ -326,3 +331,97 @@ export async function detachWorkerDomain(c: CfConfig, id: string) {
     throw err;
   }
 }
+
+/**
+ * Automatically create or sync a Cloudflare Worker Route for a domain.
+ * Pattern: `hostname/*` pointing to script `c.worker_name`
+ */
+export async function createWorkerRoute(c: CfConfig, hostname: string): Promise<string | null> {
+  const isAutoEnabled = Boolean(c.auto_worker_routes ?? c.auto_worker_domain);
+  if (!isAutoEnabled || !c.zone_id || !c.worker_name || !c.api_token) return null;
+
+  const pattern = `${hostname}/*`;
+  const scriptName = c.worker_name.trim();
+
+  // Check if a route already exists for this pattern
+  try {
+    const existing = await cf(c, `/zones/${c.zone_id}/workers/routes`);
+    if (Array.isArray(existing)) {
+      const match = existing.find((r: any) => r.pattern === pattern);
+      if (match?.id) {
+        if (match.script !== scriptName) {
+          try {
+            await cf(c, `/zones/${c.zone_id}/workers/routes/${match.id}`, {
+              method: "PUT",
+              body: JSON.stringify({ pattern, script: scriptName }),
+            });
+          } catch (updateErr) {
+            console.error(`Failed to update existing worker route ${match.id}:`, updateErr);
+          }
+        }
+        return String(match.id);
+      }
+    }
+  } catch (err) {
+    console.warn("Could not list worker routes to check existing:", err);
+  }
+
+  try {
+    const result = await cf(c, `/zones/${c.zone_id}/workers/routes`, {
+      method: "POST",
+      body: JSON.stringify({ pattern, script: scriptName }),
+    });
+    return result?.id ? String(result.id) : null;
+  } catch (err: any) {
+    console.error(`Cloudflare worker route creation failed for ${pattern}:`, err);
+    // If route creation reported duplicate or conflict, try finding it again
+    try {
+      const existing = await cf(c, `/zones/${c.zone_id}/workers/routes`);
+      if (Array.isArray(existing)) {
+        const match = existing.find((r: any) => r.pattern === pattern);
+        if (match?.id) return String(match.id);
+      }
+    } catch {}
+    return null;
+  }
+}
+
+/**
+ * Delete a Cloudflare Worker Route by route ID or hostname pattern.
+ */
+export async function deleteWorkerRoute(
+  c: CfConfig,
+  target: { routeId?: string | null; hostname?: string },
+) {
+  if (!c.zone_id || !c.api_token) return;
+
+  if (target.routeId) {
+    try {
+      await cf(c, `/zones/${c.zone_id}/workers/routes/${target.routeId}`, { method: "DELETE" });
+      return;
+    } catch (err) {
+      if (err instanceof Response && err.status === 404) return;
+      console.warn(`Worker route delete by ID failed (${target.routeId}):`, err);
+    }
+  }
+
+  if (target.hostname) {
+    try {
+      const pattern = `${target.hostname}/*`;
+      const routes = await cf(c, `/zones/${c.zone_id}/workers/routes`);
+      if (Array.isArray(routes)) {
+        const matches = routes.filter((r: any) => r.pattern === pattern);
+        for (const m of matches) {
+          try {
+            await cf(c, `/zones/${c.zone_id}/workers/routes/${m.id}`, { method: "DELETE" });
+          } catch (delErr) {
+            console.warn(`Failed to delete matched worker route ${m.id}:`, delErr);
+          }
+        }
+      }
+    } catch (err) {
+      console.warn(`Could not list/clean worker routes for ${target.hostname}:`, err);
+    }
+  }
+}
+
