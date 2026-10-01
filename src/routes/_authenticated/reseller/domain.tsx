@@ -104,7 +104,7 @@ function recordFor(row: DomainRow, guide: DnsGuide | null): { type: "A" | "CNAME
     if (apex && guide?.serverIp) return { type: "A", host, value: guide.serverIp };
     return { type: "CNAME", host, value: guide?.serverCname || row.dns_target || "" };
   }
-  if (apex && guide?.aRecordIp) return { type: "A", host, value: guide.aRecordIp };
+  // Cloudflare mode: Use CNAME for both root (@) and www/subdomain records
   return { type: "CNAME", host, value: row.dns_target || guide?.cnameTarget || "" };
 }
 
@@ -345,9 +345,11 @@ function DomainPage() {
             ...(apexRec
               ? [
                   {
-                    id: "apex-a",
-                    type: "A" as const,
-                    badgeClass: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
+                    id: "apex-rec",
+                    type: apexRec.type,
+                    badgeClass: apexRec.type === "A"
+                      ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
+                      : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
                     host: apexRec.host,
                     hostLabel: baseDomain,
                     value: apexRec.value,
@@ -359,8 +361,8 @@ function DomainPage() {
             ...(wwwRec
               ? [
                   {
-                    id: "www-cname",
-                    type: "CNAME" as const,
+                    id: "www-rec",
+                    type: wwwRec.type,
                     badgeClass: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
                     host: wwwRec.host,
                     hostLabel: `www.${baseDomain}`,
@@ -537,7 +539,11 @@ function DomainPage() {
                   <div className="flex items-start gap-2">
                     <Info className="h-4 w-4 shrink-0 text-primary mt-0.5" />
                     <span>
-                      আপনার ডোমেইন প্যানেলে (Namecheap / GoDaddy / cPanel) DNS Management এ গিয়ে <strong>@</strong> এর জন্য <strong>A Record</strong> এবং <strong>www</strong> এর জন্য <strong>CNAME</strong> বসান।
+                      {group[0].mode === "dns" ? (
+                        <>আপনার ডোমেইন প্যানেলে (Namecheap / GoDaddy / cPanel) DNS Management-এ গিয়ে <strong>@</strong> এর জন্য <strong>A Record</strong> এবং <strong>www</strong> এর জন্য <strong>CNAME</strong> বসান।</>
+                      ) : (
+                        <>আপনার ডোমেইন প্যানেলে (Namecheap / GoDaddy / cPanel / Cloudflare) DNS Management-এ গিয়ে <strong>@</strong> এবং <strong>www</strong> উভয়ের জন্যই <strong>CNAME Record</strong> বসান।</>
+                      )}
                     </span>
                   </div>
                   <div className="flex items-start gap-1.5 pl-6 text-[11px] text-muted-foreground">
