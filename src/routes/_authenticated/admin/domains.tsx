@@ -272,15 +272,20 @@ function DomainsAdmin() {
                 <ShieldCheck className="h-4 w-4 text-primary" /> Cloudflare credentials
               </div>
 
-              <label className="flex flex-col gap-1">
-                <span className="text-xs font-medium text-muted-foreground">
-                  API token {hasToken && <span className="ml-1 rounded bg-muted px-1.5 py-0.5 text-[10px]">saved: {tokenHint}</span>}
-                </span>
+              <label className="flex flex-col gap-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-muted-foreground">API token</span>
+                  {hasToken && (
+                    <span className="inline-flex items-center gap-1 rounded bg-emerald-500/10 px-2 py-0.5 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                      <CheckCircle2 className="h-3 w-3" /> Saved ({tokenHint})
+                    </span>
+                  )}
+                </div>
                 <input
                   type="password"
                   autoComplete="new-password"
                   value={form.api_token}
-                  placeholder={hasToken ? "Leave blank to keep the saved token" : "Cloudflare API token"}
+                  placeholder={hasToken ? `•••••••••••••••••••••••• (Saved: ${tokenHint})` : "Cloudflare API token"}
                   onChange={(e) => setForm((f) => ({ ...f, api_token: e.target.value }))}
                   className="rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
                 />

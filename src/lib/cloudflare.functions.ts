@@ -80,7 +80,7 @@ export const saveCloudflareConfig = createServerFn({ method: "POST" })
     await assertAnyPermission(context.supabase, context.userId, ["settings.manage", "domains.manage"]);
     const { loadConfigAsCaller, maskConfig } = await import("@/lib/cloudflare.server");
 
-    const autoRoutes = data.auto_worker_routes ?? data.auto_worker_domain;
+    const autoRoutes = Boolean(data.auto_worker_routes ?? data.auto_worker_domain);
 
     const { error } = await context.supabase.rpc("cf_config_save", {
       _api_token: (data.api_token ?? "").trim(),
@@ -97,7 +97,6 @@ export const saveCloudflareConfig = createServerFn({ method: "POST" })
       _server_cname: data.server_cname.trim(),
       _server_note: data.server_note.trim(),
       _dns_active: data.dns_active,
-      _auto_worker_routes: autoRoutes,
     });
     if (error) throw new Response(error.message, { status: 400 });
     return maskConfig(await loadConfigAsCaller(context.supabase));
