@@ -311,24 +311,89 @@ export async function deleteCustomHostname(c: CfConfig, id: string) {
   }
 }
 
-/** Attach the hostname straight to the Worker (only for domains inside our own zone). */
+/** Attach the hostname to the Worker (Workers Custom Domains). */
 export async function attachWorkerDomain(c: CfConfig, hostname: string): Promise<string | null> {
-  if (!c.auto_worker_domain || !c.account_id || !c.worker_name || !c.zone_id) return null;
-  if (c.zone_name && !hostname.endsWith(c.zone_name)) return null;
-  const result = await cf(c, `/accounts/${c.account_id}/workers/domains`, {
-    method: "PUT",
-    body: JSON.stringify({ environment: "production", hostname, service: c.worker_name, zone_id: c.zone_id }),
-  });
-  return result?.id ? String(result.id) : null;
+  const accountId = c.account_id?.trim();
+  const service = (c.worker_name && c.worker_name.trim()) || "saas-proxy";
+  if (!accountId || !c.api_token) return null;
+
+  const payload: any = {
+    environment: "production",
+    hostname,
+    service,
+  };
+  if (c.zone_id?.trim()) {
+    payload.zone_id = c.zone_id.trim();
+  }
+
+  try {
+    const result = await cf(c, `/accounts/${accountId}/workers/domains`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    });
+    return result?.id ? String(result.id) : null;
+  } catch (err: any) {
+    console.warn(`Cloudflare attachWorkerDomain for ${hostname} returned:`, err?.message || err);
+    // If it failed with zone_id, retry without zone_id
+    if (payload.zone_id) {
+      try {
+        const retryResult = await cf(c, `/accounts/${accountId}/workers/domains`, {
+          method: "PUT",
+          body: JSON.stringify({ environment: "production", hostname, service }),
+        });
+        return retryResult?.id ? String(retryResult.id) : null;
+      } catch (retryErr) {
+        console.warn(`Cloudflare attachWorkerDomain retry without zone_id for ${hostname}:`, retryErr);
+      }
+    }
+    // If it already exists, query existing domains
+    try {
+      const existing = await cf(c, `/accounts/${accountId}/workers/domains`);
+      if (Array.isArray(existing)) {
+        const match = existing.find((d: any) => d.hostname === hostname);
+        if (match?.id) return String(match.id);
+      }
+    } catch {}
+    return null;
+  }
 }
 
-export async function detachWorkerDomain(c: CfConfig, id: string) {
-  if (!c.account_id) return;
-  try {
-    await cf(c, `/accounts/${c.account_id}/workers/domains/${id}`, { method: "DELETE" });
-  } catch (err) {
-    if (err instanceof Response && err.status === 404) return;
-    throw err;
+export async function detachWorkerDomain(
+  c: CfConfig,
+  target: { id?: string | null; hostname?: string } | string,
+) {
+  const accountId = c.account_id?.trim();
+  if (!accountId || !c.api_token) return;
+
+  const id = typeof target === "string" ? target : target?.id;
+  const hostname = typeof target === "object" ? target?.hostname : undefined;
+
+  if (id) {
+    try {
+      await cf(c, `/accounts/${accountId}/workers/domains/${id}`, { method: "DELETE" });
+      return;
+    } catch (err) {
+      if (err instanceof Response && err.status === 404) return;
+      console.warn(`Worker domain detach by ID failed (${id}):`, err);
+    }
+  }
+
+  if (hostname) {
+    try {
+      const domains = await cf(c, `/accounts/${accountId}/workers/domains`);
+      if (Array.isArray(domains)) {
+        const matches = domains.filter((d: any) => d.hostname === hostname);
+        for (const m of matches) {
+          try {
+            await cf(c, `/accounts/${accountId}/workers/domains/${m.id}`, { method: "DELETE" });
+          } catch (delErr) {
+            console.warn(`Failed to delete matched worker domain ${m.id}:`, delErr);
+          }
+        }
+      }
+    } catch (err) {
+      console.warn(`Could not list/clean worker domains for ${hostname}:`, err);
+    }
   }
 }
 

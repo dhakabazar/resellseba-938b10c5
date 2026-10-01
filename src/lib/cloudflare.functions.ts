@@ -523,19 +523,30 @@ export const refreshDomain = createServerFn({ method: "POST" })
       throw err;
     }
 
-    // If auto worker routes enabled and worker_route_id is missing, sync worker route
+    // Sync worker domain and route if missing or on refresh
     let workerRouteId = row.worker_route_id;
-    if ((conf.auto_worker_domain || conf.auto_worker_routes) && conf.worker_name && conf.zone_id) {
-      try {
-        workerRouteId = await cf.createWorkerRoute(conf, row.hostname);
-      } catch (err) {
-        console.error("Refresh worker route sync failed:", err);
+    let workerDomainId = row.worker_domain_id;
+    if (conf.api_token) {
+      if (!workerRouteId) {
+        try {
+          workerRouteId = await cf.createWorkerRoute(conf, row.hostname);
+        } catch (err) {
+          console.error("Refresh worker route sync failed:", err);
+        }
+      }
+      if (!workerDomainId) {
+        try {
+          const wDomainId = await cf.attachWorkerDomain(conf, row.hostname);
+          if (wDomainId) workerDomainId = wDomainId;
+        } catch (err) {
+          console.error("Refresh worker domain sync failed:", err);
+        }
       }
     }
 
     const updatePayload: any = {
       cloudflare_hostname_id: state.id,
-      worker_domain_id: workerRouteId || row.worker_domain_id,
+      worker_domain_id: workerRouteId || workerDomainId,
       ssl_status: state.sslStatus,
       ownership_status: state.ownershipStatus,
       dns_target: state.dnsTarget,
@@ -584,7 +595,7 @@ export const setPrimaryDomain = createServerFn({ method: "POST" })
 
 /** Remove the domain from Cloudflare (hostname + worker route / worker domain) and from the DB. */
 async function removeDomainRow(cf: typeof import("@/lib/cloudflare.server"), db: any, conf: any, row: any) {
-  if (row.mode !== "dns" && conf.api_token && conf.zone_id) {
+  if (row.mode !== "dns" && conf.api_token) {
     if (row.worker_route_id || row.hostname) {
       try {
         await cf.deleteWorkerRoute(conf, { routeId: row.worker_route_id, hostname: row.hostname });
@@ -592,9 +603,9 @@ async function removeDomainRow(cf: typeof import("@/lib/cloudflare.server"), db:
         console.error("deleteWorkerRoute failed:", err);
       }
     }
-    if (row.worker_domain_id) {
+    if (row.worker_domain_id || row.hostname) {
       try {
-        await cf.detachWorkerDomain(conf, row.worker_domain_id);
+        await cf.detachWorkerDomain(conf, { id: row.worker_domain_id, hostname: row.hostname });
       } catch (err) {
         console.error("detachWorkerDomain failed:", err);
       }
