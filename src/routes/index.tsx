@@ -35,7 +35,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { youtubeEmbed, youtubeThumb } from "@/lib/tutorials";
 import { PublicHeader, Brand } from "@/components/public-header";
 import { FloatingChat, type ChatBubbleConfig } from "@/components/floating-chat";
-import { useStoreLoader } from "@/components/store/store-context";
+import { useStoreLoader, useStore } from "@/components/store/store-context";
 import {
   LegacyChromeBoundary,
   PoripatiChromeBoundary,
@@ -44,6 +44,8 @@ import {
 } from "@/components/store/theme-loader";
 import { useStoreVisitLog } from "@/lib/store-visits";
 import { storeThemeStyle } from "@/lib/store-theme";
+import { supabase } from "@/integrations/supabase/client";
+import { CustomDomainStoreLayout } from "@/components/store/custom-domain-shell";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -231,17 +233,19 @@ type LandingStats = LpBootstrap["stats"] & {
   products: LpBootstrap["products"];
 };
 
+function StoreHomeInner() {
+  const store = useStore();
+  return store.theme.id === "poripati" ? (
+    <PoripatiHomeBoundary />
+  ) : (
+    <LegacyHomeBoundary />
+  );
+}
+
 function CustomDomainStore({ code }: { code: string }) {
   return (
     <CustomDomainStoreLayout path="/">
-      {() => {
-        const store = useStore();
-        return store.theme.id === "poripati" ? (
-          <PoripatiHomeBoundary />
-        ) : (
-          <LegacyHomeBoundary />
-        );
-      }}
+      {() => <StoreHomeInner />}
     </CustomDomainStoreLayout>
   );
 }
