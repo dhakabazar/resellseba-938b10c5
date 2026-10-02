@@ -470,7 +470,7 @@ export const connectDomain = createServerFn({ method: "POST" })
       } catch (cleanupError) {
         console.error("apex hostname cleanup failed", cleanupError);
       }
-      await db.from("reseller_domains").delete().eq("id", row.id);
+      await db.from("reseller_domains").delete().eq("id", row!.id);
       throw err;
     }
     return mapRow(row);

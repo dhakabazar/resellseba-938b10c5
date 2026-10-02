@@ -120,18 +120,6 @@ function MenuLabel({
   const { code } = useStore();
   const target = menuTarget(node, code);
   const body = children ?? node.label;
-  if (target.kind === "route")
-    return (
-      <Link to={target.to} params={target.params} className={className} onClick={onClick}>
-        {body}
-      </Link>
-    );
-  if (target.kind === "route-slug")
-    return (
-      <Link to={target.to} params={target.params} className={className} onClick={onClick}>
-        {body}
-      </Link>
-    );
   if (target.kind === "external")
     return (
       <a
@@ -376,7 +364,7 @@ function StoreNav({ variant }: { variant: "row" | "stack" }) {
 const CategoryNav = StoreNav;
 
 function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { code, name, settings } = useStore();
+  const { code, name, settings, url } = useStore();
   const phone = settings?.support_phone?.trim();
   const [mounted, setMounted] = useState(false);
 
@@ -652,7 +640,7 @@ export function TrustBar() {
 }
 
 export function StoreFooter() {
-  const { code, name, settings, categories, theme } = useStore();
+  const { code, name, settings, categories, theme, url } = useStore();
   const year = new Date().getFullYear();
   const socials = [
     settings?.facebook_url && { label: "Facebook", href: settings.facebook_url },

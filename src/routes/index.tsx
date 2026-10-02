@@ -292,7 +292,7 @@ function RootResolver() {
 
         // Try 2: Server function with admin database access (bypasses RLS)
         try {
-          const resolved = await resolveDomain({ hostname: host });
+          const resolved = await resolveDomain({ data: { hostname: host } });
           if (alive && resolved) {
             setCustomStoreCode(resolved);
             setChecking(false);

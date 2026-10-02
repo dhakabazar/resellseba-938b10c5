@@ -347,7 +347,6 @@ export type Database = {
           account_id: string | null
           api_token: string | null
           auto_worker_domain: boolean
-          auto_worker_routes?: boolean
           cname_target: string | null
           dns_active: boolean
           id: number
@@ -366,7 +365,6 @@ export type Database = {
           account_id?: string | null
           api_token?: string | null
           auto_worker_domain?: boolean
-          auto_worker_routes?: boolean
           cname_target?: string | null
           dns_active?: boolean
           id?: number
@@ -385,7 +383,6 @@ export type Database = {
           account_id?: string | null
           api_token?: string | null
           auto_worker_domain?: boolean
-          auto_worker_routes?: boolean
           cname_target?: string | null
           dns_active?: boolean
           id?: number
@@ -1797,7 +1794,6 @@ export type Database = {
           verification_txt_value: string | null
           verified_at: string | null
           worker_domain_id: string | null
-          worker_route_id?: string | null
         }
         Insert: {
           cloudflare_hostname_id?: string | null
@@ -1816,7 +1812,6 @@ export type Database = {
           verification_txt_value?: string | null
           verified_at?: string | null
           worker_domain_id?: string | null
-          worker_route_id?: string | null
         }
         Update: {
           cloudflare_hostname_id?: string | null
@@ -1835,7 +1830,6 @@ export type Database = {
           verification_txt_value?: string | null
           verified_at?: string | null
           worker_domain_id?: string | null
-          worker_route_id?: string | null
         }
         Relationships: [
           {
