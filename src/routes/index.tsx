@@ -19,7 +19,7 @@ import {
   MessageCircle,
   Headset,
   MapPin,
-
+  Loader2,
 } from "lucide-react";
 import { APP_ICONS } from "@/lib/icons";
 import { toast } from "sonner";
@@ -35,6 +35,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { youtubeEmbed, youtubeThumb } from "@/lib/tutorials";
 import { PublicHeader, Brand } from "@/components/public-header";
 import { FloatingChat, type ChatBubbleConfig } from "@/components/floating-chat";
+import { useStoreLoader } from "@/components/store/store-context";
+import {
+  LegacyChromeBoundary,
+  PoripatiChromeBoundary,
+  LegacyHomeBoundary,
+  PoripatiHomeBoundary,
+} from "@/components/store/theme-loader";
+import { useStoreVisitLog } from "@/lib/store-visits";
+import { storeThemeStyle } from "@/lib/store-theme";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -222,9 +231,71 @@ type LandingStats = LpBootstrap["stats"] & {
   products: LpBootstrap["products"];
 };
 
+function CustomDomainStore({ code }: { code: string }) {
+  const { state, store, Provider } = useStoreLoader(code);
+  useStoreVisitLog(code, "/", false);
+
+  if (state === "loading") {
+    return (
+      <div className="grid min-h-screen place-items-center bg-background">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (state === "closed") {
+    return (
+      <div className="grid min-h-screen place-items-center p-6 text-center">
+        <div className="max-w-sm">
+          <h1 className="text-2xl font-semibold">Store temporarily unavailable</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            This store is closed right now. Please try again later or contact the store owner.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (state === "missing" || !store) {
+    return (
+      <div className="grid min-h-screen place-items-center p-6 text-center">
+        <div>
+          <h1 className="text-2xl font-semibold">Store not found</h1>
+          <p className="mt-2 text-sm text-muted-foreground">No active store exists for this address.</p>
+        </div>
+      </div>
+    );
+  }
+
+  const style = storeThemeStyle(store.theme, store.palette.id);
+  const homeContent = store.theme.id === "poripati" ? (
+    <PoripatiHomeBoundary />
+  ) : (
+    <LegacyHomeBoundary />
+  );
+
+  const body = store.theme.id === "poripati" ? (
+    <PoripatiChromeBoundary>{homeContent}</PoripatiChromeBoundary>
+  ) : (
+    <LegacyChromeBoundary>{homeContent}</LegacyChromeBoundary>
+  );
+
+  return (
+    <Provider value={store}>
+      <div
+        data-store-theme={store.theme.id}
+        style={{ ...style, fontFamily: "var(--st-font-body)" }}
+        className="min-h-screen bg-[var(--st-bg)] text-[var(--st-fg)] antialiased"
+      >
+        {body}
+      </div>
+    </Provider>
+  );
+}
+
 function RootResolver() {
-  const nav = useNavigate();
   const [checking, setChecking] = useState(true);
+  const [customStoreCode, setCustomStoreCode] = useState<string | null>(null);
   const [content, setContent] = useState<LandingContent>(FALLBACK);
   const [siteName, setSiteName] = useState("Reseller");
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
@@ -251,7 +322,8 @@ function RootResolver() {
 
       const store = data?.store;
       if (!isPlatformHost && store && store.status === "active") {
-        nav({ to: "/s/$code", params: { code: store.code }, replace: true });
+        setCustomStoreCode(store.code);
+        setChecking(false);
         return;
       }
 
@@ -281,7 +353,7 @@ function RootResolver() {
     return () => {
       alive = false;
     };
-  }, [nav]);
+  }, []);
 
   if (checking) {
     return (
@@ -289,6 +361,10 @@ function RootResolver() {
         <div className="h-8 w-8 animate-pulse rounded-full bg-primary/20" />
       </div>
     );
+  }
+
+  if (customStoreCode) {
+    return <CustomDomainStore code={customStoreCode} />;
   }
 
   return (
