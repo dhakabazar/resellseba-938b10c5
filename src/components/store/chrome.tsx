@@ -376,7 +376,7 @@ function StoreNav({ variant }: { variant: "row" | "stack" }) {
 const CategoryNav = StoreNav;
 
 function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { code, name, settings } = useStore();
+  const { code, name, settings, url } = useStore();
   const phone = settings?.support_phone?.trim();
   const [mounted, setMounted] = useState(false);
 
@@ -652,7 +652,7 @@ export function TrustBar() {
 }
 
 export function StoreFooter() {
-  const { code, name, settings, categories, theme } = useStore();
+  const { code, name, settings, categories, theme, url } = useStore();
   const year = new Date().getFullYear();
   const socials = [
     settings?.facebook_url && { label: "Facebook", href: settings.facebook_url },
