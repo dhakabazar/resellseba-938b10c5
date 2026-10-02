@@ -47,10 +47,10 @@ export const Route = createFileRoute("/s/$code/p/$slug")({
   },
 });
 
-function ProductPage() {
-  const { code, slug } = Route.useParams();
-  const nav = useNavigate();
+export function ProductPageContent({ slug, code: propCode }: { slug: string; code?: string }) {
   const store = useStore();
+  const code = propCode || store.code;
+  const nav = useNavigate();
   const listing = store.bySlug(slug);
   const [qty, setQty] = useState(1);
   const [idx, setIdx] = useState(0);
@@ -68,7 +68,7 @@ function ProductPage() {
       <div className="mx-auto max-w-4xl px-4 py-16">
         <EmptyState title="Product not available" hint="It may have been removed from this store." />
         <div className="mt-6 text-center">
-          <Link to="/s/$code" params={{ code }}>
+          <Link to={store.url("/")}>
             <GhostButton>Back to store</GhostButton>
           </Link>
         </div>
@@ -104,7 +104,7 @@ function ProductPage() {
   function add(goCheckout: boolean) {
     addToCart(code, listing!.id, qty);
     trackAddToCart({ id: p.id, name: title, price, qty });
-    if (goCheckout) nav({ to: "/s/$code/checkout", params: { code } });
+    if (goCheckout) nav({ to: store.url("/checkout") });
     else toast.success("Added to cart");
   }
 
@@ -122,7 +122,7 @@ function ProductPage() {
           onOrder={(q) => {
             addToCart(code, listing.id, q);
             trackAddToCart({ id: p.id, name: title, price, qty: q });
-            nav({ to: "/s/$code/checkout", params: { code } });
+            nav({ to: store.url("/checkout") });
           }}
           onAddToCart={(q) => {
             addToCart(code, listing.id, q);
@@ -139,7 +139,7 @@ function ProductPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       <nav className={cx("mb-5 flex items-center gap-1 text-xs", muted)}>
-        <Link to="/s/$code" params={{ code }} className="inline-flex items-center gap-1 hover:text-[var(--st-primary)]">
+        <Link to={store.url("/")} className="inline-flex items-center gap-1 hover:text-[var(--st-primary)]">
           <ChevronLeft className="h-3 w-3" /> Store
         </Link>
         <span>/</span>
@@ -314,3 +314,9 @@ function ProductPage() {
 
   );
 }
+
+function ProductPage() {
+  const { code, slug } = Route.useParams();
+  return <ProductPageContent slug={slug} code={code} />;
+}
+

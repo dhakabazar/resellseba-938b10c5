@@ -21,7 +21,7 @@ export const Route = createFileRoute("/s/$code/shop")({
   }),
 });
 
-function ShopPage() {
+export function ShopPageContent() {
   const { listings } = useStore();
   const poripati = usePoripati();
   const [visible, setVisible] = useState(PAGE_SIZE);
@@ -46,4 +46,8 @@ function ShopPage() {
       )}
     </section>
   );
+}
+
+function ShopPage() {
+  return <ShopPageContent />;
 }

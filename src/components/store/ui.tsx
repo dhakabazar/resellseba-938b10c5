@@ -167,13 +167,13 @@ function soldCount(id: string) {
 }
 
 export function ProductCard({ listing }: { listing: StoreListing }) {
-  const { code, theme, title, image, content } = useStore();
+  const { code, theme, title, image, content, url } = useStore();
   const img = image(listing);
   const p = listing.product!;
   const free = resolveDelivery(p).mode === "free";
   const sold = useMemo(() => soldCount(p.id), [p.id]);
   const price = Number(listing.selling_price);
-  const to = { to: "/s/$code/p/$slug" as const, params: { code, slug: p.slug } };
+  const to = { to: url(`/p/${p.slug}`) };
 
   const Img = ({ className }: { className?: string }) =>
     img ? (

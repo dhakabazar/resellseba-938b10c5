@@ -46,7 +46,7 @@ export function Hero() {
   const buttons = (
     <div className="flex flex-wrap items-center gap-3">
       {firstSlug ? (
-        <Link to="/s/$code/p/$slug" params={{ code, slug: firstSlug }}>
+        <Link to={store.url(`/p/${firstSlug}`)}>
           <PrimaryButton>
             {cta} <ArrowRight className="h-4 w-4" />
           </PrimaryButton>
@@ -75,7 +75,7 @@ export function Hero() {
       <section className="mx-auto max-w-6xl px-3 pt-3">
         <div className={cx("overflow-hidden rounded-[var(--st-radius)] border", borderc)}>
           {firstSlug ? (
-            <Link to="/s/$code/p/$slug" params={{ code, slug: firstSlug }} className="block">
+            <Link to={store.url(`/p/${firstSlug}`)} className="block">
               {banner}
             </Link>
           ) : (
@@ -303,8 +303,7 @@ export function CategoryStrip() {
             {categories.map((c) => (
               <Link
                 key={c.id}
-                to="/s/$code/c/$slug"
-                params={{ code, slug: c.slug }}
+                to={url(`/c/${c.slug}`)}
                 className="group flex flex-col items-center gap-1.5 text-center"
               >
                 <span className="grid h-16 w-16 place-items-center overflow-hidden rounded-full bg-[var(--st-bg-alt)] ring-2 ring-transparent transition-all group-hover:ring-[var(--st-primary)]">
@@ -332,8 +331,7 @@ export function CategoryStrip() {
           {categories.map((c) => (
             <Link
               key={c.id}
-              to="/s/$code/c/$slug"
-              params={{ code, slug: c.slug }}
+              to={url(`/c/${c.slug}`)}
               className={cx(
                 "group overflow-hidden rounded-[var(--st-radius)] border bg-[var(--st-surface)] transition-colors hover:border-[var(--st-primary)]",
                 borderc,
@@ -364,8 +362,7 @@ export function CategoryStrip() {
           {categories.slice(0, 10).map((c) => (
             <Link
               key={c.id}
-              to="/s/$code/c/$slug"
-              params={{ code, slug: c.slug }}
+              to={url(`/c/${c.slug}`)}
               className={cx(
                 "flex items-center justify-center gap-2 rounded-[var(--st-radius)] border bg-[var(--st-surface)] px-3 py-3.5 text-center text-[13px] font-semibold transition-colors hover:border-[var(--st-primary)] hover:text-[var(--st-primary)]",
                 borderc,
@@ -387,8 +384,7 @@ export function CategoryStrip() {
         {categories.map((c) => (
           <Link
             key={c.id}
-            to="/s/$code/c/$slug"
-            params={{ code, slug: c.slug }}
+            to={url(`/c/${c.slug}`)}
             className="group flex min-w-0 flex-col items-center text-center"
           >
             <div className="aspect-square w-full overflow-hidden rounded-full border-2 border-[var(--st-surface)] bg-[var(--st-bg-alt)] shadow-[var(--st-shadow)] ring-1 ring-[var(--st-border)] transition-all group-hover:-translate-y-1 group-hover:ring-[var(--st-primary)]">
@@ -419,7 +415,7 @@ export function CategoryStrip() {
 /* ------------------------------------------------------------ promo banner */
 
 export function PromoBanner() {
-  const { code, content, settings, theme } = useStore();
+  const { code, content, settings, theme, url } = useStore();
   if (!content.flag("promo_show")) return null;
   const title = content.text("promo_title");
   const text = content.text("promo_text");
@@ -428,7 +424,7 @@ export function PromoBanner() {
   if (!title && !text) return null;
 
   const shopLink = (label: string, primary = true) => (
-    <Link to="/s/$code" params={{ code }}>
+    <Link to={url("/")}>
       {primary ? <PrimaryButton>{label}</PrimaryButton> : <GhostButton>{label}</GhostButton>}
     </Link>
   );
@@ -445,8 +441,7 @@ export function PromoBanner() {
           </div>
           {cta && (
             <Link
-              to="/s/$code"
-              params={{ code }}
+              to={url("/")}
               className="rounded-full bg-[var(--st-primary)] px-6 py-2.5 text-sm font-bold text-[var(--st-on-primary)]"
             >
               {cta}
@@ -475,7 +470,7 @@ export function PromoBanner() {
     return (
       <section className="mx-auto max-w-6xl px-3 py-4">
         {image ? (
-          <Link to="/s/$code" params={{ code }} className={cx("block overflow-hidden rounded-[var(--st-radius)] border", borderc)}>
+          <Link to={url("/")} className={cx("block overflow-hidden rounded-[var(--st-radius)] border", borderc)}>
             <img src={image} alt={title} loading="lazy" className="h-auto w-full object-cover" />
           </Link>
         ) : (
@@ -486,8 +481,7 @@ export function PromoBanner() {
             </div>
             {cta && (
               <Link
-                to="/s/$code"
-                params={{ code }}
+                to={url("/")}
                 className="rounded-[var(--st-radius)] bg-[var(--st-surface)] px-5 py-2.5 text-sm font-bold text-[var(--st-primary)]"
               >
                 {cta}

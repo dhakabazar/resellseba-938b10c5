@@ -8,9 +8,9 @@ import { useStore } from "./store-context";
 import { borderc, cx, Heading, muted } from "./ui";
 
 function Logo() {
-  const { code, name, settings, theme } = useStore();
+  const { code, name, settings, theme, url } = useStore();
   return (
-    <Link to="/s/$code" params={{ code }} className="flex min-w-0 items-center gap-2.5">
+    <Link to={url("/")} className="flex min-w-0 items-center gap-2.5">
       {settings?.logo_url ? (
         <img src={settings.logo_url} alt={name} className="h-10 w-auto max-w-[180px] object-contain" />
       ) : (
@@ -33,12 +33,12 @@ function Logo() {
 }
 
 function SearchBox({ className, variant = "default" }: { className?: string; variant?: "default" | "sohoj" }) {
-  const { code } = useStore();
+  const { code, url } = useStore();
   const nav = useNavigate();
   const [q, setQ] = useState("");
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    nav({ to: "/s/$code", params: { code }, search: { q: q || undefined } });
+    nav({ to: url("/"), search: { q: q || undefined } });
   };
 
   if (variant === "sohoj")
@@ -83,11 +83,10 @@ function SearchBox({ className, variant = "default" }: { className?: string; var
 
 
 function CartButton() {
-  const { code, cartCount } = useStore();
+  const { code, cartCount, url } = useStore();
   return (
     <Link
-      to="/s/$code/checkout"
-      params={{ code }}
+      to={url("/checkout")}
       aria-label="Cart"
       className={cx(
         "relative inline-flex items-center gap-2 rounded-[var(--st-radius-sm)] border px-3 py-2 text-sm",
@@ -412,7 +411,7 @@ function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void })
         )}
       >
         <div className={cx("flex items-center justify-between border-b px-4 py-3", borderc)}>
-          <Link to="/s/$code" params={{ code }} onClick={onClose} className="flex min-w-0 items-center gap-2">
+          <Link to={url("/")} onClick={onClose} className="flex min-w-0 items-center gap-2">
             {settings?.logo_url ? (
               <img src={settings.logo_url} alt={name} className="h-8 w-auto max-w-[140px] object-contain" />
             ) : (
@@ -705,14 +704,13 @@ export function StoreFooter() {
             <div>
               <div className="mb-2 text-[11px] font-bold uppercase tracking-wider text-[var(--st-fg)]">Shop</div>
               <div className="flex flex-col gap-1.5">
-                <Link to="/s/$code/shop" params={{ code }} className={cx("text-[12px] hover:text-[var(--st-primary)]", muted)}>
+                <Link to={url("/shop")} className={cx("text-[12px] hover:text-[var(--st-primary)]", muted)}>
                   All products
                 </Link>
                 {catLinks.map((c) => (
                   <Link
                     key={c.id}
-                    to="/s/$code/c/$slug"
-                    params={{ code, slug: c.slug }}
+                    to={url(`/c/${c.slug}`)}
                     className={cx("text-[12px] hover:text-[var(--st-primary)]", muted)}
                   >
                     {c.name}
@@ -763,14 +761,13 @@ export function StoreFooter() {
           <Heading className="text-2xl tracking-[0.16em]">{name}</Heading>
           <p className={cx("mx-auto mt-4 max-w-lg text-sm leading-relaxed", muted)}>{about}</p>
           <div className={cx("mt-8 flex flex-wrap items-center justify-center gap-x-7 gap-y-3 text-[10px] uppercase tracking-[0.28em]", muted)}>
-            <Link to="/s/$code/shop" params={{ code }} className="hover:text-[var(--st-primary)]">
+            <Link to={url("/shop")} className="hover:text-[var(--st-primary)]">
               All products
             </Link>
             {catLinks.slice(0, 4).map((c) => (
               <Link
                 key={c.id}
-                to="/s/$code/c/$slug"
-                params={{ code, slug: c.slug }}
+                to={url(`/c/${c.slug}`)}
                 className="hover:text-[var(--st-primary)]"
               >
                 {c.name}
@@ -800,14 +797,13 @@ export function StoreFooter() {
       <footer className="mt-8">
         <div className={cx("border-t bg-[var(--st-surface)]", borderc)}>
           <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-5 gap-y-2 px-4 py-4 text-[12px] font-medium">
-            <Link to="/s/$code/shop" params={{ code }} className="hover:text-[var(--st-primary)]">
+            <Link to={url("/shop")} className="hover:text-[var(--st-primary)]">
               সব প্রোডাক্ট
             </Link>
             {catLinks.slice(0, 4).map((c) => (
               <Link
                 key={c.id}
-                to="/s/$code/c/$slug"
-                params={{ code, slug: c.slug }}
+                to={url(`/c/${c.slug}`)}
                 className="hover:text-[var(--st-primary)]"
               >
                 {c.name}
@@ -899,14 +895,13 @@ export function StoreFooter() {
           <div>
             <div className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--st-fg)]">Shop</div>
             <div className="flex flex-col gap-2">
-              <Link to="/s/$code/shop" params={{ code }} className={cx("text-sm hover:text-[var(--st-primary)]", muted)}>
+              <Link to={url("/shop")} className={cx("text-sm hover:text-[var(--st-primary)]", muted)}>
                 All products
               </Link>
               {catLinks.map((c) => (
                 <Link
                   key={c.id}
-                  to="/s/$code/c/$slug"
-                  params={{ code, slug: c.slug }}
+                  to={url(`/c/${c.slug}`)}
                   className={cx("text-sm hover:text-[var(--st-primary)]", muted)}
                 >
                   {c.name}

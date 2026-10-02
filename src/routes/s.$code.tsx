@@ -1,9 +1,9 @@
-import { createFileRoute, Outlet, useRouterState } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { useStoreVisitLog } from "@/lib/store-visits";
 import { storeThemeStyle } from "@/lib/store-theme";
-import { useStoreLoader } from "@/components/store/store-context";
+import { isCustomDomainHost, useStoreLoader } from "@/components/store/store-context";
 import { LegacyChromeBoundary, PoripatiChromeBoundary } from "@/components/store/theme-loader";
 
 
@@ -26,6 +26,7 @@ export const Route = createFileRoute("/s/$code")({
 
 function StoreLayout() {
   const { code } = Route.useParams();
+  const nav = useNavigate();
   /** `?theme=` / `?palette=` let the reseller panel preview any combination. */
   const searchStr = useRouterState({ select: (s) => s.location.searchStr });
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -33,6 +34,14 @@ function StoreLayout() {
   const previewTheme = params.get("theme");
   const previewPalette = params.get("palette");
   const { state, store, Provider } = useStoreLoader(code, previewTheme, previewPalette);
+
+  // If visitor is on a custom domain and not in admin theme preview, clean the URL from /s/code to /
+  useEffect(() => {
+    if (isCustomDomainHost() && !previewTheme && !previewPalette) {
+      const cleanPath = pathname.replace(new RegExp(`^/s/${code}`), "") || "/";
+      nav({ to: cleanPath, replace: true });
+    }
+  }, [code, pathname, previewTheme, previewPalette, nav]);
 
   /** Panel previews (?theme / ?palette) are not counted as customer visits. */
   useStoreVisitLog(code, pathname.replace(`/s/${code}`, "") || "/", Boolean(previewTheme || previewPalette));

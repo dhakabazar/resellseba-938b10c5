@@ -30,11 +30,20 @@ export const Route = createFileRoute("/s/$code/thanks")({
   component: Thanks,
 });
 
-function Thanks() {
-  const { code } = Route.useParams();
-  const { n, pay, txn } = Route.useSearch();
-  const fired = useRef(false);
+export function ThanksPageContent({
+  code: propCode,
+  n,
+  pay,
+  txn,
+}: {
+  code?: string;
+  n: string;
+  pay?: string;
+  txn?: string;
+}) {
   const store = useStore();
+  const code = propCode || store.code;
+  const fired = useRef(false);
   const { content } = store;
   const poripati = store.theme.id === "poripati";
   const capi = useServerFn(trackPurchaseServer);
@@ -98,13 +107,18 @@ function Thanks() {
       {payState !== "idle" && <PaymentBanner state={payState} txn={txn} />}
       <p className={cx("mt-2 text-sm leading-relaxed", muted)}>{content.text("co_success_note")}</p>
       <div className="mt-7 flex justify-center">
-        <Link to="/s/$code" params={{ code }}>
+        <Link to={store.url("/")}>
           <PrimaryButton>Continue shopping</PrimaryButton>
         </Link>
       </div>
     </div>
   );
+}
 
+function Thanks() {
+  const { code } = Route.useParams();
+  const { n, pay, txn } = Route.useSearch();
+  return <ThanksPageContent code={code} n={n} pay={pay} txn={txn} />;
 }
 
 /** Online-payment outcome, shown only when the customer returns from a gateway. */

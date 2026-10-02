@@ -218,8 +218,7 @@ export function SohojProductPage({
             title="রিলেটেড প্রোডাক্টস"
             action={
               <Link
-                to="/s/$code"
-                params={{ code }}
+                to={store.url("/")}
                 className={cx(
                   "rounded-[var(--st-radius-sm)] border px-4 py-2 text-[13px] font-bold hover:border-[var(--st-primary)] hover:text-[var(--st-primary)]",
                   borderc,

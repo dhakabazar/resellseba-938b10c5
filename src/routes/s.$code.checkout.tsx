@@ -44,12 +44,21 @@ function useAreas() {
   return areaOptions(settings.delivery);
 }
 
-function Checkout() {
+export function CheckoutPageContent({
+  code: propCode,
+  directListing,
+  directQty,
+  payFlag,
+}: {
+  code?: string;
+  directListing?: string;
+  directQty?: number;
+  payFlag?: string;
+}) {
   const AREAS = useAreas();
-  const { code } = Route.useParams();
-  const { l: directListing, q: directQty, pay: payFlag } = Route.useSearch();
-  const nav = useNavigate();
   const store = useStore();
+  const code = propCode || store.code;
+  const nav = useNavigate();
   const poripati = store.theme.id === "poripati";
   /** Manual methods arrive with the storefront bootstrap payload — no extra call. */
   const methods: PayMethod[] = store.paymentMethods.map((m) => ({
@@ -77,9 +86,9 @@ function Checkout() {
   useEffect(() => {
     if (directListing) {
       addToCart(code, directListing, directQty && directQty > 0 ? directQty : 1);
-      nav({ to: "/s/$code/checkout", params: { code }, search: {}, replace: true });
+      nav({ to: store.url("/checkout"), search: {}, replace: true });
     }
-  }, [directListing, directQty, code, nav]);
+  }, [directListing, directQty, code, nav, store]);
 
   /**
    * The shopper came back from a gateway without paying (cancelled or failed).
@@ -92,8 +101,8 @@ function Checkout() {
         ? "Payment was cancelled — your cart is still here, try again or choose Cash on Delivery."
         : "Payment did not go through — please try again or choose Cash on Delivery.",
     );
-    nav({ to: "/s/$code/checkout", params: { code }, search: {}, replace: true });
-  }, [payFlag, code, nav]);
+    nav({ to: store.url("/checkout"), search: {}, replace: true });
+  }, [payFlag, code, nav, store]);
 
   /** Automatic gateways come from the server (credentials never reach the browser). */
   useEffect(() => {
@@ -211,7 +220,7 @@ function Checkout() {
 
     clearCart(code);
     setBusy(false);
-    nav({ to: "/s/$code/thanks", params: { code }, search: { n: row.order_number } });
+    nav({ to: store.url("/thanks"), search: { n: row.order_number } });
   }
 
   const inp = cx(
@@ -224,7 +233,7 @@ function Checkout() {
       <div className="mx-auto max-w-3xl px-4 py-16">
         <EmptyState title="Your cart is empty" hint="Add a product to continue to checkout." />
         <div className="mt-6 text-center">
-          <Link to="/s/$code" params={{ code }}>
+          <Link to={store.url("/")}>
             <GhostButton>Browse products</GhostButton>
           </Link>
         </div>
@@ -491,8 +500,7 @@ function Checkout() {
 
           </div>
           <Link
-            to="/s/$code"
-            params={{ code }}
+            to={store.url("/")}
             className={cx("flex items-center justify-center gap-1 text-xs hover:text-[var(--st-primary)]", muted)}
           >
             <ChevronDown className="h-3.5 w-3.5 rotate-90" /> Continue shopping
@@ -501,6 +509,12 @@ function Checkout() {
       </div>
     </div>
   );
+}
+
+function Checkout() {
+  const { code } = Route.useParams();
+  const { l: directListing, q: directQty, pay: payFlag } = Route.useSearch();
+  return <CheckoutPageContent code={code} directListing={directListing} directQty={directQty} payFlag={payFlag} />;
 }
 
 function Field({

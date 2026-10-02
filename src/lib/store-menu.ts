@@ -160,26 +160,26 @@ export async function saveMenuRows(resellerId: string, items: FlatMenuItem[]) {
   }
 }
 
+import { buildStorePath } from "@/components/store/store-context";
+
 /** Resolved link target for a menu row inside a given store. */
 export type MenuTarget =
-  | { kind: "route"; to: "/s/$code" | "/s/$code/shop"; params: { code: string }; search?: Record<string, unknown> }
-  | { kind: "route-slug"; to: "/s/$code/c/$slug" | "/s/$code/p/$slug"; params: { code: string; slug: string } }
   | { kind: "external"; href: string }
   | { kind: "none" };
 
 export function menuTarget(row: MenuRow, code: string): MenuTarget {
   switch (row.kind) {
     case "home":
-      return { kind: "route", to: "/s/$code", params: { code } };
+      return { kind: "external", href: buildStorePath(code, "/") };
     case "all_products":
-      return { kind: "route", to: "/s/$code/shop", params: { code } };
+      return { kind: "external", href: buildStorePath(code, "/shop") };
     case "category":
       return row.ref_slug
-        ? { kind: "route-slug", to: "/s/$code/c/$slug", params: { code, slug: row.ref_slug } }
+        ? { kind: "external", href: buildStorePath(code, `/c/${row.ref_slug}`) }
         : { kind: "none" };
     case "product":
       return row.ref_slug
-        ? { kind: "route-slug", to: "/s/$code/p/$slug", params: { code, slug: row.ref_slug } }
+        ? { kind: "external", href: buildStorePath(code, `/p/${row.ref_slug}`) }
         : { kind: "none" };
     default: {
       const url = row.url?.trim();

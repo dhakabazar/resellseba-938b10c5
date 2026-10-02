@@ -92,7 +92,29 @@ export type StoreData = {
   bySlug: (slug: string) => StoreListing | undefined;
   title: (l: StoreListing) => string;
   image: (l: StoreListing) => string | undefined;
+  /** Builds clean URLs on custom domains (e.g. /p/item) vs /s/code/p/item on platform domain */
+  url: (path: string) => string;
 };
+
+export function isCustomDomainHost(): boolean {
+  if (typeof window === "undefined") return false;
+  const host = window.location.hostname.toLowerCase();
+  if (!host || host === "localhost" || host === "127.0.0.1") return false;
+  if (host.endsWith(".lovable.app") || host.endsWith(".lovableproject.com")) return false;
+  if (host === "ecomsellerbd.com" || host.endsWith(".ecomsellerbd.com")) {
+    if (host === "fallback.ecomsellerbd.com") return true;
+    return false;
+  }
+  return true;
+}
+
+export function buildStorePath(code: string, subpath: string): string {
+  const clean = subpath.startsWith("/") ? subpath : `/${subpath}`;
+  if (isCustomDomainHost()) {
+    return clean === "" ? "/" : clean;
+  }
+  return clean === "/" ? `/s/${code}` : `/s/${code}${clean}`;
+}
 
 
 /** reseller-specific method overrides the platform one with the same key */
@@ -188,6 +210,7 @@ export function useStoreLoader(code: string, themeOverride?: string | null, pale
         title: (l) => l.custom_title || l.product?.name || "",
         image: (l) =>
           l.product?.product_images?.find((i) => i.is_primary)?.url ?? l.product?.product_images?.[0]?.url,
+        url: (path: string) => buildStorePath(code, path),
       });
       setState("ready");
     })();

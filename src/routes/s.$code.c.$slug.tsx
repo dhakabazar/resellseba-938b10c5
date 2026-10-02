@@ -21,9 +21,10 @@ export const Route = createFileRoute("/s/$code/c/$slug")({
 
 type Sort = "new" | "low" | "high";
 
-function CategoryPage() {
-  const { code, slug } = Route.useParams();
-  const { categories, listings } = useStore();
+export function CategoryPageContent({ slug, code: propCode }: { slug: string; code?: string }) {
+  const store = useStore();
+  const code = propCode || store.code;
+  const { categories, listings } = store;
   const [sort, setSort] = useState<Sort>("new");
   const poripati = usePoripati();
 
@@ -42,7 +43,7 @@ function CategoryPage() {
       <div className="mx-auto max-w-6xl px-4 py-16">
         <EmptyState title="Collection not found" hint="This collection is no longer available." />
         <div className="mt-6 text-center">
-          <Link to="/s/$code" params={{ code }}>
+          <Link to={store.url("/")}>
             <GhostButton>Back to store</GhostButton>
           </Link>
         </div>
@@ -78,11 +79,16 @@ function CategoryPage() {
           <EmptyState title="No products here yet" hint="Check another collection." />
         )}
         <div className={cx("mt-10 text-center text-sm", muted)}>
-          <Link to="/s/$code" params={{ code }} className="hover:text-[var(--st-primary)]">
+          <Link to={store.url("/")} className="hover:text-[var(--st-primary)]">
             ← Continue shopping
           </Link>
         </div>
       </div>
     </div>
   );
+}
+
+function CategoryPage() {
+  const { code, slug } = Route.useParams();
+  return <CategoryPageContent slug={slug} code={code} />;
 }
