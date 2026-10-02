@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { CustomDomainStoreLayout } from "@/components/store/custom-domain-shell";
-import { CategoryPageContent } from "@/routes/s.$code.c.$slug";
+import { CategoryPageContent } from "@/components/store/pages/category-page-content";
 
 export const Route = createFileRoute("/c/$slug")({
   head: ({ params }) => ({

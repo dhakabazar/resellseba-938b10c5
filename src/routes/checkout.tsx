@@ -1,16 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { CustomDomainStoreLayout } from "@/components/store/custom-domain-shell";
-import { CheckoutPageContent } from "@/routes/s.$code.checkout";
+import { CheckoutPageContent } from "@/components/store/pages/checkout-page-content";
 
-type Search = { l?: string; q?: number; pay?: string };
+type Search = {
+  l?: string;
+  q?: number;
+  pay?: string;
+};
 
 export const Route = createFileRoute("/checkout")({
   head: () => ({
     meta: [
       { title: "Checkout · Online Store" },
-      { name: "description", content: "Complete your order securely." },
+      { name: "description", content: "Fast and easy checkout with cash on delivery across Bangladesh." },
       { property: "og:title", content: "Checkout · Online Store" },
-      { property: "og:description", content: "Complete your order securely." },
+      { property: "og:description", content: "Fast and easy checkout with cash on delivery." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],

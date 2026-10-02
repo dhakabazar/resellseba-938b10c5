@@ -1,14 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { CustomDomainStoreLayout } from "@/components/store/custom-domain-shell";
-import { ThanksPageContent } from "@/routes/s.$code.thanks";
+import { ThanksPageContent } from "@/components/store/pages/thanks-page-content";
 
 export const Route = createFileRoute("/thanks")({
   head: () => ({
     meta: [
-      { title: "Order received · Online Store" },
-      { name: "description", content: "Order confirmation and verified payment result." },
-      { property: "og:title", content: "Order received · Online Store" },
-      { property: "og:description", content: "View your order number and confirmed payment status." },
+      { title: "Order received · Reseller Store" },
+      { name: "description", content: "Order confirmation and verified payment result for reseller store customers." },
+      { property: "og:title", content: "Order received · Reseller Store" },
+      { property: "og:description", content: "View your order number and confirmed payment status after checkout." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],

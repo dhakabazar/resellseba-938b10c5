@@ -232,64 +232,17 @@ type LandingStats = LpBootstrap["stats"] & {
 };
 
 function CustomDomainStore({ code }: { code: string }) {
-  const { state, store, Provider } = useStoreLoader(code);
-  useStoreVisitLog(code, "/", false);
-
-  if (state === "loading") {
-    return (
-      <div className="grid min-h-screen place-items-center bg-background">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
-  if (state === "closed") {
-    return (
-      <div className="grid min-h-screen place-items-center p-6 text-center">
-        <div className="max-w-sm">
-          <h1 className="text-2xl font-semibold">Store temporarily unavailable</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            This store is closed right now. Please try again later or contact the store owner.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  if (state === "missing" || !store) {
-    return (
-      <div className="grid min-h-screen place-items-center p-6 text-center">
-        <div>
-          <h1 className="text-2xl font-semibold">Store not found</h1>
-          <p className="mt-2 text-sm text-muted-foreground">No active store exists for this address.</p>
-        </div>
-      </div>
-    );
-  }
-
-  const style = storeThemeStyle(store.theme, store.palette.id);
-  const homeContent = store.theme.id === "poripati" ? (
-    <PoripatiHomeBoundary />
-  ) : (
-    <LegacyHomeBoundary />
-  );
-
-  const body = store.theme.id === "poripati" ? (
-    <PoripatiChromeBoundary>{homeContent}</PoripatiChromeBoundary>
-  ) : (
-    <LegacyChromeBoundary>{homeContent}</LegacyChromeBoundary>
-  );
-
   return (
-    <Provider value={store}>
-      <div
-        data-store-theme={store.theme.id}
-        style={{ ...style, fontFamily: "var(--st-font-body)" }}
-        className="min-h-screen bg-[var(--st-bg)] text-[var(--st-fg)] antialiased"
-      >
-        {body}
-      </div>
-    </Provider>
+    <CustomDomainStoreLayout path="/">
+      {() => {
+        const store = useStore();
+        return store.theme.id === "poripati" ? (
+          <PoripatiHomeBoundary />
+        ) : (
+          <LegacyHomeBoundary />
+        );
+      }}
+    </CustomDomainStoreLayout>
   );
 }
 
@@ -312,8 +265,10 @@ function RootResolver() {
       const isPlatformHost =
         !host ||
         host === "localhost" ||
+        host === "127.0.0.1" ||
         host.endsWith(".lovable.app") ||
-        host.endsWith(".lovableproject.com");
+        host.endsWith(".lovableproject.com") ||
+        (host === "ecomsellerbd.com" || (host.endsWith(".ecomsellerbd.com") && host !== "fallback.ecomsellerbd.com"));
 
       // ONE call: branding + landing content + stats + categories + products,
       // and (for custom domains) the reseller this hostname belongs to.
@@ -321,10 +276,31 @@ function RootResolver() {
       if (!alive) return;
 
       const store = data?.store;
-      if (!isPlatformHost && store && store.status === "active") {
-        setCustomStoreCode(store.code);
-        setChecking(false);
-        return;
+      if (!isPlatformHost) {
+        if (store && store.status === "active") {
+          setCustomStoreCode(store.code);
+          setChecking(false);
+          return;
+        }
+
+        // Direct fallback query in case lp_bootstrap function in DB didn't match immediately
+        try {
+          const cleanHost = host.toLowerCase().trim();
+          const baseHost = cleanHost.replace(/^www\./, "");
+          const { data: domainRows } = await supabase
+            .from("reseller_domains")
+            .select("resellers(code, status)")
+            .or(`hostname.eq.${cleanHost},hostname.eq.${baseHost},hostname.eq.www.${baseHost}`)
+            .limit(1);
+          const matched = domainRows?.[0]?.resellers as { code?: string; status?: string } | null;
+          if (matched?.code && matched.status === "active") {
+            setCustomStoreCode(matched.code);
+            setChecking(false);
+            return;
+          }
+        } catch {
+          // ignore error and proceed
+        }
       }
 
       const s = data?.settings as
