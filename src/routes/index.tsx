@@ -33,6 +33,8 @@ import {
 import { CountUp } from "@/components/count-up";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { youtubeEmbed, youtubeThumb } from "@/lib/tutorials";
+import { useServerFn } from "@tanstack/react-start";
+import { resolveDomainToStoreCode } from "@/lib/domain-lookup.functions";
 import { PublicHeader, Brand } from "@/components/public-header";
 import { FloatingChat, type ChatBubbleConfig } from "@/components/floating-chat";
 import { useStoreLoader, useStore } from "@/components/store/store-context";
@@ -45,7 +47,7 @@ import {
 import { useStoreVisitLog } from "@/lib/store-visits";
 import { storeThemeStyle } from "@/lib/store-theme";
 import { supabase } from "@/integrations/supabase/client";
-import { CustomDomainStoreLayout } from "@/components/store/custom-domain-shell";
+import { CustomDomainStoreLayout, StoreShell } from "@/components/store/custom-domain-shell";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -244,9 +246,9 @@ function StoreHomeInner() {
 
 function CustomDomainStore({ code }: { code: string }) {
   return (
-    <CustomDomainStoreLayout path="/">
-      {() => <StoreHomeInner />}
-    </CustomDomainStoreLayout>
+    <StoreShell code={code} path="/">
+      <StoreHomeInner />
+    </StoreShell>
   );
 }
 
@@ -261,6 +263,7 @@ function RootResolver() {
     phone: null,
     email: null,
   });
+  const resolveDomain = useServerFn(resolveDomainToStoreCode);
 
   useEffect(() => {
     let alive = true;
@@ -274,38 +277,34 @@ function RootResolver() {
         host.endsWith(".lovableproject.com") ||
         (host === "ecomsellerbd.com" || (host.endsWith(".ecomsellerbd.com") && host !== "fallback.ecomsellerbd.com"));
 
-      // ONE call: branding + landing content + stats + categories + products,
-      // and (for custom domains) the reseller this hostname belongs to.
-      const data = await getLpBootstrap(isPlatformHost ? "" : host);
-      if (!alive) return;
-
-      const store = data?.store;
       if (!isPlatformHost) {
-        if (store && store.status === "active") {
-          setCustomStoreCode(store.code);
-          setChecking(false);
-          return;
-        }
-
-        // Direct fallback query in case lp_bootstrap function in DB didn't match immediately
+        // Try 1: bootstrap
         try {
-          const cleanHost = host.toLowerCase().trim();
-          const baseHost = cleanHost.replace(/^www\./, "");
-          const { data: domainRows } = await supabase
-            .from("reseller_domains")
-            .select("resellers(code, status)")
-            .or(`hostname.eq.${cleanHost},hostname.eq.${baseHost},hostname.eq.www.${baseHost}`)
-            .limit(1);
-          const matched = domainRows?.[0]?.resellers as { code?: string; status?: string } | null;
-          if (matched?.code && matched.status === "active") {
-            setCustomStoreCode(matched.code);
+          const data = await getLpBootstrap(host);
+          if (alive && data?.store && data.store.status === "active") {
+            setCustomStoreCode(data.store.code);
             setChecking(false);
             return;
           }
         } catch {
-          // ignore error and proceed
+          // fallback to server function
+        }
+
+        // Try 2: Server function with admin database access (bypasses RLS)
+        try {
+          const resolved = await resolveDomain({ hostname: host });
+          if (alive && resolved) {
+            setCustomStoreCode(resolved);
+            setChecking(false);
+            return;
+          }
+        } catch (err) {
+          console.error("[RootResolver] Domain resolution failed:", err);
         }
       }
+
+      const data = await getLpBootstrap(isPlatformHost ? "" : host);
+      if (!alive) return;
 
       const s = data?.settings as
         | {

@@ -1,24 +1,33 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { useNavigate } from "@tanstack/react-router";
 import { getLpBootstrap } from "@/lib/bootstrap";
 import { useStoreLoader } from "@/components/store/store-context";
 import { useStoreVisitLog } from "@/lib/store-visits";
 import { storeThemeStyle } from "@/lib/store-theme";
 import { LegacyChromeBoundary, PoripatiChromeBoundary } from "@/components/store/theme-loader";
 import { Loader2 } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { resolveDomainToStoreCode } from "@/lib/domain-lookup.functions";
 
 export function CustomDomainStoreLayout({
+  code: propCode,
   children,
   path = "/",
 }: {
+  code?: string;
   children: (props: { code: string }) => ReactNode;
   path?: string;
 }) {
-  const [storeCode, setStoreCode] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const nav = useNavigate();
+  const [storeCode, setStoreCode] = useState<string | null>(propCode || null);
+  const [loading, setLoading] = useState(!propCode);
+  const resolveDomain = useServerFn(resolveDomainToStoreCode);
 
   useEffect(() => {
+    if (propCode) {
+      setStoreCode(propCode);
+      setLoading(false);
+      return;
+    }
+
     let alive = true;
     (async () => {
       const host = typeof window !== "undefined" ? window.location.hostname : "";
@@ -31,28 +40,61 @@ export function CustomDomainStoreLayout({
         (host === "ecomsellerbd.com" || (host.endsWith(".ecomsellerbd.com") && host !== "fallback.ecomsellerbd.com"));
 
       if (isPlatform) {
-        nav({ to: "/", replace: true });
+        setLoading(false);
         return;
       }
 
-      const data = await getLpBootstrap(host);
-      if (!alive) return;
-      if (data?.store?.code && data.store.status === "active") {
-        setStoreCode(data.store.code);
-      } else {
-        nav({ to: "/", replace: true });
+      // Try 1: bootstrap cache/RPC
+      try {
+        const data = await getLpBootstrap(host);
+        if (alive && data?.store?.code && data.store.status === "active") {
+          setStoreCode(data.store.code);
+          setLoading(false);
+          return;
+        }
+      } catch {
+        // Fallback to server function below
       }
-      setLoading(false);
+
+      // Try 2: Server function with admin database access
+      try {
+        const code = await resolveDomain({ hostname: host });
+        if (alive && code) {
+          setStoreCode(code);
+          setLoading(false);
+          return;
+        }
+      } catch (err) {
+        console.error("[CustomDomainStoreLayout] Domain resolution error:", err);
+      }
+
+      if (alive) {
+        setLoading(false);
+      }
     })();
+
     return () => {
       alive = false;
     };
-  }, [nav]);
+  }, [propCode, resolveDomain]);
 
-  if (loading || !storeCode) {
+  if (loading) {
     return (
       <div className="grid min-h-screen place-items-center bg-background">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (!storeCode) {
+    return (
+      <div className="grid min-h-screen place-items-center bg-background p-6 text-center">
+        <div className="max-w-sm">
+          <h1 className="text-2xl font-semibold">Store Not Found</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            No active store is connected to this domain address.
+          </p>
+        </div>
       </div>
     );
   }
@@ -64,7 +106,15 @@ export function CustomDomainStoreLayout({
   );
 }
 
-function StoreShell({ code, path, children }: { code: string; path: string; children: ReactNode }) {
+export function StoreShell({
+  code,
+  path,
+  children,
+}: {
+  code: string;
+  path: string;
+  children: ReactNode;
+}) {
   const { state, store, Provider } = useStoreLoader(code);
   useStoreVisitLog(code, path, false);
 
@@ -78,7 +128,7 @@ function StoreShell({ code, path, children }: { code: string; path: string; chil
 
   if (state === "closed") {
     return (
-      <div className="grid min-h-screen place-items-center p-6 text-center">
+      <div className="grid min-h-screen place-items-center bg-background p-6 text-center">
         <div className="max-w-sm">
           <h1 className="text-2xl font-semibold">Store temporarily unavailable</h1>
           <p className="mt-2 text-sm text-muted-foreground">
@@ -91,7 +141,7 @@ function StoreShell({ code, path, children }: { code: string; path: string; chil
 
   if (state === "missing" || !store) {
     return (
-      <div className="grid min-h-screen place-items-center p-6 text-center">
+      <div className="grid min-h-screen place-items-center bg-background p-6 text-center">
         <div>
           <h1 className="text-2xl font-semibold">Store not found</h1>
           <p className="mt-2 text-sm text-muted-foreground">No active store exists for this address.</p>
