@@ -6,23 +6,21 @@ import { inCategory, categoryIdsOf } from "@/lib/product-categories";
 import { addToCart } from "@/lib/store-cart";
 import { deliveryLabel } from "@/lib/delivery";
 import { trackAddToCart, trackViewContent } from "@/lib/tracking";
-import { useResellerTools, stripHtml } from "@/components/store/reseller-tools";
+import { useResellerTools, stripHtml, CopyButton, ImageDownloadTools } from "@/components/store/reseller-tools";
+import { ProductCodeChip } from "@/components/product-code";
 import { useStore } from "@/components/store/store-context";
 import { PoripatiProductBoundary } from "@/components/store/theme-loader";
 import { SohojProductPage } from "@/components/store/sohoj-pdp";
 import {
   borderc,
-  CopyButton,
   cx,
   EmptyState,
   GhostButton,
   Heading,
-  ImageDownloadTools,
   muted,
   Price,
   PrimaryButton,
   ProductCard,
-  ProductCodeChip,
   ProductGrid,
   SectionHead,
 } from "@/components/store/ui";
