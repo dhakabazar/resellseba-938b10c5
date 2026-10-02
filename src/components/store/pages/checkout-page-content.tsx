@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { addToCart, clearCart, removeFromCart, setCartQty } from "@/lib/store-cart";
 import { areaOptions, type DeliveryArea } from "@/lib/delivery";
 import { productDeliveryCharge } from "@/lib/product-delivery";
-import { addressError, nameError, normalizePhone, phoneError, sanitizeName } from "@/lib/validation";
+import { addressError, nameError, normalizePhone, phoneError, sanitizeName } from "@/lib/checkout-validate";
 import { bdt } from "@/lib/finance-report";
 import { useAdvancedSettings } from "@/lib/advanced-settings";
 import { useServerFn } from "@tanstack/react-start";
