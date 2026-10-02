@@ -120,18 +120,6 @@ function MenuLabel({
   const { code } = useStore();
   const target = menuTarget(node, code);
   const body = children ?? node.label;
-  if (target.kind === "route")
-    return (
-      <Link to={target.to} params={target.params} className={className} onClick={onClick}>
-        {body}
-      </Link>
-    );
-  if (target.kind === "route-slug")
-    return (
-      <Link to={target.to} params={target.params} className={className} onClick={onClick}>
-        {body}
-      </Link>
-    );
   if (target.kind === "external")
     return (
       <a
