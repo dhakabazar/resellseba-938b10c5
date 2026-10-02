@@ -58,7 +58,7 @@ export function CustomDomainStoreLayout({
 
       // Try 2: Server function with admin database access
       try {
-        const code = await resolveDomain({ hostname: host });
+        const code = await resolveDomain({ data: { hostname: host } });
         if (alive && code) {
           setStoreCode(code);
           setLoading(false);
