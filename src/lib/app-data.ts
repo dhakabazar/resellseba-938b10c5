@@ -35,6 +35,8 @@ export type MyReseller = {
   business_name: string;
   status: string;
   avatar_url?: string | null;
+  /** Live verified custom domain hostname (from panel bootstrap), no scheme. */
+  primary_domain?: string | null;
 };
 
 let settingsPromise: Promise<GlobalSettings | null> | null = null;

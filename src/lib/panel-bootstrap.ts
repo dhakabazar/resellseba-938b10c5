@@ -34,6 +34,8 @@ export type PanelBootstrap = {
     subscription_expires_at?: string | null;
     subscription_trial_ends_at?: string | null;
     subscription_exempt?: boolean | null;
+    /** Live verified custom domain (hostname, no scheme) — falls back to /s/<code>. */
+    primary_domain?: string | null;
   } | null;
   /** Monthly package state for the signed-in reseller (null for staff). */
   subscription: {
