@@ -4,14 +4,13 @@ import { ChevronDown, Loader2, Minus, Plus, Trash2, Truck } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { addToCart, clearCart, removeFromCart, setCartQty } from "@/lib/store-cart";
-import { areaOptions, type DeliveryArea } from "@/lib/delivery";
-import { productDeliveryCharge } from "@/lib/product-delivery";
+import { areaOptions, productDeliveryCharge, type DeliveryArea } from "@/lib/delivery";
 import { addressError, nameError, normalizePhone, phoneError, sanitizeName } from "@/lib/checkout-validate";
 import { bdt } from "@/lib/finance-report";
 import { useAdvancedSettings } from "@/lib/advanced-settings";
 import { useServerFn } from "@tanstack/react-start";
 import { listActiveGateways, startGatewayPayment } from "@/lib/gateways.functions";
-import { PaymentLogo } from "@/components/payment-logo";
+import { PaymentLogo } from "@/components/payments/payment-brand";
 import { useStore } from "@/components/store/store-context";
 import { borderc, cx, EmptyState, GhostButton, Heading, muted, PrimaryButton } from "@/components/store/ui";
 
