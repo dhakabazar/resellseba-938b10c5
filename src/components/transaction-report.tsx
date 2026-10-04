@@ -124,7 +124,14 @@ function PartialSummary({ r }: { r: TxRow }) {
  * balance runs per reseller; with "All resellers" it is one combined balance.
  */
 function withRunningBalance(rows: TxRow[], perReseller: boolean): TxRow[] {
-  const asc = [...rows].sort((a, b) => new Date(a.at).getTime() - new Date(b.at).getTime());
+  // Sort ascending by time with tie-breaker
+  const asc = [...rows].sort((a, b) => {
+    const diff = new Date(a.at).getTime() - new Date(b.at).getTime();
+    if (diff !== 0) return diff;
+    const numA = a.order_number ?? a.note ?? a.label ?? "";
+    const numB = b.order_number ?? b.note ?? b.label ?? "";
+    return numA.localeCompare(numB);
+  });
   const run = new Map<string, number>();
   const balances = new Map<TxRow, number>();
   for (const r of asc) {
@@ -136,7 +143,15 @@ function withRunningBalance(rows: TxRow[], perReseller: boolean): TxRow[] {
     run.set(key, bal);
     balances.set(r, bal);
   }
-  return rows.map((r) => ({ ...r, running: balances.get(r) ?? (Number(r.running) || 0) }));
+  // Sort descending by time with matching tie-breaker
+  const desc = [...rows].sort((a, b) => {
+    const diff = new Date(b.at).getTime() - new Date(a.at).getTime();
+    if (diff !== 0) return diff;
+    const numA = a.order_number ?? a.note ?? a.label ?? "";
+    const numB = b.order_number ?? b.note ?? b.label ?? "";
+    return numB.localeCompare(numA);
+  });
+  return desc.map((r) => ({ ...r, running: balances.get(r) ?? (Number(r.running) || 0) }));
 }
 
 

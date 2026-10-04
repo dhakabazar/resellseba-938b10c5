@@ -121,7 +121,7 @@ export function resolveDateRange(f: OrderFilterState): { fromTs: number | null; 
     case "custom":
       return {
         fromTs: f.from ? new Date(`${f.from}T00:00:00`).getTime() : null,
-        toTs: f.to ? new Date(`${f.to}T23:59:59`).getTime() : null,
+        toTs: f.to ? new Date(`${f.to}T23:59:59.999`).getTime() : null,
       };
     default:
       return { fromTs: null, toTs: null };
