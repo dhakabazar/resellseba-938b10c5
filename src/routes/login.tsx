@@ -3,10 +3,9 @@ import { useEffect, useState } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
-import { sendVerificationCode } from "@/lib/verification.functions";
-import { fetchAdvancedSettings } from "@/lib/advanced-settings";
+import { registerResellerAccount, sendVerificationCode, unlockUnconfirmedUser } from "@/lib/verification.functions";
 import { toast } from "sonner";
-import { Loader2, Mail, ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { Loader2, ArrowLeft, Eye, EyeOff } from "lucide-react";
 
 export const Route = createFileRoute("/login")({
   validateSearch: z.object({
@@ -34,8 +33,9 @@ function AuthPage() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [busy, setBusy] = useState(false);
-  const [sentEmail, setSentEmail] = useState<string | null>(null);
+  const registerFn = useServerFn(registerResellerAccount);
   const sendCode = useServerFn(sendVerificationCode);
+  const unlockFn = useServerFn(unlockUnconfirmedUser);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -58,33 +58,43 @@ function AuthPage() {
     setBusy(true);
     try {
       if (mode === "signup") {
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/login`,
-            data: { full_name: name, phone },
+        const res = await registerFn({
+          data: {
+            email,
+            password,
+            name,
+            phone,
           },
         });
-        if (error) throw error;
-        // If email confirmation is required, session will be null
-        if (!data.session) {
-          setSentEmail(email);
+
+        if (!res.ok) {
+          throw new Error(res.error || "রেজিস্ট্রেশন করা সম্ভব হয়নি");
+        }
+
+        // Sign in immediately to create active session
+        const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
+        if (signInErr) throw signInErr;
+
+        if (res.requiresVerification) {
+          // Send 6-digit OTP codes for active channels and route to /verify
+          if (res.verifyEmail) await sendCode({ data: { channel: "email" } }).catch(() => null);
+          if (res.verifySms) await sendCode({ data: { channel: "sms" } }).catch(() => null);
+          toast.success("অ্যাকাউন্ট তৈরি হয়েছে — কোড দিয়ে ভেরিফাই করুন");
+          nav({ to: "/verify", replace: true });
         } else {
-          const adv = await fetchAdvancedSettings();
-          if (adv.verifyEnabled && (adv.verifyEmail || adv.verifySms)) {
-            // Fire the codes off, then let /verify collect them.
-            if (adv.verifyEmail) await sendCode({ data: { channel: "email" } }).catch(() => null);
-            if (adv.verifySms) await sendCode({ data: { channel: "sms" } }).catch(() => null);
-            toast.success("অ্যাকাউন্ট তৈরি হয়েছে — এখন ভেরিফাই করুন");
-            nav({ to: "/verify", replace: true });
-          } else {
-            toast.success("অ্যাকাউন্ট তৈরি হয়েছে!");
-            nav({ to: "/dashboard", replace: true });
-          }
+          toast.success("রেজিস্ট্রেশন সফল হয়েছে — স্বাগতম!");
+          nav({ to: "/dashboard", replace: true });
         }
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        let { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error && error.message.toLowerCase().includes("email not confirmed")) {
+          // Unlock if admin has verification disabled
+          const unlockRes = await unlockFn({ data: { email } }).catch(() => ({ ok: false }));
+          if (unlockRes?.ok) {
+            const retry = await supabase.auth.signInWithPassword({ email, password });
+            error = retry.error;
+          }
+        }
         if (error) throw error;
         toast.success("স্বাগতম!");
         const target =
@@ -98,37 +108,6 @@ function AuthPage() {
     } finally {
       setBusy(false);
     }
-  }
-
-  if (sentEmail) {
-    return (
-      <div className="grid min-h-screen place-items-center px-4" style={{ background: "var(--gradient-hero)" }}>
-        <div className="w-full max-w-md">
-          <div className="surface-card p-8 text-center">
-            <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-full bg-primary/10 text-primary">
-              <Mail className="h-6 w-6" />
-            </div>
-            <h1 className="text-2xl font-semibold">ইমেইল ভেরিফাই করুন</h1>
-            <p className="mt-3 text-sm text-muted-foreground">
-              আমরা <span className="font-medium text-foreground">{sentEmail}</span> এ একটি ভেরিফিকেশন লিংক পাঠিয়েছি।
-              ইমেইল খুলে লিংকে ক্লিক করুন, তারপর এখানে ফিরে এসে লগইন করুন।
-            </p>
-            <p className="mt-2 text-xs text-muted-foreground">
-              (ইমেইল না পেলে স্প্যাম / প্রোমোশন ফোল্ডার চেক করুন)
-            </p>
-            <button
-              onClick={() => {
-                setSentEmail(null);
-                setMode("signin");
-              }}
-              className="btn-brand mt-6 inline-flex items-center gap-2 rounded-md px-5 py-2.5 text-sm font-medium"
-            >
-              লগইন পেজে যান
-            </button>
-          </div>
-        </div>
-      </div>
-    );
   }
 
   const isSignup = mode === "signup";

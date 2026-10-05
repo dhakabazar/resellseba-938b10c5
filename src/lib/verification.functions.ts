@@ -2,6 +2,126 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+const registerInput = z.object({
+  email: z.string().trim().email(),
+  password: z.string().min(6),
+  name: z.string().trim().min(2),
+  phone: z.string().trim().min(6),
+});
+
+/** Server-side reseller registration respecting admin advanced verification toggles. */
+export const registerResellerAccount = createServerFn({ method: "POST" })
+  .inputValidator((d) => registerInput.parse(d))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { mergeAdvanced } = await import("@/lib/advanced-settings");
+
+    // Fetch platform advanced settings to check verification toggles
+    const { data: globalRow } = await supabaseAdmin
+      .from("global_settings")
+      .select("advanced_settings")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const adv = mergeAdvanced(globalRow?.advanced_settings);
+    const requiresVerification = adv.verifyEnabled && (adv.verifyEmail || adv.verifySms);
+    const needsEmailCode = adv.verifyEnabled && adv.verifyEmail;
+    const needsSmsCode = adv.verifyEnabled && adv.verifySms;
+
+    // Create user in Supabase Auth with email confirmed at the auth provider level
+    // so the session can be created and they can log in seamlessly
+    const { data: created, error: createError } = await supabaseAdmin.auth.admin.createUser({
+      email: data.email,
+      password: data.password,
+      email_confirm: true,
+      user_metadata: {
+        full_name: data.name,
+        name: data.name,
+        phone: data.phone,
+      },
+    });
+
+    if (createError) {
+      if (
+        createError.message.toLowerCase().includes("already registered") ||
+        createError.message.toLowerCase().includes("already exists") ||
+        createError.message.toLowerCase().includes("unique constraint")
+      ) {
+        return { ok: false, error: "এই ইমেইল দিয়ে ইতিমধ্যে অ্যাকাউন্ট তৈরি করা আছে। দয়া করে লগইন করুন।" };
+      }
+      return { ok: false, error: createError.message || "রেজিস্ট্রেশন করা সম্ভব হয়নি।" };
+    }
+
+    const userId = created.user?.id;
+    if (userId) {
+      // If verification is NOT required by admin, mark it verified in profile immediately
+      const profileUpdates: Record<string, string | null> = {};
+      if (!needsEmailCode) {
+        profileUpdates.email_verified_at = new Date().toISOString();
+      }
+      if (!needsSmsCode) {
+        profileUpdates.phone_verified_at = new Date().toISOString();
+      }
+
+      if (Object.keys(profileUpdates).length > 0) {
+        await supabaseAdmin
+          .from("profiles")
+          .update(profileUpdates as any)
+          .eq("id", userId);
+      }
+    }
+
+    return {
+      ok: true,
+      requiresVerification,
+      verifyEmail: needsEmailCode,
+      verifySms: needsSmsCode,
+    };
+  });
+
+const unlockInput = z.object({
+  email: z.string().trim().email(),
+});
+
+/** Auto-unlocks email confirmation for users created before or when verification is off. */
+export const unlockUnconfirmedUser = createServerFn({ method: "POST" })
+  .inputValidator((d) => unlockInput.parse(d))
+  .handler(async ({ data }) => {
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { mergeAdvanced } = await import("@/lib/advanced-settings");
+
+      const { data: globalRow } = await supabaseAdmin
+        .from("global_settings")
+        .select("advanced_settings")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const adv = mergeAdvanced(globalRow?.advanced_settings);
+
+      const { data: usersData } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 100 });
+      const targetUser = usersData?.users?.find(
+        (u) => u.email?.toLowerCase() === data.email.toLowerCase()
+      );
+
+      if (targetUser) {
+        await supabaseAdmin.auth.admin.updateUserById(targetUser.id, { email_confirm: true });
+        if (!adv.verifyEnabled || !adv.verifyEmail) {
+          await supabaseAdmin
+            .from("profiles")
+            .update({ email_verified_at: new Date().toISOString() })
+            .eq("id", targetUser.id);
+        }
+        return { ok: true };
+      }
+    } catch (err) {
+      console.error("[unlockUnconfirmedUser] error", err);
+    }
+    return { ok: false };
+  });
+
 /** Send a fresh 6-digit code to the signed-in user's email or phone. */
 export const sendVerificationCode = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
