@@ -232,7 +232,7 @@ export function SohojProductPage({
           disabled={!inStock}
           className={cx(
             "flex items-center gap-1.5 rounded-[var(--st-radius-sm)] px-4 py-2.5 text-[13px] font-extrabold text-white disabled:opacity-50",
-            free ? "bg-[#0f8a4d]" : "bg-[var(--st-primary)]",
+            "bg-[var(--st-primary)]",
           )}
         >
           <ShoppingBasket className="h-4 w-4" /> {orderLabel}
