@@ -67,28 +67,42 @@ function AuthPage() {
         });
         if (error) throw error;
 
-        // If session was not auto-started on signup, sign in
-        if (!data.session) {
-          const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
-          if (signInErr && !signInErr.message.toLowerCase().includes("email not confirmed")) {
-            throw signInErr;
-          }
+        // Auto-confirm email in auth database so password sign in is never blocked
+        await supabase.rpc("confirm_auth_user_by_email", { _email: email }).catch(() => null);
+
+        // Sign in immediately to create an active user session
+        let { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
+        if (signInErr) {
+          await supabase.rpc("confirm_auth_user_by_email", { _email: email }).catch(() => null);
+          const retry = await supabase.auth.signInWithPassword({ email, password });
+          signInErr = retry.error;
+          if (signInErr) throw signInErr;
         }
 
         const adv = await fetchAdvancedSettings();
         if (adv.verifyEnabled && (adv.verifyEmail || adv.verifySms)) {
-          // Verification is enabled in Admin settings
+          // Verification is enabled by Admin
           if (adv.verifyEmail) await sendCode({ data: { channel: "email" } }).catch(() => null);
           if (adv.verifySms) await sendCode({ data: { channel: "sms" } }).catch(() => null);
-          toast.success("অ্যাকাউন্ট তৈরি হয়েছে — এখন কোড দিয়ে ভেরিফাই করুন");
+          toast.success("অ্যাকাউন্ট তৈরি হয়েছে — কোড দিয়ে ভেরিফাই করুন");
           nav({ to: "/verify", replace: true });
         } else {
-          // Verification is disabled in Admin settings
+          // Verification is disabled by Admin -> complete signup, reset and enter dashboard
+          setEmail("");
+          setPassword("");
+          setName("");
+          setPhone("");
           toast.success("রেজিস্ট্রেশন সফল হয়েছে — স্বাগতম!");
           nav({ to: "/dashboard", replace: true });
         }
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        let { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error && error.message.toLowerCase().includes("email not confirmed")) {
+          // Auto-confirm via RPC and retry
+          await supabase.rpc("confirm_auth_user_by_email", { _email: email }).catch(() => null);
+          const retry = await supabase.auth.signInWithPassword({ email, password });
+          error = retry.error;
+        }
         if (error) throw error;
         toast.success("স্বাগতম!");
         const target =
