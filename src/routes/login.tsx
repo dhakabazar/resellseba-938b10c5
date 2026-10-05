@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
-import { registerResellerAccount, sendVerificationCode, unlockUnconfirmedUser } from "@/lib/verification.functions";
+import { sendVerificationCode } from "@/lib/verification.functions";
+import { fetchAdvancedSettings } from "@/lib/advanced-settings";
 import { toast } from "sonner";
 import { Loader2, ArrowLeft, Eye, EyeOff } from "lucide-react";
 
@@ -33,9 +34,7 @@ function AuthPage() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [busy, setBusy] = useState(false);
-  const registerFn = useServerFn(registerResellerAccount);
   const sendCode = useServerFn(sendVerificationCode);
-  const unlockFn = useServerFn(unlockUnconfirmedUser);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -58,43 +57,38 @@ function AuthPage() {
     setBusy(true);
     try {
       if (mode === "signup") {
-        const res = await registerFn({
-          data: {
-            email,
-            password,
-            name,
-            phone,
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/login`,
+            data: { full_name: name, phone },
           },
         });
+        if (error) throw error;
 
-        if (!res.ok) {
-          throw new Error(res.error || "রেজিস্ট্রেশন করা সম্ভব হয়নি");
+        // If session was not auto-started on signup, sign in
+        if (!data.session) {
+          const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
+          if (signInErr && !signInErr.message.toLowerCase().includes("email not confirmed")) {
+            throw signInErr;
+          }
         }
 
-        // Sign in immediately to create active session
-        const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
-        if (signInErr) throw signInErr;
-
-        if (res.requiresVerification) {
-          // Send 6-digit OTP codes for active channels and route to /verify
-          if (res.verifyEmail) await sendCode({ data: { channel: "email" } }).catch(() => null);
-          if (res.verifySms) await sendCode({ data: { channel: "sms" } }).catch(() => null);
-          toast.success("অ্যাকাউন্ট তৈরি হয়েছে — কোড দিয়ে ভেরিফাই করুন");
+        const adv = await fetchAdvancedSettings();
+        if (adv.verifyEnabled && (adv.verifyEmail || adv.verifySms)) {
+          // Verification is enabled in Admin settings
+          if (adv.verifyEmail) await sendCode({ data: { channel: "email" } }).catch(() => null);
+          if (adv.verifySms) await sendCode({ data: { channel: "sms" } }).catch(() => null);
+          toast.success("অ্যাকাউন্ট তৈরি হয়েছে — এখন কোড দিয়ে ভেরিফাই করুন");
           nav({ to: "/verify", replace: true });
         } else {
+          // Verification is disabled in Admin settings
           toast.success("রেজিস্ট্রেশন সফল হয়েছে — স্বাগতম!");
           nav({ to: "/dashboard", replace: true });
         }
       } else {
-        let { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error && error.message.toLowerCase().includes("email not confirmed")) {
-          // Unlock if admin has verification disabled
-          const unlockRes = await unlockFn({ data: { email } }).catch(() => ({ ok: false }));
-          if (unlockRes?.ok) {
-            const retry = await supabase.auth.signInWithPassword({ email, password });
-            error = retry.error;
-          }
-        }
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         toast.success("স্বাগতম!");
         const target =
