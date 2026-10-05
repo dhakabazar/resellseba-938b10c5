@@ -24,14 +24,6 @@ export const Route = createFileRoute("/login")({
   component: AuthPage,
 });
 
-async function confirmEmailViaRpc(targetEmail: string) {
-  try {
-    await supabase.rpc("confirm_auth_user_by_email" as any, { _email: targetEmail });
-  } catch {
-    // Ignore RPC failure if already confirmed or not defined
-  }
-}
-
 function AuthPage() {
   const nav = useNavigate();
   const search = Route.useSearch();
@@ -65,47 +57,30 @@ function AuthPage() {
     setBusy(true);
     try {
       if (mode === "signup") {
-        // Step 1: Try register_reseller_auth RPC first (it sets email_confirmed_at = now() automatically)
-        const { error: rpcErr } = await supabase.rpc("register_reseller_auth" as any, {
-          _email: email,
-          _password: password,
-          _full_name: name,
-          _phone: phone,
+        // Auth-level email confirmation is off; the admin toggle in
+        // Advanced Settings alone decides whether an OTP step is required.
+        const { data: upData, error: signErr } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/login`,
+            data: { full_name: name, phone },
+          },
         });
-
-        if (rpcErr) {
-          if (
-            rpcErr.message.includes("ইতিমধ্যে") ||
-            rpcErr.message.toLowerCase().includes("already registered") ||
-            rpcErr.message.toLowerCase().includes("already exists") ||
-            rpcErr.message.toLowerCase().includes("unique constraint")
-          ) {
-            throw new Error("এই ইমেইল দিয়ে ইতিমধ্যে অ্যাকাউন্ট তৈরি করা আছে। দয়া করে লগইন করুন।");
+        if (signErr) {
+          const m = signErr.message.toLowerCase();
+          if (m.includes("already registered") || m.includes("already exists")) {
+            throw new Error("এই ইমেইল দিয়ে ইতিমধ্যে অ্যাকাউন্ট তৈরি করা আছে। দয়া করে লগইন করুন।");
           }
-
-          // Fallback to standard signUp
-          const { error: signErr } = await supabase.auth.signUp({
-            email,
-            password,
-            options: {
-              emailRedirectTo: `${window.location.origin}/login`,
-              data: { full_name: name, phone },
-            },
-          });
-          if (signErr) throw signErr;
+          throw signErr;
         }
 
-        // Auto-confirm in auth database if possible
-        await confirmEmailViaRpc(email);
-
-        // Try signing in immediately
-        let { data: authData, error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
-        if (signInErr && signInErr.message.toLowerCase().includes("email not confirmed")) {
-          await confirmEmailViaRpc(email);
-          const retry = await supabase.auth.signInWithPassword({ email, password });
-          signInErr = retry.error;
-          authData = retry.data;
+        let authData: { session: unknown } | null = upData;
+        if (!upData.session) {
+          const r = await supabase.auth.signInWithPassword({ email, password });
+          authData = r.data;
         }
+
 
         const adv = await fetchAdvancedSettings();
         const hasSession = Boolean(authData?.session);
@@ -145,13 +120,7 @@ function AuthPage() {
           setPassword("");
         }
       } else {
-        let { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error && error.message.toLowerCase().includes("email not confirmed")) {
-          // Auto-confirm via RPC and retry
-          await confirmEmailViaRpc(email);
-          const retry = await supabase.auth.signInWithPassword({ email, password });
-          error = retry.error;
-        }
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) {
           if (error.message.toLowerCase().includes("email not confirmed")) {
             throw new Error("আপনার ইমেইলটি এখনো কনফার্ম করা হয়নি। অনুগ্রহ করে ইনবক্স বা স্প্যাম ফোল্ডার চেক করুন।");

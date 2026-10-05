@@ -11,7 +11,9 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TutorialsRouteImport } from './routes/tutorials'
 import { Route as ThanksRouteImport } from './routes/thanks'
+import { Route as SignupRouteImport } from './routes/signup'
 import { Route as ShopRouteImport } from './routes/shop'
+import { Route as RegisterRouteImport } from './routes/register'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as CheckoutRouteImport } from './routes/checkout'
@@ -115,9 +117,19 @@ const ThanksRoute = ThanksRouteImport.update({
   path: '/thanks',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ShopRoute = ShopRouteImport.update({
   id: '/shop',
   path: '/shop',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -650,7 +662,9 @@ export interface FileRoutesByFullPath {
   '/checkout': typeof CheckoutRoute
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
+  '/register': typeof RegisterRoute
   '/shop': typeof ShopRoute
+  '/signup': typeof SignupRoute
   '/thanks': typeof ThanksRoute
   '/tutorials': typeof TutorialsRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
@@ -745,7 +759,9 @@ export interface FileRoutesByTo {
   '/checkout': typeof CheckoutRoute
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
+  '/register': typeof RegisterRoute
   '/shop': typeof ShopRoute
+  '/signup': typeof SignupRoute
   '/thanks': typeof ThanksRoute
   '/tutorials': typeof TutorialsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -840,7 +856,9 @@ export interface FileRoutesById {
   '/checkout': typeof CheckoutRoute
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
+  '/register': typeof RegisterRoute
   '/shop': typeof ShopRoute
+  '/signup': typeof SignupRoute
   '/thanks': typeof ThanksRoute
   '/tutorials': typeof TutorialsRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
@@ -938,7 +956,9 @@ export interface FileRouteTypes {
     | '/checkout'
     | '/login'
     | '/privacy'
+    | '/register'
     | '/shop'
+    | '/signup'
     | '/thanks'
     | '/tutorials'
     | '/admin'
@@ -1033,7 +1053,9 @@ export interface FileRouteTypes {
     | '/checkout'
     | '/login'
     | '/privacy'
+    | '/register'
     | '/shop'
+    | '/signup'
     | '/thanks'
     | '/tutorials'
     | '/dashboard'
@@ -1127,7 +1149,9 @@ export interface FileRouteTypes {
     | '/checkout'
     | '/login'
     | '/privacy'
+    | '/register'
     | '/shop'
+    | '/signup'
     | '/thanks'
     | '/tutorials'
     | '/_authenticated/admin'
@@ -1225,7 +1249,9 @@ export interface RootRouteChildren {
   CheckoutRoute: typeof CheckoutRoute
   LoginRoute: typeof LoginRoute
   PrivacyRoute: typeof PrivacyRoute
+  RegisterRoute: typeof RegisterRoute
   ShopRoute: typeof ShopRoute
+  SignupRoute: typeof SignupRoute
   ThanksRoute: typeof ThanksRoute
   TutorialsRoute: typeof TutorialsRoute
   CSlugRoute: typeof CSlugRoute
@@ -1259,11 +1285,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ThanksRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/shop': {
       id: '/shop'
       path: '/shop'
       fullPath: '/shop'
       preLoaderRoute: typeof ShopRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy': {
@@ -2138,7 +2178,9 @@ const rootRouteChildren: RootRouteChildren = {
   CheckoutRoute: CheckoutRoute,
   LoginRoute: LoginRoute,
   PrivacyRoute: PrivacyRoute,
+  RegisterRoute: RegisterRoute,
   ShopRoute: ShopRoute,
+  SignupRoute: SignupRoute,
   ThanksRoute: ThanksRoute,
   TutorialsRoute: TutorialsRoute,
   CSlugRoute: CSlugRoute,

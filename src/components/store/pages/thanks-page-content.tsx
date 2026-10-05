@@ -95,7 +95,7 @@ export function ThanksPageContent({
     (async () => {
       const { data } = await supabase
         .from("orders")
-        .select("id,order_number,total,delivery_charge,customer_name,customer_phone,address_line,area,payment_method,payment_status,created_at,order_items(id,product_id,product_name,reseller_price,quantity,variant_label)")
+        .select("id,order_number,total,delivery_charge:shipping_cost,customer_name,customer_phone,address_line,area,payment_method,payment_status,created_at,order_items(id,product_id,product_name,reseller_price,quantity)")
         .eq("order_number", n)
         .maybeSingle();
 
