@@ -45,6 +45,8 @@ export function CheckoutPageContent({
     instructions: m.instructions,
   }));
   const [payMethod, setPayMethod] = useState<string>("cod");
+  const [manualSender, setManualSender] = useState<string>("");
+  const [manualTrxId, setManualTrxId] = useState<string>("");
   const [busy, setBusy] = useState(false);
   const [noteOpen, setNoteOpen] = useState(false);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -130,6 +132,7 @@ export function CheckoutPageContent({
     provider: g.provider,
   }));
   const codMeta = methods.find((m) => m.method === "cod");
+  const activeManualMethod = extraMethods.find((m) => m.method === payMethod);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -139,8 +142,20 @@ export function CheckoutPageContent({
       toast.error(errors.name || errors.phone || errors.address || "Please check your details");
       return;
     }
+
     setBusy(true);
     const gateway = gatewayOptions.find((g) => g.value === payMethod);
+
+    // Build combined order notes including manual payment details if applicable
+    let finalNotes = form.notes.trim();
+    if (activeManualMethod) {
+      const paymentNoteParts: string[] = [];
+      if (manualSender.trim()) paymentNoteParts.push(`Sender: ${manualSender.trim()}`);
+      if (manualTrxId.trim()) paymentNoteParts.push(`TrxID: ${manualTrxId.trim()}`);
+      const paymentInfoTag = `[Manual Payment: ${activeManualMethod.label}${paymentNoteParts.length ? ` | ${paymentNoteParts.join(" | ")}` : ""}]`;
+      finalNotes = finalNotes ? `${finalNotes}\n${paymentInfoTag}` : paymentInfoTag;
+    }
+
     const { data, error } = await supabase.rpc("create_public_order", {
       _reseller_code: code,
       _customer_name: sanitizeName(form.name).trim(),
@@ -151,14 +166,16 @@ export function CheckoutPageContent({
       _area: form.area,
       _landmark: null as never,
       _payment_method: (gateway ? gateway.method : payMethod) as never,
-      _notes: form.notes.trim() || (null as never),
+      _notes: finalNotes || (null as never),
       _items: lines.map((x) => ({ listing_id: x.listing.id, quantity: x.line.qty })) as never,
     });
+
     if (error) {
       setBusy(false);
-      toast.error(error.message);
+      toast.error(error.message || "অর্ডার সম্পন্ন করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।");
       return;
     }
+
     const row = Array.isArray(data) ? data[0] : data;
     if (!row?.order_number) {
       setBusy(false);
@@ -212,10 +229,12 @@ export function CheckoutPageContent({
     <div className={cx("mx-auto px-4 pb-28 pt-6 sm:pb-10 sm:pt-8", poripati ? "max-w-7xl" : "max-w-6xl")}>
       <div className={poripati ? "border-b border-[var(--st-border)] pb-7" : "text-center sm:text-left"}>
         {poripati && <div className="mb-2 text-[10px] font-bold uppercase text-[var(--st-primary)]">Secure checkout</div>}
-        <Heading as="h1" className="text-2xl sm:text-3xl">
-          {store.content.text("co_headline")}
+        <Heading as="h1" className="text-2xl sm:text-3xl font-extrabold">
+          {store.content.text("co_headline") || "অর্ডার সম্পন্ন করুন"}
         </Heading>
-        <p className={cx("mx-auto mt-1.5 max-w-xl text-sm sm:mx-0", muted)}>{store.content.text("co_note")}</p>
+        <p className={cx("mx-auto mt-1.5 max-w-xl text-sm sm:mx-0", muted)}>
+          {store.content.text("co_note") || "আপনার ডেলিভারি তথ্য দিয়ে সহজে অর্ডার কনফার্ম করুন।"}
+        </p>
       </div>
 
       <div className={cx("mt-6 grid gap-5", poripati ? "lg:grid-cols-[1.15fr_.85fr] lg:gap-12" : "lg:grid-cols-[1fr_380px]")}>
@@ -225,19 +244,19 @@ export function CheckoutPageContent({
           className={cx("space-y-4 border bg-[var(--st-surface)] p-4 sm:p-5", borderc, !poripati && "rounded-[var(--st-radius)]")}
         >
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Your name" required error={touched.name ? errors.name : null}>
+            <Field label="আপনার নাম (Your name)" required error={touched.name ? errors.name : null}>
               <input
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: sanitizeName(e.target.value) })}
                 onBlur={() => setTouched((t) => ({ ...t, name: true }))}
                 autoComplete="name"
                 inputMode="text"
-                placeholder="Full name"
+                placeholder="আপনার পুরো নাম লিখুন"
                 className={inp}
               />
             </Field>
 
-            <Field label="Mobile number" required error={touched.phone ? errors.phone : null} hint="11 digits, starts with 01">
+            <Field label="মোবাইল নম্বর (Mobile number)" required error={touched.phone ? errors.phone : null} hint="১১ ডিজিট, 01 দিয়ে শুরু">
               <input
                 value={form.phone}
                 onChange={(e) => setForm({ ...form, phone: normalizePhone(e.target.value) })}
@@ -250,20 +269,20 @@ export function CheckoutPageContent({
             </Field>
           </div>
 
-          <Field label="Full address" required error={touched.address ? errors.address : null}>
+          <Field label="সম্পূর্ণ ঠিকানা (Full address)" required error={touched.address ? errors.address : null}>
             <textarea
               rows={3}
               value={form.address}
               onChange={(e) => setForm({ ...form, address: e.target.value })}
               onBlur={() => setTouched((t) => ({ ...t, address: true }))}
               autoComplete="street-address"
-              placeholder="House / road, area, upazila, district"
+              placeholder="বাসা/রোড নম্বর, এলাকা, থানা, জেলা"
               className={inp}
             />
           </Field>
 
           <div>
-            <div className="mb-1.5 text-xs font-medium">Delivery area</div>
+            <div className="mb-1.5 text-xs font-semibold text-[var(--st-fg)]">ডেলিভারি এলাকা (Delivery area)</div>
             <div className="grid grid-cols-3 gap-2">
               {AREAS.map((a) => (
                 <button
@@ -272,10 +291,10 @@ export function CheckoutPageContent({
                   onClick={() => setForm({ ...form, area: a.value })}
                   aria-pressed={form.area === a.value}
                   className={cx(
-                    "rounded-[var(--st-radius-sm)] border px-2 py-2.5 text-xs font-medium sm:text-sm",
+                    "rounded-[var(--st-radius-sm)] border px-2 py-2.5 text-xs font-semibold transition-all sm:text-sm",
                     form.area === a.value
-                      ? "border-[var(--st-primary)] bg-[var(--st-primary)] text-[var(--st-on-primary)]"
-                      : cx(borderc, "text-[var(--st-fg)] hover:border-[var(--st-primary)]"),
+                      ? "border-[var(--st-primary)] bg-[var(--st-primary)] text-[var(--st-on-primary)] shadow-sm"
+                      : cx(borderc, "text-[var(--st-fg)] hover:border-[var(--st-primary)] bg-[var(--st-bg-alt)]/40"),
                   )}
                 >
                   {a.label}
@@ -291,7 +310,7 @@ export function CheckoutPageContent({
               className={cx("inline-flex items-center gap-1.5 text-xs font-medium", muted, "hover:text-[var(--st-primary)]")}
             >
               <Plus className={cx("h-3.5 w-3.5 transition-transform", noteOpen && "rotate-45")} />
-              Add note (optional)
+              অর্ডার নোট যোগ করুন (Optional)
             </button>
             {noteOpen && (
               <textarea
@@ -299,96 +318,143 @@ export function CheckoutPageContent({
                 autoFocus
                 value={form.notes}
                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                placeholder="Anything we should know about your order?"
+                placeholder="পণ্য বা ডেলিভারি সম্পর্কে বিশেষ কিছু জানানোর থাকলে লিখুন..."
                 className={cx(inp, "mt-2")}
               />
             )}
           </div>
 
-          {extraMethods.length + gatewayOptions.length > 0 && (
-            <div>
-              <div className="mb-2.5 flex items-baseline justify-between gap-2">
-                <div className="text-xs font-semibold uppercase tracking-[0.14em]">Payment method</div>
-                <span className={cx("text-[11px]", muted)}>Choose one</span>
-              </div>
-              <div className="grid gap-2.5 sm:grid-cols-2">
-                {[
-                  {
-                    value: "cod",
-                    method: "cod",
-                    label: "Cash on Delivery",
-                    instructions: codMeta?.instructions ?? "Pay the courier when your parcel arrives.",
-                  },
-                  ...extraMethods.map((m) => ({ ...m, value: m.method })),
-                  ...gatewayOptions,
-                ].map((m) => {
-                  const selected = payMethod === m.value;
-                  const online = "provider" in m;
-                  const logoFor = (online ? m.provider : m.method) as string;
-                  return (
-                    <button
-                      type="button"
-                      key={m.value}
-                      onClick={() => setPayMethod(m.value)}
-                      aria-pressed={selected}
+          {/* Payment Method Selector */}
+          <div>
+            <div className="mb-2.5 flex items-baseline justify-between gap-2">
+              <div className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--st-fg)]">পেমেন্ট মেথড (Payment Method)</div>
+              <span className={cx("text-[11px]", muted)}>একটি নির্বাচন করুন</span>
+            </div>
+
+            <div className="grid gap-2.5 sm:grid-cols-2">
+              {[
+                {
+                  value: "cod",
+                  method: "cod",
+                  label: "Cash on Delivery (ক্যাশ অন ডেলিভারি)",
+                  instructions: codMeta?.instructions ?? "পণ্য হাতে পেয়ে মূল্য পরিশোধ করুন।",
+                },
+                ...extraMethods.map((m) => ({ ...m, value: m.method })),
+                ...gatewayOptions,
+              ].map((m) => {
+                const selected = payMethod === m.value;
+                const online = "provider" in m;
+                const logoFor = (online ? m.provider : m.method) as string;
+                return (
+                  <button
+                    type="button"
+                    key={m.value}
+                    onClick={() => setPayMethod(m.value)}
+                    aria-pressed={selected}
+                    className={cx(
+                      "group relative flex items-center gap-3 rounded-[var(--st-radius-sm)] border p-3 text-left transition-all",
+                      selected
+                        ? "border-[var(--st-primary)] bg-[var(--st-primary)]/[0.08] ring-1 ring-[var(--st-primary)]"
+                        : cx(borderc, "hover:border-[var(--st-primary)]/60 bg-[var(--st-surface)]"),
+                    )}
+                  >
+                    <span
                       className={cx(
-                        "group relative flex items-center gap-3 rounded-[var(--st-radius-sm)] border p-3 text-left transition-colors",
-                        selected
-                          ? "border-[var(--st-primary)] bg-[var(--st-primary)]/[0.07]"
-                          : cx(borderc, "hover:border-[var(--st-primary)]"),
+                        "grid h-12 w-14 shrink-0 place-items-center overflow-hidden rounded-[var(--st-radius-sm)] border bg-[var(--st-bg-alt)] p-1",
+                        selected ? "border-[var(--st-primary)]" : borderc,
                       )}
                     >
-                      <span
-                        className={cx(
-                          "grid h-12 w-16 shrink-0 place-items-center overflow-hidden rounded-[var(--st-radius-sm)] border bg-[var(--st-bg)] p-1",
-                          selected ? "border-[var(--st-primary)]" : borderc,
+                      {m.value === "cod" ? (
+                        <Truck className="h-6 w-6 text-[var(--st-primary)]" />
+                      ) : (
+                        <PaymentLogo method={logoFor} width={50} height={35} fit="contain" alt={m.label} />
+                      )}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="flex items-center gap-1.5">
+                        <span className="truncate text-xs font-bold text-[var(--st-fg)] sm:text-sm">{m.label}</span>
+                        {online && (
+                          <span className="rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-emerald-600">
+                            Auto
+                          </span>
                         )}
-                      >
-                        {m.value === "cod" ? (
-                          <Truck className="h-6 w-6 text-[var(--st-primary)]" />
-                        ) : (
-                          <PaymentLogo method={logoFor} width={60} height={40} fit="contain" alt={m.label} />
+                        {!online && m.value !== "cod" && (
+                          <span className="rounded-full bg-[var(--st-primary)]/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[var(--st-primary)]">
+                            Manual
+                          </span>
                         )}
                       </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="flex items-center gap-1.5">
-                          <span className="truncate text-sm font-semibold text-[var(--st-fg)]">{m.label}</span>
-                          {online && (
-                            <span className="rounded-full bg-[var(--st-primary)]/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[var(--st-primary)]">
-                              instant
-                            </span>
-                          )}
-                        </span>
-                        <span className={cx("mt-0.5 line-clamp-2 block text-[11px] leading-snug", muted)}>
-                          {online ? "Pay securely online and confirm instantly." : m.instructions || "Manual payment"}
-                        </span>
+                      <span className={cx("mt-0.5 line-clamp-1 block text-[11px] leading-snug", muted)}>
+                        {online
+                          ? "ইনস্ট্যান্ট অনলাইন পেমেন্ট (bKash/Nagad/Card)"
+                          : m.instructions || "পণ্য হাতে পেয়ে পেমেন্ট করুন"}
                       </span>
-                      <span
-                        aria-hidden
-                        className={cx(
-                          "grid h-4.5 w-4.5 shrink-0 place-items-center rounded-full border",
-                          selected ? "border-[var(--st-primary)] bg-[var(--st-primary)]" : borderc,
-                        )}
-                      >
-                        {selected && <span className="h-1.5 w-1.5 rounded-full bg-[var(--st-on-primary)]" />}
-                      </span>
-                    </button>
-                  );
-                })}
+                    </span>
+                    <span
+                      aria-hidden
+                      className={cx(
+                        "grid h-4.5 w-4.5 shrink-0 place-items-center rounded-full border transition-all",
+                        selected ? "border-[var(--st-primary)] bg-[var(--st-primary)] text-white" : borderc,
+                      )}
+                    >
+                      {selected && <span className="h-1.5 w-1.5 rounded-full bg-[var(--st-on-primary)]" />}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Manual Payment Instructions & Input Drawer */}
+            {activeManualMethod && (
+              <div className={cx("mt-3 rounded-[var(--st-radius-sm)] border bg-[var(--st-bg-alt)]/50 p-4 space-y-3", borderc)}>
+                <div className="text-xs font-bold text-[var(--st-fg)]">
+                  {activeManualMethod.label} পেমেন্ট নির্দেশনা:
+                </div>
+                {activeManualMethod.instructions && (
+                  <p className={cx("whitespace-pre-wrap text-xs leading-relaxed bg-[var(--st-surface)] p-3 rounded border", borderc, muted)}>
+                    {activeManualMethod.instructions}
+                  </p>
+                )}
+                <div className="grid gap-3 sm:grid-cols-2 pt-1">
+                  <div>
+                    <label className="block text-[11px] font-medium text-[var(--st-fg)] mb-1">
+                      সেন্ডার নম্বর (যে নম্বর থেকে পাঠিয়েছেন):
+                    </label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={manualSender}
+                      onChange={(e) => setManualSender(e.target.value)}
+                      placeholder="01XXXXXXXXX"
+                      className={cx(inp, "py-2 text-xs")}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-medium text-[var(--st-fg)] mb-1">
+                      ট্রানজেকশন আইডি (TrxID):
+                    </label>
+                    <input
+                      type="text"
+                      value={manualTrxId}
+                      onChange={(e) => setManualTrxId(e.target.value)}
+                      placeholder="TrxID (যেমন: 9J28DA10X)"
+                      className={cx(inp, "py-2 text-xs uppercase")}
+                    />
+                  </div>
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
-          {extraMethods.length + gatewayOptions.length === 0 && (
-            <div className={cx("flex items-start gap-2 rounded-[var(--st-radius-sm)] border border-dashed p-3 text-xs", borderc, muted)}>
-              <Truck className="mt-0.5 h-4 w-4 shrink-0 text-[var(--st-primary)]" />
-              <span>Cash on Delivery — pay the courier when your parcel arrives.</span>
-            </div>
-          )}
-
-          <div className="hidden sm:block">
-            <PrimaryButton disabled={busy} className="w-full">
-              {busy && <Loader2 className="h-4 w-4 animate-spin" />} Place order — {bdt(totals.total)}
+          <div className="hidden sm:block pt-2">
+            <PrimaryButton disabled={busy} className="w-full py-3.5 text-base font-bold justify-center">
+              {busy ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin" /> অর্ডার প্রসেস হচ্ছে...
+                </>
+              ) : (
+                `অর্ডার কনফার্ম করুন — ${bdt(totals.total)}`
+              )}
             </PrimaryButton>
           </div>
           <div
@@ -397,8 +463,14 @@ export function CheckoutPageContent({
               borderc,
             )}
           >
-            <PrimaryButton disabled={busy} className="w-full">
-              {busy && <Loader2 className="h-4 w-4 animate-spin" />} Place order — {bdt(totals.total)}
+            <PrimaryButton disabled={busy} className="w-full py-3.5 text-base font-bold justify-center">
+              {busy ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin" /> অর্ডার প্রসেস হচ্ছে...
+                </>
+              ) : (
+                `অর্ডার কনফার্ম করুন — ${bdt(totals.total)}`
+              )}
             </PrimaryButton>
           </div>
         </form>
