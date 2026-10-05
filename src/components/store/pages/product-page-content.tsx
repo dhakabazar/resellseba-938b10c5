@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { ChevronLeft, Minus, Plus, ShieldCheck, ShoppingBag, Truck, Zap } from "lucide-react";
+import { Minus, Plus, ShoppingBag, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { inCategory, categoryIdsOf } from "@/lib/product-categories";
 import { addToCart } from "@/lib/store-cart";
-import { deliveryLabel } from "@/lib/delivery";
 import { trackAddToCart, trackViewContent } from "@/lib/tracking";
 import { useResellerTools, stripHtml, CopyButton, ImageDownloadTools } from "@/components/store/reseller-tools";
 import { ProductCodeChip } from "@/components/product-code";
@@ -115,14 +114,6 @@ export function ProductPageContent({ slug, code: propCode }: { slug: string; cod
     <div className="mx-auto max-w-6xl px-4 pb-24 pt-8 lg:pb-10">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
-      <nav className={cx("mb-5 flex items-center gap-1 text-xs", muted)}>
-        <Link to={store.url("/")} className="inline-flex items-center gap-1 hover:text-[var(--st-primary)]">
-          <ChevronLeft className="h-3 w-3" /> Store
-        </Link>
-        <span>/</span>
-        <span className="truncate text-[var(--st-fg)]">{title}</span>
-      </nav>
-
       <div className="grid gap-10 lg:grid-cols-2">
         <div>
           <div
@@ -192,34 +183,6 @@ export function ProductPageContent({ slug, code: propCode }: { slug: string; cod
 
           <div className="mt-5 flex items-baseline gap-3">
             <Price value={price} className="text-3xl md:text-4xl" />
-            <span
-              className={cx(
-                "rounded-full px-2.5 py-1 text-[11px] font-semibold",
-                inStock ? "bg-[var(--st-primary)]/12 text-[var(--st-primary)]" : "bg-[var(--st-bg-alt)] text-[var(--st-muted)]",
-              )}
-            >
-              {inStock ? "In stock" : "Out of stock"}
-            </span>
-          </div>
-
-          {store.content.text("pdp_urgency") && inStock && (
-            <p className="mt-3 text-sm font-medium text-[var(--st-primary)]">{store.content.text("pdp_urgency")}</p>
-          )}
-
-          <div className={cx("mt-5 grid gap-2 rounded-[var(--st-radius)] border p-4 text-sm", borderc)}>
-            <div className="flex items-center gap-2">
-              <Truck className="h-4 w-4 text-[var(--st-primary)]" />
-              <span>Delivery: {deliveryLabel(p)}</span>
-            </div>
-            {[1, 2, 3]
-              .map((i) => store.content.text(`pdp_trust${i}`))
-              .filter(Boolean)
-              .map((line) => (
-                <div key={line} className="flex items-center gap-2">
-                  <ShieldCheck className="h-4 w-4 text-[var(--st-primary)]" />
-                  <span>{line}</span>
-                </div>
-              ))}
           </div>
 
           <div className="mt-6 flex flex-wrap items-center gap-3">
@@ -239,10 +202,6 @@ export function ProductPageContent({ slug, code: propCode }: { slug: string; cod
               <ShoppingBag className="h-4 w-4" /> Add to cart
             </GhostButton>
           </div>
-
-          {store.content.text("pdp_returns") && (
-            <p className={cx("mt-3 text-xs leading-relaxed", muted)}>{store.content.text("pdp_returns")}</p>
-          )}
         </div>
       </div>
 

@@ -715,8 +715,6 @@ export function StoreFooter() {
                     WhatsApp chat
                   </a>
                 )}
-                <span>Cash on delivery available</span>
-                <span>Delivery: 1–3 days Dhaka, 2–5 days outside</span>
               </div>
             </div>
             <div>
@@ -830,36 +828,6 @@ export function StoreFooter() {
         style={{ background: "radial-gradient(700px 260px at 15% 0%, var(--st-primary), transparent 62%)" }}
       />
       <div className="relative mx-auto max-w-6xl px-4 py-12">
-        <div
-          className="mb-10 flex flex-col items-center gap-3 rounded-[var(--st-radius)] p-6 text-center text-[var(--st-on-primary)] md:flex-row md:justify-between md:text-left"
-          style={{ background: "linear-gradient(135deg, var(--st-primary), var(--st-accent))" }}
-        >
-          <div>
-            <div className="text-lg font-bold">Need help choosing?</div>
-            <div className="text-sm opacity-90">We reply fast — cash on delivery all over Bangladesh.</div>
-          </div>
-          <div className="flex flex-wrap justify-center gap-2">
-            {settings?.support_phone && (
-              <a
-                href={`tel:${settings.support_phone}`}
-                className="rounded-full bg-[var(--st-surface)] px-5 py-2 text-sm font-semibold text-[var(--st-fg)]"
-              >
-                Call {settings.support_phone}
-              </a>
-            )}
-            {wa && (
-              <a
-                href={wa}
-                target="_blank"
-                rel="noreferrer"
-                className="rounded-full border border-current px-5 py-2 text-sm font-semibold"
-              >
-                WhatsApp
-              </a>
-            )}
-          </div>
-        </div>
-
         <div className="grid gap-8 md:grid-cols-4">
           <div className="md:col-span-2">
             <Heading className="text-lg">{name}</Heading>
@@ -906,8 +874,6 @@ export function StoreFooter() {
                   WhatsApp chat
                 </a>
               )}
-              <span>Cash on delivery available</span>
-              <span>Delivery: 1–3 days (Dhaka), 2–5 days (outside)</span>
             </div>
           </div>
         </div>

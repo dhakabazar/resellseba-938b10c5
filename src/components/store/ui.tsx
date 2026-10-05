@@ -2,7 +2,6 @@ import { Link } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { Flame, ShoppingBag, ShoppingBasket } from "lucide-react";
 import { bdt } from "@/lib/store-cart";
-import { deliveryLabel, resolveDelivery } from "@/lib/delivery";
 import { useStore, type StoreListing } from "./store-context";
 
 export const cx = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(" ");
@@ -170,7 +169,6 @@ export function ProductCard({ listing }: { listing: StoreListing }) {
   const { code, theme, title, image, content, url } = useStore();
   const img = image(listing);
   const p = listing.product!;
-  const free = resolveDelivery(p).mode === "free";
   const sold = useMemo(() => soldCount(p.id), [p.id]);
   const price = Number(listing.selling_price);
   const to = { to: url(`/p/${p.slug}`) };
@@ -199,11 +197,6 @@ export function ProductCard({ listing }: { listing: StoreListing }) {
       >
         <div className="relative aspect-square overflow-hidden bg-[var(--st-bg-alt)]">
           <Img />
-          {free && (
-            <span className="absolute bottom-0 left-0 right-0 bg-black/65 py-0.5 text-center text-[10px] font-bold uppercase text-white">
-              Free delivery
-            </span>
-          )}
         </div>
         <div className="flex flex-1 flex-col p-2.5">
           <h3 className="line-clamp-2 text-[13px] leading-snug text-[var(--st-fg)]">{title(listing)}</h3>
@@ -245,9 +238,7 @@ export function ProductCard({ listing }: { listing: StoreListing }) {
 
   /* --------------------------- সহজ শপ: বাংলা ডিল কার্ড, বড় অর্ডার বাটন */
   if (theme.id === "atelier") {
-    const label = free
-      ? content.text("sohoj_free_label") || "ফ্রী ডেলিভারিতে অর্ডার করুন"
-      : content.text("sohoj_order_label") || "অর্ডার করুন";
+    const label = content.text("sohoj_order_label") || "অর্ডার করুন";
     return (
       <Link
         {...to}
@@ -258,11 +249,6 @@ export function ProductCard({ listing }: { listing: StoreListing }) {
       >
         <div className="relative aspect-square overflow-hidden bg-[var(--st-bg-alt)]">
           <Img />
-          {free && (
-            <span className="absolute left-2 top-2 rounded-md bg-[#e11d48] px-2 py-1 text-[10px] font-extrabold leading-none text-white shadow-sm">
-              ফ্রি ডেলিভারি
-            </span>
-          )}
         </div>
         <div className="flex flex-1 flex-col px-2.5 pb-2.5 pt-2">
           <h3 className="line-clamp-2 text-[13px] font-semibold leading-snug text-[var(--st-fg)]">{title(listing)}</h3>
@@ -271,12 +257,7 @@ export function ProductCard({ listing }: { listing: StoreListing }) {
           </div>
           <div className={cx("mt-0.5 text-[11px]", muted)}>{sold} জন কিনেছেন</div>
         </div>
-        <span
-          className={cx(
-            "flex items-center justify-center gap-1.5 px-2 py-2.5 text-center text-[12px] font-bold leading-snug text-white",
-            free ? "bg-[#0f8a4d]" : "bg-[var(--st-primary)]",
-          )}
-        >
+        <span className="flex items-center justify-center gap-1.5 bg-[var(--st-primary)] px-2 py-2.5 text-center text-[12px] font-bold leading-snug text-white">
           <ShoppingBasket className="h-3.5 w-3.5 shrink-0" /> {label}
         </span>
       </Link>
@@ -292,13 +273,6 @@ export function ProductCard({ listing }: { listing: StoreListing }) {
     >
       <div className="relative aspect-square overflow-hidden bg-[var(--st-bg-alt)]">
         <Img />
-        <div className="absolute left-2 top-2 flex flex-col items-start gap-1.5">
-          {free && (
-            <span className="rounded-full bg-[var(--st-accent)] px-2 py-0.5 text-[10px] font-semibold text-[var(--st-on-accent)]">
-              Free delivery
-            </span>
-          )}
-        </div>
         <span className="absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-full bg-black/55 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur-sm">
           <ShoppingBag className="h-2.5 w-2.5" /> {sold} sold
         </span>
@@ -308,9 +282,8 @@ export function ProductCard({ listing }: { listing: StoreListing }) {
         <div className="mt-2 flex items-baseline gap-2">
           <Price value={price} className="text-base" />
         </div>
-        <div className="mt-3 flex items-center justify-between gap-2">
-          <span className={cx("text-[11px]", muted)}>{free ? "Cash on delivery" : deliveryLabel(p)}</span>
-          <span className="rounded-full bg-[var(--st-primary)]/12 px-3 py-1 text-[11px] font-semibold text-[var(--st-primary)] transition-colors group-hover:bg-[var(--st-primary)] group-hover:text-[var(--st-on-primary)]">
+        <div className="mt-3 flex items-center justify-end gap-2">
+          <span className="rounded-full bg-[var(--st-primary)]/12 px-3.5 py-1 text-[11px] font-semibold text-[var(--st-primary)] transition-colors group-hover:bg-[var(--st-primary)] group-hover:text-[var(--st-on-primary)]">
             Order now
           </span>
         </div>

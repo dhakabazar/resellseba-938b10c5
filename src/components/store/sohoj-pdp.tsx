@@ -7,8 +7,7 @@
  */
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Minus, Phone, Plus, ShoppingBasket, Truck } from "lucide-react";
-import { deliveryLabel, resolveDelivery } from "@/lib/delivery";
+import { Minus, Phone, Plus, ShoppingBasket } from "lucide-react";
 import { useStore, type StoreListing } from "./store-context";
 import { CopyButton, ImageDownloadTools } from "./reseller-tools";
 import { borderc, cx, muted, Price, ProductGrid, SectionHead } from "./ui";
@@ -40,11 +39,8 @@ export function SohojProductPage({
   const images = p.product_images ?? [];
   const active = images[idx]?.url ?? store.image(listing);
   const inStock = p.stock === null || Number(p.stock) > 0;
-  const free = resolveDelivery(p).mode === "free";
   const phone = settings?.support_phone?.trim();
-  const orderLabel = free
-    ? content.text("sohoj_free_label") || "ফ্রী ডেলিভারিতে অর্ডার করুন"
-    : content.text("sohoj_order_label") || "অর্ডার করুন";
+  const orderLabel = content.text("sohoj_order_label") || "অর্ডার করুন";
   const returnText = content.text("sohoj_return");
 
   return (
@@ -95,14 +91,6 @@ export function SohojProductPage({
 
           <div className="mt-2 flex flex-wrap items-baseline gap-3">
             <Price value={price} className="text-2xl md:text-3xl" />
-            <span
-              className={cx(
-                "rounded-[var(--st-radius-sm)] px-2 py-0.5 text-[11px] font-bold",
-                inStock ? "bg-[#0f8a4d]/12 text-[#0f8a4d]" : "bg-[var(--st-bg-alt)] text-[var(--st-muted)]",
-              )}
-            >
-              {inStock ? "স্টকে আছে" : "স্টকে নেই"}
-            </span>
           </div>
 
           <div className="mt-4 flex items-center gap-3">
@@ -131,10 +119,7 @@ export function SohojProductPage({
           <button
             onClick={() => onOrder(qty)}
             disabled={!inStock}
-            className={cx(
-              "mt-3 flex w-full items-center justify-center gap-2 rounded-[var(--st-radius-sm)] px-4 py-3 text-sm font-extrabold text-white disabled:opacity-50",
-              free ? "bg-[#0f8a4d]" : "bg-[var(--st-primary)]",
-            )}
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-[var(--st-radius-sm)] bg-[var(--st-primary)] px-4 py-3 text-sm font-extrabold text-white disabled:opacity-50"
           >
             <ShoppingBasket className="h-4 w-4" /> {orderLabel}
           </button>
@@ -151,16 +136,6 @@ export function SohojProductPage({
           {p.product_code && (
             <div className="mt-3 text-sm">
               <span className="font-bold">Code :</span> <span className={muted}>{p.product_code}</span>
-            </div>
-          )}
-
-          <div className={cx("mt-3 flex items-center gap-2 text-sm", muted)}>
-            <Truck className="h-4 w-4 text-[var(--st-primary)]" /> ডেলিভারি: {deliveryLabel(p)}
-          </div>
-
-          {free && (
-            <div className="mt-3 rounded-[var(--st-radius-sm)] bg-[#e11d48] px-3 py-2.5 text-sm font-bold text-white">
-              {content.text("sohoj_free_note") || "এই পণ্যটি পাচ্ছেন সম্পূর্ণ ফ্রি ডেলিভারিতে!"}
             </div>
           )}
 
