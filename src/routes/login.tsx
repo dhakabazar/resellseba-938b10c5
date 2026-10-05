@@ -65,27 +65,47 @@ function AuthPage() {
     setBusy(true);
     try {
       if (mode === "signup") {
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/login`,
-            data: { full_name: name, phone },
-          },
+        // Step 1: Try register_reseller_auth RPC first (it sets email_confirmed_at = now() automatically)
+        const { error: rpcErr } = await supabase.rpc("register_reseller_auth" as any, {
+          _email: email,
+          _password: password,
+          _full_name: name,
+          _phone: phone,
         });
-        if (error) throw error;
 
-        // Auto-confirm email in auth database so password sign in is never blocked
+        if (rpcErr) {
+          if (
+            rpcErr.message.includes("ইতিমধ্যে") ||
+            rpcErr.message.toLowerCase().includes("already registered") ||
+            rpcErr.message.toLowerCase().includes("already exists") ||
+            rpcErr.message.toLowerCase().includes("unique constraint")
+          ) {
+            throw new Error("এই ইমেইল দিয়ে ইতিমধ্যে অ্যাকাউন্ট তৈরি করা আছে। দয়া করে লগইন করুন।");
+          }
+
+          // If RPC is not available in database yet, fallback to standard signUp
+          const { error: signErr } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+              emailRedirectTo: `${window.location.origin}/login`,
+              data: { full_name: name, phone },
+            },
+          });
+          if (signErr) throw signErr;
+        }
+
+        // Auto-confirm in auth database
         await confirmEmailViaRpc(email);
 
         // Sign in immediately to create an active user session
         let { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
-        if (signInErr) {
+        if (signInErr && signInErr.message.toLowerCase().includes("email not confirmed")) {
           await confirmEmailViaRpc(email);
           const retry = await supabase.auth.signInWithPassword({ email, password });
           signInErr = retry.error;
-          if (signInErr) throw signInErr;
         }
+        if (signInErr) throw signInErr;
 
         const adv = await fetchAdvancedSettings();
         if (adv.verifyEnabled && (adv.verifyEmail || adv.verifySms)) {
