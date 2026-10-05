@@ -24,14 +24,6 @@ export const Route = createFileRoute("/login")({
   component: AuthPage,
 });
 
-async function confirmEmailViaRpc(targetEmail: string) {
-  try {
-    await supabase.rpc("confirm_auth_user_by_email" as any, { _email: targetEmail });
-  } catch {
-    // Ignore RPC failure if already confirmed or not defined
-  }
-}
-
 function AuthPage() {
   const nav = useNavigate();
   const search = Route.useSearch();
@@ -128,13 +120,7 @@ function AuthPage() {
           setPassword("");
         }
       } else {
-        let { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error && error.message.toLowerCase().includes("email not confirmed")) {
-          // Auto-confirm via RPC and retry
-          await confirmEmailViaRpc(email);
-          const retry = await supabase.auth.signInWithPassword({ email, password });
-          error = retry.error;
-        }
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) {
           if (error.message.toLowerCase().includes("email not confirmed")) {
             throw new Error("আপনার ইমেইলটি এখনো কনফার্ম করা হয়নি। অনুগ্রহ করে ইনবক্স বা স্প্যাম ফোল্ডার চেক করুন।");
