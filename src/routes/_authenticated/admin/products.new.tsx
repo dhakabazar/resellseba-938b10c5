@@ -39,6 +39,7 @@ function NewProduct() {
   const [suggested, setSuggested] = useState("");
   const [stock, setStock] = useState("0");
   const [images, setImages] = useState<UploadedImage[]>([]);
+  const [videoUrl, setVideoUrl] = useState("");
   const [metaTitle, setMetaTitle] = useState("");
   const [metaDesc, setMetaDesc] = useState("");
   const [keywords, setKeywords] = useState("");
@@ -134,6 +135,7 @@ function NewProduct() {
           suggested_price: Number(suggested),
           stock: Number(stock),
           og_image_url: images[0]?.url ?? null,
+          video_url: videoUrl.trim() || null,
           meta_title: metaTitle || null,
           meta_description: metaDesc || null,
           keywords: keywords || null,
@@ -241,6 +243,21 @@ function NewProduct() {
             variant="square"
             label="Add image"
           />
+        </div>
+
+        <div className="surface-card p-6">
+          <h3 className="mb-3 text-sm font-semibold">Video</h3>
+          <Field
+            label="YouTube link"
+            hint="Paste the product's YouTube link (watch / shorts / youtu.be). It will show on the product page."
+          >
+            <input
+              value={videoUrl}
+              onChange={(e) => setVideoUrl(e.target.value)}
+              className={inputCls}
+              placeholder="https://www.youtube.com/watch?v=..."
+            />
+          </Field>
         </div>
 
         <div className="surface-card p-6">

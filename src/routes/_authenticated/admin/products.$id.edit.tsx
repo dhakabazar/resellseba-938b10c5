@@ -62,6 +62,7 @@ function EditProduct() {
   const [stock, setStock] = useState("0");
   const [isActive, setIsActive] = useState(true);
   const [images, setImages] = useState<UploadedImage[]>([]);
+  const [videoUrl, setVideoUrl] = useState("");
   const [metaTitle, setMetaTitle] = useState("");
   const [metaDesc, setMetaDesc] = useState("");
   const [keywords, setKeywords] = useState("");
@@ -102,6 +103,7 @@ function EditProduct() {
       setSuggested(String(p.suggested_price ?? 0));
       setStock(String(p.stock ?? 0));
       setIsActive(!!p.is_active);
+      setVideoUrl(anyP.video_url ?? "");
       setMetaTitle(p.meta_title ?? "");
       setMetaDesc(p.meta_description ?? "");
       setKeywords(p.keywords ?? "");
@@ -177,6 +179,7 @@ function EditProduct() {
           stock: Number(stock),
           is_active: isActive,
           og_image_url: images[0]?.url ?? null,
+          video_url: videoUrl.trim() || null,
           meta_title: metaTitle || null,
           meta_description: metaDesc || null,
           keywords: keywords || null,
@@ -296,6 +299,21 @@ function EditProduct() {
             variant="square"
             label="Add image"
           />
+        </div>
+
+        <div className="surface-card p-6">
+          <h3 className="mb-3 text-sm font-semibold">Video</h3>
+          <Field
+            label="YouTube link"
+            hint="Paste the product's YouTube link (watch / shorts / youtu.be). It will show on the product page."
+          >
+            <input
+              value={videoUrl}
+              onChange={(e) => setVideoUrl(e.target.value)}
+              className={inputCls}
+              placeholder="https://www.youtube.com/watch?v=..."
+            />
+          </Field>
         </div>
 
         <div className="surface-card p-6">

@@ -17,6 +17,7 @@ import { CopyButton, ImageDownloadTools, stripHtml } from "@/components/store/re
 import { ProductImportModal } from "@/components/ProductImportModal";
 import { confirmAction } from "@/lib/confirm";
 import { usePermissions } from "@/lib/permissions";
+import { ProductMediaGallery } from "@/components/product-media-gallery";
 
 type Row = {
   id: string;
@@ -507,25 +508,17 @@ function ProductDetailModal({
         
         <div className="p-6">
           <div className="grid gap-8 md:grid-cols-2">
-            <div className="space-y-4">
-              <div className="relative aspect-square overflow-hidden rounded-xl border bg-muted">
-                {p.og_image_url ? (
-                  <img src={p.og_image_url} className="h-full w-full object-cover" alt="" />
-                ) : (
-                  <div className="grid h-full w-full place-items-center text-muted-foreground">No image</div>
-                )}
-                <div className="absolute right-3 top-3 flex flex-col gap-2">
-                  <ImageDownloadTools compact images={imageUrls} activeUrl={p.og_image_url} baseName={p.name} />
+            <ProductMediaGallery
+              images={imageUrls}
+              youtubeUrl={p.video_url}
+              fileUrl={p.video_file_url}
+              name={p.name}
+              renderImageActions={(currUrl) => (
+                <div className="absolute right-3 top-3 z-10 flex flex-col gap-2">
+                  <ImageDownloadTools compact images={imageUrls} activeUrl={currUrl} baseName={p.name} />
                 </div>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {images.map((img, i) => (
-                  <div key={i} className="h-16 w-16 overflow-hidden rounded-lg border bg-muted">
-                    <img src={img.url} className="h-full w-full object-cover" alt="" />
-                  </div>
-                ))}
-              </div>
-            </div>
+              )}
+            />
 
             <div className="space-y-6">
               <div>
