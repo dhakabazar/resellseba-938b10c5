@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { loadTutorialLibrary, youtubeEmbed, youtubeThumb, type Tutorial, type TutorialTopic } from "@/lib/tutorials";
-import { Loader2, PlayCircle, Search, Youtube } from "lucide-react";
+import { loadTutorialLibrary, youtubeEmbed, youtubeId, youtubeThumb, type Tutorial, type TutorialTopic } from "@/lib/tutorials";
+import { Check, Copy, Download, Loader2, PlayCircle, Search, Youtube } from "lucide-react";
 import { AppModal } from "@/components/ui-kit/AppModal";
+import { toast } from "sonner";
 
 export function TutorialLibrary({ compact = false }: { compact?: boolean }) {
   const [loading, setLoading] = useState(true);
@@ -141,6 +142,32 @@ function TopicChip({ active, label, onClick }: { active: boolean; label: string;
 
 function TutorialModal({ video, topic, onClose }: { video: Tutorial; topic: string; onClose: () => void }) {
   const embed = youtubeEmbed(video.youtube_url);
+  const [copied, setCopied] = useState(false);
+
+  const id = youtubeId(video.youtube_url);
+  const cleanUrl = id ? `https://www.youtube.com/watch?v=${id}` : video.youtube_url;
+  const downloadUrl = id ? `https://ssyoutube.com/watch?v=${id}` : `https://ssyoutube.com/${video.youtube_url}`;
+
+  async function handleCopy(e: React.MouseEvent) {
+    e.preventDefault();
+    try {
+      await navigator.clipboard.writeText(cleanUrl);
+      setCopied(true);
+      toast.success("ভিডিও লিঙ্ক কপি হয়েছে");
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error("লিঙ্ক কপি করা যায়নি");
+    }
+  }
+
+  function handleDownload(e: React.MouseEvent) {
+    e.preventDefault();
+    try {
+      navigator.clipboard.writeText(cleanUrl).catch(() => {});
+    } catch {}
+    window.open(downloadUrl, "_blank", "noopener,noreferrer");
+    toast.success("ভিডিও ডাউনলোড পেজ ওপেন হয়েছে (লিঙ্ক কপি করা হয়েছে)");
+  }
 
   return (
     <AppModal
@@ -152,14 +179,32 @@ function TutorialModal({ video, topic, onClose }: { video: Tutorial; topic: stri
         <span className="inline-flex rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-bold text-primary">{topic}</span>
       }
       footer={
-        <div className="flex justify-end">
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <button
+            type="button"
+            onClick={handleCopy}
+            title="ভিডিও লিংক কপি করুন"
+            className="inline-flex items-center gap-1.5 rounded-lg border bg-background px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted"
+          >
+            {copied ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
+            <span>{copied ? "Copied!" : "Copy link"}</span>
+          </button>
+          <button
+            type="button"
+            onClick={handleDownload}
+            title="ভিডিও ডাউনলোড করুন"
+            className="inline-flex items-center gap-1.5 rounded-lg border bg-background px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted"
+          >
+            <Download className="h-3.5 w-3.5 text-primary" />
+            <span>Download</span>
+          </button>
           <a
-            href={video.youtube_url}
+            href={cleanUrl}
             target="_blank"
             rel="noreferrer"
             className="inline-flex items-center gap-1.5 rounded-lg border bg-background px-3 py-1.5 text-xs font-bold hover:bg-muted"
           >
-            <Youtube className="h-4 w-4" /> YouTube te dekhun
+            <Youtube className="h-4 w-4 text-red-500" /> YouTube
           </a>
         </div>
       }
