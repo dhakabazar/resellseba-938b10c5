@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { ChevronDown, Loader2, Minus, Plus, Trash2, Truck } from "lucide-react";
+import { Check, ChevronDown, Copy, Loader2, Minus, Plus, Trash2, Truck } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { addToCart, clearCart, removeFromCart, setCartQty } from "@/lib/store-cart";
@@ -47,6 +47,7 @@ export function CheckoutPageContent({
   const [payMethod, setPayMethod] = useState<string>("cod");
   const [manualSender, setManualSender] = useState<string>("");
   const [manualTrxId, setManualTrxId] = useState<string>("");
+  const [copiedNumber, setCopiedNumber] = useState(false);
   const [busy, setBusy] = useState(false);
   const [noteOpen, setNoteOpen] = useState(false);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -143,6 +144,14 @@ export function CheckoutPageContent({
       return;
     }
 
+    // If a manual personal payment method is chosen, enforce mandatory Transaction ID (TrxID)
+    if (activeManualMethod) {
+      if (!manualTrxId.trim()) {
+        toast.error("অনুগ্রহ করে ট্রানজেকশন আইডি (Transaction ID) প্রদান করুন।");
+        return;
+      }
+    }
+
     setBusy(true);
     const gateway = gatewayOptions.find((g) => g.value === payMethod);
 
@@ -151,7 +160,7 @@ export function CheckoutPageContent({
     if (activeManualMethod) {
       const paymentNoteParts: string[] = [];
       if (manualSender.trim()) paymentNoteParts.push(`Sender: ${manualSender.trim()}`);
-      if (manualTrxId.trim()) paymentNoteParts.push(`TrxID: ${manualTrxId.trim()}`);
+      paymentNoteParts.push(`TrxID: ${manualTrxId.trim()}`);
       const paymentInfoTag = `[Manual Payment: ${activeManualMethod.label}${paymentNoteParts.length ? ` | ${paymentNoteParts.join(" | ")}` : ""}]`;
       finalNotes = finalNotes ? `${finalNotes}\n${paymentInfoTag}` : paymentInfoTag;
     }
@@ -380,14 +389,14 @@ export function CheckoutPageContent({
                         )}
                         {!online && m.value !== "cod" && (
                           <span className="rounded-full bg-[var(--st-primary)]/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[var(--st-primary)]">
-                            Manual
+                            Personal
                           </span>
                         )}
                       </span>
                       <span className={cx("mt-0.5 line-clamp-1 block text-[11px] leading-snug", muted)}>
                         {online
                           ? "ইনস্ট্যান্ট অনলাইন পেমেন্ট (bKash/Nagad/Card)"
-                          : m.instructions || "পণ্য হাতে পেয়ে পেমেন্ট করুন"}
+                          : m.instructions || "Send Money করে TrxID দিয়ে সাবমিট করুন"}
                       </span>
                     </span>
                     <span
@@ -404,42 +413,81 @@ export function CheckoutPageContent({
               })}
             </div>
 
-            {/* Manual Payment Instructions & Input Drawer */}
+            {/* Manual Personal Payment Instructions & Input Drawer */}
             {activeManualMethod && (
-              <div className={cx("mt-3 rounded-[var(--st-radius-sm)] border bg-[var(--st-bg-alt)]/50 p-4 space-y-3", borderc)}>
-                <div className="text-xs font-bold text-[var(--st-fg)]">
-                  {activeManualMethod.label} পেমেন্ট নির্দেশনা:
-                </div>
-                {activeManualMethod.instructions && (
-                  <p className={cx("whitespace-pre-wrap text-xs leading-relaxed bg-[var(--st-surface)] p-3 rounded border", borderc, muted)}>
-                    {activeManualMethod.instructions}
-                  </p>
-                )}
-                <div className="grid gap-3 sm:grid-cols-2 pt-1">
-                  <div>
-                    <label className="block text-[11px] font-medium text-[var(--st-fg)] mb-1">
-                      সেন্ডার নম্বর (যে নম্বর থেকে পাঠিয়েছেন):
-                    </label>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      value={manualSender}
-                      onChange={(e) => setManualSender(e.target.value)}
-                      placeholder="01XXXXXXXXX"
-                      className={cx(inp, "py-2 text-xs")}
-                    />
+              <div className={cx("mt-4 overflow-hidden rounded-[var(--st-radius-sm)] border-2 border-[var(--st-primary)] bg-[var(--st-surface)] shadow-md")}>
+                {/* Highlighted Banner */}
+                <div className="bg-gradient-to-r from-[var(--st-primary)] to-[var(--st-accent)] p-4 text-[var(--st-on-primary)]">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-bold uppercase tracking-wider bg-black/20 px-2.5 py-0.5 rounded-full">
+                      {activeManualMethod.label} পার্সোনাল পেমেন্ট
+                    </span>
+                    <span className="text-[11px] font-semibold opacity-90">Send Money</span>
                   </div>
-                  <div>
-                    <label className="block text-[11px] font-medium text-[var(--st-fg)] mb-1">
-                      ট্রানজেকশন আইডি (TrxID):
-                    </label>
-                    <input
-                      type="text"
-                      value={manualTrxId}
-                      onChange={(e) => setManualTrxId(e.target.value)}
-                      placeholder="TrxID (যেমন: 9J28DA10X)"
-                      className={cx(inp, "py-2 text-xs uppercase")}
-                    />
+                  <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-black/25 p-3 backdrop-blur-sm">
+                    <div>
+                      <div className="text-[11px] opacity-85">সেন্ড মানি নম্বর (Send Money Number):</div>
+                      <div className="text-lg sm:text-xl font-mono font-black tracking-wider text-white select-all">
+                        01710778457
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText("01710778457");
+                        setCopiedNumber(true);
+                        toast.success("নম্বর কপি করা হয়েছে: 01710778457");
+                        setTimeout(() => setCopiedNumber(false), 2000);
+                      }}
+                      className="inline-flex items-center gap-1.5 rounded-md bg-white px-3.5 py-2 text-xs font-bold text-[var(--st-primary)] shadow-sm transition-all hover:bg-white/95 active:scale-95"
+                    >
+                      {copiedNumber ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
+                      {copiedNumber ? "কপি হয়েছে" : "নম্বর কপি করুন"}
+                    </button>
+                  </div>
+                  <p className="mt-2 text-xs font-medium leading-relaxed opacity-95">
+                    📢 <strong>01710778457</strong> নম্বরে Send Money করে নিচে Transaction ID দিয়ে সাবমিট করুন।
+                  </p>
+                </div>
+
+                {/* Additional instructions if present */}
+                {activeManualMethod.instructions && activeManualMethod.instructions !== "01710778457" && (
+                  <div className={cx("border-b bg-[var(--st-bg-alt)]/60 p-3 text-xs leading-relaxed", borderc, muted)}>
+                    {activeManualMethod.instructions}
+                  </div>
+                )}
+
+                {/* Form fields */}
+                <div className="p-4 space-y-3">
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <label className="block text-xs font-bold text-[var(--st-fg)] mb-1.5">
+                        ট্রানজেকশন আইডি (TrxID) <span className="text-[var(--st-primary)]">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={manualTrxId}
+                        onChange={(e) => setManualTrxId(e.target.value)}
+                        placeholder="TrxID দিন (যেমন: 9J28DA10X)"
+                        className={cx(inp, "py-2.5 text-sm uppercase font-mono tracking-wider font-semibold focus:ring-2 focus:ring-[var(--st-primary)]/20")}
+                      />
+                      <span className={cx("mt-1 block text-[10px]", muted)}>টাকা পাঠানোর পর প্রাপ্ত TrxID লিখুন</span>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-[var(--st-fg)] mb-1.5">
+                        টাকা পাঠানোর নম্বর <span className={cx("text-[11px] font-normal", muted)}>(ঐচ্ছিক)</span>
+                      </label>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={manualSender}
+                        onChange={(e) => setManualSender(e.target.value)}
+                        placeholder="01XXXXXXXXX"
+                        className={cx(inp, "py-2.5 text-sm tracking-wide")}
+                      />
+                      <span className={cx("mt-1 block text-[10px]", muted)}>যে নম্বর থেকে টাকা পাঠিয়েছেন</span>
+                    </div>
                   </div>
                 </div>
               </div>
