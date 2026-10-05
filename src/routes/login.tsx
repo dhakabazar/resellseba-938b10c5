@@ -24,6 +24,14 @@ export const Route = createFileRoute("/login")({
   component: AuthPage,
 });
 
+async function confirmEmailViaRpc(targetEmail: string) {
+  try {
+    await supabase.rpc("confirm_auth_user_by_email" as any, { _email: targetEmail });
+  } catch {
+    // Ignore RPC failure if already confirmed or not defined
+  }
+}
+
 function AuthPage() {
   const nav = useNavigate();
   const search = Route.useSearch();
@@ -68,12 +76,12 @@ function AuthPage() {
         if (error) throw error;
 
         // Auto-confirm email in auth database so password sign in is never blocked
-        await supabase.rpc("confirm_auth_user_by_email", { _email: email }).catch(() => null);
+        await confirmEmailViaRpc(email);
 
         // Sign in immediately to create an active user session
         let { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
         if (signInErr) {
-          await supabase.rpc("confirm_auth_user_by_email", { _email: email }).catch(() => null);
+          await confirmEmailViaRpc(email);
           const retry = await supabase.auth.signInWithPassword({ email, password });
           signInErr = retry.error;
           if (signInErr) throw signInErr;
@@ -82,8 +90,20 @@ function AuthPage() {
         const adv = await fetchAdvancedSettings();
         if (adv.verifyEnabled && (adv.verifyEmail || adv.verifySms)) {
           // Verification is enabled by Admin
-          if (adv.verifyEmail) await sendCode({ data: { channel: "email" } }).catch(() => null);
-          if (adv.verifySms) await sendCode({ data: { channel: "sms" } }).catch(() => null);
+          if (adv.verifyEmail) {
+            try {
+              await sendCode({ data: { channel: "email" } });
+            } catch {
+              // best effort
+            }
+          }
+          if (adv.verifySms) {
+            try {
+              await sendCode({ data: { channel: "sms" } });
+            } catch {
+              // best effort
+            }
+          }
           toast.success("অ্যাকাউন্ট তৈরি হয়েছে — কোড দিয়ে ভেরিফাই করুন");
           nav({ to: "/verify", replace: true });
         } else {
@@ -99,7 +119,7 @@ function AuthPage() {
         let { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error && error.message.toLowerCase().includes("email not confirmed")) {
           // Auto-confirm via RPC and retry
-          await supabase.rpc("confirm_auth_user_by_email", { _email: email }).catch(() => null);
+          await confirmEmailViaRpc(email);
           const retry = await supabase.auth.signInWithPassword({ email, password });
           error = retry.error;
         }
