@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { ChevronDown, Menu, Phone, Search, ShoppingBag, X } from "lucide-react";
+import { ChevronDown, Menu, MessageCircle, Phone, Search, ShoppingBag, X } from "lucide-react";
 import { menuTarget, type MenuNode } from "@/lib/store-menu";
 
 import { useStore } from "./store-context";
@@ -640,7 +640,7 @@ export function TrustBar() {
 }
 
 export function StoreFooter() {
-  const { code, name, settings, categories, theme, url } = useStore();
+  const { name, settings, theme, url } = useStore();
   const year = new Date().getFullYear();
   const socials = [
     settings?.facebook_url && { label: "Facebook", href: settings.facebook_url },
@@ -651,90 +651,94 @@ export function StoreFooter() {
   const about =
     settings?.about_text ||
     settings?.meta_description ||
-    `${name} — genuine products, honest pricing and cash-on-delivery across Bangladesh.`;
+    `${name} — genuine products, honest pricing and fast cash on delivery across Bangladesh.`;
   const wa = settings?.whatsapp ? `https://wa.me/${settings.whatsapp.replace(/[^\d]/g, "")}` : undefined;
-  const catLinks = categories.slice(0, 6);
   const copy = settings?.footer_text || `© ${year} ${name}. All rights reserved.`;
 
   /* ------------------------------------------- Bazaar: dense utility footer */
   if (theme.id === "bazaar")
     return (
       <footer className="mt-10">
-        <div className="bg-[var(--st-accent)] px-4 py-5 text-center text-[var(--st-on-accent)]">
-          <div className="text-base font-extrabold uppercase">Order now — cash on delivery</div>
-          <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
-            {settings?.support_phone && (
-              <a
-                href={`tel:${settings.support_phone}`}
-                className="rounded-full bg-[var(--st-primary)] px-5 py-2 text-sm font-bold text-[var(--st-on-primary)]"
-              >
-                Call {settings.support_phone}
-              </a>
-            )}
-            {wa && (
-              <a
-                href={wa}
-                target="_blank"
-                rel="noreferrer"
-                className="rounded-full border border-current px-5 py-2 text-sm font-bold"
-              >
-                WhatsApp
-              </a>
-            )}
+        {(settings?.support_phone || wa) && (
+          <div className="bg-[var(--st-accent)] px-4 py-5 text-center text-[var(--st-on-accent)]">
+            <div className="text-base font-extrabold uppercase tracking-wide">Order now — cash on delivery</div>
+            <div className="mt-3 flex flex-wrap items-center justify-center gap-2.5">
+              {settings?.support_phone && (
+                <a
+                  href={`tel:${settings.support_phone}`}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-[var(--st-primary)] px-5 py-2 text-sm font-bold text-[var(--st-on-primary)] shadow-sm transition hover:opacity-90"
+                >
+                  <Phone className="h-4 w-4" /> Call {settings.support_phone}
+                </a>
+              )}
+              {wa && (
+                <a
+                  href={wa}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-current bg-transparent px-5 py-2 text-sm font-bold transition hover:bg-black/10"
+                >
+                  <MessageCircle className="h-4 w-4" /> WhatsApp
+                </a>
+              )}
+            </div>
           </div>
-        </div>
+        )}
         <div className={cx("border-t bg-[var(--st-surface)]", borderc)}>
-          <div className="mx-auto grid max-w-6xl gap-6 px-4 py-8 sm:grid-cols-2 md:grid-cols-4">
+          <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 sm:grid-cols-2 md:grid-cols-3">
             <div>
-              <div className="text-sm font-extrabold uppercase text-[var(--st-fg)]">{name}</div>
-              <p className={cx("mt-2 text-[12px] leading-relaxed", muted)}>{about}</p>
+              <div className="text-base font-extrabold uppercase text-[var(--st-fg)]">{name}</div>
+              <p className={cx("mt-2 text-xs leading-relaxed", muted)}>{about}</p>
+              {socials.length > 0 && (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {socials.map((s) => (
+                    <a
+                      key={s.label}
+                      href={s.href}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="rounded-[var(--st-radius-sm)] bg-[var(--st-bg-alt)] px-3 py-1 text-xs font-semibold hover:text-[var(--st-primary)]"
+                    >
+                      {s.label}
+                    </a>
+                  ))}
+                </div>
+              )}
             </div>
             <div>
-              <div className="mb-2 text-[11px] font-bold uppercase tracking-wider text-[var(--st-fg)]">Shop</div>
-              <div className="flex flex-col gap-1.5">
-                <Link to={url("/shop")} className={cx("text-[12px] hover:text-[var(--st-primary)]", muted)}>
+              <div className="mb-3 text-[11px] font-bold uppercase tracking-wider text-[var(--st-fg)]">Quick Links</div>
+              <div className="flex flex-col gap-2">
+                <Link to={url("/")} className={cx("text-xs hover:text-[var(--st-primary)]", muted)}>
+                  Home
+                </Link>
+                <Link to={url("/shop")} className={cx("text-xs hover:text-[var(--st-primary)]", muted)}>
                   All products
                 </Link>
-                {catLinks.map((c) => (
-                  <Link
-                    key={c.id}
-                    to={url(`/c/${c.slug}`)}
-                    className={cx("text-[12px] hover:text-[var(--st-primary)]", muted)}
-                  >
-                    {c.name}
-                  </Link>
-                ))}
+                <Link to={url("/checkout")} className={cx("text-xs hover:text-[var(--st-primary)]", muted)}>
+                  Cart / Checkout
+                </Link>
               </div>
             </div>
             <div>
-              <div className="mb-2 text-[11px] font-bold uppercase tracking-wider text-[var(--st-fg)]">Support</div>
-              <div className={cx("flex flex-col gap-1.5 text-[12px]", muted)}>
-                {settings?.support_phone && <a href={`tel:${settings.support_phone}`}>Call {settings.support_phone}</a>}
-                {wa && (
-                  <a href={wa} target="_blank" rel="noreferrer">
-                    WhatsApp chat
+              <div className="mb-3 text-[11px] font-bold uppercase tracking-wider text-[var(--st-fg)]">Customer Support</div>
+              <div className={cx("flex flex-col gap-2 text-xs", muted)}>
+                {settings?.support_phone && (
+                  <a href={`tel:${settings.support_phone}`} className="inline-flex items-center gap-1.5 hover:text-[var(--st-primary)]">
+                    <Phone className="h-3.5 w-3.5" /> {settings.support_phone}
                   </a>
                 )}
-              </div>
-            </div>
-            <div>
-              <div className="mb-2 text-[11px] font-bold uppercase tracking-wider text-[var(--st-fg)]">Follow</div>
-              <div className="flex flex-wrap gap-2">
-                {socials.map((s) => (
-                  <a
-                    key={s.label}
-                    href={s.href}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="rounded-[var(--st-radius-sm)] bg-[var(--st-bg-alt)] px-3 py-1.5 text-[11px] font-semibold"
-                  >
-                    {s.label}
+                {wa && (
+                  <a href={wa} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 hover:text-[var(--st-primary)]">
+                    <MessageCircle className="h-3.5 w-3.5" /> WhatsApp chat
                   </a>
-                ))}
+                )}
+                <div className="mt-1 text-[11px] text-[var(--st-muted)]">
+                  Cash on Delivery available all over Bangladesh
+                </div>
               </div>
             </div>
           </div>
-          <div className={cx("border-t px-4 py-4 text-center text-[11px]", borderc, muted)}>{copy}</div>
+          <div className={cx("border-t px-4 py-4 text-center text-xs", borderc, muted)}>{copy}</div>
         </div>
       </footer>
     );
@@ -746,58 +750,19 @@ export function StoreFooter() {
         <div className="mx-auto max-w-3xl px-4 py-16 text-center">
           <Heading className="text-2xl tracking-[0.16em]">{name}</Heading>
           <p className={cx("mx-auto mt-4 max-w-lg text-sm leading-relaxed", muted)}>{about}</p>
-          <div className={cx("mt-8 flex flex-wrap items-center justify-center gap-x-7 gap-y-3 text-[10px] uppercase tracking-[0.28em]", muted)}>
+          <div className={cx("mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-[11px] uppercase tracking-[0.2em]", muted)}>
+            <Link to={url("/")} className="hover:text-[var(--st-primary)]">
+              Home
+            </Link>
             <Link to={url("/shop")} className="hover:text-[var(--st-primary)]">
               All products
             </Link>
-            {catLinks.slice(0, 4).map((c) => (
-              <Link
-                key={c.id}
-                to={url(`/c/${c.slug}`)}
-                className="hover:text-[var(--st-primary)]"
-              >
-                {c.name}
-              </Link>
-            ))}
-            {settings?.support_phone && <a href={`tel:${settings.support_phone}`}>{settings.support_phone}</a>}
-            {wa && (
-              <a href={wa} target="_blank" rel="noreferrer">
-                WhatsApp
-              </a>
-            )}
-            {socials.map((s) => (
-              <a key={s.label} href={s.href} target="_blank" rel="noreferrer">
-                {s.label}
-              </a>
-            ))}
-          </div>
-          <div className={cx("mx-auto mt-10 h-px w-24 bg-[var(--st-primary)]")} />
-          <div className={cx("mt-6 text-[11px]", muted)}>{copy}</div>
-        </div>
-      </footer>
-    );
-
-  /* ------------------------- সহজ শপ: সরু কমলা ফুটার বার + ছোট লিংক রো */
-  if (theme.id === "atelier")
-    return (
-      <footer className="mt-8">
-        <div className={cx("border-t bg-[var(--st-surface)]", borderc)}>
-          <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-5 gap-y-2 px-4 py-4 text-[12px] font-medium">
-            <Link to={url("/shop")} className="hover:text-[var(--st-primary)]">
-              সব প্রোডাক্ট
+            <Link to={url("/checkout")} className="hover:text-[var(--st-primary)]">
+              Checkout
             </Link>
-            {catLinks.slice(0, 4).map((c) => (
-              <Link
-                key={c.id}
-                to={url(`/c/${c.slug}`)}
-                className="hover:text-[var(--st-primary)]"
-              >
-                {c.name}
-              </Link>
-            ))}
             {settings?.support_phone && (
-              <a href={`tel:${settings.support_phone}`} className="font-bold text-[var(--st-primary)]">
-                কল করুন {settings.support_phone}
+              <a href={`tel:${settings.support_phone}`} className="hover:text-[var(--st-primary)]">
+                {settings.support_phone}
               </a>
             )}
             {wa && (
@@ -811,14 +776,55 @@ export function StoreFooter() {
               </a>
             ))}
           </div>
-        </div>
-        <div className="bg-[var(--st-primary)] px-4 py-3 text-center text-[12px] font-semibold text-[var(--st-on-primary)]">
-          {copy}
+          <div className={cx("mx-auto mt-8 h-px w-16 bg-[var(--st-primary)] opacity-40")} />
+          <div className={cx("mt-5 text-[11px]", muted)}>{copy}</div>
         </div>
       </footer>
     );
 
-
+  /* ------------------------- সহজ শপ: সরু কমলা ফুটার বার + ক্লিন লিংক */
+  if (theme.id === "atelier")
+    return (
+      <footer className="mt-12">
+        <div className={cx("border-t bg-[var(--st-surface)]", borderc)}>
+          <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4 px-4 py-6">
+            <div>
+              <div className="text-sm font-bold text-[var(--st-fg)]">{name}</div>
+              <p className={cx("mt-0.5 text-xs max-w-md", muted)}>{about}</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <Link to={url("/")} className={cx("text-xs font-medium hover:text-[var(--st-primary)]", muted)}>
+                হোম
+              </Link>
+              <span className="text-[var(--st-border)]">•</span>
+              <Link to={url("/shop")} className={cx("text-xs font-medium hover:text-[var(--st-primary)]", muted)}>
+                সব প্রোডাক্ট
+              </Link>
+              <span className="text-[var(--st-border)]">•</span>
+              <Link to={url("/checkout")} className={cx("text-xs font-medium hover:text-[var(--st-primary)]", muted)}>
+                অর্ডার চেকআউট
+              </Link>
+              {settings?.support_phone && (
+                <>
+                  <span className="text-[var(--st-border)]">•</span>
+                  <a href={`tel:${settings.support_phone}`} className="inline-flex items-center gap-1 rounded-full bg-[var(--st-bg-alt)] px-3 py-1 text-xs font-bold text-[var(--st-primary)]">
+                    <Phone className="h-3 w-3" /> {settings.support_phone}
+                  </a>
+                </>
+              )}
+              {wa && (
+                <a href={wa} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-full bg-[var(--st-bg-alt)] px-3 py-1 text-xs font-bold text-emerald-600">
+                  <MessageCircle className="h-3 w-3" /> WhatsApp
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+        <div className="bg-[var(--st-primary)] px-4 py-3 text-center text-xs font-semibold text-[var(--st-on-primary)]">
+          {copy}
+        </div>
+      </footer>
+    );
 
   /* ------------------------------------------- Aurora: soft gradient footer */
   return (
@@ -828,10 +834,10 @@ export function StoreFooter() {
         style={{ background: "radial-gradient(700px 260px at 15% 0%, var(--st-primary), transparent 62%)" }}
       />
       <div className="relative mx-auto max-w-6xl px-4 py-12">
-        <div className="grid gap-8 md:grid-cols-4">
-          <div className="md:col-span-2">
+        <div className="grid gap-8 md:grid-cols-3">
+          <div>
             <Heading className="text-lg">{name}</Heading>
-            <p className={cx("mt-2 max-w-md text-sm leading-relaxed", muted)}>{about}</p>
+            <p className={cx("mt-2 max-w-md text-xs leading-relaxed", muted)}>{about}</p>
             {socials.length > 0 && (
               <div className="mt-4 flex flex-wrap gap-2">
                 {socials.map((s) => (
@@ -840,7 +846,7 @@ export function StoreFooter() {
                     href={s.href}
                     target="_blank"
                     rel="noreferrer"
-                    className="rounded-full bg-[var(--st-surface)] px-4 py-1.5 text-xs shadow-[var(--st-shadow)]"
+                    className="rounded-full bg-[var(--st-surface)] px-3.5 py-1 text-xs shadow-sm hover:text-[var(--st-primary)]"
                   >
                     {s.label}
                   </a>
@@ -849,36 +855,38 @@ export function StoreFooter() {
             )}
           </div>
           <div>
-            <div className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--st-fg)]">Shop</div>
+            <div className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--st-fg)]">Navigation</div>
             <div className="flex flex-col gap-2">
-              <Link to={url("/shop")} className={cx("text-sm hover:text-[var(--st-primary)]", muted)}>
+              <Link to={url("/")} className={cx("text-xs hover:text-[var(--st-primary)]", muted)}>
+                Home
+              </Link>
+              <Link to={url("/shop")} className={cx("text-xs hover:text-[var(--st-primary)]", muted)}>
                 All products
               </Link>
-              {catLinks.map((c) => (
-                <Link
-                  key={c.id}
-                  to={url(`/c/${c.slug}`)}
-                  className={cx("text-sm hover:text-[var(--st-primary)]", muted)}
-                >
-                  {c.name}
-                </Link>
-              ))}
+              <Link to={url("/checkout")} className={cx("text-xs hover:text-[var(--st-primary)]", muted)}>
+                Cart / Checkout
+              </Link>
             </div>
           </div>
           <div>
-            <div className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--st-fg)]">Support</div>
-            <div className={cx("flex flex-col gap-2 text-sm", muted)}>
-              {settings?.support_phone && <a href={`tel:${settings.support_phone}`}>Call {settings.support_phone}</a>}
-              {wa && (
-                <a href={wa} target="_blank" rel="noreferrer">
-                  WhatsApp chat
+            <div className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--st-fg)]">Support & Contact</div>
+            <div className={cx("flex flex-col gap-2.5 text-xs", muted)}>
+              {settings?.support_phone && (
+                <a href={`tel:${settings.support_phone}`} className="inline-flex items-center gap-1.5 hover:text-[var(--st-primary)]">
+                  <Phone className="h-3.5 w-3.5" /> Call {settings.support_phone}
                 </a>
               )}
+              {wa && (
+                <a href={wa} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 hover:text-[var(--st-primary)]">
+                  <MessageCircle className="h-3.5 w-3.5" /> WhatsApp chat
+                </a>
+              )}
+              <p className="text-[11px] opacity-75">Cash on delivery available across Bangladesh</p>
             </div>
           </div>
         </div>
       </div>
-      <div className={cx("relative border-t px-4 py-5 text-center text-xs", borderc, muted)}>{copy}</div>
+      <div className={cx("relative border-t px-4 py-4 text-center text-xs", borderc, muted)}>{copy}</div>
     </footer>
   );
 }
