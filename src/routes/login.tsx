@@ -83,7 +83,7 @@ function AuthPage() {
             throw new Error("এই ইমেইল দিয়ে ইতিমধ্যে অ্যাকাউন্ট তৈরি করা আছে। দয়া করে লগইন করুন।");
           }
 
-          // If RPC is not available in database yet, fallback to standard signUp
+          // Fallback to standard signUp
           const { error: signErr } = await supabase.auth.signUp({
             email,
             password,
@@ -95,45 +95,54 @@ function AuthPage() {
           if (signErr) throw signErr;
         }
 
-        // Auto-confirm in auth database
+        // Auto-confirm in auth database if possible
         await confirmEmailViaRpc(email);
 
-        // Sign in immediately to create an active user session
-        let { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
+        // Try signing in immediately
+        let { data: authData, error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
         if (signInErr && signInErr.message.toLowerCase().includes("email not confirmed")) {
           await confirmEmailViaRpc(email);
           const retry = await supabase.auth.signInWithPassword({ email, password });
           signInErr = retry.error;
+          authData = retry.data;
         }
-        if (signInErr) throw signInErr;
 
         const adv = await fetchAdvancedSettings();
-        if (adv.verifyEnabled && (adv.verifyEmail || adv.verifySms)) {
-          // Verification is enabled by Admin
-          if (adv.verifyEmail) {
-            try {
-              await sendCode({ data: { channel: "email" } });
-            } catch {
-              // best effort
+        const hasSession = Boolean(authData?.session);
+
+        if (hasSession) {
+          if (adv.verifyEnabled && (adv.verifyEmail || adv.verifySms)) {
+            // Verification is enabled by Admin
+            if (adv.verifyEmail) {
+              try {
+                await sendCode({ data: { channel: "email" } });
+              } catch {
+                // best effort
+              }
             }
-          }
-          if (adv.verifySms) {
-            try {
-              await sendCode({ data: { channel: "sms" } });
-            } catch {
-              // best effort
+            if (adv.verifySms) {
+              try {
+                await sendCode({ data: { channel: "sms" } });
+              } catch {
+                // best effort
+              }
             }
+            toast.success("অ্যাকাউন্ট তৈরি হয়েছে — কোড দিয়ে ভেরিফাই করুন");
+            nav({ to: "/verify", replace: true });
+          } else {
+            // Verification is disabled by Admin -> complete signup, reset and enter dashboard
+            setEmail("");
+            setPassword("");
+            setName("");
+            setPhone("");
+            toast.success("রেজিস্ট্রেশন সফল হয়েছে — স্বাগতম!");
+            nav({ to: "/dashboard", replace: true });
           }
-          toast.success("অ্যাকাউন্ট তৈরি হয়েছে — কোড দিয়ে ভেরিফাই করুন");
-          nav({ to: "/verify", replace: true });
         } else {
-          // Verification is disabled by Admin -> complete signup, reset and enter dashboard
-          setEmail("");
+          // If session could not be established because Supabase requires email confirmation link
+          toast.success("অ্যাকাউন্ট সফলভাবে তৈরি হয়েছে! অনুগ্রহ করে আপনার ইমেইল চেক করে কনফার্ম করুন।");
+          setMode("signin");
           setPassword("");
-          setName("");
-          setPhone("");
-          toast.success("রেজিস্ট্রেশন সফল হয়েছে — স্বাগতম!");
-          nav({ to: "/dashboard", replace: true });
         }
       } else {
         let { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -143,7 +152,15 @@ function AuthPage() {
           const retry = await supabase.auth.signInWithPassword({ email, password });
           error = retry.error;
         }
-        if (error) throw error;
+        if (error) {
+          if (error.message.toLowerCase().includes("email not confirmed")) {
+            throw new Error("আপনার ইমেইলটি এখনো কনফার্ম করা হয়নি। অনুগ্রহ করে ইনবক্স বা স্প্যাম ফোল্ডার চেক করুন।");
+          }
+          if (error.message.toLowerCase().includes("invalid login credentials")) {
+            throw new Error("ইমেইল বা পাসওয়ার্ড সঠিক নয়।");
+          }
+          throw error;
+        }
         toast.success("স্বাগতম!");
         const target =
           search.redirect && search.redirect.startsWith("/") && !search.redirect.startsWith("/login")
