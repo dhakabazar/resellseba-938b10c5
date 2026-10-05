@@ -521,9 +521,38 @@ export function TransactionReport({
                         <DateCell at={r.at} />
                       </td>
                       <td className="px-3 py-2">
-                        <span className={`rounded-full px-2 py-0.5 text-[10px] capitalize ${orderStatusTone(r.status)}`}>
-                          {orderStatusLabel(r.status)}
-                        </span>
+                        {(() => {
+                          if (r.order_id) {
+                            return (
+                              <span className={`rounded-full px-2 py-0.5 text-[10px] capitalize ${orderStatusTone(r.status)}`}>
+                                {orderStatusLabel(r.status)}
+                              </span>
+                            );
+                          }
+                          if (r.kind === "withdraw") {
+                            const tone =
+                              r.status === "paid"
+                                ? "bg-success/15 text-success"
+                                : r.status === "approved"
+                                  ? "bg-primary/15 text-primary"
+                                  : r.status === "rejected"
+                                    ? "bg-destructive/15 text-destructive line-through"
+                                    : "bg-amber-500/15 text-amber-600";
+                            const label =
+                              r.status === "paid"
+                                ? "Paid"
+                                : r.status === "approved"
+                                  ? "Approved"
+                                  : r.status === "rejected"
+                                    ? "Rejected"
+                                    : "Pending";
+                            return <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${tone}`}>{label}</span>;
+                          }
+                          if (r.kind === "deposit") {
+                            return <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">Confirmed</span>;
+                          }
+                          return <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">{r.status}</span>;
+                        })()}
                       </td>
                       <td className="max-w-[280px] px-3 py-2">
                         {r.order_id ? (
