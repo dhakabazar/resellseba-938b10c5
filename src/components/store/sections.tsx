@@ -638,22 +638,6 @@ export function Faq() {
 export function ThemeSignature({ slot = "mid" }: { slot?: "top" | "mid" }) {
   const { theme, content, settings } = useStore();
 
-  if (theme.id === "bazaar" && slot === "top") {
-    const title = content.text("bazaar_deal_title");
-    const note = content.text("bazaar_deal_note");
-    if (!title && !note) return null;
-    return (
-      <section className="mx-auto max-w-6xl px-4 pt-6">
-        <div className="flex flex-wrap items-center justify-between gap-2 rounded-[var(--st-radius)] bg-[var(--st-primary)] px-4 py-3 text-[var(--st-on-primary)]">
-          <div className="flex items-center gap-2 text-sm font-bold uppercase">
-            <Sparkles className="h-4 w-4" /> {title}
-          </div>
-          {note && <div className="text-xs font-medium opacity-90">{note}</div>}
-        </div>
-      </section>
-    );
-  }
-
   if (slot === "top") return null;
 
 

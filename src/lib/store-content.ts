@@ -173,15 +173,6 @@ const THEME_GROUP: Partial<Record<StoreThemeId, ContentGroup>> = {
       t("aurora_stat2", "Highlight 2 (next to hero buttons)", "4.8★ average rating"),
     ],
   },
-  bazaar: {
-    id: "theme-bazaar",
-    title: "Bazaar deal strip",
-    description: "Colored deal strip shown between the hero and the product sections.",
-    fields: [
-      t("bazaar_deal_title", "Flash deal strip title", "আজকের ডিল"),
-      t("bazaar_deal_note", "Flash deal note", "স্টক সীমিত — আগে অর্ডার করলেই পাবেন"),
-    ],
-  },
   atelier: {
     id: "theme-atelier",
     title: "Simple Shop — Order & Call",
