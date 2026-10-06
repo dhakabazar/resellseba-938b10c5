@@ -195,7 +195,7 @@ export function ProductPageContent({ slug, code: propCode }: { slug: string; cod
                 <Plus className="h-3.5 w-3.5" />
               </button>
             </div>
-            <PrimaryButton disabled={!inStock} onClick={() => add(true)} className="flex-1">
+            <PrimaryButton disabled={!inStock} onClick={() => add(true)} className="flex-1 animate-order-jiggle shadow-sm">
               <Zap className="h-4 w-4" /> Order now
             </PrimaryButton>
             <GhostButton disabled={!inStock} onClick={() => add(false)}>
@@ -232,7 +232,7 @@ export function ProductPageContent({ slug, code: propCode }: { slug: string; cod
       {store.content.flag("pdp_sticky") && (
         <div
           className={cx(
-            "fixed inset-x-0 bottom-0 z-40 flex items-center gap-3 border-t bg-[var(--st-surface)] px-4 py-3 lg:hidden",
+            "fixed inset-x-0 bottom-0 z-40 flex items-center gap-3 border-t bg-[var(--st-surface)] px-4 py-3 shadow-[0_-8px_20px_-10px_rgba(0,0,0,0.15)] lg:hidden",
             borderc,
           )}
         >
@@ -240,7 +240,7 @@ export function ProductPageContent({ slug, code: propCode }: { slug: string; cod
             <div className="truncate text-xs text-[var(--st-muted)]">{title}</div>
             <Price value={price} className="text-lg" />
           </div>
-          <PrimaryButton disabled={!inStock} onClick={() => add(true)} className="px-4 py-2.5">
+          <PrimaryButton disabled={!inStock} onClick={() => add(true)} className="px-5 py-2.5 animate-order-jiggle shadow-md font-bold">
             <Zap className="h-4 w-4" /> Order now
           </PrimaryButton>
         </div>

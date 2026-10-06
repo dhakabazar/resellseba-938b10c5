@@ -495,7 +495,7 @@ export function CheckoutPageContent({
           </div>
 
           <div className="hidden sm:block pt-2">
-            <PrimaryButton disabled={busy} className="w-full py-3.5 text-base font-bold justify-center">
+            <PrimaryButton disabled={busy} className="w-full py-3.5 text-base font-bold justify-center animate-order-jiggle shadow-md">
               {busy ? (
                 <>
                   <Loader2 className="h-5 w-5 animate-spin" /> অর্ডার প্রসেস হচ্ছে...
@@ -511,7 +511,7 @@ export function CheckoutPageContent({
               borderc,
             )}
           >
-            <PrimaryButton disabled={busy} className="w-full py-3.5 text-base font-bold justify-center">
+            <PrimaryButton disabled={busy} className="w-full py-3.5 text-base font-bold justify-center animate-order-jiggle shadow-md">
               {busy ? (
                 <>
                   <Loader2 className="h-5 w-5 animate-spin" /> অর্ডার প্রসেস হচ্ছে...

@@ -559,3 +559,28 @@
     padding: 0.55rem 0.4rem;
   }
 }
+
+/* Subtle attention-grabbing pulse & shake for high-conversion order buttons */
+@keyframes order-pulse-jiggle {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+  }
+  8%, 20% {
+    transform: scale(1.025) rotate(-1.5deg);
+  }
+  14%, 26% {
+    transform: scale(1.025) rotate(1.5deg);
+  }
+  32% {
+    transform: scale(1.015) rotate(0deg);
+  }
+  38% {
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@utility animate-order-jiggle {
+  animation: order-pulse-jiggle 2.8s ease-in-out infinite;
+  transform-origin: center center;
+}
+
