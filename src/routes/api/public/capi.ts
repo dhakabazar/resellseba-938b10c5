@@ -24,7 +24,7 @@ export const Route = createFileRoute("/api/public/capi")({
         if (!parsed.success) return new Response("Bad request", { status: 400 });
         const { hasPrivilegedDb } = await import("@/lib/gateways/bridge.server");
         if (!hasPrivilegedDb()) return new Response("Not available", { status: 503 });
-        const { runCapiLocal } = await import("@/lib/capi.functions");
+        const { runCapiLocal } = await import("@/lib/capi.server");
         try {
           const result = await runCapiLocal(parsed.data.name, parsed.data.data);
           return new Response(JSON.stringify(result ?? null), {
