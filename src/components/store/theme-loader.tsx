@@ -17,6 +17,6 @@ export function PoripatiChromeBoundary({ children }: { children: ReactNode }) {
 export function LegacyChromeBoundary({ children }: { children: ReactNode }) { return <Suspense fallback={<Wait />}><LegacyShell>{children}</LegacyShell></Suspense>; }
 export function LegacyHomeBoundary({ query }: { query?: string }) { return <Suspense fallback={<Wait />}><LegacyHome query={query} /></Suspense>; }
 export function PoripatiHomeBoundary({ query }: { query?: string }) { return <Suspense fallback={<Wait />}><PoripatiHome query={query} /></Suspense>; }
-export function PoripatiListingBoundary(props: { title: string; listings: StoreListing[]; categoryId?: string }) { return <Suspense fallback={<Wait />}><PoripatiListing {...props} /></Suspense>; }
+export function PoripatiListingBoundary(props: { title: string; listings: StoreListing[]; categoryId?: string; clearUrl?: string }) { return <Suspense fallback={<Wait />}><PoripatiListing {...props} /></Suspense>; }
 export function PoripatiProductBoundary({ listing }: { listing: StoreListing }) { return <Suspense fallback={<Wait />}><PoripatiProduct listing={listing} /></Suspense>; }
 export function usePoripati() { return useStore().theme.id === "poripati"; }

@@ -12,11 +12,12 @@ export default function LegacyStoreHome({ query }: { query?: string }) {
 
   const results = useMemo(() => {
     if (!query) return listings;
-    const term = query.toLowerCase();
+    const term = query.toLowerCase().trim();
     return listings.filter(
       (l) =>
         store.title(l).toLowerCase().includes(term) ||
-        String(l.product?.product_code ?? "").toLowerCase().includes(term)
+        String(l.product?.product_code ?? "").toLowerCase().includes(term) ||
+        String(l.product?.short_description ?? "").toLowerCase().includes(term)
     );
   }, [query, listings, store]);
 

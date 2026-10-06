@@ -48,7 +48,8 @@ function SearchBox({
   const [q, setQ] = useState("");
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    nav({ to: url("/"), search: { q: q || undefined } });
+    const clean = q.trim();
+    nav({ to: url("/"), search: { q: clean || undefined } as any });
     onSubmitted?.();
   };
 
@@ -69,7 +70,7 @@ function SearchBox({
         <button
           type="submit"
           aria-label="Search"
-          className="absolute right-0 top-0 grid h-full w-12 place-items-center rounded-r-[var(--st-radius)] bg-[var(--st-fg)] text-[var(--st-surface)]"
+          className="absolute right-0 top-0 grid h-full w-12 place-items-center rounded-r-[var(--st-radius)] bg-[var(--st-fg)] text-[var(--st-surface)] transition-opacity hover:opacity-90"
         >
           <Search className="h-4 w-4" />
         </button>
@@ -77,19 +78,29 @@ function SearchBox({
     );
 
   return (
-    <form onSubmit={submit} className={cx("relative", className)}>
+    <form onSubmit={submit} className={cx("relative flex items-center", className)}>
       <Search className={cx("pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 sm:left-3 sm:h-4 sm:w-4", muted)} />
       <input
         autoFocus={autoFocus}
         value={q}
         onChange={(e) => setQ(e.target.value)}
-        placeholder="Search products…"
+        placeholder="প্রোডাক্ট খুঁজুন…"
         aria-label="Search products"
         className={cx(
-          "w-full rounded-[var(--st-radius-sm)] border bg-[var(--st-surface)] py-1.5 pl-8 pr-2.5 text-xs text-[var(--st-fg)] outline-none placeholder:text-[var(--st-muted)] focus:border-[var(--st-primary)] sm:py-2.5 sm:pl-9 sm:pr-3 sm:text-sm",
+          "w-full rounded-[var(--st-radius-sm)] border bg-[var(--st-surface)] py-1.5 pl-8 pr-8 text-xs text-[var(--st-fg)] outline-none placeholder:text-[var(--st-muted)] focus:border-[var(--st-primary)] sm:py-2.5 sm:pl-9 sm:pr-8 sm:text-sm",
           borderc,
         )}
       />
+      {q && (
+        <button
+          type="button"
+          aria-label="Clear search"
+          onClick={() => setQ("")}
+          className="absolute right-2 top-1/2 grid h-5 w-5 -translate-y-1/2 place-items-center rounded-full text-[var(--st-muted)] hover:text-[var(--st-fg)]"
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
+      )}
     </form>
   );
 }

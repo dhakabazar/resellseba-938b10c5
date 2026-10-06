@@ -26,12 +26,43 @@ function SearchForm({ close }: { close?: () => void }) {
   const { code, url } = useStore();
   const navigate = useNavigate();
   const [q, setQ] = useState("");
-  return <form className="flex items-center overflow-hidden rounded-full border border-[var(--st-border)] bg-[var(--st-bg-alt)] transition-colors focus-within:border-[var(--st-primary)] focus-within:bg-[var(--st-surface)]" onSubmit={(e) => { e.preventDefault(); close?.(); navigate({ to: url("/"), search: { q: q || undefined } }); }}>
-    <Search className="ml-3.5 h-4 w-4 shrink-0 text-[var(--st-muted)]" />
-    <input aria-label="Search products" value={q} onChange={(e) => setQ(e.target.value)} placeholder="প্রোডাক্ট খুঁজুন…" className="h-10 min-w-0 flex-1 bg-transparent px-2.5 text-sm outline-none placeholder:text-[var(--st-muted)]" />
-    {q && <button type="button" aria-label="Clear search" onClick={() => setQ("")} className="grid h-10 w-8 shrink-0 place-items-center text-[var(--st-muted)] hover:text-[var(--st-fg)]"><X className="h-4 w-4" /></button>}
-    <button type="submit" aria-label="Search" className="mr-1 flex h-8 shrink-0 items-center gap-1.5 rounded-full bg-[var(--st-primary)] px-3.5 text-xs font-bold text-[var(--st-on-primary)] sm:px-4">খুঁজুন</button>
-  </form>;
+  return (
+    <form
+      className="flex items-center overflow-hidden rounded-full border border-[var(--st-border)] bg-[var(--st-bg-alt)] transition-colors focus-within:border-[var(--st-primary)] focus-within:bg-[var(--st-surface)]"
+      onSubmit={(e) => {
+        e.preventDefault();
+        close?.();
+        const clean = q.trim();
+        navigate({ to: url("/"), search: { q: clean || undefined } as any });
+      }}
+    >
+      <Search className="ml-3.5 h-4 w-4 shrink-0 text-[var(--st-muted)]" />
+      <input
+        aria-label="Search products"
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+        placeholder="প্রোডাক্ট খুঁজুন…"
+        className="h-10 min-w-0 flex-1 bg-transparent px-2.5 text-sm text-[var(--st-fg)] outline-none placeholder:text-[var(--st-muted)]"
+      />
+      {q && (
+        <button
+          type="button"
+          aria-label="Clear search"
+          onClick={() => setQ("")}
+          className="grid h-10 w-8 shrink-0 place-items-center text-[var(--st-muted)] hover:text-[var(--st-fg)]"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      )}
+      <button
+        type="submit"
+        aria-label="Search"
+        className="mr-1 flex h-8 shrink-0 items-center gap-1.5 rounded-full bg-[var(--st-primary)] px-3.5 text-xs font-bold text-[var(--st-on-primary)] transition-opacity hover:opacity-90 sm:px-4"
+      >
+        খুঁজুন
+      </button>
+    </form>
+  );
 }
 
 export function PoripatiChrome({ children }: { children: ReactNode }) {
@@ -192,8 +223,12 @@ export function PoripatiGrid({ listings }: { listings: StoreListing[] }) { retur
 
 export function PoripatiHome({ query }: { query?: string }) {
   const store = useStore(); const { content, listings, categories, code, name, url } = store; const [visible, setVisible] = useState(16);
-  const rows = useMemo(() => query ? listings.filter(l => `${store.title(l)} ${l.product?.product_code || ""}`.toLowerCase().includes(query.toLowerCase())) : listings, [listings, query, store]);
-  if (query) return <PoripatiListing title={`Search: “${query}”`} listings={rows} />;
+  const rows = useMemo(() => {
+    if (!query) return listings;
+    const term = query.toLowerCase().trim();
+    return listings.filter(l => `${store.title(l)} ${l.product?.product_code || ""} ${l.product?.short_description || ""}`.toLowerCase().includes(term));
+  }, [listings, query, store]);
+  if (query) return <PoripatiListing title={`Search: “${query}”`} listings={rows} clearUrl={url("/")} />;
   const media = content.text("hero_image") || (listings[0] ? store.image(listings[0]) : undefined);
   const features = [1,2,3,4].map(i => ({ t: content.text(`usp${i}_t`), d: content.text(`usp${i}_d`) })).filter(i => i.t);
   return <div>
@@ -208,9 +243,9 @@ export function PoripatiHome({ query }: { query?: string }) {
 
 function PoripatiProof() { const { content } = useStore(); const reviews=[1,2,3].map(i=>({text:content.text(`review${i}_text`),name:content.text(`review${i}_name`)})).filter(x=>x.text); return <>{content.flag("review_show") && reviews.length>0 && <section className="bg-[var(--st-bg-alt)]"><div className="mx-auto max-w-7xl px-4 py-16"><SectionTitle title={content.text("review_title")} /><div className="grid gap-px bg-[var(--st-border)] md:grid-cols-3">{reviews.map(r=><figure key={r.text} className="bg-[var(--st-surface)] p-6"><blockquote className="text-base leading-relaxed">“{r.text}”</blockquote><figcaption className="mt-5 text-xs font-bold text-[var(--st-primary)]">{r.name}</figcaption></figure>)}</div></div></section>}</>; }
 
-export function PoripatiListing({ title, listings, categoryId }: { title: string; listings: StoreListing[]; categoryId?: string }) {
+export function PoripatiListing({ title, listings, categoryId, clearUrl }: { title: string; listings: StoreListing[]; categoryId?: string; clearUrl?: string }) {
   const [sort,setSort]=useState("new"); const rows=useMemo(()=>{ const base=categoryId?listings.filter(l=>l.product&&inCategory(l.product,categoryId)):listings; const out=[...base]; if(sort==="low")out.sort((a,b)=>a.selling_price-b.selling_price); if(sort==="high")out.sort((a,b)=>b.selling_price-a.selling_price); return out;},[listings,categoryId,sort]);
-  return <section className="mx-auto max-w-7xl px-4 py-12"><div className="mb-10 flex items-end justify-between gap-4 border-b border-[var(--st-border)] pb-6"><div><div className="text-[10px] font-bold uppercase text-[var(--st-primary)]">Browse collection</div><h1 className="mt-2 text-3xl font-bold md:text-5xl">{title}</h1><p className="mt-2 text-xs text-[var(--st-muted)]">{rows.length} products</p></div><select aria-label="Sort products" value={sort} onChange={e=>setSort(e.target.value)} className="border-b border-[var(--st-border)] bg-transparent px-2 py-2 text-xs outline-none"><option value="new">Newest</option><option value="low">Price: low to high</option><option value="high">Price: high to low</option></select></div>{rows.length?<PoripatiGrid listings={rows}/>:<div className="border border-dashed border-[var(--st-border)] py-24 text-center text-sm text-[var(--st-muted)]">No products found.</div>}</section>;
+  return <section className="mx-auto max-w-7xl px-4 py-12"><div className="mb-10 flex items-end justify-between gap-4 border-b border-[var(--st-border)] pb-6"><div><div className="text-[10px] font-bold uppercase text-[var(--st-primary)]">{clearUrl ? "Search results" : "Browse collection"}</div><h1 className="mt-2 text-3xl font-bold md:text-5xl">{title}</h1><p className="mt-2 text-xs text-[var(--st-muted)]">{rows.length} {rows.length === 1 ? "product" : "products"} found</p></div><div className="flex items-center gap-3">{clearUrl && <Link to={clearUrl} className="rounded-full border border-[var(--st-border)] px-3.5 py-1.5 text-xs font-semibold text-[var(--st-fg)] hover:border-[var(--st-primary)] hover:text-[var(--st-primary)] transition-colors">Clear</Link>}<select aria-label="Sort products" value={sort} onChange={e=>setSort(e.target.value)} className="border-b border-[var(--st-border)] bg-transparent px-2 py-2 text-xs outline-none text-[var(--st-fg)]"><option value="new">Newest</option><option value="low">Price: low to high</option><option value="high">Price: high to low</option></select></div></div>{rows.length?<PoripatiGrid listings={rows}/>:<div className="border border-dashed border-[var(--st-border)] py-24 text-center text-sm text-[var(--st-muted)]">কোনো প্রোডাক্ট খুঁজে পাওয়া যায়নি।</div>}</section>;
 }
 
 export function PoripatiProduct({ listing }: { listing: StoreListing }) {

@@ -2,7 +2,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { CustomDomainStoreLayout } from "@/components/store/custom-domain-shell";
 import { ShopPageContent } from "@/components/store/pages/shop-page-content";
 
+type ShopSearch = { q?: string };
+
 export const Route = createFileRoute("/shop")({
+  validateSearch: (s: Record<string, unknown>): ShopSearch => ({
+    q: typeof s.q === "string" && s.q ? s.q : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "All Products — Online Store" },
@@ -17,9 +22,10 @@ export const Route = createFileRoute("/shop")({
 });
 
 function CustomDomainShopRoute() {
+  const { q } = Route.useSearch();
   return (
     <CustomDomainStoreLayout path="/shop">
-      {() => <ShopPageContent />}
+      {() => <ShopPageContent query={q} />}
     </CustomDomainStoreLayout>
   );
 }

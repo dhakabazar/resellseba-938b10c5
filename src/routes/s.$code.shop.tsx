@@ -1,7 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ShopPageContent } from "@/components/store/pages/shop-page-content";
 
+type ShopSearch = { q?: string };
+
 export const Route = createFileRoute("/s/$code/shop")({
+  validateSearch: (s: Record<string, unknown>): ShopSearch => ({
+    q: typeof s.q === "string" && s.q ? s.q : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "All Products — Online Store" },
@@ -16,5 +21,6 @@ export const Route = createFileRoute("/s/$code/shop")({
 });
 
 function ShopPage() {
-  return <ShopPageContent />;
+  const { q } = Route.useSearch();
+  return <ShopPageContent query={q} />;
 }

@@ -47,9 +47,14 @@ import {
 import { useStoreVisitLog } from "@/lib/store-visits";
 import { storeThemeStyle } from "@/lib/store-theme";
 import { supabase } from "@/integrations/supabase/client";
-import { CustomDomainStoreLayout, StoreShell } from "@/components/store/custom-domain-shell";
+type RootSearch = { q?: string; theme?: string; palette?: string };
 
 export const Route = createFileRoute("/")({
+  validateSearch: (s: Record<string, unknown>): RootSearch => ({
+    q: typeof s.q === "string" && s.q ? s.q : undefined,
+    theme: typeof s.theme === "string" && s.theme ? s.theme : undefined,
+    palette: typeof s.palette === "string" && s.palette ? s.palette : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Reseller Platform — Nijer online store, zero investment" },
@@ -237,10 +242,12 @@ type LandingStats = LpBootstrap["stats"] & {
 
 function StoreHomeInner() {
   const store = useStore();
+  const search = Route.useSearch();
+  const q = search?.q;
   return store.theme.id === "poripati" ? (
-    <PoripatiHomeBoundary />
+    <PoripatiHomeBoundary query={q} />
   ) : (
-    <LegacyHomeBoundary />
+    <LegacyHomeBoundary query={q} />
   );
 }
 
