@@ -300,7 +300,6 @@ export function CategoryStrip() {
                   )}
                 </span>
                 <span className="line-clamp-2 text-[11px] font-medium leading-tight text-[var(--st-fg)]">{c.name}</span>
-                {c.product_count != null && <span className={cx("text-[10px]", muted)}>{c.product_count}</span>}
               </Link>
             ))}
           </div>
@@ -332,7 +331,6 @@ export function CategoryStrip() {
               </div>
               <div className="px-1.5 py-2 text-center">
                 <span className="block truncate text-[11px] font-medium text-[var(--st-fg)]">{c.name}</span>
-                {c.product_count != null && <span className={cx("mt-0.5 block text-[9px]", muted)}>{c.product_count} পণ্য</span>}
               </div>
             </Link>
           ))}
