@@ -18,7 +18,7 @@ export function ShopPageContent({ query }: { query?: string }) {
     const term = query.toLowerCase().trim();
     return listings.filter(
       (l) =>
-        (l.product?.title || "").toLowerCase().includes(term) ||
+        (l.product?.name || "").toLowerCase().includes(term) ||
         String(l.product?.product_code ?? "").toLowerCase().includes(term) ||
         String(l.product?.short_description ?? "").toLowerCase().includes(term)
     );

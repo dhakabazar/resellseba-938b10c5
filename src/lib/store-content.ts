@@ -40,11 +40,12 @@ const t = (key: string, label: string, def?: string, placeholder?: string): Cont
   def,
   placeholder,
 });
-const area = (key: string, label: string, def?: string): ContentField => ({
+const area = (key: string, label: string, def?: string, placeholder?: string): ContentField => ({
   key,
   label,
   type: "textarea",
   def,
+  placeholder,
 });
 const img = (key: string, label: string, hint?: string): ContentField => ({
   key,
