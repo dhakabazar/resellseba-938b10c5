@@ -65,7 +65,7 @@ export function Hero() {
   if (theme.layout.hero === "banner" || theme.layout.hero === "sohoj" || theme.id === "bazaar") {
     if (!media) return null;
     return (
-      <section className="mx-auto max-w-6xl px-3 pt-3 sm:px-4 sm:pt-4">
+      <section className="mx-auto max-w-6xl px-3 py-3.5 sm:px-4 sm:py-5">
         <div className={cx("overflow-hidden rounded-[var(--st-radius)] border bg-[var(--st-surface)]", borderc)}>
           {firstSlug ? (
             <Link to={store.url(`/p/${firstSlug}`)} className="block">
