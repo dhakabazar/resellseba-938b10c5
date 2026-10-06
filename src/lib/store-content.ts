@@ -132,7 +132,7 @@ function baseGroups(): ContentGroup[] {
       description: "Copy that reassures customers on the final step.",
       fields: [
         t("co_headline", "Checkout headline", "অর্ডার সম্পন্ন করুন"),
-        area("co_note", "Note above the form", "আপনার সঠিক তথ্য দিয়ে অর্ডার কনফার্ম করুন। আমাদের টিম ডেলিভারির আগে কল করে কনফার্ম করবে।"),
+        area("co_note", "Note above the form", "সঠিক তথ্য দিয়ে অর্ডার করুন, ডেলিভারির আগে কল করা হবে।"),
         t("co_success", "Thank-you headline", "ধন্যবাদ! আপনার অর্ডারটি গ্রহণ করা হয়েছে"),
         area("co_success_note", "Thank-you note", "আমাদের প্রতিনিধি দ্রুত আপনার সাথে যোগাযোগ করে অর্ডারটি কনফার্ম করবেন।"),
       ],

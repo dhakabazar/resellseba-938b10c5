@@ -285,11 +285,11 @@ export function CheckoutPageContent({
             return h;
           })()}
         </Heading>
-        <p className={cx("mx-auto mt-1 max-w-lg text-[11px] sm:text-xs text-center leading-relaxed", muted)}>
+        <p className={cx("mx-auto mt-1 max-w-lg text-xs sm:text-sm text-center leading-relaxed font-medium", muted)}>
           {(() => {
             const n = store.content.text("co_note");
-            if (!n || n.startsWith("Fill in your delivery details")) {
-              return "আপনার সঠিক তথ্য দিয়ে অর্ডার কনফার্ম করুন। আমাদের টিম ডেলিভারির আগে কল করে কনফার্ম করবে।";
+            if (!n || n.startsWith("Fill in your delivery details") || n.startsWith("আপনার সঠিক তথ্য দিয়ে")) {
+              return "সঠিক তথ্য দিয়ে অর্ডার করুন, ডেলিভারির আগে কল করা হবে।";
             }
             return n;
           })()}
