@@ -389,7 +389,6 @@ export function CategoryStrip() {
             </div>
             <div className="mt-2 w-full px-0.5">
               <span className="block truncate text-[11px] font-semibold text-[var(--st-fg)] sm:text-xs">{c.name}</span>
-              {c.product_count != null && <span className={cx("mt-0.5 block text-[9px]", muted)}>{c.product_count} পণ্য</span>}
             </div>
           </Link>
         ))}
