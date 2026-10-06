@@ -110,8 +110,28 @@ export type StoreBootstrap = {
 
 };
 
+const STORE_BOOT_CACHE_KEY = "__st_boot_";
+const STORE_BOOT_TTL = 3 * 60 * 1000; // 3 minutes
+
 /** Storefront: settings + listings + categories + menu + delivery rule in one call. */
 export function getStoreBootstrap(code: string, force = false) {
+  if (!force && typeof window !== "undefined") {
+    try {
+      const cached = sessionStorage.getItem(`${STORE_BOOT_CACHE_KEY}${code}`);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed?.data && Date.now() - Number(parsed.ts || 0) < STORE_BOOT_TTL) {
+          const data = parsed.data as StoreBootstrap;
+          setGlobalDelivery(mergeDeliverySettings(data.delivery as never));
+          primeGlobalSettings(data.settings);
+          return Promise.resolve(data);
+        }
+      }
+    } catch {
+      // fallback to network
+    }
+  }
+
   return once(
     `store:${code}`,
     async () => {
@@ -122,6 +142,17 @@ export function getStoreBootstrap(code: string, force = false) {
         setGlobalDelivery(mergeDeliverySettings(data.delivery as never));
         // checkout reads platform/advanced settings — seed them from this payload
         primeGlobalSettings(data.settings);
+
+        if (typeof window !== "undefined") {
+          try {
+            sessionStorage.setItem(
+              `${STORE_BOOT_CACHE_KEY}${code}`,
+              JSON.stringify({ data, ts: Date.now() }),
+            );
+          } catch {
+            // ignore
+          }
+        }
       }
       return data;
     },

@@ -48,6 +48,7 @@ import { useStoreVisitLog } from "@/lib/store-visits";
 import { storeThemeStyle } from "@/lib/store-theme";
 import { supabase } from "@/integrations/supabase/client";
 import { CustomDomainStoreLayout, StoreShell } from "@/components/store/custom-domain-shell";
+import { getCachedDomainStoreCode, setCachedDomainStoreCode, isPlatformHostname } from "@/lib/domain-cache";
 type RootSearch = { q?: string; theme?: string; palette?: string };
 
 export const Route = createFileRoute("/")({
@@ -261,8 +262,10 @@ function CustomDomainStore({ code }: { code: string }) {
 }
 
 function RootResolver() {
-  const [checking, setChecking] = useState(true);
-  const [customStoreCode, setCustomStoreCode] = useState<string | null>(null);
+  const host = typeof window !== "undefined" ? window.location.hostname : "";
+  const cachedCode = getCachedDomainStoreCode(host);
+  const [checking, setChecking] = useState(!cachedCode);
+  const [customStoreCode, setCustomStoreCode] = useState<string | null>(cachedCode);
   const [content, setContent] = useState<LandingContent>(FALLBACK);
   const [siteName, setSiteName] = useState("Reseller");
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
@@ -276,14 +279,7 @@ function RootResolver() {
   useEffect(() => {
     let alive = true;
     (async () => {
-      const host = typeof window !== "undefined" ? window.location.hostname : "";
-      const isPlatformHost =
-        !host ||
-        host === "localhost" ||
-        host === "127.0.0.1" ||
-        host.endsWith(".lovable.app") ||
-        host.endsWith(".lovableproject.com") ||
-        (host === "ecomsellerbd.com" || (host.endsWith(".ecomsellerbd.com") && host !== "fallback.ecomsellerbd.com"));
+      const isPlatformHost = isPlatformHostname(host);
 
       if (!isPlatformHost) {
         // Try 1: bootstrap
@@ -291,6 +287,7 @@ function RootResolver() {
           const data = await getLpBootstrap(host);
           if (alive && data?.store && data.store.status === "active") {
             setCustomStoreCode(data.store.code);
+            setCachedDomainStoreCode(host, data.store.code);
             setChecking(false);
             return;
           }
@@ -303,6 +300,7 @@ function RootResolver() {
           const resolved = await resolveDomain({ data: { hostname: host } });
           if (alive && resolved) {
             setCustomStoreCode(resolved);
+            setCachedDomainStoreCode(host, resolved);
             setChecking(false);
             return;
           }

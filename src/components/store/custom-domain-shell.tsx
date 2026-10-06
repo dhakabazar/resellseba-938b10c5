@@ -7,6 +7,7 @@ import { LegacyChromeBoundary, PoripatiChromeBoundary } from "@/components/store
 import { Loader2 } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { resolveDomainToStoreCode } from "@/lib/domain-lookup.functions";
+import { getCachedDomainStoreCode, setCachedDomainStoreCode, isPlatformHostname } from "@/lib/domain-cache";
 
 export function CustomDomainStoreLayout({
   code: propCode,
@@ -17,29 +18,23 @@ export function CustomDomainStoreLayout({
   children: (props: { code: string }) => ReactNode;
   path?: string;
 }) {
-  const [storeCode, setStoreCode] = useState<string | null>(propCode || null);
-  const [loading, setLoading] = useState(!propCode);
+  const host = typeof window !== "undefined" ? window.location.hostname : "";
+  const cached = propCode || getCachedDomainStoreCode(host);
+  const [storeCode, setStoreCode] = useState<string | null>(cached || null);
+  const [loading, setLoading] = useState(!cached);
   const resolveDomain = useServerFn(resolveDomainToStoreCode);
 
   useEffect(() => {
     if (propCode) {
       setStoreCode(propCode);
+      setCachedDomainStoreCode(host, propCode);
       setLoading(false);
       return;
     }
 
     let alive = true;
     (async () => {
-      const host = typeof window !== "undefined" ? window.location.hostname : "";
-      const isPlatform =
-        !host ||
-        host === "localhost" ||
-        host === "127.0.0.1" ||
-        host.endsWith(".lovable.app") ||
-        host.endsWith(".lovableproject.com") ||
-        (host === "ecomsellerbd.com" || (host.endsWith(".ecomsellerbd.com") && host !== "fallback.ecomsellerbd.com"));
-
-      if (isPlatform) {
+      if (isPlatformHostname(host)) {
         setLoading(false);
         return;
       }
@@ -49,6 +44,7 @@ export function CustomDomainStoreLayout({
         const data = await getLpBootstrap(host);
         if (alive && data?.store?.code && data.store.status === "active") {
           setStoreCode(data.store.code);
+          setCachedDomainStoreCode(host, data.store.code);
           setLoading(false);
           return;
         }
@@ -61,6 +57,7 @@ export function CustomDomainStoreLayout({
         const code = await resolveDomain({ data: { hostname: host } });
         if (alive && code) {
           setStoreCode(code);
+          setCachedDomainStoreCode(host, code);
           setLoading(false);
           return;
         }
@@ -76,7 +73,7 @@ export function CustomDomainStoreLayout({
     return () => {
       alive = false;
     };
-  }, [propCode, resolveDomain]);
+  }, [propCode, resolveDomain, host]);
 
   if (loading) {
     return (
