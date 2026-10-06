@@ -153,15 +153,25 @@ export function ThanksPageContent({
         </div>
 
         <div className="mt-6 inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-1 text-xs font-bold text-emerald-700 dark:text-emerald-300">
-          <Check className="h-3.5 w-3.5" /> Order Placed Successfully
+          <Check className="h-3.5 w-3.5" /> অর্ডার সফলভাবে সম্পন্ন হয়েছে
         </div>
 
         <Heading as="h1" className="mt-3 text-2xl font-extrabold sm:text-3xl lg:text-4xl">
-          {content.text("co_success") || "ধন্যবাদ! আপনার অর্ডারটি গ্রহণ করা হয়েছে"}
+          {(() => {
+            const s = content.text("co_success");
+            if (!s || s === "Order received!") return "ধন্যবাদ! আপনার অর্ডারটি গ্রহণ করা হয়েছে";
+            return s;
+          })()}
         </Heading>
 
         <p className={cx("mx-auto mt-2 max-w-lg text-sm leading-relaxed", muted)}>
-          {content.text("co_success_note") || "আমাদের প্রতিনিধি দ্রুত আপনার সাথে যোগাযোগ করে অর্ডারটি কনফার্ম করবেন।"}
+          {(() => {
+            const sn = content.text("co_success_note");
+            if (!sn || sn.startsWith("We will call you shortly")) {
+              return "আমাদের প্রতিনিধি দ্রুত আপনার সাথে যোগাযোগ করে অর্ডারটি কনফার্ম করবেন।";
+            }
+            return sn;
+          })()}
         </p>
 
         {payState !== "idle" && <PaymentBanner state={payState} txn={txn} />}

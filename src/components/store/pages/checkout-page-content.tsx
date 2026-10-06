@@ -268,12 +268,22 @@ export function CheckoutPageContent({
   return (
     <div className={cx("mx-auto px-4 pb-28 pt-6 sm:pb-10 sm:pt-8", poripati ? "max-w-7xl" : "max-w-6xl")}>
       <div className={poripati ? "border-b border-[var(--st-border)] pb-7" : "text-center sm:text-left"}>
-        {poripati && <div className="mb-2 text-[10px] font-bold uppercase text-[var(--st-primary)]">Secure checkout</div>}
+        {poripati && <div className="mb-2 text-[10px] font-bold uppercase text-[var(--st-primary)]">নিরাপদ চেকআউট</div>}
         <Heading as="h1" className="text-2xl sm:text-3xl font-extrabold">
-          {store.content.text("co_headline") || "অর্ডার সম্পন্ন করুন"}
+          {(() => {
+            const h = store.content.text("co_headline");
+            if (!h || h === "Complete your order") return "অর্ডার সম্পন্ন করুন";
+            return h;
+          })()}
         </Heading>
         <p className={cx("mx-auto mt-1.5 max-w-xl text-sm sm:mx-0", muted)}>
-          {store.content.text("co_note") || "আপনার ডেলিভারি তথ্য দিয়ে সহজে অর্ডার কনফার্ম করুন।"}
+          {(() => {
+            const n = store.content.text("co_note");
+            if (!n || n.startsWith("Fill in your delivery details")) {
+              return "আপনার সঠিক তথ্য দিয়ে অর্ডার কনফার্ম করুন। আমাদের টিম ডেলিভারির আগে কল করে কনফার্ম করবে।";
+            }
+            return n;
+          })()}
         </p>
       </div>
 
