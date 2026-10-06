@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/ui-kit";
 import { Facebook, Zap, LineChart, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { Switch } from "@/components/ui/switch";
 
 export const Route = createFileRoute("/_authenticated/admin/marketing")({
   component: MarketingPage,
@@ -75,21 +76,34 @@ function MarketingPage() {
           const m = meta[r.platform];
           return (
             <div key={r.platform} className="surface-card p-5">
-              <div className="mb-3 flex items-center gap-2">
-                <div className="grid h-9 w-9 place-items-center rounded-md bg-primary-soft text-primary">{m.icon}</div>
-                <div className="flex-1 font-semibold">{m.name}</div>
-                <label className="inline-flex items-center gap-2 text-xs font-medium cursor-pointer">
-                  <input
-                    type="checkbox"
+              <div className="mb-4 flex items-center justify-between gap-3 border-b pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="grid h-10 w-10 place-items-center rounded-md bg-primary-soft text-primary">{m.icon}</div>
+                  <div>
+                    <div className="font-semibold text-sm leading-tight">{m.name}</div>
+                    <div className="text-[11px] text-muted-foreground">{m.pixelLabel}</div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`text-xs font-semibold px-2.5 py-0.5 rounded-full transition-colors ${
+                      r.is_active
+                        ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
+                        : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {r.is_active ? "Active" : "Off"}
+                  </span>
+                  <Switch
                     checked={r.is_active}
-                    onChange={(e) => {
+                    onCheckedChange={(checked) => {
                       const copy = [...rows];
-                      copy[idx] = { ...r, is_active: e.target.checked };
+                      copy[idx] = { ...r, is_active: checked };
                       setRows(copy);
                     }}
                   />
-                  Active
-                </label>
+                </div>
               </div>
               <div className="space-y-3">
                 <Field label={m.pixelLabel}>
