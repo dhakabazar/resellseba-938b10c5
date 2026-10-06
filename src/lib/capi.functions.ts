@@ -49,16 +49,18 @@ async function getConfigsForStore(supabaseAdmin: any, code: string) {
 
   // 2. If not found by code, try matching custom domain or hostname
   if (!store?.id && cleanCode) {
-    const cleanHost = cleanCode.replace(/^https?:\/\//, "").replace(/\/.*$/, "").replace(/^www\./, "");
-    const { data: domainRow } = await supabaseAdmin
+    const cleanHost = cleanCode.replace(/^https?:\/\//, "").replace(/\/.*$/, "").replace(/^www\./, "").toLowerCase();
+    const { data: domainRows } = await supabaseAdmin
       .from("reseller_domains")
-      .select("reseller_id")
-      .or(`hostname.ilike.${cleanHost},hostname.ilike.www.${cleanHost}`)
-      .limit(1)
-      .maybeSingle();
+      .select("reseller_id, hostname");
 
-    if (domainRow?.reseller_id) {
-      store = { id: domainRow.reseller_id, code: cleanCode };
+    const matchedDomain = (domainRows ?? []).find((d: any) => {
+      const h = (d.hostname || "").toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "").replace(/^www\./, "");
+      return h === cleanHost || cleanHost.includes(h) || h.includes(cleanHost);
+    });
+
+    if (matchedDomain?.reseller_id) {
+      store = { id: matchedDomain.reseller_id, code: cleanCode };
     }
   }
 

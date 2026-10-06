@@ -10,8 +10,8 @@ import { bdt } from "@/lib/finance-report";
 import { useAdvancedSettings } from "@/lib/advanced-settings";
 import { useServerFn } from "@tanstack/react-start";
 import { listActiveGateways, startGatewayPayment } from "@/lib/gateways.functions";
-import { getTrackingCookies, trackInitiateCheckout } from "@/lib/tracking";
-import { trackInitiateCheckoutServer } from "@/lib/capi.functions";
+import { getTrackingCookies, trackInitiateCheckout, trackPurchase } from "@/lib/tracking";
+import { trackInitiateCheckoutServer, trackPurchaseServer } from "@/lib/capi.functions";
 import { PaymentLogo } from "@/components/payments/payment-brand";
 import { useStore } from "@/components/store/store-context";
 import { borderc, cx, EmptyState, GhostButton, Heading, muted, PrimaryButton, ProductGrid, SectionHead } from "@/components/store/ui";
@@ -60,6 +60,7 @@ export function CheckoutPageContent({
   const loadGateways = useServerFn(listActiveGateways);
   const startPayment = useServerFn(startGatewayPayment);
   const initiateCheckoutCapi = useServerFn(trackInitiateCheckoutServer);
+  const purchaseCapi = useServerFn(trackPurchaseServer);
   const icFired = useRef(false);
 
   const [form, setForm] = useState({
@@ -260,6 +261,39 @@ export function CheckoutPageContent({
       toast.error("Order could not be created");
       return;
     }
+
+    // Immediately trigger Purchase event (both client pixel & server CAPI)
+    const purchaseEventId = `pur_${row.order_number}`;
+    const trackingCookies = getTrackingCookies();
+    const purchaseItems = lines.map((x) => ({
+      id: x.listing.product?.id || x.listing.id,
+      name: store.title(x.listing),
+      price: Number(x.listing.selling_price),
+      qty: x.line.qty,
+    }));
+    const purchaseTotal = lines.reduce((s, x) => s + Number(x.listing.selling_price) * x.line.qty, 0);
+
+    trackPurchase({
+      orderNumber: row.order_number,
+      total: purchaseTotal,
+      items: purchaseItems,
+      eventId: purchaseEventId,
+    });
+
+    purchaseCapi({
+      data: {
+        orderNumber: row.order_number,
+        code,
+        eventId: purchaseEventId,
+        origin: window.location.origin,
+        fbp: trackingCookies.fbp,
+        fbc: trackingCookies.fbc,
+        ttp: trackingCookies.ttp,
+        userAgent: trackingCookies.userAgent,
+      },
+    }).catch((err) => {
+      console.warn("[Checkout] Immediate Purchase CAPI notice:", err);
+    });
 
     if (gateway) {
       try {
