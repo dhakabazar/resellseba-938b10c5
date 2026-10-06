@@ -10,6 +10,8 @@ import { bdt } from "@/lib/finance-report";
 import { useAdvancedSettings } from "@/lib/advanced-settings";
 import { useServerFn } from "@tanstack/react-start";
 import { listActiveGateways, startGatewayPayment } from "@/lib/gateways.functions";
+import { getTrackingCookies, trackInitiateCheckout } from "@/lib/tracking";
+import { trackInitiateCheckoutServer } from "@/lib/capi.functions";
 import { PaymentLogo } from "@/components/payments/payment-brand";
 import { useStore } from "@/components/store/store-context";
 import { borderc, cx, EmptyState, GhostButton, Heading, muted, PrimaryButton, ProductGrid, SectionHead } from "@/components/store/ui";
@@ -57,6 +59,8 @@ export function CheckoutPageContent({
   const [gateways, setGateways] = useState<{ provider: string; label: string; method: string }[]>([]);
   const loadGateways = useServerFn(listActiveGateways);
   const startPayment = useServerFn(startGatewayPayment);
+  const initiateCheckoutCapi = useServerFn(trackInitiateCheckoutServer);
+  const icFired = useRef(false);
 
   const [form, setForm] = useState({
     name: "",
@@ -95,6 +99,46 @@ export function CheckoutPageContent({
     observer.observe(el);
     return () => observer.disconnect();
   }, [lines.length]);
+
+  /** Track InitiateCheckout once lines are loaded */
+  useEffect(() => {
+    if (lines.length > 0 && !icFired.current) {
+      icFired.current = true;
+      const eventId = `ic_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+      const itemsPayload = lines.map((x) => ({
+        id: x.listing.product?.id || x.listing.id,
+        name: store.title(x.listing),
+        price: Number(x.listing.selling_price),
+        qty: x.line.qty,
+      }));
+      const totalAmount = lines.reduce((s, x) => s + Number(x.listing.selling_price) * x.line.qty, 0);
+
+      // 1. Client-side InitiateCheckout
+      trackInitiateCheckout({
+        items: itemsPayload,
+        total: totalAmount,
+        eventId,
+      });
+
+      // 2. Server-side InitiateCheckout CAPI
+      const cookies = getTrackingCookies();
+      initiateCheckoutCapi({
+        data: {
+          code,
+          items: itemsPayload,
+          total: totalAmount,
+          eventId,
+          origin: window.location.origin,
+          fbp: cookies.fbp,
+          fbc: cookies.fbc,
+          ttp: cookies.ttp,
+          userAgent: cookies.userAgent,
+          customerPhone: form.phone || undefined,
+          customerName: form.name || undefined,
+        },
+      }).catch(() => {});
+    }
+  }, [lines, code, store, initiateCheckoutCapi, form.phone, form.name]);
 
   /** Direct "Order now" links still work: merge into the cart once. */
   useEffect(() => {

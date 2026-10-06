@@ -17,7 +17,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { trackPurchase } from "@/lib/tracking";
+import { getTrackingCookies, trackPurchase } from "@/lib/tracking";
 import { useServerFn } from "@tanstack/react-start";
 import { trackPurchaseServer } from "@/lib/capi.functions";
 import { verifyGatewayPayment } from "@/lib/gateways.functions";
@@ -116,8 +116,20 @@ export function ThanksPageContent({
             })),
             eventId,
           });
+          const cookies = getTrackingCookies();
           // fire server-side CAPI (deduped by eventId)
-          capi({ data: { orderNumber: n, code, eventId, origin: window.location.origin } }).catch(() => {});
+          capi({
+            data: {
+              orderNumber: n,
+              code,
+              eventId,
+              origin: window.location.origin,
+              fbp: cookies.fbp,
+              fbc: cookies.fbc,
+              ttp: cookies.ttp,
+              userAgent: cookies.userAgent,
+            },
+          }).catch(() => {});
         }
       }
     })();

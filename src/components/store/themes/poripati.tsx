@@ -349,7 +349,6 @@ export function PoripatiListing({ title, listings, categoryId, clearUrl }: { tit
 
 export function PoripatiProduct({ listing }: { listing: StoreListing }) {
   const store=useStore(); const navigate=useNavigate(); const [idx,setIdx]=useState(0); const [qty,setQty]=useState(1); const [relatedVisible,setRelatedVisible]=useState(16); const p=listing.product; const title=store.title(listing); const price=Number(listing.selling_price);
-  useEffect(()=>{if(p) trackViewContent({id:p.id,name:title,price});},[p?.id,title,price]);
   if(!p)return null; const images=p.product_images||[]; const active=images[idx]?.url||store.image(listing);
   const sameCategory=store.listings.filter(l=>l.id!==listing.id&&l.product&&categoryIdsOf(p).some(id=>inCategory(l.product as NonNullable<typeof l.product>,id)));
   const otherProducts=store.listings.filter(l=>l.id!==listing.id&&!sameCategory.some(s=>s.id===l.id));

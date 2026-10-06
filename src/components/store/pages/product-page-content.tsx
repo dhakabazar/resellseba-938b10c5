@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { Minus, Plus, ShoppingBag, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { inCategory, categoryIdsOf } from "@/lib/product-categories";
 import { addToCart } from "@/lib/store-cart";
-import { trackAddToCart, trackViewContent } from "@/lib/tracking";
+import { getTrackingCookies, trackAddToCart, trackViewContent } from "@/lib/tracking";
+import { trackViewContentServer } from "@/lib/capi.functions";
 import { useResellerTools, stripHtml, CopyButton, ImageDownloadTools } from "@/components/store/reseller-tools";
 import { ProductCodeChip } from "@/components/product-code";
 import { useStore } from "@/components/store/store-context";
@@ -36,6 +38,7 @@ export function ProductPageContent({ slug, code: propCode }: { slug: string; cod
   const tools = useResellerTools();
   const mainOrderRef = useRef<HTMLDivElement>(null);
   const [isMainVisible, setIsMainVisible] = useState(true);
+  const viewContentCapi = useServerFn(trackViewContentServer);
 
   useEffect(() => {
     const el = mainOrderRef.current;
@@ -53,9 +56,37 @@ export function ProductPageContent({ slug, code: propCode }: { slug: string; cod
   useEffect(() => {
     setQty(1);
     setIdx(0);
-    if (listing?.product)
-      trackViewContent({ id: listing.product.id, name: store.title(listing), price: Number(listing.selling_price) });
-  }, [listing?.id]);
+    if (listing?.product) {
+      const eventId = `vc_${listing.product.id}_${Date.now()}`;
+      const title = store.title(listing);
+      const price = Number(listing.selling_price);
+
+      // 1. Client-side pixel event
+      trackViewContent({
+        id: listing.product.id,
+        name: title,
+        price,
+        eventId,
+      });
+
+      // 2. Server-side CAPI event (deduped by matching eventId)
+      const cookies = getTrackingCookies();
+      viewContentCapi({
+        data: {
+          code,
+          productId: listing.product.id,
+          productName: title,
+          price,
+          eventId,
+          origin: window.location.origin,
+          fbp: cookies.fbp,
+          fbc: cookies.fbc,
+          ttp: cookies.ttp,
+          userAgent: cookies.userAgent,
+        },
+      }).catch(() => {});
+    }
+  }, [listing?.id, code]);
 
   if (!listing || !listing.product)
     return (
