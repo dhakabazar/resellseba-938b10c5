@@ -311,13 +311,10 @@ export function ProductCard({ listing }: { listing: StoreListing }) {
         <button
           type="button"
           onClick={handleDirectOrder}
-          className="mt-2.5 flex w-full items-center justify-between gap-1 rounded-full bg-[var(--st-primary)] px-3 py-2 text-xs sm:text-[13px] font-bold text-[var(--st-on-primary)] shadow-sm transition-all hover:brightness-105 hover:shadow active:scale-[0.98]"
+          className="mt-2.5 flex w-full items-center justify-between gap-1 rounded-full bg-[var(--st-primary)] px-3.5 py-2 text-xs sm:text-[13px] font-bold text-[var(--st-on-primary)] shadow-sm transition-all hover:brightness-105 hover:shadow active:scale-[0.98]"
         >
           <span className="font-extrabold tracking-tight">{bdt(price)}</span>
-          <span className="inline-flex items-center gap-1">
-            <ShoppingBasket className="h-3.5 w-3.5" />
-            অর্ডার করুন
-          </span>
+          <span>অর্ডার করুন</span>
         </button>
       </div>
     </Link>

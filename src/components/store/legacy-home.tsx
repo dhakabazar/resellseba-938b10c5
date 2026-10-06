@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 export default function LegacyStoreHome({ query }: { query?: string }) {
   const store = useStore();
   const { code, listings, name, content } = store;
-  const [latestVisible, setLatestVisible] = useState(20);
+  const [latestVisible, setLatestVisible] = useState(16);
 
   const results = useMemo(() => {
     if (!query) return listings;
@@ -65,7 +65,13 @@ export default function LegacyStoreHome({ query }: { query?: string }) {
             <ProductGrid listings={latest} />
             {latestVisible < listings.length && (
               <div className="mt-8 flex justify-center">
-                <Button onClick={() => setLatestVisible((v) => v + 20)}>Load more</Button>
+                <Button
+                  variant="outline"
+                  className="rounded-full px-8 py-2.5 font-bold text-sm hover:bg-[var(--st-primary)] hover:text-[var(--st-on-primary)] transition-colors shadow-sm"
+                  onClick={() => setLatestVisible((v) => v + 16)}
+                >
+                  আরও দেখুন
+                </Button>
               </div>
             )}
           </>
