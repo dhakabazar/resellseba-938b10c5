@@ -640,7 +640,7 @@ export function TrustBar() {
 }
 
 export function StoreFooter() {
-  const { name, settings, theme, url } = useStore();
+  const { name, settings, theme, url, content } = useStore();
   const year = new Date().getFullYear();
   const socials = [
     settings?.facebook_url && { label: "Facebook", href: settings.facebook_url },
@@ -649,11 +649,15 @@ export function StoreFooter() {
   ].filter(Boolean) as { label: string; href: string }[];
 
   const about =
+    content?.text("footer_about") ||
     settings?.about_text ||
     settings?.meta_description ||
     `${name} — genuine products, honest pricing and fast cash on delivery across Bangladesh.`;
   const wa = settings?.whatsapp ? `https://wa.me/${settings.whatsapp.replace(/[^\d]/g, "")}` : undefined;
-  const copy = settings?.footer_text || `© ${year} ${name}. All rights reserved.`;
+  const copy =
+    content?.text("footer_note") ||
+    settings?.footer_text ||
+    `© ${year} ${name}. All rights reserved.`;
 
   /* ------------------------------------------- Bazaar: dense utility footer */
   if (theme.id === "bazaar")
@@ -688,7 +692,7 @@ export function StoreFooter() {
           <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 sm:grid-cols-2 md:grid-cols-3">
             <div>
               <div className="text-base font-extrabold uppercase text-[var(--st-fg)]">{name}</div>
-              <p className={cx("mt-2 text-xs leading-relaxed", muted)}>{about}</p>
+              <p className={cx("mt-2 text-xs leading-relaxed whitespace-pre-line", muted)}>{about}</p>
               {socials.length > 0 && (
                 <div className="mt-4 flex flex-wrap gap-2">
                   {socials.map((s) => (
@@ -749,7 +753,7 @@ export function StoreFooter() {
       <footer className={cx("mt-20 border-t bg-[var(--st-bg-alt)]", borderc)}>
         <div className="mx-auto max-w-3xl px-4 py-16 text-center">
           <Heading className="text-2xl tracking-[0.16em]">{name}</Heading>
-          <p className={cx("mx-auto mt-4 max-w-lg text-sm leading-relaxed", muted)}>{about}</p>
+          <p className={cx("mx-auto mt-4 max-w-lg text-sm leading-relaxed whitespace-pre-line", muted)}>{about}</p>
           <div className={cx("mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-[11px] uppercase tracking-[0.2em]", muted)}>
             <Link to={url("/")} className="hover:text-[var(--st-primary)]">
               Home
@@ -790,7 +794,7 @@ export function StoreFooter() {
           <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4 px-4 py-6">
             <div>
               <div className="text-sm font-bold text-[var(--st-fg)]">{name}</div>
-              <p className={cx("mt-0.5 text-xs max-w-md", muted)}>{about}</p>
+              <p className={cx("mt-0.5 text-xs max-w-md whitespace-pre-line", muted)}>{about}</p>
             </div>
             <div className="flex flex-wrap items-center gap-3">
               <Link to={url("/")} className={cx("text-xs font-medium hover:text-[var(--st-primary)]", muted)}>
@@ -837,7 +841,7 @@ export function StoreFooter() {
         <div className="grid gap-8 md:grid-cols-3">
           <div>
             <Heading className="text-lg">{name}</Heading>
-            <p className={cx("mt-2 max-w-md text-xs leading-relaxed", muted)}>{about}</p>
+            <p className={cx("mt-2 max-w-md text-xs leading-relaxed whitespace-pre-line", muted)}>{about}</p>
             {socials.length > 0 && (
               <div className="mt-4 flex flex-wrap gap-2">
                 {socials.map((s) => (

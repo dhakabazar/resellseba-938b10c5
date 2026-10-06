@@ -139,11 +139,21 @@ function baseGroups(): ContentGroup[] {
     },
     {
       id: "footer",
-      title: "Footer",
-      description: "Closing message and store story in the footer.",
+      title: "Footer & Store Info",
+      description: "Store description, office/shop address and bottom copyright text in the footer.",
       fields: [
-        area("footer_about", "About text in footer", ""),
-        t("footer_note", "Bottom note", ""),
+        area(
+          "footer_about",
+          "About store / Address (স্টোর পরিচিতি বা ঠিকানা)",
+          "",
+          "Write a brief intro about your store, office/shop address, or operational details.",
+        ),
+        t(
+          "footer_note",
+          "Bottom note / Copyright (ফুটার কপিরাইট লাইন)",
+          "",
+          "e.g. © 2026 {store}. All rights reserved.",
+        ),
       ],
     },
   ];
