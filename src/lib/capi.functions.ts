@@ -4,27 +4,27 @@ import { pageViewInput, viewContentInput, initiateCheckoutInput, purchaseInput }
 
 export const trackPageViewServer = createServerFn({ method: "POST" })
   .inputValidator((d) => pageViewInput.parse(d))
-  .handler(async ({ data }) => runCapi("trackPageViewServer", data) as Promise<any>);
+  .handler(async ({ data }) => runCapi("trackPageViewServer", data) as ReturnType<typeof import("./capi.server").trackPageViewServerImpl>);
 
 export const trackViewContentServer = createServerFn({ method: "POST" })
   .inputValidator((d) => viewContentInput.parse(d))
-  .handler(async ({ data }) => runCapi("trackViewContentServer", data) as Promise<any>);
+  .handler(async ({ data }) => runCapi("trackViewContentServer", data) as ReturnType<typeof import("./capi.server").trackViewContentServerImpl>);
 
 export const trackInitiateCheckoutServer = createServerFn({ method: "POST" })
   .inputValidator((d) => initiateCheckoutInput.parse(d))
-  .handler(async ({ data }) => runCapi("trackInitiateCheckoutServer", data) as Promise<any>);
+  .handler(async ({ data }) => runCapi("trackInitiateCheckoutServer", data) as ReturnType<typeof import("./capi.server").trackInitiateCheckoutServerImpl>);
 
 export const trackPurchaseServer = createServerFn({ method: "POST" })
   .inputValidator((d) => purchaseInput.parse(d))
-  .handler(async ({ data }) => runCapi("trackPurchaseServer", data) as Promise<any>);
+  .handler(async ({ data }) => runCapi("trackPurchaseServer", data) as ReturnType<typeof import("./capi.server").trackPurchaseServerImpl>);
 
 export const getStoreMarketingPixelsServer = createServerFn({ method: "GET" })
   .inputValidator((d) => z.object({ code: z.string().min(1) }).parse(d))
-  .handler(async ({ data }) => runCapi("getStoreMarketingPixelsServer", data) as Promise<any>);
+  .handler(async ({ data }) => runCapi("getStoreMarketingPixelsServer", data) as ReturnType<typeof import("./capi.server").getStoreMarketingPixelsServerImpl>);
 
 export const getPublicOrderDetailsServer = createServerFn({ method: "GET" })
   .inputValidator((d) => z.object({ orderNumber: z.string().min(1) }).parse(d))
-  .handler(async ({ data }) => runCapi("getPublicOrderDetailsServer", data) as Promise<any>);
+  .handler(async ({ data }) => runCapi("getPublicOrderDetailsServer", data) as ReturnType<typeof import("./capi.server").getPublicOrderDetailsServerImpl>);
 
 async function runCapi(name: string, data: any): Promise<any> {
   const { hasPrivilegedDb, platformOrigin } = await import("@/lib/gateways/bridge.server");

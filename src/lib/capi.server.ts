@@ -175,7 +175,7 @@ async function getConfigsForStore(supabaseAdmin: any, codeOrResellerId: string, 
  * 1. Server-side PageView CAPI
  * ────────────────────────────────────────────────────────────────────────── */
 
-async function trackPageViewServerImpl(data: z.infer<typeof pageViewInput>) {
+export async function trackPageViewServerImpl(data: z.infer<typeof pageViewInput>) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { pick } = await getConfigsForStore(supabaseAdmin, data.code, data.origin);
 
@@ -292,7 +292,7 @@ async function trackPageViewServerImpl(data: z.infer<typeof pageViewInput>) {
  * 2. Server-side ViewContent CAPI
  * ────────────────────────────────────────────────────────────────────────── */
 
-async function trackViewContentServerImpl(data: z.infer<typeof viewContentInput>) {
+export async function trackViewContentServerImpl(data: z.infer<typeof viewContentInput>) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { pick } = await getConfigsForStore(supabaseAdmin, data.code, data.origin);
 
@@ -432,7 +432,7 @@ async function trackViewContentServerImpl(data: z.infer<typeof viewContentInput>
  * 3. Server-side InitiateCheckout CAPI
  * ────────────────────────────────────────────────────────────────────────── */
 
-async function trackInitiateCheckoutServerImpl(data: z.infer<typeof initiateCheckoutInput>) {
+export async function trackInitiateCheckoutServerImpl(data: z.infer<typeof initiateCheckoutInput>) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { pick } = await getConfigsForStore(supabaseAdmin, data.code, data.origin);
 
@@ -579,7 +579,7 @@ async function trackInitiateCheckoutServerImpl(data: z.infer<typeof initiateChec
  * 4. Server-side Purchase CAPI
  * ────────────────────────────────────────────────────────────────────────── */
 
-async function trackPurchaseServerImpl(data: z.infer<typeof purchaseInput>) {
+export async function trackPurchaseServerImpl(data: z.infer<typeof purchaseInput>) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const rawOrderNumber = data.orderNumber.trim();
   const cleanOrderNumber = rawOrderNumber.replace(/^#/, "").trim();
@@ -772,7 +772,7 @@ async function trackPurchaseServerImpl(data: z.infer<typeof purchaseInput>) {
 /* ──────────────────────────────────────────────────────────────────────────
  * 5. Get active store marketing pixels directly from server
  * ────────────────────────────────────────────────────────────────────────── */
-async function getStoreMarketingPixelsServerImpl(data: { code: string }) {
+export async function getStoreMarketingPixelsServerImpl(data: { code: string }) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { pick } = await getConfigsForStore(supabaseAdmin, data.code);
   const fb = pick("facebook");
@@ -788,7 +788,7 @@ async function getStoreMarketingPixelsServerImpl(data: { code: string }) {
 /* ──────────────────────────────────────────────────────────────────────────
  * 6. Get public order details for Thanks page (bypassing anon RLS restriction)
  * ────────────────────────────────────────────────────────────────────────── */
-async function getPublicOrderDetailsServerImpl(data: { orderNumber: string }) {
+export async function getPublicOrderDetailsServerImpl(data: { orderNumber: string }) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data: order, error } = await supabaseAdmin
     .from("orders")
