@@ -280,7 +280,7 @@ export function CheckoutPageContent({
               />
             </Field>
 
-            <Field label="মোবাইল নম্বর" required error={touched.phone ? errors.phone : null} hint="১১ ডিজিট, 01 দিয়ে শুরু">
+            <Field label="মোবাইল নম্বর" required error={touched.phone ? errors.phone : null}>
               <input
                 value={form.phone}
                 onChange={(e) => setForm({ ...form, phone: normalizePhone(e.target.value) })}
@@ -333,7 +333,6 @@ export function CheckoutPageContent({
           <div>
             <div className="mb-2 flex items-center justify-between">
               <span className="text-xs font-semibold text-[var(--st-fg)]">ডেলিভারি এলাকা</span>
-              <span className={cx("text-[11px]", muted)}>এলাকা নির্বাচন করুন</span>
             </div>
             <div className="grid grid-cols-3 gap-2">
               {AREAS.map((a) => {
@@ -373,7 +372,6 @@ export function CheckoutPageContent({
           <div>
             <div className="mb-2.5 flex items-baseline justify-between gap-2">
               <div className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--st-fg)]">পেমেন্ট মেথড</div>
-              <span className={cx("text-[11px]", muted)}>একটি নির্বাচন করুন</span>
             </div>
 
             <div className="grid gap-2.5 sm:grid-cols-2">
