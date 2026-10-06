@@ -8,9 +8,9 @@ import {
 } from "@/lib/store-content";
 import { buildMenuTree, type MenuNode } from "@/lib/store-menu";
 import { getStoreBootstrap } from "@/lib/bootstrap";
-import { injectTracking, injectTrackingFromRows } from "@/lib/tracking";
+import { injectTracking, injectTrackingFromRows, getTrackingCookies } from "@/lib/tracking";
 import { useServerFn } from "@tanstack/react-start";
-import { getStoreMarketingPixelsServer } from "@/lib/capi.functions";
+import { getStoreMarketingPixelsServer, trackPageViewServer } from "@/lib/capi.functions";
 
 
 export type StoreImage = { url: string; is_primary: boolean | null; sort_order?: number | null };
@@ -147,6 +147,7 @@ export function useStoreLoader(code: string, themeOverride?: string | null, pale
   const [data, setData] = useState<Omit<StoreData, "cart" | "cartCount"> | null>(null);
   const [cart, setCart] = useState<CartLine[]>([]);
   const fetchLivePixels = useServerFn(getStoreMarketingPixelsServer);
+  const fetchPageViewServer = useServerFn(trackPageViewServer);
 
   const refreshCart = useCallback(() => setCart(readCart(code)), [code]);
 
@@ -198,6 +199,22 @@ export function useStoreLoader(code: string, themeOverride?: string | null, pale
           }
         })
         .catch(() => {});
+
+      // Fire server-side PageView CAPI with client cookies for maximum event match quality
+      const pageViewEventId = `pv_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+      const cookies = getTrackingCookies();
+      fetchPageViewServer({
+        data: {
+          code,
+          eventId: pageViewEventId,
+          url: typeof window !== "undefined" ? window.location.href : undefined,
+          origin: typeof window !== "undefined" ? window.location.origin : undefined,
+          fbp: cookies.fbp,
+          fbc: cookies.fbc,
+          ttp: cookies.ttp,
+          userAgent: cookies.userAgent,
+        },
+      }).catch(() => {});
 
       const theme = getStoreTheme(themeOverride || s?.theme);
       ensureThemeFont(theme);

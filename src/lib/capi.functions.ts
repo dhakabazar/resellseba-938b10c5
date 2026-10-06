@@ -9,14 +9,14 @@ function normalizePhoneHashes(rawPhone?: string | null): string[] | undefined {
   const digits = rawPhone.replace(/\D/g, "");
   if (!digits) return undefined;
   const hashes = new Set<string>();
-  hashes.add(sha256(digits));
   if (digits.startsWith("01")) {
     hashes.add(sha256(`88${digits}`));
-    hashes.add(sha256(`+88${digits}`));
+    hashes.add(sha256(digits));
   } else if (digits.startsWith("8801")) {
     hashes.add(sha256(digits));
-    hashes.add(sha256(`+${digits}`));
     hashes.add(sha256(digits.replace(/^88/, "")));
+  } else {
+    hashes.add(sha256(digits));
   }
   return Array.from(hashes);
 }
@@ -29,8 +29,8 @@ function normalizeNameHashes(rawName?: string | null): { fn?: string[]; ln?: str
   return { fn, ln };
 }
 
-// Helper to get active marketing configs for a store code / reseller id / domain
-async function getConfigsForStore(supabaseAdmin: any, codeOrResellerId: string) {
+// Helper to get active marketing configs for a store code / reseller id / domain / origin
+async function getConfigsForStore(supabaseAdmin: any, codeOrResellerId: string, origin?: string) {
   const clean = (codeOrResellerId || "").trim();
   let resellerId: string | null = null;
 
@@ -78,7 +78,35 @@ async function getConfigsForStore(supabaseAdmin: any, codeOrResellerId: string) 
     }
   }
 
-  // 3. Fetch marketing configs safely
+  // 3. If still not found, try matching against origin hostname
+  if (!resellerId && origin) {
+    const originHost = origin
+      .replace(/^https?:\/\//, "")
+      .replace(/\/.*$/, "")
+      .replace(/^www\./, "")
+      .toLowerCase();
+
+    if (originHost && originHost !== "localhost" && originHost !== "127.0.0.1") {
+      const { data: domainRows } = await supabaseAdmin
+        .from("reseller_domains")
+        .select("reseller_id, hostname");
+
+      const matched = (domainRows ?? []).find((d: any) => {
+        const h = (d.hostname || "")
+          .toLowerCase()
+          .replace(/^https?:\/\//, "")
+          .replace(/\/.*$/, "")
+          .replace(/^www\./, "");
+        return h === originHost || originHost.includes(h) || h.includes(originHost);
+      });
+
+      if (matched?.reseller_id) {
+        resellerId = matched.reseller_id;
+      }
+    }
+  }
+
+  // 4. Fetch marketing configs safely
   const configs: any[] = [];
   try {
     if (resellerId) {
@@ -104,16 +132,24 @@ async function getConfigsForStore(supabaseAdmin: any, codeOrResellerId: string) 
 
   const pick = (platform: string) => {
     // Reseller row
-    const resellerRow = resellerId
-      ? configs.find(
+    const resellerRows = resellerId
+      ? configs.filter(
           (c: any) => c.reseller_id === resellerId && c.platform === platform && c.is_active !== false,
         )
-      : null;
+      : [];
+    const resellerRow =
+      resellerRows.find((c: any) => Boolean(c.pixel_id?.trim() && c.access_token?.trim())) ||
+      resellerRows[0] ||
+      null;
 
     // Global row
-    const globalRow = configs.find(
+    const globalRows = configs.filter(
       (c: any) => !c.reseller_id && c.platform === platform && c.is_active !== false,
     );
+    const globalRow =
+      globalRows.find((c: any) => Boolean(c.pixel_id?.trim() && c.access_token?.trim())) ||
+      globalRows[0] ||
+      null;
 
     // Merge: Reseller takes precedence; fallback to global access_token or pixel_id if empty
     const pixel_id = (resellerRow?.pixel_id?.trim() || globalRow?.pixel_id?.trim() || "").trim();
@@ -128,7 +164,7 @@ async function getConfigsForStore(supabaseAdmin: any, codeOrResellerId: string) 
       access_token: access_token || null,
       test_event_code: test_event_code || null,
       reseller_id: resellerRow?.reseller_id || null,
-      is_active: resellerRow ? resellerRow.is_active !== false : globalRow?.is_active !== false,
+      is_active: true,
     };
   };
 
@@ -136,7 +172,136 @@ async function getConfigsForStore(supabaseAdmin: any, codeOrResellerId: string) 
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
- * 1. Server-side ViewContent CAPI
+ * 1. Server-side PageView CAPI
+ * ────────────────────────────────────────────────────────────────────────── */
+const pageViewInput = z.object({
+  code: z.string().min(1),
+  eventId: z.string().min(1),
+  url: z.string().optional(),
+  origin: z.string().optional(),
+  fbp: z.string().optional(),
+  fbc: z.string().optional(),
+  ttp: z.string().optional(),
+  userAgent: z.string().optional(),
+});
+
+export const trackPageViewServer = createServerFn({ method: "POST" })
+  .inputValidator((d) => pageViewInput.parse(d))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { pick } = await getConfigsForStore(supabaseAdmin, data.code, data.origin);
+
+    const origin = (data.origin ?? process.env["SITE_URL"] ?? "").replace(/\/$/, "");
+    const eventUrl = data.url || origin || undefined;
+    const eventTime = Math.floor(Date.now() / 1000);
+    const results: Record<string, any> = {};
+    const fallbackUa =
+      data.userAgent ||
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+
+    // Facebook CAPI
+    const fb: any = pick("facebook");
+    if (fb?.pixel_id && fb?.access_token) {
+      const pixelId = fb.pixel_id.trim();
+      const accessToken = fb.access_token.trim();
+      const testCode = fb.test_event_code?.trim() || "";
+
+      const payload: any = {
+        data: [
+          {
+            event_name: "PageView",
+            event_time: eventTime,
+            event_id: data.eventId,
+            event_source_url: eventUrl,
+            action_source: "website",
+            user_data: {
+              client_user_agent: fallbackUa,
+              fbp: data.fbp || undefined,
+              fbc: data.fbc || undefined,
+              country: [sha256("bd")],
+            },
+          },
+        ],
+      };
+
+      if (testCode) payload.test_event_code = testCode;
+
+      try {
+        const queryParams = new URLSearchParams();
+        queryParams.set("access_token", accessToken);
+        if (testCode) queryParams.set("test_event_code", testCode);
+
+        const url = `https://graph.facebook.com/v19.0/${encodeURIComponent(pixelId)}/events?${queryParams.toString()}`;
+        const r = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify(payload),
+        });
+        const resBody = await r.json().catch(() => ({}));
+        console.log("[CAPI Facebook PageView]", { ok: r.ok, status: r.status, response: resBody, testCode, pixelId });
+        results.facebook = { ok: r.ok, status: r.status, response: resBody, pixelId, testCode };
+      } catch (err: any) {
+        console.error("[CAPI Facebook PageView Error]", err);
+        results.facebook = { ok: false, error: err.message };
+      }
+    } else {
+      results.facebook = { ok: false, reason: "Missing Facebook pixel_id or access_token" };
+    }
+
+    // TikTok Events API
+    const tt: any = pick("tiktok");
+    if (tt?.pixel_id && tt?.access_token) {
+      const pixelId = tt.pixel_id.trim();
+      const accessToken = tt.access_token.trim();
+      const testCode = tt.test_event_code?.trim() || "";
+
+      const payload: any = {
+        event_source: "web",
+        event_source_id: pixelId,
+        data: [
+          {
+            event: "Pageview",
+            event_time: eventTime,
+            event_id: data.eventId,
+            user: {
+              ttp: data.ttp || undefined,
+            },
+            context: {
+              page: { url: eventUrl },
+              user_agent: fallbackUa,
+            },
+          },
+        ],
+      };
+
+      if (testCode) payload.test_event_code = testCode;
+
+      try {
+        const r = await fetch("https://business-api.tiktok.com/open_api/v1.3/event/track/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Token": accessToken,
+          },
+          body: JSON.stringify(payload),
+        });
+        const resBody = await r.json().catch(() => ({}));
+        console.log("[CAPI TikTok PageView]", { ok: r.ok, status: r.status, response: resBody, testCode, pixelId });
+        results.tiktok = { ok: r.ok, status: r.status, response: resBody, pixelId, testCode };
+      } catch (err: any) {
+        console.error("[CAPI TikTok PageView Error]", err);
+        results.tiktok = { ok: false, error: err.message };
+      }
+    }
+
+    return { ok: true, results };
+  });
+
+/* ──────────────────────────────────────────────────────────────────────────
+ * 2. Server-side ViewContent CAPI
  * ────────────────────────────────────────────────────────────────────────── */
 const viewContentInput = z.object({
   code: z.string().min(1),
@@ -155,12 +320,15 @@ export const trackViewContentServer = createServerFn({ method: "POST" })
   .inputValidator((d) => viewContentInput.parse(d))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { pick } = await getConfigsForStore(supabaseAdmin, data.code);
+    const { pick } = await getConfigsForStore(supabaseAdmin, data.code, data.origin);
 
     const origin = (data.origin ?? process.env["SITE_URL"] ?? "").replace(/\/$/, "");
     const eventUrl = origin || undefined;
     const eventTime = Math.floor(Date.now() / 1000);
     const results: Record<string, any> = {};
+    const fallbackUa =
+      data.userAgent ||
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
     // Facebook CAPI
     const fb: any = pick("facebook");
@@ -177,9 +345,8 @@ export const trackViewContentServer = createServerFn({ method: "POST" })
             event_id: data.eventId,
             event_source_url: eventUrl,
             action_source: "website",
-            client_user_agent: data.userAgent || undefined,
             user_data: {
-              client_user_agent: data.userAgent || undefined,
+              client_user_agent: fallbackUa,
               fbp: data.fbp || undefined,
               fbc: data.fbc || undefined,
               country: [sha256("bd")],
@@ -197,7 +364,6 @@ export const trackViewContentServer = createServerFn({ method: "POST" })
       };
 
       if (testCode) payload.test_event_code = testCode;
-      payload.access_token = accessToken;
 
       try {
         const queryParams = new URLSearchParams();
@@ -215,11 +381,13 @@ export const trackViewContentServer = createServerFn({ method: "POST" })
         });
         const resBody = await r.json().catch(() => ({}));
         console.log("[CAPI Facebook ViewContent]", { ok: r.ok, status: r.status, response: resBody, testCode, pixelId });
-        results.facebook = { ok: r.ok, status: r.status, response: resBody };
+        results.facebook = { ok: r.ok, status: r.status, response: resBody, pixelId, testCode };
       } catch (err: any) {
         console.error("[CAPI Facebook ViewContent Error]", err);
         results.facebook = { ok: false, error: err.message };
       }
+    } else {
+      results.facebook = { ok: false, reason: "Missing Facebook pixel_id or access_token" };
     }
 
     // TikTok Events API
@@ -242,7 +410,7 @@ export const trackViewContentServer = createServerFn({ method: "POST" })
             },
             context: {
               page: { url: eventUrl },
-              user_agent: data.userAgent || undefined,
+              user_agent: fallbackUa,
             },
             properties: {
               currency: "BDT",
@@ -276,7 +444,7 @@ export const trackViewContentServer = createServerFn({ method: "POST" })
         });
         const resBody = await r.json().catch(() => ({}));
         console.log("[CAPI TikTok ViewContent]", { ok: r.ok, status: r.status, response: resBody, testCode, pixelId });
-        results.tiktok = { ok: r.ok, status: r.status, response: resBody };
+        results.tiktok = { ok: r.ok, status: r.status, response: resBody, pixelId, testCode };
       } catch (err: any) {
         console.error("[CAPI TikTok ViewContent Error]", err);
         results.tiktok = { ok: false, error: err.message };
@@ -287,7 +455,7 @@ export const trackViewContentServer = createServerFn({ method: "POST" })
   });
 
 /* ──────────────────────────────────────────────────────────────────────────
- * 2. Server-side InitiateCheckout CAPI
+ * 3. Server-side InitiateCheckout CAPI
  * ────────────────────────────────────────────────────────────────────────── */
 const initiateCheckoutInput = z.object({
   code: z.string().min(1),
@@ -314,7 +482,7 @@ export const trackInitiateCheckoutServer = createServerFn({ method: "POST" })
   .inputValidator((d) => initiateCheckoutInput.parse(d))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { pick } = await getConfigsForStore(supabaseAdmin, data.code);
+    const { pick } = await getConfigsForStore(supabaseAdmin, data.code, data.origin);
 
     const origin = (data.origin ?? process.env["SITE_URL"] ?? "").replace(/\/$/, "");
     const checkoutUrl = origin ? `${origin}/checkout` : undefined;
@@ -323,6 +491,9 @@ export const trackInitiateCheckoutServer = createServerFn({ method: "POST" })
 
     const phoneHashes = normalizePhoneHashes(data.customerPhone);
     const nameHashes = normalizeNameHashes(data.customerName);
+    const fallbackUa =
+      data.userAgent ||
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
     // Facebook CAPI
     const fb: any = pick("facebook");
@@ -339,9 +510,8 @@ export const trackInitiateCheckoutServer = createServerFn({ method: "POST" })
             event_id: data.eventId,
             event_source_url: checkoutUrl,
             action_source: "website",
-            client_user_agent: data.userAgent || undefined,
             user_data: {
-              client_user_agent: data.userAgent || undefined,
+              client_user_agent: fallbackUa,
               fbp: data.fbp || undefined,
               fbc: data.fbc || undefined,
               ph: phoneHashes,
@@ -366,7 +536,6 @@ export const trackInitiateCheckoutServer = createServerFn({ method: "POST" })
       };
 
       if (testCode) payload.test_event_code = testCode;
-      payload.access_token = accessToken;
 
       try {
         const queryParams = new URLSearchParams();
@@ -384,11 +553,13 @@ export const trackInitiateCheckoutServer = createServerFn({ method: "POST" })
         });
         const resBody = await r.json().catch(() => ({}));
         console.log("[CAPI Facebook InitiateCheckout]", { ok: r.ok, status: r.status, response: resBody, testCode, pixelId });
-        results.facebook = { ok: r.ok, status: r.status, response: resBody };
+        results.facebook = { ok: r.ok, status: r.status, response: resBody, pixelId, testCode };
       } catch (err: any) {
         console.error("[CAPI Facebook InitiateCheckout Error]", err);
         results.facebook = { ok: false, error: err.message };
       }
+    } else {
+      results.facebook = { ok: false, reason: "Missing Facebook pixel_id or access_token" };
     }
 
     // TikTok Events API
@@ -412,7 +583,7 @@ export const trackInitiateCheckoutServer = createServerFn({ method: "POST" })
             },
             context: {
               page: { url: checkoutUrl },
-              user_agent: data.userAgent || undefined,
+              user_agent: fallbackUa,
             },
             properties: {
               currency: "BDT",
@@ -442,7 +613,7 @@ export const trackInitiateCheckoutServer = createServerFn({ method: "POST" })
         });
         const resBody = await r.json().catch(() => ({}));
         console.log("[CAPI TikTok InitiateCheckout]", { ok: r.ok, status: r.status, response: resBody, testCode, pixelId });
-        results.tiktok = { ok: r.ok, status: r.status, response: resBody };
+        results.tiktok = { ok: r.ok, status: r.status, response: resBody, pixelId, testCode };
       } catch (err: any) {
         console.error("[CAPI TikTok InitiateCheckout Error]", err);
         results.tiktok = { ok: false, error: err.message };
@@ -453,7 +624,7 @@ export const trackInitiateCheckoutServer = createServerFn({ method: "POST" })
   });
 
 /* ──────────────────────────────────────────────────────────────────────────
- * 3. Server-side Purchase CAPI
+ * 4. Server-side Purchase CAPI
  * ────────────────────────────────────────────────────────────────────────── */
 const purchaseInput = z.object({
   orderNumber: z.string().min(1),
@@ -478,7 +649,8 @@ export const trackPurchaseServer = createServerFn({ method: "POST" })
     const { data: o1 } = await supabaseAdmin
       .from("orders")
       .select("id, order_number, total, customer_phone, customer_name, address_line, area, reseller_id")
-      .eq("order_number", cleanOrderNumber)
+      .or(`order_number.eq.${cleanOrderNumber},order_number.eq.#${cleanOrderNumber}`)
+      .limit(1)
       .maybeSingle();
 
     if (o1) {
@@ -506,8 +678,12 @@ export const trackPurchaseServer = createServerFn({ method: "POST" })
 
     const orderItems = items ?? [];
 
-    // 3. Marketing configs using unified resolver with reseller UUID fallback
-    const { pick } = await getConfigsForStore(supabaseAdmin, order.reseller_id || data.code || "");
+    // 3. Marketing configs using unified resolver with reseller UUID fallback and origin
+    const { pick } = await getConfigsForStore(
+      supabaseAdmin,
+      order.reseller_id || data.code || "",
+      data.origin,
+    );
 
     const origin = (data.origin ?? process.env["SITE_URL"] ?? "").replace(/\/$/, "");
     const checkoutUrl = origin ? `${origin}/thanks?n=${encodeURIComponent(order.order_number)}` : undefined;
@@ -518,6 +694,10 @@ export const trackPurchaseServer = createServerFn({ method: "POST" })
 
     const phoneHashes = normalizePhoneHashes(order.customer_phone);
     const nameHashes = normalizeNameHashes(order.customer_name);
+    const cityHash = order.area === "inside_dhaka" ? [sha256("dhaka")] : undefined;
+    const fallbackUa =
+      data.userAgent ||
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
     // Facebook CAPI
     const fb: any = pick("facebook");
@@ -534,9 +714,8 @@ export const trackPurchaseServer = createServerFn({ method: "POST" })
             event_id: eventId,
             event_source_url: checkoutUrl,
             action_source: "website",
-            client_user_agent: data.userAgent || undefined,
             user_data: {
-              client_user_agent: data.userAgent || undefined,
+              client_user_agent: fallbackUa,
               fbp: data.fbp || undefined,
               fbc: data.fbc || undefined,
               ph: phoneHashes,
@@ -544,7 +723,7 @@ export const trackPurchaseServer = createServerFn({ method: "POST" })
               ln: nameHashes.ln,
               external_id: [sha256(order.id)],
               country: [sha256("bd")],
-              ct: order.area ? [sha256(order.area)] : undefined,
+              ct: cityHash,
             },
             custom_data: {
               currency: "BDT",
@@ -563,7 +742,6 @@ export const trackPurchaseServer = createServerFn({ method: "POST" })
       };
 
       if (testCode) payload.test_event_code = testCode;
-      payload.access_token = accessToken;
 
       try {
         const queryParams = new URLSearchParams();
@@ -581,11 +759,13 @@ export const trackPurchaseServer = createServerFn({ method: "POST" })
         });
         const resBody = await r.json().catch(() => ({}));
         console.log("[CAPI Facebook Purchase]", { ok: r.ok, status: r.status, response: resBody, testCode, pixelId });
-        results.facebook = { ok: r.ok, status: r.status, response: resBody };
+        results.facebook = { ok: r.ok, status: r.status, response: resBody, pixelId, testCode };
       } catch (err: any) {
         console.error("[CAPI Facebook Purchase Error]", err);
         results.facebook = { ok: false, error: err.message };
       }
+    } else {
+      results.facebook = { ok: false, reason: "Missing Facebook pixel_id or access_token" };
     }
 
     // TikTok Events API
@@ -609,7 +789,7 @@ export const trackPurchaseServer = createServerFn({ method: "POST" })
             },
             context: {
               page: { url: checkoutUrl },
-              user_agent: data.userAgent || undefined,
+              user_agent: fallbackUa,
             },
             properties: {
               currency: "BDT",
@@ -639,7 +819,7 @@ export const trackPurchaseServer = createServerFn({ method: "POST" })
         });
         const resBody = await r.json().catch(() => ({}));
         console.log("[CAPI TikTok Purchase]", { ok: r.ok, status: r.status, response: resBody, testCode, pixelId });
-        results.tiktok = { ok: r.ok, status: r.status, response: resBody };
+        results.tiktok = { ok: r.ok, status: r.status, response: resBody, pixelId, testCode };
       } catch (err: any) {
         console.error("[CAPI TikTok Purchase Error]", err);
         results.tiktok = { ok: false, error: err.message };
@@ -650,7 +830,7 @@ export const trackPurchaseServer = createServerFn({ method: "POST" })
   });
 
 /* ──────────────────────────────────────────────────────────────────────────
- * 4. Get active store marketing pixels directly from server
+ * 5. Get active store marketing pixels directly from server
  * ────────────────────────────────────────────────────────────────────────── */
 export const getStoreMarketingPixelsServer = createServerFn({ method: "GET" })
   .inputValidator((d) => z.object({ code: z.string().min(1) }).parse(d))
@@ -668,7 +848,7 @@ export const getStoreMarketingPixelsServer = createServerFn({ method: "GET" })
   });
 
 /* ──────────────────────────────────────────────────────────────────────────
- * 5. Get public order details for Thanks page (bypassing anon RLS restriction)
+ * 6. Get public order details for Thanks page (bypassing anon RLS restriction)
  * ────────────────────────────────────────────────────────────────────────── */
 export const getPublicOrderDetailsServer = createServerFn({ method: "GET" })
   .inputValidator((d) => z.object({ orderNumber: z.string().min(1) }).parse(d))
