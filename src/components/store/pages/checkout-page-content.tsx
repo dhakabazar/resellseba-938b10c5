@@ -63,6 +63,14 @@ export function CheckoutPageContent({
     notes: "",
   });
 
+  const lines = useMemo(
+    () =>
+      store.cart
+        .map((c) => ({ line: c, listing: store.byListingId(c.listingId) }))
+        .filter((x) => x.listing) as { line: { listingId: string; qty: number }; listing: NonNullable<ReturnType<typeof store.byListingId>> }[],
+    [store.cart, store],
+  );
+
   const inlineBtnRef = useRef<HTMLDivElement | null>(null);
   const [isInlineBtnVisible, setIsInlineBtnVisible] = useState(false);
 
@@ -107,14 +115,6 @@ export function CheckoutPageContent({
       .then((rows) => setGateways(rows))
       .catch(() => setGateways([]));
   }, [code, loadGateways]);
-
-  const lines = useMemo(
-    () =>
-      store.cart
-        .map((c) => ({ line: c, listing: store.byListingId(c.listingId) }))
-        .filter((x) => x.listing) as { line: { listingId: string; qty: number }; listing: NonNullable<ReturnType<typeof store.byListingId>> }[],
-    [store.cart, store],
-  );
 
   const totals = useMemo(() => {
     const subtotal = lines.reduce((s, x) => s + Number(x.listing.selling_price) * x.line.qty, 0);
