@@ -150,18 +150,18 @@ export function Hero() {
             "radial-gradient(1000px 420px at 12% -10%, var(--st-primary), transparent 60%), radial-gradient(820px 420px at 92% 0%, var(--st-accent), transparent 62%)",
         }}
       />
-      <div className="relative mx-auto grid max-w-6xl items-center gap-10 px-4 py-14 md:grid-cols-2 md:py-20">
+      <div className="relative mx-auto grid max-w-6xl items-center gap-6 px-4 py-6 sm:py-10 md:grid-cols-2 md:gap-10 md:py-20">
         <div>
-          <Heading as="h2" className="text-3xl leading-[1.12] md:text-5xl">
+          <Heading as="h2" className="text-2xl font-extrabold leading-tight sm:text-3xl md:text-5xl">
             {headline}
           </Heading>
-          <p className={cx("mt-4 max-w-md text-sm md:text-base", muted)}>{sub}</p>
-          <div className="mt-7">{buttons}</div>
+          <p className={cx("mt-2.5 max-w-md text-xs sm:text-sm md:text-base leading-relaxed sm:mt-4", muted)}>{sub}</p>
+          <div className="mt-4 sm:mt-6">{buttons}</div>
           {(stat1 || stat2) && (
-            <div className="mt-7 flex flex-wrap items-center gap-6">
+            <div className="mt-4 sm:mt-6 flex flex-wrap items-center gap-3 sm:gap-6">
               {[stat1, stat2].filter(Boolean).map((s) => (
-                <div key={s} className="flex items-center gap-2 text-sm font-medium">
-                  <BadgeCheck className="h-4 w-4 text-[var(--st-primary)]" /> {s}
+                <div key={s} className="flex items-center gap-1.5 text-xs sm:text-sm font-medium">
+                  <BadgeCheck className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-[var(--st-primary)] shrink-0" /> {s}
                 </div>
               ))}
             </div>
