@@ -524,7 +524,7 @@ export function StoreHeader() {
   return (
     <div className="sticky top-0 z-40">
       {announcement && (
-        <div className="bg-[var(--st-primary)] px-4 py-1.5 text-center text-[12px] font-medium text-[var(--st-on-primary)]">
+        <div className="bg-[var(--st-accent)] px-4 py-1.5 text-center text-[12px] font-semibold text-[var(--st-on-accent)] shadow-sm">
           {announcement}
         </div>
       )}
@@ -533,18 +533,11 @@ export function StoreHeader() {
         <div className="bg-[var(--st-surface)]">
           <div className="bg-[var(--st-primary)] text-[var(--st-on-primary)]">
             <div className="mx-auto flex max-w-6xl items-center gap-2.5 px-3 py-2.5 sm:gap-3 sm:px-4">
-              <button
-                className="rounded-[var(--st-radius-sm)] p-1.5 text-[var(--st-on-primary)] hover:bg-black/10 md:hidden"
-                aria-label="Menu"
-                onClick={() => setOpen((o) => !o)}
-              >
-                {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-              </button>
               <div className="rounded-[var(--st-radius-sm)] bg-[var(--st-surface)] px-2 py-1 text-[var(--st-fg)]">
                 <Logo />
               </div>
               <SearchBox className="hidden flex-1 md:block" />
-              <div className="ml-auto flex items-center gap-2 text-[var(--st-on-primary)]">
+              <div className="ml-auto flex items-center gap-1.5 sm:gap-2 text-[var(--st-on-primary)]">
                 {settings?.support_phone && (
                   <a href={`tel:${settings.support_phone}`} className="hidden items-center gap-1.5 text-sm text-[var(--st-on-primary)] sm:flex">
                     <Phone className="h-4 w-4" /> {settings.support_phone}
@@ -554,13 +547,20 @@ export function StoreHeader() {
                   type="button"
                   aria-label="Search"
                   onClick={() => setSearchOpen((s) => !s)}
-                  className="flex h-8 w-8 items-center justify-center rounded-[var(--st-radius-sm)] bg-[var(--st-surface)] text-[var(--st-fg)] md:hidden"
+                  className="flex h-8 w-8 items-center justify-center rounded-[var(--st-radius-sm)] bg-[var(--st-surface)] text-[var(--st-fg)] md:hidden transition-opacity hover:opacity-90"
                 >
                   {searchOpen ? <X className="h-4 w-4" /> : <Search className="h-4 w-4" />}
                 </button>
                 <div className="rounded-[var(--st-radius-sm)] bg-[var(--st-surface)] text-[var(--st-fg)]">
                   <CartButton />
                 </div>
+                <button
+                  className="flex h-8 w-8 items-center justify-center rounded-[var(--st-radius-sm)] bg-[var(--st-surface)] text-[var(--st-fg)] md:hidden transition-opacity hover:opacity-90"
+                  aria-label="Menu"
+                  onClick={() => setOpen((o) => !o)}
+                >
+                  {open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+                </button>
               </div>
             </div>
           </div>
