@@ -18,6 +18,7 @@ import { AppModal } from "@/components/ui-kit/AppModal";
 import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
 import {
   Check,
+  CheckCircle2,
   CheckSquare,
   KeyRound,
   Loader2,
@@ -315,39 +316,87 @@ function ResellerStaffPage() {
             </div>
 
             {/* Quick Presets */}
-            <div className="rounded-xl border bg-muted/40 p-3.5">
-              <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
-                কুইক পারমিশন প্রিসেট (Quick Presets)
-              </div>
-              <div className="grid gap-2 grid-cols-2 sm:grid-cols-4">
-                {PRESETS.map((pr) => (
-                  <button
-                    key={pr.label}
-                    type="button"
-                    onClick={() => setDraft({ ...draft, permissions: [...pr.keys] })}
-                    className="flex flex-col items-start rounded-lg border bg-background p-2 text-left text-xs transition-all hover:border-primary hover:shadow-xs active:scale-98"
-                  >
-                    <div className="flex items-center gap-1.5 font-bold text-foreground">
-                      {pr.icon} {pr.label}
+            {(() => {
+              const activePreset = PRESETS.find(
+                (pr) =>
+                  pr.keys.length === draft.permissions.length &&
+                  pr.keys.every((k) => draft.permissions.includes(k)),
+              );
+
+              return (
+                <div className="rounded-xl border bg-muted/40 p-4">
+                  <div className="flex items-center justify-between mb-2.5">
+                    <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                      কুইক পারমিশন প্রিসেট (Quick Presets)
                     </div>
-                    <div className="text-[10px] text-muted-foreground mt-0.5">{pr.desc}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
+                    {activePreset && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-primary/15 border border-primary/30 px-2.5 py-0.5 text-[11px] font-bold text-primary animate-in fade-in">
+                        <CheckCircle2 className="h-3.5 w-3.5" /> {activePreset.label} সক্রিয়
+                      </span>
+                    )}
+                  </div>
+                  <div className="grid gap-2.5 grid-cols-2 sm:grid-cols-4">
+                    {PRESETS.map((pr) => {
+                      const isSelected =
+                        pr.keys.length === draft.permissions.length &&
+                        pr.keys.every((k) => draft.permissions.includes(k));
+
+                      return (
+                        <button
+                          key={pr.label}
+                          type="button"
+                          onClick={() => {
+                            setDraft({ ...draft, permissions: [...pr.keys] });
+                            toast.success(`"${pr.label}" প্রিসেট প্রয়োগ করা হয়েছে (${pr.keys.length}টি পারমিশন)`);
+                          }}
+                          className={`flex flex-col items-start rounded-xl border p-3 text-left text-xs transition-all relative ${
+                            isSelected
+                              ? "border-primary bg-primary/10 shadow-sm ring-2 ring-primary/25 font-bold"
+                              : "bg-background border-border/70 hover:border-primary/50 hover:bg-card active:scale-98"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between w-full">
+                            <div className={`flex items-center gap-1.5 font-bold ${isSelected ? "text-primary" : "text-foreground"}`}>
+                              {pr.icon} {pr.label}
+                            </div>
+                            {isSelected && (
+                              <CheckCircle2 className="h-4 w-4 text-primary shrink-0 animate-in zoom-in-50" />
+                            )}
+                          </div>
+                          <div className={`text-[10px] mt-1 ${isSelected ? "text-primary/90 font-medium" : "text-muted-foreground"}`}>
+                            {pr.desc}
+                          </div>
+                          <div className="mt-2 text-[10px] font-bold opacity-80">
+                            {pr.keys.length}টি পারমিশন
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Granular Permission Toggles */}
             <div>
-              <div className="flex items-center justify-between border-b pb-2">
+              <div className="flex items-center justify-between border-b pb-2.5">
                 <div>
-                  <Label className="text-sm font-bold">মেনু ও কাজের অনুমতি (Permissions)</Label>
-                  <p className="text-xs text-muted-foreground">নির্দিষ্ট মেনু বা অপারেশনে টিক দিন</p>
+                  <div className="flex items-center gap-2">
+                    <Label className="text-sm font-bold">মেনু ও কাজের অনুমতি (Permissions)</Label>
+                    <span className="rounded-full bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 text-[10px] font-bold">
+                      {draft.permissions.length} / {ALL_RESELLER_PERMISSIONS.length} সিলেক্টেড
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">নির্দিষ্ট মেনু বা অপারেশনে টিক দিন</p>
                 </div>
                 <div className="flex gap-2">
                   <button
                     type="button"
                     className="text-xs font-bold text-primary hover:underline"
-                    onClick={() => setDraft({ ...draft, permissions: [...ALL_RESELLER_PERMISSIONS] })}
+                    onClick={() => {
+                      setDraft({ ...draft, permissions: [...ALL_RESELLER_PERMISSIONS] });
+                      toast.success("সকল পারমিশন সিলেক্ট করা হয়েছে");
+                    }}
                   >
                     Select all
                   </button>
@@ -355,7 +404,10 @@ function ResellerStaffPage() {
                   <button
                     type="button"
                     className="text-xs font-bold text-muted-foreground hover:underline"
-                    onClick={() => setDraft({ ...draft, permissions: [] })}
+                    onClick={() => {
+                      setDraft({ ...draft, permissions: [] });
+                      toast.info("সব পারমিশন ক্লিয়ার করা হয়েছে");
+                    }}
                   >
                     Clear
                   </button>
@@ -363,74 +415,89 @@ function ResellerStaffPage() {
               </div>
 
               <div className="mt-3 space-y-4">
-                {RESELLER_MENU_PERMISSIONS.map((g) => (
-                  <div key={g.group} className="rounded-lg border bg-card p-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="text-xs font-bold uppercase tracking-wider text-primary">
-                        {g.group} <span className="text-muted-foreground font-normal">({g.groupBn})</span>
-                      </div>
-                      <button
-                        type="button"
-                        className="text-[10px] text-muted-foreground hover:text-foreground font-semibold"
-                        onClick={() => {
-                          const groupKeys = g.items.map((i) => i.key);
-                          const allSelected = groupKeys.every((k) => draft.permissions.includes(k));
-                          if (allSelected) {
-                            setDraft({
-                              ...draft,
-                              permissions: draft.permissions.filter((p) => !groupKeys.includes(p)),
-                            });
-                          } else {
-                            const combined = Array.from(new Set([...draft.permissions, ...groupKeys]));
-                            setDraft({ ...draft, permissions: combined });
-                          }
-                        }}
-                      >
-                        Toggle group
-                      </button>
-                    </div>
+                {RESELLER_MENU_PERMISSIONS.map((g) => {
+                  const groupKeys = g.items.map((i) => i.key);
+                  const selectedInGroup = groupKeys.filter((k) => draft.permissions.includes(k)).length;
+                  const allSelectedInGroup = selectedInGroup === groupKeys.length;
 
-                    <div className="grid gap-2 sm:grid-cols-2">
-                      {g.items.map((i) => {
-                        const on = draft.permissions.includes(i.key);
-                        return (
-                          <div
-                            key={i.key}
-                            onClick={() =>
-                              setDraft({
-                                ...draft,
-                                permissions: on
-                                  ? draft.permissions.filter((p) => p !== i.key)
-                                  : [...draft.permissions, i.key],
-                              })
-                            }
-                            className={`flex items-start gap-2.5 rounded-lg border p-2.5 cursor-pointer select-none transition-all ${
-                              on
-                                ? "border-primary bg-primary/5 shadow-xs"
-                                : "border-border/60 hover:border-primary/40 bg-background/50"
+                  return (
+                    <div key={g.group} className="rounded-xl border bg-card p-3.5 shadow-xs">
+                      <div className="flex items-center justify-between mb-2.5">
+                        <div className="flex items-center gap-2">
+                          <div className="text-xs font-bold uppercase tracking-wider text-primary">
+                            {g.group} <span className="text-muted-foreground font-normal">({g.groupBn})</span>
+                          </div>
+                          <span
+                            className={`rounded-full px-2 py-0.2 text-[10px] font-bold ${
+                              selectedInGroup > 0
+                                ? "bg-primary/15 text-primary border border-primary/25"
+                                : "bg-muted text-muted-foreground"
                             }`}
                           >
-                            <input
-                              type="checkbox"
-                              checked={on}
-                              onChange={() => {}}
-                              className="mt-0.5 h-4 w-4 rounded text-primary focus:ring-primary"
-                            />
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
-                                <span>{i.label}</span>
-                                <span className="text-[10px] text-muted-foreground font-normal">({i.labelBn})</span>
+                            {selectedInGroup} / {groupKeys.length}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          className="text-[11px] text-muted-foreground hover:text-foreground font-semibold"
+                          onClick={() => {
+                            if (allSelectedInGroup) {
+                              setDraft({
+                                ...draft,
+                                permissions: draft.permissions.filter((p) => !groupKeys.includes(p)),
+                              });
+                            } else {
+                              const combined = Array.from(new Set([...draft.permissions, ...groupKeys]));
+                              setDraft({ ...draft, permissions: combined });
+                            }
+                          }}
+                        >
+                          {allSelectedInGroup ? "Deselect group" : "Select group"}
+                        </button>
+                      </div>
+
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        {g.items.map((i) => {
+                          const on = draft.permissions.includes(i.key);
+                          return (
+                            <div
+                              key={i.key}
+                              onClick={() =>
+                                setDraft({
+                                  ...draft,
+                                  permissions: on
+                                  ? draft.permissions.filter((p) => p !== i.key)
+                                  : [...draft.permissions, i.key],
+                                })
+                              }
+                              className={`flex items-start gap-2.5 rounded-lg border p-2.5 cursor-pointer select-none transition-all ${
+                                on
+                                  ? "border-primary bg-primary/10 shadow-xs ring-1 ring-primary/20"
+                                  : "border-border/60 hover:border-primary/40 bg-background/50"
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={on}
+                                onChange={() => {}}
+                                className="mt-0.5 h-4 w-4 rounded text-primary focus:ring-primary"
+                              />
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
+                                  <span>{i.label}</span>
+                                  <span className="text-[10px] text-muted-foreground font-normal">({i.labelBn})</span>
+                                </div>
+                                <p className="mt-0.5 text-[10px] leading-tight text-muted-foreground">
+                                  {i.description}
+                                </p>
                               </div>
-                              <p className="mt-0.5 text-[10px] leading-tight text-muted-foreground">
-                                {i.description}
-                              </p>
                             </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>
