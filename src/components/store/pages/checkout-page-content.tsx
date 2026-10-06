@@ -266,7 +266,7 @@ export function CheckoutPageContent({
   };
 
   return (
-    <div className={cx("mx-auto px-4 pb-28 pt-6 sm:pb-10 sm:pt-8", poripati ? "max-w-7xl" : "max-w-6xl")}>
+    <div className={cx("mx-auto px-4 pb-6 pt-6 sm:pb-10 sm:pt-8", poripati ? "max-w-7xl" : "max-w-6xl")}>
       <div className={cx("text-center", poripati && "border-b border-[var(--st-border)] pb-7")}>
         {poripati && <div className="mb-2 text-[10px] font-bold uppercase text-[var(--st-primary)]">নিরাপদ চেকআউট</div>}
         <Heading as="h1" className="text-2xl sm:text-3xl font-extrabold text-center">
