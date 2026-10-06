@@ -100,9 +100,7 @@ function baseGroups(): ContentGroup[] {
         t("cat_title", "Category section title", "Shop by category"),
         on("featured_show", "Show featured section"),
         t("featured_title", "Featured section title", "Best sellers"),
-        t("featured_sub", "Featured section subtitle", "Most ordered products this month"),
         t("latest_title", "New arrivals title", "New arrivals"),
-        t("latest_sub", "New arrivals subtitle", "Freshly added to the store"),
       ],
     },
     {
