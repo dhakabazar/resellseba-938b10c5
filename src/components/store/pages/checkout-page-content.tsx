@@ -217,10 +217,8 @@ export function CheckoutPageContent({
     nav({ to: store.url("/thanks"), search: { n: row.order_number } });
   }
 
-  const inp = cx(
-    "w-full rounded-[var(--st-radius-sm)] border bg-[var(--st-surface)] px-3.5 py-3 text-base text-[var(--st-fg)] outline-none placeholder:text-[var(--st-muted)] focus:border-[var(--st-primary)] sm:text-sm",
-    borderc,
-  );
+  const inp =
+    "w-full bg-transparent text-sm text-[var(--st-fg)] outline-none placeholder:text-muted-foreground/35 placeholder:font-normal leading-relaxed";
 
   if (!lines.length)
     return (
@@ -233,6 +231,23 @@ export function CheckoutPageContent({
         </div>
       </div>
     );
+
+  function getAreaCharge(areaVal: DeliveryArea) {
+    if (!lines.length) return 0;
+    const perItem = lines.map((x) =>
+      productDeliveryCharge(x.listing.product ?? {}, areaVal, {
+        inside: x.listing.extra_delivery_inside,
+        outside: x.listing.extra_delivery_outside,
+      })
+    );
+    return Math.max(0, ...perItem);
+  }
+
+  const AREA_NAMES: Record<string, string> = {
+    inside_dhaka: "ঢাকার ভেতরে",
+    sub_dhaka: "সাব ঢাকা",
+    outside_dhaka: "ঢাকার বাইরে",
+  };
 
   return (
     <div className={cx("mx-auto px-4 pb-28 pt-6 sm:pb-10 sm:pt-8", poripati ? "max-w-7xl" : "max-w-6xl")}>
@@ -252,8 +267,8 @@ export function CheckoutPageContent({
           noValidate
           className={cx("space-y-4 border bg-[var(--st-surface)] p-4 sm:p-5", borderc, !poripati && "rounded-[var(--st-radius)]")}
         >
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="আপনার নাম (Your name)" required error={touched.name ? errors.name : null}>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="আপনার নাম" required error={touched.name ? errors.name : null}>
               <input
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: sanitizeName(e.target.value) })}
@@ -265,7 +280,7 @@ export function CheckoutPageContent({
               />
             </Field>
 
-            <Field label="মোবাইল নম্বর (Mobile number)" required error={touched.phone ? errors.phone : null} hint="১১ ডিজিট, 01 দিয়ে শুরু">
+            <Field label="মোবাইল নম্বর" required error={touched.phone ? errors.phone : null} hint="১১ ডিজিট, 01 দিয়ে শুরু">
               <input
                 value={form.phone}
                 onChange={(e) => setForm({ ...form, phone: normalizePhone(e.target.value) })}
@@ -278,9 +293,9 @@ export function CheckoutPageContent({
             </Field>
           </div>
 
-          <Field label="সম্পূর্ণ ঠিকানা (Full address)" required error={touched.address ? errors.address : null}>
+          <Field label="সম্পূর্ণ ঠিকানা" required error={touched.address ? errors.address : null}>
             <textarea
-              rows={3}
+              rows={2}
               value={form.address}
               onChange={(e) => setForm({ ...form, address: e.target.value })}
               onBlur={() => setTouched((t) => ({ ...t, address: true }))}
@@ -290,53 +305,74 @@ export function CheckoutPageContent({
             />
           </Field>
 
+          {/* Order note positioned right below address */}
           <div>
-            <div className="mb-1.5 text-xs font-semibold text-[var(--st-fg)]">ডেলিভারি এলাকা (Delivery area)</div>
-            <div className="grid grid-cols-3 gap-2">
-              {AREAS.map((a) => (
-                <button
-                  key={a.value}
-                  type="button"
-                  onClick={() => setForm({ ...form, area: a.value })}
-                  aria-pressed={form.area === a.value}
-                  className={cx(
-                    "rounded-[var(--st-radius-sm)] border px-2 py-2.5 text-xs font-semibold transition-all sm:text-sm",
-                    form.area === a.value
-                      ? "border-[var(--st-primary)] bg-[var(--st-primary)] text-[var(--st-on-primary)] shadow-sm"
-                      : cx(borderc, "text-[var(--st-fg)] hover:border-[var(--st-primary)] bg-[var(--st-bg-alt)]/40"),
-                  )}
-                >
-                  {a.label}
-                </button>
-              ))}
-            </div>
+            {!noteOpen ? (
+              <button
+                type="button"
+                onClick={() => setNoteOpen(true)}
+                className={cx("inline-flex items-center gap-1.5 text-xs font-medium text-[var(--st-muted)] hover:text-[var(--st-primary)] transition-colors")}
+              >
+                <Plus className="h-3.5 w-3.5" />
+                অর্ডার নোট যোগ করুন (ঐচ্ছিক)
+              </button>
+            ) : (
+              <Field label="অর্ডার নোট (ঐচ্ছিক)">
+                <textarea
+                  rows={2}
+                  autoFocus
+                  value={form.notes}
+                  onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                  placeholder="পণ্য বা ডেলিভারি সম্পর্কে বিশেষ কিছু জানানোর থাকলে লিখুন..."
+                  className={inp}
+                />
+              </Field>
+            )}
           </div>
 
           <div>
-            <button
-              type="button"
-              onClick={() => setNoteOpen((v) => !v)}
-              className={cx("inline-flex items-center gap-1.5 text-xs font-medium", muted, "hover:text-[var(--st-primary)]")}
-            >
-              <Plus className={cx("h-3.5 w-3.5 transition-transform", noteOpen && "rotate-45")} />
-              অর্ডার নোট যোগ করুন (Optional)
-            </button>
-            {noteOpen && (
-              <textarea
-                rows={2}
-                autoFocus
-                value={form.notes}
-                onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                placeholder="পণ্য বা ডেলিভারি সম্পর্কে বিশেষ কিছু জানানোর থাকলে লিখুন..."
-                className={cx(inp, "mt-2")}
-              />
-            )}
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-xs font-semibold text-[var(--st-fg)]">ডেলিভারি এলাকা</span>
+              <span className={cx("text-[11px]", muted)}>এলাকা নির্বাচন করুন</span>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {AREAS.map((a) => {
+                const charge = getAreaCharge(a.value);
+                const chargeText = charge === 0 ? "ফ্রি ডেলিভারি" : `৳${charge}`;
+                const isSelected = form.area === a.value;
+
+                return (
+                  <button
+                    key={a.value}
+                    type="button"
+                    onClick={() => setForm({ ...form, area: a.value })}
+                    aria-pressed={isSelected}
+                    className={cx(
+                      "flex flex-col items-center justify-center rounded-[var(--st-radius-sm)] border py-2.5 px-2 text-center transition-all",
+                      isSelected
+                        ? "border-[var(--st-primary)] bg-[var(--st-primary)] text-[var(--st-on-primary)] shadow-sm font-bold"
+                        : cx(borderc, "text-[var(--st-fg)] hover:border-[var(--st-primary)]/60 bg-[var(--st-surface)] font-medium"),
+                    )}
+                  >
+                    <span className="text-xs sm:text-sm">{AREA_NAMES[a.value] || a.label}</span>
+                    <span
+                      className={cx(
+                        "text-[11px] mt-0.5 font-semibold",
+                        isSelected ? "opacity-95 text-[var(--st-on-primary)]" : "text-[var(--st-primary)]",
+                      )}
+                    >
+                      {chargeText}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* Payment Method Selector */}
           <div>
             <div className="mb-2.5 flex items-baseline justify-between gap-2">
-              <div className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--st-fg)]">পেমেন্ট মেথড (Payment Method)</div>
+              <div className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--st-fg)]">পেমেন্ট মেথড</div>
               <span className={cx("text-[11px]", muted)}>একটি নির্বাচন করুন</span>
             </div>
 
@@ -460,34 +496,26 @@ export function CheckoutPageContent({
                 {/* Form fields */}
                 <div className="p-4 space-y-3">
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <div>
-                      <label className="block text-xs font-bold text-[var(--st-fg)] mb-1.5">
-                        ট্রানজেকশন আইডি (TrxID) <span className="text-[var(--st-primary)]">*</span>
-                      </label>
+                    <Field label="ট্রানজেকশন আইডি (TrxID)" required hint="টাকা পাঠানোর পর প্রাপ্ত TrxID">
                       <input
                         type="text"
                         required
                         value={manualTrxId}
                         onChange={(e) => setManualTrxId(e.target.value)}
                         placeholder="TrxID দিন (যেমন: 9J28DA10X)"
-                        className={cx(inp, "py-2.5 text-sm uppercase font-mono tracking-wider font-semibold focus:ring-2 focus:ring-[var(--st-primary)]/20")}
+                        className={cx(inp, "uppercase font-mono tracking-wider font-semibold")}
                       />
-                      <span className={cx("mt-1 block text-[10px]", muted)}>টাকা পাঠানোর পর প্রাপ্ত TrxID লিখুন</span>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-[var(--st-fg)] mb-1.5">
-                        টাকা পাঠানোর নম্বর <span className={cx("text-[11px] font-normal", muted)}>(ঐচ্ছিক)</span>
-                      </label>
+                    </Field>
+                    <Field label="টাকা পাঠানোর নম্বর" hint="ঐচ্ছিক">
                       <input
                         type="text"
                         inputMode="numeric"
                         value={manualSender}
                         onChange={(e) => setManualSender(e.target.value)}
                         placeholder="01XXXXXXXXX"
-                        className={cx(inp, "py-2.5 text-sm tracking-wide")}
+                        className={cx(inp, "tracking-wide")}
                       />
-                      <span className={cx("mt-1 block text-[10px]", muted)}>যে নম্বর থেকে টাকা পাঠিয়েছেন</span>
-                    </div>
+                    </Field>
                   </div>
                 </div>
               </div>
@@ -524,7 +552,7 @@ export function CheckoutPageContent({
         </form>
 
         <aside className={cx("h-fit space-y-4 border bg-[var(--st-surface)] p-4 sm:p-5", borderc, !poripati && "rounded-[var(--st-radius)]", poripati && "lg:sticky lg:top-32")}>
-          <Heading className="text-base">Your cart ({store.cartCount})</Heading>
+          <Heading className="text-base">আপনার কার্ট ({store.cartCount})</Heading>
           <div className="space-y-3">
             {lines.map(({ line, listing }) => {
               const img = store.image(listing);
@@ -572,22 +600,22 @@ export function CheckoutPageContent({
           </div>
 
           <div className={cx("space-y-1.5 border-t pt-3 text-sm", borderc)}>
-            <Row label="Subtotal" value={bdt(totals.subtotal)} />
-            <Row label="Delivery charge" value={totals.ship ? bdt(totals.ship) : "Free"} />
+            <Row label="সাবটোটাল" value={bdt(totals.subtotal)} />
+            <Row label="ডেলিভারি চার্জ" value={totals.ship ? bdt(totals.ship) : "ফ্রি"} />
             {totals.multi && (
               <p className={cx("text-[11px] leading-snug", muted)}>
                 {totals.ship
-                  ? `Highest single-product delivery charge applied${totals.shipFrom ? ` (${totals.shipFrom})` : ""} — charges are not added up.`
-                  : "Free delivery on this cart."}
+                  ? `কার্টের সর্বোচ্চ ডেলিভারি চার্জ প্রযোজ্য হয়েছে — আলাদা চার্জ যোগ হবে না।`
+                  : "এই কার্টে ডেলিভারি সম্পূর্ণ ফ্রি।"}
               </p>
             )}
-            <Row label="Total payable" value={bdt(totals.total)} bold />
+            <Row label="সর্বমোট পরিশোধযোগ্য" value={bdt(totals.total)} bold />
           </div>
           <Link
             to={store.url("/")}
             className={cx("flex items-center justify-center gap-1 text-xs hover:text-[var(--st-primary)]", muted)}
           >
-            <ChevronDown className="h-3.5 w-3.5 rotate-90" /> Continue shopping
+            <ChevronDown className="h-3.5 w-3.5 rotate-90" /> আরও কেনাকাটা করুন
           </Link>
         </aside>
       </div>
@@ -601,23 +629,35 @@ function Field({
   hint,
   error,
   children,
+  className,
 }: {
   label: string;
   required?: boolean;
   hint?: string;
   error?: string | null;
   children: React.ReactNode;
+  className?: string;
 }) {
   return (
-    <div>
-      <div className="mb-1.5 flex items-baseline justify-between gap-2">
-        <label className="text-xs font-medium text-[var(--st-fg)]">
-          {label} {required && <span className="text-[var(--st-primary)]">*</span>}
-        </label>
-        {hint && !error && <span className={cx("text-[11px]", muted)}>{hint}</span>}
+    <div className="space-y-1">
+      <div
+        className={cx(
+          "relative rounded-[var(--st-radius-sm)] border bg-[var(--st-surface)] px-3 pt-1.5 pb-2 transition-all focus-within:border-[var(--st-primary)] focus-within:ring-1 focus-within:ring-[var(--st-primary)]/30",
+          error ? "border-destructive ring-1 ring-destructive/30" : borderc,
+          className,
+        )}
+      >
+        <div className="mb-0.5 flex items-center justify-between gap-2">
+          <label className="text-[11px] font-semibold text-[var(--st-fg)]/80 select-none leading-tight">
+            {label} {required && <span className="text-destructive font-bold">*</span>}
+          </label>
+          {hint && !error && (
+            <span className={cx("text-[10px]", muted, "opacity-75 leading-tight")}>{hint}</span>
+          )}
+        </div>
+        {children}
       </div>
-      {children}
-      {error && <p className="mt-1 text-[11px] font-medium text-[var(--st-primary)]">{error}</p>}
+      {error && <p className="text-[11px] font-medium text-destructive px-1">{error}</p>}
     </div>
   );
 }
