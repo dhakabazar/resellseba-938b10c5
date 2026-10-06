@@ -53,6 +53,7 @@ import { OrderTabs } from "@/components/OrderTabs";
 import { PickListModal } from "@/components/pick-list-modal";
 import { OrderSearch, type OrderSearchMode } from "@/components/order-search";
 import { Pagination, usePaginated } from "@/components/data-list";
+import { useResellerAccess } from "@/lib/reseller-staff";
 import {
   OrderFilterBar,
   applyOrderFilters,
@@ -205,6 +206,7 @@ function OrdersPage() {
   const [page, setPage] = useState(1);
   const [editId, setEditId] = useState<string | null>(null);
   const [statusModal, setStatusModal] = useState<{ open: boolean; orderId: string; currentStatus: string; isBulk?: boolean } | null>(null);
+  const { canCreateOrder, canEditOrder } = useResellerAccess();
   const { status: deposit } = useDepositStatus(resellerId);
   const { texts: depositTexts } = useDepositSettings();
   const [confirmModal, setConfirmModal] = useState<{
@@ -558,12 +560,14 @@ function OrdersPage() {
             >
               <Download className="h-4 w-4" /> <span className="hidden xs:inline">Export</span>
             </button>
-            <button
-              onClick={() => setOpen(true)}
-              className="btn-brand inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium whitespace-nowrap"
-            >
-              <Plus className="h-4 w-4" /> New order
-            </button>
+            {canCreateOrder && (
+              <button
+                onClick={() => setOpen(true)}
+                className="btn-brand inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium whitespace-nowrap"
+              >
+                <Plus className="h-4 w-4" /> New order
+              </button>
+            )}
           </div>
         }
       />

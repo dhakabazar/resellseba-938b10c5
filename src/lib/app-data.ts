@@ -85,8 +85,7 @@ export function primeMyReseller(userId: string | null | undefined, row: unknown)
   resellerPromise = Promise.resolve(row as MyReseller);
 }
 
-/** One `resellers` lookup per signed-in user (shared by every reseller screen). */
-
+/** One `resellers` lookup per signed-in user (shared by every reseller screen, works for both owners & staff). */
 export function getMyReseller(userId?: string | null, force = false): Promise<MyReseller | null> {
   if (force || (userId && resellerForUser && resellerForUser !== userId)) {
     resellerPromise = null;
@@ -98,16 +97,45 @@ export function getMyReseller(userId?: string | null, force = false): Promise<My
       try {
         await waitForPanelBootstrap();
         if (resellerPromise && resellerPromise !== p) return resellerPromise;
+
         let uid = userId ?? null;
         if (!uid) uid = (await supabase.auth.getUser()).data.user?.id ?? null;
         if (!uid) return null;
         resellerForUser = uid;
-        const { data } = await supabase
+
+        // 1. Direct owner lookup
+        const { data: ownerReseller } = await supabase
           .from("resellers")
           .select("id, code, business_name, status, avatar_url")
           .eq("user_id", uid)
           .maybeSingle();
-        return (data as MyReseller | null) ?? null;
+
+        if (ownerReseller) return ownerReseller as MyReseller;
+
+        // 2. Staff lookup: find the owner's reseller via reseller_staff
+        const { data: staffRow } = await supabase
+          .from("reseller_staff")
+          .select("reseller_id, resellers!inner(id, code, business_name, status, avatar_url)")
+          .eq("user_id", uid)
+          .eq("active", true)
+          .maybeSingle();
+
+        if (staffRow?.resellers) {
+          return staffRow.resellers as unknown as MyReseller;
+        }
+
+        // 3. Fallback via current_reseller_id RPC
+        const { data: currentResellerId } = await supabase.rpc("current_reseller_id");
+        if (currentResellerId) {
+          const { data: byRpc } = await supabase
+            .from("resellers")
+            .select("id, code, business_name, status, avatar_url")
+            .eq("id", currentResellerId)
+            .maybeSingle();
+          if (byRpc) return byRpc as MyReseller;
+        }
+
+        return null;
       } catch {
         return null;
       }
