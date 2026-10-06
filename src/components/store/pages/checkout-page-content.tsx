@@ -285,7 +285,7 @@ export function CheckoutPageContent({
             return h;
           })()}
         </Heading>
-        <p className={cx("mx-auto mt-1 max-w-xl text-xs sm:text-sm text-center", muted)}>
+        <p className={cx("mx-auto mt-1 max-w-lg text-[11px] sm:text-xs text-center leading-relaxed", muted)}>
           {(() => {
             const n = store.content.text("co_note");
             if (!n || n.startsWith("Fill in your delivery details")) {
