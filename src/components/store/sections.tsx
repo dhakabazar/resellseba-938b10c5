@@ -61,30 +61,28 @@ export function Hero() {
     </div>
   );
 
-  /* Bazaar & সহজ শপ — পুরো চওড়া ছবির ব্যানার, কোনো টেক্সট বা বাটন ছাড়া (কোনো অংশ যেন না কাটে) */
+  /* Bazaar & সহজ শপ — শুধু পিওর ব্যানার ইমেজ, কোনো টেক্সট বা বাটন কখনোই থাকবে না */
   if (theme.layout.hero === "banner" || theme.layout.hero === "sohoj" || theme.id === "bazaar") {
-    const banner = media ? (
-      <img
-        src={media}
-        alt={name}
-        loading="eager"
-        className="block h-auto w-full max-w-full object-contain"
-      />
-    ) : (
-      <div className="bg-[var(--st-primary)] px-5 py-10 text-center text-[var(--st-on-primary)]">
-        <div className="text-2xl font-extrabold leading-tight md:text-4xl">{headline}</div>
-        <p className="mx-auto mt-2 max-w-xl text-sm opacity-90">{sub}</p>
-      </div>
-    );
+    if (!media) return null;
     return (
       <section className="mx-auto max-w-6xl px-3 pt-3 sm:px-4 sm:pt-4">
         <div className={cx("overflow-hidden rounded-[var(--st-radius)] border bg-[var(--st-surface)]", borderc)}>
           {firstSlug ? (
             <Link to={store.url(`/p/${firstSlug}`)} className="block">
-              {banner}
+              <img
+                src={media}
+                alt={name}
+                loading="eager"
+                className="block h-auto w-full max-w-full object-contain"
+              />
             </Link>
           ) : (
-            banner
+            <img
+              src={media}
+              alt={name}
+              loading="eager"
+              className="block h-auto w-full max-w-full object-contain"
+            />
           )}
         </div>
       </section>
