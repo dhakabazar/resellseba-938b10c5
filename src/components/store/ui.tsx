@@ -304,21 +304,21 @@ export function ProductCard({ listing }: { listing: StoreListing }) {
           <ShoppingBag className="h-2.5 w-2.5" /> {sold} sold
         </span>
       </div>
-      <div className="flex flex-1 flex-col justify-between p-3 sm:p-4">
+      <div className="flex flex-1 flex-col justify-between p-2.5 sm:p-3.5">
         <h3 className="truncate text-[13px] sm:text-sm font-semibold leading-snug text-[var(--st-fg)]" title={title(listing)}>
           {title(listing)}
         </h3>
-        <div className="mt-3 flex items-center justify-between gap-2">
-          <Price value={price} className="text-base sm:text-lg font-extrabold" />
-          <button
-            type="button"
-            onClick={handleDirectOrder}
-            className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full bg-[var(--st-primary)] px-3.5 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-bold text-[var(--st-on-primary)] shadow-sm transition-all hover:brightness-105 hover:shadow active:scale-95"
-          >
+        <button
+          type="button"
+          onClick={handleDirectOrder}
+          className="mt-2.5 flex w-full items-center justify-between gap-1 rounded-full bg-[var(--st-primary)] px-3 py-2 text-xs sm:text-[13px] font-bold text-[var(--st-on-primary)] shadow-sm transition-all hover:brightness-105 hover:shadow active:scale-[0.98]"
+        >
+          <span className="font-extrabold tracking-tight">{bdt(price)}</span>
+          <span className="inline-flex items-center gap-1">
             <ShoppingBasket className="h-3.5 w-3.5" />
             অর্ডার করুন
-          </button>
-        </div>
+          </span>
+        </button>
       </div>
     </Link>
   );
