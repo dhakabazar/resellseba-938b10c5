@@ -536,7 +536,7 @@ export function StoreHeader() {
                 <Logo />
               </div>
               <SearchBox className="hidden flex-1 md:block" />
-              <div className="ml-auto flex items-center gap-1.5 sm:gap-2 text-[var(--st-on-primary)]">
+              <div className="ml-auto flex items-center gap-3 sm:gap-3.5 text-[var(--st-on-primary)]">
                 {settings?.support_phone && (
                   <a
                     href={`tel:${settings.support_phone}`}
@@ -589,7 +589,7 @@ export function StoreHeader() {
               <div className="mx-auto md:mx-0">
                 <Logo />
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3 sm:gap-3.5">
                 <SearchBox className="hidden w-64 lg:block" />
                 {settings?.support_phone && (
                   <a
@@ -634,7 +634,7 @@ export function StoreHeader() {
             <div className="hidden min-w-0 flex-1 justify-center md:flex">
               <CategoryNav variant="row" />
             </div>
-            <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+            <div className="flex shrink-0 items-center gap-3 sm:gap-3.5">
               <SearchBox className="hidden w-56 lg:block" />
               {settings?.support_phone && (
                 <a
@@ -676,7 +676,7 @@ export function StoreHeader() {
               <Logo />
             </div>
             <SearchBox className="mx-1 min-w-0 flex-1 max-w-md sm:mx-2" />
-            <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+            <div className="flex shrink-0 items-center gap-3 sm:gap-3.5">
               {settings?.support_phone && (
                 <a
                   href={`tel:${settings.support_phone}`}

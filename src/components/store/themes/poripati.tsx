@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { ArrowRight, Check, ChevronDown, ChevronLeft, ChevronRight, Menu, Minus, Plus, Search, ShoppingBag, Truck, X } from "lucide-react";
+import { ArrowRight, Check, ChevronDown, ChevronLeft, ChevronRight, Menu, Minus, Phone, Plus, Search, ShoppingBag, Truck, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { inCategory, categoryIdsOf } from "@/lib/product-categories";
@@ -44,24 +44,56 @@ export function PoripatiChrome({ children }: { children: ReactNode }) {
     {settings?.announcement && <div className="bg-[var(--st-fg)] px-4 py-2 text-center text-[11px] font-semibold text-[var(--st-surface)]">{settings.announcement}</div>}
     <header className="sticky top-0 z-40 border-b border-[var(--st-border)] bg-[var(--st-surface)]/95 backdrop-blur">
       <div className="mx-auto max-w-7xl px-4">
-        <div className="grid h-16 grid-cols-[auto_1fr_auto] items-center gap-4 md:h-20 md:grid-cols-[1fr_auto_1fr]">
-          <button aria-label="Open menu" onClick={() => setOpen(true)} className="md:hidden"><Menu className="h-5 w-5" /></button>
-          <div className="hidden max-w-xs md:block"><SearchForm /></div><div className="justify-self-center"><Brand /></div>
-          <div className="flex items-center justify-end gap-3 sm:gap-4">
-            <Link to={url("/shop")} className="hidden text-sm font-medium md:block">Shop all</Link>
+        {/* Mobile Header */}
+        <div className="flex h-16 items-center justify-between gap-3 md:hidden">
+          <Brand />
+          <div className="flex items-center gap-3 sm:gap-4">
+            <button
+              type="button"
+              aria-label="Search"
+              onClick={() => setSearchOpen((s) => !s)}
+              className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--st-fg)] hover:bg-[var(--st-bg-alt)] transition-colors"
+            >
+              {searchOpen ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
+            </button>
+            <Link
+              to={url("/checkout")}
+              aria-label="Cart"
+              className="relative flex h-9 w-9 items-center justify-center rounded-full text-[var(--st-fg)] hover:bg-[var(--st-bg-alt)] transition-colors"
+            >
+              <ShoppingBag className="h-5 w-5" />
+              {cartCount > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-[var(--st-primary)] px-1 text-[9px] font-bold text-[var(--st-on-primary)]">
+                  {cartCount}
+                </span>
+              )}
+            </Link>
+            <button
+              aria-label="Open menu"
+              onClick={() => setOpen(true)}
+              className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--st-fg)] hover:bg-[var(--st-bg-alt)] transition-colors"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Desktop Header */}
+        <div className="hidden h-20 grid-cols-[1fr_auto_1fr] items-center gap-4 md:grid">
+          <div className="max-w-xs"><SearchForm /></div>
+          <div className="justify-self-center"><Brand /></div>
+          <div className="flex items-center justify-end gap-4">
+            <Link to={url("/shop")} className="text-sm font-medium">Shop all</Link>
             {phone && (
               <a
                 href={`tel:${phone}`}
-                className="hidden items-center gap-1.5 rounded-full border border-[var(--st-border)] px-3 py-1.5 text-xs font-semibold text-[var(--st-fg)] transition-all hover:border-[var(--st-primary)] hover:text-[var(--st-primary)] md:flex"
+                className="flex items-center gap-1.5 rounded-full border border-[var(--st-border)] px-3.5 py-1.5 text-xs font-semibold text-[var(--st-fg)] transition-all hover:border-[var(--st-primary)] hover:text-[var(--st-primary)]"
               >
                 <Phone className="h-3 w-3 text-[var(--st-primary)]" />
                 <span>{phone}</span>
               </a>
             )}
-            <button type="button" aria-label="Search" onClick={() => setSearchOpen(s => !s)} className="p-1.5 text-[var(--st-fg)] md:hidden">
-              {searchOpen ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
-            </button>
-            <Link to={url("/checkout")} aria-label="Cart" className="relative p-1">
+            <Link to={url("/checkout")} aria-label="Cart" className="relative p-1.5">
               <ShoppingBag className="h-5 w-5" />
               {cartCount > 0 && <span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-[var(--st-primary)] px-1 text-[9px] font-bold text-[var(--st-on-primary)]">{cartCount}</span>}
             </Link>
