@@ -12,7 +12,9 @@ import { useServerFn } from "@tanstack/react-start";
 import { listActiveGateways, startGatewayPayment } from "@/lib/gateways.functions";
 import { PaymentLogo } from "@/components/payments/payment-brand";
 import { useStore } from "@/components/store/store-context";
-import { borderc, cx, EmptyState, GhostButton, Heading, muted, PrimaryButton } from "@/components/store/ui";
+import { borderc, cx, EmptyState, GhostButton, Heading, muted, PrimaryButton, ProductGrid, SectionHead } from "@/components/store/ui";
+import { Button } from "@/components/ui/button";
+import { PoripatiGrid } from "@/components/store/themes/poripati";
 
 type PayMethod = { method: string; label: string; instructions: string | null };
 type GatewayOption = { value: string; method: string; label: string; instructions: null; provider: string };
@@ -38,6 +40,7 @@ export function CheckoutPageContent({
   const code = propCode || store.code;
   const nav = useNavigate();
   const poripati = store.theme.id === "poripati";
+  const [recVisible, setRecVisible] = useState(16);
   /** Manual methods arrive with the storefront bootstrap payload — no extra call. */
   const methods: PayMethod[] = store.paymentMethods.map((m) => ({
     method: m.method,
@@ -69,6 +72,12 @@ export function CheckoutPageContent({
         .map((c) => ({ line: c, listing: store.byListingId(c.listingId) }))
         .filter((x) => x.listing) as { line: { listingId: string; qty: number }; listing: NonNullable<ReturnType<typeof store.byListingId>> }[],
     [store.cart, store],
+  );
+
+  const cartListingIds = useMemo(() => new Set(lines.map((l) => l.listing.id)), [lines]);
+  const recommended = useMemo(
+    () => store.listings.filter((l) => !cartListingIds.has(l.id)),
+    [store.listings, cartListingIds],
   );
 
   const inlineBtnRef = useRef<HTMLDivElement | null>(null);
@@ -636,6 +645,28 @@ export function CheckoutPageContent({
           </div>
         </aside>
       </div>
+
+      {recommended.length > 0 && (
+        <section className="mt-12 sm:mt-16 border-t border-[var(--st-border)] pt-8 sm:pt-10">
+          <SectionHead title="আপনার পছন্দ হতে পারে" subtitle="অন্যান্য আকর্ষণীয় ও জনপ্রিয় পণ্যসমূহ" />
+          {poripati ? (
+            <PoripatiGrid listings={recommended.slice(0, recVisible)} />
+          ) : (
+            <ProductGrid listings={recommended.slice(0, recVisible)} />
+          )}
+          {recVisible < recommended.length && (
+            <div className="mt-8 sm:mt-10 flex justify-center">
+              <Button
+                variant="outline"
+                className="rounded-full px-8 py-2.5 font-bold text-sm hover:bg-[var(--st-primary)] hover:text-[var(--st-on-primary)] transition-colors shadow-sm"
+                onClick={() => setRecVisible((v) => v + 16)}
+              >
+                আরও দেখুন
+              </Button>
+            </div>
+          )}
+        </section>
+      )}
     </div>
   );
 }

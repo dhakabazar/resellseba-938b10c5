@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Minus, Plus, ShoppingBag, Zap } from "lucide-react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { inCategory, categoryIdsOf } from "@/lib/product-categories";
 import { addToCart } from "@/lib/store-cart";
 import { trackAddToCart, trackViewContent } from "@/lib/tracking";
@@ -78,7 +79,14 @@ export function ProductPageContent({ slug, code: propCode }: { slug: string; cod
   const detailsText = stripHtml(
     [listing.custom_description || p.short_description || "", p.description || ""].filter(Boolean).join("\n\n"),
   );
-  const related = store.listings.filter((l) => l.id !== listing.id && l.product && categoryIdsOf(p).some((cid) => inCategory(l.product!, cid))).slice(0, 4);
+  const [relatedVisible, setRelatedVisible] = useState(16);
+  const sameCategory = store.listings.filter(
+    (l) => l.id !== listing.id && l.product && categoryIdsOf(p).some((cid) => inCategory(l.product!, cid)),
+  );
+  const otherProducts = store.listings.filter(
+    (l) => l.id !== listing.id && !sameCategory.some((s) => s.id === l.id),
+  );
+  const recommended = useMemo(() => [...sameCategory, ...otherProducts], [sameCategory, otherProducts]);
 
   const jsonLd = {
     "@context": "https://schema.org/",
@@ -217,10 +225,21 @@ export function ProductPageContent({ slug, code: propCode }: { slug: string; cod
         </section>
       )}
 
-      {related.length > 0 && (
-        <section className="mt-16">
-          <SectionHead title="আপনার পছন্দ হতে পারে" subtitle="সম্পর্কিত পণ্যসমূহ" />
-          <ProductGrid listings={related} />
+      {recommended.length > 0 && (
+        <section className="mt-14 sm:mt-16 border-t border-[var(--st-border)] pt-10">
+          <SectionHead title="আপনার পছন্দ হতে পারে" subtitle="সম্পর্কিত ও জনপ্রিয় পণ্যসমূহ" />
+          <ProductGrid listings={recommended.slice(0, relatedVisible)} />
+          {relatedVisible < recommended.length && (
+            <div className="mt-10 flex justify-center">
+              <Button
+                variant="outline"
+                className="rounded-full px-8 py-2.5 font-bold text-sm hover:bg-[var(--st-primary)] hover:text-[var(--st-on-primary)] transition-colors shadow-sm"
+                onClick={() => setRelatedVisible((v) => v + 16)}
+              >
+                আরও দেখুন
+              </Button>
+            </div>
+          )}
         </section>
       )}
 

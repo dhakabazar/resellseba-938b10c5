@@ -6,8 +6,10 @@
  * রিটার্ন পলিসি tab block and related products.
  */
 import { Link } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Minus, Phone, Plus, ShoppingBasket } from "lucide-react";
+import { inCategory, categoryIdsOf } from "@/lib/product-categories";
+import { Button } from "@/components/ui/button";
 import { useStore, type StoreListing } from "./store-context";
 import { CopyButton, ImageDownloadTools } from "./reseller-tools";
 import { borderc, cx, muted, Price, ProductGrid, ProductImageGallery, SectionHead } from "./ui";
@@ -32,6 +34,7 @@ export function SohojProductPage({
   const [idx, setIdx] = useState(0);
   const [qty, setQty] = useState(1);
   const [tab, setTab] = useState<"desc" | "return">("desc");
+  const [relatedVisible, setRelatedVisible] = useState(16);
   const mainOrderRef = useRef<HTMLDivElement>(null);
   const [isMainVisible, setIsMainVisible] = useState(true);
 
@@ -57,6 +60,14 @@ export function SohojProductPage({
   const phone = settings?.support_phone?.trim();
   const orderLabel = content.text("sohoj_order_label") || "অর্ডার করুন";
   const returnText = content.text("sohoj_return");
+
+  const sameCategory = store.listings.filter(
+    (l) => l.id !== listing.id && l.product && categoryIdsOf(p).some((cid) => inCategory(l.product!, cid)),
+  );
+  const otherProducts = store.listings.filter(
+    (l) => l.id !== listing.id && !sameCategory.some((s) => s.id === l.id),
+  );
+  const recommended = useMemo(() => [...sameCategory, ...otherProducts], [sameCategory, otherProducts]);
 
   return (
     <div className="mx-auto max-w-6xl px-3 pb-24 pt-3 lg:pb-8">
@@ -189,23 +200,24 @@ export function SohojProductPage({
         </div>
       </section>
 
-      {related.length > 0 && (
-        <section className="mt-6">
+      {recommended.length > 0 && (
+        <section className="mt-8 border-t border-[var(--st-border)] pt-8">
           <SectionHead
-            title="রিলেটেড প্রোডাক্টস"
-            action={
-              <Link
-                to={store.url("/")}
-                className={cx(
-                  "rounded-[var(--st-radius-sm)] border px-4 py-2 text-[13px] font-bold hover:border-[var(--st-primary)] hover:text-[var(--st-primary)]",
-                  borderc,
-                )}
-              >
-                সব দেখুন
-              </Link>
-            }
+            title="আপনার পছন্দ হতে পারে"
+            subtitle="সম্পর্কিত ও জনপ্রিয় পণ্যসমূহ"
           />
-          <ProductGrid listings={related} />
+          <ProductGrid listings={recommended.slice(0, relatedVisible)} />
+          {relatedVisible < recommended.length && (
+            <div className="mt-8 flex justify-center">
+              <Button
+                variant="outline"
+                className="rounded-full px-8 py-2.5 font-bold text-sm hover:bg-[var(--st-primary)] hover:text-[var(--st-on-primary)] transition-colors shadow-sm"
+                onClick={() => setRelatedVisible((v) => v + 16)}
+              >
+                আরও দেখুন
+              </Button>
+            </div>
+          )}
         </section>
       )}
 
