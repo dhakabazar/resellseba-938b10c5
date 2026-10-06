@@ -232,17 +232,31 @@ export function ProductPageContent({ slug, code: propCode }: { slug: string; cod
       {store.content.flag("pdp_sticky") && (
         <div
           className={cx(
-            "fixed inset-x-0 bottom-0 z-40 flex items-center gap-3 border-t bg-[var(--st-surface)] px-4 py-3 shadow-[0_-8px_20px_-10px_rgba(0,0,0,0.15)] lg:hidden",
+            "fixed inset-x-0 bottom-0 z-40 border-t bg-[var(--st-surface)]/95 backdrop-blur-md px-4 py-3 shadow-[0_-8px_25px_-10px_rgba(0,0,0,0.2)]",
             borderc,
           )}
         >
-          <div className="min-w-0 flex-1">
-            <div className="truncate text-xs text-[var(--st-muted)]">{title}</div>
-            <Price value={price} className="text-lg" />
+          <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-3 sm:gap-4">
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-xs font-medium text-[var(--st-muted)]">{title}</div>
+              <Price value={price} className="text-base sm:text-lg font-bold" />
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => add(false)}
+                disabled={!inStock}
+                className={cx(
+                  "hidden sm:inline-flex items-center gap-1.5 rounded-[var(--st-radius-sm)] border px-4 py-2.5 text-xs sm:text-sm font-semibold hover:bg-muted transition-colors disabled:opacity-50",
+                  borderc,
+                )}
+              >
+                <ShoppingBag className="h-4 w-4" /> কার্টে রাখুন
+              </button>
+              <PrimaryButton disabled={!inStock} onClick={() => add(true)} className="px-5 sm:px-7 py-2.5 animate-order-jiggle shadow-md font-bold text-xs sm:text-sm">
+                <Zap className="h-4 w-4" /> অর্ডার করুন
+              </PrimaryButton>
+            </div>
           </div>
-          <PrimaryButton disabled={!inStock} onClick={() => add(true)} className="px-5 py-2.5 animate-order-jiggle shadow-md font-bold">
-            <Zap className="h-4 w-4" /> Order now
-          </PrimaryButton>
         </div>
       )}
     </div>

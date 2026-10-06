@@ -207,36 +207,40 @@ export function SohojProductPage({
         </section>
       )}
 
-      {/* মোবাইল স্টিকি অর্ডার বার */}
+      {/* স্টিকি অর্ডার বার (Mobile & PC) */}
       <div
         className={cx(
-          "fixed inset-x-0 bottom-0 z-40 flex items-center gap-2 border-t bg-[var(--st-surface)] px-3 py-2.5 lg:hidden",
+          "fixed inset-x-0 bottom-0 z-40 border-t bg-[var(--st-surface)]/95 backdrop-blur-md px-4 py-2.5 shadow-[0_-8px_25px_-10px_rgba(0,0,0,0.2)]",
           borderc,
         )}
       >
-        <div className="min-w-0 flex-1">
-          <div className={cx("truncate text-[11px]", muted)}>{title}</div>
-          <Price value={price} className="text-base" />
+        <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <div className={cx("truncate text-xs font-medium", muted)}>{title}</div>
+            <Price value={price} className="text-base sm:text-lg font-bold" />
+          </div>
+          <div className="flex items-center gap-2">
+            {phone && (
+              <a
+                href={`tel:${phone}`}
+                aria-label="কল করুন"
+                className="flex items-center gap-1.5 rounded-[var(--st-radius-sm)] bg-[var(--st-accent)] px-3 py-2 text-xs font-bold text-[var(--st-on-accent)] hover:opacity-90"
+              >
+                <Phone className="h-3.5 w-3.5" /> <span className="hidden sm:inline">কল করুন</span>
+              </a>
+            )}
+            <button
+              onClick={() => onOrder(qty)}
+              disabled={!inStock}
+              className={cx(
+                "flex items-center gap-1.5 rounded-[var(--st-radius-sm)] px-5 py-2.5 text-xs sm:text-sm font-extrabold text-white animate-order-jiggle shadow-md disabled:opacity-50",
+                "bg-[var(--st-primary)]",
+              )}
+            >
+              <ShoppingBasket className="h-4 w-4" /> {orderLabel}
+            </button>
+          </div>
         </div>
-        {phone && (
-          <a
-            href={`tel:${phone}`}
-            aria-label="কল করুন"
-            className="grid h-10 w-10 shrink-0 place-items-center rounded-[var(--st-radius-sm)] bg-[var(--st-accent)] text-[var(--st-on-accent)]"
-          >
-            <Phone className="h-4 w-4" />
-          </a>
-        )}
-        <button
-          onClick={() => onOrder(qty)}
-          disabled={!inStock}
-          className={cx(
-            "flex items-center gap-1.5 rounded-[var(--st-radius-sm)] px-4 py-2.5 text-[13px] font-extrabold text-white disabled:opacity-50",
-            "bg-[var(--st-primary)]",
-          )}
-        >
-          <ShoppingBasket className="h-4 w-4" /> {orderLabel}
-        </button>
       </div>
     </div>
   );

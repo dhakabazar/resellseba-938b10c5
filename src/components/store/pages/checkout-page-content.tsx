@@ -267,16 +267,16 @@ export function CheckoutPageContent({
 
   return (
     <div className={cx("mx-auto px-4 pb-28 pt-6 sm:pb-10 sm:pt-8", poripati ? "max-w-7xl" : "max-w-6xl")}>
-      <div className={poripati ? "border-b border-[var(--st-border)] pb-7" : "text-center sm:text-left"}>
+      <div className={cx("text-center", poripati && "border-b border-[var(--st-border)] pb-7")}>
         {poripati && <div className="mb-2 text-[10px] font-bold uppercase text-[var(--st-primary)]">নিরাপদ চেকআউট</div>}
-        <Heading as="h1" className="text-2xl sm:text-3xl font-extrabold">
+        <Heading as="h1" className="text-2xl sm:text-3xl font-extrabold text-center">
           {(() => {
             const h = store.content.text("co_headline");
             if (!h || h === "Complete your order") return "অর্ডার সম্পন্ন করুন";
             return h;
           })()}
         </Heading>
-        <p className={cx("mx-auto mt-1.5 max-w-xl text-sm sm:mx-0", muted)}>
+        <p className={cx("mx-auto mt-1.5 max-w-xl text-sm text-center", muted)}>
           {(() => {
             const n = store.content.text("co_note");
             if (!n || n.startsWith("Fill in your delivery details")) {
@@ -534,29 +534,31 @@ export function CheckoutPageContent({
             )}
           </div>
 
-          {/* Mobile Floating Bottom CTA Bar - shown only when the inline button is scrolled out of view */}
+          {/* Floating Bottom CTA Bar (Mobile & PC) - shown only when the inline button is scrolled out of view */}
           <div
             className={cx(
-              "fixed inset-x-0 bottom-0 z-40 border-t bg-[var(--st-surface)]/95 backdrop-blur-md p-3 shadow-[0_-10px_30px_-15px_rgba(0,0,0,0.5)] transition-all duration-300 sm:hidden",
+              "fixed inset-x-0 bottom-0 z-40 border-t bg-[var(--st-surface)]/95 backdrop-blur-md p-3 shadow-[0_-10px_30px_-15px_rgba(0,0,0,0.5)] transition-all duration-300",
               borderc,
               isInlineBtnVisible ? "translate-y-full opacity-0 pointer-events-none" : "translate-y-0 opacity-100",
             )}
           >
-            <PrimaryButton
-              type="submit"
-              form="checkout-form"
-              onClick={submit}
-              disabled={busy}
-              className="w-full py-3.5 text-base font-bold justify-center animate-order-jiggle shadow-md"
-            >
-              {busy ? (
-                <>
-                  <Loader2 className="h-5 w-5 animate-spin" /> অর্ডার প্রসেস হচ্ছে...
-                </>
-              ) : (
-                `অর্ডার কনফার্ম করুন — ${bdt(totals.total)}`
-              )}
-            </PrimaryButton>
+            <div className="mx-auto max-w-lg">
+              <PrimaryButton
+                type="submit"
+                form="checkout-form"
+                onClick={submit}
+                disabled={busy}
+                className="w-full py-3.5 text-base font-bold justify-center animate-order-jiggle shadow-md"
+              >
+                {busy ? (
+                  <>
+                    <Loader2 className="h-5 w-5 animate-spin" /> অর্ডার প্রসেস হচ্ছে...
+                  </>
+                ) : (
+                  `অর্ডার কনফার্ম করুন — ${bdt(totals.total)}`
+                )}
+              </PrimaryButton>
+            </div>
           </div>
         </form>
 
