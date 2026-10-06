@@ -305,28 +305,32 @@ export function CheckoutPageContent({
             />
           </Field>
 
-          {/* Order note positioned right below address */}
+          {/* Collapsible Order note right below address */}
           <div>
-            {!noteOpen ? (
-              <button
-                type="button"
-                onClick={() => setNoteOpen(true)}
-                className={cx("inline-flex items-center gap-1.5 text-xs font-medium text-[var(--st-muted)] hover:text-[var(--st-primary)] transition-colors")}
-              >
-                <Plus className="h-3.5 w-3.5" />
-                অর্ডার নোট যোগ করুন (ঐচ্ছিক)
-              </button>
-            ) : (
-              <Field label="অর্ডার নোট (ঐচ্ছিক)">
-                <textarea
-                  rows={2}
-                  autoFocus
-                  value={form.notes}
-                  onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                  placeholder="পণ্য বা ডেলিভারি সম্পর্কে বিশেষ কিছু জানানোর থাকলে লিখুন..."
-                  className={inp}
-                />
-              </Field>
+            <button
+              type="button"
+              onClick={() => setNoteOpen((prev) => !prev)}
+              className={cx(
+                "inline-flex items-center gap-1 text-xs font-semibold text-[var(--st-primary)] hover:opacity-85 transition-opacity py-0.5",
+              )}
+            >
+              {noteOpen ? <Minus className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
+              <span>{noteOpen ? "অর্ডার নোট লুকান" : "অর্ডার নোট"}</span>
+            </button>
+
+            {noteOpen && (
+              <div className="mt-2">
+                <Field label="অর্ডার নোট">
+                  <textarea
+                    rows={2}
+                    autoFocus
+                    value={form.notes}
+                    onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                    placeholder="পণ্য বা ডেলিভারি সম্পর্কে বিশেষ কিছু জানানোর থাকলে লিখুন..."
+                    className={inp}
+                  />
+                </Field>
+              </div>
             )}
           </div>
 
