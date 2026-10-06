@@ -119,24 +119,9 @@ export function injectTrackingFromRows(rows: PixelRow[] | null | undefined): Tra
   return cfg;
 }
 
-function ensureFbqStub() {
-  if (typeof window === "undefined") return;
-  if (!window.fbq) {
-    const n: any = (window.fbq = function (...args: unknown[]) {
-      n.callMethod ? n.callMethod.apply(n, args) : n.queue.push(args);
-    });
-    if (!window._fbq) window._fbq = n;
-    n.push = n;
-    n.loaded = true;
-    n.version = "2.0";
-    n.queue = [];
-  }
-}
-
 export function injectTracking(cfg: TrackingConfig) {
   if (typeof window === "undefined") return;
   captureClickIds();
-  ensureFbqStub();
 
   if (!window.__loadedFbPixels) window.__loadedFbPixels = new Set();
   if (!window.__loadedTtPixels) window.__loadedTtPixels = new Set();
@@ -145,27 +130,29 @@ export function injectTracking(cfg: TrackingConfig) {
   // 1. Facebook Pixel
   const fbPixel = cfg.fb_pixel?.trim();
   if (fbPixel) {
-    if (!window.__loadedFbPixels.has(fbPixel)) {
-      window.__loadedFbPixels.add(fbPixel);
-
+    if (!window.fbq) {
+      // Official Meta Pixel Standard Snippet
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (function (f: any, b: Document, e: string, v: string) {
-        if (f.fbq && f.fbq.version) return;
-        const n: any = (f.fbq = function (...args: unknown[]) {
-          n.callMethod ? n.callMethod.apply(n, args) : n.queue.push(args);
-        });
+      (function (f: any, b: any, e: any, v: any, n?: any, t?: any, s?: any) {
+        if (f.fbq) return;
+        n = f.fbq = function () {
+          n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments);
+        };
         if (!f._fbq) f._fbq = n;
         n.push = n;
         n.loaded = true;
         n.version = "2.0";
         n.queue = [];
-        const t = b.createElement(e) as HTMLScriptElement;
+        t = b.createElement(e);
         t.async = true;
         t.src = v;
-        const s = b.getElementsByTagName(e)[0];
+        s = b.getElementsByTagName(e)[0];
         s.parentNode?.insertBefore(t, s);
       })(window, document, "script", "https://connect.facebook.net/en_US/fbevents.js");
+    }
 
+    if (!window.__loadedFbPixels.has(fbPixel)) {
+      window.__loadedFbPixels.add(fbPixel);
       window.fbq?.("init", fbPixel);
       window.fbq?.("track", "PageView");
     }
@@ -240,7 +227,7 @@ export function injectTracking(cfg: TrackingConfig) {
 /** 1. PageView Tracking */
 export function trackPageView(url?: string) {
   const eventId = `pv_${Date.now()}`;
-  window.fbq?.("track", "PageView", { eventID: eventId }, { eventID: eventId });
+  window.fbq?.("track", "PageView");
   window.ttq?.page();
   window.gtag?.("event", "page_view", {
     page_location: url || (typeof window !== "undefined" ? window.location.href : undefined),
