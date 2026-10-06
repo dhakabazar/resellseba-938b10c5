@@ -108,21 +108,6 @@ function baseGroups(): ContentGroup[] {
       ],
     },
     {
-      id: "why",
-      title: "Why shop with us",
-      description: "Three reasons that remove buying hesitation.",
-      fields: [
-        on("why_show", "Show this section", true),
-        t("why_title", "Section title", "Why customers choose {store}"),
-        t("why1_t", "Reason 1", "Real product, real photos"),
-        area("why1_d", "Reason 1 detail", "Every item is checked before it leaves our warehouse."),
-        t("why2_t", "Reason 2", "Fast, tracked delivery"),
-        area("why2_d", "Reason 2 detail", "Courier tracking is shared right after your order is booked."),
-        t("why3_t", "Reason 3", "Support that replies"),
-        area("why3_d", "Reason 3 detail", "Call or WhatsApp us any day between 10am and 9pm."),
-      ],
-    },
-    {
       id: "reviews",
       title: "Customer reviews",
       description: "Social proof. Use real customer feedback.",
@@ -135,21 +120,6 @@ function baseGroups(): ContentGroup[] {
         t("review2_name", "Review 2 name", "Sumaiya, Chattogram"),
         area("review3_text", "Review 3", "Support answered on WhatsApp within minutes. Will order again."),
         t("review3_name", "Review 3 name", "Tanvir, Sylhet"),
-      ],
-    },
-    {
-      id: "faq",
-      title: "FAQ",
-      description: "Answer the questions that stop people from ordering.",
-      fields: [
-        on("faq_show", "Show FAQ", true),
-        t("faq_title", "Section title", "Frequently asked questions"),
-        t("faq1_q", "Question 1", "How do I pay?"),
-        area("faq1_a", "Answer 1", "Cash on delivery — you pay the courier when the parcel arrives."),
-        t("faq2_q", "Question 2", "How long is delivery?"),
-        area("faq2_a", "Answer 2", "1–3 days inside Dhaka and 2–5 days outside Dhaka."),
-        t("faq3_q", "Question 3", "Can I return a product?"),
-        area("faq3_a", "Answer 3", "Yes. If the product is wrong or damaged, report within 24 hours of delivery."),
       ],
     },
     {
