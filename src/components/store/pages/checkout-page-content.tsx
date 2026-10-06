@@ -365,10 +365,10 @@ export function CheckoutPageContent({
             <div className="mb-2 flex items-center justify-between">
               <span className="text-xs font-semibold text-[var(--st-fg)]">ডেলিভারি এলাকা</span>
             </div>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
               {AREAS.map((a) => {
                 const charge = getAreaCharge(a.value);
-                const chargeText = charge === 0 ? "ফ্রি ডেলিভারি" : `৳${charge}`;
+                const chargeText = charge === 0 ? "ফ্রি" : `৳${charge}`;
                 const isSelected = form.area === a.value;
 
                 return (
@@ -378,16 +378,16 @@ export function CheckoutPageContent({
                     onClick={() => setForm({ ...form, area: a.value })}
                     aria-pressed={isSelected}
                     className={cx(
-                      "flex flex-col items-center justify-center rounded-[var(--st-radius-sm)] border py-2.5 px-2 text-center transition-all",
+                      "flex items-center justify-center gap-1 sm:gap-1.5 rounded-[var(--st-radius-sm)] border py-2 px-1.5 sm:px-2.5 text-center transition-all whitespace-nowrap",
                       isSelected
                         ? "border-[var(--st-primary)] bg-[var(--st-primary)] text-[var(--st-on-primary)] shadow-sm font-bold"
                         : cx(borderc, "text-[var(--st-fg)] hover:border-[var(--st-primary)]/60 bg-[var(--st-surface)] font-medium"),
                     )}
                   >
-                    <span className="text-xs sm:text-sm">{AREA_NAMES[a.value] || a.label}</span>
+                    <span className="text-[11px] sm:text-xs font-semibold">{AREA_NAMES[a.value] || a.label}</span>
                     <span
                       className={cx(
-                        "text-[11px] mt-0.5 font-semibold",
+                        "text-[11px] sm:text-xs font-bold",
                         isSelected ? "opacity-95 text-[var(--st-on-primary)]" : "text-[var(--st-primary)]",
                       )}
                     >
@@ -401,11 +401,11 @@ export function CheckoutPageContent({
 
           {/* Payment Method Selector */}
           <div>
-            <div className="mb-2.5 flex items-baseline justify-between gap-2">
+            <div className="mb-2 flex items-baseline justify-between gap-2">
               <div className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--st-fg)]">পেমেন্ট মেথড</div>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-2.5">
+            <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 sm:gap-2">
               {[
                 {
                   value: "cod",
@@ -426,7 +426,7 @@ export function CheckoutPageContent({
                     onClick={() => setPayMethod(m.value)}
                     aria-pressed={selected}
                     className={cx(
-                      "group relative flex items-center gap-2 rounded-[var(--st-radius-sm)] border p-2 text-left transition-all sm:gap-2.5 sm:p-2.5",
+                      "group relative flex items-center gap-1.5 sm:gap-2 rounded-[var(--st-radius-sm)] border p-1.5 sm:py-2 sm:px-2.5 text-left transition-all",
                       selected
                         ? "border-[var(--st-primary)] bg-[var(--st-primary)]/[0.08] ring-1 ring-[var(--st-primary)]"
                         : cx(borderc, "hover:border-[var(--st-primary)]/60 bg-[var(--st-surface)]"),
@@ -434,23 +434,23 @@ export function CheckoutPageContent({
                   >
                     <span
                       className={cx(
-                        "grid h-8 w-9 shrink-0 place-items-center overflow-hidden rounded-[var(--st-radius-sm)] border bg-[var(--st-bg-alt)] p-0.5 sm:h-9 sm:w-11",
+                        "grid h-7 w-8 shrink-0 place-items-center overflow-hidden rounded-[var(--st-radius-sm)] border bg-[var(--st-bg-alt)] p-0.5 sm:h-8 sm:w-9",
                         selected ? "border-[var(--st-primary)]" : borderc,
                       )}
                     >
                       {m.value === "cod" ? (
-                        <Truck className="h-4 w-4 text-[var(--st-primary)] sm:h-5 sm:w-5" />
+                        <Truck className="h-4 w-4 text-[var(--st-primary)]" />
                       ) : (
-                        <PaymentLogo method={logoFor} width={38} height={26} fit="contain" alt={m.label} />
+                        <PaymentLogo method={logoFor} width={32} height={22} fit="contain" alt={m.label} />
                       )}
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[11px] font-bold leading-tight text-[var(--st-fg)] sm:text-xs">{m.label}</span>
+                      <span className="block text-[11px] sm:text-xs font-bold leading-tight text-[var(--st-fg)] line-clamp-2">{m.label}</span>
                     </span>
                     <span
                       aria-hidden
                       className={cx(
-                        "grid h-4 w-4 shrink-0 place-items-center rounded-full border transition-all",
+                        "grid h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 place-items-center rounded-full border transition-all",
                         selected ? "border-[var(--st-primary)] bg-[var(--st-primary)] text-white" : borderc,
                       )}
                     >
