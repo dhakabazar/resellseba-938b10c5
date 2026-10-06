@@ -100,7 +100,7 @@ export function SohojProductPage({
         <div className={cx("min-w-0 rounded-[var(--st-radius)] border bg-[var(--st-surface)] p-4", borderc)}>
           <h1 className="text-lg font-extrabold leading-snug text-[var(--st-fg)] md:text-2xl">{title}</h1>
 
-          <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+          <div className="mt-3 flex flex-wrap items-center justify-start gap-4">
             <Price value={price} className="text-2xl md:text-3xl" />
             <div className={cx("inline-flex items-center rounded-[var(--st-radius-sm)] border bg-[var(--st-surface)]", borderc)}>
               <button onClick={() => setQty((q) => Math.max(1, q - 1))} aria-label="কমান" className="p-2 sm:p-2.5 hover:bg-[var(--st-bg-alt)] transition-colors">
@@ -207,8 +207,7 @@ export function SohojProductPage({
           {relatedVisible < recommended.length && (
             <div className="mt-8 flex justify-center">
               <Button
-                variant="outline"
-                className="rounded-full px-8 py-2.5 font-bold text-sm hover:bg-[var(--st-primary)] hover:text-[var(--st-on-primary)] transition-colors shadow-sm"
+                className="rounded-full px-8 py-3 font-extrabold text-sm bg-[var(--st-primary)] text-[var(--st-on-primary)] hover:bg-[var(--st-primary)] hover:opacity-90 shadow-md animate-order-jiggle transition-all"
                 onClick={() => setRelatedVisible((v) => v + 16)}
               >
                 আরও দেখুন

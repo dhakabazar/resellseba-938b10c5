@@ -30,8 +30,7 @@ export function ShopPageContent() {
       {visible < listings.length && (
         <div className="mt-10 flex justify-center">
           <Button
-            variant="outline"
-            className="rounded-full px-8 py-2.5 font-bold text-sm hover:bg-[var(--st-primary)] hover:text-[var(--st-on-primary)] transition-colors shadow-sm"
+            className="rounded-full px-8 py-3 font-extrabold text-sm bg-[var(--st-primary)] text-[var(--st-on-primary)] hover:bg-[var(--st-primary)] hover:opacity-90 shadow-md animate-order-jiggle transition-all"
             onClick={() => setVisible((v) => v + PAGE_SIZE)}
           >
             আরও দেখুন
