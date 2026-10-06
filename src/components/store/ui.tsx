@@ -428,9 +428,34 @@ export function ProductImageGallery({
   }
 
   return (
-    <div className="relative select-none">
-      {/* Main image carousel with touch swipe */}
-      <div className={cx("relative overflow-hidden rounded-[var(--st-radius)] border bg-[var(--st-bg-alt)]", aspectRatio, borderc)}>
+    <div className="relative select-none md:flex md:flex-row md:items-start md:gap-3.5">
+      {/* Thumbnails (Left side on PC, Bottom on Mobile) */}
+      {showThumbnails && allImages.length > 1 && (
+        <div className="no-scrollbar order-2 mt-3 flex gap-2 overflow-x-auto pb-1 md:order-1 md:mt-0 md:max-h-[520px] md:flex-col md:overflow-y-auto md:pb-0">
+          {allImages.map((url, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => handleSelect(i)}
+              aria-label={`Image ${i + 1}`}
+              className={cx(
+                "relative aspect-square h-16 w-16 flex-none overflow-hidden rounded-[var(--st-radius-sm)] border-2 transition-all hover:opacity-90",
+                i === currentIdx ? "border-[var(--st-primary)] ring-2 ring-[var(--st-primary)]/20" : borderc,
+              )}
+            >
+              <img
+                src={url}
+                alt=""
+                loading="lazy"
+                className={cx("h-full w-full aspect-square", objectFit === "contain" ? "object-contain" : "object-cover")}
+              />
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Main Image Slider with Touch Swipe (Strict 1:1 Square) */}
+      <div className={cx("relative order-1 aspect-square flex-1 overflow-hidden rounded-[var(--st-radius)] border bg-[var(--st-bg-alt)] md:order-2", borderc)}>
         <div
           ref={scrollRef}
           onScroll={handleScroll}
@@ -438,12 +463,12 @@ export function ProductImageGallery({
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           {allImages.map((url, i) => (
-            <div key={i} className="flex h-full w-full flex-none snap-center items-center justify-center">
+            <div key={i} className="flex aspect-square h-full w-full flex-none snap-center items-center justify-center">
               <img
                 src={url}
                 alt={`${title} - ${i + 1}`}
                 loading={i === 0 ? "eager" : "lazy"}
-                className={cx("h-full w-full select-none", objectFit === "contain" ? "object-contain" : "object-cover")}
+                className={cx("aspect-square h-full w-full select-none", objectFit === "contain" ? "object-contain" : "object-cover")}
                 draggable={false}
               />
             </div>
@@ -460,31 +485,6 @@ export function ProductImageGallery({
         {/* Reseller Tools */}
         {tools}
       </div>
-
-      {/* Thumbnails */}
-      {showThumbnails && allImages.length > 1 && (
-        <div className="no-scrollbar mt-3 flex gap-2 overflow-x-auto pb-1">
-          {allImages.map((url, i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => handleSelect(i)}
-              aria-label={`Image ${i + 1}`}
-              className={cx(
-                "relative h-16 w-16 flex-none overflow-hidden rounded-[var(--st-radius-sm)] border-2 transition-all",
-                i === currentIdx ? "border-[var(--st-primary)] ring-2 ring-[var(--st-primary)]/20" : borderc,
-              )}
-            >
-              <img
-                src={url}
-                alt=""
-                loading="lazy"
-                className={cx("h-full w-full", objectFit === "contain" ? "object-contain" : "object-cover")}
-              />
-            </button>
-          ))}
-        </div>
-      )}
     </div>
   );
 }
