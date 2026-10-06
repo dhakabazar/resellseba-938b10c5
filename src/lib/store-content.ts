@@ -121,13 +121,8 @@ function baseGroups(): ContentGroup[] {
     {
       id: "product",
       title: "Product page",
-      description: "Product page settings.",
+      description: "Product page mobile options.",
       fields: [
-        t("pdp_trust1", "Trust line 1", ""),
-        t("pdp_trust2", "Trust line 2", ""),
-        t("pdp_trust3", "Trust line 3", ""),
-        t("pdp_urgency", "Urgency line", ""),
-        area("pdp_returns", "Return / warranty note", ""),
         on("pdp_sticky", "Show sticky mobile buy bar", true),
       ],
     },
