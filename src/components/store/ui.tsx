@@ -439,104 +439,101 @@ export function ProductImageGallery({
   const hasMultiple = showThumbnails && allImages.length > 1;
 
   return (
-    <div
-      className={cx(
-        "relative w-full min-w-0 select-none",
-        hasMultiple ? "flex flex-col md:grid md:grid-cols-[68px_1fr] md:gap-3.5 md:items-start" : "w-full",
-      )}
-    >
-      {/* Thumbnails (Left side on PC matching gallery height, Bottom on Mobile) */}
-      {hasMultiple && (
-        <div
-          ref={thumbContainerRef}
-          className="no-scrollbar order-2 mt-3 flex w-full max-w-full min-w-0 gap-2 overflow-x-auto pb-1 md:order-1 md:mt-0 md:h-full md:max-h-full md:min-h-0 md:w-[68px] md:flex-col md:justify-start md:overflow-y-auto md:pb-0"
-        >
-          {allImages.map((url, i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => handleSelect(i)}
-              aria-label={`Image ${i + 1}`}
-              className={cx(
-                "relative aspect-square h-16 w-16 shrink-0 flex-none overflow-hidden rounded-[var(--st-radius-sm)] border-2 transition-all hover:opacity-90",
-                i === currentIdx ? "border-[var(--st-primary)] ring-2 ring-[var(--st-primary)]/20" : borderc,
-              )}
-            >
-              <img
-                src={url}
-                alt=""
-                loading="lazy"
-                className={cx("aspect-square h-full w-full", objectFit === "contain" ? "object-contain" : "object-cover")}
-              />
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* Main Image Slider with Touch Swipe (Strict 1:1 Square) */}
-      <div className={cx("relative order-1 aspect-square w-full min-w-0 overflow-hidden rounded-[var(--st-radius)] border bg-[var(--st-bg-alt)] md:order-2", borderc)}>
-        <div
-          ref={scrollRef}
-          onScroll={handleScroll}
-          className="no-scrollbar flex h-full w-full min-w-0 snap-x snap-mandatory overflow-x-auto scroll-smooth touch-pan-x"
-          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-        >
-          {allImages.map((url, i) => (
-            <div key={i} className="flex aspect-square h-full w-full min-w-full flex-none snap-center items-center justify-center">
-              <img
-                src={url}
-                alt={`${title} - ${i + 1}`}
-                loading={i === 0 ? "eager" : "lazy"}
-                className={cx("aspect-square h-full w-full select-none", objectFit === "contain" ? "object-contain" : "object-cover")}
-                draggable={false}
-              />
-            </div>
-          ))}
-        </div>
-
-        {/* Navigation Arrows for Previous / Next Image (< and >) */}
-        {allImages.length > 1 && (
-          <>
-            {currentIdx > 0 && (
+    <div className="relative w-full min-w-0 select-none">
+      <div className={cx("relative w-full min-w-0", hasMultiple && "flex flex-col md:block md:pl-[80px]")}>
+        {/* Thumbnails (Left side on PC matching EXACT main gallery height, Bottom on Mobile) */}
+        {hasMultiple && (
+          <div
+            ref={thumbContainerRef}
+            className="no-scrollbar order-2 mt-3 flex w-full max-w-full min-w-0 gap-2 overflow-x-auto pb-1 md:absolute md:left-0 md:top-0 md:bottom-0 md:mt-0 md:w-[68px] md:flex-col md:justify-start md:overflow-y-auto md:pb-0"
+          >
+            {allImages.map((url, i) => (
               <button
+                key={i}
                 type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  handleSelect(currentIdx - 1);
-                }}
-                aria-label="Previous image"
-                className="absolute left-2.5 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/45 p-1.5 text-white shadow-md backdrop-blur-sm transition-all hover:bg-black/75 hover:scale-110 active:scale-95"
+                onClick={() => handleSelect(i)}
+                aria-label={`Image ${i + 1}`}
+                className={cx(
+                  "relative aspect-square h-16 w-16 shrink-0 flex-none overflow-hidden rounded-[var(--st-radius-sm)] border-2 transition-all hover:opacity-90",
+                  i === currentIdx ? "border-[var(--st-primary)] ring-2 ring-[var(--st-primary)]/20" : borderc,
+                )}
               >
-                <ChevronLeft className="h-5 w-5" />
+                <img
+                  src={url}
+                  alt=""
+                  loading="lazy"
+                  className={cx("aspect-square h-full w-full", objectFit === "contain" ? "object-contain" : "object-cover")}
+                />
               </button>
-            )}
-            {currentIdx < allImages.length - 1 && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  handleSelect(currentIdx + 1);
-                }}
-                aria-label="Next image"
-                className="absolute right-2.5 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/45 p-1.5 text-white shadow-md backdrop-blur-sm transition-all hover:bg-black/75 hover:scale-110 active:scale-95"
-              >
-                <ChevronRight className="h-5 w-5" />
-              </button>
-            )}
-          </>
-        )}
-
-        {/* Counter Badge */}
-        {allImages.length > 1 && (
-          <div className="pointer-events-none absolute bottom-3 right-3 z-10 rounded-full bg-black/60 px-2.5 py-0.5 text-[11px] font-semibold text-white backdrop-blur-sm">
-            {currentIdx + 1} / {allImages.length}
+            ))}
           </div>
         )}
 
-        {/* Reseller Tools */}
-        {tools}
+        {/* Main Image Slider with Touch Swipe (Strict 1:1 Square) */}
+        <div className={cx("relative order-1 aspect-square w-full min-w-0 overflow-hidden rounded-[var(--st-radius)] border bg-[var(--st-bg-alt)]", borderc)}>
+          <div
+            ref={scrollRef}
+            onScroll={handleScroll}
+            className="no-scrollbar flex h-full w-full min-w-0 snap-x snap-mandatory overflow-x-auto scroll-smooth touch-pan-x"
+            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+          >
+            {allImages.map((url, i) => (
+              <div key={i} className="flex aspect-square h-full w-full min-w-full flex-none snap-center items-center justify-center">
+                <img
+                  src={url}
+                  alt={`${title} - ${i + 1}`}
+                  loading={i === 0 ? "eager" : "lazy"}
+                  className={cx("aspect-square h-full w-full select-none", objectFit === "contain" ? "object-contain" : "object-cover")}
+                  draggable={false}
+                />
+              </div>
+            ))}
+          </div>
+
+          {/* Navigation Arrows for Previous / Next Image (< and >) */}
+          {allImages.length > 1 && (
+            <>
+              {currentIdx > 0 && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleSelect(currentIdx - 1);
+                  }}
+                  aria-label="Previous image"
+                  className="absolute left-2.5 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/45 p-1.5 text-white shadow-md backdrop-blur-sm transition-all hover:bg-black/75 hover:scale-110 active:scale-95"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+              )}
+              {currentIdx < allImages.length - 1 && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleSelect(currentIdx + 1);
+                  }}
+                  aria-label="Next image"
+                  className="absolute right-2.5 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/45 p-1.5 text-white shadow-md backdrop-blur-sm transition-all hover:bg-black/75 hover:scale-110 active:scale-95"
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+              )}
+            </>
+          )}
+
+          {/* Counter Badge */}
+          {allImages.length > 1 && (
+            <div className="pointer-events-none absolute bottom-3 right-3 z-10 rounded-full bg-black/60 px-2.5 py-0.5 text-[11px] font-semibold text-white backdrop-blur-sm">
+              {currentIdx + 1} / {allImages.length}
+            </div>
+          )}
+
+          {/* Reseller Tools */}
+          {tools}
+        </div>
       </div>
     </div>
   );
