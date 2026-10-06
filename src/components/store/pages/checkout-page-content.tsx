@@ -266,17 +266,17 @@ export function CheckoutPageContent({
   };
 
   return (
-    <div className={cx("mx-auto px-4 pb-6 pt-6 sm:pb-10 sm:pt-8", poripati ? "max-w-7xl" : "max-w-6xl")}>
-      <div className={cx("text-center", poripati && "border-b border-[var(--st-border)] pb-7")}>
+    <div className={cx("mx-auto px-1.5 sm:px-4 pb-6 pt-4 sm:pb-10 sm:pt-8", poripati ? "max-w-7xl" : "max-w-6xl")}>
+      <div className={cx("text-center px-1", poripati && "border-b border-[var(--st-border)] pb-7")}>
         {poripati && <div className="mb-2 text-[10px] font-bold uppercase text-[var(--st-primary)]">নিরাপদ চেকআউট</div>}
-        <Heading as="h1" className="text-2xl sm:text-3xl font-extrabold text-center">
+        <Heading as="h1" className="text-xl sm:text-3xl font-extrabold text-center">
           {(() => {
             const h = store.content.text("co_headline");
             if (!h || h === "Complete your order") return "অর্ডার সম্পন্ন করুন";
             return h;
           })()}
         </Heading>
-        <p className={cx("mx-auto mt-1.5 max-w-xl text-sm text-center", muted)}>
+        <p className={cx("mx-auto mt-1 max-w-xl text-xs sm:text-sm text-center", muted)}>
           {(() => {
             const n = store.content.text("co_note");
             if (!n || n.startsWith("Fill in your delivery details")) {
@@ -287,12 +287,12 @@ export function CheckoutPageContent({
         </p>
       </div>
 
-      <div className={cx("mt-6 grid gap-5", poripati ? "lg:grid-cols-[1.15fr_.85fr] lg:gap-12" : "lg:grid-cols-[1fr_380px]")}>
+      <div className={cx("mt-4 sm:mt-6 grid gap-3 sm:gap-5", poripati ? "lg:grid-cols-[1.15fr_.85fr] lg:gap-12" : "lg:grid-cols-[1fr_380px]")}>
         <form
           id="checkout-form"
           onSubmit={submit}
           noValidate
-          className={cx("space-y-4 border bg-[var(--st-surface)] p-4 sm:p-5", borderc, !poripati && "rounded-[var(--st-radius)]")}
+          className={cx("space-y-3.5 sm:space-y-4 border bg-[var(--st-surface)] p-2.5 sm:p-5", borderc, !poripati && "rounded-[var(--st-radius)]")}
         >
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label="আপনার নাম" required error={touched.name ? errors.name : null}>
@@ -562,23 +562,23 @@ export function CheckoutPageContent({
           </div>
         </form>
 
-        <aside className={cx("h-fit space-y-4 border bg-[var(--st-surface)] p-4 sm:p-5", borderc, !poripati && "rounded-[var(--st-radius)]", poripati && "lg:sticky lg:top-32")}>
-          <Heading className="text-base">আপনার কার্ট ({store.cartCount})</Heading>
-          <div className="space-y-3">
+        <aside className={cx("h-fit space-y-3.5 sm:space-y-4 border bg-[var(--st-surface)] p-2.5 sm:p-5", borderc, !poripati && "rounded-[var(--st-radius)]", poripati && "lg:sticky lg:top-32")}>
+          <Heading className="text-sm sm:text-base font-bold">আপনার কার্ট ({store.cartCount})</Heading>
+          <div className="space-y-2.5 sm:space-y-3">
             {lines.map(({ line, listing }) => {
               const img = store.image(listing);
               return (
-                <div key={listing.id} className={cx("flex gap-3 rounded-[var(--st-radius-sm)] border p-3", borderc)}>
-                  {img && <img src={img} alt="" className="h-16 w-16 shrink-0 rounded-[var(--st-radius-sm)] object-cover" />}
+                <div key={listing.id} className={cx("flex gap-2.5 sm:gap-3 rounded-[var(--st-radius-sm)] border p-2 sm:p-3", borderc)}>
+                  {img && <img src={img} alt="" className="h-14 w-14 sm:h-16 sm:w-16 shrink-0 rounded-[var(--st-radius-sm)] object-cover" />}
                   <div className="min-w-0 flex-1">
-                    <div className="line-clamp-2 text-sm text-[var(--st-fg)]">{store.title(listing)}</div>
+                    <div className="line-clamp-2 text-xs sm:text-sm text-[var(--st-fg)] font-medium">{store.title(listing)}</div>
                     <div className="mt-1.5 flex items-center gap-2">
                       <div className={cx("inline-flex items-center rounded-[var(--st-radius-sm)] border", borderc)}>
                         <button
                           type="button"
                           aria-label="Decrease"
                           onClick={() => setCartQty(code, listing.id, line.qty - 1)}
-                          className="px-2.5 py-1.5"
+                          className="px-2 py-1 sm:px-2.5 sm:py-1.5"
                         >
                           <Minus className="h-3 w-3" />
                         </button>
@@ -587,7 +587,7 @@ export function CheckoutPageContent({
                           type="button"
                           aria-label="Increase"
                           onClick={() => setCartQty(code, listing.id, line.qty + 1)}
-                          className="px-2.5 py-1.5"
+                          className="px-2 py-1 sm:px-2.5 sm:py-1.5"
                         >
                           <Plus className="h-3 w-3" />
                         </button>
@@ -596,11 +596,11 @@ export function CheckoutPageContent({
                         type="button"
                         aria-label="Remove"
                         onClick={() => removeFromCart(code, listing.id)}
-                        className={cx("p-1.5", muted, "hover:text-[var(--st-primary)]")}
+                        className={cx("p-1", muted, "hover:text-[var(--st-primary)]")}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
-                      <span className="ml-auto text-sm font-semibold text-[var(--st-fg)]">
+                      <span className="ml-auto text-xs sm:text-sm font-bold text-[var(--st-fg)]">
                         {bdt(Number(listing.selling_price) * line.qty)}
                       </span>
                     </div>
@@ -659,7 +659,7 @@ function Field({
     <div className="pt-2">
       <div
         className={cx(
-          "relative rounded-[var(--st-radius-sm)] border bg-[var(--st-surface)] px-3.5 pt-3 pb-2.5 transition-all focus-within:border-[var(--st-primary)] focus-within:ring-1 focus-within:ring-[var(--st-primary)]/30",
+          "relative rounded-[var(--st-radius-sm)] border bg-[var(--st-surface)] px-3 pt-2.5 pb-2 sm:px-3.5 sm:pt-3 sm:pb-2.5 transition-all focus-within:border-[var(--st-primary)] focus-within:ring-1 focus-within:ring-[var(--st-primary)]/30",
           error ? "border-destructive ring-1 ring-destructive/30" : borderc,
           className,
         )}
