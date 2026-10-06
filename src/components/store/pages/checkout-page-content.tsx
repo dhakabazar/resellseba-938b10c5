@@ -378,7 +378,7 @@ export function CheckoutPageContent({
               <div className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--st-fg)]">পেমেন্ট মেথড</div>
             </div>
 
-            <div className="grid gap-2.5 sm:grid-cols-2">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-2.5">
               {[
                 {
                   value: "cod",
@@ -399,7 +399,7 @@ export function CheckoutPageContent({
                     onClick={() => setPayMethod(m.value)}
                     aria-pressed={selected}
                     className={cx(
-                      "group relative flex items-center gap-3 rounded-[var(--st-radius-sm)] border p-3 text-left transition-all",
+                      "group relative flex items-center gap-2 rounded-[var(--st-radius-sm)] border p-2 text-left transition-all sm:gap-2.5 sm:p-2.5",
                       selected
                         ? "border-[var(--st-primary)] bg-[var(--st-primary)]/[0.08] ring-1 ring-[var(--st-primary)]"
                         : cx(borderc, "hover:border-[var(--st-primary)]/60 bg-[var(--st-surface)]"),
@@ -407,23 +407,23 @@ export function CheckoutPageContent({
                   >
                     <span
                       className={cx(
-                        "grid h-10 w-12 shrink-0 place-items-center overflow-hidden rounded-[var(--st-radius-sm)] border bg-[var(--st-bg-alt)] p-1",
+                        "grid h-8 w-9 shrink-0 place-items-center overflow-hidden rounded-[var(--st-radius-sm)] border bg-[var(--st-bg-alt)] p-0.5 sm:h-9 sm:w-11",
                         selected ? "border-[var(--st-primary)]" : borderc,
                       )}
                     >
                       {m.value === "cod" ? (
-                        <Truck className="h-5 w-5 text-[var(--st-primary)]" />
+                        <Truck className="h-4 w-4 text-[var(--st-primary)] sm:h-5 sm:w-5" />
                       ) : (
-                        <PaymentLogo method={logoFor} width={44} height={30} fit="contain" alt={m.label} />
+                        <PaymentLogo method={logoFor} width={38} height={26} fit="contain" alt={m.label} />
                       )}
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="truncate text-xs font-bold text-[var(--st-fg)] sm:text-sm">{m.label}</span>
+                      <span className="block truncate text-[11px] font-bold leading-tight text-[var(--st-fg)] sm:text-xs">{m.label}</span>
                     </span>
                     <span
                       aria-hidden
                       className={cx(
-                        "grid h-4.5 w-4.5 shrink-0 place-items-center rounded-full border transition-all",
+                        "grid h-4 w-4 shrink-0 place-items-center rounded-full border transition-all",
                         selected ? "border-[var(--st-primary)] bg-[var(--st-primary)] text-white" : borderc,
                       )}
                     >
