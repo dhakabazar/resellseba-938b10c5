@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Check, ChevronDown, Copy, Loader2, Minus, Plus, Trash2, Truck } from "lucide-react";
 import { toast } from "sonner";
@@ -62,6 +62,22 @@ export function CheckoutPageContent({
     area: "outside_dhaka" as DeliveryArea,
     notes: "",
   });
+
+  const inlineBtnRef = useRef<HTMLDivElement | null>(null);
+  const [isInlineBtnVisible, setIsInlineBtnVisible] = useState(false);
+
+  useEffect(() => {
+    const el = inlineBtnRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsInlineBtnVisible(entry.isIntersecting);
+      },
+      { threshold: 0.1 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [lines.length]);
 
   /** Direct "Order now" links still work: merge into the cart once. */
   useEffect(() => {
@@ -263,6 +279,7 @@ export function CheckoutPageContent({
 
       <div className={cx("mt-6 grid gap-5", poripati ? "lg:grid-cols-[1.15fr_.85fr] lg:gap-12" : "lg:grid-cols-[1fr_380px]")}>
         <form
+          id="checkout-form"
           onSubmit={submit}
           noValidate
           className={cx("space-y-4 border bg-[var(--st-surface)] p-4 sm:p-5", borderc, !poripati && "rounded-[var(--st-radius)]")}
@@ -518,13 +535,21 @@ export function CheckoutPageContent({
               )}
             </PrimaryButton>
           </div>
+          {/* Mobile Floating Bottom CTA Bar - shown only when the inline button is scrolled out of view */}
           <div
             className={cx(
-              "fixed inset-x-0 bottom-0 z-30 border-t bg-[var(--st-surface)] p-3 shadow-[0_-10px_30px_-24px_rgba(0,0,0,0.6)] sm:hidden",
+              "fixed inset-x-0 bottom-0 z-40 border-t bg-[var(--st-surface)]/95 backdrop-blur-md p-3 shadow-[0_-10px_30px_-15px_rgba(0,0,0,0.5)] transition-all duration-300 sm:hidden",
               borderc,
+              isInlineBtnVisible ? "translate-y-full opacity-0 pointer-events-none" : "translate-y-0 opacity-100",
             )}
           >
-            <PrimaryButton disabled={busy} className="w-full py-3.5 text-base font-bold justify-center animate-order-jiggle shadow-md">
+            <PrimaryButton
+              type="submit"
+              form="checkout-form"
+              onClick={submit}
+              disabled={busy}
+              className="w-full py-3.5 text-base font-bold justify-center animate-order-jiggle shadow-md"
+            >
               {busy ? (
                 <>
                   <Loader2 className="h-5 w-5 animate-spin" /> অর্ডার প্রসেস হচ্ছে...
@@ -588,6 +613,25 @@ export function CheckoutPageContent({
             <Row label="সাবটোটাল" value={bdt(totals.subtotal)} />
             <Row label="ডেলিভারি চার্জ" value={totals.ship ? bdt(totals.ship) : "ফ্রি"} />
             <Row label="সর্বমোট পরিশোধযোগ্য" value={bdt(totals.total)} bold />
+          </div>
+
+          {/* Inline Order button under cart summary (visible on all devices including mobile) */}
+          <div ref={inlineBtnRef} className="pt-2">
+            <PrimaryButton
+              type="submit"
+              form="checkout-form"
+              onClick={submit}
+              disabled={busy}
+              className="w-full py-3.5 text-base font-bold justify-center animate-order-jiggle shadow-md"
+            >
+              {busy ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin" /> অর্ডার প্রসেস হচ্ছে...
+                </>
+              ) : (
+                `অর্ডার কনফার্ম করুন — ${bdt(totals.total)}`
+              )}
+            </PrimaryButton>
           </div>
         </aside>
       </div>
