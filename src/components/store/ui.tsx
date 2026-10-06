@@ -291,7 +291,7 @@ export function ProductCard({ listing }: { listing: StoreListing }) {
   return (
     <Link
       {...to}
-      className="group block overflow-hidden rounded-[var(--st-radius)] border border-transparent bg-[var(--st-surface)] shadow-[var(--st-shadow)] transition-all hover:-translate-y-1 hover:border-[var(--st-primary)]/40"
+      className="group flex flex-col overflow-hidden rounded-[var(--st-radius)] border border-transparent bg-[var(--st-surface)] shadow-[var(--st-shadow)] transition-all hover:-translate-y-1 hover:border-[var(--st-primary)]/40 hover:shadow-lg"
     >
       <div className="relative aspect-square overflow-hidden bg-[var(--st-bg-alt)]">
         <Img />
@@ -299,17 +299,18 @@ export function ProductCard({ listing }: { listing: StoreListing }) {
           <ShoppingBag className="h-2.5 w-2.5" /> {sold} sold
         </span>
       </div>
-      <div className="p-4">
-        <h3 className="line-clamp-2 text-sm text-[var(--st-fg)]">{title(listing)}</h3>
-        <div className="mt-2 flex items-baseline gap-2">
-          <Price value={price} className="text-base" />
-        </div>
-        <div className="mt-3 flex items-center justify-end gap-2">
+      <div className="flex flex-1 flex-col justify-between p-3 sm:p-4">
+        <h3 className="line-clamp-2 text-[13px] sm:text-sm font-semibold leading-snug text-[var(--st-fg)]">
+          {title(listing)}
+        </h3>
+        <div className="mt-3 flex items-center justify-between gap-2">
+          <Price value={price} className="text-base sm:text-lg font-extrabold" />
           <button
             type="button"
             onClick={handleDirectOrder}
-            className="rounded-full bg-[var(--st-primary)]/12 px-3.5 py-1.5 text-[11px] font-bold text-[var(--st-primary)] transition-all hover:bg-[var(--st-primary)] hover:text-[var(--st-on-primary)] active:scale-[0.98]"
+            className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full bg-[var(--st-primary)] px-3.5 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-bold text-[var(--st-on-primary)] shadow-sm transition-all hover:brightness-105 hover:shadow active:scale-95"
           >
+            <ShoppingBasket className="h-3.5 w-3.5" />
             অর্ডার করুন
           </button>
         </div>
