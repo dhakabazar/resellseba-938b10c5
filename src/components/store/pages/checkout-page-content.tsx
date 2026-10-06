@@ -381,7 +381,7 @@ export function CheckoutPageContent({
                 {
                   value: "cod",
                   method: "cod",
-                  label: "Cash on Delivery (ক্যাশ অন ডেলিভারি)",
+                  label: "ক্যাশ অন ডেলিভারি",
                   instructions: codMeta?.instructions ?? "পণ্য হাতে পেয়ে মূল্য পরিশোধ করুন।",
                 },
                 ...extraMethods.map((m) => ({ ...m, value: m.method })),
@@ -405,35 +405,18 @@ export function CheckoutPageContent({
                   >
                     <span
                       className={cx(
-                        "grid h-12 w-14 shrink-0 place-items-center overflow-hidden rounded-[var(--st-radius-sm)] border bg-[var(--st-bg-alt)] p-1",
+                        "grid h-10 w-12 shrink-0 place-items-center overflow-hidden rounded-[var(--st-radius-sm)] border bg-[var(--st-bg-alt)] p-1",
                         selected ? "border-[var(--st-primary)]" : borderc,
                       )}
                     >
                       {m.value === "cod" ? (
-                        <Truck className="h-6 w-6 text-[var(--st-primary)]" />
+                        <Truck className="h-5 w-5 text-[var(--st-primary)]" />
                       ) : (
-                        <PaymentLogo method={logoFor} width={50} height={35} fit="contain" alt={m.label} />
+                        <PaymentLogo method={logoFor} width={44} height={30} fit="contain" alt={m.label} />
                       )}
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="flex items-center gap-1.5">
-                        <span className="truncate text-xs font-bold text-[var(--st-fg)] sm:text-sm">{m.label}</span>
-                        {online && (
-                          <span className="rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-emerald-600">
-                            Auto
-                          </span>
-                        )}
-                        {!online && m.value !== "cod" && (
-                          <span className="rounded-full bg-[var(--st-primary)]/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[var(--st-primary)]">
-                            Personal
-                          </span>
-                        )}
-                      </span>
-                      <span className={cx("mt-0.5 line-clamp-1 block text-[11px] leading-snug", muted)}>
-                        {online
-                          ? "ইনস্ট্যান্ট অনলাইন পেমেন্ট (bKash/Nagad/Card)"
-                          : m.instructions || "Send Money করে TrxID দিয়ে সাবমিট করুন"}
-                      </span>
+                      <span className="truncate text-xs font-bold text-[var(--st-fg)] sm:text-sm">{m.label}</span>
                     </span>
                     <span
                       aria-hidden
