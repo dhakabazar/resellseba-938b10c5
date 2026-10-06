@@ -21,6 +21,7 @@ import {
   PrimaryButton,
   ProductCard,
   ProductGrid,
+  ProductImageGallery,
   SectionHead,
 } from "@/components/store/ui";
 
@@ -131,51 +132,30 @@ export function ProductPageContent({ slug, code: propCode }: { slug: string; cod
 
       <div className="grid gap-10 lg:grid-cols-2">
         <div>
-          <div
-            className={cx(
-              "relative aspect-square overflow-hidden rounded-[var(--st-radius)] border bg-[var(--st-bg-alt)]",
-              borderc,
-            )}
-          >
-            {active ? (
-              <img src={active} alt={title} className="h-full w-full object-cover" />
-            ) : (
-              <div className={cx("grid h-full w-full place-items-center text-xs", muted)}>No image</div>
-            )}
-            {tools && (
-              <div className="absolute right-3 top-3 z-10 flex flex-col gap-2">
-                <ImageDownloadTools compact images={imageUrls} activeUrl={active} baseName={title} />
-                <CopyButton
-                  value={title}
-                  className="h-9 w-9 rounded-full bg-[var(--st-surface)]/90 p-0 shadow-sm backdrop-blur"
-                />
-                {detailsText && (
+          <ProductImageGallery
+            images={images.length > 0 ? images : active ? [{ url: active }] : []}
+            title={title}
+            activeIdx={idx}
+            onIndexChange={setIdx}
+            tools={
+              tools ? (
+                <div className="absolute right-3 top-3 z-10 flex flex-col gap-2">
+                  <ImageDownloadTools compact images={imageUrls} activeUrl={active} baseName={title} />
                   <CopyButton
-                    value={detailsText}
-                    label="details"
+                    value={title}
                     className="h-9 w-9 rounded-full bg-[var(--st-surface)]/90 p-0 shadow-sm backdrop-blur"
                   />
-                )}
-              </div>
-            )}
-          </div>
-          {images.length > 1 && (
-            <div className="mt-3 flex flex-wrap gap-2">
-              {images.map((im, i) => (
-                <button
-                  key={i}
-                  onClick={() => setIdx(i)}
-                  aria-label={`Image ${i + 1}`}
-                  className={cx(
-                    "h-16 w-16 flex-none overflow-hidden rounded-[var(--st-radius-sm)] border",
-                    i === idx ? "border-[var(--st-primary)]" : borderc,
+                  {detailsText && (
+                    <CopyButton
+                      value={detailsText}
+                      label="details"
+                      className="h-9 w-9 rounded-full bg-[var(--st-surface)]/90 p-0 shadow-sm backdrop-blur"
+                    />
                   )}
-                >
-                  <img src={im.url} alt="" loading="lazy" className="h-full w-full object-cover" />
-                </button>
-              ))}
-            </div>
-          )}
+                </div>
+              ) : null
+            }
+          />
         </div>
 
         <div>

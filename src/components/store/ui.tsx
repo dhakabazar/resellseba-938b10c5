@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Flame, ShoppingBag, ShoppingBasket } from "lucide-react";
 import { addToCart, bdt } from "@/lib/store-cart";
 import { trackAddToCart } from "@/lib/tracking";
@@ -345,6 +345,143 @@ export function EmptyState({ title, hint }: { title: string; hint?: string }) {
         <Heading className="text-lg">{title}</Heading>
         {hint && <p className={cx("mt-1 text-sm", muted)}>{hint}</p>}
       </div>
+    </div>
+  );
+}
+
+export function ProductImageGallery({
+  images,
+  title,
+  tools,
+  aspectRatio = "aspect-square",
+  objectFit = "cover",
+  activeIdx,
+  onIndexChange,
+  showThumbnails = true,
+}: {
+  images: { url: string }[];
+  title: string;
+  tools?: React.ReactNode;
+  aspectRatio?: string;
+  objectFit?: "cover" | "contain";
+  activeIdx?: number;
+  onIndexChange?: (idx: number) => void;
+  showThumbnails?: boolean;
+}) {
+  const allImages = images.length > 0 ? images.map((im) => im.url).filter(Boolean) : [];
+  const [internalIdx, setInternalIdx] = useState(0);
+  const currentIdx = activeIdx !== undefined ? activeIdx : internalIdx;
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const isProgrammaticScroll = useRef(false);
+
+  const handleSelect = (index: number) => {
+    if (activeIdx === undefined) setInternalIdx(index);
+    onIndexChange?.(index);
+    if (scrollRef.current) {
+      isProgrammaticScroll.current = true;
+      const el = scrollRef.current;
+      el.scrollTo({
+        left: index * el.clientWidth,
+        behavior: "smooth",
+      });
+      setTimeout(() => {
+        isProgrammaticScroll.current = false;
+      }, 400);
+    }
+  };
+
+  const handleScroll = () => {
+    if (isProgrammaticScroll.current || !scrollRef.current) return;
+    const el = scrollRef.current;
+    if (el.clientWidth > 0) {
+      const newIdx = Math.round(el.scrollLeft / el.clientWidth);
+      if (newIdx !== currentIdx && newIdx >= 0 && newIdx < allImages.length) {
+        if (activeIdx === undefined) setInternalIdx(newIdx);
+        onIndexChange?.(newIdx);
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (activeIdx !== undefined && scrollRef.current) {
+      const el = scrollRef.current;
+      const targetLeft = activeIdx * el.clientWidth;
+      if (Math.abs(el.scrollLeft - targetLeft) > 10) {
+        isProgrammaticScroll.current = true;
+        el.scrollTo({ left: targetLeft, behavior: "smooth" });
+        setTimeout(() => {
+          isProgrammaticScroll.current = false;
+        }, 400);
+      }
+    }
+  }, [activeIdx]);
+
+  if (allImages.length === 0) {
+    return (
+      <div className={cx("relative overflow-hidden rounded-[var(--st-radius)] border bg-[var(--st-bg-alt)]", aspectRatio, borderc)}>
+        <div className={cx("grid h-full w-full place-items-center text-xs", muted)}>ছবি নেই</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative select-none">
+      {/* Main image carousel with touch swipe */}
+      <div className={cx("relative overflow-hidden rounded-[var(--st-radius)] border bg-[var(--st-bg-alt)]", aspectRatio, borderc)}>
+        <div
+          ref={scrollRef}
+          onScroll={handleScroll}
+          className="no-scrollbar flex h-full w-full snap-x snap-mandatory overflow-x-auto scroll-smooth touch-pan-x"
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        >
+          {allImages.map((url, i) => (
+            <div key={i} className="flex h-full w-full flex-none snap-center items-center justify-center">
+              <img
+                src={url}
+                alt={`${title} - ${i + 1}`}
+                loading={i === 0 ? "eager" : "lazy"}
+                className={cx("h-full w-full select-none", objectFit === "contain" ? "object-contain" : "object-cover")}
+                draggable={false}
+              />
+            </div>
+          ))}
+        </div>
+
+        {/* Counter Badge for Mobile / Multi-image */}
+        {allImages.length > 1 && (
+          <div className="pointer-events-none absolute bottom-3 right-3 z-10 rounded-full bg-black/60 px-2.5 py-0.5 text-[11px] font-semibold text-white backdrop-blur-sm">
+            {currentIdx + 1} / {allImages.length}
+          </div>
+        )}
+
+        {/* Reseller Tools */}
+        {tools}
+      </div>
+
+      {/* Thumbnails */}
+      {showThumbnails && allImages.length > 1 && (
+        <div className="no-scrollbar mt-3 flex gap-2 overflow-x-auto pb-1">
+          {allImages.map((url, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => handleSelect(i)}
+              aria-label={`Image ${i + 1}`}
+              className={cx(
+                "relative h-16 w-16 flex-none overflow-hidden rounded-[var(--st-radius-sm)] border-2 transition-all",
+                i === currentIdx ? "border-[var(--st-primary)] ring-2 ring-[var(--st-primary)]/20" : borderc,
+              )}
+            >
+              <img
+                src={url}
+                alt=""
+                loading="lazy"
+                className={cx("h-full w-full", objectFit === "contain" ? "object-contain" : "object-cover")}
+              />
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

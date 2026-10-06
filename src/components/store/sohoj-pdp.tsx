@@ -10,7 +10,7 @@ import { useEffect, useRef, useState } from "react";
 import { Minus, Phone, Plus, ShoppingBasket } from "lucide-react";
 import { useStore, type StoreListing } from "./store-context";
 import { CopyButton, ImageDownloadTools } from "./reseller-tools";
-import { borderc, cx, muted, Price, ProductGrid, SectionHead } from "./ui";
+import { borderc, cx, muted, Price, ProductGrid, ProductImageGallery, SectionHead } from "./ui";
 
 export function SohojProductPage({
   listing,
@@ -63,41 +63,26 @@ export function SohojProductPage({
       <div className="grid gap-3 lg:grid-cols-[minmax(0,420px)_1fr]">
         {/* ছবি */}
         <div className={cx("rounded-[var(--st-radius)] border bg-[var(--st-surface)] p-3", borderc)}>
-          <div className="relative aspect-square overflow-hidden rounded-[var(--st-radius-sm)] bg-[var(--st-bg-alt)]">
-            {active ? (
-              <img src={active} alt={title} className="h-full w-full object-contain" />
-            ) : (
-              <div className={cx("grid h-full w-full place-items-center text-xs", muted)}>ছবি নেই</div>
-            )}
-            {tools && (
-              <div className="absolute right-2 top-2 z-10 flex flex-col gap-2">
-                <ImageDownloadTools
-                  compact
-                  images={images.map((im) => im.url).filter(Boolean)}
-                  activeUrl={active}
-                  baseName={title}
-                />
-                <CopyButton value={title} className="h-9 w-9 rounded-full bg-[var(--st-surface)]/90 p-0 shadow-sm" />
-              </div>
-            )}
-          </div>
-          {images.length > 1 && (
-            <div className="mt-3 flex flex-wrap gap-2">
-              {images.map((im, i) => (
-                <button
-                  key={i}
-                  onClick={() => setIdx(i)}
-                  aria-label={`ছবি ${i + 1}`}
-                  className={cx(
-                    "h-14 w-14 flex-none overflow-hidden rounded-[var(--st-radius-sm)] border",
-                    i === idx ? "border-[var(--st-primary)]" : borderc,
-                  )}
-                >
-                  <img src={im.url} alt="" loading="lazy" className="h-full w-full object-cover" />
-                </button>
-              ))}
-            </div>
-          )}
+          <ProductImageGallery
+            images={images.length > 0 ? images : active ? [{ url: active }] : []}
+            title={title}
+            objectFit="contain"
+            activeIdx={idx}
+            onIndexChange={setIdx}
+            tools={
+              tools ? (
+                <div className="absolute right-2 top-2 z-10 flex flex-col gap-2">
+                  <ImageDownloadTools
+                    compact
+                    images={images.map((im) => im.url).filter(Boolean)}
+                    activeUrl={active}
+                    baseName={title}
+                  />
+                  <CopyButton value={title} className="h-9 w-9 rounded-full bg-[var(--st-surface)]/90 p-0 shadow-sm" />
+                </div>
+              ) : null
+            }
+          />
         </div>
 
         {/* অর্ডার প্যানেল */}
