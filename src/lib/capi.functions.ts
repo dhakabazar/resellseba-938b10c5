@@ -16,6 +16,7 @@ function normalizePhoneHashes(rawPhone?: string | null): string[] | undefined {
   } else if (digits.startsWith("8801")) {
     hashes.add(sha256(digits));
     hashes.add(sha256(`+${digits}`));
+    hashes.add(sha256(digits.replace(/^88/, "")));
   }
   return Array.from(hashes);
 }
@@ -28,16 +29,35 @@ function normalizeNameHashes(rawName?: string | null): { fn?: string[]; ln?: str
   return { fn, ln };
 }
 
-// Helper to get active marketing configs for a store code
+// Helper to get active marketing configs for a store code (reseller override > global)
 async function getConfigsForStore(supabaseAdmin: any, code: string) {
-  const { data: store } = await supabaseAdmin
+  const cleanCode = (code || "").trim();
+
+  // 1. Check if code matches reseller code directly
+  let { data: store } = await supabaseAdmin
     .from("resellers")
-    .select("id")
-    .eq("code", code)
+    .select("id, code")
+    .ilike("code", cleanCode)
     .maybeSingle();
+
+  // 2. If not found by code, try matching custom domain or hostname
+  if (!store?.id) {
+    const cleanHost = cleanCode.replace(/^https?:\/\//, "").replace(/\/.*$/, "").replace(/^www\./, "");
+    const { data: domainRow } = await supabaseAdmin
+      .from("reseller_domains")
+      .select("reseller_id")
+      .or(`hostname.ilike.${cleanHost},hostname.ilike.www.${cleanHost}`)
+      .limit(1)
+      .maybeSingle();
+
+    if (domainRow?.reseller_id) {
+      store = { id: domainRow.reseller_id, code: cleanCode };
+    }
+  }
 
   const resellerId = store?.id || null;
 
+  // 3. Fetch marketing configs for this reseller + platform global configs
   const { data: configs } = await supabaseAdmin
     .from("marketing_configs")
     .select("platform, pixel_id, access_token, test_event_code, is_active, reseller_id")
@@ -46,7 +66,11 @@ async function getConfigsForStore(supabaseAdmin: any, code: string) {
 
   const pick = (platform: string) => {
     const rows = (configs ?? []).filter((c: any) => c.platform === platform && c.is_active);
-    return rows.find((c: any) => c.reseller_id === resellerId) ?? rows.find((c: any) => c.reseller_id === null);
+    const resellerRow = resellerId ? rows.find((c: any) => c.reseller_id === resellerId) : null;
+    if (resellerRow && (resellerRow.pixel_id || resellerRow.access_token)) {
+      return resellerRow;
+    }
+    return rows.find((c: any) => c.reseller_id === null) ?? null;
   };
 
   return { pick, resellerId };
@@ -82,7 +106,7 @@ export const trackViewContentServer = createServerFn({ method: "POST" })
     // Facebook CAPI
     const fb: any = pick("facebook");
     if (fb?.pixel_id && fb?.access_token) {
-      const payload = {
+      const payload: any = {
         data: [
           {
             event_name: "ViewContent",
@@ -92,8 +116,10 @@ export const trackViewContentServer = createServerFn({ method: "POST" })
             action_source: "website",
             client_user_agent: data.userAgent || undefined,
             user_data: {
+              client_user_agent: data.userAgent || undefined,
               fbp: data.fbp || undefined,
               fbc: data.fbc || undefined,
+              country: [sha256("bd")],
             },
             custom_data: {
               currency: "BDT",
@@ -105,12 +131,20 @@ export const trackViewContentServer = createServerFn({ method: "POST" })
             },
           },
         ],
-        test_event_code: fb.test_event_code || undefined,
       };
+      if (fb.test_event_code?.trim()) {
+        payload.test_event_code = fb.test_event_code.trim();
+      }
+
       try {
-        const url = `https://graph.facebook.com/v19.0/${fb.pixel_id}/events?access_token=${encodeURIComponent(fb.access_token)}`;
-        const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-        results.facebook = { ok: r.ok, status: r.status };
+        const url = `https://graph.facebook.com/v19.0/${fb.pixel_id.trim()}/events?access_token=${encodeURIComponent(fb.access_token.trim())}`;
+        const r = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const resBody = await r.json().catch(() => ({}));
+        results.facebook = { ok: r.ok, status: r.status, response: resBody };
       } catch (err: any) {
         results.facebook = { ok: false, error: err.message };
       }
@@ -119,9 +153,9 @@ export const trackViewContentServer = createServerFn({ method: "POST" })
     // TikTok Events API
     const tt: any = pick("tiktok");
     if (tt?.pixel_id && tt?.access_token) {
-      const payload = {
+      const payload: any = {
         event_source: "web",
-        event_source_id: tt.pixel_id,
+        event_source_id: tt.pixel_id.trim(),
         data: [
           {
             event: "ViewContent",
@@ -144,15 +178,22 @@ export const trackViewContentServer = createServerFn({ method: "POST" })
             },
           },
         ],
-        test_event_code: tt.test_event_code || undefined,
       };
+      if (tt.test_event_code?.trim()) {
+        payload.test_event_code = tt.test_event_code.trim();
+      }
+
       try {
         const r = await fetch("https://business-api.tiktok.com/open_api/v1.3/event/track/", {
           method: "POST",
-          headers: { "Content-Type": "application/json", "Access-Token": tt.access_token },
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Token": tt.access_token.trim(),
+          },
           body: JSON.stringify(payload),
         });
-        results.tiktok = { ok: r.ok, status: r.status };
+        const resBody = await r.json().catch(() => ({}));
+        results.tiktok = { ok: r.ok, status: r.status, response: resBody };
       } catch (err: any) {
         results.tiktok = { ok: false, error: err.message };
       }
@@ -202,7 +243,7 @@ export const trackInitiateCheckoutServer = createServerFn({ method: "POST" })
     // Facebook CAPI
     const fb: any = pick("facebook");
     if (fb?.pixel_id && fb?.access_token) {
-      const payload = {
+      const payload: any = {
         data: [
           {
             event_name: "InitiateCheckout",
@@ -212,11 +253,13 @@ export const trackInitiateCheckoutServer = createServerFn({ method: "POST" })
             action_source: "website",
             client_user_agent: data.userAgent || undefined,
             user_data: {
+              client_user_agent: data.userAgent || undefined,
               fbp: data.fbp || undefined,
               fbc: data.fbc || undefined,
               ph: phoneHashes,
               fn: nameHashes.fn,
               ln: nameHashes.ln,
+              country: [sha256("bd")],
             },
             custom_data: {
               currency: "BDT",
@@ -228,12 +271,20 @@ export const trackInitiateCheckoutServer = createServerFn({ method: "POST" })
             },
           },
         ],
-        test_event_code: fb.test_event_code || undefined,
       };
+      if (fb.test_event_code?.trim()) {
+        payload.test_event_code = fb.test_event_code.trim();
+      }
+
       try {
-        const url = `https://graph.facebook.com/v19.0/${fb.pixel_id}/events?access_token=${encodeURIComponent(fb.access_token)}`;
-        const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-        results.facebook = { ok: r.ok, status: r.status };
+        const url = `https://graph.facebook.com/v19.0/${fb.pixel_id.trim()}/events?access_token=${encodeURIComponent(fb.access_token.trim())}`;
+        const r = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const resBody = await r.json().catch(() => ({}));
+        results.facebook = { ok: r.ok, status: r.status, response: resBody };
       } catch (err: any) {
         results.facebook = { ok: false, error: err.message };
       }
@@ -242,9 +293,9 @@ export const trackInitiateCheckoutServer = createServerFn({ method: "POST" })
     // TikTok Events API
     const tt: any = pick("tiktok");
     if (tt?.pixel_id && tt?.access_token) {
-      const payload = {
+      const payload: any = {
         event_source: "web",
-        event_source_id: tt.pixel_id,
+        event_source_id: tt.pixel_id.trim(),
         data: [
           {
             event: "InitiateCheckout",
@@ -271,15 +322,22 @@ export const trackInitiateCheckoutServer = createServerFn({ method: "POST" })
             },
           },
         ],
-        test_event_code: tt.test_event_code || undefined,
       };
+      if (tt.test_event_code?.trim()) {
+        payload.test_event_code = tt.test_event_code.trim();
+      }
+
       try {
         const r = await fetch("https://business-api.tiktok.com/open_api/v1.3/event/track/", {
           method: "POST",
-          headers: { "Content-Type": "application/json", "Access-Token": tt.access_token },
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Token": tt.access_token.trim(),
+          },
           body: JSON.stringify(payload),
         });
-        results.tiktok = { ok: r.ok, status: r.status };
+        const resBody = await r.json().catch(() => ({}));
+        results.tiktok = { ok: r.ok, status: r.status, response: resBody };
       } catch (err: any) {
         results.tiktok = { ok: false, error: err.message };
       }
@@ -306,23 +364,39 @@ export const trackPurchaseServer = createServerFn({ method: "POST" })
   .inputValidator((d) => purchaseInput.parse(d))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // 1. Retrieve order details
     const { data: order } = await supabaseAdmin
       .from("orders")
-      .select("id, order_number, total, customer_phone, customer_name, address_line, area, reseller_id, order_items(product_id,product_name,reseller_price,quantity)")
+      .select("id, order_number, total, customer_phone, customer_name, address_line, area, reseller_id")
       .eq("order_number", data.orderNumber)
       .maybeSingle();
-    if (!order) return { ok: false };
 
-    // marketing_configs: per-reseller override else global (reseller_id null)
+    if (!order) return { ok: false, error: "Order not found" };
+
+    // 2. Retrieve order items
+    const { data: items } = await supabaseAdmin
+      .from("order_items")
+      .select("product_id, product_name, reseller_price, quantity")
+      .eq("order_id", order.id);
+
+    const orderItems = items ?? [];
+
+    // 3. Marketing configs: per-reseller override else global (reseller_id null)
+    const resellerId = order.reseller_id || null;
     const { data: configs } = await supabaseAdmin
       .from("marketing_configs")
       .select("platform, pixel_id, access_token, test_event_code, is_active, reseller_id")
       .in("platform", ["facebook", "tiktok", "ga4"])
-      .or(`reseller_id.eq.${order.reseller_id},reseller_id.is.null`);
+      .or(resellerId ? `reseller_id.eq.${resellerId},reseller_id.is.null` : `reseller_id.is.null`);
 
     const pick = (platform: string) => {
       const rows = (configs ?? []).filter((c: any) => c.platform === platform && c.is_active);
-      return rows.find((c: any) => c.reseller_id === order.reseller_id) ?? rows.find((c: any) => c.reseller_id === null);
+      const resellerRow = resellerId ? rows.find((c: any) => c.reseller_id === resellerId) : null;
+      if (resellerRow && (resellerRow.pixel_id || resellerRow.access_token)) {
+        return resellerRow;
+      }
+      return rows.find((c: any) => c.reseller_id === null) ?? null;
     };
 
     const origin = (data.origin ?? process.env["SITE_URL"] ?? "").replace(/\/$/, "");
@@ -338,7 +412,7 @@ export const trackPurchaseServer = createServerFn({ method: "POST" })
     // Facebook CAPI
     const fb: any = pick("facebook");
     if (fb?.pixel_id && fb?.access_token) {
-      const payload = {
+      const payload: any = {
         data: [
           {
             event_name: "Purchase",
@@ -348,6 +422,7 @@ export const trackPurchaseServer = createServerFn({ method: "POST" })
             action_source: "website",
             client_user_agent: data.userAgent || undefined,
             user_data: {
+              client_user_agent: data.userAgent || undefined,
               fbp: data.fbp || undefined,
               fbc: data.fbc || undefined,
               ph: phoneHashes,
@@ -362,8 +437,8 @@ export const trackPurchaseServer = createServerFn({ method: "POST" })
               value: Number(order.total),
               order_id: order.order_number,
               content_type: "product",
-              content_ids: (order.order_items ?? []).map((i: any) => i.product_id),
-              contents: (order.order_items ?? []).map((i: any) => ({
+              content_ids: orderItems.map((i: any) => i.product_id),
+              contents: orderItems.map((i: any) => ({
                 id: i.product_id,
                 quantity: i.quantity,
                 item_price: Number(i.reseller_price),
@@ -371,12 +446,20 @@ export const trackPurchaseServer = createServerFn({ method: "POST" })
             },
           },
         ],
-        test_event_code: fb.test_event_code || undefined,
       };
+      if (fb.test_event_code?.trim()) {
+        payload.test_event_code = fb.test_event_code.trim();
+      }
+
       try {
-        const url = `https://graph.facebook.com/v19.0/${fb.pixel_id}/events?access_token=${encodeURIComponent(fb.access_token)}`;
-        const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-        results.facebook = { ok: r.ok, status: r.status };
+        const url = `https://graph.facebook.com/v19.0/${fb.pixel_id.trim()}/events?access_token=${encodeURIComponent(fb.access_token.trim())}`;
+        const r = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const resBody = await r.json().catch(() => ({}));
+        results.facebook = { ok: r.ok, status: r.status, response: resBody };
       } catch (err: any) {
         results.facebook = { ok: false, error: err.message };
       }
@@ -385,9 +468,9 @@ export const trackPurchaseServer = createServerFn({ method: "POST" })
     // TikTok Events API
     const tt: any = pick("tiktok");
     if (tt?.pixel_id && tt?.access_token) {
-      const payload = {
+      const payload: any = {
         event_source: "web",
-        event_source_id: tt.pixel_id,
+        event_source_id: tt.pixel_id.trim(),
         data: [
           {
             event: "CompletePayment",
@@ -405,7 +488,7 @@ export const trackPurchaseServer = createServerFn({ method: "POST" })
               currency: "BDT",
               value: Number(order.total),
               order_id: order.order_number,
-              contents: (order.order_items ?? []).map((i: any) => ({
+              contents: orderItems.map((i: any) => ({
                 content_id: i.product_id,
                 quantity: i.quantity,
                 price: Number(i.reseller_price),
@@ -414,15 +497,22 @@ export const trackPurchaseServer = createServerFn({ method: "POST" })
             },
           },
         ],
-        test_event_code: tt.test_event_code || undefined,
       };
+      if (tt.test_event_code?.trim()) {
+        payload.test_event_code = tt.test_event_code.trim();
+      }
+
       try {
         const r = await fetch("https://business-api.tiktok.com/open_api/v1.3/event/track/", {
           method: "POST",
-          headers: { "Content-Type": "application/json", "Access-Token": tt.access_token },
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Token": tt.access_token.trim(),
+          },
           body: JSON.stringify(payload),
         });
-        results.tiktok = { ok: r.ok, status: r.status };
+        const resBody = await r.json().catch(() => ({}));
+        results.tiktok = { ok: r.ok, status: r.status, response: resBody };
       } catch (err: any) {
         results.tiktok = { ok: false, error: err.message };
       }

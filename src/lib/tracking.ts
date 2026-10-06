@@ -12,6 +12,9 @@ declare global {
     gtag?: (...args: unknown[]) => void;
     dataLayer?: unknown[];
     ttq?: { track: (...args: unknown[]) => void; load: (id: string) => void; page: () => void };
+    __loadedFbPixels?: Set<string>;
+    __loadedTtPixels?: Set<string>;
+    __loadedGa4Ids?: Set<string>;
     __trackingLoaded?: boolean;
   }
 }
@@ -22,7 +25,12 @@ export type TrackingConfig = {
   tiktok_pixel?: string | null;
 };
 
-export type PixelRow = { platform: string; pixel_id: string | null; is_global?: boolean | null };
+export type PixelRow = {
+  platform: string;
+  pixel_id: string | null;
+  reseller_id?: string | null;
+  is_global?: boolean | null;
+};
 
 export function getCookie(name: string): string | null {
   if (typeof document === "undefined") return null;
@@ -52,21 +60,34 @@ function captureClickIds() {
       const creationTime = Date.now();
       document.cookie = `_fbc=fb.1.${creationTime}.${fbclid};path=/;max-age=7776000;SameSite=Lax`;
     }
+    const ttclid = params.get("ttclid");
+    if (ttclid && !getCookie("_ttp")) {
+      document.cookie = `_ttp=${ttclid};path=/;max-age=7776000;SameSite=Lax`;
+    }
   } catch {
     // ignore
   }
 }
 
 /**
- * Injects pixels from rows already fetched by the storefront bootstrap call
- * (reseller-owned wins, platform-wide is the fallback) — no extra request.
+ * Injects pixels from rows fetched by the storefront bootstrap call.
+ * Prioritizes reseller-owned pixel (reseller_id is non-null), falls back to platform-wide global pixel.
  */
 export function injectTrackingFromRows(rows: PixelRow[] | null | undefined): TrackingConfig {
   const list = rows ?? [];
-  const pick = (platform: string) =>
-    list.find((r) => r.platform === platform && !r.is_global)?.pixel_id ??
-    list.find((r) => r.platform === platform)?.pixel_id ??
-    null;
+  const pick = (platform: string) => {
+    // 1. Reseller-specific pixel row (has reseller_id)
+    const resRow = list.find((r) => r.platform === platform && Boolean(r.reseller_id));
+    if (resRow?.pixel_id) return resRow.pixel_id.trim();
+
+    // 2. Explicit non-global row
+    const nonGlobal = list.find((r) => r.platform === platform && r.is_global === false);
+    if (nonGlobal?.pixel_id) return nonGlobal.pixel_id.trim();
+
+    // 3. Fallback to global row
+    const globalRow = list.find((r) => r.platform === platform);
+    return globalRow?.pixel_id ? globalRow.pixel_id.trim() : null;
+  };
 
   const cfg: TrackingConfig = {
     fb_pixel: pick("facebook"),
@@ -79,11 +100,17 @@ export function injectTrackingFromRows(rows: PixelRow[] | null | undefined): Tra
 
 export function injectTracking(cfg: TrackingConfig) {
   if (typeof window === "undefined") return;
-  if (window.__trackingLoaded) return;
-  window.__trackingLoaded = true;
   captureClickIds();
 
-  if (cfg.fb_pixel) {
+  if (!window.__loadedFbPixels) window.__loadedFbPixels = new Set();
+  if (!window.__loadedTtPixels) window.__loadedTtPixels = new Set();
+  if (!window.__loadedGa4Ids) window.__loadedGa4Ids = new Set();
+
+  // 1. Facebook Pixel
+  const fbPixel = cfg.fb_pixel?.trim();
+  if (fbPixel && !window.__loadedFbPixels.has(fbPixel)) {
+    window.__loadedFbPixels.add(fbPixel);
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (function (f: any, b: Document, e: string, v: string) {
       if (f.fbq) return;
@@ -101,14 +128,19 @@ export function injectTracking(cfg: TrackingConfig) {
       const s = b.getElementsByTagName(e)[0];
       s.parentNode?.insertBefore(t, s);
     })(window, document, "script", "https://connect.facebook.net/en_US/fbevents.js");
-    window.fbq?.("init", cfg.fb_pixel, {}, { agent: "lovable_v2" });
+
+    window.fbq?.("init", fbPixel, {}, { agent: "lovable_v2" });
     window.fbq?.("track", "PageView", {}, { eventID: `pv_${Date.now()}` });
   }
 
-  if (cfg.ga4_id) {
+  // 2. Google Analytics 4 (GA4)
+  const ga4Id = cfg.ga4_id?.trim();
+  if (ga4Id && !window.__loadedGa4Ids.has(ga4Id)) {
+    window.__loadedGa4Ids.add(ga4Id);
+
     const s = document.createElement("script");
     s.async = true;
-    s.src = `https://www.googletagmanager.com/gtag/js?id=${cfg.ga4_id}`;
+    s.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(ga4Id)}`;
     document.head.appendChild(s);
     window.dataLayer = window.dataLayer || [];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -116,10 +148,14 @@ export function injectTracking(cfg: TrackingConfig) {
       window.dataLayer!.push(args);
     };
     window.gtag("js", new Date());
-    window.gtag("config", cfg.ga4_id, { send_page_view: true });
+    window.gtag("config", ga4Id, { send_page_view: true });
   }
 
-  if (cfg.tiktok_pixel) {
+  // 3. TikTok Pixel
+  const ttPixel = cfg.tiktok_pixel?.trim();
+  if (ttPixel && !window.__loadedTtPixels.has(ttPixel)) {
+    window.__loadedTtPixels.add(ttPixel);
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (function (w: any, d: Document, t: string) {
       w.TiktokAnalyticsObject = t;
@@ -157,7 +193,8 @@ export function injectTracking(cfg: TrackingConfig) {
         a.parentNode?.insertBefore(n, a);
       };
     })(window, document, "ttq");
-    window.ttq?.load(cfg.tiktok_pixel);
+
+    window.ttq?.load(ttPixel);
     window.ttq?.page();
   }
 }
@@ -165,13 +202,22 @@ export function injectTracking(cfg: TrackingConfig) {
 /** 1. PageView Tracking */
 export function trackPageView(url?: string) {
   const eventId = `pv_${Date.now()}`;
-  window.fbq?.("track", "PageView", {}, { eventID: eventId });
+  window.fbq?.("track", "PageView", { eventID: eventId }, { eventID: eventId });
   window.ttq?.page();
-  window.gtag?.("event", "page_view", { page_location: url || (typeof window !== "undefined" ? window.location.href : undefined) });
+  window.gtag?.("event", "page_view", {
+    page_location: url || (typeof window !== "undefined" ? window.location.href : undefined),
+    event_id: eventId,
+  });
 }
 
 /** 2. ViewContent Tracking */
-export function trackViewContent(p: { id: string; name: string; price: number; currency?: string; eventId?: string }) {
+export function trackViewContent(p: {
+  id: string;
+  name: string;
+  price: number;
+  currency?: string;
+  eventId?: string;
+}) {
   const currency = p.currency ?? "BDT";
   const eventId = p.eventId ?? `vc_${p.id}_${Date.now()}`;
 
@@ -186,6 +232,7 @@ export function trackViewContent(p: { id: string; name: string; price: number; c
       value: p.price,
       currency,
       contents: [{ id: p.id, quantity: 1, item_price: p.price }],
+      eventID: eventId,
     },
     { eventID: eventId }
   );
@@ -194,25 +241,38 @@ export function trackViewContent(p: { id: string; name: string; price: number; c
   window.gtag?.("event", "view_item", {
     currency,
     value: p.price,
+    event_id: eventId,
+    transaction_id: eventId,
     items: [{ item_id: p.id, item_name: p.name, price: p.price, quantity: 1 }],
   });
 
   // TikTok
-  window.ttq?.track("ViewContent", {
-    content_id: p.id,
-    content_name: p.name,
-    content_type: "product",
-    value: p.price,
-    currency,
-    contents: [{ content_id: p.id, content_name: p.name, quantity: 1, price: p.price }],
-    event_id: eventId,
-  });
+  window.ttq?.track(
+    "ViewContent",
+    {
+      content_id: p.id,
+      content_name: p.name,
+      content_type: "product",
+      value: p.price,
+      currency,
+      contents: [{ content_id: p.id, content_name: p.name, quantity: 1, price: p.price }],
+      event_id: eventId,
+    },
+    { event_id: eventId }
+  );
 
   return eventId;
 }
 
 /** 3. AddToCart Tracking */
-export function trackAddToCart(p: { id: string; name: string; price: number; qty: number; currency?: string; eventId?: string }) {
+export function trackAddToCart(p: {
+  id: string;
+  name: string;
+  price: number;
+  qty: number;
+  currency?: string;
+  eventId?: string;
+}) {
   const currency = p.currency ?? "BDT";
   const value = p.price * p.qty;
   const eventId = p.eventId ?? `atc_${p.id}_${Date.now()}`;
@@ -229,6 +289,7 @@ export function trackAddToCart(p: { id: string; name: string; price: number; qty
       currency,
       num_items: p.qty,
       contents: [{ id: p.id, quantity: p.qty, item_price: p.price }],
+      eventID: eventId,
     },
     { eventID: eventId }
   );
@@ -237,20 +298,25 @@ export function trackAddToCart(p: { id: string; name: string; price: number; qty
   window.gtag?.("event", "add_to_cart", {
     currency,
     value,
+    event_id: eventId,
     items: [{ item_id: p.id, item_name: p.name, price: p.price, quantity: p.qty }],
   });
 
   // TikTok
-  window.ttq?.track("AddToCart", {
-    content_id: p.id,
-    content_name: p.name,
-    content_type: "product",
-    value,
-    currency,
-    quantity: p.qty,
-    contents: [{ content_id: p.id, content_name: p.name, quantity: p.qty, price: p.price }],
-    event_id: eventId,
-  });
+  window.ttq?.track(
+    "AddToCart",
+    {
+      content_id: p.id,
+      content_name: p.name,
+      content_type: "product",
+      value,
+      currency,
+      quantity: p.qty,
+      contents: [{ content_id: p.id, content_name: p.name, quantity: p.qty, price: p.price }],
+      event_id: eventId,
+    },
+    { event_id: eventId }
+  );
 
   return eventId;
 }
@@ -277,6 +343,7 @@ export function trackInitiateCheckout(p: {
       value: p.total,
       currency,
       num_items: totalQty,
+      eventID: eventId,
     },
     { eventID: eventId }
   );
@@ -285,6 +352,8 @@ export function trackInitiateCheckout(p: {
   window.gtag?.("event", "begin_checkout", {
     currency,
     value: p.total,
+    event_id: eventId,
+    transaction_id: eventId,
     items: p.items.map((i) => ({
       item_id: i.id,
       item_name: i.name,
@@ -294,18 +363,22 @@ export function trackInitiateCheckout(p: {
   });
 
   // TikTok
-  window.ttq?.track("InitiateCheckout", {
-    contents: p.items.map((i) => ({
-      content_id: i.id,
-      content_name: i.name,
-      quantity: i.qty,
-      price: i.price,
-    })),
-    value: p.total,
-    currency,
-    quantity: totalQty,
-    event_id: eventId,
-  });
+  window.ttq?.track(
+    "InitiateCheckout",
+    {
+      contents: p.items.map((i) => ({
+        content_id: i.id,
+        content_name: i.name,
+        quantity: i.qty,
+        price: i.price,
+      })),
+      value: p.total,
+      currency,
+      quantity: totalQty,
+      event_id: eventId,
+    },
+    { event_id: eventId }
+  );
 
   return eventId;
 }
@@ -335,6 +408,7 @@ export function trackPurchase(p: {
       contents: p.items?.map((i) => ({ id: i.id, quantity: i.qty, item_price: i.price })) || [
         { id: p.orderNumber, quantity: 1, item_price: p.total },
       ],
+      eventID: eventId,
     },
     { eventID: eventId }
   );
@@ -344,6 +418,7 @@ export function trackPurchase(p: {
     transaction_id: p.orderNumber,
     value: p.total,
     currency,
+    event_id: eventId,
     items: p.items?.map((i) => ({
       item_id: i.id,
       item_name: i.name,
@@ -353,19 +428,23 @@ export function trackPurchase(p: {
   });
 
   // TikTok
-  window.ttq?.track("CompletePayment", {
-    content_id: p.orderNumber,
-    value: p.total,
-    currency,
-    quantity: totalQty,
-    contents: p.items?.map((i) => ({
-      content_id: i.id,
-      content_name: i.name,
-      quantity: i.qty,
-      price: i.price,
-    })) || [{ content_id: p.orderNumber, content_name: `Order #${p.orderNumber}`, quantity: 1, price: p.total }],
-    event_id: eventId,
-  });
+  window.ttq?.track(
+    "CompletePayment",
+    {
+      content_id: p.orderNumber,
+      value: p.total,
+      currency,
+      quantity: totalQty,
+      contents: p.items?.map((i) => ({
+        content_id: i.id,
+        content_name: i.name,
+        quantity: i.qty,
+        price: i.price,
+      })) || [{ content_id: p.orderNumber, content_name: `Order #${p.orderNumber}`, quantity: 1, price: p.total }],
+      event_id: eventId,
+    },
+    { event_id: eventId }
+  );
 
   return eventId;
 }
