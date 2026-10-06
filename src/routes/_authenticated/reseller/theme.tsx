@@ -249,75 +249,83 @@ function ThemePage() {
                   <span className="text-xs text-muted-foreground">{open ? "Hide" : "Edit"}</span>
                 </button>
                 {open && (
-                  <div className="space-y-3 border-t p-4">
-                    {g.fields.map((f) => {
-                      const raw = values[f.key];
-                      if (f.type === "toggle") {
-                        const checked = typeof raw === "boolean" ? raw : f.def !== false;
-                        return (
-                          <label key={f.key} className="flex items-center justify-between gap-3 text-sm">
-                            <span className="font-medium">{f.label}</span>
-                            <button
-                              type="button"
-                              role="switch"
-                              aria-checked={checked}
-                              onClick={() => setField(f.key, !checked)}
-                              className={
-                                "relative h-6 w-11 shrink-0 rounded-full transition-colors " +
-                                (checked ? "bg-primary" : "bg-muted")
-                              }
-                            >
-                              <span
-                                className={
-                                  "absolute top-0.5 h-5 w-5 rounded-full bg-background transition-all " +
-                                  (checked ? "left-[22px]" : "left-0.5")
-                                }
-                              />
-                            </button>
-                          </label>
-                        );
-                      }
-                      if (f.type === "image") {
-                        const url = typeof raw === "string" ? raw : "";
-                        const val: UploadedImage[] = url ? [{ path: "", url, bytes: 0 }] : [];
-                        return (
-                          <div key={f.key}>
-                            <label className="mb-1 block text-xs font-medium">{f.label}</label>
-                            <ImageUploader
-                              bucket="branding"
-                              folder={`${rid}/${theme}/${f.key}`}
-                              value={val}
-                              onChange={(v) => setField(f.key, v[0]?.url ?? "")}
-                            />
-                            {f.hint && <p className="mt-1 text-[11px] text-muted-foreground">{f.hint}</p>}
-                          </div>
-                        );
-                      }
-                      const str = typeof raw === "string" ? raw : "";
-                      const ph = typeof f.def === "string" ? f.def : f.placeholder;
-                      return (
-                        <div key={f.key}>
-                          <label className="mb-1 block text-xs font-medium">{f.label}</label>
-                          {f.type === "textarea" ? (
-                            <textarea
-                              rows={3}
-                              value={str}
-                              placeholder={ph}
-                              onChange={(e) => setField(f.key, e.target.value)}
-                              className={inp}
-                            />
-                          ) : (
-                            <input
-                              value={str}
-                              placeholder={ph}
-                              onChange={(e) => setField(f.key, e.target.value)}
-                              className={inp}
-                            />
-                          )}
-                        </div>
-                      );
-                    })}
-                    <p className="text-[11px] text-muted-foreground">
+                  <div className="space-y-4 border-t p-4">
+                    {g.id === "usp" ? (
+                      <BenefitStripEditor values={values} setField={setField} />
+                    ) : g.id === "reviews" ? (
+                      <ReviewsEditor values={values} setField={setField} />
+                    ) : (
+                      <>
+                        {g.fields.map((f) => {
+                          const raw = values[f.key];
+                          if (f.type === "toggle") {
+                            const checked = typeof raw === "boolean" ? raw : f.def !== false;
+                            return (
+                              <label key={f.key} className="flex items-center justify-between gap-3 text-sm">
+                                <span className="font-medium">{f.label}</span>
+                                <button
+                                  type="button"
+                                  role="switch"
+                                  aria-checked={checked}
+                                  onClick={() => setField(f.key, !checked)}
+                                  className={
+                                    "relative h-6 w-11 shrink-0 rounded-full transition-colors " +
+                                    (checked ? "bg-primary" : "bg-muted")
+                                  }
+                                >
+                                  <span
+                                    className={
+                                      "absolute top-0.5 h-5 w-5 rounded-full bg-background transition-all " +
+                                      (checked ? "left-[22px]" : "left-0.5")
+                                    }
+                                  />
+                                </button>
+                              </label>
+                            );
+                          }
+                          if (f.type === "image") {
+                            const url = typeof raw === "string" ? raw : "";
+                            const val: UploadedImage[] = url ? [{ path: "", url, bytes: 0 }] : [];
+                            return (
+                              <div key={f.key}>
+                                <label className="mb-1 block text-xs font-medium">{f.label}</label>
+                                <ImageUploader
+                                  bucket="branding"
+                                  folder={`${rid}/${theme}/${f.key}`}
+                                  value={val}
+                                  onChange={(v) => setField(f.key, v[0]?.url ?? "")}
+                                />
+                                {f.hint && <p className="mt-1 text-[11px] text-muted-foreground">{f.hint}</p>}
+                              </div>
+                            );
+                          }
+                          const str = typeof raw === "string" ? raw : "";
+                          const ph = typeof f.def === "string" ? f.def : f.placeholder;
+                          return (
+                            <div key={f.key}>
+                              <label className="mb-1 block text-xs font-medium">{f.label}</label>
+                              {f.type === "textarea" ? (
+                                <textarea
+                                  rows={3}
+                                  value={str}
+                                  placeholder={ph}
+                                  onChange={(e) => setField(f.key, e.target.value)}
+                                  className={inp}
+                                />
+                              ) : (
+                                <input
+                                  value={str}
+                                  placeholder={ph}
+                                  onChange={(e) => setField(f.key, e.target.value)}
+                                  className={inp}
+                                />
+                              )}
+                            </div>
+                          );
+                        })}
+                      </>
+                    )}
+                    <p className="text-[11px] text-muted-foreground pt-1 border-t border-dashed">
                       Leave a field empty to use the theme default. Use {"{store}"} to insert your store name.
                     </p>
                   </div>
@@ -445,6 +453,190 @@ function PaletteChip({ palette }: { palette: StorePalette }) {
         <div className="text-[10px]" style={{ color: palette.muted }}>
           ৳1,250 · in stock
         </div>
+      </div>
+    </div>
+  );
+}
+
+/** Structured editor for Benefit Strip where Title and Detail are cleanly paired per item */
+function BenefitStripEditor({
+  values,
+  setField,
+}: {
+  values: ThemeContentValues;
+  setField: (key: string, value: string | boolean) => void;
+}) {
+  const showRaw = values["usp_show"];
+  const checked = typeof showRaw === "boolean" ? showRaw : true;
+
+  const defaults = [
+    { num: 1, titlePh: "Cash on Delivery", detailPh: "Pay after you receive" },
+    { num: 2, titlePh: "Nationwide delivery", detailPh: "All 64 districts" },
+    { num: 3, titlePh: "100% genuine", detailPh: "Verified products only" },
+    { num: 4, titlePh: "Easy returns", detailPh: "Report within 24 hours" },
+  ];
+
+  return (
+    <div className="space-y-4">
+      {/* Visibility Toggle */}
+      <div className="flex items-center justify-between rounded-lg border bg-muted/30 p-3">
+        <div>
+          <span className="text-sm font-medium">Show Benefit Strip</span>
+          <p className="text-[11px] text-muted-foreground">Display the 4 trust promises below the hero banner</p>
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={checked}
+          onClick={() => setField("usp_show", !checked)}
+          className={
+            "relative h-6 w-11 shrink-0 rounded-full transition-colors " +
+            (checked ? "bg-primary" : "bg-muted")
+          }
+        >
+          <span
+            className={
+              "absolute top-0.5 h-5 w-5 rounded-full bg-background transition-all " +
+              (checked ? "left-[22px]" : "left-0.5")
+            }
+          />
+        </button>
+      </div>
+
+      {/* 4 Grouped Benefit Cards */}
+      <div className="grid gap-3 sm:grid-cols-2">
+        {defaults.map(({ num, titlePh, detailPh }) => {
+          const tVal = typeof values[`usp${num}_t`] === "string" ? (values[`usp${num}_t`] as string) : "";
+          const dVal = typeof values[`usp${num}_d`] === "string" ? (values[`usp${num}_d`] as string) : "";
+
+          return (
+            <div key={num} className="rounded-xl border bg-card/60 p-3.5 space-y-3 shadow-xs">
+              <div className="flex items-center gap-2 border-b pb-2">
+                <span className="grid h-5 w-5 place-items-center rounded bg-primary/10 text-[11px] font-bold text-primary">
+                  {num}
+                </span>
+                <span className="text-xs font-semibold text-foreground">Benefit Item {num}</span>
+              </div>
+              <div className="space-y-1">
+                <label className="block text-[11px] font-medium text-muted-foreground">Title</label>
+                <input
+                  value={tVal}
+                  placeholder={titlePh}
+                  onChange={(e) => setField(`usp${num}_t`, e.target.value)}
+                  className={inp}
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="block text-[11px] font-medium text-muted-foreground">Detail / Subtitle</label>
+                <input
+                  value={dVal}
+                  placeholder={detailPh}
+                  onChange={(e) => setField(`usp${num}_d`, e.target.value)}
+                  className={inp}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/** Structured editor for Customer Reviews */
+function ReviewsEditor({
+  values,
+  setField,
+}: {
+  values: ThemeContentValues;
+  setField: (key: string, value: string | boolean) => void;
+}) {
+  const showRaw = values["review_show"];
+  const checked = typeof showRaw === "boolean" ? showRaw : true;
+  const titleVal = typeof values["review_title"] === "string" ? (values["review_title"] as string) : "";
+
+  const defaults = [
+    { num: 1, namePh: "Rakib, Dhaka", textPh: "Product exactly matched the photos and delivery was quick. Highly recommended." },
+    { num: 2, namePh: "Sumaiya, Chattogram", textPh: "I paid after checking the parcel. Very comfortable shopping experience." },
+    { num: 3, namePh: "Tanvir, Sylhet", textPh: "Support answered on WhatsApp within minutes. Will order again." },
+  ];
+
+  return (
+    <div className="space-y-4">
+      {/* Visibility Toggle */}
+      <div className="flex items-center justify-between rounded-lg border bg-muted/30 p-3">
+        <div>
+          <span className="text-sm font-medium">Show Reviews Section</span>
+          <p className="text-[11px] text-muted-foreground">Display social proof feedback from customers</p>
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={checked}
+          onClick={() => setField("review_show", !checked)}
+          className={
+            "relative h-6 w-11 shrink-0 rounded-full transition-colors " +
+            (checked ? "bg-primary" : "bg-muted")
+          }
+        >
+          <span
+            className={
+              "absolute top-0.5 h-5 w-5 rounded-full bg-background transition-all " +
+              (checked ? "left-[22px]" : "left-0.5")
+            }
+          />
+        </button>
+      </div>
+
+      {/* Section Title */}
+      <div>
+        <label className="mb-1 block text-xs font-medium">Section title</label>
+        <input
+          value={titleVal}
+          placeholder="What customers say"
+          onChange={(e) => setField("review_title", e.target.value)}
+          className={inp}
+        />
+      </div>
+
+      {/* 3 Grouped Review Cards */}
+      <div className="space-y-3">
+        {defaults.map(({ num, namePh, textPh }) => {
+          const nVal = typeof values[`review${num}_name`] === "string" ? (values[`review${num}_name`] as string) : "";
+          const tVal = typeof values[`review${num}_text`] === "string" ? (values[`review${num}_text`] as string) : "";
+
+          return (
+            <div key={num} className="rounded-xl border bg-card/60 p-3.5 space-y-3 shadow-xs">
+              <div className="flex items-center gap-2 border-b pb-2">
+                <span className="grid h-5 w-5 place-items-center rounded bg-primary/10 text-[11px] font-bold text-primary">
+                  {num}
+                </span>
+                <span className="text-xs font-semibold text-foreground">Customer Review {num}</span>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-[1fr_2fr]">
+                <div className="space-y-1">
+                  <label className="block text-[11px] font-medium text-muted-foreground">Customer Name</label>
+                  <input
+                    value={nVal}
+                    placeholder={namePh}
+                    onChange={(e) => setField(`review${num}_name`, e.target.value)}
+                    className={inp}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="block text-[11px] font-medium text-muted-foreground">Review Text</label>
+                  <textarea
+                    rows={2}
+                    value={tVal}
+                    placeholder={textPh}
+                    onChange={(e) => setField(`review${num}_text`, e.target.value)}
+                    className={inp}
+                  />
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
