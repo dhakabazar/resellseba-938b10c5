@@ -364,16 +364,16 @@ export function CategoryStrip() {
 
   /* Aurora — compact circular category portraits */
   return (
-    <section className="mx-auto max-w-6xl px-4 py-10">
+    <section className="mx-auto max-w-6xl px-3 py-4 sm:px-4 sm:py-8">
       <SectionHead title={title} />
-      <div className="grid grid-cols-4 gap-x-3 gap-y-5 sm:grid-cols-6 lg:grid-cols-8">
+      <div className="grid grid-cols-4 gap-x-2.5 gap-y-3 sm:grid-cols-6 sm:gap-x-4 sm:gap-y-4 lg:grid-cols-8">
         {categories.map((c) => (
           <Link
             key={c.id}
             to={url(`/c/${c.slug}`)}
             className="group flex min-w-0 flex-col items-center text-center"
           >
-            <div className="aspect-square w-full overflow-hidden rounded-full border-2 border-[var(--st-surface)] bg-[var(--st-bg-alt)] shadow-[var(--st-shadow)] ring-1 ring-[var(--st-border)] transition-all group-hover:-translate-y-1 group-hover:ring-[var(--st-primary)]">
+            <div className="aspect-square w-full overflow-hidden rounded-full border-2 border-[var(--st-surface)] bg-[var(--st-bg-alt)] shadow-[var(--st-shadow)] ring-1 ring-[var(--st-border)] transition-all group-hover:-translate-y-0.5 group-hover:ring-[var(--st-primary)]">
               {c.image_url ? (
                 <img
                   src={c.image_url}
@@ -382,13 +382,13 @@ export function CategoryStrip() {
                   className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
               ) : (
-                <div className={cx("grid h-full w-full place-items-center text-xl font-semibold", muted)}>
+                <div className={cx("grid h-full w-full place-items-center text-lg font-semibold", muted)}>
                   {c.name.charAt(0)}
                 </div>
               )}
             </div>
-            <div className="mt-2 w-full px-0.5">
-              <span className="block truncate text-[11px] font-semibold text-[var(--st-fg)] sm:text-xs">{c.name}</span>
+            <div className="mt-1.5 w-full px-0.5">
+              <span className="block truncate text-[11px] font-semibold leading-tight text-[var(--st-fg)] sm:text-xs">{c.name}</span>
             </div>
           </Link>
         ))}
