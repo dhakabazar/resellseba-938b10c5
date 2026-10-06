@@ -534,17 +534,6 @@ export function CheckoutPageContent({
             )}
           </div>
 
-          <div className="hidden sm:block pt-2">
-            <PrimaryButton disabled={busy} className="w-full py-3.5 text-base font-bold justify-center animate-order-jiggle shadow-md">
-              {busy ? (
-                <>
-                  <Loader2 className="h-5 w-5 animate-spin" /> অর্ডার প্রসেস হচ্ছে...
-                </>
-              ) : (
-                `অর্ডার কনফার্ম করুন — ${bdt(totals.total)}`
-              )}
-            </PrimaryButton>
-          </div>
           {/* Mobile Floating Bottom CTA Bar - shown only when the inline button is scrolled out of view */}
           <div
             className={cx(
