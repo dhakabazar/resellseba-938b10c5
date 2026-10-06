@@ -19,7 +19,6 @@ export function ShopPageContent() {
     <section className="mx-auto max-w-6xl px-4 py-10">
       <div className={cx("mb-8 border-b pb-6", borderc)}>
         <Heading className="text-2xl md:text-3xl">সকল প্রোডাক্ট</Heading>
-        <p className={cx("mt-2 text-xs", muted)}>{listings.length}টি পণ্য</p>
       </div>
 
       {listings.length ? (
