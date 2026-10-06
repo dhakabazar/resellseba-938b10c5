@@ -5,6 +5,7 @@ import {
   ChevronDown,
   Quote,
   ShieldCheck,
+  Sparkles,
   Star,
   Truck,
   Undo2,

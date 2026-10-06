@@ -127,6 +127,7 @@ function ResellerLayout() {
   const [storeName, setStoreName] = useState("My store");
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [storeCode, setStoreCode] = useState<string | null>(null);
+  const [storeUrl, setStoreUrl] = useState<string | null>(null);
   const [primary, setPrimary] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [approved, setApproved] = useState<boolean | null>(null);
@@ -193,6 +194,14 @@ function ResellerLayout() {
         setStoreName(r.business_name);
         setStoreCode(r.code);
         setAvatarUrl(r.avatar_url ?? null);
+
+        let activeUrl = `/s/${r.code}`;
+        const bDomain = getPanelBootstrapPayload()?.reseller?.primary_domain;
+        if (bDomain) {
+          activeUrl = `https://${bDomain}`;
+        }
+        setStoreUrl(activeUrl);
+
         // Store branding rides along with the panel bootstrap.
         const s = getPanelBootstrapPayload()?.reseller_settings ?? null;
         if (s?.logo_url) logo = s.logo_url;
@@ -249,9 +258,9 @@ function ResellerLayout() {
         avatarUrl,
       }}
       headerRight={
-        storeCode ? (
+        storeUrl || storeCode ? (
           <a
-            href={`/s/${storeCode}`}
+            href={storeUrl || `/s/${storeCode}`}
             target="_blank"
             rel="noreferrer"
             className="inline-flex items-center gap-2 rounded-md border bg-background px-3 py-1.5 text-sm font-medium transition hover:bg-muted"

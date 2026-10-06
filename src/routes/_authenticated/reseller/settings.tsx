@@ -28,6 +28,7 @@ function SettingsPage() {
   const { user } = useAuth();
   const [rid, setRid] = useState<string | null>(null);
   const [code, setCode] = useState("");
+  const [storeUrl, setStoreUrl] = useState("");
   const [storeName, setStoreName] = useState("");
   const [tagline, setTagline] = useState("");
   /** Store colors are managed per theme in the Theme page. */
@@ -52,6 +53,20 @@ function SettingsPage() {
       if (!r) return setLoading(false);
       setRid(r.id);
       setCode(r.code);
+
+      let activeUrl = `/s/${r.code}`;
+      const { data: dRows } = await supabase
+        .from("reseller_domains")
+        .select("hostname, is_primary, ssl_status")
+        .eq("reseller_id", r.id)
+        .eq("ssl_status", "active")
+        .order("is_primary", { ascending: false })
+        .limit(1);
+      if (dRows && dRows.length > 0 && dRows[0]?.hostname) {
+        activeUrl = `https://${dRows[0].hostname}`;
+      }
+      setStoreUrl(activeUrl);
+
       const { data: s } = await supabase.from("reseller_settings").select("*").eq("reseller_id", r.id).maybeSingle();
       if (s) {
         setStoreName(s.store_name);
@@ -119,9 +134,9 @@ function SettingsPage() {
         description="Configure your storefront identity, branding assets, social channels, and SEO parameters."
         actions={
           <div className="flex items-center gap-2">
-            {code && (
+            {(storeUrl || code) && (
               <a
-                href={`/s/${code}`}
+                href={storeUrl || `/s/${code}`}
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-muted/50 transition-colors"

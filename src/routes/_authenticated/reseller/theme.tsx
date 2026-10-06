@@ -28,6 +28,7 @@ function ThemePage() {
   const { user } = useAuth();
   const [rid, setRid] = useState<string | null>(null);
   const [code, setCode] = useState("");
+  const [storeUrl, setStoreUrl] = useState("");
   const [theme, setTheme] = useState<StoreThemeId>(DEFAULT_THEME_ID);
   const [savedTheme, setSavedTheme] = useState<StoreThemeId>(DEFAULT_THEME_ID);
   const [all, setAll] = useState<Record<string, ThemeContentValues>>({});
@@ -53,6 +54,20 @@ function ThemePage() {
       if (!r) return setLoading(false);
       setRid(r.id);
       setCode(r.code);
+
+      let activeUrl = `/s/${r.code}`;
+      const { data: dRows } = await supabase
+        .from("reseller_domains")
+        .select("hostname, is_primary, ssl_status")
+        .eq("reseller_id", r.id)
+        .eq("ssl_status", "active")
+        .order("is_primary", { ascending: false })
+        .limit(1);
+      if (dRows && dRows.length > 0 && dRows[0]?.hostname) {
+        activeUrl = `https://${dRows[0].hostname}`;
+      }
+      setStoreUrl(activeUrl);
+
       const { data: s } = await supabase
         .from("reseller_settings")
         .select("theme,theme_settings")
@@ -101,9 +116,9 @@ function ThemePage() {
         description="Customize your storefront theme, color palettes, and interactive section content."
         actions={
           <div className="flex flex-wrap gap-2">
-            {code && (
+            {(storeUrl || code) && (
               <a
-                href={`/s/${code}`}
+                href={storeUrl || `/s/${code}`}
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted transition-colors"
@@ -352,9 +367,9 @@ function ThemePage() {
           Active Theme: <span className="font-semibold text-foreground">{activeTheme.name}</span> ({palette.name})
         </div>
         <div className="flex items-center gap-2">
-          {code && (
+          {(storeUrl || code) && (
             <a
-              href={`/s/${code}`}
+              href={storeUrl || `/s/${code}`}
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center gap-1.5 rounded-md border px-3 py-2 text-xs font-medium hover:bg-muted"
