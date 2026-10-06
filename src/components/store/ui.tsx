@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Flame, ShoppingBag, ShoppingBasket } from "lucide-react";
+import { ChevronLeft, ChevronRight, Flame, ShoppingBag, ShoppingBasket } from "lucide-react";
 import { addToCart, bdt } from "@/lib/store-cart";
 import { trackAddToCart } from "@/lib/tracking";
 import { useStore, type StoreListing } from "./store-context";
@@ -375,16 +375,18 @@ export function ProductImageGallery({
   const [internalIdx, setInternalIdx] = useState(0);
   const currentIdx = activeIdx !== undefined ? activeIdx : internalIdx;
   const scrollRef = useRef<HTMLDivElement>(null);
+  const thumbContainerRef = useRef<HTMLDivElement>(null);
   const isProgrammaticScroll = useRef(false);
 
   const handleSelect = (index: number) => {
-    if (activeIdx === undefined) setInternalIdx(index);
-    onIndexChange?.(index);
+    const validIdx = Math.max(0, Math.min(index, allImages.length - 1));
+    if (activeIdx === undefined) setInternalIdx(validIdx);
+    onIndexChange?.(validIdx);
     if (scrollRef.current) {
       isProgrammaticScroll.current = true;
       const el = scrollRef.current;
       el.scrollTo({
-        left: index * el.clientWidth,
+        left: validIdx * el.clientWidth,
         behavior: "smooth",
       });
       setTimeout(() => {
@@ -419,19 +421,38 @@ export function ProductImageGallery({
     }
   }, [activeIdx]);
 
+  useEffect(() => {
+    if (thumbContainerRef.current) {
+      const activeBtn = thumbContainerRef.current.children[currentIdx] as HTMLElement | undefined;
+      if (activeBtn) {
+        activeBtn.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
+      }
+    }
+  }, [currentIdx]);
+
   if (allImages.length === 0) {
     return (
-      <div className={cx("relative overflow-hidden rounded-[var(--st-radius)] border bg-[var(--st-bg-alt)]", aspectRatio, borderc)}>
+      <div className={cx("relative aspect-square w-full overflow-hidden rounded-[var(--st-radius)] border bg-[var(--st-bg-alt)]", borderc)}>
         <div className={cx("grid h-full w-full place-items-center text-xs", muted)}>ছবি নেই</div>
       </div>
     );
   }
 
+  const hasMultiple = showThumbnails && allImages.length > 1;
+
   return (
-    <div className="relative select-none md:flex md:flex-row md:items-start md:gap-3.5">
-      {/* Thumbnails (Left side on PC, Bottom on Mobile) */}
-      {showThumbnails && allImages.length > 1 && (
-        <div className="no-scrollbar order-2 mt-3 flex gap-2 overflow-x-auto pb-1 md:order-1 md:mt-0 md:max-h-[520px] md:flex-col md:overflow-y-auto md:pb-0">
+    <div
+      className={cx(
+        "relative w-full min-w-0 select-none",
+        hasMultiple ? "flex flex-col md:grid md:grid-cols-[68px_1fr] md:gap-3.5 md:items-start" : "w-full",
+      )}
+    >
+      {/* Thumbnails (Left side on PC matching gallery height, Bottom on Mobile) */}
+      {hasMultiple && (
+        <div
+          ref={thumbContainerRef}
+          className="no-scrollbar order-2 mt-3 flex w-full max-w-full min-w-0 gap-2 overflow-x-auto pb-1 md:order-1 md:mt-0 md:h-full md:max-h-full md:min-h-0 md:w-[68px] md:flex-col md:justify-start md:overflow-y-auto md:pb-0"
+        >
           {allImages.map((url, i) => (
             <button
               key={i}
@@ -439,7 +460,7 @@ export function ProductImageGallery({
               onClick={() => handleSelect(i)}
               aria-label={`Image ${i + 1}`}
               className={cx(
-                "relative aspect-square h-16 w-16 flex-none overflow-hidden rounded-[var(--st-radius-sm)] border-2 transition-all hover:opacity-90",
+                "relative aspect-square h-16 w-16 shrink-0 flex-none overflow-hidden rounded-[var(--st-radius-sm)] border-2 transition-all hover:opacity-90",
                 i === currentIdx ? "border-[var(--st-primary)] ring-2 ring-[var(--st-primary)]/20" : borderc,
               )}
             >
@@ -447,7 +468,7 @@ export function ProductImageGallery({
                 src={url}
                 alt=""
                 loading="lazy"
-                className={cx("h-full w-full aspect-square", objectFit === "contain" ? "object-contain" : "object-cover")}
+                className={cx("aspect-square h-full w-full", objectFit === "contain" ? "object-contain" : "object-cover")}
               />
             </button>
           ))}
@@ -455,15 +476,15 @@ export function ProductImageGallery({
       )}
 
       {/* Main Image Slider with Touch Swipe (Strict 1:1 Square) */}
-      <div className={cx("relative order-1 aspect-square flex-1 overflow-hidden rounded-[var(--st-radius)] border bg-[var(--st-bg-alt)] md:order-2", borderc)}>
+      <div className={cx("relative order-1 aspect-square w-full min-w-0 overflow-hidden rounded-[var(--st-radius)] border bg-[var(--st-bg-alt)] md:order-2", borderc)}>
         <div
           ref={scrollRef}
           onScroll={handleScroll}
-          className="no-scrollbar flex h-full w-full snap-x snap-mandatory overflow-x-auto scroll-smooth touch-pan-x"
+          className="no-scrollbar flex h-full w-full min-w-0 snap-x snap-mandatory overflow-x-auto scroll-smooth touch-pan-x"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           {allImages.map((url, i) => (
-            <div key={i} className="flex aspect-square h-full w-full flex-none snap-center items-center justify-center">
+            <div key={i} className="flex aspect-square h-full w-full min-w-full flex-none snap-center items-center justify-center">
               <img
                 src={url}
                 alt={`${title} - ${i + 1}`}
@@ -475,7 +496,41 @@ export function ProductImageGallery({
           ))}
         </div>
 
-        {/* Counter Badge for Mobile / Multi-image */}
+        {/* Navigation Arrows for Previous / Next Image (< and >) */}
+        {allImages.length > 1 && (
+          <>
+            {currentIdx > 0 && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleSelect(currentIdx - 1);
+                }}
+                aria-label="Previous image"
+                className="absolute left-2.5 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/45 p-1.5 text-white shadow-md backdrop-blur-sm transition-all hover:bg-black/75 hover:scale-110 active:scale-95"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+            )}
+            {currentIdx < allImages.length - 1 && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleSelect(currentIdx + 1);
+                }}
+                aria-label="Next image"
+                className="absolute right-2.5 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/45 p-1.5 text-white shadow-md backdrop-blur-sm transition-all hover:bg-black/75 hover:scale-110 active:scale-95"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </button>
+            )}
+          </>
+        )}
+
+        {/* Counter Badge */}
         {allImages.length > 1 && (
           <div className="pointer-events-none absolute bottom-3 right-3 z-10 rounded-full bg-black/60 px-2.5 py-0.5 text-[11px] font-semibold text-white backdrop-blur-sm">
             {currentIdx + 1} / {allImages.length}

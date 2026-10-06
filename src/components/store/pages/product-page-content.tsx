@@ -130,8 +130,8 @@ export function ProductPageContent({ slug, code: propCode }: { slug: string; cod
     <div className="mx-auto max-w-6xl px-4 pb-24 pt-8 lg:pb-10">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
-      <div className="grid gap-10 lg:grid-cols-2">
-        <div>
+      <div className="grid gap-8 lg:grid-cols-2 lg:gap-10">
+        <div className="min-w-0">
           <ProductImageGallery
             images={images.length > 0 ? images : active ? [{ url: active }] : []}
             title={title}
@@ -158,7 +158,7 @@ export function ProductPageContent({ slug, code: propCode }: { slug: string; cod
           />
         </div>
 
-        <div>
+        <div className="min-w-0">
           <div className="group flex items-start gap-2">
             <Heading as="h1" className="text-2xl leading-tight md:text-4xl">
               {title}

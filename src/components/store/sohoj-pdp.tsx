@@ -62,7 +62,7 @@ export function SohojProductPage({
     <div className="mx-auto max-w-6xl px-3 pb-24 pt-3 lg:pb-8">
       <div className="grid gap-3 lg:grid-cols-[minmax(0,420px)_1fr]">
         {/* ছবি */}
-        <div className={cx("rounded-[var(--st-radius)] border bg-[var(--st-surface)] p-3", borderc)}>
+        <div className={cx("min-w-0 rounded-[var(--st-radius)] border bg-[var(--st-surface)] p-3", borderc)}>
           <ProductImageGallery
             images={images.length > 0 ? images : active ? [{ url: active }] : []}
             title={title}
@@ -86,7 +86,7 @@ export function SohojProductPage({
         </div>
 
         {/* অর্ডার প্যানেল */}
-        <div className={cx("rounded-[var(--st-radius)] border bg-[var(--st-surface)] p-4", borderc)}>
+        <div className={cx("min-w-0 rounded-[var(--st-radius)] border bg-[var(--st-surface)] p-4", borderc)}>
           <h1 className="text-lg font-extrabold leading-snug text-[var(--st-fg)] md:text-2xl">{title}</h1>
 
           <div className="mt-2 flex flex-wrap items-baseline gap-3">
