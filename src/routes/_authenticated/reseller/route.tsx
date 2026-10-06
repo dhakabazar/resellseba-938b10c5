@@ -36,7 +36,7 @@ import { ImpersonationBanner } from "@/components/impersonation-banner";
 import { useAuth } from "@/lib/use-auth";
 import { useVerification } from "@/lib/use-verification";
 import { useBrandingTheme } from "@/lib/branding";
-import { getGlobalSettings, getMyReseller } from "@/lib/app-data";
+import { getGlobalSettings, getMyReseller, getResellerStoreUrl } from "@/lib/app-data";
 import { getPanelBootstrapPayload } from "@/lib/panel-bootstrap";
 import { consumeImpersonationReturnTarget } from "@/lib/impersonation";
 import { SubscriptionGate } from "@/components/subscription-lock";
@@ -195,11 +195,7 @@ function ResellerLayout() {
         setStoreCode(r.code);
         setAvatarUrl(r.avatar_url ?? null);
 
-        let activeUrl = `/s/${r.code}`;
-        const bDomain = getPanelBootstrapPayload()?.reseller?.primary_domain;
-        if (bDomain) {
-          activeUrl = `https://${bDomain}`;
-        }
+        const activeUrl = await getResellerStoreUrl(r.id, r.code);
         setStoreUrl(activeUrl);
 
         // Store branding rides along with the panel bootstrap.

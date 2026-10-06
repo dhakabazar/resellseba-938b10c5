@@ -184,24 +184,24 @@ const THEME_GROUP: Partial<Record<StoreThemeId, ContentGroup>> = {
   },
   atelier: {
     id: "theme-atelier",
-    title: "সহজ শপ — অর্ডার ও কল",
-    description: "কল করে অর্ডারের লেখা, অর্ডার বাটনের লেখা আর রিটার্ন পলিসি।",
+    title: "Simple Shop — Order & Call",
+    description: "Call to order text, order button labels, and return policy details.",
     fields: [
-      t("sohoj_call_label", "কল করার উপরের ছোট লেখা", "অর্ডার করতে কল করুন"),
-      t("sohoj_order_label", "অর্ডার বাটনের লেখা", "অর্ডার করুন"),
-      t("sohoj_free_label", "ফ্রি ডেলিভারি বাটনের লেখা", "ফ্রী ডেলিভারিতে অর্ডার করুন"),
-      t("sohoj_free_note", "ফ্রি ডেলিভারির নোটিশ", "এই পণ্যটি পাচ্ছেন সম্পূর্ণ ফ্রি ডেলিভারিতে!"),
+      t("sohoj_call_label", "Call order top text", "অর্ডার করতে কল করুন"),
+      t("sohoj_order_label", "Order button label", "অর্ডার করুন"),
+      t("sohoj_free_label", "Free delivery button label", "ফ্রী ডেলিভারিতে অর্ডার করুন"),
+      t("sohoj_free_note", "Free delivery badge text", "এই পণ্যটি পাচ্ছেন সম্পূর্ণ ফ্রি ডেলিভারিতে!"),
       area(
         "sohoj_return",
-        "রিটার্ন পলিসি",
+        "Return policy text",
         "পণ্য হাতে পাওয়ার ২৪ ঘণ্টার মধ্যে সমস্যা জানালে রিটার্ন বা রিপ্লেসমেন্ট করা হবে। ডেলিভারি ম্যানের সামনেই পণ্য চেক করে নিন।",
       ),
     ],
   },
   poripati: {
     id: "theme-poripati",
-    title: "পরিপাটি — editorial details",
-    description: "Banner kicker, collection note and the focused story band.",
+    title: "Clean Minimal — Editorial Details",
+    description: "Banner kicker, collection note, and focused story band.",
     fields: [
       t("poripati_kicker", "Banner kicker", "Thoughtfully selected for everyday life"),
       t("poripati_collection", "Collection label", "The current edit"),

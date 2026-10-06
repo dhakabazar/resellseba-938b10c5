@@ -117,6 +117,41 @@ export function getMyReseller(userId?: string | null, force = false): Promise<My
   return p;
 }
 
+/** Resolves the live store URL (custom domain if connected/verified, otherwise /s/code). */
+export async function getResellerStoreUrl(resellerId: string, resellerCode: string): Promise<string> {
+  let activeUrl = `/s/${resellerCode}`;
+
+  try {
+    const { data: dRows } = await supabase
+      .from("reseller_domains")
+      .select("hostname, is_primary, ssl_status, verified_at")
+      .eq("reseller_id", resellerId)
+      .order("is_primary", { ascending: false });
+
+    if (dRows && dRows.length > 0) {
+      // Prioritize:
+      // 1. Primary domain
+      // 2. Active SSL or verified domain
+      // 3. Any connected domain
+      const best =
+        dRows.find((d) => d.is_primary && d.hostname) ||
+        dRows.find((d) => (d.ssl_status === "active" || d.verified_at) && d.hostname) ||
+        dRows.find((d) => !!d.hostname);
+
+      if (best?.hostname) {
+        const cleanHost = best.hostname.replace(/^https?:\/\//, "").trim();
+        if (cleanHost) {
+          activeUrl = `https://${cleanHost}`;
+        }
+      }
+    }
+  } catch (e) {
+    console.warn("Failed to resolve custom domain for reseller:", e);
+  }
+
+  return activeUrl;
+}
+
 /** Drop caches — call after sign-in/out or after saving settings. */
 export function clearAppDataCache(scope: "all" | "settings" | "reseller" = "all") {
   if (scope === "all" || scope === "settings") settingsPromise = null;
@@ -165,3 +200,4 @@ export function useMyReseller(userId?: string | null) {
 
   return { reseller, loading };
 }
+

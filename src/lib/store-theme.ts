@@ -87,8 +87,8 @@ const pal = (
 export const STORE_THEMES: StoreTheme[] = [
   {
     id: "aurora",
-    name: "অরোরা",
-    description: "Modern gradient commerce — soft cards, glass header, bold hero.",
+    name: "Aurora",
+    description: "Modern gradient store with soft cards, glass header, and vibrant hero.",
     vars: {
       "--st-radius": "16px",
       "--st-radius-sm": "10px",
@@ -151,8 +151,8 @@ export const STORE_THEMES: StoreTheme[] = [
   },
   {
     id: "noir",
-    name: "নোয়ার লাক্স",
-    description: "Dark premium boutique — serif headlines, metallic accents, spotlight hero.",
+    name: "Noir Luxe",
+    description: "Dark luxury boutique with serif titles, gold accents, and spotlight hero.",
     vars: {
       "--st-radius": "4px",
       "--st-radius-sm": "2px",
@@ -216,7 +216,7 @@ export const STORE_THEMES: StoreTheme[] = [
   {
     id: "bazaar",
     name: "Bazaar",
-    description: "High-density marketplace — colored top bar, compact cards, deal strips.",
+    description: "High-density marketplace with compact cards and top deal strips.",
     vars: {
       "--st-radius": "8px",
       "--st-radius-sm": "6px",
@@ -279,8 +279,8 @@ export const STORE_THEMES: StoreTheme[] = [
   },
   {
     id: "atelier",
-    name: "সহজ শপ",
-    description: "সহজ বাংলা দোকান — কমলা মেনু বার, ছবির ব্যানার, বড় অর্ডার বাটন, কল করে অর্ডার।",
+    name: "Simple Shop",
+    description: "Clean classic store with high-contrast header, call-to-order, and fast checkout.",
     vars: {
       "--st-radius": "6px",
       "--st-radius-sm": "5px",
@@ -299,7 +299,7 @@ export const STORE_THEMES: StoreTheme[] = [
       trustBar: false,
     },
     palettes: [
-      pal("kamla", "কমলা (Orange)", false, {
+      pal("kamla", "Orange", false, {
         bg: "#f2f4f7",
         bgAlt: "#ffffff",
         surface: "#ffffff",
@@ -309,7 +309,7 @@ export const STORE_THEMES: StoreTheme[] = [
         primary: "#fb6514",
         accent: "#1b3d8f",
       }),
-      pal("shobuj", "সবুজ (Green)", false, {
+      pal("shobuj", "Green", false, {
         bg: "#f1f6f2",
         bgAlt: "#ffffff",
         surface: "#ffffff",
@@ -319,7 +319,7 @@ export const STORE_THEMES: StoreTheme[] = [
         primary: "#12924f",
         accent: "#0f5132",
       }),
-      pal("nil", "নীল (Blue)", false, {
+      pal("nil", "Blue", false, {
         bg: "#f1f4f9",
         bgAlt: "#ffffff",
         surface: "#ffffff",
@@ -329,7 +329,7 @@ export const STORE_THEMES: StoreTheme[] = [
         primary: "#1266d6",
         accent: "#0b2545",
       }),
-      pal("lal", "লাল (Red)", false, {
+      pal("lal", "Red", false, {
         bg: "#f7f3f3",
         bgAlt: "#ffffff",
         surface: "#ffffff",
@@ -343,8 +343,8 @@ export const STORE_THEMES: StoreTheme[] = [
   },
   {
     id: "poripati",
-    name: "পরিপাটি",
-    description: "Clean editorial shop — image-led banner, horizontal categories, refined product grid and focused checkout.",
+    name: "Clean Minimal",
+    description: "Editorial minimalist shop with image banners and refined grid layout.",
     vars: {
       "--st-radius": "2px",
       "--st-radius-sm": "2px",

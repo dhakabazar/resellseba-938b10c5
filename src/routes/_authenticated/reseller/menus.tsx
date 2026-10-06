@@ -18,7 +18,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { getMyReseller } from "@/lib/app-data";
+import { getMyReseller, getResellerStoreUrl } from "@/lib/app-data";
 import { useAuth } from "@/lib/use-auth";
 import { PageHeader } from "@/components/ui-kit";
 import { ImageUploader, type UploadedImage } from "@/components/ImageUploader";
@@ -67,6 +67,7 @@ function MenusPage() {
   const [customLabel, setCustomLabel] = useState("");
   const [customUrl, setCustomUrl] = useState("");
 
+  const [storeUrl, setStoreUrl] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
@@ -81,6 +82,9 @@ function MenusPage() {
       if (!r) return setLoading(false);
       setRid(r.id);
       setCode(r.code);
+      void getResellerStoreUrl(r.id, r.code).then((url) => {
+        if (alive) setStoreUrl(url);
+      });
 
       const [menu, cats, listings] = await Promise.all([
         fetchMenuRows(r.id, false),
@@ -196,9 +200,9 @@ function MenusPage() {
         description="Drag kore menu sajao, sub-menu / child-menu banao ar mega menu on koro — store header ei onujai dekhabe."
         actions={
           <div className="flex items-center gap-2">
-            {code && (
+            {(storeUrl || code) && (
               <a
-                href={`/s/${code}`}
+                href={storeUrl || `/s/${code}`}
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted"

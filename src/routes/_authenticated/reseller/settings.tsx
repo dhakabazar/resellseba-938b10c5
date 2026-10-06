@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { getMyReseller } from "@/lib/app-data";
+import { getMyReseller, getResellerStoreUrl } from "@/lib/app-data";
 import { useAuth } from "@/lib/use-auth";
 import { PageHeader } from "@/components/ui-kit";
 import { ExternalLink, Loader2, Save } from "lucide-react";
@@ -54,17 +54,7 @@ function SettingsPage() {
       setRid(r.id);
       setCode(r.code);
 
-      let activeUrl = `/s/${r.code}`;
-      const { data: dRows } = await supabase
-        .from("reseller_domains")
-        .select("hostname, is_primary, ssl_status")
-        .eq("reseller_id", r.id)
-        .eq("ssl_status", "active")
-        .order("is_primary", { ascending: false })
-        .limit(1);
-      if (dRows && dRows.length > 0 && dRows[0]?.hostname) {
-        activeUrl = `https://${dRows[0].hostname}`;
-      }
+      const activeUrl = await getResellerStoreUrl(r.id, r.code);
       setStoreUrl(activeUrl);
 
       const { data: s } = await supabase.from("reseller_settings").select("*").eq("reseller_id", r.id).maybeSingle();
