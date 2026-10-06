@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Minus, Plus, ShoppingBag, Zap } from "lucide-react";
 import { toast } from "sonner";
@@ -118,7 +118,7 @@ export function ProductPageContent({ slug, code: propCode }: { slug: string; cod
         <SohojProductPage
           listing={listing}
           detailsText={detailsText}
-          related={related}
+          related={recommended}
           tools={!!tools}
           onOrder={(q) => {
             addToCart(code, listing.id, q);
