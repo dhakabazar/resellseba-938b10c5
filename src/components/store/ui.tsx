@@ -209,7 +209,9 @@ export function ProductCard({ listing }: { listing: StoreListing }) {
           <Img />
         </div>
         <div className="flex flex-1 flex-col p-2.5">
-          <h3 className="line-clamp-2 text-[13px] leading-snug text-[var(--st-fg)]">{title(listing)}</h3>
+          <h3 className="truncate text-[13px] leading-snug text-[var(--st-fg)]" title={title(listing)}>
+            {title(listing)}
+          </h3>
           <div className="mt-1.5 flex items-baseline gap-2">
             <Price value={price} className="text-base font-extrabold" />
           </div>
@@ -242,8 +244,9 @@ export function ProductCard({ listing }: { listing: StoreListing }) {
           </button>
         </div>
         <h3
-          className="mt-4 line-clamp-2 text-[13px] uppercase tracking-[0.16em] text-[var(--st-fg)]"
+          className="mt-4 truncate text-[13px] uppercase tracking-[0.16em] text-[var(--st-fg)]"
           style={{ fontFamily: "var(--st-font-body)" }}
+          title={title(listing)}
         >
           {title(listing)}
         </h3>
@@ -269,7 +272,9 @@ export function ProductCard({ listing }: { listing: StoreListing }) {
           <Img />
         </div>
         <div className="flex flex-1 flex-col px-2.5 pb-2.5 pt-2">
-          <h3 className="line-clamp-2 text-[13px] font-semibold leading-snug text-[var(--st-fg)]">{title(listing)}</h3>
+          <h3 className="truncate text-[13px] font-semibold leading-snug text-[var(--st-fg)]" title={title(listing)}>
+            {title(listing)}
+          </h3>
           <div className="mt-1.5 flex items-baseline gap-2">
             <Price value={price} className="text-[16px] font-extrabold" />
           </div>
@@ -300,7 +305,7 @@ export function ProductCard({ listing }: { listing: StoreListing }) {
         </span>
       </div>
       <div className="flex flex-1 flex-col justify-between p-3 sm:p-4">
-        <h3 className="line-clamp-2 text-[13px] sm:text-sm font-semibold leading-snug text-[var(--st-fg)]">
+        <h3 className="truncate text-[13px] sm:text-sm font-semibold leading-snug text-[var(--st-fg)]" title={title(listing)}>
           {title(listing)}
         </h3>
         <div className="mt-3 flex items-center justify-between gap-2">

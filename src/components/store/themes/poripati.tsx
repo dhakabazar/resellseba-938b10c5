@@ -126,7 +126,7 @@ function Card({ listing }: { listing: StoreListing }) {
           অর্ডার করুন
         </button>
       </div>
-      <h3 className="mt-3 line-clamp-2 text-sm font-medium leading-snug">{store.title(listing)}</h3>
+      <h3 className="mt-3 truncate text-sm font-medium leading-snug" title={store.title(listing)}>{store.title(listing)}</h3>
       <div className="mt-1 text-sm font-bold text-[var(--st-primary)]">{bdt(price)}</div>
     </Link>
   );
