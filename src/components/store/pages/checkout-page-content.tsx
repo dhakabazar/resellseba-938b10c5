@@ -624,25 +624,26 @@ function Field({
   className?: string;
 }) {
   return (
-    <div className="space-y-1">
+    <div className="pt-2">
       <div
         className={cx(
-          "relative rounded-[var(--st-radius-sm)] border bg-[var(--st-surface)] px-3 pt-1.5 pb-2 transition-all focus-within:border-[var(--st-primary)] focus-within:ring-1 focus-within:ring-[var(--st-primary)]/30",
+          "relative rounded-[var(--st-radius-sm)] border bg-[var(--st-surface)] px-3.5 pt-3 pb-2.5 transition-all focus-within:border-[var(--st-primary)] focus-within:ring-1 focus-within:ring-[var(--st-primary)]/30",
           error ? "border-destructive ring-1 ring-destructive/30" : borderc,
           className,
         )}
       >
-        <div className="mb-0.5 flex items-center justify-between gap-2">
-          <label className="text-[11px] font-semibold text-[var(--st-fg)]/80 select-none leading-tight">
-            {label} {required && <span className="text-destructive font-bold">*</span>}
-          </label>
-          {hint && !error && (
-            <span className={cx("text-[10px]", muted, "opacity-75 leading-tight")}>{hint}</span>
-          )}
-        </div>
+        <label className="absolute -top-2.5 left-3 z-10 flex items-center gap-1 bg-[var(--st-surface)] px-1.5 text-xs sm:text-[13px] font-bold text-[var(--st-fg)] leading-none select-none pointer-events-none">
+          <span>{label}</span>
+          {required && <span className="text-destructive font-bold text-sm leading-none">*</span>}
+        </label>
+        {hint && !error && (
+          <span className={cx("absolute -top-2.5 right-3 z-10 bg-[var(--st-surface)] px-1.5 text-[10px] sm:text-[11px] font-medium opacity-80 leading-none", muted)}>
+            {hint}
+          </span>
+        )}
         {children}
       </div>
-      {error && <p className="text-[11px] font-medium text-destructive px-1">{error}</p>}
+      {error && <p className="mt-1 text-[11px] font-medium text-destructive px-1">{error}</p>}
     </div>
   );
 }
