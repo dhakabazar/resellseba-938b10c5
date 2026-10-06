@@ -10,21 +10,21 @@ import { borderc, cx, Heading, muted } from "./ui";
 function Logo() {
   const { code, name, settings, theme, url } = useStore();
   return (
-    <Link to={url("/")} className="flex min-w-0 items-center gap-2.5">
+    <Link to={url("/")} className="flex min-w-0 items-center gap-2">
       {settings?.logo_url ? (
-        <img src={settings.logo_url} alt={name} className="h-10 w-auto max-w-[180px] object-contain" />
+        <img src={settings.logo_url} alt={name} className="h-8 w-auto max-w-[120px] object-contain sm:h-10 sm:max-w-[180px]" />
       ) : (
         <>
           <span
-            className="grid h-10 w-10 shrink-0 place-items-center rounded-[var(--st-radius-sm)] bg-[var(--st-primary)] text-base font-bold text-[var(--st-on-primary)]"
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-[var(--st-radius-sm)] bg-[var(--st-primary)] text-sm font-bold text-[var(--st-on-primary)] sm:h-10 sm:w-10 sm:text-base"
           >
             {name.charAt(0).toUpperCase()}
           </span>
-          <span className="min-w-0">
-            <Heading as="h1" className={cx("truncate text-base leading-tight", theme.layout.header === "editorial" && "text-lg")}>
+          <span className="min-w-0 hidden xs:inline sm:inline">
+            <Heading as="h1" className={cx("truncate text-sm font-bold leading-tight sm:text-base", theme.layout.header === "editorial" && "text-lg")}>
               {name}
             </Heading>
-            {settings?.tagline && <span className={cx("block truncate text-[11px]", muted)}>{settings.tagline}</span>}
+            {settings?.tagline && <span className={cx("block truncate text-[10px] sm:text-[11px]", muted)}>{settings.tagline}</span>}
           </span>
         </>
       )}
@@ -66,14 +66,14 @@ function SearchBox({ className, variant = "default" }: { className?: string; var
 
   return (
     <form onSubmit={submit} className={cx("relative", className)}>
-      <Search className={cx("pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2", muted)} />
+      <Search className={cx("pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 sm:left-3 sm:h-4 sm:w-4", muted)} />
       <input
         value={q}
         onChange={(e) => setQ(e.target.value)}
         placeholder="Search products…"
         aria-label="Search products"
         className={cx(
-          "w-full rounded-[var(--st-radius-sm)] border bg-[var(--st-surface)] py-2.5 pl-9 pr-3 text-sm text-[var(--st-fg)] outline-none placeholder:text-[var(--st-muted)] focus:border-[var(--st-primary)]",
+          "w-full rounded-[var(--st-radius-sm)] border bg-[var(--st-surface)] py-1.5 pl-8 pr-2.5 text-xs text-[var(--st-fg)] outline-none placeholder:text-[var(--st-muted)] focus:border-[var(--st-primary)] sm:py-2.5 sm:pl-9 sm:pr-3 sm:text-sm",
           borderc,
         )}
       />
@@ -89,15 +89,15 @@ function CartButton() {
       to={url("/checkout")}
       aria-label="Cart"
       className={cx(
-        "relative inline-flex items-center gap-2 rounded-[var(--st-radius-sm)] border px-3 py-2 text-sm",
+        "relative inline-flex items-center gap-1.5 rounded-[var(--st-radius-sm)] border p-1.5 text-xs sm:px-3 sm:py-2 sm:text-sm",
         borderc,
         "hover:border-[var(--st-primary)]",
       )}
     >
-      <ShoppingBag className="h-4 w-4" />
+      <ShoppingBag className="h-4 w-4 shrink-0" />
       <span className="hidden sm:inline">Cart</span>
       {cartCount > 0 && (
-        <span className="absolute -right-1.5 -top-1.5 grid h-5 min-w-5 place-items-center rounded-full bg-[var(--st-primary)] px-1 text-[10px] font-bold text-[var(--st-on-primary)]">
+        <span className="absolute -right-1.5 -top-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-[var(--st-primary)] px-1 text-[9px] font-bold text-[var(--st-on-primary)] sm:h-5 sm:min-w-5 sm:text-[10px]">
           {cartCount}
         </span>
       )}
@@ -586,12 +586,18 @@ export function StoreHeader() {
         </header>
       ) : (
         <header className={cx("border-b bg-[var(--st-bg)]/80 backdrop-blur-xl", borderc)}>
-          <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3">
-            <Logo />
-            <SearchBox className="mx-auto hidden max-w-md flex-1 md:block" />
-            <div className="ml-auto flex items-center gap-2">
+          <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-3 py-2 sm:gap-3 sm:px-4 sm:py-3">
+            <div className="shrink-0">
+              <Logo />
+            </div>
+            <SearchBox className="mx-1 min-w-0 flex-1 max-w-md sm:mx-2" />
+            <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
               <CartButton />
-              <button className="md:hidden" aria-label="Menu" onClick={() => setOpen((o) => !o)}>
+              <button
+                className="rounded-md p-1.5 hover:bg-[var(--st-bg-alt)] md:hidden"
+                aria-label="Menu"
+                onClick={() => setOpen((o) => !o)}
+              >
                 {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </button>
             </div>

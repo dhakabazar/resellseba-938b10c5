@@ -43,17 +43,19 @@ export function Hero() {
   const cta2 = content.text("hero_cta2");
 
   const buttons = (
-    <div className="flex flex-wrap items-center gap-3">
+    <div className="flex items-center gap-2 sm:gap-3">
       {firstSlug ? (
-        <Link to={store.url(`/p/${firstSlug}`)}>
-          <PrimaryButton>
-            {cta} <ArrowRight className="h-4 w-4" />
+        <Link to={store.url(`/p/${firstSlug}`)} className="flex-1 sm:flex-initial">
+          <PrimaryButton className="w-full sm:w-auto px-3.5 sm:px-5 py-2.5 sm:py-3 text-xs sm:text-sm whitespace-nowrap">
+            {cta} <ArrowRight className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
           </PrimaryButton>
         </Link>
       ) : null}
       {wa && cta2 ? (
-        <a href={wa} target="_blank" rel="noreferrer">
-          <GhostButton>{cta2}</GhostButton>
+        <a href={wa} target="_blank" rel="noreferrer" className="flex-1 sm:flex-initial">
+          <GhostButton className="w-full sm:w-auto px-3.5 sm:px-5 py-2.5 sm:py-3 text-xs sm:text-sm whitespace-nowrap">
+            {cta2}
+          </GhostButton>
         </a>
       ) : null}
     </div>
