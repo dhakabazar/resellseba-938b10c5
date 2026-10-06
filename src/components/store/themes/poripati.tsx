@@ -239,7 +239,30 @@ export function PoripatiChrome({ children }: { children: ReactNode }) {
     </header>
     {open && <div className="fixed inset-0 z-50 md:hidden"><button aria-label="Close menu" className="absolute inset-0 bg-[var(--st-fg)]/45" onClick={() => setOpen(false)} /><aside className="absolute right-0 top-0 flex h-full w-[86%] max-w-sm flex-col bg-[var(--st-surface)] p-5"><div className="flex items-center justify-between"><Brand /><button aria-label="Close menu" onClick={() => setOpen(false)}><X className="h-5 w-5" /></button></div><div className="mt-8"><SearchForm close={() => setOpen(false)} /></div><nav className="mt-8 flex flex-col border-t border-[var(--st-border)]"> <Link to={url("/shop")} onClick={() => setOpen(false)} className="border-b border-[var(--st-border)] py-4 font-semibold">All products</Link>{categories.map(c => <Link key={c.id} to={url(`/c/${c.slug}`)} onClick={() => setOpen(false)} className="border-b border-[var(--st-border)] py-4">{c.name}</Link>)}</nav>{phone && <a href={`tel:${phone}`} className="mt-auto bg-[var(--st-fg)] px-4 py-3 text-center text-sm font-bold text-[var(--st-surface)]">Call {phone}</a>}</aside></div>}
     <main>{children}</main>
-    <footer className="mt-20 border-t border-[var(--st-border)] bg-[var(--st-fg)] text-[var(--st-surface)]"><div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 md:grid-cols-[1.5fr_1fr_1fr]"><div><div className="text-2xl font-bold">{name}</div><p className="mt-3 max-w-md text-sm opacity-70">{settings?.about_text || settings?.meta_description || `${name} — genuine products, fast cash on delivery across Bangladesh.`}</p></div><div><div className="mb-4 text-xs font-bold">EXPLORE</div><div className="flex flex-col gap-2.5 text-sm opacity-80"><Link to={url("/")} className="hover:opacity-100">Home</Link><Link to={url("/shop")} className="hover:opacity-100">All products</Link><Link to={url("/checkout")} className="hover:opacity-100">Cart / Checkout</Link></div></div><div><div className="mb-4 text-xs font-bold">CONTACT</div><div className="flex flex-col gap-2.5 text-sm opacity-80">{phone && <a href={`tel:${phone}`} className="hover:opacity-100">Call {phone}</a>}{settings?.whatsapp && <a href={`https://wa.me/${settings.whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noreferrer" className="hover:opacity-100">WhatsApp</a>}{settings?.facebook_url && <a href={settings.facebook_url} target="_blank" rel="noreferrer" className="hover:opacity-100">Facebook</a>}{settings?.instagram_url && <a href={settings.instagram_url} target="_blank" rel="noreferrer" className="hover:opacity-100">Instagram</a>}</div></div></div><div className="border-t border-current/20 px-4 py-5 text-center text-xs opacity-60">{settings?.footer_text || `© ${year} ${name}. All rights reserved.`}</div></footer>
+    <footer className="mt-16 border-t border-[var(--st-border)] bg-[var(--st-bg-alt)]/60 text-xs text-[var(--st-muted)]">
+      <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 py-8 text-center sm:flex-row sm:text-left">
+        <div>
+          © {year} <span className="font-semibold text-[var(--st-fg)]">{name}</span>. All rights reserved.
+        </div>
+        <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6">
+          <Link
+            to={url("/privacy")}
+            className="font-medium text-[var(--st-fg)]/85 transition-colors hover:text-[var(--st-primary)] hover:underline"
+          >
+            Privacy Policy
+          </Link>
+          <span className="text-[var(--st-border)]">•</span>
+          <a
+            href="https://ecomsellerbd.com"
+            target="_blank"
+            rel="noreferrer"
+            className="font-medium text-[var(--st-fg)]/85 transition-colors hover:text-[var(--st-primary)]"
+          >
+            Made with <span className="font-semibold text-[var(--st-primary)] hover:underline">ecomsellerbd.com</span>
+          </a>
+        </div>
+      </div>
+    </footer>
   </>;
 }
 

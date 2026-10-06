@@ -3,6 +3,9 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PublicHeader, Brand } from "@/components/public-header";
 import { ArrowLeft } from "lucide-react";
+import { isPlatformHostname } from "@/lib/domain-cache";
+import { CustomDomainStoreLayout } from "@/components/store/custom-domain-shell";
+import { PrivacyPageContent } from "@/components/store/pages/privacy-page-content";
 
 export const Route = createFileRoute("/privacy")({
   head: () => ({
@@ -64,11 +67,15 @@ const DEFAULT_POLICY = `<p>Your privacy is important to us. This policy explains
 <p class="font-semibold">Last updated: Today</p>`;
 
 function PrivacyPage() {
+  const host = typeof window !== "undefined" ? window.location.hostname : "";
+  const isCustomDomain = !isPlatformHostname(host);
+
   const [policy, setPolicy] = useState<string>(DEFAULT_POLICY);
   const [siteName, setSiteName] = useState("Reseller");
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
 
   useEffect(() => {
+    if (isCustomDomain) return;
     (async () => {
       const { data } = await supabase
         .from("global_settings")
@@ -81,7 +88,15 @@ function PrivacyPage() {
         if ((data as any).privacy_policy) setPolicy((data as any).privacy_policy);
       }
     })();
-  }, []);
+  }, [isCustomDomain]);
+
+  if (isCustomDomain) {
+    return (
+      <CustomDomainStoreLayout path="/privacy">
+        {() => <PrivacyPageContent />}
+      </CustomDomainStoreLayout>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
