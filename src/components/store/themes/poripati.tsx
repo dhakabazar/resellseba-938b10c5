@@ -49,6 +49,15 @@ export function PoripatiChrome({ children }: { children: ReactNode }) {
           <div className="hidden max-w-xs md:block"><SearchForm /></div><div className="justify-self-center"><Brand /></div>
           <div className="flex items-center justify-end gap-3 sm:gap-4">
             <Link to={url("/shop")} className="hidden text-sm font-medium md:block">Shop all</Link>
+            {phone && (
+              <a
+                href={`tel:${phone}`}
+                className="hidden items-center gap-1.5 rounded-full border border-[var(--st-border)] px-3 py-1.5 text-xs font-semibold text-[var(--st-fg)] transition-all hover:border-[var(--st-primary)] hover:text-[var(--st-primary)] md:flex"
+              >
+                <Phone className="h-3 w-3 text-[var(--st-primary)]" />
+                <span>{phone}</span>
+              </a>
+            )}
             <button type="button" aria-label="Search" onClick={() => setSearchOpen(s => !s)} className="p-1.5 text-[var(--st-fg)] md:hidden">
               {searchOpen ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
             </button>

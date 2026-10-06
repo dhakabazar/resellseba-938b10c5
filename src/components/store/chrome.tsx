@@ -486,13 +486,12 @@ export function StoreHeader() {
               </div>
               <SearchBox variant="sohoj" className="mx-auto hidden w-full max-w-md md:block" />
               {phone && (
-                <a href={`tel:${phone}`} className="ml-auto hidden text-right leading-tight sm:block">
-                  <span className={cx("block text-[11px]", muted)}>
-                    {content.text("sohoj_call_label") || "অর্ডার করতে কল করুন"}
-                  </span>
-                  <span className="flex items-center justify-end gap-1 text-sm font-extrabold text-[var(--st-primary)]">
-                    <Phone className="h-3.5 w-3.5" /> {phone}
-                  </span>
+                <a
+                  href={`tel:${phone}`}
+                  className="ml-auto hidden items-center gap-2 rounded-[var(--st-radius-sm)] border border-[var(--st-primary)]/25 bg-[var(--st-primary)]/10 px-3.5 py-2 text-xs font-bold text-[var(--st-primary)] shadow-sm transition-all hover:bg-[var(--st-primary)] hover:text-[var(--st-on-primary)] sm:flex"
+                >
+                  <Phone className="h-3.5 w-3.5" />
+                  <span>{phone}</span>
                 </a>
               )}
               <div className={cx("shrink-0", phone ? "ml-2" : "ml-auto")}>
@@ -539,8 +538,12 @@ export function StoreHeader() {
               <SearchBox className="hidden flex-1 md:block" />
               <div className="ml-auto flex items-center gap-1.5 sm:gap-2 text-[var(--st-on-primary)]">
                 {settings?.support_phone && (
-                  <a href={`tel:${settings.support_phone}`} className="hidden items-center gap-1.5 text-sm text-[var(--st-on-primary)] sm:flex">
-                    <Phone className="h-4 w-4" /> {settings.support_phone}
+                  <a
+                    href={`tel:${settings.support_phone}`}
+                    className="hidden items-center gap-1.5 rounded-[var(--st-radius-sm)] bg-[var(--st-surface)] px-3 py-1.5 text-xs font-bold text-[var(--st-fg)] shadow-sm transition-all hover:opacity-90 sm:flex"
+                  >
+                    <Phone className="h-3.5 w-3.5 text-[var(--st-primary)]" />
+                    <span>{settings.support_phone}</span>
                   </a>
                 )}
                 <button
@@ -588,6 +591,15 @@ export function StoreHeader() {
               </div>
               <div className="flex items-center gap-2">
                 <SearchBox className="hidden w-64 lg:block" />
+                {settings?.support_phone && (
+                  <a
+                    href={`tel:${settings.support_phone}`}
+                    className="hidden items-center gap-1.5 rounded-[var(--st-radius-sm)] border bg-[var(--st-surface)] px-3 py-1.5 text-xs font-bold text-[var(--st-fg)] shadow-sm transition-all hover:border-[var(--st-primary)] hover:text-[var(--st-primary)] sm:flex"
+                  >
+                    <Phone className="h-3.5 w-3.5 text-[var(--st-primary)]" />
+                    <span>{settings.support_phone}</span>
+                  </a>
+                )}
                 <button
                   type="button"
                   aria-label="Search"
@@ -624,6 +636,15 @@ export function StoreHeader() {
             </div>
             <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
               <SearchBox className="hidden w-56 lg:block" />
+              {settings?.support_phone && (
+                <a
+                  href={`tel:${settings.support_phone}`}
+                  className="hidden items-center gap-1.5 rounded-[var(--st-radius-sm)] border bg-[var(--st-surface)] px-3 py-1.5 text-xs font-bold text-[var(--st-fg)] shadow-sm transition-all hover:border-[var(--st-primary)] hover:text-[var(--st-primary)] md:flex"
+                >
+                  <Phone className="h-3.5 w-3.5 text-[var(--st-primary)]" />
+                  <span>{settings.support_phone}</span>
+                </a>
+              )}
               <button
                 type="button"
                 aria-label="Search"
@@ -656,6 +677,15 @@ export function StoreHeader() {
             </div>
             <SearchBox className="mx-1 min-w-0 flex-1 max-w-md sm:mx-2" />
             <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+              {settings?.support_phone && (
+                <a
+                  href={`tel:${settings.support_phone}`}
+                  className="hidden items-center gap-1.5 rounded-[var(--st-radius-sm)] border bg-[var(--st-surface)] px-3 py-1.5 text-xs font-bold text-[var(--st-fg)] shadow-sm transition-all hover:border-[var(--st-primary)] hover:text-[var(--st-primary)] sm:flex"
+                >
+                  <Phone className="h-3.5 w-3.5 text-[var(--st-primary)]" />
+                  <span>{settings.support_phone}</span>
+                </a>
+              )}
               <CartButton />
               <button
                 className="rounded-md p-1.5 hover:bg-[var(--st-bg-alt)] md:hidden"
