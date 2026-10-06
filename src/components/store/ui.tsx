@@ -133,10 +133,8 @@ export function GhostButton({
     <button
       {...rest}
       className={cx(
-        "inline-flex items-center justify-center gap-2 border px-5 py-3 text-sm font-medium",
-        "rounded-[var(--st-radius-sm)]",
-        borderc,
-        "hover:bg-[var(--st-bg-alt)]",
+        "inline-flex items-center justify-center gap-2 border px-5 py-3 text-sm font-semibold transition-all hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 disabled:hover:translate-y-0",
+        "rounded-[var(--st-radius-sm)] border-[var(--st-primary)]/25 bg-[var(--st-primary)]/10 text-[var(--st-primary)] hover:bg-[var(--st-primary)]/15 hover:border-[var(--st-primary)]/40 shadow-sm",
         className,
       )}
     >

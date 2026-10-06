@@ -241,8 +241,7 @@ export function ProductPageContent({ slug, code: propCode }: { slug: string; cod
                 onClick={() => add(false)}
                 disabled={!inStock}
                 className={cx(
-                  "hidden sm:inline-flex items-center gap-1.5 rounded-[var(--st-radius-sm)] border px-4 py-2.5 text-xs sm:text-sm font-semibold hover:bg-muted transition-colors disabled:opacity-50",
-                  borderc,
+                  "hidden sm:inline-flex items-center gap-1.5 rounded-[var(--st-radius-sm)] border border-[var(--st-primary)]/25 bg-[var(--st-primary)]/10 text-[var(--st-primary)] hover:bg-[var(--st-primary)]/18 px-4 py-2.5 text-xs sm:text-sm font-semibold transition-all disabled:opacity-50",
                 )}
               >
                 <ShoppingBag className="h-4 w-4" /> কার্টে রাখুন
