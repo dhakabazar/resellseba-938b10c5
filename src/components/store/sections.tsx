@@ -246,7 +246,7 @@ export function BenefitStrip() {
 
   /* Aurora — glass cards with gradient icon pills */
   return (
-    <section className="mx-auto -mt-6 max-w-6xl px-4">
+    <section className="mx-auto mt-4 max-w-6xl px-4 sm:-mt-6">
       <div
         className={cx(
           "grid grid-cols-2 gap-3 rounded-[var(--st-radius)] border bg-[var(--st-surface)] p-4 shadow-[var(--st-shadow)] md:grid-cols-4",
