@@ -37,17 +37,32 @@ function SearchForm({ close }: { close?: () => void }) {
 export function PoripatiChrome({ children }: { children: ReactNode }) {
   const { code, name, settings, categories, cartCount, url } = useStore();
   const [open, setOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const year = new Date().getFullYear();
   const phone = settings?.support_phone?.trim();
   return <>
     {settings?.announcement && <div className="bg-[var(--st-fg)] px-4 py-2 text-center text-[11px] font-semibold text-[var(--st-surface)]">{settings.announcement}</div>}
     <header className="sticky top-0 z-40 border-b border-[var(--st-border)] bg-[var(--st-surface)]/95 backdrop-blur">
       <div className="mx-auto max-w-7xl px-4">
-        <div className="grid h-16 grid-cols-[auto_1fr_auto] items-center gap-5 md:h-20 md:grid-cols-[1fr_auto_1fr]">
+        <div className="grid h-16 grid-cols-[auto_1fr_auto] items-center gap-4 md:h-20 md:grid-cols-[1fr_auto_1fr]">
           <button aria-label="Open menu" onClick={() => setOpen(true)} className="md:hidden"><Menu className="h-5 w-5" /></button>
           <div className="hidden max-w-xs md:block"><SearchForm /></div><div className="justify-self-center"><Brand /></div>
-          <div className="flex items-center justify-end gap-4"><Link to={url("/shop")} className="hidden text-sm font-medium md:block">Shop all</Link><Link to={url("/checkout")} aria-label="Cart" className="relative"><ShoppingBag className="h-5 w-5" />{cartCount > 0 && <span className="absolute -right-2 -top-2 grid h-4 min-w-4 place-items-center bg-[var(--st-primary)] px-1 text-[9px] font-bold text-[var(--st-on-primary)]">{cartCount}</span>}</Link></div>
+          <div className="flex items-center justify-end gap-3 sm:gap-4">
+            <Link to={url("/shop")} className="hidden text-sm font-medium md:block">Shop all</Link>
+            <button type="button" aria-label="Search" onClick={() => setSearchOpen(s => !s)} className="p-1.5 text-[var(--st-fg)] md:hidden">
+              {searchOpen ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
+            </button>
+            <Link to={url("/checkout")} aria-label="Cart" className="relative p-1">
+              <ShoppingBag className="h-5 w-5" />
+              {cartCount > 0 && <span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-[var(--st-primary)] px-1 text-[9px] font-bold text-[var(--st-on-primary)]">{cartCount}</span>}
+            </Link>
+          </div>
         </div>
+        {searchOpen && (
+          <div className="border-t border-[var(--st-border)] py-2.5 md:hidden">
+            <SearchForm close={() => setSearchOpen(false)} />
+          </div>
+        )}
         <nav className="hidden items-center justify-center gap-7 border-t border-[var(--st-border)] py-3 text-[12px] font-semibold md:flex"><Link to={url("/shop")}>All products</Link>{categories.slice(0, 7).map(c => <Link key={c.id} to={url(`/c/${c.slug}`)} className="hover:text-[var(--st-primary)]">{c.name}</Link>)}</nav>
       </div>
     </header>

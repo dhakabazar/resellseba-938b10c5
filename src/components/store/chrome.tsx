@@ -32,19 +32,31 @@ function Logo() {
   );
 }
 
-function SearchBox({ className, variant = "default" }: { className?: string; variant?: "default" | "sohoj" }) {
+function SearchBox({
+  className,
+  variant = "default",
+  autoFocus,
+  onSubmitted,
+}: {
+  className?: string;
+  variant?: "default" | "sohoj";
+  autoFocus?: boolean;
+  onSubmitted?: () => void;
+}) {
   const { code, url } = useStore();
   const nav = useNavigate();
   const [q, setQ] = useState("");
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     nav({ to: url("/"), search: { q: q || undefined } });
+    onSubmitted?.();
   };
 
   if (variant === "sohoj")
     return (
       <form onSubmit={submit} className={cx("relative", className)}>
         <input
+          autoFocus={autoFocus}
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="পণ্য খুঁজুন…"
@@ -68,6 +80,7 @@ function SearchBox({ className, variant = "default" }: { className?: string; var
     <form onSubmit={submit} className={cx("relative", className)}>
       <Search className={cx("pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 sm:left-3 sm:h-4 sm:w-4", muted)} />
       <input
+        autoFocus={autoFocus}
         value={q}
         onChange={(e) => setQ(e.target.value)}
         placeholder="Search products…"
@@ -443,6 +456,7 @@ function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void })
 export function StoreHeader() {
   const { settings, theme, content } = useStore();
   const [open, setOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const v = theme.layout.header;
 
   const announcement = settings?.announcement?.trim();
@@ -556,9 +570,25 @@ export function StoreHeader() {
               </div>
               <div className="flex items-center gap-2">
                 <SearchBox className="hidden w-64 lg:block" />
+                <button
+                  type="button"
+                  aria-label="Search"
+                  onClick={() => setSearchOpen((s) => !s)}
+                  className={cx(
+                    "flex h-8 w-8 items-center justify-center rounded-[var(--st-radius-sm)] border text-[var(--st-fg)] transition-colors hover:border-[var(--st-primary)] lg:hidden",
+                    borderc,
+                  )}
+                >
+                  {searchOpen ? <X className="h-4 w-4" /> : <Search className="h-4 w-4" />}
+                </button>
                 <CartButton />
               </div>
             </div>
+            {searchOpen && (
+              <div className={cx("w-full border-t pt-3 lg:hidden", borderc)}>
+                <SearchBox autoFocus onSubmitted={() => setSearchOpen(false)} className="w-full" />
+              </div>
+            )}
             <div className="hidden md:block">
               <CategoryNav variant="row" />
             </div>
@@ -567,21 +597,37 @@ export function StoreHeader() {
         </header>
       ) : v === "editorial" ? (
         <header className={cx("border-b bg-[var(--st-bg)]", borderc)}>
-          <div className="mx-auto flex max-w-6xl items-center justify-between gap-6 px-5 py-5">
+          <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3.5 sm:gap-6 sm:px-5 sm:py-5">
             <div className="shrink-0">
               <Logo />
             </div>
             <div className="hidden min-w-0 flex-1 justify-center md:flex">
               <CategoryNav variant="row" />
             </div>
-            <div className="flex shrink-0 items-center gap-2">
+            <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
               <SearchBox className="hidden w-56 lg:block" />
+              <button
+                type="button"
+                aria-label="Search"
+                onClick={() => setSearchOpen((s) => !s)}
+                className={cx(
+                  "flex h-8 w-8 items-center justify-center rounded-[var(--st-radius-sm)] border text-[var(--st-fg)] transition-colors hover:border-[var(--st-primary)] lg:hidden",
+                  borderc,
+                )}
+              >
+                {searchOpen ? <X className="h-4 w-4" /> : <Search className="h-4 w-4" />}
+              </button>
               <CartButton />
               <button className="md:hidden" aria-label="Menu" onClick={() => setOpen((o) => !o)}>
                 {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </button>
             </div>
           </div>
+          {searchOpen && (
+            <div className={cx("border-t bg-[var(--st-surface)] px-4 py-2.5 lg:hidden", borderc)}>
+              <SearchBox autoFocus onSubmitted={() => setSearchOpen(false)} className="w-full" />
+            </div>
+          )}
           <MobileDrawer open={open} onClose={() => setOpen(false)} />
         </header>
       ) : (
