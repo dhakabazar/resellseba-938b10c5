@@ -47,6 +47,7 @@ import {
 import { useStoreVisitLog } from "@/lib/store-visits";
 import { storeThemeStyle } from "@/lib/store-theme";
 import { supabase } from "@/integrations/supabase/client";
+import { CustomDomainStoreLayout, StoreShell } from "@/components/store/custom-domain-shell";
 type RootSearch = { q?: string; theme?: string; palette?: string };
 
 export const Route = createFileRoute("/")({
