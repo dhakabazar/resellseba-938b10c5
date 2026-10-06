@@ -23,45 +23,144 @@ function Brand() {
 }
 
 function SearchForm({ close }: { close?: () => void }) {
-  const { code, url } = useStore();
+  const store = useStore();
+  const { code, url, listings } = store;
   const navigate = useNavigate();
   const [q, setQ] = useState("");
+  const [openSuggest, setOpenSuggest] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const clean = q.trim();
+
+  const suggestions = useMemo(() => {
+    if (!clean) return [];
+    const term = clean.toLowerCase();
+    return listings
+      .filter(
+        (l) =>
+          store.title(l).toLowerCase().includes(term) ||
+          String(l.product?.product_code ?? "").toLowerCase().includes(term) ||
+          String(l.product?.short_description ?? "").toLowerCase().includes(term)
+      )
+      .slice(0, 5);
+  }, [clean, listings, store]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpenSuggest(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const submit = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    setOpenSuggest(false);
+    close?.();
+    navigate({ to: url("/"), search: { q: clean || undefined } as any });
+  };
+
+  const handleSelect = (slug?: string) => {
+    setOpenSuggest(false);
+    close?.();
+    if (slug) {
+      navigate({ to: url(`/p/${slug}`) });
+    }
+  };
+
   return (
-    <form
-      className="flex items-center overflow-hidden rounded-full border border-[var(--st-border)] bg-[var(--st-bg-alt)] transition-colors focus-within:border-[var(--st-primary)] focus-within:bg-[var(--st-surface)]"
-      onSubmit={(e) => {
-        e.preventDefault();
-        close?.();
-        const clean = q.trim();
-        navigate({ to: url("/"), search: { q: clean || undefined } as any });
-      }}
-    >
-      <Search className="ml-3.5 h-4 w-4 shrink-0 text-[var(--st-muted)]" />
-      <input
-        aria-label="Search products"
-        value={q}
-        onChange={(e) => setQ(e.target.value)}
-        placeholder="প্রোডাক্ট খুঁজুন…"
-        className="h-10 min-w-0 flex-1 bg-transparent px-2.5 text-sm text-[var(--st-fg)] outline-none placeholder:text-[var(--st-muted)]"
-      />
-      {q && (
-        <button
-          type="button"
-          aria-label="Clear search"
-          onClick={() => setQ("")}
-          className="grid h-10 w-8 shrink-0 place-items-center text-[var(--st-muted)] hover:text-[var(--st-fg)]"
-        >
-          <X className="h-4 w-4" />
-        </button>
-      )}
-      <button
-        type="submit"
-        aria-label="Search"
-        className="mr-1 flex h-8 shrink-0 items-center gap-1.5 rounded-full bg-[var(--st-primary)] px-3.5 text-xs font-bold text-[var(--st-on-primary)] transition-opacity hover:opacity-90 sm:px-4"
+    <div ref={containerRef} className="relative w-full">
+      <form
+        className="flex items-center overflow-hidden rounded-full border border-[var(--st-border)] bg-[var(--st-bg-alt)] transition-colors focus-within:border-[var(--st-primary)] focus-within:bg-[var(--st-surface)]"
+        onSubmit={submit}
       >
-        খুঁজুন
-      </button>
-    </form>
+        <Search className="ml-3.5 h-4 w-4 shrink-0 text-[var(--st-muted)]" />
+        <input
+          aria-label="Search products"
+          value={q}
+          onFocus={() => setOpenSuggest(true)}
+          onChange={(e) => {
+            setQ(e.target.value);
+            setOpenSuggest(true);
+          }}
+          placeholder="প্রোডাক্ট খুঁজুন…"
+          className="h-10 min-w-0 flex-1 bg-transparent px-2.5 text-sm text-[var(--st-fg)] outline-none placeholder:text-[var(--st-muted)]"
+        />
+        {q && (
+          <button
+            type="button"
+            aria-label="Clear search"
+            onClick={() => {
+              setQ("");
+              setOpenSuggest(false);
+            }}
+            className="grid h-10 w-8 shrink-0 place-items-center text-[var(--st-muted)] hover:text-[var(--st-fg)]"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
+        <button
+          type="submit"
+          aria-label="Search"
+          className="mr-1 flex h-8 shrink-0 items-center gap-1.5 rounded-full bg-[var(--st-primary)] px-3.5 text-xs font-bold text-[var(--st-on-primary)] shadow-sm transition-opacity hover:opacity-90 active:scale-95 sm:px-4"
+        >
+          <Search className="h-3.5 w-3.5" />
+          <span>খুঁজুন</span>
+        </button>
+      </form>
+
+      {openSuggest && clean && (
+        <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-[360px] overflow-y-auto rounded-2xl border border-[var(--st-border)] bg-[var(--st-surface)] p-1.5 shadow-2xl animate-in fade-in-50 zoom-in-95 duration-150">
+          <div className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-[var(--st-muted)] border-b border-[var(--st-border)]">
+            সাজেশন ({suggestions.length})
+          </div>
+          {suggestions.length > 0 ? (
+            <div className="py-1">
+              {suggestions.map((item) => {
+                const img = store.image(item);
+                const title = store.title(item);
+                const price = Number(item.selling_price);
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => handleSelect(item.product?.slug)}
+                    className="flex w-full items-center gap-3 rounded-xl p-2 text-left transition-colors hover:bg-[var(--st-bg-alt)]"
+                  >
+                    <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg bg-[var(--st-bg-alt)] border border-[var(--st-border)]">
+                      {img ? (
+                        <img src={img} alt={title} className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="grid h-full place-items-center text-xs text-[var(--st-muted)]">No img</div>
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-xs font-semibold text-[var(--st-fg)] sm:text-sm">{title}</div>
+                      <div className="mt-0.5 text-xs font-bold text-[var(--st-primary)]">{bdt(price)}</div>
+                    </div>
+                    <ArrowRight className="h-3.5 w-3.5 flex-shrink-0 text-[var(--st-muted)] opacity-60" />
+                  </button>
+                );
+              })}
+              <button
+                type="button"
+                onClick={() => submit()}
+                className="mt-1 flex w-full items-center justify-center gap-1.5 rounded-xl bg-[var(--st-bg-alt)] py-2 text-center text-xs font-bold text-[var(--st-primary)] hover:bg-[var(--st-primary)] hover:text-[var(--st-on-primary)] transition-colors"
+              >
+                <span>“{clean}” এর সকল প্রোডাক্ট দেখুন</span>
+                <ArrowRight className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ) : (
+            <div className="py-6 text-center text-xs text-[var(--st-muted)]">
+              “{clean}” দিয়ে কোনো প্রোডাক্ট পাওয়া যায়নি
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 

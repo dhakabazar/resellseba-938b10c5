@@ -1,10 +1,11 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { ChevronDown, Menu, MessageCircle, Phone, Search, ShoppingBag, X } from "lucide-react";
+import { ArrowRight, ChevronDown, Menu, MessageCircle, Phone, Search, ShoppingBag, X } from "lucide-react";
 import { menuTarget, type MenuNode } from "@/lib/store-menu";
+import { bdt } from "@/lib/store-cart";
 
-import { useStore } from "./store-context";
+import { useStore, type StoreListing } from "./store-context";
 import { borderc, cx, Heading, muted } from "./ui";
 
 function Logo() {
@@ -43,65 +44,187 @@ function SearchBox({
   autoFocus?: boolean;
   onSubmitted?: () => void;
 }) {
-  const { code, url } = useStore();
+  const store = useStore();
+  const { code, url, listings } = store;
   const nav = useNavigate();
   const [q, setQ] = useState("");
-  const submit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const clean = q.trim();
+  const [openSuggest, setOpenSuggest] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const clean = q.trim();
+
+  const suggestions = useMemo(() => {
+    if (!clean) return [];
+    const term = clean.toLowerCase();
+    return listings
+      .filter(
+        (l) =>
+          store.title(l).toLowerCase().includes(term) ||
+          String(l.product?.product_code ?? "").toLowerCase().includes(term) ||
+          String(l.product?.short_description ?? "").toLowerCase().includes(term)
+      )
+      .slice(0, 5);
+  }, [clean, listings, store]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpenSuggest(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const submit = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    setOpenSuggest(false);
     nav({ to: url("/"), search: { q: clean || undefined } as any });
     onSubmitted?.();
   };
 
-  if (variant === "sohoj")
-    return (
-      <form onSubmit={submit} className={cx("relative", className)}>
-        <input
-          autoFocus={autoFocus}
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="পণ্য খুঁজুন…"
-          aria-label="Search products"
-          className={cx(
-            "w-full rounded-[var(--st-radius)] border bg-[var(--st-surface)] py-2.5 pl-4 pr-14 text-sm text-[var(--st-fg)] outline-none placeholder:text-[var(--st-muted)] focus:border-[var(--st-primary)]",
-            borderc,
-          )}
-        />
-        <button
-          type="submit"
-          aria-label="Search"
-          className="absolute right-0 top-0 grid h-full w-12 place-items-center rounded-r-[var(--st-radius)] bg-[var(--st-fg)] text-[var(--st-surface)] transition-opacity hover:opacity-90"
-        >
-          <Search className="h-4 w-4" />
-        </button>
-      </form>
-    );
+  const handleSelect = (slug?: string) => {
+    setOpenSuggest(false);
+    onSubmitted?.();
+    if (slug) {
+      nav({ to: url(`/p/${slug}`) });
+    }
+  };
 
   return (
-    <form onSubmit={submit} className={cx("relative flex items-center", className)}>
-      <Search className={cx("pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 sm:left-3 sm:h-4 sm:w-4", muted)} />
-      <input
-        autoFocus={autoFocus}
-        value={q}
-        onChange={(e) => setQ(e.target.value)}
-        placeholder="প্রোডাক্ট খুঁজুন…"
-        aria-label="Search products"
-        className={cx(
-          "w-full rounded-[var(--st-radius-sm)] border bg-[var(--st-surface)] py-1.5 pl-8 pr-8 text-xs text-[var(--st-fg)] outline-none placeholder:text-[var(--st-muted)] focus:border-[var(--st-primary)] sm:py-2.5 sm:pl-9 sm:pr-8 sm:text-sm",
-          borderc,
-        )}
-      />
-      {q && (
-        <button
-          type="button"
-          aria-label="Clear search"
-          onClick={() => setQ("")}
-          className="absolute right-2 top-1/2 grid h-5 w-5 -translate-y-1/2 place-items-center rounded-full text-[var(--st-muted)] hover:text-[var(--st-fg)]"
-        >
-          <X className="h-3.5 w-3.5" />
-        </button>
+    <div ref={containerRef} className={cx("relative", className)}>
+      {variant === "sohoj" ? (
+        <form onSubmit={submit} className="relative flex items-center">
+          <input
+            autoFocus={autoFocus}
+            value={q}
+            onFocus={() => setOpenSuggest(true)}
+            onChange={(e) => {
+              setQ(e.target.value);
+              setOpenSuggest(true);
+            }}
+            placeholder="পণ্য খুঁজুন…"
+            aria-label="Search products"
+            className={cx(
+              "w-full rounded-[var(--st-radius)] border bg-[var(--st-surface)] py-2 pl-3.5 pr-24 text-xs text-[var(--st-fg)] outline-none placeholder:text-[var(--st-muted)] focus:border-[var(--st-primary)] sm:py-2.5 sm:pl-4 sm:pr-24 sm:text-sm",
+              borderc,
+            )}
+          />
+          {q && (
+            <button
+              type="button"
+              aria-label="Clear search"
+              onClick={() => {
+                setQ("");
+                setOpenSuggest(false);
+              }}
+              className="absolute right-16 top-1/2 grid h-5 w-5 -translate-y-1/2 place-items-center rounded-full text-[var(--st-muted)] hover:text-[var(--st-fg)]"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+          <button
+            type="submit"
+            aria-label="Search"
+            className="absolute right-1 top-1 bottom-1 flex items-center gap-1.5 rounded-[var(--st-radius-sm)] bg-[var(--st-primary)] px-3 text-xs font-bold text-[var(--st-on-primary)] shadow-sm transition-all hover:opacity-90 active:scale-95"
+          >
+            <Search className="h-3.5 w-3.5" />
+            <span>খুঁজুন</span>
+          </button>
+        </form>
+      ) : (
+        <form onSubmit={submit} className="relative flex items-center">
+          <Search className={cx("pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 sm:left-3 sm:h-4 sm:w-4", muted)} />
+          <input
+            autoFocus={autoFocus}
+            value={q}
+            onFocus={() => setOpenSuggest(true)}
+            onChange={(e) => {
+              setQ(e.target.value);
+              setOpenSuggest(true);
+            }}
+            placeholder="প্রোডাক্ট খুঁজুন…"
+            aria-label="Search products"
+            className={cx(
+              "w-full rounded-[var(--st-radius-sm)] border bg-[var(--st-surface)] py-1.5 pl-8 pr-16 text-xs text-[var(--st-fg)] outline-none placeholder:text-[var(--st-muted)] focus:border-[var(--st-primary)] sm:py-2 sm:pl-9 sm:pr-20 sm:text-sm",
+              borderc,
+            )}
+          />
+          {q && (
+            <button
+              type="button"
+              aria-label="Clear search"
+              onClick={() => {
+                setQ("");
+                setOpenSuggest(false);
+              }}
+              className="absolute right-12 top-1/2 grid h-5 w-5 -translate-y-1/2 place-items-center rounded-full text-[var(--st-muted)] hover:text-[var(--st-fg)] sm:right-16"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+          <button
+            type="submit"
+            aria-label="Search"
+            className="absolute right-0.5 top-0.5 bottom-0.5 flex items-center gap-1 rounded-[var(--st-radius-sm)] bg-[var(--st-primary)] px-2 text-[11px] font-bold text-[var(--st-on-primary)] shadow-sm transition-all hover:opacity-90 active:scale-95 sm:right-1 sm:top-1 sm:bottom-1 sm:px-3 sm:text-xs"
+          >
+            <Search className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+            <span className="hidden xs:inline sm:inline">খুঁজুন</span>
+          </button>
+        </form>
       )}
-    </form>
+
+      {/* Suggestion Dropdown */}
+      {openSuggest && clean && (
+        <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-[360px] overflow-y-auto rounded-[var(--st-radius-sm)] border border-[var(--st-border)] bg-[var(--st-surface)] p-1.5 shadow-xl animate-in fade-in-50 zoom-in-95 duration-150">
+          <div className="px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-[var(--st-muted)] border-b border-[var(--st-border)]">
+            সাজেশন ({suggestions.length})
+          </div>
+          {suggestions.length > 0 ? (
+            <div className="py-1">
+              {suggestions.map((item) => {
+                const img = store.image(item);
+                const title = store.title(item);
+                const price = Number(item.selling_price);
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => handleSelect(item.product?.slug)}
+                    className="flex w-full items-center gap-3 rounded-[var(--st-radius-sm)] p-2 text-left transition-colors hover:bg-[var(--st-bg-alt)]"
+                  >
+                    <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded bg-[var(--st-bg-alt)] border border-[var(--st-border)]">
+                      {img ? (
+                        <img src={img} alt={title} className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="grid h-full place-items-center text-xs text-[var(--st-muted)]">No img</div>
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-xs font-semibold text-[var(--st-fg)] sm:text-sm">{title}</div>
+                      <div className="mt-0.5 text-xs font-bold text-[var(--st-primary)]">{bdt(price)}</div>
+                    </div>
+                    <ArrowRight className="h-3.5 w-3.5 flex-shrink-0 text-[var(--st-muted)] opacity-60" />
+                  </button>
+                );
+              })}
+              <button
+                type="button"
+                onClick={() => submit()}
+                className="mt-1 flex w-full items-center justify-center gap-1.5 rounded-[var(--st-radius-sm)] bg-[var(--st-bg-alt)] py-2 text-center text-xs font-bold text-[var(--st-primary)] hover:bg-[var(--st-primary)] hover:text-[var(--st-on-primary)] transition-colors"
+              >
+                <span>“{clean}” এর সকল প্রোডাক্ট দেখুন</span>
+                <ArrowRight className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ) : (
+            <div className="py-6 text-center text-xs text-[var(--st-muted)]">
+              “{clean}” দিয়ে কোনো প্রোডাক্ট পাওয়া যায়নি
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
