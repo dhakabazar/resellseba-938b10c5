@@ -715,6 +715,7 @@ export function StoreFooter() {
                 </div>
               )}
             </div>
+          <div className="grid grid-cols-2 gap-6 md:col-span-2 md:grid-cols-2">
             <div>
               <div className="mb-3 text-[11px] font-bold uppercase tracking-wider text-[var(--st-fg)]">Quick Links</div>
               <div className="flex flex-col gap-2">
@@ -747,6 +748,7 @@ export function StoreFooter() {
                 </div>
               </div>
             </div>
+          </div>
           </div>
           <div className={cx("border-t px-4 py-4 text-center text-xs", borderc, muted)}>{copy}</div>
         </div>
@@ -864,34 +866,36 @@ export function StoreFooter() {
               </div>
             )}
           </div>
-          <div>
-            <div className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--st-fg)]">Navigation</div>
-            <div className="flex flex-col gap-2">
-              <Link to={url("/")} className={cx("text-xs hover:text-[var(--st-primary)]", muted)}>
-                Home
-              </Link>
-              <Link to={url("/shop")} className={cx("text-xs hover:text-[var(--st-primary)]", muted)}>
-                All products
-              </Link>
-              <Link to={url("/checkout")} className={cx("text-xs hover:text-[var(--st-primary)]", muted)}>
-                Cart / Checkout
-              </Link>
+          <div className="grid grid-cols-2 gap-6 md:col-span-2 md:grid-cols-2">
+            <div>
+              <div className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--st-fg)]">Navigation</div>
+              <div className="flex flex-col gap-2">
+                <Link to={url("/")} className={cx("text-xs hover:text-[var(--st-primary)]", muted)}>
+                  Home
+                </Link>
+                <Link to={url("/shop")} className={cx("text-xs hover:text-[var(--st-primary)]", muted)}>
+                  All products
+                </Link>
+                <Link to={url("/checkout")} className={cx("text-xs hover:text-[var(--st-primary)]", muted)}>
+                  Cart / Checkout
+                </Link>
+              </div>
             </div>
-          </div>
-          <div>
-            <div className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--st-fg)]">Support & Contact</div>
-            <div className={cx("flex flex-col gap-2.5 text-xs", muted)}>
-              {settings?.support_phone && (
-                <a href={`tel:${settings.support_phone}`} className="inline-flex items-center gap-1.5 hover:text-[var(--st-primary)]">
-                  <Phone className="h-3.5 w-3.5" /> Call {settings.support_phone}
-                </a>
-              )}
-              {wa && (
-                <a href={wa} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 hover:text-[var(--st-primary)]">
-                  <MessageCircle className="h-3.5 w-3.5" /> WhatsApp chat
-                </a>
-              )}
-              <p className="text-[11px] opacity-75">Cash on delivery available across Bangladesh</p>
+            <div>
+              <div className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--st-fg)]">Support & Contact</div>
+              <div className={cx("flex flex-col gap-2.5 text-xs", muted)}>
+                {settings?.support_phone && (
+                  <a href={`tel:${settings.support_phone}`} className="inline-flex items-center gap-1.5 hover:text-[var(--st-primary)]">
+                    <Phone className="h-3.5 w-3.5" /> Call {settings.support_phone}
+                  </a>
+                )}
+                {wa && (
+                  <a href={wa} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 hover:text-[var(--st-primary)]">
+                    <MessageCircle className="h-3.5 w-3.5" /> WhatsApp chat
+                  </a>
+                )}
+                <p className="text-[11px] opacity-75">Cash on delivery available across Bangladesh</p>
+              </div>
             </div>
           </div>
         </div>
