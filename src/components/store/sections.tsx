@@ -61,10 +61,15 @@ export function Hero() {
     </div>
   );
 
-  /* সহজ শপ — পুরো চওড়া ছবির ব্যানার */
-  if (theme.layout.hero === "sohoj") {
+  /* Bazaar & সহজ শপ — পুরো চওড়া ছবির ব্যানার, কোনো টেক্সট বা বাটন ছাড়া (কোনো অংশ যেন না কাটে) */
+  if (theme.layout.hero === "banner" || theme.layout.hero === "sohoj" || theme.id === "bazaar") {
     const banner = media ? (
-      <img src={media} alt={name} className="h-auto w-full object-cover" />
+      <img
+        src={media}
+        alt={name}
+        loading="eager"
+        className="block h-auto w-full max-w-full object-contain"
+      />
     ) : (
       <div className="bg-[var(--st-primary)] px-5 py-10 text-center text-[var(--st-on-primary)]">
         <div className="text-2xl font-extrabold leading-tight md:text-4xl">{headline}</div>
@@ -72,8 +77,8 @@ export function Hero() {
       </div>
     );
     return (
-      <section className="mx-auto max-w-6xl px-3 pt-3">
-        <div className={cx("overflow-hidden rounded-[var(--st-radius)] border", borderc)}>
+      <section className="mx-auto max-w-6xl px-3 pt-3 sm:px-4 sm:pt-4">
+        <div className={cx("overflow-hidden rounded-[var(--st-radius)] border bg-[var(--st-surface)]", borderc)}>
           {firstSlug ? (
             <Link to={store.url(`/p/${firstSlug}`)} className="block">
               {banner}
@@ -85,26 +90,6 @@ export function Hero() {
       </section>
     );
   }
-
-  if (theme.layout.hero === "banner")
-    return (
-      <section className="mx-auto max-w-6xl px-4 pt-4">
-        <div className={cx("overflow-hidden rounded-[var(--st-radius)] border bg-[var(--st-surface)]", borderc)}>
-          <div className="grid md:grid-cols-[1.1fr_1fr]">
-            <div className="p-6 md:p-10">
-              <Heading as="h2" className="text-2xl leading-tight md:text-4xl">
-                {headline}
-              </Heading>
-              <p className={cx("mt-3 max-w-md text-sm", muted)}>{sub}</p>
-              <div className="mt-5">{buttons}</div>
-            </div>
-            <div className="min-h-[220px] bg-[var(--st-bg-alt)]">
-              {media && <img src={media} alt={name} className="h-full w-full object-cover" />}
-            </div>
-          </div>
-        </div>
-      </section>
-    );
 
   if (theme.layout.hero === "spotlight")
     return (
