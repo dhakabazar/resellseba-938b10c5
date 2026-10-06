@@ -185,7 +185,7 @@ const pageViewInput = z.object({
   userAgent: z.string().optional(),
 });
 
-async function trackPageViewServerImpl(data: any): Promise<any> {
+async function trackPageViewServerImpl(data: z.infer<typeof pageViewInput>) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { pick } = await getConfigsForStore(supabaseAdmin, data.code, data.origin);
 
@@ -299,7 +299,7 @@ async function trackPageViewServerImpl(data: any): Promise<any> {
 }
 export const trackPageViewServer = createServerFn({ method: "POST" })
   .inputValidator((d) => pageViewInput.parse(d))
-  .handler(async ({ data }) => runCapi("trackPageViewServer", data));
+  .handler(async ({ data }) => runCapi("trackPageViewServer", data) as ReturnType<typeof trackPageViewServerImpl>);
 
 /* ──────────────────────────────────────────────────────────────────────────
  * 2. Server-side ViewContent CAPI
@@ -317,7 +317,7 @@ const viewContentInput = z.object({
   userAgent: z.string().optional(),
 });
 
-async function trackViewContentServerImpl(data: any): Promise<any> {
+async function trackViewContentServerImpl(data: z.infer<typeof viewContentInput>) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { pick } = await getConfigsForStore(supabaseAdmin, data.code, data.origin);
 
@@ -454,7 +454,7 @@ async function trackViewContentServerImpl(data: any): Promise<any> {
 }
 export const trackViewContentServer = createServerFn({ method: "POST" })
   .inputValidator((d) => viewContentInput.parse(d))
-  .handler(async ({ data }) => runCapi("trackViewContentServer", data));
+  .handler(async ({ data }) => runCapi("trackViewContentServer", data) as ReturnType<typeof trackViewContentServerImpl>);
 
 /* ──────────────────────────────────────────────────────────────────────────
  * 3. Server-side InitiateCheckout CAPI
@@ -480,7 +480,7 @@ const initiateCheckoutInput = z.object({
   customerName: z.string().optional(),
 });
 
-async function trackInitiateCheckoutServerImpl(data: any): Promise<any> {
+async function trackInitiateCheckoutServerImpl(data: z.infer<typeof initiateCheckoutInput>) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { pick } = await getConfigsForStore(supabaseAdmin, data.code, data.origin);
 
@@ -624,7 +624,7 @@ async function trackInitiateCheckoutServerImpl(data: any): Promise<any> {
 }
 export const trackInitiateCheckoutServer = createServerFn({ method: "POST" })
   .inputValidator((d) => initiateCheckoutInput.parse(d))
-  .handler(async ({ data }) => runCapi("trackInitiateCheckoutServer", data));
+  .handler(async ({ data }) => runCapi("trackInitiateCheckoutServer", data) as ReturnType<typeof trackInitiateCheckoutServerImpl>);
 
 /* ──────────────────────────────────────────────────────────────────────────
  * 4. Server-side Purchase CAPI
@@ -640,7 +640,7 @@ const purchaseInput = z.object({
   userAgent: z.string().optional(),
 });
 
-async function trackPurchaseServerImpl(data: any): Promise<any> {
+async function trackPurchaseServerImpl(data: z.infer<typeof purchaseInput>) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const rawOrderNumber = data.orderNumber.trim();
   const cleanOrderNumber = rawOrderNumber.replace(/^#/, "").trim();
@@ -831,12 +831,12 @@ async function trackPurchaseServerImpl(data: any): Promise<any> {
 }
 export const trackPurchaseServer = createServerFn({ method: "POST" })
   .inputValidator((d) => purchaseInput.parse(d))
-  .handler(async ({ data }) => runCapi("trackPurchaseServer", data));
+  .handler(async ({ data }) => runCapi("trackPurchaseServer", data) as ReturnType<typeof trackPurchaseServerImpl>);
 
 /* ──────────────────────────────────────────────────────────────────────────
  * 5. Get active store marketing pixels directly from server
  * ────────────────────────────────────────────────────────────────────────── */
-async function getStoreMarketingPixelsServerImpl(data: any): Promise<any> {
+async function getStoreMarketingPixelsServerImpl(data: { code: string }) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { pick } = await getConfigsForStore(supabaseAdmin, data.code);
   const fb = pick("facebook");
@@ -850,12 +850,12 @@ async function getStoreMarketingPixelsServerImpl(data: any): Promise<any> {
 }
 export const getStoreMarketingPixelsServer = createServerFn({ method: "GET" })
   .inputValidator((d) => z.object({ code: z.string().min(1) }).parse(d))
-  .handler(async ({ data }) => runCapi("getStoreMarketingPixelsServer", data));
+  .handler(async ({ data }) => runCapi("getStoreMarketingPixelsServer", data) as ReturnType<typeof getStoreMarketingPixelsServerImpl>);
 
 /* ──────────────────────────────────────────────────────────────────────────
  * 6. Get public order details for Thanks page (bypassing anon RLS restriction)
  * ────────────────────────────────────────────────────────────────────────── */
-async function getPublicOrderDetailsServerImpl(data: any): Promise<any> {
+async function getPublicOrderDetailsServerImpl(data: { orderNumber: string }) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data: order, error } = await supabaseAdmin
     .from("orders")
@@ -889,13 +889,13 @@ async function getPublicOrderDetailsServerImpl(data: any): Promise<any> {
 }
 export const getPublicOrderDetailsServer = createServerFn({ method: "GET" })
   .inputValidator((d) => z.object({ orderNumber: z.string().min(1) }).parse(d))
-  .handler(async ({ data }) => runCapi("getPublicOrderDetailsServer", data));
+  .handler(async ({ data }) => runCapi("getPublicOrderDetailsServer", data) as ReturnType<typeof getPublicOrderDetailsServerImpl>);
 
 /* ──────────────────────────────────────────────────────────────────────────
  * Dispatcher: custom domains (Cloudflare) have no privileged key, so the
  * call is forwarded once to the platform origin (/api/public/capi).
  * ────────────────────────────────────────────────────────────────────────── */
-const CAPI_IMPLS: Record<string, (data: any) => Promise<any>> = {
+const CAPI_IMPLS = {
   trackPageViewServer: trackPageViewServerImpl,
   trackViewContentServer: trackViewContentServerImpl,
   trackInitiateCheckoutServer: trackInitiateCheckoutServerImpl,
@@ -905,7 +905,7 @@ const CAPI_IMPLS: Record<string, (data: any) => Promise<any>> = {
 };
 
 export async function runCapiLocal(name: string, data: any): Promise<any> {
-  const impl = CAPI_IMPLS[name];
+  const impl = (CAPI_IMPLS as Record<string, (d: any) => Promise<any>>)[name];
   if (!impl) throw new Error("Unknown CAPI op");
   return impl(data);
 }

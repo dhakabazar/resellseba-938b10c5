@@ -86,6 +86,7 @@ import { Route as AuthenticatedResellerThemeRouteImport } from './routes/_authen
 import { Route as AuthenticatedResellerTransactionsRouteImport } from './routes/_authenticated/reseller/transactions'
 import { Route as AuthenticatedResellerTutorialsRouteImport } from './routes/_authenticated/reseller/tutorials'
 import { Route as AuthenticatedResellerVisitorsRouteImport } from './routes/_authenticated/reseller/visitors'
+import { Route as ApiPublicCapiRouteImport } from './routes/api/public/capi'
 import { Route as ApiPublicProductRouteImport } from './routes/api/public/product'
 import { Route as ApiPublicRobotsRouteImport } from './routes/api/public/robots'
 import { Route as SCodeIndexRouteImport } from './routes/s.$code.index'
@@ -546,6 +547,11 @@ const AuthenticatedResellerVisitorsRoute =
     path: '/visitors',
     getParentRoute: () => AuthenticatedResellerRouteRoute,
   } as any)
+const ApiPublicCapiRoute = ApiPublicCapiRouteImport.update({
+  id: '/api/public/capi',
+  path: '/api/public/capi',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicProductRoute = ApiPublicProductRouteImport.update({
   id: '/api/public/product',
   path: '/api/public/product',
@@ -731,6 +737,7 @@ export interface FileRoutesByFullPath {
   '/reseller/transactions': typeof AuthenticatedResellerTransactionsRoute
   '/reseller/tutorials': typeof AuthenticatedResellerTutorialsRoute
   '/reseller/visitors': typeof AuthenticatedResellerVisitorsRoute
+  '/api/public/capi': typeof ApiPublicCapiRoute
   '/api/public/product': typeof ApiPublicProductRoute
   '/api/public/robots': typeof ApiPublicRobotsRoute
   '/s/$code/checkout': typeof SCodeCheckoutRoute
@@ -825,6 +832,7 @@ export interface FileRoutesByTo {
   '/reseller/transactions': typeof AuthenticatedResellerTransactionsRoute
   '/reseller/tutorials': typeof AuthenticatedResellerTutorialsRoute
   '/reseller/visitors': typeof AuthenticatedResellerVisitorsRoute
+  '/api/public/capi': typeof ApiPublicCapiRoute
   '/api/public/product': typeof ApiPublicProductRoute
   '/api/public/robots': typeof ApiPublicRobotsRoute
   '/s/$code/checkout': typeof SCodeCheckoutRoute
@@ -925,6 +933,7 @@ export interface FileRoutesById {
   '/_authenticated/reseller/transactions': typeof AuthenticatedResellerTransactionsRoute
   '/_authenticated/reseller/tutorials': typeof AuthenticatedResellerTutorialsRoute
   '/_authenticated/reseller/visitors': typeof AuthenticatedResellerVisitorsRoute
+  '/api/public/capi': typeof ApiPublicCapiRoute
   '/api/public/product': typeof ApiPublicProductRoute
   '/api/public/robots': typeof ApiPublicRobotsRoute
   '/s/$code/checkout': typeof SCodeCheckoutRoute
@@ -1025,6 +1034,7 @@ export interface FileRouteTypes {
     | '/reseller/transactions'
     | '/reseller/tutorials'
     | '/reseller/visitors'
+    | '/api/public/capi'
     | '/api/public/product'
     | '/api/public/robots'
     | '/s/$code/checkout'
@@ -1119,6 +1129,7 @@ export interface FileRouteTypes {
     | '/reseller/transactions'
     | '/reseller/tutorials'
     | '/reseller/visitors'
+    | '/api/public/capi'
     | '/api/public/product'
     | '/api/public/robots'
     | '/s/$code/checkout'
@@ -1218,6 +1229,7 @@ export interface FileRouteTypes {
     | '/_authenticated/reseller/transactions'
     | '/_authenticated/reseller/tutorials'
     | '/_authenticated/reseller/visitors'
+    | '/api/public/capi'
     | '/api/public/product'
     | '/api/public/robots'
     | '/s/$code/checkout'
@@ -1257,6 +1269,7 @@ export interface RootRouteChildren {
   CSlugRoute: typeof CSlugRoute
   PSlugRoute: typeof PSlugRoute
   SCodeRoute: typeof SCodeRouteWithChildren
+  ApiPublicCapiRoute: typeof ApiPublicCapiRoute
   ApiPublicProductRoute: typeof ApiPublicProductRoute
   ApiPublicRobotsRoute: typeof ApiPublicRobotsRoute
   ApiPublicCourierCarrybeeRoute: typeof ApiPublicCourierCarrybeeRoute
@@ -1810,6 +1823,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedResellerVisitorsRouteImport
       parentRoute: typeof AuthenticatedResellerRouteRoute
     }
+    '/api/public/capi': {
+      id: '/api/public/capi'
+      path: '/api/public/capi'
+      fullPath: '/api/public/capi'
+      preLoaderRoute: typeof ApiPublicCapiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/product': {
       id: '/api/public/product'
       path: '/api/public/product'
@@ -2186,6 +2206,7 @@ const rootRouteChildren: RootRouteChildren = {
   CSlugRoute: CSlugRoute,
   PSlugRoute: PSlugRoute,
   SCodeRoute: SCodeRouteWithChildren,
+  ApiPublicCapiRoute: ApiPublicCapiRoute,
   ApiPublicProductRoute: ApiPublicProductRoute,
   ApiPublicRobotsRoute: ApiPublicRobotsRoute,
   ApiPublicCourierCarrybeeRoute: ApiPublicCourierCarrybeeRoute,
