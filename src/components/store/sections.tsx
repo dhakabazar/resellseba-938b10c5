@@ -275,13 +275,12 @@ export function CategoryStrip() {
   const { code, categories, content, theme, url } = useStore();
   if (!content.flag("cat_show") || !categories.length) return null;
   const title = content.text("cat_title");
-  const sub = content.text("cat_sub");
 
   /* Bazaar — round icon rail, scrollable like a marketplace */
   if (theme.id === "bazaar")
     return (
       <section className="mx-auto max-w-6xl px-4 py-6">
-        <SectionHead title={title} subtitle={sub} />
+        <SectionHead title={title} />
         <div className={cx("rounded-[var(--st-radius)] border bg-[var(--st-surface)] p-3", borderc)}>
           <div className="grid grid-cols-4 gap-3 sm:grid-cols-6 lg:grid-cols-8">
             {categories.map((c) => (
@@ -310,7 +309,7 @@ export function CategoryStrip() {
   if (theme.id === "noir")
     return (
       <section className="mx-auto max-w-6xl px-4 py-10">
-        <SectionHead title={title} subtitle={sub} />
+        <SectionHead title={title} />
         <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8">
           {categories.map((c) => (
             <Link
@@ -363,7 +362,7 @@ export function CategoryStrip() {
   /* Aurora — compact circular category portraits */
   return (
     <section className="mx-auto max-w-6xl px-4 py-10">
-      <SectionHead title={title} subtitle={sub} />
+      <SectionHead title={title} />
       <div className="grid grid-cols-4 gap-x-3 gap-y-5 sm:grid-cols-6 lg:grid-cols-8">
         {categories.map((c) => (
           <Link

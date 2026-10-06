@@ -98,7 +98,6 @@ function baseGroups(): ContentGroup[] {
       fields: [
         on("cat_show", "Show category section"),
         t("cat_title", "Category section title", "Shop by category"),
-        t("cat_sub", "Category section subtitle", "Find what you need faster"),
         on("featured_show", "Show featured section"),
         t("featured_title", "Featured section title", "Best sellers"),
         t("featured_sub", "Featured section subtitle", "Most ordered products this month"),
