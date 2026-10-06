@@ -6,7 +6,7 @@
  * রিটার্ন পলিসি tab block and related products.
  */
 import { Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Minus, Phone, Plus, ShoppingBasket } from "lucide-react";
 import { useStore, type StoreListing } from "./store-context";
 import { CopyButton, ImageDownloadTools } from "./reseller-tools";
@@ -32,6 +32,21 @@ export function SohojProductPage({
   const [idx, setIdx] = useState(0);
   const [qty, setQty] = useState(1);
   const [tab, setTab] = useState<"desc" | "return">("desc");
+  const mainOrderRef = useRef<HTMLDivElement>(null);
+  const [isMainVisible, setIsMainVisible] = useState(true);
+
+  useEffect(() => {
+    const el = mainOrderRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsMainVisible(entry.isIntersecting);
+      },
+      { threshold: 0.1 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [listing?.id]);
 
   const p = listing.product!;
   const title = store.title(listing);
@@ -93,36 +108,38 @@ export function SohojProductPage({
             <Price value={price} className="text-2xl md:text-3xl" />
           </div>
 
-          <div className="mt-4 flex items-center gap-3">
-            <div className={cx("inline-flex items-center rounded-[var(--st-radius-sm)] border", borderc)}>
-              <button onClick={() => setQty((q) => Math.max(1, q - 1))} aria-label="কমান" className="px-3 py-2.5">
-                <Minus className="h-3.5 w-3.5" />
-              </button>
-              <span className="min-w-[3ch] text-center text-sm font-bold">{qty}</span>
-              <button onClick={() => setQty((q) => q + 1)} aria-label="বাড়ান" className="px-3 py-2.5">
-                <Plus className="h-3.5 w-3.5" />
+          <div ref={mainOrderRef}>
+            <div className="mt-4 flex items-center gap-3">
+              <div className={cx("inline-flex items-center rounded-[var(--st-radius-sm)] border", borderc)}>
+                <button onClick={() => setQty((q) => Math.max(1, q - 1))} aria-label="কমান" className="px-3 py-2.5">
+                  <Minus className="h-3.5 w-3.5" />
+                </button>
+                <span className="min-w-[3ch] text-center text-sm font-bold">{qty}</span>
+                <button onClick={() => setQty((q) => q + 1)} aria-label="বাড়ান" className="px-3 py-2.5">
+                  <Plus className="h-3.5 w-3.5" />
+                </button>
+              </div>
+              <button
+                onClick={() => onAddToCart(qty)}
+                disabled={!inStock}
+                className={cx(
+                  "flex-1 rounded-[var(--st-radius-sm)] border px-4 py-2.5 text-sm font-bold disabled:opacity-50",
+                  borderc,
+                  "hover:border-[var(--st-primary)] hover:text-[var(--st-primary)]",
+                )}
+              >
+                কার্টে যোগ করুন
               </button>
             </div>
+
             <button
-              onClick={() => onAddToCart(qty)}
+              onClick={() => onOrder(qty)}
               disabled={!inStock}
-              className={cx(
-                "flex-1 rounded-[var(--st-radius-sm)] border px-4 py-2.5 text-sm font-bold disabled:opacity-50",
-                borderc,
-                "hover:border-[var(--st-primary)] hover:text-[var(--st-primary)]",
-              )}
+              className="mt-3 flex w-full items-center justify-center gap-2 rounded-[var(--st-radius-sm)] bg-[var(--st-primary)] px-4 py-3.5 text-sm font-extrabold text-white animate-order-jiggle shadow-md disabled:opacity-50"
             >
-              কার্টে যোগ করুন
+              <ShoppingBasket className="h-4 w-4" /> {orderLabel}
             </button>
           </div>
-
-          <button
-            onClick={() => onOrder(qty)}
-            disabled={!inStock}
-            className="mt-3 flex w-full items-center justify-center gap-2 rounded-[var(--st-radius-sm)] bg-[var(--st-primary)] px-4 py-3 text-sm font-extrabold text-white disabled:opacity-50"
-          >
-            <ShoppingBasket className="h-4 w-4" /> {orderLabel}
-          </button>
 
           {phone && (
             <a
@@ -208,40 +225,42 @@ export function SohojProductPage({
       )}
 
       {/* স্টিকি অর্ডার বার (Mobile & PC) */}
-      <div
-        className={cx(
-          "fixed inset-x-0 bottom-0 z-40 border-t bg-[var(--st-surface)]/95 backdrop-blur-md px-4 py-2.5 shadow-[0_-8px_25px_-10px_rgba(0,0,0,0.2)]",
-          borderc,
-        )}
-      >
-        <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-3">
-          <div className="min-w-0 flex-1">
-            <div className={cx("truncate text-xs font-medium", muted)}>{title}</div>
-            <Price value={price} className="text-base sm:text-lg font-bold" />
-          </div>
-          <div className="flex items-center gap-2">
-            {phone && (
-              <a
-                href={`tel:${phone}`}
-                aria-label="কল করুন"
-                className="flex items-center gap-1.5 rounded-[var(--st-radius-sm)] bg-[var(--st-accent)] px-3 py-2 text-xs font-bold text-[var(--st-on-accent)] hover:opacity-90"
-              >
-                <Phone className="h-3.5 w-3.5" /> <span className="hidden sm:inline">কল করুন</span>
-              </a>
-            )}
-            <button
-              onClick={() => onOrder(qty)}
-              disabled={!inStock}
-              className={cx(
-                "flex items-center gap-1.5 rounded-[var(--st-radius-sm)] px-5 py-2.5 text-xs sm:text-sm font-extrabold text-white animate-order-jiggle shadow-md disabled:opacity-50",
-                "bg-[var(--st-primary)]",
+      {!isMainVisible && (
+        <div
+          className={cx(
+            "fixed inset-x-0 bottom-0 z-40 border-t bg-[var(--st-surface)]/95 backdrop-blur-md px-4 py-2.5 shadow-[0_-8px_25px_-10px_rgba(0,0,0,0.2)] animate-in fade-in slide-in-from-bottom duration-300",
+            borderc,
+          )}
+        >
+          <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <div className={cx("truncate text-xs font-medium", muted)}>{title}</div>
+              <Price value={price} className="text-base sm:text-lg font-bold" />
+            </div>
+            <div className="flex items-center gap-2">
+              {phone && (
+                <a
+                  href={`tel:${phone}`}
+                  aria-label="কল করুন"
+                  className="flex items-center gap-1.5 rounded-[var(--st-radius-sm)] bg-[var(--st-accent)] px-3 py-2 text-xs font-bold text-[var(--st-on-accent)] hover:opacity-90"
+                >
+                  <Phone className="h-3.5 w-3.5" /> <span className="hidden sm:inline">কল করুন</span>
+                </a>
               )}
-            >
-              <ShoppingBasket className="h-4 w-4" /> {orderLabel}
-            </button>
+              <button
+                onClick={() => onOrder(qty)}
+                disabled={!inStock}
+                className={cx(
+                  "flex items-center gap-1.5 rounded-[var(--st-radius-sm)] px-5 py-2.5 text-xs sm:text-sm font-extrabold text-white animate-order-jiggle shadow-md disabled:opacity-50",
+                  "bg-[var(--st-primary)]",
+                )}
+              >
+                <ShoppingBasket className="h-4 w-4" /> {orderLabel}
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

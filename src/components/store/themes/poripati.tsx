@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ArrowRight, Check, ChevronDown, ChevronLeft, ChevronRight, Menu, Minus, Plus, Search, ShoppingBag, Truck, X } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { inCategory, categoryIdsOf } from "@/lib/product-categories";
 import { addToCart, bdt } from "@/lib/store-cart";
@@ -88,9 +89,46 @@ function SectionTitle({ kicker, title, action }: { kicker?: string; title: strin
 }
 
 function Card({ listing }: { listing: StoreListing }) {
-  const store = useStore(); const p = listing.product; if (!p) return null;
+  const store = useStore();
+  const navigate = useNavigate();
+  const p = listing.product;
+  if (!p) return null;
   const image = store.image(listing);
-  return <Link to={store.url(`/p/${p.slug}`)} className="group block"><div className="relative aspect-[4/5] overflow-hidden bg-[var(--st-bg-alt)]">{image ? <img src={image} alt={store.title(listing)} loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" /> : <div className="grid h-full place-items-center text-xs text-[var(--st-muted)]">No image</div>}<span className="absolute inset-x-3 bottom-3 translate-y-2 bg-[var(--st-surface)] px-3 py-2 text-center text-xs font-bold opacity-0 transition-all group-hover:translate-y-0 group-hover:opacity-100">View product</span></div><h3 className="mt-3 line-clamp-2 text-sm font-medium leading-snug">{store.title(listing)}</h3><div className="mt-1 text-sm font-bold text-[var(--st-primary)]">{bdt(Number(listing.selling_price))}</div></Link>;
+  const price = Number(listing.selling_price);
+
+  const handleDirectOrder = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    addToCart(store.code, listing.id, 1);
+    trackAddToCart({ id: p.id, name: store.title(listing), price, qty: 1 });
+    navigate({ to: store.url("/checkout") });
+  };
+
+  return (
+    <Link to={store.url(`/p/${p.slug}`)} className="group block">
+      <div className="relative aspect-[4/5] overflow-hidden bg-[var(--st-bg-alt)]">
+        {image ? (
+          <img
+            src={image}
+            alt={store.title(listing)}
+            loading="lazy"
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+          />
+        ) : (
+          <div className="grid h-full place-items-center text-xs text-[var(--st-muted)]">No image</div>
+        )}
+        <button
+          type="button"
+          onClick={handleDirectOrder}
+          className="absolute inset-x-3 bottom-3 translate-y-2 bg-[var(--st-surface)] px-3 py-2 text-center text-xs font-bold opacity-0 transition-all hover:bg-[var(--st-primary)] hover:text-[var(--st-on-primary)] group-hover:translate-y-0 group-hover:opacity-100"
+        >
+          অর্ডার করুন
+        </button>
+      </div>
+      <h3 className="mt-3 line-clamp-2 text-sm font-medium leading-snug">{store.title(listing)}</h3>
+      <div className="mt-1 text-sm font-bold text-[var(--st-primary)]">{bdt(price)}</div>
+    </Link>
+  );
 }
 
 export function PoripatiGrid({ listings }: { listings: StoreListing[] }) { return <div className="grid grid-cols-2 gap-x-3 gap-y-8 sm:grid-cols-3 md:gap-x-6 lg:grid-cols-4">{listings.map(l => <Card key={l.id} listing={l} />)}</div>; }
@@ -122,6 +160,6 @@ export function PoripatiProduct({ listing }: { listing: StoreListing }) {
   const store=useStore(); const navigate=useNavigate(); const [idx,setIdx]=useState(0); const [qty,setQty]=useState(1); const p=listing.product; const title=store.title(listing); const price=Number(listing.selling_price);
   useEffect(()=>{if(p) trackViewContent({id:p.id,name:title,price});},[p?.id,title,price]);
   if(!p)return null; const images=p.product_images||[]; const active=images[idx]?.url||store.image(listing); const related=store.listings.filter(l=>l.id!==listing.id&&l.product&&categoryIdsOf(p).some(id=>inCategory(l.product as NonNullable<typeof l.product>,id))).slice(0,4);
-  const buy=(checkout:boolean)=>{addToCart(store.code,listing.id,qty);trackAddToCart({id:p.id,name:title,price,qty});if(checkout)navigate({to:store.url("/checkout")});};
-  return <div className="mx-auto max-w-7xl px-4 pb-16 pt-8"><div className="grid gap-10 lg:grid-cols-[1.2fr_.8fr]"><div className="grid gap-3 sm:grid-cols-[80px_1fr]"><div className="order-2 flex gap-2 sm:order-1 sm:flex-col">{images.map((im,i)=><button key={im.url} onClick={()=>setIdx(i)} className={cn("aspect-square w-16 overflow-hidden border",i===idx?"border-[var(--st-primary)]":"border-[var(--st-border)]")}><img src={im.url} alt="" className="h-full w-full object-cover" /></button>)}</div><div className="order-1 aspect-[4/5] overflow-hidden bg-[var(--st-bg-alt)] sm:order-2">{active&&<img src={active} alt={title} className="h-full w-full object-cover" />}</div></div><aside className="lg:sticky lg:top-32 lg:h-fit"><div className="text-[10px] font-bold uppercase text-[var(--st-primary)]">{store.content.text("poripati_collection")}</div><h1 className="mt-3 text-3xl font-bold leading-tight md:text-4xl">{title}</h1><div className="mt-5 text-2xl font-bold text-[var(--st-primary)]">{bdt(price)}</div>{(listing.custom_description||p.short_description)&&<p className="mt-5 text-sm leading-relaxed text-[var(--st-muted)]">{listing.custom_description||p.short_description}</p>}<div className="mt-7 flex items-center border-y border-[var(--st-border)] py-4"><button aria-label="Decrease" onClick={()=>setQty(q=>Math.max(1,q-1))} className="p-2"><Minus className="h-4 w-4"/></button><span className="w-10 text-center text-sm font-bold">{qty}</span><button aria-label="Increase" onClick={()=>setQty(q=>q+1)} className="p-2"><Plus className="h-4 w-4"/></button></div><button onClick={()=>buy(true)} className="mt-5 flex w-full items-center justify-center gap-2 bg-[var(--st-primary)] px-5 py-4 text-sm font-bold text-[var(--st-on-primary)] animate-order-jiggle shadow-md">Order now <ArrowRight className="h-4 w-4"/></button><button onClick={()=>buy(false)} className="mt-2 flex w-full items-center justify-center gap-2 border border-[var(--st-border)] px-5 py-4 text-sm font-bold"><ShoppingBag className="h-4 w-4"/>Add to cart</button></aside></div>{p.description&&<section className="mt-16 grid gap-6 border-t border-[var(--st-border)] pt-10 md:grid-cols-[.4fr_1fr]"><h2 className="text-xl font-bold">Product details</h2><div className="prose prose-sm max-w-none text-[var(--st-muted)]" dangerouslySetInnerHTML={{__html:p.description}}/></section>}{related.length>0&&<section className="mt-20"><SectionTitle title="You may also like"/><PoripatiGrid listings={related}/></section>}</div>;
+  const buy=(checkout:boolean)=>{addToCart(store.code,listing.id,qty);trackAddToCart({id:p.id,name:title,price,qty});if(checkout)navigate({to:store.url("/checkout")});else toast.success("কার্টে যোগ হয়েছে");};
+  return <div className="mx-auto max-w-7xl px-4 pb-16 pt-8"><div className="grid gap-10 lg:grid-cols-[1.2fr_.8fr]"><div className="grid gap-3 sm:grid-cols-[80px_1fr]"><div className="order-2 flex gap-2 sm:order-1 sm:flex-col">{images.map((im,i)=><button key={im.url} onClick={()=>setIdx(i)} className={cn("aspect-square w-16 overflow-hidden border",i===idx?"border-[var(--st-primary)]":"border-[var(--st-border)]")}><img src={im.url} alt="" className="h-full w-full object-cover" /></button>)}</div><div className="order-1 aspect-[4/5] overflow-hidden bg-[var(--st-bg-alt)] sm:order-2">{active&&<img src={active} alt={title} className="h-full w-full object-cover" />}</div></div><aside className="lg:sticky lg:top-32 lg:h-fit"><div className="text-[10px] font-bold uppercase text-[var(--st-primary)]">{store.content.text("poripati_collection")}</div><h1 className="mt-3 text-3xl font-bold leading-tight md:text-4xl">{title}</h1><div className="mt-5 text-2xl font-bold text-[var(--st-primary)]">{bdt(price)}</div>{(listing.custom_description||p.short_description)&&<p className="mt-5 text-sm leading-relaxed text-[var(--st-muted)]">{listing.custom_description||p.short_description}</p>}<div className="mt-7 flex items-center border-y border-[var(--st-border)] py-4"><button aria-label="Decrease" onClick={()=>setQty(q=>Math.max(1,q-1))} className="p-2"><Minus className="h-4 w-4"/></button><span className="w-10 text-center text-sm font-bold">{qty}</span><button aria-label="Increase" onClick={()=>setQty(q=>q+1)} className="p-2"><Plus className="h-4 w-4"/></button></div><button onClick={()=>buy(true)} className="mt-5 flex w-full items-center justify-center gap-2 bg-[var(--st-primary)] px-5 py-4 text-sm font-bold text-[var(--st-on-primary)] animate-order-jiggle shadow-md">অর্ডার করুন <ArrowRight className="h-4 w-4"/></button><button onClick={()=>buy(false)} className="mt-2 flex w-full items-center justify-center gap-2 border border-[var(--st-border)] px-5 py-4 text-sm font-bold"><ShoppingBag className="h-4 w-4"/>কার্টে যোগ করুন</button></aside></div>{p.description&&<section className="mt-16 grid gap-6 border-t border-[var(--st-border)] pt-10 md:grid-cols-[.4fr_1fr]"><h2 className="text-xl font-bold">Product details</h2><div className="prose prose-sm max-w-none text-[var(--st-muted)]" dangerouslySetInnerHTML={{__html:p.description}}/></section>}{related.length>0&&<section className="mt-20"><SectionTitle title="You may also like"/><PoripatiGrid listings={related}/></section>}</div>;
 }

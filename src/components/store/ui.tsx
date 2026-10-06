@@ -1,7 +1,8 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { Flame, ShoppingBag, ShoppingBasket } from "lucide-react";
-import { bdt } from "@/lib/store-cart";
+import { addToCart, bdt } from "@/lib/store-cart";
+import { trackAddToCart } from "@/lib/tracking";
 import { useStore, type StoreListing } from "./store-context";
 
 export const cx = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(" ");
@@ -167,11 +168,20 @@ function soldCount(id: string) {
 
 export function ProductCard({ listing }: { listing: StoreListing }) {
   const { code, theme, title, image, content, url } = useStore();
+  const navigate = useNavigate();
   const img = image(listing);
   const p = listing.product!;
   const sold = useMemo(() => soldCount(p.id), [p.id]);
   const price = Number(listing.selling_price);
   const to = { to: url(`/p/${p.slug}`) };
+
+  const handleDirectOrder = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    addToCart(code, listing.id, 1);
+    trackAddToCart({ id: p.id, name: title(listing), price, qty: 1 });
+    navigate({ to: url("/checkout") });
+  };
 
   const Img = ({ className }: { className?: string }) =>
     img ? (
@@ -206,9 +216,13 @@ export function ProductCard({ listing }: { listing: StoreListing }) {
           <div className={cx("mt-1 flex items-center gap-1 text-[10px] font-semibold", muted)}>
             <Flame className="h-3 w-3 text-[var(--st-primary)]" /> {sold} sold
           </div>
-          <span className="mt-2 block rounded-[var(--st-radius-sm)] bg-[var(--st-primary)] py-2 text-center text-[12px] font-bold text-[var(--st-on-primary)]">
-            Order now
-          </span>
+          <button
+            type="button"
+            onClick={handleDirectOrder}
+            className="mt-2 block w-full rounded-[var(--st-radius-sm)] bg-[var(--st-primary)] py-2 text-center text-[12px] font-bold text-[var(--st-on-primary)] transition-transform hover:opacity-95 active:scale-[0.98]"
+          >
+            অর্ডার করুন
+          </button>
         </div>
       </Link>
     );
@@ -219,9 +233,13 @@ export function ProductCard({ listing }: { listing: StoreListing }) {
       <Link {...to} className="group block">
         <div className={cx("relative aspect-[3/4] overflow-hidden border bg-[var(--st-bg-alt)]", borderc)}>
           <Img className="opacity-95 group-hover:opacity-100" />
-          <span className="absolute inset-x-0 bottom-0 translate-y-full bg-[var(--st-primary)] py-2.5 text-center text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--st-on-primary)] transition-transform duration-300 group-hover:translate-y-0">
-            Order now
-          </span>
+          <button
+            type="button"
+            onClick={handleDirectOrder}
+            className="absolute inset-x-0 bottom-0 translate-y-full bg-[var(--st-primary)] py-2.5 text-center text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--st-on-primary)] transition-transform duration-300 group-hover:translate-y-0"
+          >
+            অর্ডার করুন
+          </button>
         </div>
         <h3
           className="mt-4 line-clamp-2 text-[13px] uppercase tracking-[0.16em] text-[var(--st-fg)]"
@@ -257,9 +275,13 @@ export function ProductCard({ listing }: { listing: StoreListing }) {
           </div>
           <div className={cx("mt-0.5 text-[11px]", muted)}>{sold} জন কিনেছেন</div>
         </div>
-        <span className="flex items-center justify-center gap-1.5 bg-[var(--st-primary)] px-2 py-2.5 text-center text-[12px] font-bold leading-snug text-white">
+        <button
+          type="button"
+          onClick={handleDirectOrder}
+          className="flex w-full items-center justify-center gap-1.5 bg-[var(--st-primary)] px-2 py-2.5 text-center text-[12px] font-bold leading-snug text-white transition-transform hover:opacity-95 active:scale-[0.98]"
+        >
           <ShoppingBasket className="h-3.5 w-3.5 shrink-0" /> {label}
-        </span>
+        </button>
       </Link>
     );
   }
@@ -283,9 +305,13 @@ export function ProductCard({ listing }: { listing: StoreListing }) {
           <Price value={price} className="text-base" />
         </div>
         <div className="mt-3 flex items-center justify-end gap-2">
-          <span className="rounded-full bg-[var(--st-primary)]/12 px-3.5 py-1 text-[11px] font-semibold text-[var(--st-primary)] transition-colors group-hover:bg-[var(--st-primary)] group-hover:text-[var(--st-on-primary)]">
-            Order now
-          </span>
+          <button
+            type="button"
+            onClick={handleDirectOrder}
+            className="rounded-full bg-[var(--st-primary)]/12 px-3.5 py-1.5 text-[11px] font-bold text-[var(--st-primary)] transition-all hover:bg-[var(--st-primary)] hover:text-[var(--st-on-primary)] active:scale-[0.98]"
+          >
+            অর্ডার করুন
+          </button>
         </div>
       </div>
     </Link>

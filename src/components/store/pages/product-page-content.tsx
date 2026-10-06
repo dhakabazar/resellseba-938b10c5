@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Minus, Plus, ShoppingBag, Zap } from "lucide-react";
 import { toast } from "sonner";
@@ -32,6 +32,21 @@ export function ProductPageContent({ slug, code: propCode }: { slug: string; cod
   const [qty, setQty] = useState(1);
   const [idx, setIdx] = useState(0);
   const tools = useResellerTools();
+  const mainOrderRef = useRef<HTMLDivElement>(null);
+  const [isMainVisible, setIsMainVisible] = useState(true);
+
+  useEffect(() => {
+    const el = mainOrderRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsMainVisible(entry.isIntersecting);
+      },
+      { threshold: 0.1 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [listing?.id]);
 
   useEffect(() => {
     setQty(1);
@@ -82,7 +97,7 @@ export function ProductPageContent({ slug, code: propCode }: { slug: string; cod
     addToCart(code, listing!.id, qty);
     trackAddToCart({ id: p.id, name: title, price, qty });
     if (goCheckout) nav({ to: store.url("/checkout") });
-    else toast.success("Added to cart");
+    else toast.success("কার্টে যোগ হয়েছে");
   }
 
   if (store.theme.id === "poripati") return <PoripatiProductBoundary listing={listing} />;
@@ -185,7 +200,7 @@ export function ProductPageContent({ slug, code: propCode }: { slug: string; cod
             <Price value={price} className="text-3xl md:text-4xl" />
           </div>
 
-          <div className="mt-6 flex flex-wrap items-center gap-3">
+          <div ref={mainOrderRef} className="mt-6 flex flex-wrap items-center gap-3">
             <div className={cx("inline-flex items-center rounded-[var(--st-radius-sm)] border", borderc)}>
               <button onClick={() => setQty((q) => Math.max(1, q - 1))} aria-label="Decrease" className="p-3">
                 <Minus className="h-3.5 w-3.5" />
@@ -195,11 +210,11 @@ export function ProductPageContent({ slug, code: propCode }: { slug: string; cod
                 <Plus className="h-3.5 w-3.5" />
               </button>
             </div>
-            <PrimaryButton disabled={!inStock} onClick={() => add(true)} className="flex-1 animate-order-jiggle shadow-sm">
-              <Zap className="h-4 w-4" /> Order now
+            <PrimaryButton disabled={!inStock} onClick={() => add(true)} className="flex-1 animate-order-jiggle shadow-sm font-bold">
+              <Zap className="h-4 w-4" /> অর্ডার করুন
             </PrimaryButton>
-            <GhostButton disabled={!inStock} onClick={() => add(false)}>
-              <ShoppingBag className="h-4 w-4" /> Add to cart
+            <GhostButton disabled={!inStock} onClick={() => add(false)} className="font-semibold">
+              <ShoppingBag className="h-4 w-4" /> কার্টে যোগ করুন
             </GhostButton>
           </div>
         </div>
@@ -208,7 +223,7 @@ export function ProductPageContent({ slug, code: propCode }: { slug: string; cod
       {p.description && (
         <section className="mt-12 lg:mt-16">
           <div className="flex items-center justify-between gap-3">
-            <Heading className="text-xl">Product details</Heading>
+            <Heading className="text-xl">প্রোডাক্ট বিবরণ</Heading>
             {tools && <CopyButton value={detailsText} label="details" />}
           </div>
           <div
@@ -224,15 +239,15 @@ export function ProductPageContent({ slug, code: propCode }: { slug: string; cod
 
       {related.length > 0 && (
         <section className="mt-16">
-          <SectionHead title="You may also like" subtitle="More from this collection" />
+          <SectionHead title="আপনার পছন্দ হতে পারে" subtitle="সম্পর্কিত পণ্যসমূহ" />
           <ProductGrid listings={related} />
         </section>
       )}
 
-      {store.content.flag("pdp_sticky") && (
+      {store.content.flag("pdp_sticky") && !isMainVisible && (
         <div
           className={cx(
-            "fixed inset-x-0 bottom-0 z-40 border-t bg-[var(--st-surface)]/95 backdrop-blur-md px-4 py-3 shadow-[0_-8px_25px_-10px_rgba(0,0,0,0.2)]",
+            "fixed inset-x-0 bottom-0 z-40 border-t bg-[var(--st-surface)]/95 backdrop-blur-md px-4 py-3 shadow-[0_-8px_25px_-10px_rgba(0,0,0,0.2)] animate-in fade-in slide-in-from-bottom duration-300",
             borderc,
           )}
         >
