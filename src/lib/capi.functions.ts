@@ -916,7 +916,8 @@ async function runCapi(name: string, data: any): Promise<any> {
   const { getRequest } = await import("@tanstack/react-start/server");
   let here = "";
   try { here = new URL(getRequest().url).origin; } catch { /* ignore */ }
-  const base = await platformOrigin("");
+  let base = await platformOrigin("");
+  if (base && !/^https?:\/\//i.test(base)) base = `https://${base}`;
   if (!base || base === here) {
     console.error("[capi] no privileged key and no platform origin configured");
     return null;
