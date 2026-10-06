@@ -8,7 +8,9 @@ import {
 } from "@/lib/store-content";
 import { buildMenuTree, type MenuNode } from "@/lib/store-menu";
 import { getStoreBootstrap } from "@/lib/bootstrap";
-import { injectTrackingFromRows } from "@/lib/tracking";
+import { injectTracking, injectTrackingFromRows } from "@/lib/tracking";
+import { useServerFn } from "@tanstack/react-start";
+import { getStoreMarketingPixelsServer } from "@/lib/capi.functions";
 
 
 export type StoreImage = { url: string; is_primary: boolean | null; sort_order?: number | null };
@@ -144,6 +146,7 @@ export function useStoreLoader(code: string, themeOverride?: string | null, pale
   const [state, setState] = useState<LoadState>("loading");
   const [data, setData] = useState<Omit<StoreData, "cart" | "cartCount"> | null>(null);
   const [cart, setCart] = useState<CartLine[]>([]);
+  const fetchLivePixels = useServerFn(getStoreMarketingPixelsServer);
 
   const refreshCart = useCallback(() => setCart(readCart(code)), [code]);
 
@@ -180,7 +183,21 @@ export function useStoreLoader(code: string, themeOverride?: string | null, pale
 
       const categories = (boot?.categories ?? []) as StoreCategory[];
       const menuRows = (boot?.menu ?? []) as never;
-      injectTrackingFromRows(boot?.pixels as never);
+      
+      // Inject tracking from bootstrap rows first
+      if (boot?.pixels) {
+        injectTrackingFromRows(boot.pixels as never);
+      }
+
+      // Also ensure live pixels are loaded from server (handles custom domain & instant cache busting)
+      fetchLivePixels({ data: { code } })
+        .then((live) => {
+          if (!alive || !live) return;
+          if (live.fb_pixel || live.tiktok_pixel || live.ga4_id) {
+            injectTracking(live);
+          }
+        })
+        .catch(() => {});
 
       const theme = getStoreTheme(themeOverride || s?.theme);
       ensureThemeFont(theme);

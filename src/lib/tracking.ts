@@ -129,8 +129,8 @@ export function injectTracking(cfg: TrackingConfig) {
       s.parentNode?.insertBefore(t, s);
     })(window, document, "script", "https://connect.facebook.net/en_US/fbevents.js");
 
-    window.fbq?.("init", fbPixel, {}, { agent: "lovable_v2" });
-    window.fbq?.("track", "PageView", {}, { eventID: `pv_${Date.now()}` });
+    window.fbq?.("init", fbPixel);
+    window.fbq?.("track", "PageView");
   }
 
   // 2. Google Analytics 4 (GA4)

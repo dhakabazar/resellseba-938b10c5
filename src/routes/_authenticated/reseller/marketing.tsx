@@ -42,12 +42,27 @@ function ResellerMarketing() {
 
   async function save(r: Row) {
     if (!resellerId) return;
-    const payload = { platform: r.platform, is_active: r.is_active, pixel_id: r.pixel_id || null, access_token: r.access_token || null, test_event_code: r.test_event_code || null, reseller_id: resellerId };
+    const hasValue = Boolean(r.pixel_id?.trim() || r.access_token?.trim());
+    const isActive = hasValue ? (r.is_active !== false) : r.is_active;
+    const payload = {
+      platform: r.platform,
+      is_active: isActive,
+      pixel_id: r.pixel_id?.trim() || null,
+      access_token: r.access_token?.trim() || null,
+      test_event_code: r.test_event_code?.trim() || null,
+      reseller_id: resellerId,
+    };
     const { error } = r.id
       ? await supabase.from("marketing_configs").update(payload).eq("id", r.id)
       : await supabase.from("marketing_configs").insert(payload);
     if (error) toast.error(error.message);
-    else { toast.success("Saved"); load(); }
+    else {
+      toast.success("Saved successfully");
+      if (typeof window !== "undefined") {
+        sessionStorage.clear();
+      }
+      load();
+    }
   }
 
   if (loading) return <div className="grid place-items-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
@@ -69,14 +84,59 @@ function ResellerMarketing() {
               <div className="mb-3 flex items-center gap-2">
                 <div className="grid h-9 w-9 place-items-center rounded-md bg-primary-soft text-primary">{m.icon}</div>
                 <div className="flex-1 font-semibold">{m.name}</div>
-                <label className="inline-flex items-center gap-2 text-xs">
-                  <input type="checkbox" checked={r.is_active} onChange={(e) => { const c=[...rows]; c[idx]={...r,is_active:e.target.checked}; setRows(c); }} /> Active
+                <label className="inline-flex items-center gap-2 text-xs font-medium cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={r.is_active}
+                    onChange={(e) => {
+                      const c = [...rows];
+                      c[idx] = { ...r, is_active: e.target.checked };
+                      setRows(c);
+                    }}
+                  />
+                  Active
                 </label>
               </div>
               <div className="space-y-3">
-                <Field label={m.pixelLabel}><input value={r.pixel_id} onChange={(e) => { const c=[...rows]; c[idx]={...r,pixel_id:e.target.value}; setRows(c); }} className={inp} /></Field>
-                <Field label="Access Token / API Secret"><input type="password" value={r.access_token} onChange={(e) => { const c=[...rows]; c[idx]={...r,access_token:e.target.value}; setRows(c); }} className={inp} /></Field>
-                <Field label="Test Event Code (optional)"><input value={r.test_event_code} onChange={(e) => { const c=[...rows]; c[idx]={...r,test_event_code:e.target.value}; setRows(c); }} className={inp} /></Field>
+                <Field label={m.pixelLabel}>
+                  <input
+                    value={r.pixel_id}
+                    placeholder="Enter Pixel ID"
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      const c = [...rows];
+                      c[idx] = { ...r, pixel_id: val, is_active: val.trim() ? true : r.is_active };
+                      setRows(c);
+                    }}
+                    className={inp}
+                  />
+                </Field>
+                <Field label="Access Token / API Secret">
+                  <input
+                    type="password"
+                    value={r.access_token}
+                    placeholder="Conversions API Token"
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      const c = [...rows];
+                      c[idx] = { ...r, access_token: val, is_active: val.trim() ? true : r.is_active };
+                      setRows(c);
+                    }}
+                    className={inp}
+                  />
+                </Field>
+                <Field label="Test Event Code (optional)">
+                  <input
+                    value={r.test_event_code}
+                    placeholder="e.g. TEST12345"
+                    onChange={(e) => {
+                      const c = [...rows];
+                      c[idx] = { ...r, test_event_code: e.target.value };
+                      setRows(c);
+                    }}
+                    className={inp}
+                  />
+                </Field>
               </div>
               <button onClick={() => save(r)} className="btn-brand mt-4 rounded-md px-3 py-1.5 text-xs font-medium">Save</button>
             </div>

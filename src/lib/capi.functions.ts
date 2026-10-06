@@ -32,16 +32,23 @@ function normalizeNameHashes(rawName?: string | null): { fn?: string[]; ln?: str
 // Helper to get active marketing configs for a store code (reseller override > global)
 async function getConfigsForStore(supabaseAdmin: any, code: string) {
   const cleanCode = (code || "").trim();
+  let store: { id: string; code?: string } | null = null;
 
   // 1. Check if code matches reseller code directly
-  let { data: store } = await supabaseAdmin
-    .from("resellers")
-    .select("id, code")
-    .ilike("code", cleanCode)
-    .maybeSingle();
+  if (cleanCode) {
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanCode);
+    if (isUuid) {
+      const { data } = await supabaseAdmin.from("resellers").select("id, code").eq("id", cleanCode).maybeSingle();
+      if (data?.id) store = data;
+    }
+    if (!store?.id) {
+      const { data } = await supabaseAdmin.from("resellers").select("id, code").ilike("code", cleanCode).maybeSingle();
+      if (data?.id) store = data;
+    }
+  }
 
   // 2. If not found by code, try matching custom domain or hostname
-  if (!store?.id) {
+  if (!store?.id && cleanCode) {
     const cleanHost = cleanCode.replace(/^https?:\/\//, "").replace(/\/.*$/, "").replace(/^www\./, "");
     const { data: domainRow } = await supabaseAdmin
       .from("reseller_domains")
@@ -65,12 +72,23 @@ async function getConfigsForStore(supabaseAdmin: any, code: string) {
     .or(resellerId ? `reseller_id.eq.${resellerId},reseller_id.is.null` : `reseller_id.is.null`);
 
   const pick = (platform: string) => {
-    const rows = (configs ?? []).filter((c: any) => c.platform === platform && c.is_active);
-    const resellerRow = resellerId ? rows.find((c: any) => c.reseller_id === resellerId) : null;
-    if (resellerRow && (resellerRow.pixel_id || resellerRow.access_token)) {
-      return resellerRow;
+    // Check reseller-specific config first
+    if (resellerId) {
+      const resellerRow = (configs ?? []).find(
+        (c: any) =>
+          c.reseller_id === resellerId &&
+          c.platform === platform &&
+          (c.is_active !== false) &&
+          (c.pixel_id?.trim() || c.access_token?.trim())
+      );
+      if (resellerRow) return resellerRow;
     }
-    return rows.find((c: any) => c.reseller_id === null) ?? null;
+
+    // Fallback to platform global config
+    const globalRow = (configs ?? []).find(
+      (c: any) => !c.reseller_id && c.platform === platform && c.is_active
+    );
+    return globalRow ?? null;
   };
 
   return { pick, resellerId };
@@ -519,4 +537,22 @@ export const trackPurchaseServer = createServerFn({ method: "POST" })
     }
 
     return { ok: true, results };
+  });
+
+/* ──────────────────────────────────────────────────────────────────────────
+ * 4. Get active store marketing pixels directly from server
+ * ────────────────────────────────────────────────────────────────────────── */
+export const getStoreMarketingPixelsServer = createServerFn({ method: "GET" })
+  .inputValidator((d) => z.object({ code: z.string().min(1) }).parse(d))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { pick } = await getConfigsForStore(supabaseAdmin, data.code);
+    const fb = pick("facebook");
+    const tt = pick("tiktok");
+    const ga = pick("ga4");
+    return {
+      fb_pixel: fb?.pixel_id?.trim() || null,
+      tiktok_pixel: tt?.pixel_id?.trim() || null,
+      ga4_id: ga?.pixel_id?.trim() || null,
+    };
   });
