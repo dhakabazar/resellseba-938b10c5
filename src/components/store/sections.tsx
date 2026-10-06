@@ -209,16 +209,26 @@ export function BenefitStrip() {
       </section>
     );
 
-  /* Noir — hairline divided row, no icons, wide tracking */
+  /* Noir — hairline divided 2-column on mobile, 4-column on desktop */
   if (theme.id === "noir")
     return (
       <section className={cx("border-y", borderc)}>
-        <div className={cx("mx-auto grid max-w-6xl divide-y px-4 md:grid-cols-4 md:divide-x md:divide-y-0", borderc)}>
-          {items.map(({ t, d }, n) => (
-            <div key={t} className="px-0 py-7 text-center md:px-5">
-              <div className="text-[10px] tracking-[0.3em] text-[var(--st-primary)]">0{n + 1}</div>
-              <div className="mt-3 text-[12px] uppercase tracking-[0.22em] text-[var(--st-fg)]">{t}</div>
-              {d && <div className={cx("mt-1.5 text-xs leading-relaxed", muted)}>{d}</div>}
+        <div className="mx-auto grid max-w-6xl grid-cols-2 md:grid-cols-4">
+          {items.map(({ t, d }, idx) => (
+            <div
+              key={t}
+              className={cx(
+                "p-3.5 text-center sm:px-5 sm:py-6",
+                idx % 2 === 0 && "border-r",
+                idx >= 2 && "border-t md:border-t-0",
+                idx > 0 && "md:border-l md:border-r-0",
+                borderc,
+              )}
+            >
+              <div className="text-[11px] font-medium uppercase tracking-[0.16em] text-[var(--st-fg)] sm:text-[12px] sm:tracking-[0.22em]">
+                {t}
+              </div>
+              {d && <div className={cx("mt-1 text-[11px] leading-relaxed sm:text-xs", muted)}>{d}</div>}
             </div>
           ))}
         </div>
