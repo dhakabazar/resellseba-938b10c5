@@ -184,24 +184,40 @@ export function ProductPageContent({ slug, code: propCode }: { slug: string; cod
             </p>
           )}
 
-          <div className="mt-5 flex items-baseline gap-3">
+          <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
             <Price value={price} className="text-3xl md:text-4xl" />
-          </div>
-
-          <div ref={mainOrderRef} className="mt-6 flex flex-wrap items-center gap-3">
-            <div className={cx("inline-flex items-center rounded-[var(--st-radius-sm)] border", borderc)}>
-              <button onClick={() => setQty((q) => Math.max(1, q - 1))} aria-label="Decrease" className="p-3">
-                <Minus className="h-3.5 w-3.5" />
+            <div className={cx("inline-flex items-center rounded-[var(--st-radius-sm)] border bg-[var(--st-surface)]", borderc)}>
+              <button
+                onClick={() => setQty((q) => Math.max(1, q - 1))}
+                aria-label="Decrease"
+                className="p-2 sm:p-2.5 text-[var(--st-fg)] hover:bg-[var(--st-bg-alt)] transition-colors"
+              >
+                <Minus className="h-4 w-4" />
               </button>
-              <span className="min-w-[3ch] text-center text-sm font-semibold">{qty}</span>
-              <button onClick={() => setQty((q) => q + 1)} aria-label="Increase" className="p-3">
-                <Plus className="h-3.5 w-3.5" />
+              <span className="min-w-[3.5ch] text-center text-sm font-bold text-[var(--st-fg)]">{qty}</span>
+              <button
+                onClick={() => setQty((q) => q + 1)}
+                aria-label="Increase"
+                className="p-2 sm:p-2.5 text-[var(--st-fg)] hover:bg-[var(--st-bg-alt)] transition-colors"
+              >
+                <Plus className="h-4 w-4" />
               </button>
             </div>
-            <PrimaryButton disabled={!inStock} onClick={() => add(true)} className="flex-1 animate-order-jiggle shadow-sm font-bold">
+          </div>
+
+          <div ref={mainOrderRef} className="mt-6 flex flex-col sm:flex-row items-stretch gap-3">
+            <PrimaryButton
+              disabled={!inStock}
+              onClick={() => add(true)}
+              className="w-full sm:flex-1 justify-center py-3.5 text-base font-bold animate-order-jiggle shadow-sm"
+            >
               <Zap className="h-4 w-4" /> অর্ডার করুন
             </PrimaryButton>
-            <GhostButton disabled={!inStock} onClick={() => add(false)} className="font-semibold">
+            <GhostButton
+              disabled={!inStock}
+              onClick={() => add(false)}
+              className="w-full sm:flex-1 justify-center py-3.5 text-sm sm:text-base font-bold shadow-sm"
+            >
               <ShoppingBag className="h-4 w-4" /> কার্টে যোগ করুন
             </GhostButton>
           </div>

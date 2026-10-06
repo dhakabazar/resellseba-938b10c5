@@ -100,40 +100,37 @@ export function SohojProductPage({
         <div className={cx("min-w-0 rounded-[var(--st-radius)] border bg-[var(--st-surface)] p-4", borderc)}>
           <h1 className="text-lg font-extrabold leading-snug text-[var(--st-fg)] md:text-2xl">{title}</h1>
 
-          <div className="mt-2 flex flex-wrap items-baseline gap-3">
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
             <Price value={price} className="text-2xl md:text-3xl" />
-          </div>
-
-          <div ref={mainOrderRef}>
-            <div className="mt-4 flex items-center gap-3">
-              <div className={cx("inline-flex items-center rounded-[var(--st-radius-sm)] border", borderc)}>
-                <button onClick={() => setQty((q) => Math.max(1, q - 1))} aria-label="কমান" className="px-3 py-2.5">
-                  <Minus className="h-3.5 w-3.5" />
-                </button>
-                <span className="min-w-[3ch] text-center text-sm font-bold">{qty}</span>
-                <button onClick={() => setQty((q) => q + 1)} aria-label="বাড়ান" className="px-3 py-2.5">
-                  <Plus className="h-3.5 w-3.5" />
-                </button>
-              </div>
-              <button
-                onClick={() => onAddToCart(qty)}
-                disabled={!inStock}
-                className={cx(
-                  "flex-1 rounded-[var(--st-radius-sm)] border px-4 py-2.5 text-sm font-bold disabled:opacity-50",
-                  borderc,
-                  "hover:border-[var(--st-primary)] hover:text-[var(--st-primary)]",
-                )}
-              >
-                কার্টে যোগ করুন
+            <div className={cx("inline-flex items-center rounded-[var(--st-radius-sm)] border bg-[var(--st-surface)]", borderc)}>
+              <button onClick={() => setQty((q) => Math.max(1, q - 1))} aria-label="কমান" className="p-2 sm:p-2.5 hover:bg-[var(--st-bg-alt)] transition-colors">
+                <Minus className="h-4 w-4" />
+              </button>
+              <span className="min-w-[3.5ch] text-center text-sm font-bold text-[var(--st-fg)]">{qty}</span>
+              <button onClick={() => setQty((q) => q + 1)} aria-label="বাড়ান" className="p-2 sm:p-2.5 hover:bg-[var(--st-bg-alt)] transition-colors">
+                <Plus className="h-4 w-4" />
               </button>
             </div>
+          </div>
 
+          <div ref={mainOrderRef} className="mt-5 flex flex-col sm:flex-row items-stretch gap-3">
             <button
               onClick={() => onOrder(qty)}
               disabled={!inStock}
-              className="mt-3 flex w-full items-center justify-center gap-2 rounded-[var(--st-radius-sm)] bg-[var(--st-primary)] px-4 py-3.5 text-sm font-extrabold text-white animate-order-jiggle shadow-md disabled:opacity-50"
+              className="w-full sm:flex-1 flex items-center justify-center gap-2 rounded-[var(--st-radius-sm)] bg-[var(--st-primary)] px-4 py-3.5 text-sm font-extrabold text-white animate-order-jiggle shadow-md disabled:opacity-50"
             >
               <ShoppingBasket className="h-4 w-4" /> {orderLabel}
+            </button>
+            <button
+              onClick={() => onAddToCart(qty)}
+              disabled={!inStock}
+              className={cx(
+                "w-full sm:flex-1 rounded-[var(--st-radius-sm)] border px-4 py-3 text-sm font-bold disabled:opacity-50 transition-colors",
+                borderc,
+                "hover:border-[var(--st-primary)] hover:text-[var(--st-primary)]",
+              )}
+            >
+              কার্টে যোগ করুন
             </button>
           </div>
 
