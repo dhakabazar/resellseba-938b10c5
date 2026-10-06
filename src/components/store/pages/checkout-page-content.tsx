@@ -587,21 +587,8 @@ export function CheckoutPageContent({
           <div className={cx("space-y-1.5 border-t pt-3 text-sm", borderc)}>
             <Row label="সাবটোটাল" value={bdt(totals.subtotal)} />
             <Row label="ডেলিভারি চার্জ" value={totals.ship ? bdt(totals.ship) : "ফ্রি"} />
-            {totals.multi && (
-              <p className={cx("text-[11px] leading-snug", muted)}>
-                {totals.ship
-                  ? `কার্টের সর্বোচ্চ ডেলিভারি চার্জ প্রযোজ্য হয়েছে — আলাদা চার্জ যোগ হবে না।`
-                  : "এই কার্টে ডেলিভারি সম্পূর্ণ ফ্রি।"}
-              </p>
-            )}
             <Row label="সর্বমোট পরিশোধযোগ্য" value={bdt(totals.total)} bold />
           </div>
-          <Link
-            to={store.url("/")}
-            className={cx("flex items-center justify-center gap-1 text-xs hover:text-[var(--st-primary)]", muted)}
-          >
-            <ChevronDown className="h-3.5 w-3.5 rotate-90" /> আরও কেনাকাটা করুন
-          </Link>
         </aside>
       </div>
     </div>
