@@ -1,9 +1,10 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useStore } from "@/components/store/store-context";
 import { PoripatiListingBoundary } from "@/components/store/theme-loader";
 import { borderc, cx, EmptyState, GhostButton, Heading, muted, ProductGrid } from "@/components/store/ui";
 import { Button } from "@/components/ui/button";
+import { trackPageView, trackSearch } from "@/lib/tracking";
 
 const PAGE_SIZE = 16;
 
@@ -22,6 +23,14 @@ export function ShopPageContent({ query }: { query?: string }) {
         String(l.product?.short_description ?? "").toLowerCase().includes(term)
     );
   }, [listings, query]);
+
+  useEffect(() => {
+    if (query && query.trim()) {
+      trackSearch({ query: query.trim(), resultCount: filtered.length });
+    } else {
+      trackPageView();
+    }
+  }, [query, filtered.length]);
 
   if (poripati) {
     return (

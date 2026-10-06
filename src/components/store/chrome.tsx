@@ -7,6 +7,7 @@ import { bdt } from "@/lib/store-cart";
 
 import { useStore, type StoreListing } from "./store-context";
 import { borderc, cx, Heading, muted } from "./ui";
+import { trackSearch, trackViewCategory } from "@/lib/tracking";
 
 function Logo() {
   const { code, name, settings, theme, url } = useStore();
@@ -79,6 +80,9 @@ function SearchBox({
   const submit = (e?: React.FormEvent) => {
     e?.preventDefault();
     setOpenSuggest(false);
+    if (clean) {
+      trackSearch({ query: clean, resultCount: suggestions.length });
+    }
     nav({ to: url("/"), search: { q: clean || undefined } as any });
     onSubmitted?.();
   };

@@ -1,9 +1,10 @@
 import { Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useStore } from "./store-context";
 import { BenefitStrip, CategoryStrip, Hero, Reviews, ThemeSignature } from "./sections";
 import { borderc, cx, EmptyState, GhostButton, muted, ProductGrid, SectionHead } from "./ui";
 import { Button } from "@/components/ui/button";
+import { trackSearch } from "@/lib/tracking";
 
 export default function LegacyStoreHome({ query }: { query?: string }) {
   const store = useStore();
@@ -20,6 +21,12 @@ export default function LegacyStoreHome({ query }: { query?: string }) {
         String(l.product?.short_description ?? "").toLowerCase().includes(term)
     );
   }, [query, listings, store]);
+
+  useEffect(() => {
+    if (query && query.trim()) {
+      trackSearch({ query: query.trim(), resultCount: results.length });
+    }
+  }, [query, results.length]);
 
   const featured = listings.filter((l) => l.product?.is_featured).slice(0, 8);
   const latest = listings.slice(0, latestVisible);

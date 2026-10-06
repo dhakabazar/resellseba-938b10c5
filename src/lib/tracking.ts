@@ -448,3 +448,99 @@ export function trackPurchase(p: {
 
   return eventId;
 }
+
+/** 6. Search Tracking (Facebook + GA4 + TikTok) */
+export function trackSearch(p: { query: string; resultCount?: number; eventId?: string }) {
+  const query = (p.query || "").trim();
+  if (!query) return;
+  const eventId = p.eventId ?? `srch_${Date.now()}`;
+
+  // Facebook
+  window.fbq?.(
+    "track",
+    "Search",
+    {
+      search_string: query,
+      content_type: "product",
+      num_items: p.resultCount,
+      eventID: eventId,
+    },
+    { eventID: eventId }
+  );
+
+  // GA4
+  window.gtag?.("event", "search", {
+    search_term: query,
+    event_id: eventId,
+  });
+
+  // TikTok
+  window.ttq?.track(
+    "Search",
+    {
+      query: query,
+      contents: [{ content_name: query }],
+      event_id: eventId,
+    },
+    { event_id: eventId }
+  );
+
+  return eventId;
+}
+
+/** 7. Category View Tracking (Facebook + GA4 + TikTok) */
+export function trackViewCategory(p: {
+  id?: string;
+  name: string;
+  slug?: string;
+  itemCount?: number;
+  eventId?: string;
+}) {
+  const name = (p.name || "").trim();
+  if (!name) return;
+  const eventId = p.eventId ?? `cat_${p.slug || p.id || "view"}_${Date.now()}`;
+
+  // Facebook (Standard ViewContent on product group + custom ViewCategory)
+  window.fbq?.(
+    "track",
+    "ViewContent",
+    {
+      content_name: name,
+      content_category: name,
+      content_type: "product_group",
+      num_items: p.itemCount,
+      eventID: eventId,
+    },
+    { eventID: eventId }
+  );
+  window.fbq?.(
+    "trackCustom",
+    "ViewCategory",
+    {
+      content_category: name,
+      content_name: name,
+      eventID: eventId,
+    },
+    { eventID: eventId }
+  );
+
+  // GA4
+  window.gtag?.("event", "view_item_list", {
+    item_list_id: p.id || p.slug || name,
+    item_list_name: name,
+    event_id: eventId,
+  });
+
+  // TikTok
+  window.ttq?.track(
+    "Browse",
+    {
+      content_name: name,
+      content_id: p.id || p.slug,
+      event_id: eventId,
+    },
+    { event_id: eventId }
+  );
+
+  return eventId;
+}

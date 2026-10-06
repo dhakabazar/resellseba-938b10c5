@@ -19,7 +19,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { getTrackingCookies, trackPurchase } from "@/lib/tracking";
 import { useServerFn } from "@tanstack/react-start";
-import { trackPurchaseServer } from "@/lib/capi.functions";
+import { getPublicOrderDetailsServer, trackPurchaseServer } from "@/lib/capi.functions";
 import { verifyGatewayPayment } from "@/lib/gateways.functions";
 import { useStore } from "@/components/store/store-context";
 import { bdt } from "@/lib/store-cart";
@@ -64,6 +64,7 @@ export function ThanksPageContent({
   const { content, settings } = store;
   const poripati = store.theme.id === "poripati";
   const capi = useServerFn(trackPurchaseServer);
+  const getOrderDetails = useServerFn(getPublicOrderDetailsServer);
   const verifyPayment = useServerFn(verifyGatewayPayment);
   const [payState, setPayState] = useState<"idle" | "checking" | "paid" | "partial" | "failed" | "cancelled">(
     pay ? "checking" : "idle",
@@ -92,32 +93,58 @@ export function ThanksPageContent({
 
   useEffect(() => {
     if (!n) return;
+    let alive = true;
     (async () => {
-      const { data } = await supabase
-        .from("orders")
-        .select("id,order_number,total,delivery_charge:shipping_cost,customer_name,customer_phone,address_line,area,payment_method,payment_status,created_at,order_items(id,product_id,product_name,reseller_price,quantity)")
-        .eq("order_number", n)
-        .maybeSingle();
+      try {
+        const data = await getOrderDetails({ data: { orderNumber: n } });
+        if (!alive) return;
 
-      if (data) {
-        setOrder(data as unknown as OrderDetail);
+        if (data) {
+          setOrder(data as unknown as OrderDetail);
 
-        if (!fired.current) {
+          if (!fired.current) {
+            fired.current = true;
+            const eventId = `pur_${data.order_number}`;
+            // 1. Client-side pixel event
+            trackPurchase({
+              orderNumber: n,
+              total: Number(data.total),
+              items: (data.order_items ?? []).map((i) => ({
+                id: i.product_id ?? "",
+                name: i.product_name,
+                price: Number(i.reseller_price),
+                qty: i.quantity,
+              })),
+              eventId,
+            });
+
+            // 2. Server-side CAPI event (deduped by matching eventId)
+            const cookies = getTrackingCookies();
+            capi({
+              data: {
+                orderNumber: n,
+                code,
+                eventId,
+                origin: window.location.origin,
+                fbp: cookies.fbp,
+                fbc: cookies.fbc,
+                ttp: cookies.ttp,
+                userAgent: cookies.userAgent,
+              },
+            }).catch((err) => {
+              console.error("[ThanksPage] CAPI Purchase failed:", err);
+            });
+          }
+        } else if (!fired.current) {
+          // Fallback tracking if order details query returned empty
           fired.current = true;
-          const eventId = `purchase_${data.id}`;
+          const eventId = `pur_${n}`;
           trackPurchase({
             orderNumber: n,
-            total: Number(data.total),
-            items: (data.order_items ?? []).map((i) => ({
-              id: i.product_id ?? "",
-              name: i.product_name,
-              price: Number(i.reseller_price),
-              qty: i.quantity,
-            })),
+            total: 0,
             eventId,
           });
           const cookies = getTrackingCookies();
-          // fire server-side CAPI (deduped by eventId)
           capi({
             data: {
               orderNumber: n,
@@ -131,9 +158,15 @@ export function ThanksPageContent({
             },
           }).catch(() => {});
         }
+      } catch (err) {
+        console.error("[ThanksPage] Order load error:", err);
       }
     })();
-  }, [n, code, capi]);
+
+    return () => {
+      alive = false;
+    };
+  }, [n, code, capi, getOrderDetails]);
 
   function copyOrderNumber() {
     if (!n) return;

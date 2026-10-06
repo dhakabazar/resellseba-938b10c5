@@ -101,9 +101,9 @@ const viewContentInput = z.object({
   code: z.string().min(1),
   productId: z.string().min(1),
   productName: z.string().min(1),
-  price: z.number().positive(),
+  price: z.coerce.number(),
   eventId: z.string().min(1),
-  origin: z.string().url().optional(),
+  origin: z.string().optional(),
   fbp: z.string().optional(),
   fbc: z.string().optional(),
   ttp: z.string().optional(),
@@ -141,11 +141,11 @@ export const trackViewContentServer = createServerFn({ method: "POST" })
             },
             custom_data: {
               currency: "BDT",
-              value: data.price,
+              value: Number(data.price),
               content_name: data.productName,
               content_ids: [data.productId],
               content_type: "product",
-              contents: [{ id: data.productId, quantity: 1, item_price: data.price }],
+              contents: [{ id: data.productId, quantity: 1, item_price: Number(data.price) }],
             },
           },
         ],
@@ -155,15 +155,17 @@ export const trackViewContentServer = createServerFn({ method: "POST" })
       }
 
       try {
-        const url = `https://graph.facebook.com/v19.0/${fb.pixel_id.trim()}/events?access_token=${encodeURIComponent(fb.access_token.trim())}`;
+        const url = `https://graph.facebook.com/v19.0/${encodeURIComponent(fb.pixel_id.trim())}/events?access_token=${encodeURIComponent(fb.access_token.trim())}`;
         const r = await fetch(url, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
         const resBody = await r.json().catch(() => ({}));
+        console.log("[CAPI Facebook ViewContent]", { ok: r.ok, status: r.status, response: resBody, testCode: fb.test_event_code });
         results.facebook = { ok: r.ok, status: r.status, response: resBody };
       } catch (err: any) {
+        console.error("[CAPI Facebook ViewContent Error]", err);
         results.facebook = { ok: false, error: err.message };
       }
     }
@@ -188,11 +190,11 @@ export const trackViewContentServer = createServerFn({ method: "POST" })
             },
             properties: {
               currency: "BDT",
-              value: data.price,
+              value: Number(data.price),
               content_id: data.productId,
               content_name: data.productName,
               content_type: "product",
-              contents: [{ content_id: data.productId, content_name: data.productName, quantity: 1, price: data.price }],
+              contents: [{ content_id: data.productId, content_name: data.productName, quantity: 1, price: Number(data.price) }],
             },
           },
         ],
@@ -211,8 +213,10 @@ export const trackViewContentServer = createServerFn({ method: "POST" })
           body: JSON.stringify(payload),
         });
         const resBody = await r.json().catch(() => ({}));
+        console.log("[CAPI TikTok ViewContent]", { ok: r.ok, status: r.status, response: resBody, testCode: tt.test_event_code });
         results.tiktok = { ok: r.ok, status: r.status, response: resBody };
       } catch (err: any) {
+        console.error("[CAPI TikTok ViewContent Error]", err);
         results.tiktok = { ok: false, error: err.message };
       }
     }
@@ -229,13 +233,13 @@ const initiateCheckoutInput = z.object({
     z.object({
       id: z.string(),
       name: z.string(),
-      price: z.number(),
-      qty: z.number(),
+      price: z.coerce.number(),
+      qty: z.coerce.number(),
     })
   ),
-  total: z.number(),
+  total: z.coerce.number(),
   eventId: z.string().min(1),
-  origin: z.string().url().optional(),
+  origin: z.string().optional(),
   fbp: z.string().optional(),
   fbc: z.string().optional(),
   ttp: z.string().optional(),
@@ -281,11 +285,11 @@ export const trackInitiateCheckoutServer = createServerFn({ method: "POST" })
             },
             custom_data: {
               currency: "BDT",
-              value: data.total,
+              value: Number(data.total),
               num_items: data.items.reduce((s, i) => s + i.qty, 0),
               content_type: "product",
               content_ids: data.items.map((i) => i.id),
-              contents: data.items.map((i) => ({ id: i.id, quantity: i.qty, item_price: i.price })),
+              contents: data.items.map((i) => ({ id: i.id, quantity: i.qty, item_price: Number(i.price) })),
             },
           },
         ],
@@ -295,15 +299,17 @@ export const trackInitiateCheckoutServer = createServerFn({ method: "POST" })
       }
 
       try {
-        const url = `https://graph.facebook.com/v19.0/${fb.pixel_id.trim()}/events?access_token=${encodeURIComponent(fb.access_token.trim())}`;
+        const url = `https://graph.facebook.com/v19.0/${encodeURIComponent(fb.pixel_id.trim())}/events?access_token=${encodeURIComponent(fb.access_token.trim())}`;
         const r = await fetch(url, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
         const resBody = await r.json().catch(() => ({}));
+        console.log("[CAPI Facebook InitiateCheckout]", { ok: r.ok, status: r.status, response: resBody, testCode: fb.test_event_code });
         results.facebook = { ok: r.ok, status: r.status, response: resBody };
       } catch (err: any) {
+        console.error("[CAPI Facebook InitiateCheckout Error]", err);
         results.facebook = { ok: false, error: err.message };
       }
     }
@@ -329,13 +335,13 @@ export const trackInitiateCheckoutServer = createServerFn({ method: "POST" })
             },
             properties: {
               currency: "BDT",
-              value: data.total,
+              value: Number(data.total),
               quantity: data.items.reduce((s, i) => s + i.qty, 0),
               contents: data.items.map((i) => ({
                 content_id: i.id,
                 content_name: i.name,
                 quantity: i.qty,
-                price: i.price,
+                price: Number(i.price),
               })),
             },
           },
@@ -355,8 +361,10 @@ export const trackInitiateCheckoutServer = createServerFn({ method: "POST" })
           body: JSON.stringify(payload),
         });
         const resBody = await r.json().catch(() => ({}));
+        console.log("[CAPI TikTok InitiateCheckout]", { ok: r.ok, status: r.status, response: resBody, testCode: tt.test_event_code });
         results.tiktok = { ok: r.ok, status: r.status, response: resBody };
       } catch (err: any) {
+        console.error("[CAPI TikTok InitiateCheckout Error]", err);
         results.tiktok = { ok: false, error: err.message };
       }
     }
@@ -369,9 +377,9 @@ export const trackInitiateCheckoutServer = createServerFn({ method: "POST" })
  * ────────────────────────────────────────────────────────────────────────── */
 const purchaseInput = z.object({
   orderNumber: z.string().min(1),
-  code: z.string().min(1),
+  code: z.string().optional(),
   eventId: z.string().optional(),
-  origin: z.string().url().optional(),
+  origin: z.string().optional(),
   fbp: z.string().optional(),
   fbc: z.string().optional(),
   ttp: z.string().optional(),
@@ -400,22 +408,8 @@ export const trackPurchaseServer = createServerFn({ method: "POST" })
 
     const orderItems = items ?? [];
 
-    // 3. Marketing configs: per-reseller override else global (reseller_id null)
-    const resellerId = order.reseller_id || null;
-    const { data: configs } = await supabaseAdmin
-      .from("marketing_configs")
-      .select("platform, pixel_id, access_token, test_event_code, is_active, reseller_id")
-      .in("platform", ["facebook", "tiktok", "ga4"])
-      .or(resellerId ? `reseller_id.eq.${resellerId},reseller_id.is.null` : `reseller_id.is.null`);
-
-    const pick = (platform: string) => {
-      const rows = (configs ?? []).filter((c: any) => c.platform === platform && c.is_active);
-      const resellerRow = resellerId ? rows.find((c: any) => c.reseller_id === resellerId) : null;
-      if (resellerRow && (resellerRow.pixel_id || resellerRow.access_token)) {
-        return resellerRow;
-      }
-      return rows.find((c: any) => c.reseller_id === null) ?? null;
-    };
+    // 3. Marketing configs using unified resolver
+    const { pick } = await getConfigsForStore(supabaseAdmin, data.code || order.reseller_id || "");
 
     const origin = (data.origin ?? process.env["SITE_URL"] ?? "").replace(/\/$/, "");
     const checkoutUrl = origin ? `${origin}/thanks?n=${encodeURIComponent(order.order_number)}` : undefined;
@@ -470,15 +464,17 @@ export const trackPurchaseServer = createServerFn({ method: "POST" })
       }
 
       try {
-        const url = `https://graph.facebook.com/v19.0/${fb.pixel_id.trim()}/events?access_token=${encodeURIComponent(fb.access_token.trim())}`;
+        const url = `https://graph.facebook.com/v19.0/${encodeURIComponent(fb.pixel_id.trim())}/events?access_token=${encodeURIComponent(fb.access_token.trim())}`;
         const r = await fetch(url, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
         const resBody = await r.json().catch(() => ({}));
+        console.log("[CAPI Facebook Purchase]", { ok: r.ok, status: r.status, response: resBody, testCode: fb.test_event_code });
         results.facebook = { ok: r.ok, status: r.status, response: resBody };
       } catch (err: any) {
+        console.error("[CAPI Facebook Purchase Error]", err);
         results.facebook = { ok: false, error: err.message };
       }
     }
@@ -530,8 +526,10 @@ export const trackPurchaseServer = createServerFn({ method: "POST" })
           body: JSON.stringify(payload),
         });
         const resBody = await r.json().catch(() => ({}));
+        console.log("[CAPI TikTok Purchase]", { ok: r.ok, status: r.status, response: resBody, testCode: tt.test_event_code });
         results.tiktok = { ok: r.ok, status: r.status, response: resBody };
       } catch (err: any) {
+        console.error("[CAPI TikTok Purchase Error]", err);
         results.tiktok = { ok: false, error: err.message };
       }
     }
@@ -554,5 +552,43 @@ export const getStoreMarketingPixelsServer = createServerFn({ method: "GET" })
       fb_pixel: fb?.pixel_id?.trim() || null,
       tiktok_pixel: tt?.pixel_id?.trim() || null,
       ga4_id: ga?.pixel_id?.trim() || null,
+    };
+  });
+
+/* ──────────────────────────────────────────────────────────────────────────
+ * 5. Get public order details for Thanks page (bypassing anon RLS restriction)
+ * ────────────────────────────────────────────────────────────────────────── */
+export const getPublicOrderDetailsServer = createServerFn({ method: "GET" })
+  .inputValidator((d) => z.object({ orderNumber: z.string().min(1) }).parse(d))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: order, error } = await supabaseAdmin
+      .from("orders")
+      .select("id, order_number, total, shipping_cost, customer_name, customer_phone, address_line, area, payment_method, payment_status, created_at, reseller_id, order_items(id, product_id, product_name, reseller_price, quantity, variant_label)")
+      .eq("order_number", data.orderNumber)
+      .maybeSingle();
+
+    if (error || !order) return null;
+    return {
+      id: order.id,
+      order_number: order.order_number,
+      total: Number(order.total),
+      delivery_charge: order.shipping_cost ? Number(order.shipping_cost) : null,
+      customer_name: order.customer_name,
+      customer_phone: order.customer_phone,
+      address_line: order.address_line,
+      area: order.area,
+      payment_method: order.payment_method,
+      payment_status: order.payment_status,
+      created_at: order.created_at,
+      reseller_id: order.reseller_id,
+      order_items: (order.order_items || []).map((i: any) => ({
+        id: i.id,
+        product_id: i.product_id,
+        product_name: i.product_name,
+        reseller_price: Number(i.reseller_price),
+        quantity: Number(i.quantity),
+        variant_label: i.variant_label,
+      })),
     };
   });

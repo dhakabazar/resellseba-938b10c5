@@ -1,9 +1,10 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { inCategory } from "@/lib/product-categories";
 import { useStore } from "@/components/store/store-context";
 import { borderc, cx, EmptyState, GhostButton, ProductGrid, SectionHead } from "@/components/store/ui";
 import { PoripatiListingBoundary, usePoripati } from "@/components/store/theme-loader";
+import { trackPageView, trackViewCategory } from "@/lib/tracking";
 
 type Sort = "new" | "low" | "high";
 
@@ -23,6 +24,18 @@ export function CategoryPageContent({ slug, code: propCode }: { slug: string; co
     if (sort === "high") sorted.sort((a, b) => Number(b.selling_price) - Number(a.selling_price));
     return sorted;
   }, [listings, category?.id, sort]);
+
+  useEffect(() => {
+    if (category) {
+      trackViewCategory({
+        id: category.id,
+        name: category.name,
+        slug: category.slug,
+        itemCount: rows.length,
+      });
+      trackPageView();
+    }
+  }, [category?.id, category?.name, category?.slug, rows.length]);
 
   if (!category)
     return (
