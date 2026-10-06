@@ -68,7 +68,6 @@ function baseGroups(): ContentGroup[] {
       description: "First screen customers see — the strongest conversion spot.",
       fields: [
         on("hero_show", "Show hero banner", true),
-        t("hero_badge", "Small badge above headline", "সারা বাংলাদেশে ক্যাশ অন ডেলিভারি"),
         t("hero_headline", "Headline", "স্মার্ট শপিং করুন {store} এ"),
         area("hero_sub", "Sub headline", "বাছাই করা পণ্য, সঠিক দাম আর ঘরে বসে ডেলিভারি — পণ্য হাতে পেয়ে টাকা দিন।"),
         t("hero_cta", "Primary button text", "কেনাকাটা করুন"),

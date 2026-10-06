@@ -5,7 +5,6 @@ import {
   ChevronDown,
   Quote,
   ShieldCheck,
-  Sparkles,
   Star,
   Truck,
   Undo2,
@@ -37,7 +36,6 @@ export function Hero() {
   const wa = whatsappHref(settings?.whatsapp);
   if (!content.flag("hero_show")) return null;
 
-  const badge = content.text("hero_badge");
   const headline = content.text("hero_headline");
   const sub = content.text("hero_sub");
   const cta = content.text("hero_cta");
@@ -68,7 +66,6 @@ export function Hero() {
       <div className="bg-[var(--st-primary)] px-5 py-10 text-center text-[var(--st-on-primary)]">
         <div className="text-2xl font-extrabold leading-tight md:text-4xl">{headline}</div>
         <p className="mx-auto mt-2 max-w-xl text-sm opacity-90">{sub}</p>
-        {badge && <div className="mt-3 text-[12px] font-semibold opacity-90">{badge}</div>}
       </div>
     );
     return (
@@ -87,18 +84,12 @@ export function Hero() {
   }
 
   if (theme.layout.hero === "banner")
-
     return (
       <section className="mx-auto max-w-6xl px-4 pt-4">
         <div className={cx("overflow-hidden rounded-[var(--st-radius)] border bg-[var(--st-surface)]", borderc)}>
           <div className="grid md:grid-cols-[1.1fr_1fr]">
             <div className="p-6 md:p-10">
-              {badge && (
-                <span className="inline-block rounded-full bg-[var(--st-primary)]/12 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--st-primary)]">
-                  {badge}
-                </span>
-              )}
-              <Heading as="h2" className="mt-3 text-2xl leading-tight md:text-4xl">
+              <Heading as="h2" className="text-2xl leading-tight md:text-4xl">
                 {headline}
               </Heading>
               <p className={cx("mt-3 max-w-md text-sm", muted)}>{sub}</p>
@@ -118,8 +109,7 @@ export function Hero() {
         {media && <img src={media} alt={name} className="absolute inset-0 h-full w-full object-cover opacity-35" />}
         <div className="absolute inset-0 bg-gradient-to-t from-[var(--st-bg)] via-[var(--st-bg)]/70 to-transparent" />
         <div className="relative mx-auto max-w-3xl px-4 py-24 text-center md:py-32">
-          {badge && <span className="text-[11px] uppercase tracking-[0.4em] text-[var(--st-primary)]">{badge}</span>}
-          <Heading as="h2" className="mt-4 text-4xl leading-[1.1] md:text-6xl">
+          <Heading as="h2" className="text-4xl leading-[1.1] md:text-6xl">
             {headline}
           </Heading>
           <p className={cx("mx-auto mt-5 max-w-xl text-sm md:text-base", muted)}>{sub}</p>
@@ -132,8 +122,7 @@ export function Hero() {
     return (
       <section className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-16 md:grid-cols-2 md:py-24">
         <div>
-          {badge && <span className="text-[11px] uppercase tracking-[0.3em] text-[var(--st-muted)]">{badge}</span>}
-          <Heading as="h2" className="mt-4 text-4xl leading-[1.05] md:text-6xl">
+          <Heading as="h2" className="text-4xl leading-[1.05] md:text-6xl">
             {headline}
           </Heading>
           <p className={cx("mt-5 max-w-md text-base leading-relaxed", muted)}>{sub}</p>
@@ -160,12 +149,7 @@ export function Hero() {
       />
       <div className="relative mx-auto grid max-w-6xl items-center gap-10 px-4 py-14 md:grid-cols-2 md:py-20">
         <div>
-          {badge && (
-            <span className="inline-flex items-center gap-2 rounded-full border border-[var(--st-border)] bg-[var(--st-surface)] px-3 py-1.5 text-[11px] font-medium shadow-[var(--st-shadow)]">
-              <Sparkles className="h-3.5 w-3.5 text-[var(--st-primary)]" /> {badge}
-            </span>
-          )}
-          <Heading as="h2" className="mt-4 text-3xl leading-[1.12] md:text-5xl">
+          <Heading as="h2" className="text-3xl leading-[1.12] md:text-5xl">
             {headline}
           </Heading>
           <p className={cx("mt-4 max-w-md text-sm md:text-base", muted)}>{sub}</p>
