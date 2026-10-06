@@ -29,71 +29,102 @@ function normalizeNameHashes(rawName?: string | null): { fn?: string[]; ln?: str
   return { fn, ln };
 }
 
-// Helper to get active marketing configs for a store code (reseller override > global)
-async function getConfigsForStore(supabaseAdmin: any, code: string) {
-  const cleanCode = (code || "").trim();
-  let store: { id: string; code?: string } | null = null;
+// Helper to get active marketing configs for a store code / reseller id / domain
+async function getConfigsForStore(supabaseAdmin: any, codeOrResellerId: string) {
+  const clean = (codeOrResellerId || "").trim();
+  let resellerId: string | null = null;
 
-  // 1. Check if code matches reseller code directly
-  if (cleanCode) {
-    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanCode);
+  if (clean) {
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(clean);
     if (isUuid) {
-      const { data } = await supabaseAdmin.from("resellers").select("id, code").eq("id", cleanCode).maybeSingle();
-      if (data?.id) store = data;
-    }
-    if (!store?.id) {
-      const { data } = await supabaseAdmin.from("resellers").select("id, code").ilike("code", cleanCode).maybeSingle();
-      if (data?.id) store = data;
+      resellerId = clean;
+    } else {
+      // 1. Check if code matches reseller code directly
+      const { data: rByCode } = await supabaseAdmin
+        .from("resellers")
+        .select("id")
+        .ilike("code", clean)
+        .maybeSingle();
+
+      if (rByCode?.id) {
+        resellerId = rByCode.id;
+      } else {
+        // 2. Check if clean matches custom domain or hostname
+        const cleanHost = clean
+          .replace(/^https?:\/\//, "")
+          .replace(/\/.*$/, "")
+          .replace(/^www\./, "")
+          .toLowerCase();
+
+        const { data: domainRows } = await supabaseAdmin
+          .from("reseller_domains")
+          .select("reseller_id, hostname");
+
+        const matchedDomain = (domainRows ?? []).find((d: any) => {
+          const h = (d.hostname || "")
+            .toLowerCase()
+            .replace(/^https?:\/\//, "")
+            .replace(/\/.*$/, "")
+            .replace(/^www\./, "");
+          return h === cleanHost || cleanHost.includes(h) || h.includes(cleanHost);
+        });
+
+        if (matchedDomain?.reseller_id) {
+          resellerId = matchedDomain.reseller_id;
+        }
+      }
     }
   }
 
-  // 2. If not found by code, try matching custom domain or hostname
-  if (!store?.id && cleanCode) {
-    const cleanHost = cleanCode.replace(/^https?:\/\//, "").replace(/\/.*$/, "").replace(/^www\./, "").toLowerCase();
-    const { data: domainRows } = await supabaseAdmin
-      .from("reseller_domains")
-      .select("reseller_id, hostname");
+  // 3. Fetch marketing configs safely without PostgREST .or() filter parsing quirks
+  const configs: any[] = [];
+  try {
+    if (resellerId) {
+      const { data: rConfigs, error: rErr } = await supabaseAdmin
+        .from("marketing_configs")
+        .select("platform, pixel_id, access_token, test_event_code, is_active, reseller_id")
+        .eq("reseller_id", resellerId);
 
-    const matchedDomain = (domainRows ?? []).find((d: any) => {
-      const h = (d.hostname || "").toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "").replace(/^www\./, "");
-      return h === cleanHost || cleanHost.includes(h) || h.includes(cleanHost);
-    });
-
-    if (matchedDomain?.reseller_id) {
-      store = { id: matchedDomain.reseller_id, code: cleanCode };
+      if (rErr) console.error("[getConfigsForStore] Reseller query error:", rErr.message);
+      if (rConfigs && rConfigs.length > 0) configs.push(...rConfigs);
     }
+
+    const { data: gConfigs, error: gErr } = await supabaseAdmin
+      .from("marketing_configs")
+      .select("platform, pixel_id, access_token, test_event_code, is_active, reseller_id")
+      .is("reseller_id", null);
+
+    if (gErr) console.error("[getConfigsForStore] Global query error:", gErr.message);
+    if (gConfigs && gConfigs.length > 0) configs.push(...gConfigs);
+  } catch (err: any) {
+    console.error("[getConfigsForStore] Fetch error:", err?.message);
   }
-
-  const resellerId = store?.id || null;
-
-  // 3. Fetch marketing configs for this reseller + platform global configs
-  const { data: configs } = await supabaseAdmin
-    .from("marketing_configs")
-    .select("platform, pixel_id, access_token, test_event_code, is_active, reseller_id")
-    .in("platform", ["facebook", "tiktok", "ga4"])
-    .or(resellerId ? `reseller_id.eq.${resellerId},reseller_id.is.null` : `reseller_id.is.null`);
 
   const pick = (platform: string) => {
-    // Check reseller-specific config first
+    // 1. Reseller-specific configuration (has reseller_id)
     if (resellerId) {
-      const resellerRow = (configs ?? []).find(
+      const resellerRow = configs.find(
         (c: any) =>
           c.reseller_id === resellerId &&
           c.platform === platform &&
-          (c.is_active !== false) &&
-          (c.pixel_id?.trim() || c.access_token?.trim())
+          (c.is_active === true || c.is_active === null || c.is_active === undefined) &&
+          (Boolean(c.pixel_id?.trim()) || Boolean(c.access_token?.trim())),
       );
       if (resellerRow) return resellerRow;
     }
 
-    // Fallback to platform global config
-    const globalRow = (configs ?? []).find(
-      (c: any) => !c.reseller_id && c.platform === platform && c.is_active
+    // 2. Global platform configuration
+    const globalRow = configs.find(
+      (c: any) =>
+        !c.reseller_id &&
+        c.platform === platform &&
+        c.is_active === true &&
+        (Boolean(c.pixel_id?.trim()) || Boolean(c.access_token?.trim())),
     );
     return globalRow ?? null;
   };
 
-  return { pick, resellerId };
+  return { pick, resellerId, configs };
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
@@ -125,7 +156,11 @@ export const trackViewContentServer = createServerFn({ method: "POST" })
 
     // Facebook CAPI
     const fb: any = pick("facebook");
-    if (fb?.pixel_id && fb?.access_token) {
+    if (fb?.pixel_id?.trim() && fb?.access_token?.trim()) {
+      const pixelId = fb.pixel_id.trim();
+      const accessToken = fb.access_token.trim();
+      const testCode = fb.test_event_code?.trim() || "";
+
       const payload: any = {
         data: [
           {
@@ -145,26 +180,31 @@ export const trackViewContentServer = createServerFn({ method: "POST" })
               currency: "BDT",
               value: Number(data.price),
               content_name: data.productName,
-              content_ids: [data.productId],
+              content_ids: [String(data.productId)],
               content_type: "product",
-              contents: [{ id: data.productId, quantity: 1, item_price: Number(data.price) }],
+              contents: [{ id: String(data.productId), quantity: 1, item_price: Number(data.price) }],
             },
           },
         ],
       };
-      if (fb.test_event_code?.trim()) {
-        payload.test_event_code = fb.test_event_code.trim();
-      }
+
+      if (testCode) payload.test_event_code = testCode;
+      payload.access_token = accessToken;
 
       try {
-        const url = `https://graph.facebook.com/v19.0/${encodeURIComponent(fb.pixel_id.trim())}/events?access_token=${encodeURIComponent(fb.access_token.trim())}`;
+        let url = `https://graph.facebook.com/v19.0/${encodeURIComponent(pixelId)}/events?access_token=${encodeURIComponent(accessToken)}`;
+        if (testCode) url += `&test_event_code=${encodeURIComponent(testCode)}`;
+
         const r = await fetch(url, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
           body: JSON.stringify(payload),
         });
         const resBody = await r.json().catch(() => ({}));
-        console.log("[CAPI Facebook ViewContent]", { ok: r.ok, status: r.status, response: resBody, testCode: fb.test_event_code });
+        console.log("[CAPI Facebook ViewContent]", { ok: r.ok, status: r.status, response: resBody, testCode });
         results.facebook = { ok: r.ok, status: r.status, response: resBody };
       } catch (err: any) {
         console.error("[CAPI Facebook ViewContent Error]", err);
@@ -174,10 +214,14 @@ export const trackViewContentServer = createServerFn({ method: "POST" })
 
     // TikTok Events API
     const tt: any = pick("tiktok");
-    if (tt?.pixel_id && tt?.access_token) {
+    if (tt?.pixel_id?.trim() && tt?.access_token?.trim()) {
+      const pixelId = tt.pixel_id.trim();
+      const accessToken = tt.access_token.trim();
+      const testCode = tt.test_event_code?.trim() || "";
+
       const payload: any = {
         event_source: "web",
-        event_source_id: tt.pixel_id.trim(),
+        event_source_id: pixelId,
         data: [
           {
             event: "ViewContent",
@@ -193,29 +237,35 @@ export const trackViewContentServer = createServerFn({ method: "POST" })
             properties: {
               currency: "BDT",
               value: Number(data.price),
-              content_id: data.productId,
+              content_id: String(data.productId),
               content_name: data.productName,
               content_type: "product",
-              contents: [{ content_id: data.productId, content_name: data.productName, quantity: 1, price: Number(data.price) }],
+              contents: [
+                {
+                  content_id: String(data.productId),
+                  content_name: data.productName,
+                  quantity: 1,
+                  price: Number(data.price),
+                },
+              ],
             },
           },
         ],
       };
-      if (tt.test_event_code?.trim()) {
-        payload.test_event_code = tt.test_event_code.trim();
-      }
+
+      if (testCode) payload.test_event_code = testCode;
 
       try {
         const r = await fetch("https://business-api.tiktok.com/open_api/v1.3/event/track/", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Access-Token": tt.access_token.trim(),
+            "Access-Token": accessToken,
           },
           body: JSON.stringify(payload),
         });
         const resBody = await r.json().catch(() => ({}));
-        console.log("[CAPI TikTok ViewContent]", { ok: r.ok, status: r.status, response: resBody, testCode: tt.test_event_code });
+        console.log("[CAPI TikTok ViewContent]", { ok: r.ok, status: r.status, response: resBody, testCode });
         results.tiktok = { ok: r.ok, status: r.status, response: resBody };
       } catch (err: any) {
         console.error("[CAPI TikTok ViewContent Error]", err);
@@ -237,7 +287,7 @@ const initiateCheckoutInput = z.object({
       name: z.string(),
       price: z.coerce.number(),
       qty: z.coerce.number(),
-    })
+    }),
   ),
   total: z.coerce.number(),
   eventId: z.string().min(1),
@@ -266,7 +316,11 @@ export const trackInitiateCheckoutServer = createServerFn({ method: "POST" })
 
     // Facebook CAPI
     const fb: any = pick("facebook");
-    if (fb?.pixel_id && fb?.access_token) {
+    if (fb?.pixel_id?.trim() && fb?.access_token?.trim()) {
+      const pixelId = fb.pixel_id.trim();
+      const accessToken = fb.access_token.trim();
+      const testCode = fb.test_event_code?.trim() || "";
+
       const payload: any = {
         data: [
           {
@@ -290,25 +344,34 @@ export const trackInitiateCheckoutServer = createServerFn({ method: "POST" })
               value: Number(data.total),
               num_items: data.items.reduce((s, i) => s + i.qty, 0),
               content_type: "product",
-              content_ids: data.items.map((i) => i.id),
-              contents: data.items.map((i) => ({ id: i.id, quantity: i.qty, item_price: Number(i.price) })),
+              content_ids: data.items.map((i) => String(i.id)),
+              contents: data.items.map((i) => ({
+                id: String(i.id),
+                quantity: Number(i.qty),
+                item_price: Number(i.price),
+              })),
             },
           },
         ],
       };
-      if (fb.test_event_code?.trim()) {
-        payload.test_event_code = fb.test_event_code.trim();
-      }
+
+      if (testCode) payload.test_event_code = testCode;
+      payload.access_token = accessToken;
 
       try {
-        const url = `https://graph.facebook.com/v19.0/${encodeURIComponent(fb.pixel_id.trim())}/events?access_token=${encodeURIComponent(fb.access_token.trim())}`;
+        let url = `https://graph.facebook.com/v19.0/${encodeURIComponent(pixelId)}/events?access_token=${encodeURIComponent(accessToken)}`;
+        if (testCode) url += `&test_event_code=${encodeURIComponent(testCode)}`;
+
         const r = await fetch(url, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
           body: JSON.stringify(payload),
         });
         const resBody = await r.json().catch(() => ({}));
-        console.log("[CAPI Facebook InitiateCheckout]", { ok: r.ok, status: r.status, response: resBody, testCode: fb.test_event_code });
+        console.log("[CAPI Facebook InitiateCheckout]", { ok: r.ok, status: r.status, response: resBody, testCode });
         results.facebook = { ok: r.ok, status: r.status, response: resBody };
       } catch (err: any) {
         console.error("[CAPI Facebook InitiateCheckout Error]", err);
@@ -318,10 +381,14 @@ export const trackInitiateCheckoutServer = createServerFn({ method: "POST" })
 
     // TikTok Events API
     const tt: any = pick("tiktok");
-    if (tt?.pixel_id && tt?.access_token) {
+    if (tt?.pixel_id?.trim() && tt?.access_token?.trim()) {
+      const pixelId = tt.pixel_id.trim();
+      const accessToken = tt.access_token.trim();
+      const testCode = tt.test_event_code?.trim() || "";
+
       const payload: any = {
         event_source: "web",
-        event_source_id: tt.pixel_id.trim(),
+        event_source_id: pixelId,
         data: [
           {
             event: "InitiateCheckout",
@@ -340,30 +407,29 @@ export const trackInitiateCheckoutServer = createServerFn({ method: "POST" })
               value: Number(data.total),
               quantity: data.items.reduce((s, i) => s + i.qty, 0),
               contents: data.items.map((i) => ({
-                content_id: i.id,
+                content_id: String(i.id),
                 content_name: i.name,
-                quantity: i.qty,
+                quantity: Number(i.qty),
                 price: Number(i.price),
               })),
             },
           },
         ],
       };
-      if (tt.test_event_code?.trim()) {
-        payload.test_event_code = tt.test_event_code.trim();
-      }
+
+      if (testCode) payload.test_event_code = testCode;
 
       try {
         const r = await fetch("https://business-api.tiktok.com/open_api/v1.3/event/track/", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Access-Token": tt.access_token.trim(),
+            "Access-Token": accessToken,
           },
           body: JSON.stringify(payload),
         });
         const resBody = await r.json().catch(() => ({}));
-        console.log("[CAPI TikTok InitiateCheckout]", { ok: r.ok, status: r.status, response: resBody, testCode: tt.test_event_code });
+        console.log("[CAPI TikTok InitiateCheckout]", { ok: r.ok, status: r.status, response: resBody, testCode });
         results.tiktok = { ok: r.ok, status: r.status, response: resBody };
       } catch (err: any) {
         console.error("[CAPI TikTok InitiateCheckout Error]", err);
@@ -392,15 +458,21 @@ export const trackPurchaseServer = createServerFn({ method: "POST" })
   .inputValidator((d) => purchaseInput.parse(d))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const rawOrderNumber = data.orderNumber.trim();
+    const cleanOrderNumber = rawOrderNumber.replace(/^#/, "");
 
     // 1. Retrieve order details
     const { data: order } = await supabaseAdmin
       .from("orders")
       .select("id, order_number, total, customer_phone, customer_name, address_line, area, reseller_id")
-      .eq("order_number", data.orderNumber)
+      .or(`order_number.eq.${cleanOrderNumber},order_number.eq.#${cleanOrderNumber},order_number.eq.${rawOrderNumber}`)
+      .limit(1)
       .maybeSingle();
 
-    if (!order) return { ok: false, error: "Order not found" };
+    if (!order) {
+      console.warn("[trackPurchaseServer] Order not found for orderNumber:", rawOrderNumber);
+      return { ok: false, error: "Order not found" };
+    }
 
     // 2. Retrieve order items
     const { data: items } = await supabaseAdmin
@@ -410,8 +482,8 @@ export const trackPurchaseServer = createServerFn({ method: "POST" })
 
     const orderItems = items ?? [];
 
-    // 3. Marketing configs using unified resolver
-    const { pick } = await getConfigsForStore(supabaseAdmin, data.code || order.reseller_id || "");
+    // 3. Marketing configs using unified resolver with reseller UUID fallback
+    const { pick } = await getConfigsForStore(supabaseAdmin, order.reseller_id || data.code || "");
 
     const origin = (data.origin ?? process.env["SITE_URL"] ?? "").replace(/\/$/, "");
     const checkoutUrl = origin ? `${origin}/thanks?n=${encodeURIComponent(order.order_number)}` : undefined;
@@ -425,7 +497,11 @@ export const trackPurchaseServer = createServerFn({ method: "POST" })
 
     // Facebook CAPI
     const fb: any = pick("facebook");
-    if (fb?.pixel_id && fb?.access_token) {
+    if (fb?.pixel_id?.trim() && fb?.access_token?.trim()) {
+      const pixelId = fb.pixel_id.trim();
+      const accessToken = fb.access_token.trim();
+      const testCode = fb.test_event_code?.trim() || "";
+
       const payload: any = {
         data: [
           {
@@ -451,29 +527,34 @@ export const trackPurchaseServer = createServerFn({ method: "POST" })
               value: Number(order.total),
               order_id: order.order_number,
               content_type: "product",
-              content_ids: orderItems.map((i: any) => i.product_id),
+              content_ids: orderItems.map((i: any) => String(i.product_id)),
               contents: orderItems.map((i: any) => ({
-                id: i.product_id,
-                quantity: i.quantity,
+                id: String(i.product_id),
+                quantity: Number(i.quantity),
                 item_price: Number(i.reseller_price),
               })),
             },
           },
         ],
       };
-      if (fb.test_event_code?.trim()) {
-        payload.test_event_code = fb.test_event_code.trim();
-      }
+
+      if (testCode) payload.test_event_code = testCode;
+      payload.access_token = accessToken;
 
       try {
-        const url = `https://graph.facebook.com/v19.0/${encodeURIComponent(fb.pixel_id.trim())}/events?access_token=${encodeURIComponent(fb.access_token.trim())}`;
+        let url = `https://graph.facebook.com/v19.0/${encodeURIComponent(pixelId)}/events?access_token=${encodeURIComponent(accessToken)}`;
+        if (testCode) url += `&test_event_code=${encodeURIComponent(testCode)}`;
+
         const r = await fetch(url, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
           body: JSON.stringify(payload),
         });
         const resBody = await r.json().catch(() => ({}));
-        console.log("[CAPI Facebook Purchase]", { ok: r.ok, status: r.status, response: resBody, testCode: fb.test_event_code });
+        console.log("[CAPI Facebook Purchase]", { ok: r.ok, status: r.status, response: resBody, testCode });
         results.facebook = { ok: r.ok, status: r.status, response: resBody };
       } catch (err: any) {
         console.error("[CAPI Facebook Purchase Error]", err);
@@ -483,10 +564,14 @@ export const trackPurchaseServer = createServerFn({ method: "POST" })
 
     // TikTok Events API
     const tt: any = pick("tiktok");
-    if (tt?.pixel_id && tt?.access_token) {
+    if (tt?.pixel_id?.trim() && tt?.access_token?.trim()) {
+      const pixelId = tt.pixel_id.trim();
+      const accessToken = tt.access_token.trim();
+      const testCode = tt.test_event_code?.trim() || "";
+
       const payload: any = {
         event_source: "web",
-        event_source_id: tt.pixel_id.trim(),
+        event_source_id: pixelId,
         data: [
           {
             event: "CompletePayment",
@@ -505,8 +590,8 @@ export const trackPurchaseServer = createServerFn({ method: "POST" })
               value: Number(order.total),
               order_id: order.order_number,
               contents: orderItems.map((i: any) => ({
-                content_id: i.product_id,
-                quantity: i.quantity,
+                content_id: String(i.product_id),
+                quantity: Number(i.quantity),
                 price: Number(i.reseller_price),
                 content_name: i.product_name,
               })),
@@ -514,21 +599,20 @@ export const trackPurchaseServer = createServerFn({ method: "POST" })
           },
         ],
       };
-      if (tt.test_event_code?.trim()) {
-        payload.test_event_code = tt.test_event_code.trim();
-      }
+
+      if (testCode) payload.test_event_code = testCode;
 
       try {
         const r = await fetch("https://business-api.tiktok.com/open_api/v1.3/event/track/", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Access-Token": tt.access_token.trim(),
+            "Access-Token": accessToken,
           },
           body: JSON.stringify(payload),
         });
         const resBody = await r.json().catch(() => ({}));
-        console.log("[CAPI TikTok Purchase]", { ok: r.ok, status: r.status, response: resBody, testCode: tt.test_event_code });
+        console.log("[CAPI TikTok Purchase]", { ok: r.ok, status: r.status, response: resBody, testCode });
         results.tiktok = { ok: r.ok, status: r.status, response: resBody };
       } catch (err: any) {
         console.error("[CAPI TikTok Purchase Error]", err);

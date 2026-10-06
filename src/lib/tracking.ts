@@ -42,10 +42,31 @@ export function getTrackingCookies() {
   if (typeof window === "undefined") {
     return { fbp: undefined, fbc: undefined, ttp: undefined, userAgent: undefined };
   }
+
+  let fbp = getCookie("_fbp");
+  if (!fbp) {
+    fbp = `fb.1.${Date.now()}.${Math.floor(Math.random() * 8999999999 + 1000000000)}`;
+    try {
+      document.cookie = `_fbp=${fbp};path=/;max-age=7776000;SameSite=Lax`;
+    } catch {
+      // ignore
+    }
+  }
+
+  let ttp = getCookie("_ttp");
+  if (!ttp) {
+    ttp = `${Math.random().toString(36).substring(2, 12)}_${Date.now()}`;
+    try {
+      document.cookie = `_ttp=${ttp};path=/;max-age=7776000;SameSite=Lax`;
+    } catch {
+      // ignore
+    }
+  }
+
   return {
-    fbp: getCookie("_fbp") || undefined,
+    fbp: fbp || undefined,
     fbc: getCookie("_fbc") || undefined,
-    ttp: getCookie("_ttp") || undefined,
+    ttp: ttp || undefined,
     userAgent: window.navigator.userAgent,
   };
 }
