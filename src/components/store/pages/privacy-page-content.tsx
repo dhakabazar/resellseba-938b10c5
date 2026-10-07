@@ -6,7 +6,7 @@ import { Heading, GhostButton, cx, borderc, muted } from "../ui";
 export function PrivacyPageContent() {
   const { name, settings, url } = useStore();
   const phone = settings?.support_phone || settings?.whatsapp;
-  const email = settings?.support_email;
+  const email = (settings as { support_email?: string | null } | null)?.support_email;
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-10 sm:py-16">
