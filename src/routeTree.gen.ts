@@ -91,6 +91,7 @@ import { Route as ApiPublicProductRouteImport } from './routes/api/public/produc
 import { Route as ApiPublicRobotsRouteImport } from './routes/api/public/robots'
 import { Route as SCodeIndexRouteImport } from './routes/s.$code.index'
 import { Route as SCodeCheckoutRouteImport } from './routes/s.$code.checkout'
+import { Route as SCodePrivacyRouteImport } from './routes/s.$code.privacy'
 import { Route as SCodeShopRouteImport } from './routes/s.$code.shop'
 import { Route as SCodeThanksRouteImport } from './routes/s.$code.thanks'
 import { Route as AuthenticatedAdminProductsIndexRouteImport } from './routes/_authenticated/admin/products.index'
@@ -572,6 +573,11 @@ const SCodeCheckoutRoute = SCodeCheckoutRouteImport.update({
   path: '/checkout',
   getParentRoute: () => SCodeRoute,
 } as any)
+const SCodePrivacyRoute = SCodePrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => SCodeRoute,
+} as any)
 const SCodeShopRoute = SCodeShopRouteImport.update({
   id: '/shop',
   path: '/shop',
@@ -741,6 +747,7 @@ export interface FileRoutesByFullPath {
   '/api/public/product': typeof ApiPublicProductRoute
   '/api/public/robots': typeof ApiPublicRobotsRoute
   '/s/$code/checkout': typeof SCodeCheckoutRoute
+  '/s/$code/privacy': typeof SCodePrivacyRoute
   '/s/$code/shop': typeof SCodeShopRoute
   '/s/$code/thanks': typeof SCodeThanksRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
@@ -836,6 +843,7 @@ export interface FileRoutesByTo {
   '/api/public/product': typeof ApiPublicProductRoute
   '/api/public/robots': typeof ApiPublicRobotsRoute
   '/s/$code/checkout': typeof SCodeCheckoutRoute
+  '/s/$code/privacy': typeof SCodePrivacyRoute
   '/s/$code/shop': typeof SCodeShopRoute
   '/s/$code/thanks': typeof SCodeThanksRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
@@ -937,6 +945,7 @@ export interface FileRoutesById {
   '/api/public/product': typeof ApiPublicProductRoute
   '/api/public/robots': typeof ApiPublicRobotsRoute
   '/s/$code/checkout': typeof SCodeCheckoutRoute
+  '/s/$code/privacy': typeof SCodePrivacyRoute
   '/s/$code/shop': typeof SCodeShopRoute
   '/s/$code/thanks': typeof SCodeThanksRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
@@ -1038,6 +1047,7 @@ export interface FileRouteTypes {
     | '/api/public/product'
     | '/api/public/robots'
     | '/s/$code/checkout'
+    | '/s/$code/privacy'
     | '/s/$code/shop'
     | '/s/$code/thanks'
     | '/admin/'
@@ -1133,6 +1143,7 @@ export interface FileRouteTypes {
     | '/api/public/product'
     | '/api/public/robots'
     | '/s/$code/checkout'
+    | '/s/$code/privacy'
     | '/s/$code/shop'
     | '/s/$code/thanks'
     | '/admin'
@@ -1233,6 +1244,7 @@ export interface FileRouteTypes {
     | '/api/public/product'
     | '/api/public/robots'
     | '/s/$code/checkout'
+    | '/s/$code/privacy'
     | '/s/$code/shop'
     | '/s/$code/thanks'
     | '/_authenticated/admin/'
@@ -1858,6 +1870,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SCodeCheckoutRouteImport
       parentRoute: typeof SCodeRoute
     }
+    '/s/$code/privacy': {
+      id: '/s/$code/privacy'
+      path: '/privacy'
+      fullPath: '/s/$code/privacy'
+      preLoaderRoute: typeof SCodePrivacyRouteImport
+      parentRoute: typeof SCodeRoute
+    }
     '/s/$code/shop': {
       id: '/s/$code/shop'
       path: '/shop'
@@ -2173,6 +2192,7 @@ const CatalogRouteWithChildren =
 
 interface SCodeRouteChildren {
   SCodeCheckoutRoute: typeof SCodeCheckoutRoute
+  SCodePrivacyRoute: typeof SCodePrivacyRoute
   SCodeShopRoute: typeof SCodeShopRoute
   SCodeThanksRoute: typeof SCodeThanksRoute
   SCodeIndexRoute: typeof SCodeIndexRoute
@@ -2182,6 +2202,7 @@ interface SCodeRouteChildren {
 
 const SCodeRouteChildren: SCodeRouteChildren = {
   SCodeCheckoutRoute: SCodeCheckoutRoute,
+  SCodePrivacyRoute: SCodePrivacyRoute,
   SCodeShopRoute: SCodeShopRoute,
   SCodeThanksRoute: SCodeThanksRoute,
   SCodeIndexRoute: SCodeIndexRoute,
