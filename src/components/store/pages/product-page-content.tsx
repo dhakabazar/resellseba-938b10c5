@@ -272,7 +272,7 @@ export function ProductPageContent({ slug, code: propCode }: { slug: string; cod
         </section>
       )}
 
-      {recommended.length > 0 && (
+      {false && recommended.length > 0 && (
         <section className="mt-14 sm:mt-16 border-t border-[var(--st-border)] pt-10">
           <SectionHead title="আপনার পছন্দ হতে পারে" subtitle="সম্পর্কিত ও জনপ্রিয় পণ্যসমূহ" />
           <ProductGrid listings={recommended.slice(0, relatedVisible)} />

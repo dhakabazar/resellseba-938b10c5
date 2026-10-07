@@ -197,7 +197,7 @@ export function SohojProductPage({
         </div>
       </section>
 
-      {recommended.length > 0 && (
+      {false && recommended.length > 0 && (
         <section className="mt-8 border-t border-[var(--st-border)] pt-8">
           <SectionHead
             title="আপনার পছন্দ হতে পারে"
