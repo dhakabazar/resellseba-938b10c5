@@ -724,7 +724,7 @@ export function CheckoutPageContent({
         </aside>
       </div>
 
-      {recommended.length > 0 && (
+      {false && recommended.length > 0 && (
         <section className="mt-12 sm:mt-16 border-t border-[var(--st-border)] pt-8 sm:pt-10">
           <SectionHead title="আপনার পছন্দ হতে পারে" subtitle="অন্যান্য আকর্ষণীয় ও জনপ্রিয় পণ্যসমূহ" />
           {poripati ? (
