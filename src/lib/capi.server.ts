@@ -557,7 +557,6 @@ export async function trackPurchaseServerImpl(data: z.infer<typeof purchaseInput
           user_data: {
             client_user_agent: fallbackUa,
             fbp: data.fbp || `fb.1.${Date.now()}.${Math.floor(Math.random() * 9e9 + 1e9)}`,
-            external_id: [sha256(String(data.fbp || data.ttp || data.eventId || ""))],
             fbc: data.fbc || undefined,
             ph: phoneHashes,
             fn: nameHashes.fn,
