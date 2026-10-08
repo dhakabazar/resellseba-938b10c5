@@ -8,6 +8,13 @@
       "when": 1791301971060,
       "tag": "0000_migration",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791433041437,
+      "tag": "0001_capi_public_rpcs",
+      "breakpoints": true
     }
   ]
 }

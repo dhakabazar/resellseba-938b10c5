@@ -3176,6 +3176,11 @@ export type Database = {
         Args: { _area: string; _product_id: string }
         Returns: number
       }
+      capi_order: { Args: { p_order_number: string }; Returns: Json }
+      capi_store_configs: {
+        Args: { p_code: string; p_origin?: string }
+        Returns: Json
+      }
       cf_config_get: {
         Args: never
         Returns: {
