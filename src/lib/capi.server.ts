@@ -126,7 +126,8 @@ export async function trackPageViewServerImpl(data: z.infer<typeof pageViewInput
           action_source: "website",
           user_data: {
             client_user_agent: fallbackUa,
-            fbp: data.fbp || undefined,
+            fbp: data.fbp || `fb.1.${Date.now()}.${Math.floor(Math.random() * 9e9 + 1e9)}`,
+            external_id: [sha256(String(data.fbp || data.ttp || data.eventId || ""))],
             fbc: data.fbc || undefined,
             country: [sha256("bd")],
           },
@@ -243,7 +244,8 @@ export async function trackViewContentServerImpl(data: z.infer<typeof viewConten
           action_source: "website",
           user_data: {
             client_user_agent: fallbackUa,
-            fbp: data.fbp || undefined,
+            fbp: data.fbp || `fb.1.${Date.now()}.${Math.floor(Math.random() * 9e9 + 1e9)}`,
+            external_id: [sha256(String(data.fbp || data.ttp || data.eventId || ""))],
             fbc: data.fbc || undefined,
             country: [sha256("bd")],
           },
@@ -386,7 +388,8 @@ export async function trackInitiateCheckoutServerImpl(data: z.infer<typeof initi
           action_source: "website",
           user_data: {
             client_user_agent: fallbackUa,
-            fbp: data.fbp || undefined,
+            fbp: data.fbp || `fb.1.${Date.now()}.${Math.floor(Math.random() * 9e9 + 1e9)}`,
+            external_id: [sha256(String(data.fbp || data.ttp || data.eventId || ""))],
             fbc: data.fbc || undefined,
             ph: phoneHashes,
             fn: nameHashes.fn,
@@ -553,7 +556,7 @@ export async function trackPurchaseServerImpl(data: z.infer<typeof purchaseInput
           action_source: "website",
           user_data: {
             client_user_agent: fallbackUa,
-            fbp: data.fbp || undefined,
+            fbp: data.fbp || `fb.1.${Date.now()}.${Math.floor(Math.random() * 9e9 + 1e9)}`,
             fbc: data.fbc || undefined,
             ph: phoneHashes,
             fn: nameHashes.fn,
