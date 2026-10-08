@@ -1,3 +1,5 @@
+import { createClient } from "@supabase/supabase-js";
+import { getRuntimeEnv } from "@/lib/env-bridge";
 import { pageViewInput, viewContentInput, initiateCheckoutInput, purchaseInput } from "./capi-schemas";
 import { z } from "zod";
 import { createHash } from "crypto";
@@ -30,106 +32,26 @@ function normalizeNameHashes(rawName?: string | null): { fn?: string[]; ln?: str
 }
 
 // Helper to get active marketing configs for a store code / reseller id / domain / origin
+function publicDb() {
+  const url = getRuntimeEnv("SUPABASE_URL")!;
+  const key = getRuntimeEnv("SUPABASE_PUBLISHABLE_KEY")!;
+  return createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: { fetch: (input, init) => {
+      const h = new Headers(init?.headers);
+      if (key.startsWith("sb_") && h.get("Authorization") === `Bearer ${key}`) h.delete("Authorization");
+      h.set("apikey", key);
+      return fetch(input, { ...init, headers: h });
+    } },
+  });
+}
+
 async function getConfigsForStore(supabaseAdmin: any, codeOrResellerId: string, origin?: string) {
-  const clean = (codeOrResellerId || "").trim();
-  let resellerId: string | null = null;
-
-  if (clean) {
-    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(clean);
-    if (isUuid) {
-      resellerId = clean;
-    } else {
-      // 1. Check if code matches reseller code directly
-      const { data: rByCode } = await supabaseAdmin
-        .from("resellers")
-        .select("id")
-        .ilike("code", clean)
-        .maybeSingle();
-
-      if (rByCode?.id) {
-        resellerId = rByCode.id;
-      }
-
-      // 2. Check if clean matches custom domain or hostname
-      if (!resellerId) {
-        const cleanHost = clean
-          .replace(/^https?:\/\//, "")
-          .replace(/\/.*$/, "")
-          .replace(/^www\./, "")
-          .toLowerCase();
-
-        const { data: domainRows } = await supabaseAdmin
-          .from("reseller_domains")
-          .select("reseller_id, hostname");
-
-        const matchedDomain = (domainRows ?? []).find((d: any) => {
-          const h = (d.hostname || "")
-            .toLowerCase()
-            .replace(/^https?:\/\//, "")
-            .replace(/\/.*$/, "")
-            .replace(/^www\./, "");
-          return h === cleanHost || cleanHost.includes(h) || h.includes(cleanHost);
-        });
-
-        if (matchedDomain?.reseller_id) {
-          resellerId = matchedDomain.reseller_id;
-        }
-      }
-    }
-  }
-
-  // 3. If still not found, try matching against origin hostname
-  if (!resellerId && origin) {
-    const originHost = origin
-      .replace(/^https?:\/\//, "")
-      .replace(/\/.*$/, "")
-      .replace(/^www\./, "")
-      .toLowerCase();
-
-    if (originHost && originHost !== "localhost" && originHost !== "127.0.0.1") {
-      const { data: domainRows } = await supabaseAdmin
-        .from("reseller_domains")
-        .select("reseller_id, hostname");
-
-      const matched = (domainRows ?? []).find((d: any) => {
-        const h = (d.hostname || "")
-          .toLowerCase()
-          .replace(/^https?:\/\//, "")
-          .replace(/\/.*$/, "")
-          .replace(/^www\./, "");
-        return h === originHost || originHost.includes(h) || h.includes(originHost);
-      });
-
-      if (matched?.reseller_id) {
-        resellerId = matched.reseller_id;
-      }
-    }
-  }
-
-  // 4. Fetch marketing configs safely
-  const configs: any[] = [];
-  try {
-    if (resellerId) {
-      const { data: rConfigs, error: rErr } = await supabaseAdmin
-        .from("marketing_configs")
-        .select("platform, pixel_id, access_token, test_event_code, is_active, reseller_id")
-        .eq("reseller_id", resellerId);
-
-      if (rErr) console.error("[getConfigsForStore] Reseller query error:", rErr.message);
-      if (rConfigs && rConfigs.length > 0) configs.push(...rConfigs);
-    }
-
-    const { data: gConfigs, error: gErr } = await supabaseAdmin
-      .from("marketing_configs")
-      .select("platform, pixel_id, access_token, test_event_code, is_active, reseller_id")
-      .is("reseller_id", null);
-
-    if (gErr) console.error("[getConfigsForStore] Global query error:", gErr.message);
-    if (gConfigs && gConfigs.length > 0) configs.push(...gConfigs);
-  } catch (err: any) {
-    console.error("[getConfigsForStore] Fetch error:", err?.message);
-  }
-
+  const db = publicDb();
+  const { data: ctx, error } = await db.rpc("capi_store_configs" as any, { p_code: codeOrResellerId || "", p_origin: origin ?? null } as any);
+  if (error) console.error("[getConfigsForStore]", error.message);
+  const resellerId: string | null = (ctx as any)?.reseller_id ?? null;
+  const configs: any[] = (ctx as any)?.configs ?? [];
   const pick = (platform: string) => {
     // Reseller row
     const resellerRows = resellerId
@@ -176,7 +98,7 @@ async function getConfigsForStore(supabaseAdmin: any, codeOrResellerId: string, 
  * ────────────────────────────────────────────────────────────────────────── */
 
 export async function trackPageViewServerImpl(data: z.infer<typeof pageViewInput>) {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const supabaseAdmin = null;
   const { pick } = await getConfigsForStore(supabaseAdmin, data.code, data.origin);
 
   const origin = (data.origin ?? process.env["SITE_URL"] ?? "").replace(/\/$/, "");
@@ -293,7 +215,7 @@ export async function trackPageViewServerImpl(data: z.infer<typeof pageViewInput
  * ────────────────────────────────────────────────────────────────────────── */
 
 export async function trackViewContentServerImpl(data: z.infer<typeof viewContentInput>) {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const supabaseAdmin = null;
   const { pick } = await getConfigsForStore(supabaseAdmin, data.code, data.origin);
 
   const origin = (data.origin ?? process.env["SITE_URL"] ?? "").replace(/\/$/, "");
@@ -433,7 +355,7 @@ export async function trackViewContentServerImpl(data: z.infer<typeof viewConten
  * ────────────────────────────────────────────────────────────────────────── */
 
 export async function trackInitiateCheckoutServerImpl(data: z.infer<typeof initiateCheckoutInput>) {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const supabaseAdmin = null;
   const { pick } = await getConfigsForStore(supabaseAdmin, data.code, data.origin);
 
   const origin = (data.origin ?? process.env["SITE_URL"] ?? "").replace(/\/$/, "");
@@ -580,42 +502,17 @@ export async function trackInitiateCheckoutServerImpl(data: z.infer<typeof initi
  * ────────────────────────────────────────────────────────────────────────── */
 
 export async function trackPurchaseServerImpl(data: z.infer<typeof purchaseInput>) {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const supabaseAdmin = null;
   const rawOrderNumber = data.orderNumber.trim();
   const cleanOrderNumber = rawOrderNumber.replace(/^#/, "").trim();
 
-  // 1. Retrieve order details safely without breaking URL fragments
-  let order: any = null;
-  const { data: o1 } = await supabaseAdmin
-    .from("orders")
-    .select("id, order_number, total, customer_phone, customer_name, address_line, area, reseller_id")
-    .or(`order_number.eq.${cleanOrderNumber},order_number.eq.#${cleanOrderNumber}`)
-    .limit(1)
-    .maybeSingle();
-
-  if (o1) {
-    order = o1;
-  } else {
-    const { data: o2 } = await supabaseAdmin
-      .from("orders")
-      .select("id, order_number, total, customer_phone, customer_name, address_line, area, reseller_id")
-      .ilike("order_number", `%${cleanOrderNumber}%`)
-      .limit(1)
-      .maybeSingle();
-    if (o2) order = o2;
-  }
-
+  const { data: od } = await publicDb().rpc("capi_order" as any, { p_order_number: cleanOrderNumber } as any);
+  const order: any = od;
   if (!order) {
     console.warn("[trackPurchaseServer] Order not found for orderNumber:", rawOrderNumber);
     return { ok: false, error: "Order not found" };
   }
-
-  // 2. Retrieve order items
-  const { data: items } = await supabaseAdmin
-    .from("order_items")
-    .select("product_id, product_name, reseller_price, quantity")
-    .eq("order_id", order.id);
-
+  const items: any[] = order.order_items ?? [];
   const orderItems = items ?? [];
 
   // 3. Marketing configs using unified resolver with reseller UUID fallback and origin
@@ -773,7 +670,7 @@ export async function trackPurchaseServerImpl(data: z.infer<typeof purchaseInput
  * 5. Get active store marketing pixels directly from server
  * ────────────────────────────────────────────────────────────────────────── */
 export async function getStoreMarketingPixelsServerImpl(data: { code: string }) {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const supabaseAdmin = null;
   const { pick } = await getConfigsForStore(supabaseAdmin, data.code);
   const fb = pick("facebook");
   const tt = pick("tiktok");
@@ -789,13 +686,9 @@ export async function getStoreMarketingPixelsServerImpl(data: { code: string }) 
  * 6. Get public order details for Thanks page (bypassing anon RLS restriction)
  * ────────────────────────────────────────────────────────────────────────── */
 export async function getPublicOrderDetailsServerImpl(data: { orderNumber: string }) {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data: order, error } = await supabaseAdmin
-    .from("orders")
-    .select("id, order_number, total, shipping_cost, customer_name, customer_phone, address_line, area, payment_method, payment_status, created_at, reseller_id, order_items(id, product_id, product_name, reseller_price, quantity)")
-    .eq("order_number", data.orderNumber)
-    .maybeSingle();
-
+  const supabaseAdmin = null;
+  const { data: od, error } = await publicDb().rpc("capi_order" as any, { p_order_number: data.orderNumber } as any);
+  const order: any = od;
   if (error || !order) return null;
   return {
     id: order.id,
