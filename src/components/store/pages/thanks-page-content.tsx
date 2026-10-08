@@ -109,7 +109,7 @@ export function ThanksPageContent({
             trackPurchase({
               orderNumber: n,
               total: Number(data.total),
-              items: (data.order_items ?? []).map((i) => ({
+              items: (data.order_items ?? []).map((i: any) => ({
                 id: i.product_id ?? "",
                 name: i.product_name,
                 price: Number(i.reseller_price),

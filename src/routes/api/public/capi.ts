@@ -22,8 +22,6 @@ export const Route = createFileRoute("/api/public/capi")({
       POST: async ({ request }) => {
         const parsed = Body.safeParse(await request.json().catch(() => null));
         if (!parsed.success) return new Response("Bad request", { status: 400 });
-        const { hasPrivilegedDb } = await import("@/lib/gateways/bridge.server");
-        if (!hasPrivilegedDb()) return new Response("Not available", { status: 503 });
         const { runCapiLocal } = await import("@/lib/capi.server");
         try {
           const result = await runCapiLocal(parsed.data.name, parsed.data.data);

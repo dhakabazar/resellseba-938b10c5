@@ -27,33 +27,6 @@ export const getPublicOrderDetailsServer = createServerFn({ method: "GET" })
   .handler(async ({ data }) => runCapi("getPublicOrderDetailsServer", data) as ReturnType<typeof import("./capi.server").getPublicOrderDetailsServerImpl>);
 
 async function runCapi(name: string, data: any): Promise<any> {
-  const { hasPrivilegedDb, platformOrigin } = await import("@/lib/gateways/bridge.server");
-  if (hasPrivilegedDb()) {
-    const { runCapiLocal } = await import("./capi.server");
-    return runCapiLocal(name, data);
-  }
-  const { getRequest } = await import("@tanstack/react-start/server");
-  let here = "";
-  try { here = new URL(getRequest().url).origin; } catch { /* ignore */ }
-  let base = await platformOrigin("");
-  if (base && !/^https?:\/\//i.test(base)) base = `https://${base}`;
-  if (!base || base === here) {
-    console.error("[capi] no privileged key and no platform origin configured");
-    return null;
-  }
-  try {
-    const res = await fetch(`${base}/api/public/capi`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ name, data }),
-    });
-    if (!res.ok) {
-      console.error("[capi] forward failed", res.status, await res.text());
-      return null;
-    }
-    return await res.json();
-  } catch (e) {
-    console.error("[capi] forward error", e);
-    return null;
-  }
+  const { runCapiLocal } = await import("./capi.server");
+  try { return await runCapiLocal(name, data); } catch (e) { console.error("[capi]", e); return null; }
 }
