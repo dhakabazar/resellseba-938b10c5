@@ -3,7 +3,7 @@
  * Replaces the old money timeline / earning report: every order settlement,
  * security deposit and withdraw request in one running-balance table.
  */
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Loader2, Download, Search, X, ArrowDownRight, ArrowUpRight, Wallet, TrendingUp, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -193,23 +193,51 @@ export function TransactionReport({
     void fetchAllSafe(() => supabase.from("resellers").select("id,business_name,code,avatar_url").order("business_name")).then((data) => setResellers(data as any));
   }, [admin]);
 
+  const [complete, setComplete] = useState(false);
+  const perPageRef = useRef(perPage);
+  perPageRef.current = perPage;
+
   useEffect(() => {
     if (!admin && !resellerId) return;
     const { fromTs, toTs } = resolveRange(range);
+    let cancelled = false;
+    let fullDone = false;
     setLoading(true);
+    setComplete(false);
     setError(null);
+    const rid = (admin ? reseller : resellerId) || null;
+    const args = {
+      _reseller_id: rid,
+      _from: fromTs != null ? new Date(fromTs).toISOString() : null,
+      _to: toTs != null ? new Date(toTs).toISOString() : null,
+    };
+    const pp = perPageRef.current;
+    // Phase 1: first page only (server already computes the true running balance
+    // over the full history, so these rows are correct as-is).
+    if (pp !== "all") {
+      void supabase
+        .rpc("transaction_report", { ...args, _limit: pp } as never)
+        .then(({ data, error }) => {
+          if (cancelled || error || fullDone) return;
+          setRows((data ?? []) as TxRow[]);
+          setLoading(false);
+        });
+    }
+    // Phase 2: full set — totals/stat cards only use this.
     void supabase
-      .rpc("transaction_report", {
-        _reseller_id: (admin ? reseller : resellerId) || null,
-        _from: fromTs != null ? new Date(fromTs).toISOString() : null,
-        _to: toTs != null ? new Date(toTs).toISOString() : null,
-        _limit: 0,
-      } as never)
+      .rpc("transaction_report", { ...args, _limit: 0 } as never)
       .then(({ data, error }) => {
+        if (cancelled) return;
         if (error) setError(error.message);
-        setRows(withRunningBalance((data ?? []) as TxRow[], Boolean((admin ? reseller : resellerId) || "")));
+        const full = withRunningBalance((data ?? []) as TxRow[], Boolean(rid));
+        fullDone = true;
+        setRows(full);
+        setComplete(true);
         setLoading(false);
       });
+    return () => {
+      cancelled = true;
+    };
   }, [admin, reseller, resellerId, range]);
 
   const filtered = useMemo(() => {
@@ -433,16 +461,16 @@ export function TransactionReport({
 
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard label="Total in" value={bdt(totals.inflow)} icon={<ArrowDownRight className="h-4 w-4" />} />
-        <StatCard label="Total out" value={bdt(totals.outflow)} icon={<ArrowUpRight className="h-4 w-4" />} />
-        <StatCard label="Balance" value={bdt(totals.balance)} icon={<Wallet className="h-4 w-4" />} />
+        <StatCard label="Total in" value={complete ? bdt(totals.inflow) : "…"} icon={<ArrowDownRight className="h-4 w-4" />} />
+        <StatCard label="Total out" value={complete ? bdt(totals.outflow) : "…"} icon={<ArrowUpRight className="h-4 w-4" />} />
+        <StatCard label="Balance" value={complete ? bdt(totals.balance) : "…"} icon={<Wallet className="h-4 w-4" />} />
         <StatCard
           label="Order profit / loss"
-          value={`${bdt(totals.profit)} / ${bdt(totals.loss)}`}
+          value={complete ? `${bdt(totals.profit)} / ${bdt(totals.loss)}` : "…"}
           icon={<TrendingUp className="h-4 w-4" />}
         />
-        <StatCard label="Security deposit" value={bdt(totals.deposit)} icon={<Wallet className="h-4 w-4" />} />
-        <StatCard label="Withdrawn" value={bdt(totals.withdraw)} icon={<ArrowUpRight className="h-4 w-4" />} />
+        <StatCard label="Security deposit" value={complete ? bdt(totals.deposit) : "…"} icon={<Wallet className="h-4 w-4" />} />
+        <StatCard label="Withdrawn" value={complete ? bdt(totals.withdraw) : "…"} icon={<ArrowUpRight className="h-4 w-4" />} />
         <StatCard label="Transactions" value={String(filtered.length)} icon={<TrendingUp className="h-4 w-4" />} />
         <StatCard label="Loss orders" value={String(filtered.filter((r) => r.kind === "loss").length)} icon={<AlertTriangle className="h-4 w-4" />} />
       </div>
