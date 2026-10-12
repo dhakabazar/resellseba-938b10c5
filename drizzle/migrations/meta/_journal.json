@@ -15,6 +15,13 @@
       "when": 1791433041437,
       "tag": "0001_capi_public_rpcs",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791807350258,
+      "tag": "0002_manual_payment_owner_tracking",
+      "breakpoints": true
     }
   ]
 }

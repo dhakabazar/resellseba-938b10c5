@@ -1166,8 +1166,10 @@ export type Database = {
           packaging_total: number
           paid_amount: number
           paid_at: string | null
+          payment_config_id: string | null
           payment_method: Database["public"]["Enums"]["payment_method"]
           payment_provider: string | null
+          payment_sender: string | null
           payment_status: Database["public"]["Enums"]["payment_status"]
           received_amount: number | null
           reseller_id: string | null
@@ -1210,8 +1212,10 @@ export type Database = {
           packaging_total?: number
           paid_amount?: number
           paid_at?: string | null
+          payment_config_id?: string | null
           payment_method?: Database["public"]["Enums"]["payment_method"]
           payment_provider?: string | null
+          payment_sender?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status"]
           received_amount?: number | null
           reseller_id?: string | null
@@ -1254,8 +1258,10 @@ export type Database = {
           packaging_total?: number
           paid_amount?: number
           paid_at?: string | null
+          payment_config_id?: string | null
           payment_method?: Database["public"]["Enums"]["payment_method"]
           payment_provider?: string | null
+          payment_sender?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status"]
           received_amount?: number | null
           reseller_id?: string | null
@@ -1276,6 +1282,20 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "orders_payment_config_id_fkey"
+            columns: ["payment_config_id"]
+            isOneToOne: false
+            referencedRelation: "payment_configs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_payment_config_id_fkey"
+            columns: ["payment_config_id"]
+            isOneToOne: false
+            referencedRelation: "public_payment_methods"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "orders_reseller_id_fkey"
             columns: ["reseller_id"]
@@ -3300,6 +3320,10 @@ export type Database = {
           rows: number
         }[]
       }
+      confirm_manual_payment: {
+        Args: { _amount: number; _order_id: string }
+        Returns: string
+      }
       courier_config_get: { Args: { _provider: string }; Returns: Json }
       courier_config_patch: {
         Args: { _patch: Json; _provider: string }
@@ -3316,8 +3340,11 @@ export type Database = {
           _items: Json
           _landmark: string
           _notes: string
+          _payment_config_id?: string
           _payment_method: Database["public"]["Enums"]["payment_method"]
           _reseller_code: string
+          _sender?: string
+          _txn_id?: string
         }
         Returns: {
           order_id: string
@@ -3513,6 +3540,7 @@ export type Database = {
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
       store_bootstrap: { Args: { _code: string }; Returns: Json }
+      store_payment_methods: { Args: { _rid: string }; Returns: Json }
       store_visit_access: { Args: { _reseller_id: string }; Returns: boolean }
       store_visit_daily: {
         Args: { _from: string; _reseller_id: string; _to: string }
