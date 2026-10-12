@@ -199,6 +199,8 @@ export function ThanksPageContent({
     0,
   );
   const deliveryFee = order?.delivery_charge ?? (order ? Math.max(0, Number(order.total) - itemsTotal) : 0);
+  const itemCount = (order?.order_items ?? []).reduce((s, i) => s + Number(i.quantity), 0);
+  const discount = order ? Math.max(0, Math.round(itemsTotal + Number(deliveryFee || 0) - Number(order.total))) : 0;
 
   return (
     <div className={cx("mx-auto max-w-2xl px-4 py-12 sm:py-16", poripati && "my-8")}>
