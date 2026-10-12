@@ -9,6 +9,8 @@ import { trackAddToCart, trackViewContent } from "@/lib/tracking";
 import { useStore, type StoreListing } from "../store-context";
 import { PreviousPrice, SoldCount } from "../product-presentation";
 import { ProductImageGallery } from "../ui";
+import { AnnouncementStrip } from "../announcement-strip";
+
 
 const cn = (...v: (string | false | null | undefined)[]) => v.filter(Boolean).join(" ");
 
