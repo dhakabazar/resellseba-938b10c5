@@ -43,8 +43,23 @@ export function CheckoutPageContent({
   const nav = useNavigate();
   const poripati = store.theme.id === "poripati";
   const [recVisible, setRecVisible] = useState(16);
-  /** Manual methods arrive with the storefront bootstrap payload — no extra call. */
-  const methods: PayMethod[] = store.paymentMethods.map((m) => ({
+  /**
+   * Bootstrap list is cached for a few minutes, so checkout re-reads the live
+   * on/off state once — a method the reseller just turned off never shows here.
+   */
+  const [liveMethods, setLiveMethods] = useState<typeof store.paymentMethods | null>(null);
+  useEffect(() => {
+    let alive = true;
+    supabase
+      .rpc("store_payment_methods" as never, { _rid: store.resellerId } as never)
+      .then(({ data, error }) => {
+        if (alive && !error && Array.isArray(data)) setLiveMethods(data as typeof store.paymentMethods);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [store.resellerId]);
+  const methods: PayMethod[] = (liveMethods ?? store.paymentMethods).map((m) => ({
     id: m.id,
     method: m.method,
     label: m.label ?? m.method,
@@ -207,6 +222,9 @@ export function CheckoutPageContent({
   const codMeta = methods.find((m) => m.method === "cod");
   const manualValue = (m: PayMethod) => `manual:${m.id ?? m.method}`;
   const activeManualMethod = extraMethods.find((m) => manualValue(m) === payMethod);
+  useEffect(() => {
+    if (payMethod.startsWith("manual:") && !activeManualMethod) setPayMethod("cod");
+  }, [payMethod, activeManualMethod]);
   const sendNumber = activeManualMethod?.account || activeManualMethod?.instructions?.match(/01\d{9}/)?.[0] || "";
 
   async function submit(e: React.FormEvent) {
