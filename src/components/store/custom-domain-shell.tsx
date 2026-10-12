@@ -81,7 +81,7 @@ export function CustomDomainStoreLayout({
     return () => {
       alive = false;
     };
-  }, [propCode, resolveDomain, host]);
+  }, [propCode, resolveDomain]);
 
   if (loading) {
     return (
