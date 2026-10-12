@@ -178,6 +178,9 @@ export function CustomersReport({
   const [q, setQ] = useState("");
   const [bucket, setBucket] = useState("all");
   const [store, setStore] = useState("");
+  const [perPage, setPerPage] = useState(20);
+  const [page, setPage] = useState(1);
+  useEffect(() => setPage(1), [q, bucket, store, perPage]);
 
   const storeLabel = (c: Customer) =>
     c.resellerIds.map((id) => resellerNames?.get(id) ?? "—").join(", ") || "Admin";
