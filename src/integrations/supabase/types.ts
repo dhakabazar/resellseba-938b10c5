@@ -3569,6 +3569,10 @@ export type Database = {
       show_trgm: { Args: { "": string }; Returns: string[] }
       store_bootstrap: { Args: { _code: string }; Returns: Json }
       store_payment_methods: { Args: { _rid: string }; Returns: Json }
+      store_product_description: {
+        Args: { _product_id: string }
+        Returns: string
+      }
       store_visit_access: { Args: { _reseller_id: string }; Returns: boolean }
       store_visit_daily: {
         Args: { _from: string; _reseller_id: string; _to: string }

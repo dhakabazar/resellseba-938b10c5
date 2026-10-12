@@ -1,3 +1,4 @@
+import { useProductDescription } from "@/lib/use-product-description";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
@@ -101,7 +102,7 @@ export function ProductPageContent({ slug, code: propCode }: { slug: string; cod
       </div>
     );
 
-  const p = listing.product;
+  const p = listing.product; const fullDesc = useProductDescription(listing.product as any);
   const title = store.title(listing);
   const price = Number(listing.selling_price);
   const images = p.product_images ?? [];
@@ -259,7 +260,7 @@ export function ProductPageContent({ slug, code: propCode }: { slug: string; cod
         </div>
       </div>
 
-      {p.description && (
+      {fullDesc && (
         <section className="mt-12 lg:mt-16">
           <div className="flex items-center justify-between gap-3">
             <Heading className="text-xl">প্রোডাক্ট বিবরণ</Heading>
@@ -271,7 +272,7 @@ export function ProductPageContent({ slug, code: propCode }: { slug: string; cod
               borderc,
               muted,
             )}
-            dangerouslySetInnerHTML={{ __html: p.description }}
+            dangerouslySetInnerHTML={{ __html: fullDesc }}
           />
         </section>
       )}
