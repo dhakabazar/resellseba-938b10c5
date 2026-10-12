@@ -5,6 +5,7 @@ import { ResellerAvatar } from "@/components/reseller-avatar";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
 import { DataToolbar, Pagination, usePaginated } from "@/components/data-list";
 import { DateRangeBar, inRange, type DateRangeState } from "@/components/date-range-filter";
+import { Button } from "@/components/ui/button";
 
 import {
   Check,
@@ -141,6 +142,14 @@ type Summary = {
 type ResellerSearch = { status?: string };
 
 export const Route = createFileRoute("/_authenticated/admin/resellers")({
+  head: () => ({ meta: [
+    { title: "Reseller Network | Ecom Seller BD" },
+    { name: "description", content: "Manage reseller applications, account status and storefront partners." },
+    { property: "og:title", content: "Reseller Network | Ecom Seller BD" },
+    { property: "og:description", content: "Manage reseller applications, account status and storefront partners." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   validateSearch: (s: Record<string, unknown>): ResellerSearch => ({
     status: typeof s.status === "string" ? s.status : undefined,
   }),
@@ -202,32 +211,37 @@ function FilterButtonRow({
   active,
   onSelect,
 }: {
-  options: Array<{ value: string; label: string; count: number }>;
+  options: Array<{ value: string; label: string; count: number; group: string }>;
   active: string;
   onSelect: (value: string) => void;
 }) {
   return (
-    <div className="flex flex-wrap gap-2">
-      {options.map((o) => {
+    <div className="grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      {Array.from(new Set(options.map((o) => o.group))).map((group) => (
+        <section key={group} className="min-w-0 space-y-2">
+          <h3 className="text-xs font-semibold text-muted-foreground">{group}</h3>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-1">
+      {options.filter((o) => o.group === group).map((o) => {
         const isActive = active === o.value;
         return (
-          <button
+          <Button
             key={o.value}
             type="button"
             onClick={() => onSelect(o.value)}
-            className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-colors sm:text-sm ${
-              isActive
-                ? "border-primary bg-primary text-primary-foreground"
-                : "bg-background hover:bg-muted"
-            }`}
+            variant={isActive ? "default" : "outline"}
+            aria-pressed={isActive}
+            className="h-auto min-h-10 min-w-0 justify-between gap-2 whitespace-normal px-2.5 py-2 text-left text-xs"
           >
-            <span className="truncate">{o.label}</span>
-            <span className={`text-[11px] ${isActive ? "opacity-80" : "text-muted-foreground"}`}>
+            <span className="min-w-0 break-words">{o.label}</span>
+            <span className={`shrink-0 text-[11px] tabular-nums ${isActive ? "opacity-80" : "text-muted-foreground"}`}>
               {o.count}
             </span>
-          </button>
+          </Button>
         );
       })}
+          </div>
+        </section>
+      ))}
     </div>
   );
 }
@@ -259,10 +273,12 @@ function SearchableFilterMenu({
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger className="inline-flex h-10 items-center gap-2 rounded-md border bg-background px-3 text-sm font-medium transition hover:bg-muted">
-        <span className="text-muted-foreground">{label}:</span>
-        <span className="max-w-[14rem] truncate">{activeLabel}</span>
-        <ChevronDown className="h-4 w-4 text-muted-foreground" />
+      <PopoverTrigger asChild>
+      <Button variant="outline" className="h-10 w-full min-w-0 justify-start gap-2 px-3 sm:w-auto sm:max-w-72">
+        <span className="shrink-0 text-muted-foreground">{label}:</span>
+        <span className="min-w-0 truncate">{activeLabel}</span>
+        <ChevronDown className="ml-auto h-4 w-4 shrink-0 text-muted-foreground" />
+      </Button>
       </PopoverTrigger>
       <PopoverContent align="start" className="w-64 p-0">
         <div className="border-b p-2">
@@ -442,6 +458,7 @@ function ResellersPage() {
     (FILTERS as readonly string[]).includes(searchParams.status ?? "") ? (searchParams.status as Filter) : "active",
   );
   const [query, setQuery] = useState("");
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(20);
   const [editing, setEditing] = useState<Reseller | null>(null);
@@ -974,7 +991,23 @@ function ResellersPage() {
 
 
       {/* One merged filter set: status + deposit + package + active plan, single selection */}
-      <div className="mb-3 flex flex-wrap items-center gap-2">
+      <div className="mb-4 min-w-0 border-b pb-3">
+        <Button
+          variant="outline"
+          onClick={() => setFiltersOpen((open) => !open)}
+          aria-expanded={filtersOpen}
+          aria-controls="reseller-network-filters"
+          className="grid h-auto min-h-10 w-full grid-cols-[minmax(0,1fr)_auto] gap-3 px-3 py-2 sm:w-auto"
+        >
+          <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-left">
+            <span>Filters</span>
+            <span className="text-xs font-normal text-muted-foreground">
+              {planFilter ? `${planLabel(planFilter)} plan` : packageFilter !== "all" ? PACKAGE_FILTER_LABELS[packageFilter] : depositFilter !== "all" ? DEPOSIT_FILTER_LABELS[depositFilter] : FILTER_LABELS[filter]}
+            </span>
+          </span>
+          <ChevronDown className={`shrink-0 transition-transform ${filtersOpen ? "rotate-180" : ""}`} />
+        </Button>
+        <div id="reseller-network-filters" hidden={!filtersOpen} className="pt-4">
         <FilterButtonRow
           active={
             planFilter
@@ -990,21 +1023,25 @@ function ResellersPage() {
               value: `status:${f}`,
               label: f === "all" ? "All" : FILTER_LABELS[f],
               count: counts[f],
+              group: "Status",
             })),
             ...DEPOSIT_FILTERS.filter((f) => f !== "all").map((f) => ({
               value: `deposit:${f}`,
               label: DEPOSIT_FILTER_LABELS[f],
               count: depositCounts[f],
+              group: "Deposit",
             })),
             ...PACKAGE_FILTERS.filter((f) => f !== "all").map((f) => ({
               value: `pkg:${f}`,
               label: PACKAGE_FILTER_LABELS[f],
               count: packageCounts[f],
+              group: "Subscription",
             })),
             ...PLAN_KEYS.map((p) => ({
               value: `plan:${p}`,
               label: `${planLabel(p)} plan`,
               count: planCounts[p],
+              group: "Plan",
             })),
           ]}
           onSelect={(v) => {
@@ -1016,11 +1053,13 @@ function ResellersPage() {
             setPage(1);
           }}
         />
+        </div>
       </div>
 
 
 
       <DataToolbar
+        stackedMobile
         search={query}
         onSearch={(v) => {
           setQuery(v);
@@ -1056,7 +1095,7 @@ function ResellersPage() {
           />
             )}
             {/* Global joined-date scope — every other filter/count works inside it. */}
-            <div className="shrink-0">
+            <div className="col-span-2 min-w-0 w-full sm:w-auto">
               <DateRangeBar
                 compact
                 label="Joined"
@@ -1076,7 +1115,7 @@ function ResellersPage() {
         }}
         right={
           depositDueTotal > 0 ? (
-            <span className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-destructive/30 bg-destructive/5 px-3 py-1.5 text-xs font-semibold text-destructive">
+            <span className="col-span-2 inline-flex min-w-0 items-center gap-1 rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs font-semibold text-destructive">
               <AlertTriangle className="h-3 w-3" />
               Total due ৳{depositDueTotal.toLocaleString()}
             </span>

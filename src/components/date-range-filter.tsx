@@ -60,7 +60,7 @@ export function DateRangeBar({
 }) {
   if (compact) {
     return (
-      <div className="flex flex-wrap items-center justify-end gap-2">
+      <div className="grid min-w-0 grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:items-center">
         {/* Plain dropdown only — no icon, label, or resolved-range text. */}
         <select
           value={value.preset}
@@ -68,7 +68,8 @@ export function DateRangeBar({
             const p = e.target.value as DatePreset;
             onChange(p === "custom" ? { ...value, preset: "custom" } : { preset: p, from: "", to: "" });
           }}
-          className="h-9 w-44 rounded-md border bg-background px-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+          aria-label={label}
+          className="h-10 w-full min-w-0 rounded-md border bg-background px-2 text-sm outline-none focus:ring-2 focus:ring-ring sm:w-44"
         >
           {DATE_PRESET_OPTIONS.map((o) => (
             <option key={o.value} value={o.value}>
@@ -80,23 +81,25 @@ export function DateRangeBar({
 
 
         {value.preset === "custom" && (
-          <>
+          <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2">
             <input
               type="date"
+              aria-label={`${label} from`}
               value={value.from}
               max={value.to || undefined}
               onChange={(e) => onChange({ ...value, from: e.target.value })}
-              className="h-7 rounded-md border bg-background px-1.5 text-xs outline-none focus:ring-2 focus:ring-ring"
+              className="h-10 w-full min-w-0 rounded-md border bg-background px-1.5 text-xs outline-none focus:ring-2 focus:ring-ring"
             />
             <span className="text-xs text-muted-foreground">→</span>
             <input
               type="date"
+              aria-label={`${label} to`}
               value={value.to}
               min={value.from || undefined}
               onChange={(e) => onChange({ ...value, to: e.target.value })}
-              className="h-7 rounded-md border bg-background px-1.5 text-xs outline-none focus:ring-2 focus:ring-ring"
+              className="h-10 w-full min-w-0 rounded-md border bg-background px-1.5 text-xs outline-none focus:ring-2 focus:ring-ring"
             />
-          </>
+          </div>
         )}
 
         {right}

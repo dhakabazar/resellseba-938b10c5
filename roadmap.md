@@ -1,5 +1,7 @@
 # Roadmap
 
+- [ ] Align reseller-network search/date controls on mobile and collapse status filters by default
+
 - [x] Add independent header menu / body category tabs and apply active body categories across all themes
 
 - [x] Storefront cleanup: remove promo/trust copy, paginate products, link all-products page, simplify category header
