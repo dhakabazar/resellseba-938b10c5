@@ -262,10 +262,10 @@ function CustomDomainStore({ code }: { code: string }) {
 }
 
 function RootResolver() {
-  const host = typeof window !== "undefined" ? window.location.hostname : "";
-  const cachedCode = getCachedDomainStoreCode(host);
-  const [checking, setChecking] = useState(!cachedCode);
-  const [customStoreCode, setCustomStoreCode] = useState<string | null>(cachedCode);
+  // First render must match the server HTML (no window / storage access), otherwise
+  // repeat visits on custom domains hydrate differently (React #418).
+  const [checking, setChecking] = useState(true);
+  const [customStoreCode, setCustomStoreCode] = useState<string | null>(null);
   const [content, setContent] = useState<LandingContent>(FALLBACK);
   const [siteName, setSiteName] = useState("Reseller");
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
@@ -278,6 +278,12 @@ function RootResolver() {
 
   useEffect(() => {
     let alive = true;
+    const host = window.location.hostname;
+    const cachedCode = getCachedDomainStoreCode(host);
+    if (cachedCode) {
+      setCustomStoreCode(cachedCode);
+      setChecking(false);
+    }
     (async () => {
       const isPlatformHost = isPlatformHostname(host);
 
