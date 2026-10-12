@@ -217,7 +217,7 @@ export function ProductPageContent({ slug, code: propCode }: { slug: string; cod
           )}
 
           <div className="mt-5 flex flex-wrap items-center justify-start gap-5">
-            <div className="flex flex-col gap-1"><Price value={price} className="text-3xl md:text-4xl" /><PreviousPrice price={price} previous={listing.compare_at_price} /></div>
+            <div className="flex flex-wrap items-center gap-2"><Price value={price} className="text-3xl md:text-4xl" /><PreviousPrice price={price} previous={listing.compare_at_price} /></div>
             <div className="flex shrink-0 items-center gap-3">
             <div className={cx("inline-flex items-center rounded-[var(--st-radius-sm)] border bg-[var(--st-surface)]", borderc)}>
               <button
