@@ -8,7 +8,6 @@ import { addToCart, bdt } from "@/lib/store-cart";
 import { trackAddToCart, trackViewContent } from "@/lib/tracking";
 import { useStore, type StoreListing } from "../store-context";
 import { PreviousPrice, SoldCount } from "../product-presentation";
-import { useHeaderScroll } from "../use-header-scroll";
 import { ProductImageGallery } from "../ui";
 
 const cn = (...v: (string | false | null | undefined)[]) => v.filter(Boolean).join(" ");

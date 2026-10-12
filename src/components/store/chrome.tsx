@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { ArrowRight, ChevronDown, Menu, MessageCircle, Phone, Search, ShoppingBag, X } from "lucide-react";
 import { menuTarget, type MenuNode } from "@/lib/store-menu";
-import { useHeaderScroll } from "./use-header-scroll";
+import { AnnouncementStrip } from "./announcement-strip";
 import { bdt } from "@/lib/store-cart";
 
 import { useStore, type StoreListing } from "./store-context";
