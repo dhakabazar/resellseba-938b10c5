@@ -229,28 +229,43 @@ function AdminOrdersPage() {
       lastLoad.current = { key: loadKey, at: Date.now() };
     }
     if (!opts?.silent) setLoading(true);
+    const seq = ++loadSeq.current;
     const statuses = (ORDER_TABS.find((t) => t.key === tab)?.statuses ?? []) as string[];
-    // One backend call carries orders, items, shipments, status counts and reseller options.
-    // Status counts respect the active date range so tab numbers follow the date filter.
-    const [{ data: page }, lookups] = await Promise.all([
-      supabase.rpc("admin_orders_page", {
-        _statuses: statuses.length > 0 ? statuses : undefined,
-        _from_ts: fromTs ?? undefined,
-        _to_ts: toTs ?? undefined,
-      }),
-      getAdminLookups(),
-    ]);
-    const pl = (page ?? {}) as any;
-    setOrders((pl.orders ?? []) as OrderRow[]);
-    setOrderItems((pl.items ?? []) as OrderItemLite[]);
-    setShipments((pl.shipments ?? []) as any[]);
+    const args = {
+      _statuses: statuses.length > 0 ? statuses : undefined,
+      _from_ts: fromTs ?? undefined,
+      _to_ts: toTs ?? undefined,
+    };
+    const apply = (page: unknown) => {
+      if (seq !== loadSeq.current) return;
+      const pl = (page ?? {}) as any;
+      setOrders((pl.orders ?? []) as OrderRow[]);
+      setOrderItems((pl.items ?? []) as OrderItemLite[]);
+      setShipments((pl.shipments ?? []) as any[]);
+      const rs = (pl.resellers ?? []) as any[];
+      setResellerOptions(rs.map((r: any) => ({ value: r.id, label: `${r.business_name} (/${r.code})` })));
+      setResellers(rs);
+    };
+    // Phase 1: only the first page's rows → instant view. Phase 2: full list in the
+    // background so filters, search and later pages stay instant afterwards.
+    const full = supabase.rpc("admin_orders_page", args);
+    const lookups = getAdminLookups();
+    if (!opts?.silent) {
+      const { data: first } = await supabase.rpc("admin_orders_page", { ...args, _limit: filtersRef.current.perPage });
+      if (seq === loadSeq.current && !fullDone.current.has(seq)) {
+        apply(first);
+        setLoading(false);
+      }
+    }
     void refreshCounts();
-    const rs = (pl.resellers ?? []) as any[];
-    setResellerOptions(rs.map((r: any) => ({ value: r.id, label: `${r.business_name} (/${r.code})` })));
-    setResellers(rs);
-    setAllProducts((lookups?.products ?? []) as any[]);
-    if (!opts?.silent) setLoading(false);
+    const [{ data: page }, lk] = await Promise.all([full, lookups]);
+    fullDone.current.add(seq);
+    apply(page);
+    if (seq === loadSeq.current) setAllProducts((lk?.products ?? []) as any[]);
+    if (!opts?.silent && seq === loadSeq.current) setLoading(false);
   }
+  const loadSeq = useRef(0);
+  const fullDone = useRef(new Set<number>());
 
 
   // Refresh only the touched order rows — keeps scroll position, page and filters intact.
