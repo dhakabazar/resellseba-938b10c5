@@ -15,6 +15,27 @@
       "when": 1791433041437,
       "tag": "0001_capi_public_rpcs",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791807350258,
+      "tag": "0002_manual_payment_owner_tracking",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791807396010,
+      "tag": "0003_store_bootstrap_payment_rows",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791807532564,
+      "tag": "0004_order_pages_payment_fields",
+      "breakpoints": true
     }
   ]
 }

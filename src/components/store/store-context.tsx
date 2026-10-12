@@ -86,7 +86,7 @@ export type StoreData = {
   /** reseller-built header menu (empty = fall back to categories) */
   menu: MenuNode[];
   /** manual payment methods usable at checkout (reseller's own wins over platform) */
-  paymentMethods: { method: string; label: string | null; instructions: string | null; reseller_id: string | null }[];
+  paymentMethods: { id?: string; method: string; label: string | null; instructions: string | null; reseller_id: string | null; account?: string | null }[];
   cart: CartLine[];
 
   cartCount: number;
@@ -120,16 +120,17 @@ export function buildStorePath(code: string, subpath: string): string {
 
 
 /** reseller-specific method overrides the platform one with the same key */
+/** Every active account is its own option (two bKash numbers = two choices). */
 function dedupePayment(
-  rows: { method: string; label: string | null; instructions: string | null; reseller_id: string | null }[],
+  rows: { id?: string; method: string; label: string | null; instructions: string | null; reseller_id: string | null; account?: string | null }[],
 ) {
-  const byMethod = new Map<string, (typeof rows)[number]>();
-  for (const r of rows) {
-    if (!r.method) continue;
-    const existing = byMethod.get(r.method);
-    if (!existing || (r.reseller_id && !existing.reseller_id)) byMethod.set(r.method, r);
-  }
-  return Array.from(byMethod.values());
+  const seen = new Set<string>();
+  return rows.filter((r) => {
+    const k = r.id ?? `${r.method}:${r.label}:${r.reseller_id}`;
+    if (!r.method || seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
 }
 
 const Ctx = createContext<StoreData | null>(null);

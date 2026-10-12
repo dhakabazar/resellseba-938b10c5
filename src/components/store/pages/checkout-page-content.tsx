@@ -18,7 +18,7 @@ import { borderc, cx, EmptyState, GhostButton, Heading, muted, PrimaryButton, Pr
 import { Button } from "@/components/ui/button";
 import { PoripatiGrid } from "@/components/store/themes/poripati";
 
-type PayMethod = { method: string; label: string; instructions: string | null };
+type PayMethod = { id?: string; method: string; label: string; instructions: string | null; account?: string | null; owner?: "admin" | "reseller" };
 type GatewayOption = { value: string; method: string; label: string; instructions: null; provider: string };
 
 function useAreas() {
@@ -45,9 +45,12 @@ export function CheckoutPageContent({
   const [recVisible, setRecVisible] = useState(16);
   /** Manual methods arrive with the storefront bootstrap payload — no extra call. */
   const methods: PayMethod[] = store.paymentMethods.map((m) => ({
+    id: m.id,
     method: m.method,
     label: m.label ?? m.method,
     instructions: m.instructions,
+    account: m.account ?? null,
+    owner: m.reseller_id ? "reseller" : "admin",
   }));
   const [payMethod, setPayMethod] = useState<string>("cod");
   const [manualSender, setManualSender] = useState<string>("");
@@ -202,7 +205,9 @@ export function CheckoutPageContent({
     provider: g.provider,
   }));
   const codMeta = methods.find((m) => m.method === "cod");
-  const activeManualMethod = extraMethods.find((m) => m.method === payMethod);
+  const manualValue = (m: PayMethod) => `manual:${m.id ?? m.method}`;
+  const activeManualMethod = extraMethods.find((m) => manualValue(m) === payMethod);
+  const sendNumber = activeManualMethod?.account || activeManualMethod?.instructions?.match(/01\d{9}/)?.[0] || "";
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -243,9 +248,12 @@ export function CheckoutPageContent({
       _city: null as never,
       _area: form.area,
       _landmark: null as never,
-      _payment_method: (gateway ? gateway.method : payMethod) as never,
+      _payment_method: (gateway ? gateway.method : activeManualMethod ? activeManualMethod.method : payMethod) as never,
       _notes: finalNotes || (null as never),
       _items: lines.map((x) => ({ listing_id: x.listing.id, quantity: x.line.qty })) as never,
+      _payment_config_id: (activeManualMethod?.id ?? null) as never,
+      _txn_id: (activeManualMethod ? manualTrxId.trim() : null) as never,
+      _sender: (activeManualMethod ? manualSender.trim() || null : null) as never,
     });
 
     if (error) {
@@ -468,7 +476,7 @@ export function CheckoutPageContent({
                   label: "ক্যাশ অন ডেলিভারি",
                   instructions: codMeta?.instructions ?? "পণ্য হাতে পেয়ে মূল্য পরিশোধ করুন।",
                 },
-                ...extraMethods.map((m) => ({ ...m, value: m.method })),
+                ...extraMethods.map((m) => ({ ...m, value: manualValue(m) })),
                 ...gatewayOptions,
               ].map((m) => {
                 const selected = payMethod === m.value;
@@ -531,15 +539,16 @@ export function CheckoutPageContent({
                     <div>
                       <div className="text-[11px] opacity-85">সেন্ড মানি নম্বর (Send Money Number):</div>
                       <div className="text-lg sm:text-xl font-mono font-black tracking-wider text-white select-all">
-                        01710778457
+                        {sendNumber || "—"}
                       </div>
                     </div>
                     <button
                       type="button"
                       onClick={() => {
-                        navigator.clipboard.writeText("01710778457");
+                        if (!sendNumber) return;
+                        navigator.clipboard.writeText(sendNumber);
                         setCopiedNumber(true);
-                        toast.success("নম্বর কপি করা হয়েছে: 01710778457");
+                        toast.success(`নম্বর কপি করা হয়েছে: ${sendNumber}`);
                         setTimeout(() => setCopiedNumber(false), 2000);
                       }}
                       className="inline-flex items-center gap-1.5 rounded-md bg-white px-3.5 py-2 text-xs font-bold text-[var(--st-primary)] shadow-sm transition-all hover:bg-white/95 active:scale-95"
@@ -549,12 +558,12 @@ export function CheckoutPageContent({
                     </button>
                   </div>
                   <p className="mt-2 text-xs font-medium leading-relaxed opacity-95">
-                    📢 <strong>01710778457</strong> নম্বরে Send Money করে নিচে Transaction ID দিয়ে সাবমিট করুন।
+                    📢 <strong>{sendNumber}</strong> নম্বরে Send Money করে নিচে Transaction ID দিয়ে সাবমিট করুন।
                   </p>
                 </div>
 
                 {/* Additional instructions if present */}
-                {activeManualMethod.instructions && activeManualMethod.instructions !== "01710778457" && (
+                {activeManualMethod.instructions && activeManualMethod.instructions !== sendNumber && (
                   <div className={cx("border-b bg-[var(--st-bg-alt)]/60 p-3 text-xs leading-relaxed", borderc, muted)}>
                     {activeManualMethod.instructions}
                   </div>
