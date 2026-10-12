@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { readBodyCategoryItems, selectBodyCategories } from "./store-body-categories";
+import { readBodyCategoryItems, selectBodyCategories } from "../src/lib/store-body-categories";
 
 const categories = [{ id: "a" }, { id: "b" }, { id: "c" }];
 describe("body category selection", () => {
