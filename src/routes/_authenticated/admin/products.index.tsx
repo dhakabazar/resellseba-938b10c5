@@ -74,8 +74,19 @@ function ProductsPage() {
 
   async function load() {
     setLoading(true);
-    // One backend call carries products, brands and categories.
-    const { data } = await supabase.rpc("admin_catalog_page");
+    // Phase 1: first page only → instant view. Phase 2: full list in the background
+    // so search, filters and later pages are instant.
+    let fullDone = false;
+    const full = supabase.rpc("admin_catalog_page", {});
+    supabase.rpc("admin_catalog_page", { _limit: perPage > 0 ? perPage : 20 }).then(({ data }) => {
+      if (fullDone || !data) return;
+      const pl = data as any;
+      setItems((pl.products ?? []) as Row[]);
+      setBrands((pl.brands ?? []) as Opt[]);
+      setLoading(false);
+    });
+    const { data } = await full;
+    fullDone = true;
     const pl = (data ?? {}) as any;
     setItems((pl.products ?? []) as Row[]);
     setBrands((pl.brands ?? []) as Opt[]);

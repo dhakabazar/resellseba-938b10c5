@@ -78,15 +78,24 @@ function CatalogPage() {
     if (!user || didLoad.current) return;
     didLoad.current = true;
     (async () => {
-      // ONE call: products + brands + categories + my listed product ids.
-      const { data } = await supabase.rpc("reseller_catalog_page");
-      const payload = (data ?? {}) as any;
-      if (payload.reseller_id) setResellerId(payload.reseller_id as string);
-      setListed(new Set(((payload.listed_product_ids ?? []) as string[])));
-      setItems((payload.products ?? []) as P[]);
-      setBrands((payload.brands ?? []) as Opt[]);
-      setCategories((payload.categories ?? []) as Opt[]);
-      setLoading(false);
+      // Phase 1: first page only → instant view; phase 2: full catalog in the background.
+      let fullDone = false;
+      const apply = (data: unknown, partial: boolean) => {
+        const payload = (data ?? {}) as any;
+        if (payload.reseller_id) setResellerId(payload.reseller_id as string);
+        setListed(new Set(((payload.listed_product_ids ?? []) as string[])));
+        setItems((payload.products ?? []) as P[]);
+        setBrands((payload.brands ?? []) as Opt[]);
+        if (!partial) setCategories((payload.categories ?? []) as Opt[]);
+        setLoading(false);
+      };
+      const full = supabase.rpc("reseller_catalog_page", {});
+      supabase.rpc("reseller_catalog_page", { _limit: perPage > 0 ? perPage : 20 }).then(({ data }) => {
+        if (!fullDone && data) apply(data, true);
+      });
+      const { data } = await full;
+      fullDone = true;
+      apply(data, false);
     })();
   }, [user]);
 
