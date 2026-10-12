@@ -26,6 +26,7 @@ export function DataToolbar({
   right,
   middle,
   inline = false,
+  stackedMobile = false,
 }: {
   search: string;
   onSearch: (v: string) => void;
@@ -38,6 +39,7 @@ export function DataToolbar({
   /** Rendered between the search box and the per-page selector. */
   middle?: ReactNode;
   inline?: boolean;
+  stackedMobile?: boolean;
 }) {
   const searchInput = (
     <input
@@ -103,9 +105,9 @@ export function DataToolbar({
 
   return (
     <div className="mb-4 space-y-2">
-      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
+      <div className={stackedMobile ? "grid min-w-0 grid-cols-1 items-center gap-2 xl:grid-cols-[minmax(0,1fr)_auto]" : "grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2"}>
         {searchInput}
-        <div className="flex shrink-0 items-center gap-2">
+        <div className={stackedMobile ? "grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 sm:flex sm:flex-wrap xl:justify-end [&>select]:h-10" : "flex shrink-0 items-center gap-2"}>
           {middle}
           {perPageSelect}
           {right}
