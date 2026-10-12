@@ -283,7 +283,6 @@ function RootResolver() {
     if (cachedCode) {
       setCustomStoreCode(cachedCode);
       setChecking(false);
-      return;
     }
     (async () => {
       const isPlatformHost = isPlatformHostname(host);
