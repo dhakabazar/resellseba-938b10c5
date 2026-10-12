@@ -235,19 +235,37 @@ function OrdersPage() {
     }
     if (!user) return;
     if (!opts?.silent) setLoading(true);
-    // Single backend call: orders, items, shipments, courier events, listings and catalog.
-    const { data } = await supabase.rpc("reseller_orders_page");
-    const pl = (data ?? {}) as any;
-    if (!pl.reseller_id) return setLoading(false);
-    setResellerId(pl.reseller_id as string);
-    setOrders((pl.orders ?? []) as OrderRow[]);
-    setListings((pl.listings ?? []) as Listing[]);
-    setAllProducts((pl.products ?? []) as any[]);
-    setOrderItems((pl.items ?? []) as OrderItemLite[]);
-    setShipments((pl.shipments ?? []) as any[]);
-    setEvents((pl.events ?? []) as any[]);
-    if (!opts?.silent) setLoading(false);
+    const seq = ++loadSeq.current;
+    let fullDone = false;
+    const apply = (data: unknown, partial: boolean) => {
+      if (seq !== loadSeq.current) return false;
+      const pl = (data ?? {}) as any;
+      if (!pl.reseller_id) return false;
+      setResellerId(pl.reseller_id as string);
+      setOrders((pl.orders ?? []) as OrderRow[]);
+      if (!partial) {
+        setListings((pl.listings ?? []) as Listing[]);
+        setAllProducts((pl.products ?? []) as any[]);
+      }
+      setOrderItems((pl.items ?? []) as OrderItemLite[]);
+      setShipments((pl.shipments ?? []) as any[]);
+      setEvents((pl.events ?? []) as any[]);
+      return true;
+    };
+    // Phase 1: first page only → instant view. Phase 2: everything in the background
+    // so filters, search and other pages are instant afterwards.
+    const full = supabase.rpc("reseller_orders_page", {});
+    if (!opts?.silent) {
+      supabase.rpc("reseller_orders_page", { _limit: filters.perPage }).then(({ data }) => {
+        if (!fullDone && apply(data, true)) setLoading(false);
+      });
+    }
+    const { data } = await full;
+    fullDone = true;
+    apply(data, false);
+    if (!opts?.silent && seq === loadSeq.current) setLoading(false);
   }
+  const loadSeq = useRef(0);
 
 
   // Refresh only the touched rows so the current page/filters stay put.
