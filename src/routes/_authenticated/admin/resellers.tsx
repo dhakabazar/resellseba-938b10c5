@@ -1150,8 +1150,8 @@ function ResellersPage() {
             const phone = (r.contact_phone ?? "").trim();
             const waPhone = phone.replace(/[^0-9]/g, "").replace(/^0/, "880");
             return (
-              <div key={r.id} className="surface-card p-4 shadow-sm transition hover:shadow-md">
-                <div className="grid grid-cols-[auto_auto_minmax(0,1fr)_auto] items-start gap-3">
+              <div key={r.id} className="surface-card p-3 shadow-sm transition hover:shadow-md sm:p-4">
+                <div className="grid grid-cols-[auto_auto_minmax(0,1fr)_auto] items-center gap-x-2 gap-y-2 sm:items-start sm:gap-3">
                   <input
                     type="checkbox"
                     checked={Boolean(selected[r.id])}
@@ -1159,14 +1159,14 @@ function ResellersPage() {
                       setSelected((prev) => ({ ...prev, [r.id]: e.target.checked }))
                     }
                     aria-label={`Select ${r.business_name}`}
-                    className="mt-3 h-4 w-4 accent-[hsl(var(--primary))]"
+                    className="h-3.5 w-3.5 shrink-0 accent-primary sm:mt-3 sm:h-4 sm:w-4"
                   />
-                  <ResellerAvatar url={r.avatar_url} name={r.business_name} size={40} />
+                  <ResellerAvatar url={r.avatar_url} name={r.business_name} size={40} className="max-sm:!h-9 max-sm:!w-9" />
 
                   <div className="contents sm:block sm:min-w-0">
                     <div className="contents sm:flex sm:flex-wrap sm:items-center sm:gap-1.5">
-                      <span className="col-start-3 row-start-1 min-w-0 self-center break-words font-medium sm:truncate">{r.business_name}</span>
-                      <div className="col-span-4 grid min-w-0 grid-cols-2 items-start gap-2 border-t pt-3 sm:contents [&>span]:min-w-0 [&>span]:max-sm:justify-self-start [&>span]:max-sm:whitespace-normal [&_svg]:shrink-0">
+                      <span className="col-start-3 row-start-1 min-w-0 self-center break-words text-sm font-semibold sm:truncate sm:text-base sm:font-medium">{r.business_name}</span>
+                      <div className="col-span-4 flex min-w-0 flex-wrap items-center gap-1.5 sm:contents [&>span]:min-w-0 [&>span]:max-sm:whitespace-normal [&_svg]:shrink-0">
                       <StatusBadge status={r.status} />
                       <VerifyBadges {...vf} className="max-sm:contents" />
                       {r.deposit_required && Number(r.deposit_required_amount) > 0 && (
@@ -1222,8 +1222,8 @@ function ResellersPage() {
                       )}
                       </div>
                     </div>
-                    <div className="col-span-4 grid min-w-0 grid-cols-2 items-start gap-2 sm:mt-1.5 sm:flex sm:flex-wrap sm:items-center sm:gap-1.5 [&>span]:min-w-0 [&>button]:min-w-0 [&_svg]:shrink-0">
-                      <span className="inline-flex min-w-0 flex-wrap items-center gap-1 rounded-md border border-primary/30 bg-primary/5 px-2 py-0.5 sm:flex-nowrap">
+                    <div className="col-span-4 flex min-w-0 flex-wrap items-center gap-1.5 sm:mt-1.5 [&>span]:min-w-0 [&>span]:max-w-full [&>button]:min-w-0 [&_svg]:shrink-0">
+                      <span className="inline-flex min-w-0 items-center gap-1 rounded-full border border-primary/30 bg-primary/5 px-2 py-0.5 sm:rounded-md">
                         <IdCard className="h-3 w-3 text-primary" />
                         <span className="text-[10px] uppercase tracking-wide text-muted-foreground">ID</span>
                         <span className="min-w-0 break-all font-mono text-[11px] font-bold tracking-wider text-primary">{r.code}</span>
@@ -1240,8 +1240,8 @@ function ResellersPage() {
                         </button>
                       </span>
                       {phone ? (
-                        <span className="inline-flex flex-wrap items-center gap-1.5 rounded-md border px-2 py-0.5 sm:flex-nowrap">
-                          <Phone className="h-3 w-3 text-muted-foreground" />
+                        <span className="inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 sm:rounded-md">
+                          <a href={`tel:${phone}`} title="Call" className="text-muted-foreground transition hover:text-primary"><Phone className="h-3 w-3" /></a>
                           <span className="font-mono text-[11px] font-medium">{phone}</span>
                           <button
                             type="button"
@@ -1254,7 +1254,7 @@ function ResellersPage() {
                           >
                             <Copy className="h-3 w-3" />
                           </button>
-                          <a href={`tel:${phone}`} title="Call" className="text-muted-foreground transition hover:text-primary">
+                          <a href={`tel:${phone}`} title="Call" className="hidden text-muted-foreground transition hover:text-primary sm:inline-flex">
                             <PhoneCall className="h-3 w-3" />
                           </a>
                           <a
@@ -1262,7 +1262,7 @@ function ResellersPage() {
                             target="_blank"
                             rel="noreferrer"
                             title="WhatsApp"
-                            className="text-muted-foreground transition hover:text-success"
+                            className="hidden text-muted-foreground transition hover:text-success sm:inline-flex"
                           >
                             <MessageCircle className="h-3 w-3" />
                           </a>
