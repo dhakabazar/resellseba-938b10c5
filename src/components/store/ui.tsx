@@ -202,10 +202,7 @@ export function ProductCard({ listing }: { listing: StoreListing }) {
           <h3 className="truncate text-[13px] leading-snug text-[var(--st-fg)]" title={title(listing)}>
             {title(listing)}
           </h3>
-          <div className="mt-1.5 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-1">
-            <Price value={price} className="min-w-0 break-all text-base font-extrabold" /><SoldCountBadge count={sold} />
-          </div>
-          <div className="mt-1"><PreviousPrice price={price} previous={listing.compare_at_price} /></div>
+          <div className="mt-1.5 flex min-w-0 flex-nowrap items-center gap-1 overflow-hidden"><Price value={price} className="shrink-0 whitespace-nowrap text-sm sm:text-base font-extrabold" /><PreviousPrice compact price={price} previous={listing.compare_at_price} /><span className="ml-auto shrink-0"><SoldCountBadge count={sold} /></span></div>
           <button
             type="button"
             onClick={handleDirectOrder}
@@ -238,10 +235,7 @@ export function ProductCard({ listing }: { listing: StoreListing }) {
         >
           {title(listing)}
         </h3>
-        <div className="mt-1.5 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-1">
-          <Price value={price} className="min-w-0 break-all text-sm" /><SoldCountBadge count={sold} />
-        </div>
-        <div className="mt-1"><PreviousPrice price={price} previous={listing.compare_at_price} /></div>
+        <div className="mt-1.5 flex min-w-0 flex-nowrap items-center gap-1 overflow-hidden"><Price value={price} className="shrink-0 whitespace-nowrap text-sm" /><PreviousPrice compact price={price} previous={listing.compare_at_price} /><span className="ml-auto shrink-0"><SoldCountBadge count={sold} /></span></div>
       </Link>
     );
 
@@ -263,10 +257,7 @@ export function ProductCard({ listing }: { listing: StoreListing }) {
           <h3 className="truncate text-[13px] font-semibold leading-snug text-[var(--st-fg)]" title={title(listing)}>
             {title(listing)}
           </h3>
-          <div className="mt-1.5 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-1">
-            <Price value={price} className="min-w-0 break-all text-[16px] font-extrabold" /><SoldCountBadge count={sold} />
-          </div>
-          <div className="mt-1"><PreviousPrice price={price} previous={listing.compare_at_price} /></div>
+          <div className="mt-1.5 flex min-w-0 flex-nowrap items-center gap-1 overflow-hidden"><Price value={price} className="shrink-0 whitespace-nowrap text-sm sm:text-base font-extrabold" /><PreviousPrice compact price={price} previous={listing.compare_at_price} /><span className="ml-auto shrink-0"><SoldCountBadge count={sold} /></span></div>
         </div>
         <button
           type="button"
@@ -293,10 +284,7 @@ export function ProductCard({ listing }: { listing: StoreListing }) {
         <h3 className="truncate text-[13px] sm:text-sm font-semibold leading-snug text-[var(--st-fg)]" title={title(listing)}>
           {title(listing)}
         </h3>
-        <div className="mt-1.5 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-1">
-          <Price value={price} className="min-w-0 break-all text-base font-extrabold" /><SoldCountBadge count={sold} />
-        </div>
-        <div className="mt-1"><PreviousPrice price={price} previous={listing.compare_at_price} /></div>
+        <div className="mt-1.5 flex min-w-0 flex-nowrap items-center gap-1 overflow-hidden"><Price value={price} className="shrink-0 whitespace-nowrap text-sm sm:text-base font-extrabold" /><PreviousPrice compact price={price} previous={listing.compare_at_price} /><span className="ml-auto shrink-0"><SoldCountBadge count={sold} /></span></div>
         <button
           type="button"
           onClick={handleDirectOrder}
