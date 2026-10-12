@@ -36,6 +36,13 @@
       "when": 1791807532564,
       "tag": "0004_order_pages_payment_fields",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791810396391,
+      "tag": "0005_store_body_category_settings",
+      "breakpoints": true
     }
   ]
 }
