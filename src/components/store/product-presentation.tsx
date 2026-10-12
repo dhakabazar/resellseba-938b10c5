@@ -22,8 +22,12 @@ export function useSoldCount(id: string) {
   return content.flag("sold_show") ? count : null;
 }
 
+export function SoldCountBadge({ count }: { count: number | null }) {
+  if (count === null) return null;
+  return <span data-sold-count className="inline-flex shrink-0 items-center rounded-md border border-[var(--st-primary)]/20 bg-[var(--st-primary)]/10 px-2 py-1 text-[10px] font-bold leading-none text-[var(--st-primary)] tabular-nums whitespace-nowrap">{count} sold</span>;
+}
+
 export function SoldCount({ id }: { id: string }) {
   const count = useSoldCount(id);
-  if (count === null) return null;
-  return <div className="mt-2 text-xs font-medium text-[var(--st-muted)]">{count} sold</div>;
+  return <SoldCountBadge count={count} />;
 }

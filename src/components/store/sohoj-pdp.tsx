@@ -101,9 +101,9 @@ export function SohojProductPage({
         <div className={cx("min-w-0 rounded-[var(--st-radius)] border bg-[var(--st-surface)] p-4", borderc)}>
           <h1 className="text-lg font-extrabold leading-snug text-[var(--st-fg)] md:text-2xl">{title}</h1>
 
-          <SoldCount id={listing.id} />
           <div className="mt-3 flex flex-wrap items-center justify-start gap-4">
             <div className="flex flex-col gap-1"><Price value={price} className="text-2xl md:text-3xl" /><PreviousPrice price={price} previous={listing.compare_at_price} /></div>
+            <div className="flex shrink-0 items-center gap-3">
             <div className={cx("inline-flex items-center rounded-[var(--st-radius-sm)] border bg-[var(--st-surface)]", borderc)}>
               <button onClick={() => setQty((q) => Math.max(1, q - 1))} aria-label="কমান" className="p-2 sm:p-2.5 hover:bg-[var(--st-bg-alt)] transition-colors">
                 <Minus className="h-4 w-4" />
@@ -112,6 +112,8 @@ export function SohojProductPage({
               <button onClick={() => setQty((q) => q + 1)} aria-label="বাড়ান" className="p-2 sm:p-2.5 hover:bg-[var(--st-bg-alt)] transition-colors">
                 <Plus className="h-4 w-4" />
               </button>
+            </div>
+            <SoldCount id={listing.id} />
             </div>
           </div>
 
