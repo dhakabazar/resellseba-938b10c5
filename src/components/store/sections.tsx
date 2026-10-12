@@ -65,7 +65,7 @@ export function Hero() {
   if (theme.layout.hero === "banner" || theme.layout.hero === "sohoj" || theme.id === "bazaar") {
     if (!media) return null;
     return (
-      <section className="mx-auto max-w-6xl px-2 sm:px-4 py-3.5 sm:px-4 sm:py-5">
+      <section className="mx-auto max-w-6xl px-2 sm:px-4 py-3.5 sm:py-5">
         <div className={cx("overflow-hidden rounded-[var(--st-radius)] border bg-[var(--st-surface)]", borderc)}>
           {firstSlug ? (
             <Link to={store.url(`/p/${firstSlug}`)} className="block">
@@ -355,7 +355,7 @@ export function CategoryStrip() {
 
   /* Aurora — compact circular category portraits */
   return (
-    <section className="mx-auto max-w-6xl px-2 sm:px-4 py-4 sm:px-4 sm:py-8">
+    <section className="mx-auto max-w-6xl px-2 sm:px-4 py-4 sm:py-8">
       <SectionHead title={title} />
       <div className="grid grid-cols-4 gap-x-2.5 gap-y-3 sm:grid-cols-6 sm:gap-x-4 sm:gap-y-4 lg:grid-cols-8">
         {categories.map((c) => (
