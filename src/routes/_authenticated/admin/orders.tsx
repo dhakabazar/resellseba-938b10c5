@@ -1,3 +1,4 @@
+import { OrderPaymentInfo } from "@/components/order-payment-info";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Pagination, usePaginated, type FilterOption } from "@/components/data-list";
@@ -1202,9 +1203,7 @@ function AdminOrdersPage() {
                               {o.area?.replace("_", " ")}
                               {o.city ? `, ${o.city}` : ""}
                             </div>
-                            <div className="mt-2 inline-block rounded bg-primary/10 px-2 py-1 text-xs font-medium uppercase text-primary">
-                              Payment: {o.payment_method}
-                            </div>
+                            <div className="mt-2"><OrderPaymentInfo order={o as never} canConfirm={true} onChanged={() => void load({ silent: true })} /></div>
                             {(() => {
                               const isBooked = shipments.some(
                                 (s) => s.order_id === o.id && (s.consignment_id || s.tracking_id),
@@ -1566,9 +1565,7 @@ function OrderDrawer({
             <div className="space-y-3 p-4">
               <div className="flex flex-wrap items-center gap-2">
                 <AdvanceChip order={order} />
-                <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold uppercase text-muted-foreground">
-                  {order.payment_method} · {order.payment_status}
-                </span>
+                <OrderPaymentInfo order={order as never} canConfirm={true} />
               </div>
               <OrderMoneyPanel order={order} items={items} role="admin" />
             </div>

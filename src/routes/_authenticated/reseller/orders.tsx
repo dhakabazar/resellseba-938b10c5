@@ -1,3 +1,4 @@
+import { OrderPaymentInfo } from "@/components/order-payment-info";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -137,7 +138,7 @@ export const Route = createFileRoute("/_authenticated/reseller/orders")({
 });
 
 const ORDER_COLUMNS =
-  "id,order_number,customer_name,customer_phone,address_line,city,area,subtotal,shipping_cost,discount,total,sa_cost_total,reseller_profit,received_amount,packaging_total,delivery_cost,advance_amount,advance_by,payment_method,status,payment_status,forwarded_to_admin,notes,reseller_note,created_at,updated_at";
+  "id,order_number,customer_name,customer_phone,address_line,city,area,subtotal,shipping_cost,discount,total,sa_cost_total,reseller_profit,received_amount,packaging_total,delivery_cost,advance_amount,advance_by,payment_method,payment_provider,transaction_id,payment_sender,payment_config_id,paid_amount,status,payment_status,forwarded_to_admin,notes,reseller_note,created_at,updated_at";
 
 type OrderItemLite = {
   order_id: string;
@@ -1583,9 +1584,7 @@ function OrderDrawer({
             <div className="space-y-3 p-4">
               <div className="flex flex-wrap items-center gap-2">
                 <AdvanceChip order={order} />
-                <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold uppercase text-muted-foreground">
-                  {order.payment_method} · {order.payment_status}
-                </span>
+                <OrderPaymentInfo order={order as never} canConfirm={order.advance_by === "reseller"} />
               </div>
               <OrderMoneyPanel order={order} items={items} role="reseller" />
             </div>
