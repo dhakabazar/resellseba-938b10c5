@@ -1238,7 +1238,7 @@ function AdminOrdersPage() {
                           </div>
                         )}
 
-                        <OrderMoneyPanel order={o} role="admin" />
+                        <OrderMoneyPanel order={o} items={(itemsByOrder.get(o.id) ?? []) as any} role="admin" />
                       </div>
                     </div>
                   </div>
@@ -1570,7 +1570,7 @@ function OrderDrawer({
                   {order.payment_method} · {order.payment_status}
                 </span>
               </div>
-              <OrderMoneyPanel order={order} role="admin" />
+              <OrderMoneyPanel order={order} items={items} role="admin" />
             </div>
           </div>
 

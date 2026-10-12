@@ -1184,7 +1184,7 @@ function OrdersPage() {
                           </div>
                         )}
 
-                        <OrderMoneyPanel order={o} role="reseller" />
+                        <OrderMoneyPanel order={o} items={(itemsByOrder.get(o.id) ?? []) as any} role="reseller" />
                       </div>
                     </div>
                   </div>
@@ -1587,7 +1587,7 @@ function OrderDrawer({
                   {order.payment_method} · {order.payment_status}
                 </span>
               </div>
-              <OrderMoneyPanel order={order} role="reseller" />
+              <OrderMoneyPanel order={order} items={items} role="reseller" />
             </div>
           </div>
 
