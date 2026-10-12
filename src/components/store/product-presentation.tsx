@@ -27,6 +27,13 @@ export function SoldCountBadge({ count }: { count: number | null }) {
   return <span data-sold-count className="inline-flex shrink-0 items-center rounded-md border border-[var(--st-sold,#d97706)]/25 bg-[var(--st-sold,#d97706)]/10 px-1.5 py-0.5 text-[10px] font-bold leading-none text-[var(--st-sold,#d97706)] tabular-nums whitespace-nowrap">{count} sold</span>;
 }
 
+/** Small sold badge pinned on a product image corner (image wrapper must be `relative`). */
+export function SoldCountOverlay({ count, corner }: { count: number | null; corner: "top-left" | "bottom-right" }) {
+  if (count === null) return null;
+  const pos = corner === "top-left" ? "left-1.5 top-1.5" : "right-1.5 bottom-1.5";
+  return <span data-sold-count className={`pointer-events-none absolute ${pos} z-[1] inline-flex items-center rounded bg-[var(--st-sold,#d97706)] px-1.5 py-[3px] text-[9px] sm:text-[10px] font-bold leading-none text-white tabular-nums whitespace-nowrap shadow-sm`}>{count} sold</span>;
+}
+
 export function SoldCount({ id }: { id: string }) {
   const count = useSoldCount(id);
   return <SoldCountBadge count={count} />;
