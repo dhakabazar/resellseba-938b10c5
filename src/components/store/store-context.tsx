@@ -162,9 +162,25 @@ export function useStoreLoader(code: string, themeOverride?: string | null, pale
     (async () => {
       setState("loading");
       // ONE call: store settings + listings (with images) + categories + menu
-      // + the platform delivery rule.
+      // + the platform delivery rule. Served from cache instantly, then
+      // revalidated in the background (stale-while-revalidate).
       const boot = await getStoreBootstrap(code);
       if (!alive) return;
+      let lastJson = JSON.stringify(boot ?? null);
+      const firstOk = !!boot?.store;
+      apply(boot, true);
+      getStoreBootstrap(code, true)
+        .then((fresh) => {
+          if (!alive || !fresh) return;
+          const j = JSON.stringify(fresh);
+          if (j === lastJson) return;
+          lastJson = j;
+          apply(fresh, !firstOk);
+        })
+        .catch(() => {});
+    })();
+
+    function apply(boot: Awaited<ReturnType<typeof getStoreBootstrap>>, first: boolean) {
       const r = boot?.store as (StoreSettings & { reseller_id: string; business_name: string }) | null;
       if (!r) return setState(boot?.store_closed ? "closed" : "missing");
 
