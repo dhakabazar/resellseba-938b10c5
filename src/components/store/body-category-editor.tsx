@@ -25,10 +25,10 @@ export function BodyCategoryEditor({ categories, items, onChange }: {
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)]">
       <section className="min-w-0 space-y-4">
-        <h2 className="text-sm font-semibold">ক্যাটাগরি নির্বাচন</h2>
+        <h2 className="text-sm font-semibold">Select categories</h2>
         <div className="relative">
           <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-          <input aria-label="ক্যাটাগরি খুঁজুন" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="ক্যাটাগরি খুঁজুন…" className="h-10 w-full rounded-md border bg-background pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-ring" />
+          <input aria-label="Search categories" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search categories…" className="h-10 w-full rounded-md border bg-background pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-ring" />
         </div>
         <div className="max-h-[440px] space-y-2 overflow-y-auto">
           {available.map((category) => (
@@ -38,31 +38,31 @@ export function BodyCategoryEditor({ categories, items, onChange }: {
               <span className="min-w-0 break-words text-sm">{category.name}</span>
             </label>
           ))}
-          {!available.length && <p className="py-8 text-center text-sm text-muted-foreground">আর কোনো ক্যাটাগরি নেই</p>}
+          {!available.length && <p className="py-8 text-center text-sm text-muted-foreground">No more categories</p>}
         </div>
         <Button className="w-full" disabled={!picked.some((id) => available.some((c) => c.id === id))} onClick={() => {
           onChange([...items, ...available.filter((c) => picked.includes(c.id)).map((c) => ({ id: c.id, is_active: true }))]);
           setPicked([]);
-        }}><Plus /> যোগ করুন</Button>
+        }}><Plus /> Add</Button>
       </section>
       <section className="min-w-0 space-y-4 lg:border-l lg:pl-6">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-sm font-semibold">বডি ক্যাটাগরি</h2>
-          <span className="text-xs text-muted-foreground">{items.filter((item) => item.is_active && byId.has(item.id)).length} সক্রিয় / {items.length} নির্বাচিত</span>
+          <h2 className="text-sm font-semibold">Body categories</h2>
+          <span className="text-xs text-muted-foreground">{items.filter((item) => item.is_active && byId.has(item.id)).length} active / {items.length} selected</span>
         </div>
-        {!items.length && <div className="rounded-md border border-dashed py-16 text-center text-sm text-muted-foreground">কোনো ক্যাটাগরি নির্বাচিত নেই</div>}
+        {!items.length && <div className="rounded-md border border-dashed py-16 text-center text-sm text-muted-foreground">No categories selected</div>}
         <div className="space-y-2">
           {items.map((item, index) => {
             const category = byId.get(item.id);
             return <div key={item.id} className="flex flex-wrap items-center gap-3 rounded-md border bg-background p-3">
               <span className="w-5 text-xs text-muted-foreground">{index + 1}</span>
               <CategoryImage category={category} />
-              <div className="min-w-0 flex-1 break-words text-sm font-medium">{category?.name ?? "অনুপলব্ধ ক্যাটাগরি"}</div>
+              <div className="min-w-0 flex-1 break-words text-sm font-medium">{category?.name ?? "Unavailable category"}</div>
               <div className="ml-auto flex items-center gap-1">
-                <Switch aria-label={`${category?.name ?? item.id} সক্রিয়`} checked={item.is_active} onCheckedChange={(is_active) => onChange(items.map((row) => row.id === item.id ? { ...row, is_active } : row))} />
-                <Button size="icon" variant="ghost" title="উপরে" aria-label={`${category?.name ?? item.id} উপরে`} disabled={index === 0} onClick={() => move(index, -1)}><ArrowUp /></Button>
-                <Button size="icon" variant="ghost" title="নিচে" aria-label={`${category?.name ?? item.id} নিচে`} disabled={index === items.length - 1} onClick={() => move(index, 1)}><ArrowDown /></Button>
-                <Button size="icon" variant="ghost" className="text-destructive" title="সরান" aria-label={`${category?.name ?? item.id} সরান`} onClick={() => onChange(items.filter((row) => row.id !== item.id))}><Trash2 /></Button>
+                <Switch aria-label={`${category?.name ?? item.id} active`} checked={item.is_active} onCheckedChange={(is_active) => onChange(items.map((row) => row.id === item.id ? { ...row, is_active } : row))} />
+                <Button size="icon" variant="ghost" title="Move up" aria-label={`${category?.name ?? item.id} move up`} disabled={index === 0} onClick={() => move(index, -1)}><ArrowUp /></Button>
+                <Button size="icon" variant="ghost" title="Move down" aria-label={`${category?.name ?? item.id} move down`} disabled={index === items.length - 1} onClick={() => move(index, 1)}><ArrowDown /></Button>
+                <Button size="icon" variant="ghost" className="text-destructive" title="Remove" aria-label={`${category?.name ?? item.id} remove`} onClick={() => onChange(items.filter((row) => row.id !== item.id))}><Trash2 /></Button>
               </div>
             </div>;
           })}

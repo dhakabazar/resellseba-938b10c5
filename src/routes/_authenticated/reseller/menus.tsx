@@ -106,7 +106,7 @@ function MenusPage() {
       const { data, error } = await supabase.rpc("reseller_menu_page", { _rid: r.id });
       if (!alive) return;
       if (error || !data) {
-        toast.error(error?.message ?? "সেটিং পাওয়া যায়নি");
+        toast.error(error?.message ?? "Settings not found");
         setLoading(false);
         return;
       }
@@ -203,7 +203,7 @@ function MenusPage() {
       }
       clearBootstrapCache(`store:${code}`);
       try { sessionStorage.removeItem(`__st_boot_${code}`); } catch { /* storage may be unavailable */ }
-      toast.success(section === "body" ? "বডি ক্যাটাগরি সংরক্ষিত হয়েছে" : "হেডার মেনু সংরক্ষিত হয়েছে");
+      toast.success(section === "body" ? "Body categories saved" : "Header menu saved");
     } catch (e) {
       toast.error((e as Error).message || "Menu save fail");
     } finally {
@@ -221,14 +221,14 @@ function MenusPage() {
   if (!rid)
     return (
       <div className="surface-card p-8 text-center text-sm text-muted-foreground">
-        Store profile পাওয়া যায়নি।
+        Store profile not found.
       </div>
     );
 
   return (
     <div>
       <PageHeader
-        title="মেনু ও ক্যাটাগরি"
+        title="Menu & Categories"
         actions={
           <div className="flex items-center gap-2">
             {(storeUrl || code) && (
@@ -247,7 +247,7 @@ function MenusPage() {
               className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50"
             >
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-              সংরক্ষণ করুন
+              Save
             </Button>
           </div>
         }
@@ -255,8 +255,8 @@ function MenusPage() {
 
       <Tabs value={section} onValueChange={setSection}>
         <TabsList className="mb-6">
-          <TabsTrigger value="header"><Link2 className="mr-2 h-4 w-4" />হেডার মেনু</TabsTrigger>
-          <TabsTrigger value="body"><Layers className="mr-2 h-4 w-4" />বডি ক্যাটাগরি</TabsTrigger>
+          <TabsTrigger value="header"><Link2 className="mr-2 h-4 w-4" />Header menu</TabsTrigger>
+          <TabsTrigger value="body"><Layers className="mr-2 h-4 w-4" />Body categories</TabsTrigger>
         </TabsList>
         <TabsContent value="body">
           <BodyCategoryEditor categories={bodySources} items={bodyItems} onChange={(next) => { setBodyItems(next); setBodyDirty(true); }} />
