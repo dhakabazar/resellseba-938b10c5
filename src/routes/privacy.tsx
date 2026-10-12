@@ -67,15 +67,17 @@ const DEFAULT_POLICY = `<p>Your privacy is important to us. This policy explains
 <p class="font-semibold">Last updated: Today</p>`;
 
 function PrivacyPage() {
-  const host = typeof window !== "undefined" ? window.location.hostname : "";
-  const isCustomDomain = !isPlatformHostname(host);
+  // Decide after hydration so the first render matches the server HTML (React #418).
+  const [host, setHost] = useState<string | null>(null);
+  useEffect(() => setHost(window.location.hostname), []);
+  const isCustomDomain = host !== null && !isPlatformHostname(host);
 
   const [policy, setPolicy] = useState<string>(DEFAULT_POLICY);
   const [siteName, setSiteName] = useState("Reseller");
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isCustomDomain) return;
+    if (host === null || isCustomDomain) return;
     (async () => {
       const { data } = await supabase
         .from("global_settings")
@@ -88,7 +90,7 @@ function PrivacyPage() {
         if ((data as any).privacy_policy) setPolicy((data as any).privacy_policy);
       }
     })();
-  }, [isCustomDomain]);
+  }, [host, isCustomDomain]);
 
   if (isCustomDomain) {
     return (
