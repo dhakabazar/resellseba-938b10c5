@@ -167,14 +167,19 @@ function SearchForm({ close }: { close?: () => void }) {
 
 export function PoripatiChrome({ children }: { children: ReactNode }) {
   const { code, name, settings, categories, cartCount, url, content } = useStore();
-  const scrolled = useHeaderScroll();
   const announcement = content.flag("announcement_show") ? content.text("announcement_text") : "";
   const [open, setOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const year = new Date().getFullYear();
   const phone = settings?.support_phone?.trim();
   return <>
-    {announcement && !scrolled && <div className="bg-[var(--st-fg)] px-4 py-2 text-center text-[11px] font-semibold text-[var(--st-surface)]">{announcement}</div>}
+    {announcement && (
+      <AnnouncementStrip
+        text={announcement}
+        className="bg-[var(--st-fg)] px-4 py-2 text-center text-[11px] font-semibold text-[var(--st-surface)]"
+      />
+    )}
+
     <header className="sticky top-0 z-40 border-b border-[var(--st-border)] bg-[var(--st-surface)]/95 backdrop-blur">
       <div className="mx-auto max-w-7xl px-4">
         {/* Mobile Header */}
