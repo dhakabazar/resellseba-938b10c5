@@ -162,9 +162,25 @@ export function useStoreLoader(code: string, themeOverride?: string | null, pale
     (async () => {
       setState("loading");
       // ONE call: store settings + listings (with images) + categories + menu
-      // + the platform delivery rule.
+      // + the platform delivery rule. Served from cache instantly, then
+      // revalidated in the background (stale-while-revalidate).
       const boot = await getStoreBootstrap(code);
       if (!alive) return;
+      let lastJson = JSON.stringify(boot ?? null);
+      const firstOk = !!boot?.store;
+      apply(boot, true);
+      getStoreBootstrap(code, true)
+        .then((fresh) => {
+          if (!alive || !fresh) return;
+          const j = JSON.stringify(fresh);
+          if (j === lastJson) return;
+          lastJson = j;
+          apply(fresh, !firstOk);
+        })
+        .catch(() => {});
+    })();
+
+    function apply(boot: Awaited<ReturnType<typeof getStoreBootstrap>>, first: boolean) {
       const r = boot?.store as (StoreSettings & { reseller_id: string; business_name: string }) | null;
       if (!r) return setState(boot?.store_closed ? "closed" : "missing");
 
@@ -187,12 +203,12 @@ export function useStoreLoader(code: string, themeOverride?: string | null, pale
       const menuRows = (boot?.menu ?? []) as never;
       
       // Inject tracking from bootstrap rows first
-      if (boot?.pixels) {
+      if (first && boot?.pixels) {
         injectTrackingFromRows(boot.pixels as never);
       }
 
       // Also ensure live pixels are loaded from server (handles custom domain & instant cache busting)
-      fetchLivePixels({ data: { code } })
+      if (first) fetchLivePixels({ data: { code } })
         .then((live) => {
           if (!alive || !live) return;
           if (live.fb_pixel || live.tiktok_pixel || live.ga4_id) {
@@ -204,7 +220,7 @@ export function useStoreLoader(code: string, themeOverride?: string | null, pale
       // Fire server-side PageView CAPI with client cookies for maximum event match quality
       const pageViewEventId = `pv_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
       const cookies = getTrackingCookies();
-      fetchPageViewServer({
+      if (first) fetchPageViewServer({
         data: {
           code,
           eventId: pageViewEventId,
@@ -248,7 +264,7 @@ export function useStoreLoader(code: string, themeOverride?: string | null, pale
         url: (path: string) => buildStorePath(code, path),
       });
       setState("ready");
-    })();
+    }
     return () => {
       alive = false;
     };

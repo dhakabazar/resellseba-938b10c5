@@ -111,7 +111,7 @@ export type StoreBootstrap = {
 };
 
 const STORE_BOOT_CACHE_KEY = "__st_boot_";
-const STORE_BOOT_TTL = 3 * 60 * 1000; // 3 minutes
+const STORE_BOOT_TTL = 10 * 60 * 1000; // 10 min; always revalidated in background
 
 /** Storefront: settings + listings + categories + menu + delivery rule in one call. */
 export function getStoreBootstrap(code: string, force = false) {
