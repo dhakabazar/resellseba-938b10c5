@@ -222,6 +222,9 @@ export function CheckoutPageContent({
   const codMeta = methods.find((m) => m.method === "cod");
   const manualValue = (m: PayMethod) => `manual:${m.id ?? m.method}`;
   const activeManualMethod = extraMethods.find((m) => manualValue(m) === payMethod);
+  useEffect(() => {
+    if (payMethod.startsWith("manual:") && !activeManualMethod) setPayMethod("cod");
+  }, [payMethod, activeManualMethod]);
   const sendNumber = activeManualMethod?.account || activeManualMethod?.instructions?.match(/01\d{9}/)?.[0] || "";
 
   async function submit(e: React.FormEvent) {
