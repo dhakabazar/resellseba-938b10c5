@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { ArrowRight, ChevronDown, Menu, MessageCircle, Phone, Search, ShoppingBag, X } from "lucide-react";
 import { menuTarget, type MenuNode } from "@/lib/store-menu";
+import { useHeaderScroll } from "./use-header-scroll";
 import { bdt } from "@/lib/store-cart";
 
 import { useStore, type StoreListing } from "./store-context";
@@ -234,7 +235,7 @@ function SearchBox({
 
 
 function CartButton() {
-  const { code, cartCount, url } = useStore();
+  const { code, cartCount, url, theme } = useStore();
   return (
     <Link
       to={url("/checkout")}
@@ -246,7 +247,7 @@ function CartButton() {
       )}
     >
       <ShoppingBag className="h-4 w-4 shrink-0" />
-      <span className="hidden sm:inline">Cart</span>
+      <span className={theme.id === "bazaar" || theme.id === "atelier" ? "inline" : "hidden sm:inline"}>Cart</span>
       {cartCount > 0 && (
         <span className="absolute -right-1.5 -top-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-[var(--st-primary)] px-1 text-[9px] font-bold text-[var(--st-on-primary)] sm:h-5 sm:min-w-5 sm:text-[10px]">
           {cartCount}
@@ -596,21 +597,22 @@ export function StoreHeader() {
   const [open, setOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const v = theme.layout.header;
+  const scrolled = useHeaderScroll();
 
-  const announcement = settings?.announcement?.trim();
+  const announcement = content.flag("announcement_show") ? content.text("announcement_text") : "";
 
   /* ------------------------- সহজ শপ: সাদা টপ বার + কমলা ক্যাটাগরি মেনু */
   if (v === "sohoj") {
     const phone = settings?.support_phone?.trim();
     return (
       <div className="sticky top-0 z-40">
-        {announcement && (
+        {announcement && !scrolled && (
           <div className="bg-[var(--st-accent)] px-4 py-1.5 text-center text-[12px] font-medium text-[var(--st-on-accent)]">
             {announcement}
           </div>
         )}
         <header className={cx("border-b bg-[var(--st-surface)]", borderc)}>
-          <div className="mx-auto max-w-6xl px-3 py-2.5">
+          <div className="mx-auto max-w-6xl px-3 py-1.5">
             <div className="flex items-center gap-3">
               <button
                 className="md:hidden"
@@ -636,7 +638,7 @@ export function StoreHeader() {
                 <CartButton />
               </div>
             </div>
-            <div className="mt-2.5 md:hidden">
+            <div className="mt-1.5 md:hidden">
               <SearchBox variant="sohoj" />
             </div>
           </div>
@@ -660,7 +662,7 @@ export function StoreHeader() {
 
   return (
     <div className="sticky top-0 z-40">
-      {announcement && (
+      {announcement && !scrolled && (
         <div className="bg-[var(--st-accent)] px-4 py-1.5 text-center text-[12px] font-semibold text-[var(--st-on-accent)] shadow-sm">
           {announcement}
         </div>
@@ -669,7 +671,7 @@ export function StoreHeader() {
       {v === "bar" ? (
         <div className="bg-[var(--st-surface)]">
           <div className="bg-[var(--st-primary)] text-[var(--st-on-primary)]">
-            <div className="mx-auto flex max-w-6xl items-center gap-2.5 px-3 py-2.5 sm:gap-3 sm:px-4">
+            <div className="mx-auto flex max-w-6xl items-center gap-2.5 px-3 py-1.5 sm:gap-3 sm:px-4">
               <div className="rounded-[var(--st-radius-sm)] bg-[var(--st-surface)] px-2 py-1 text-[var(--st-fg)]">
                 <Logo />
               </div>
@@ -719,7 +721,7 @@ export function StoreHeader() {
         </div>
       ) : v === "classic" ? (
         <header className={cx("border-b bg-[var(--st-bg)]/95 backdrop-blur", borderc)}>
-          <div className="mx-auto flex max-w-6xl flex-col items-center gap-3 px-4 py-4">
+          <div className="mx-auto flex max-w-6xl flex-col items-center gap-2 px-4 py-2">
             <div className="flex w-full items-center justify-between gap-3">
               <button className="md:hidden" aria-label="Menu" onClick={() => setOpen((o) => !o)}>
                 {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -765,7 +767,7 @@ export function StoreHeader() {
         </header>
       ) : v === "editorial" ? (
         <header className={cx("border-b bg-[var(--st-bg)]", borderc)}>
-          <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3.5 sm:gap-6 sm:px-5 sm:py-5">
+          <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-2 sm:gap-6 sm:px-5 sm:py-2.5">
             <div className="shrink-0">
               <Logo />
             </div>
@@ -809,7 +811,7 @@ export function StoreHeader() {
         </header>
       ) : (
         <header className={cx("border-b bg-[var(--st-bg)]/80 backdrop-blur-xl", borderc)}>
-          <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-3 py-2 sm:gap-3 sm:px-4 sm:py-3">
+          <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-3 py-1.5 sm:gap-3 sm:px-4 sm:py-2">
             <div className="shrink-0">
               <Logo />
             </div>
@@ -834,7 +836,7 @@ export function StoreHeader() {
               </button>
             </div>
           </div>
-          <div className={cx("mx-auto hidden max-w-6xl px-4 pb-3 md:block")}>
+          <div className={cx("mx-auto hidden max-w-6xl px-4 pb-1 md:block")}>
             <CategoryNav variant="row" />
           </div>
           <MobileDrawer open={open} onClose={() => setOpen(false)} />
@@ -930,7 +932,7 @@ export function StoreFooter() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className={cx("mt-16 border-t bg-[var(--st-bg-alt)]/60 text-xs text-[var(--st-muted)]", borderc)}>
+    <footer className={cx("mt-4 border-t bg-[var(--st-bg-alt)]/60 text-xs text-[var(--st-muted)]", borderc)}>
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 py-8 text-center sm:flex-row sm:text-left">
         <div>
           © {year} <span className="font-semibold text-[var(--st-fg)]">{name}</span>. All rights reserved.

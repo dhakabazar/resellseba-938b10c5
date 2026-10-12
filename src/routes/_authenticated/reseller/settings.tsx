@@ -10,6 +10,7 @@ import { ImageUploader, type UploadedImage } from "@/components/ImageUploader";
 
 export const Route = createFileRoute("/_authenticated/reseller/settings")({
   component: SettingsPage,
+  head: () => ({ meta: [{ title: "Store Configuration — Ecom Seller BD" }, { name: "description", content: "Manage store identity, branding and contact information." }, { property: "og:title", content: "Store Configuration — Ecom Seller BD" }, { property: "og:description", content: "Manage store identity, branding and contact information." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
 });
 
 const inp = "w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring";
@@ -37,7 +38,6 @@ function SettingsPage() {
   const [fb, setFb] = useState("");
   const [insta, setInsta] = useState("");
   const [tiktok, setTiktok] = useState("");
-  const [announcement, setAnnouncement] = useState("");
   const [metaDesc, setMetaDesc] = useState("");
   const [footer, setFooter] = useState("");
   const [logo, setLogo] = useState<UploadedImage[]>([]);
@@ -66,7 +66,6 @@ function SettingsPage() {
         setFb(s.facebook_url ?? "");
         setInsta(s.instagram_url ?? "");
         setTiktok(s.tiktok_url ?? "");
-        setAnnouncement(s.announcement ?? "");
         setMetaDesc(s.meta_description ?? "");
         setFooter(s.footer_text ?? "");
         if (s.logo_url) setLogo([{ path: "", url: s.logo_url, bytes: 0 }]);
@@ -96,7 +95,6 @@ function SettingsPage() {
         facebook_url: fb || null,
         instagram_url: insta || null,
         tiktok_url: tiktok || null,
-        announcement: announcement || null,
         meta_description: metaDesc || null,
         footer_text: footer || null,
         logo_url: logo[0]?.url ?? null,
@@ -152,7 +150,7 @@ function SettingsPage() {
           <div className="surface-card space-y-4 p-6 rounded-xl border">
             <div>
               <h3 className="text-base font-semibold">Store Identity</h3>
-              <p className="text-xs text-muted-foreground mt-0.5">Basic brand identity and public announcement</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Basic brand identity</p>
             </div>
             <Field label="Store name">
               <input required value={storeName} onChange={(e) => setStoreName(e.target.value)} className={inp} />
@@ -160,16 +158,8 @@ function SettingsPage() {
             <Field label="Tagline">
               <input value={tagline} onChange={(e) => setTagline(e.target.value)} className={inp} />
             </Field>
-            <Field label="Announcement bar" hint="Shown at the very top of the storefront.">
-              <input
-                value={announcement}
-                onChange={(e) => setAnnouncement(e.target.value)}
-                className={inp}
-                placeholder="Free delivery over ৳2000"
-              />
-            </Field>
             <p className="rounded-md border bg-muted/40 p-3 text-xs text-muted-foreground">
-              Store colors live in <span className="font-medium text-foreground">Theme</span> — pick a theme and one of its
+              Store colors and announcements live in <span className="font-medium text-foreground">Theme</span> — pick a theme and one of its
               ready-made color palettes there.
             </p>
           </div>

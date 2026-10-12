@@ -7,6 +7,8 @@ import { inCategory, categoryIdsOf } from "@/lib/product-categories";
 import { addToCart, bdt } from "@/lib/store-cart";
 import { trackAddToCart, trackViewContent } from "@/lib/tracking";
 import { useStore, type StoreListing } from "../store-context";
+import { PreviousPrice, SoldCount } from "../product-presentation";
+import { useHeaderScroll } from "../use-header-scroll";
 import { ProductImageGallery } from "../ui";
 
 const cn = (...v: (string | false | null | undefined)[]) => v.filter(Boolean).join(" ");
@@ -165,19 +167,21 @@ function SearchForm({ close }: { close?: () => void }) {
 }
 
 export function PoripatiChrome({ children }: { children: ReactNode }) {
-  const { code, name, settings, categories, cartCount, url } = useStore();
+  const { code, name, settings, categories, cartCount, url, content } = useStore();
+  const scrolled = useHeaderScroll();
+  const announcement = content.flag("announcement_show") ? content.text("announcement_text") : "";
   const [open, setOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const year = new Date().getFullYear();
   const phone = settings?.support_phone?.trim();
   return <>
-    {settings?.announcement && <div className="bg-[var(--st-fg)] px-4 py-2 text-center text-[11px] font-semibold text-[var(--st-surface)]">{settings.announcement}</div>}
+    {announcement && !scrolled && <div className="bg-[var(--st-fg)] px-4 py-2 text-center text-[11px] font-semibold text-[var(--st-surface)]">{announcement}</div>}
     <header className="sticky top-0 z-40 border-b border-[var(--st-border)] bg-[var(--st-surface)]/95 backdrop-blur">
       <div className="mx-auto max-w-7xl px-4">
         {/* Mobile Header */}
-        <div className="flex h-16 items-center justify-between gap-3 md:hidden">
+        <div className="grid h-14 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 md:hidden">
           <Brand />
-          <div className="flex items-center gap-3 sm:gap-4">
+          <div className="flex shrink-0 items-center gap-2 sm:gap-4">
             <button
               type="button"
               aria-label="Search"
@@ -189,7 +193,7 @@ export function PoripatiChrome({ children }: { children: ReactNode }) {
             <Link
               to={url("/checkout")}
               aria-label="Cart"
-              className="relative flex h-9 w-9 items-center justify-center rounded-full text-[var(--st-fg)] hover:bg-[var(--st-bg-alt)] transition-colors"
+              className="relative flex h-9 items-center justify-center gap-1 px-1 rounded-full text-[var(--st-fg)] hover:bg-[var(--st-bg-alt)] transition-colors"
             >
               <ShoppingBag className="h-5 w-5" />
               {cartCount > 0 && (
@@ -209,7 +213,7 @@ export function PoripatiChrome({ children }: { children: ReactNode }) {
         </div>
 
         {/* Desktop Header */}
-        <div className="hidden h-20 grid-cols-[1fr_auto_1fr] items-center gap-4 md:grid">
+        <div className="hidden h-16 grid-cols-[1fr_auto_1fr] items-center gap-4 md:grid">
           <div className="max-w-xs"><SearchForm /></div>
           <div className="justify-self-center"><Brand /></div>
           <div className="flex items-center justify-end gap-4">
@@ -234,12 +238,12 @@ export function PoripatiChrome({ children }: { children: ReactNode }) {
             <SearchForm close={() => setSearchOpen(false)} />
           </div>
         )}
-        <nav className="hidden items-center justify-center gap-7 border-t border-[var(--st-border)] py-3 text-[12px] font-semibold md:flex"><Link to={url("/shop")}>All products</Link>{categories.slice(0, 7).map(c => <Link key={c.id} to={url(`/c/${c.slug}`)} className="hover:text-[var(--st-primary)]">{c.name}</Link>)}</nav>
+        <nav className="hidden items-center justify-center gap-7 border-t border-[var(--st-border)] py-2 text-[12px] font-semibold md:flex"><Link to={url("/shop")}>All products</Link>{categories.slice(0, 7).map(c => <Link key={c.id} to={url(`/c/${c.slug}`)} className="hover:text-[var(--st-primary)]">{c.name}</Link>)}</nav>
       </div>
     </header>
     {open && <div className="fixed inset-0 z-50 md:hidden"><button aria-label="Close menu" className="absolute inset-0 bg-[var(--st-fg)]/45" onClick={() => setOpen(false)} /><aside className="absolute right-0 top-0 flex h-full w-[86%] max-w-sm flex-col bg-[var(--st-surface)] p-5"><div className="flex items-center justify-between"><Brand /><button aria-label="Close menu" onClick={() => setOpen(false)}><X className="h-5 w-5" /></button></div><div className="mt-8"><SearchForm close={() => setOpen(false)} /></div><nav className="mt-8 flex flex-col border-t border-[var(--st-border)]"> <Link to={url("/shop")} onClick={() => setOpen(false)} className="border-b border-[var(--st-border)] py-4 font-semibold">All products</Link>{categories.map(c => <Link key={c.id} to={url(`/c/${c.slug}`)} onClick={() => setOpen(false)} className="border-b border-[var(--st-border)] py-4">{c.name}</Link>)}</nav>{phone && <a href={`tel:${phone}`} className="mt-auto bg-[var(--st-fg)] px-4 py-3 text-center text-sm font-bold text-[var(--st-surface)]">Call {phone}</a>}</aside></div>}
     <main>{children}</main>
-    <footer className="mt-16 border-t border-[var(--st-border)] bg-[var(--st-bg-alt)]/60 text-xs text-[var(--st-muted)]">
+    <footer className="mt-4 border-t border-[var(--st-border)] bg-[var(--st-bg-alt)]/60 text-xs text-[var(--st-muted)]">
       <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 py-8 text-center sm:flex-row sm:text-left">
         <div>
           © {year} <span className="font-semibold text-[var(--st-fg)]">{name}</span>. All rights reserved.
@@ -282,7 +286,7 @@ function CategoryCarousel({ kicker, title }: { kicker?: string; title: string })
   }, [categories.length]);
   const nudge = (dir: number) => { const el = ref.current; if (el) el.scrollBy({ left: dir * Math.max(260, el.clientWidth * 0.5), behavior: "smooth" }); };
   if (!categories.length) return null;
-  return <section className="mx-auto max-w-7xl px-4 py-14">
+  return <section className="mx-auto max-w-7xl px-4 pt-10 pb-4">
     <SectionTitle kicker={kicker} title={title} />
     <div className="relative">
       <button aria-label="আগের ক্যাটাগরি" onClick={() => nudge(-1)} className="absolute -left-3 top-1/2 z-10 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-[var(--st-border)] bg-[var(--st-surface)] text-[var(--st-fg)] shadow-sm transition-colors hover:border-[var(--st-primary)] hover:text-[var(--st-primary)] md:-left-5"><ChevronLeft className="h-5 w-5" /></button>
@@ -336,7 +340,7 @@ function Card({ listing }: { listing: StoreListing }) {
         </button>
       </div>
       <h3 className="mt-3 truncate text-sm font-medium leading-snug" title={store.title(listing)}>{store.title(listing)}</h3>
-      <div className="mt-1 text-sm font-bold text-[var(--st-primary)]">{bdt(price)}</div>
+      <div className="mt-1 flex flex-wrap items-center gap-2"><span className="text-sm font-bold text-[var(--st-primary)]">{bdt(price)}</span><PreviousPrice price={price} previous={listing.compare_at_price} /></div>
     </Link>
   );
 }
@@ -357,7 +361,7 @@ export function PoripatiHome({ query }: { query?: string }) {
     {content.flag("hero_show") && <section className="relative min-h-[430px] overflow-hidden bg-[var(--st-fg)] md:min-h-[560px]">{media && <img src={media} alt={name} className="absolute inset-0 h-full w-full object-cover opacity-60 md:opacity-75" />}<div className="absolute inset-0 bg-[var(--st-fg)]/45 md:bg-transparent" /><div className="absolute inset-0 bg-gradient-to-r from-[var(--st-fg)]/90 via-[var(--st-fg)]/65 to-[var(--st-fg)]/20 md:from-[var(--st-fg)]/85 md:via-[var(--st-fg)]/25 md:to-transparent" /><div className="relative mx-auto flex min-h-[430px] max-w-7xl items-end px-4 pb-12 pt-20 text-[var(--st-surface)] md:min-h-[560px] md:items-center md:pb-20"><div className="max-w-xl"><div className="text-[11px] font-bold uppercase opacity-80">{content.text("poripati_kicker")}</div><h1 className="mt-4 text-4xl font-bold leading-tight md:text-6xl">{content.text("hero_headline")}</h1><p className="mt-4 max-w-lg text-sm leading-relaxed opacity-85 md:text-base">{content.text("hero_sub")}</p><Link to={url("/shop")} className="mt-7 inline-flex items-center gap-2 bg-[var(--st-primary)] px-6 py-3 text-sm font-bold text-[var(--st-on-primary)]">{content.text("hero_cta")} <ArrowRight className="h-4 w-4" /></Link></div></div></section>}
     {content.flag("usp_show") && <section className="border-b border-[var(--st-border)] bg-[var(--st-surface)]"><div className="mx-auto grid max-w-7xl grid-cols-2 md:grid-cols-4">{features.map((f) => <div key={f.t} className="border-r border-[var(--st-border)] px-4 py-5 last:border-r-0"><div className="text-sm font-semibold">{f.t}</div><div className="mt-0.5 text-xs text-[var(--st-muted)]">{f.d}</div></div>)}</div></section>}
     {content.flag("cat_show") && <CategoryCarousel title={content.text("cat_title")} />}
-    <section className="border-y border-[var(--st-border)] bg-[var(--st-surface)]"><div className="mx-auto max-w-7xl px-4 py-14"><SectionTitle kicker={content.text("poripati_collection")} title={content.text("latest_title")} action={<Link to={url("/shop")} className="text-xs font-bold text-[var(--st-primary)]">VIEW ALL</Link>} /><PoripatiGrid listings={listings.slice(0, visible)} />{visible < listings.length && <div className="mt-10 text-center"><Button className="rounded-full px-8 py-3 font-extrabold text-sm bg-[var(--st-primary)] text-[var(--st-on-primary)] hover:bg-[var(--st-primary)] hover:opacity-90 shadow-md animate-order-jiggle transition-all" onClick={() => setVisible(v => v + 16)}>আরও দেখুন</Button></div>}</div></section>
+    <section className="border-y border-[var(--st-border)] bg-[var(--st-surface)]"><div className="mx-auto max-w-7xl px-4 pt-10 pb-4"><SectionTitle kicker={content.text("poripati_collection")} title={content.text("latest_title")} action={<Link to={url("/shop")} className="text-xs font-bold text-[var(--st-primary)]">VIEW ALL</Link>} /><PoripatiGrid listings={listings.slice(0, visible)} />{visible < listings.length && <div className="mt-6 text-center"><Button className="min-h-12 min-w-48 rounded-full px-10 py-3.5 font-extrabold text-base bg-[var(--st-primary)] text-[var(--st-on-primary)] hover:bg-[var(--st-primary)] hover:opacity-90 shadow-md animate-order-jiggle transition-all" onClick={() => setVisible(v => v + 16)}>আরও দেখুন</Button></div>}</div></section>
     {content.text("poripati_story") && <section className="mx-auto max-w-5xl px-4 py-20 text-center"><div className="text-[10px] font-bold uppercase text-[var(--st-primary)]">Our point of view</div><p className="mt-5 text-2xl font-semibold leading-relaxed md:text-4xl">{content.text("poripati_story")}</p></section>}
     <PoripatiProof />
   </div>;
@@ -378,5 +382,5 @@ export function PoripatiProduct({ listing }: { listing: StoreListing }) {
   const recommended=[...sameCategory,...otherProducts];
   const buy=(checkout:boolean)=>{addToCart(store.code,listing.id,qty);trackAddToCart({id:p.id,name:title,price,qty});if(checkout)navigate({to:store.url("/checkout")});else toast.success("কার্টে যোগ হয়েছে");};
   const galleryImages = images.length > 0 ? images : active ? [{ url: active }] : [];
-  return <div className="mx-auto max-w-7xl px-4 pb-16 pt-8"><div className="grid gap-10 lg:grid-cols-[1.2fr_.8fr]"><div className="min-w-0"><ProductImageGallery images={galleryImages} title={title} activeIdx={idx} onIndexChange={setIdx} /></div><aside className="min-w-0 lg:sticky lg:top-32 lg:h-fit"><div className="text-[10px] font-bold uppercase text-[var(--st-primary)]">{store.content.text("poripati_collection")}</div><h1 className="mt-3 text-3xl font-bold leading-tight md:text-4xl">{title}</h1><div className="mt-5 flex flex-wrap items-center justify-start gap-5"><div className="text-2xl font-bold text-[var(--st-primary)]">{bdt(price)}</div><div className="inline-flex items-center rounded-[var(--st-radius-sm)] border border-[var(--st-border)] bg-[var(--st-surface)]"><button aria-label="Decrease" onClick={()=>setQty(q=>Math.max(1,q-1))} className="p-2 text-[var(--st-fg)] hover:bg-[var(--st-bg-alt)] transition-colors"><Minus className="h-4 w-4"/></button><span className="min-w-[3.5ch] text-center text-sm font-bold text-[var(--st-fg)]">{qty}</span><button aria-label="Increase" onClick={()=>setQty(q=>q+1)} className="p-2 text-[var(--st-fg)] hover:bg-[var(--st-bg-alt)] transition-colors"><Plus className="h-4 w-4"/></button></div></div>{(listing.custom_description||p.short_description)&&<p className="mt-4 text-sm leading-relaxed text-[var(--st-muted)]">{listing.custom_description||p.short_description}</p>}<div className="mt-6 flex flex-col sm:flex-row items-stretch gap-3"><button onClick={()=>buy(true)} className="w-full sm:flex-1 flex items-center justify-center gap-2 bg-[var(--st-primary)] px-5 py-4 text-sm font-bold text-[var(--st-on-primary)] animate-order-jiggle shadow-md">অর্ডার করুন <ArrowRight className="h-4 w-4"/></button><button onClick={()=>buy(false)} className="w-full sm:flex-1 flex items-center justify-center gap-2 rounded-[var(--st-radius-sm)] border border-[var(--st-primary)]/25 bg-[var(--st-primary)]/10 text-[var(--st-primary)] hover:bg-[var(--st-primary)]/15 px-5 py-4 text-sm font-bold transition-all"><ShoppingBag className="h-4 w-4"/>কার্টে যোগ করুন</button></div></aside></div>{p.description&&<section className="mt-16 grid gap-6 border-t border-[var(--st-border)] pt-10 md:grid-cols-[.4fr_1fr]"><h2 className="text-xl font-bold">Product details</h2><div className="prose prose-sm max-w-none text-[var(--st-muted)]" dangerouslySetInnerHTML={{__html:p.description}}/></section>}{false && recommended.length>0&&<section className="mt-20"><SectionTitle title="আপনার পছন্দ হতে পারে"/><PoripatiGrid listings={recommended.slice(0,relatedVisible)}/>{relatedVisible<recommended.length&&<div className="mt-10 text-center"><Button className="rounded-full px-8 py-3 font-extrabold text-sm bg-[var(--st-primary)] text-[var(--st-on-primary)] hover:bg-[var(--st-primary)] hover:opacity-90 shadow-md animate-order-jiggle transition-all" onClick={()=>setRelatedVisible(v=>v+16)}>আরও দেখুন</Button></div>}</section>}</div>;
+  return <div className="mx-auto max-w-7xl px-4 pb-16 pt-8"><div className="grid gap-10 lg:grid-cols-[1.2fr_.8fr]"><div className="min-w-0"><ProductImageGallery images={galleryImages} title={title} activeIdx={idx} onIndexChange={setIdx} /></div><aside className="min-w-0 lg:sticky lg:top-32 lg:h-fit"><div className="text-[10px] font-bold uppercase text-[var(--st-primary)]">{store.content.text("poripati_collection")}</div><h1 className="mt-3 text-3xl font-bold leading-tight md:text-4xl">{title}</h1><SoldCount id={listing.id}/><div className="mt-5 flex flex-wrap items-center justify-start gap-5"><div className="flex flex-col gap-1"><div className="text-2xl font-bold text-[var(--st-primary)]">{bdt(price)}</div><PreviousPrice price={price} previous={listing.compare_at_price}/></div><div className="inline-flex items-center rounded-[var(--st-radius-sm)] border border-[var(--st-border)] bg-[var(--st-surface)]"><button aria-label="Decrease" onClick={()=>setQty(q=>Math.max(1,q-1))} className="p-2 text-[var(--st-fg)] hover:bg-[var(--st-bg-alt)] transition-colors"><Minus className="h-4 w-4"/></button><span className="min-w-[3.5ch] text-center text-sm font-bold text-[var(--st-fg)]">{qty}</span><button aria-label="Increase" onClick={()=>setQty(q=>q+1)} className="p-2 text-[var(--st-fg)] hover:bg-[var(--st-bg-alt)] transition-colors"><Plus className="h-4 w-4"/></button></div></div>{(listing.custom_description||p.short_description)&&<p className="mt-4 text-sm leading-relaxed text-[var(--st-muted)]">{listing.custom_description||p.short_description}</p>}<div className="mt-6 flex flex-col sm:flex-row items-stretch gap-3"><button onClick={()=>buy(true)} className="w-full sm:flex-1 flex items-center justify-center gap-2 bg-[var(--st-primary)] px-5 py-4 text-sm font-bold text-[var(--st-on-primary)] animate-order-jiggle shadow-md">অর্ডার করুন <ArrowRight className="h-4 w-4"/></button><button onClick={()=>buy(false)} className="w-full sm:flex-1 flex items-center justify-center gap-2 rounded-[var(--st-radius-sm)] border border-[var(--st-primary)]/25 bg-[var(--st-primary)]/10 text-[var(--st-primary)] hover:bg-[var(--st-primary)]/15 px-5 py-4 text-sm font-bold transition-all"><ShoppingBag className="h-4 w-4"/>কার্টে যোগ করুন</button></div></aside></div>{p.description&&<section className="mt-16 grid gap-6 border-t border-[var(--st-border)] pt-10 md:grid-cols-[.4fr_1fr]"><h2 className="text-xl font-bold">Product details</h2><div className="prose prose-sm max-w-none text-[var(--st-muted)]" dangerouslySetInnerHTML={{__html:p.description}}/></section>}{false && recommended.length>0&&<section className="mt-20"><SectionTitle title="আপনার পছন্দ হতে পারে"/><PoripatiGrid listings={recommended.slice(0,relatedVisible)}/>{relatedVisible<recommended.length&&<div className="mt-6 text-center"><Button className="min-h-12 min-w-48 rounded-full px-10 py-3.5 font-extrabold text-base bg-[var(--st-primary)] text-[var(--st-on-primary)] hover:bg-[var(--st-primary)] hover:opacity-90 shadow-md animate-order-jiggle transition-all" onClick={()=>setRelatedVisible(v=>v+16)}>আরও দেখুন</Button></div>}</section>}</div>;
 }

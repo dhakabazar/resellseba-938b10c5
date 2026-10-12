@@ -12,7 +12,7 @@
 
 import type { StoreThemeId } from "./store-theme";
 
-export type ContentFieldType = "text" | "textarea" | "image" | "toggle";
+export type ContentFieldType = "text" | "textarea" | "image" | "toggle" | "number";
 
 export type ContentField = {
   key: string;
@@ -63,6 +63,12 @@ const on = (key: string, label: string, def = true): ContentField => ({
 /** Groups shared by every theme. */
 function baseGroups(): ContentGroup[] {
   return [
+    {
+      id: "header",
+      title: "Header & announcement",
+      description: "Top announcement bar.",
+      fields: [on("announcement_show", "Show announcement bar"), t("announcement_text", "Announcement text")],
+    },
     {
       id: "hero",
       title: "Hero section",
@@ -125,6 +131,9 @@ function baseGroups(): ContentGroup[] {
       description: "Product page mobile options.",
       fields: [
         on("pdp_sticky", "Show sticky mobile buy bar", true),
+        on("sold_show", "Show sold count", true),
+        { key: "sold_min", label: "Sold count — minimum", type: "number", def: "15" },
+        { key: "sold_max", label: "Sold count — maximum", type: "number", def: "214" },
       ],
     },
     {
@@ -224,6 +233,7 @@ export type LegacyContent = {
   hero_image_url?: string | null;
   about_text?: string | null;
   footer_text?: string | null;
+  announcement?: string | null;
 };
 
 export type ContentReader = {
@@ -244,6 +254,7 @@ export function createContentReader(
     hero_image: legacy?.hero_image_url,
     footer_about: legacy?.about_text,
     footer_note: legacy?.footer_text,
+    announcement_text: legacy?.announcement,
   };
 
   const fill = (s: string) => s.replace(/\{store\}/g, storeName);
@@ -251,6 +262,7 @@ export function createContentReader(
   return {
     text: (key) => {
       const raw = values?.[key];
+      if (key === "announcement_text" && typeof raw === "string") return fill(raw.trim());
       if (typeof raw === "string" && raw.trim()) return fill(raw.trim());
       const lg = legacyMap[key];
       if (typeof lg === "string" && lg.trim()) return fill(lg.trim());

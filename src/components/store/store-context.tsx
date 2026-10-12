@@ -39,6 +39,7 @@ export type StoreProduct = {
 export type StoreListing = {
   id: string;
   selling_price: number;
+  compare_at_price?: number | null;
   custom_title: string | null;
   custom_description: string | null;
   extra_delivery_inside: number | null;

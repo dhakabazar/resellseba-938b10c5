@@ -16,10 +16,12 @@ import {
   type StorePalette,
   type StoreThemeId,
 } from "@/lib/store-theme";
+import { clearBootstrapCache } from "@/lib/bootstrap";
 import { themeContentGroups, type ThemeContentValues } from "@/lib/store-content";
 
 export const Route = createFileRoute("/_authenticated/reseller/theme")({
   component: ThemePage,
+  head: () => ({ meta: [{ title: "Store Theme & Product Settings — Ecom Seller BD" }, { name: "description", content: "Manage storefront appearance, product settings and announcements." }, { property: "og:title", content: "Store Theme & Product Settings — Ecom Seller BD" }, { property: "og:description", content: "Manage storefront appearance, product settings and announcements." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
 });
 
 const inp = "w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring";
@@ -61,14 +63,18 @@ function ThemePage() {
 
       const { data: s } = await supabase
         .from("reseller_settings")
-        .select("theme,theme_settings")
+        .select("theme,theme_settings,announcement")
         .eq("reseller_id", r.id)
         .maybeSingle();
       if (!alive) return;
       const id = (s?.theme as StoreThemeId) ?? DEFAULT_THEME_ID;
       setTheme(id);
       setSavedTheme(id);
-      setAll((s?.theme_settings as Record<string, ThemeContentValues>) ?? {});
+      const stored = (s?.theme_settings as Record<string, ThemeContentValues>) ?? {};
+      setAll(Object.fromEntries(Object.entries(stored).map(([key, value]) => [key, value])));
+      if (s?.announcement && typeof stored[id]?.announcement_text !== "string") {
+        setAll({ ...stored, [id]: { ...(stored[id] ?? {}), announcement_text: s.announcement } });
+      }
       setLoading(false);
     })();
     return () => {
@@ -89,6 +95,8 @@ function ThemePage() {
       .eq("reseller_id", rid);
     setBusy(false);
     if (error) return toast.error(error.message);
+    clearBootstrapCache(`store:${code}`);
+    sessionStorage.removeItem(`__st_boot_${code}`);
     setSavedTheme(theme);
     toast.success("Theme saved and published successfully");
   }
@@ -329,6 +337,9 @@ function ThemePage() {
                                 />
                               ) : (
                                 <input
+                                   type={f.type === "number" ? "number" : "text"}
+                                   min={f.type === "number" ? 0 : undefined}
+                                   step={f.type === "number" ? 1 : undefined}
                                   value={str}
                                   placeholder={ph}
                                   onChange={(e) => setField(f.key, e.target.value)}

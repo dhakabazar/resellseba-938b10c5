@@ -16,6 +16,7 @@ import { PaymentLogo } from "@/components/payments/payment-brand";
 import { useStore } from "@/components/store/store-context";
 import { borderc, cx, EmptyState, GhostButton, Heading, muted, PrimaryButton, ProductGrid, SectionHead } from "@/components/store/ui";
 import { Button } from "@/components/ui/button";
+import { PreviousPrice } from "../product-presentation";
 import { PoripatiGrid } from "@/components/store/themes/poripati";
 
 type PayMethod = { id?: string; method: string; label: string; instructions: string | null; account?: string | null; owner?: "admin" | "reseller" };
@@ -654,7 +655,8 @@ export function CheckoutPageContent({
                   {img && <img src={img} alt="" className="h-14 w-14 sm:h-16 sm:w-16 shrink-0 rounded-[var(--st-radius-sm)] object-cover" />}
                   <div className="min-w-0 flex-1">
                     <div className="line-clamp-2 text-xs sm:text-sm text-[var(--st-fg)] font-medium">{store.title(listing)}</div>
-                    <div className="mt-1.5 flex items-center gap-2">
+                    <PreviousPrice price={Number(listing.selling_price)} previous={listing.compare_at_price} quantity={line.qty} />
+                    <div className="mt-1.5 flex flex-wrap items-center gap-2">
                       <div className={cx("inline-flex items-center rounded-[var(--st-radius-sm)] border", borderc)}>
                         <button
                           type="button"

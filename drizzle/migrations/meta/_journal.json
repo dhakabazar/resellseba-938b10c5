@@ -50,6 +50,13 @@
       "when": 1791818447444,
       "tag": "0006_migration",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1791819210436,
+      "tag": "0007_listing_regular_price",
+      "breakpoints": true
     }
   ]
 }
