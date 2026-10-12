@@ -106,7 +106,7 @@ function MenusPage() {
       const { data, error } = await supabase.rpc("reseller_menu_page", { _rid: r.id });
       if (!alive) return;
       if (error || !data) {
-        toast.error(error?.message ?? "সেটিং পাওয়া যায়নি");
+        toast.error(error?.message ?? "Settings not found");
         setLoading(false);
         return;
       }
@@ -203,7 +203,7 @@ function MenusPage() {
       }
       clearBootstrapCache(`store:${code}`);
       try { sessionStorage.removeItem(`__st_boot_${code}`); } catch { /* storage may be unavailable */ }
-      toast.success(section === "body" ? "বডি ক্যাটাগরি সংরক্ষিত হয়েছে" : "হেডার মেনু সংরক্ষিত হয়েছে");
+      toast.success(section === "body" ? "Body categories saved" : "Header menu saved");
     } catch (e) {
       toast.error((e as Error).message || "Menu save fail");
     } finally {
