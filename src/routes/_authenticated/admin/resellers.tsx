@@ -1272,6 +1272,11 @@ function ResellersPage() {
                           no phone
                         </span>
                       )}
+                      {phone && (
+                        <a href={`https://wa.me/${waPhone}`} target="_blank" rel="noreferrer" title="WhatsApp" className="inline-flex items-center gap-1 rounded-full border border-success/25 px-2 py-0.5 text-[11px] text-success sm:hidden">
+                          <MessageCircle className="h-3 w-3 shrink-0" /> {phone}
+                        </a>
+                      )}
                       {r.notes ? (
                         <button
                           type="button"
@@ -1311,7 +1316,7 @@ function ResellersPage() {
                     </div>
                   </div>
 
-                  <div className="col-start-4 row-start-1 grid shrink-0 grid-cols-2 items-center gap-1.5 sm:flex">
+                  <div className="col-start-4 row-start-1 flex shrink-0 items-center gap-1 sm:gap-1.5 max-sm:[&>a]:h-7 max-sm:[&>a]:w-7 max-sm:[&>button]:h-7 max-sm:[&>button]:w-7">
                     <Link
                       to="/admin/transactions"
                       search={{ reseller: r.id } as never}
@@ -1433,7 +1438,7 @@ function ResellersPage() {
                 </div>
 
 
-                <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-9">
+                <div className="mt-3 grid grid-cols-4 gap-1.5 sm:grid-cols-3 sm:gap-2 lg:grid-cols-5 xl:grid-cols-9">
                   <Metric label="Orders" value={orderCounts[r.id] ?? 0} plain />
                   <Metric label="Delivered profit" value={s?.delivered_profit} accent />
                   <Metric label="Available" value={s?.available} />
@@ -1469,7 +1474,7 @@ function ResellersPage() {
                                 st.days_left != null ? ` · ${st.days_left}d` : ""
                               }`;
                     return (
-                      <div className="rounded-md border bg-muted/30 px-2 py-1.5">
+                      <div className="hidden rounded-md border bg-muted/30 px-2 py-1.5 sm:block">
                         <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
                           Package
                         </div>
@@ -1600,12 +1605,12 @@ function Metric({
   plain?: boolean;
 }) {
   return (
-    <div className="rounded-md border bg-muted/30 px-2 py-1.5">
-      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</div>
+    <div className="min-w-0 rounded-lg border bg-muted/30 px-1.5 py-2 sm:rounded-md sm:px-2 sm:py-1.5">
+      <div className="min-h-7 break-words text-[9px] uppercase leading-[14px] text-muted-foreground sm:min-h-0 sm:text-[10px]">{label}</div>
       <div
         className={
-          "text-sm font-semibold tabular-nums " +
-          (accent ? "text-success" : muted ? "text-muted-foreground" : "")
+          "break-all text-xs font-semibold tabular-nums sm:text-sm " +
+          (value != null && value < 0 ? "text-destructive" : accent ? "text-success" : muted ? "text-muted-foreground" : "")
         }
       >
         {value == null ? "—" : plain ? value.toLocaleString() : `৳${value.toLocaleString()}`}
