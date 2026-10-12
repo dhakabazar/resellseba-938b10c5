@@ -1876,6 +1876,7 @@ export type Database = {
       }
       reseller_listings: {
         Row: {
+          compare_at_price: number | null
           created_at: string
           custom_description: string | null
           custom_title: string | null
@@ -1891,6 +1892,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          compare_at_price?: number | null
           created_at?: string
           custom_description?: string | null
           custom_title?: string | null
@@ -1906,6 +1908,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          compare_at_price?: number | null
           created_at?: string
           custom_description?: string | null
           custom_title?: string | null

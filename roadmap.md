@@ -1,5 +1,10 @@
 # Roadmap
 
+- [ ] Product-page sold range and hide storefront product codes
+- [ ] Single-listing previous price with storefront discounts; preserve bulk behavior
+- [ ] Compact theme headers/top strip on scroll, announcement controls and selected mobile cart labels
+- [ ] Larger load-more button and reduced footer gap; verify storefront flows
+
 - [x] Align reseller-network search/date controls on mobile and collapse status filters by default
 
 - [x] Add independent header menu / body category tabs and apply active body categories across all themes

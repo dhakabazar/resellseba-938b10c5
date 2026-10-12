@@ -9,7 +9,7 @@ import { addToCart } from "@/lib/store-cart";
 import { getTrackingCookies, trackAddToCart, trackViewContent } from "@/lib/tracking";
 import { trackViewContentServer } from "@/lib/capi.functions";
 import { useResellerTools, stripHtml, CopyButton, ImageDownloadTools } from "@/components/store/reseller-tools";
-import { ProductCodeChip } from "@/components/product-code";
+import { PreviousPrice, SoldCount } from "../product-presentation";
 import { useStore } from "@/components/store/store-context";
 import { PoripatiProductBoundary } from "@/components/store/theme-loader";
 import { SohojProductPage } from "@/components/store/sohoj-pdp";
@@ -39,6 +39,7 @@ export function ProductPageContent({ slug, code: propCode }: { slug: string; cod
   const mainOrderRef = useRef<HTMLDivElement>(null);
   const [isMainVisible, setIsMainVisible] = useState(true);
   const viewContentCapi = useServerFn(trackViewContentServer);
+  const [relatedVisible, setRelatedVisible] = useState(16);
 
   useEffect(() => {
     const el = mainOrderRef.current;
@@ -110,14 +111,16 @@ export function ProductPageContent({ slug, code: propCode }: { slug: string; cod
   const detailsText = stripHtml(
     [listing.custom_description || p.short_description || "", p.description || ""].filter(Boolean).join("\n\n"),
   );
-  const [relatedVisible, setRelatedVisible] = useState(16);
   const sameCategory = store.listings.filter(
-    (l) => l.id !== listing.id && l.product && categoryIdsOf(p).some((cid) => inCategory(l.product!, cid)),
+    (l) => {
+      const product = l.product;
+      return l.id !== listing.id && product !== null && categoryIdsOf(p).some((cid) => inCategory(product, cid));
+    },
   );
   const otherProducts = store.listings.filter(
     (l) => l.id !== listing.id && !sameCategory.some((s) => s.id === l.id),
   );
-  const recommended = useMemo(() => [...sameCategory, ...otherProducts], [sameCategory, otherProducts]);
+  const recommended = [...sameCategory, ...otherProducts];
 
   const jsonLd = {
     "@context": "https://schema.org/",
@@ -134,7 +137,8 @@ export function ProductPageContent({ slug, code: propCode }: { slug: string; cod
   };
 
   function add(goCheckout: boolean) {
-    addToCart(code, listing!.id, qty);
+    if (!listing) return;
+    addToCart(code, listing.id, qty);
     trackAddToCart({ id: p.id, name: title, price, qty });
     if (goCheckout) nav({ to: store.url("/checkout") });
     else toast.success("কার্টে যোগ হয়েছে");
@@ -206,9 +210,7 @@ export function ProductPageContent({ slug, code: propCode }: { slug: string; cod
               <CopyButton value={title} className="mt-1.5 flex-none opacity-70 group-hover:opacity-100" />
             )}
           </div>
-          <div className="mt-2">
-            <ProductCodeChip code={p.product_code} />
-          </div>
+          <SoldCount id={listing.id} />
           {(listing.custom_description || p.short_description) && (
             <p className={cx("mt-3 text-sm leading-relaxed", muted)}>
               {listing.custom_description || p.short_description}
@@ -216,7 +218,7 @@ export function ProductPageContent({ slug, code: propCode }: { slug: string; cod
           )}
 
           <div className="mt-5 flex flex-wrap items-center justify-start gap-5">
-            <Price value={price} className="text-3xl md:text-4xl" />
+            <div className="flex flex-col gap-1"><Price value={price} className="text-3xl md:text-4xl" /><PreviousPrice price={price} previous={listing.compare_at_price} /></div>
             <div className={cx("inline-flex items-center rounded-[var(--st-radius-sm)] border bg-[var(--st-surface)]", borderc)}>
               <button
                 onClick={() => setQty((q) => Math.max(1, q - 1))}

@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, Flame, ShoppingBag, ShoppingBasket } from "l
 import { addToCart, bdt } from "@/lib/store-cart";
 import { trackAddToCart } from "@/lib/tracking";
 import { useStore, type StoreListing } from "./store-context";
+import { PreviousPrice, useSoldCount } from "./product-presentation";
 
 export const cx = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(" ");
 
@@ -154,22 +155,13 @@ export function Price({ value, className }: { value: number; className?: string 
   );
 }
 
-/** Deterministic "sold" count so the social proof never jumps between renders. */
-function soldCount(id: string) {
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) {
-    hash = (hash << 5) - hash + id.charCodeAt(i);
-    hash |= 0;
-  }
-  return Math.abs(hash % 200) + 15;
-}
-
 export function ProductCard({ listing }: { listing: StoreListing }) {
   const { code, theme, title, image, content, url } = useStore();
   const navigate = useNavigate();
   const img = image(listing);
-  const p = listing.product!;
-  const sold = useMemo(() => soldCount(p.id), [p.id]);
+  const p = listing.product;
+  const sold = useSoldCount(listing.id);
+  if (!p) return null;
   const price = Number(listing.selling_price);
   const to = { to: url(`/p/${p.slug}`) };
 
@@ -210,12 +202,12 @@ export function ProductCard({ listing }: { listing: StoreListing }) {
           <h3 className="truncate text-[13px] leading-snug text-[var(--st-fg)]" title={title(listing)}>
             {title(listing)}
           </h3>
-          <div className="mt-1.5 flex items-baseline gap-2">
-            <Price value={price} className="text-base font-extrabold" />
+          <div className="mt-1.5 flex flex-wrap items-baseline gap-2">
+            <Price value={price} className="text-base font-extrabold" /><PreviousPrice price={price} previous={listing.compare_at_price} />
           </div>
-          <div className={cx("mt-1 flex items-center gap-1 text-[10px] font-semibold", muted)}>
+          {sold !== null && <div className={cx("mt-1 flex items-center gap-1 text-[10px] font-semibold", muted)}>
             <Flame className="h-3 w-3 text-[var(--st-primary)]" /> {sold} sold
-          </div>
+          </div>}
           <button
             type="button"
             onClick={handleDirectOrder}
@@ -248,10 +240,10 @@ export function ProductCard({ listing }: { listing: StoreListing }) {
         >
           {title(listing)}
         </h3>
-        <div className="mt-1.5 flex items-baseline gap-2">
-          <Price value={price} className="text-sm tracking-widest" />
+        <div className="mt-1.5 flex flex-wrap items-baseline gap-2">
+          <Price value={price} className="text-sm tracking-widest" /><PreviousPrice price={price} previous={listing.compare_at_price} />
         </div>
-        <div className={cx("mt-1 text-[10px] uppercase tracking-[0.22em]", muted)}>{sold} sold</div>
+        {sold !== null && <div className={cx("mt-1 text-[10px] uppercase tracking-[0.22em]", muted)}>{sold} sold</div>}
       </Link>
     );
 
@@ -273,10 +265,10 @@ export function ProductCard({ listing }: { listing: StoreListing }) {
           <h3 className="truncate text-[13px] font-semibold leading-snug text-[var(--st-fg)]" title={title(listing)}>
             {title(listing)}
           </h3>
-          <div className="mt-1.5 flex items-baseline gap-2">
-            <Price value={price} className="text-[16px] font-extrabold" />
+          <div className="mt-1.5 flex flex-wrap items-baseline gap-2">
+            <Price value={price} className="text-[16px] font-extrabold" /><PreviousPrice price={price} previous={listing.compare_at_price} />
           </div>
-          <div className={cx("mt-0.5 text-[11px]", muted)}>{sold} জন কিনেছেন</div>
+          {sold !== null && <div className={cx("mt-0.5 text-[11px]", muted)}>{sold} জন কিনেছেন</div>}
         </div>
         <button
           type="button"
@@ -298,14 +290,15 @@ export function ProductCard({ listing }: { listing: StoreListing }) {
     >
       <div className="relative aspect-square overflow-hidden bg-[var(--st-bg-alt)]">
         <Img />
-        <span className="absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-full bg-black/55 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur-sm">
+        {sold !== null && <span className="absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-full bg-black/55 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur-sm">
           <ShoppingBag className="h-2.5 w-2.5" /> {sold} sold
-        </span>
+        </span>}
       </div>
       <div className="flex flex-1 flex-col justify-between p-2.5 sm:p-3.5">
         <h3 className="truncate text-[13px] sm:text-sm font-semibold leading-snug text-[var(--st-fg)]" title={title(listing)}>
           {title(listing)}
         </h3>
+        <div className="mt-1.5"><PreviousPrice price={price} previous={listing.compare_at_price} /></div>
         <button
           type="button"
           onClick={handleDirectOrder}

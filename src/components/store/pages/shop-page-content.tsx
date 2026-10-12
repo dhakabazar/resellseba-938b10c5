@@ -43,7 +43,7 @@ export function ShopPageContent({ query }: { query?: string }) {
   }
 
   return (
-    <section className="mx-auto max-w-6xl px-4 py-10">
+    <section className="mx-auto max-w-6xl px-4 pt-10 pb-4">
       <div className={cx("mb-8 flex items-center justify-between border-b pb-6", borderc)}>
         <div>
           <Heading className="text-2xl md:text-3xl">
@@ -69,9 +69,9 @@ export function ShopPageContent({ query }: { query?: string }) {
       )}
 
       {visible < filtered.length && (
-        <div className="mt-10 flex justify-center">
+        <div className="mt-6 flex justify-center">
           <Button
-            className="rounded-full px-8 py-3 font-extrabold text-sm bg-[var(--st-primary)] text-[var(--st-on-primary)] hover:bg-[var(--st-primary)] hover:opacity-90 shadow-md animate-order-jiggle transition-all"
+            className="min-h-12 min-w-48 rounded-full px-10 py-3.5 font-extrabold text-base bg-[var(--st-primary)] text-[var(--st-on-primary)] hover:bg-[var(--st-primary)] hover:opacity-90 shadow-md animate-order-jiggle transition-all"
             onClick={() => setVisible((v) => v + PAGE_SIZE)}
           >
             আরও দেখুন

@@ -15,6 +15,7 @@ import { DataToolbar, Pagination, usePaginated, type FilterDef } from "@/compone
 import { CopyButton, ImageDownloadTools, stripHtml } from "@/components/store/reseller-tools";
 import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
 import { ProductCodeChip } from "@/components/product-code";
+import { validPreviousPrice, productDiscount } from "@/lib/store-product-presentation";
 import { ProductMediaGallery } from "@/components/product-media-gallery";
 
 type P = {
@@ -44,6 +45,7 @@ type Opt = { id: string; name: string; product_count?: number };
 
 export const Route = createFileRoute("/_authenticated/reseller/catalog")({
   component: CatalogPage,
+  head: () => ({ meta: [{ title: "Reseller Catalog — Ecom Seller BD" }, { name: "description", content: "Choose products and set your store selling prices." }, { property: "og:title", content: "Reseller Catalog — Ecom Seller BD" }, { property: "og:description", content: "Choose products and set your store selling prices." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
 });
 
 function CatalogPage() {
@@ -56,6 +58,7 @@ function CatalogPage() {
   const [listed, setListed] = useState<Set<string>>(new Set());
   const [selected, setSelected] = useState<P | null>(null);
   const [price, setPrice] = useState("");
+  const [previousPrice, setPreviousPrice] = useState("");
   const [busy, setBusy] = useState(false);
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
@@ -132,6 +135,7 @@ function CatalogPage() {
   const openList = (p: P) => {
     setSelected(p);
     setPrice(String(p.suggested_price));
+    setPreviousPrice("");
   };
 
   async function addListing() {
@@ -139,6 +143,8 @@ function CatalogPage() {
     const priceNum = Number(price);
     // Reseller's minimum sell = reseller_price + packaging (delivery is separate, charged to customer)
     const minPrice = selected.reseller_price + selected.packaging_cost;
+    if (!price.trim() || !Number.isFinite(priceNum)) return toast.error("Enter a valid selling price");
+    if (!validPreviousPrice(previousPrice, priceNum)) return toast.error("Regular price must be higher than selling price");
     if (priceNum < minPrice) {
       toast.error(`Selling price must be at least ৳${minPrice} (product + packaging). Delivery is charged separately.`);
       return;
@@ -148,6 +154,7 @@ function CatalogPage() {
       reseller_id: resellerId,
       product_id: selected.id,
       selling_price: priceNum,
+      compare_at_price: previousPrice.trim() ? Number(previousPrice) : null,
       extra_delivery_inside: 0,
       extra_delivery_outside: 0,
     });
@@ -429,6 +436,11 @@ function CatalogPage() {
                 onChange={(e) => setPrice(e.target.value)}
                 className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
               />
+            </div>
+            <div className="mt-4">
+              <label htmlFor="new-listing-regular-price" className="mb-1 block text-xs font-medium">Regular price (৳) — optional</label>
+              <input id="new-listing-regular-price" type="number" min="0" value={previousPrice} onChange={e => setPreviousPrice(e.target.value)} className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" />
+              {productDiscount(Number(price), previousPrice) && <p className="mt-1 text-xs text-primary">{productDiscount(Number(price), previousPrice)?.percent}% discount · Save ৳{productDiscount(Number(price), previousPrice)?.saving}</p>}
             </div>
             <div className="mt-4">
               <ResellerProductCalc

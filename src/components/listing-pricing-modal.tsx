@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, X, Save, TrendingUp } from "lucide-react";
 import { ProductCodeChip } from "@/components/product-code";
+import { Button } from "@/components/ui/button";
+import { validPreviousPrice, productDiscount } from "@/lib/store-product-presentation";
 import { getGlobalSettings } from "@/lib/app-data";
 import { fetchResellerPriceMap, hasCustomPrice, wholesalePrice } from "@/lib/reseller-prices";
 import {
@@ -35,6 +37,7 @@ type PricingProduct = {
 type PricingListing = {
   id: string;
   selling_price: number;
+  compare_at_price: number | null;
   is_active: boolean;
   products: PricingProduct | null;
 };
@@ -53,6 +56,7 @@ export function ListingPricingModal({
   const [row, setRow] = useState<PricingListing | null>(null);
   const [loading, setLoading] = useState(true);
   const [price, setPrice] = useState("");
+  const [previousPrice, setPreviousPrice] = useState("");
   const [busy, setBusy] = useState(false);
 
   const [settingsTick, setSettingsTick] = useState(0);
@@ -68,7 +72,7 @@ export function ListingPricingModal({
         supabase
           .from("reseller_listings")
           .select(
-            "id,selling_price,is_active,products(id,name,product_code,og_image_url,reseller_price,packaging_cost,suggested_price,stock,brand_id,category_id,delivery_mode,delivery_flat,delivery_inside,delivery_outside,delivery_sub)",
+            "id,selling_price,compare_at_price,is_active,products(id,name,product_code,og_image_url,reseller_price,packaging_cost,suggested_price,stock,brand_id,category_id,delivery_mode,delivery_flat,delivery_inside,delivery_outside,delivery_sub)",
           )
           .eq("id", id)
           .maybeSingle(),
@@ -86,6 +90,7 @@ export function ListingPricingModal({
       }
       setRow(l);
       setPrice(l ? String(l.selling_price) : "");
+      setPreviousPrice(l?.compare_at_price != null ? String(l.compare_at_price) : "");
       setSettingsTick((t) => t + 1);
       setLoading(false);
     })();
@@ -122,10 +127,11 @@ export function ListingPricingModal({
       return toast.error(
         `Selling price must be at least ${taka(calc.cost)} (product + packaging). Delivery is charged to the customer separately.`,
       );
+    if (!validPreviousPrice(previousPrice, calc.sell)) return toast.error("Regular price must be higher than selling price");
     setBusy(true);
     const { error } = await supabase
       .from("reseller_listings")
-      .update({ selling_price: calc.sell })
+      .update({ selling_price: calc.sell, compare_at_price: previousPrice.trim() ? Number(previousPrice) : null })
       .eq("id", row.id);
     setBusy(false);
     if (error) return toast.error(error.message);
@@ -244,6 +250,11 @@ export function ListingPricingModal({
               )}
             </div>
 
+            <div>
+              <label htmlFor="listing-regular-price" className="mb-1.5 block text-sm font-medium">Regular price (৳) — optional</label>
+              <input id="listing-regular-price" type="number" min="0" step="1" value={previousPrice} onChange={e => setPreviousPrice(e.target.value)} className="w-full rounded-lg border bg-background px-3 py-2 text-lg font-semibold outline-none focus:ring-2 focus:ring-ring" />
+              {productDiscount(calc.sell, previousPrice) && <p className="mt-1 text-xs text-primary">{productDiscount(calc.sell, previousPrice)?.percent}% discount · Save {taka(productDiscount(calc.sell, previousPrice)?.saving ?? 0)}</p>}
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="rounded-xl border bg-muted/30 p-3">
                 <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
@@ -298,7 +309,7 @@ export function ListingPricingModal({
               <button
                 type="button"
                 onClick={save}
-                disabled={busy || !calc.valid || calc.sell < calc.cost}
+                disabled={busy || !calc.valid || calc.sell < calc.cost || !validPreviousPrice(previousPrice, calc.sell)}
                 className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
               >
                 {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
