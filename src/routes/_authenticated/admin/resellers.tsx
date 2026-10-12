@@ -216,12 +216,8 @@ function FilterButtonRow({
   onSelect: (value: string) => void;
 }) {
   return (
-    <div className="grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      {Array.from(new Set(options.map((o) => o.group))).map((group) => (
-        <section key={group} className="min-w-0 space-y-2">
-          <h3 className="text-xs font-semibold text-muted-foreground">{group}</h3>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-1">
-      {options.filter((o) => o.group === group).map((o) => {
+    <div className="flex min-w-0 flex-wrap gap-2">
+      {options.map((o) => {
         const isActive = active === o.value;
         return (
           <Button
@@ -230,18 +226,15 @@ function FilterButtonRow({
             onClick={() => onSelect(o.value)}
             variant={isActive ? "default" : "outline"}
             aria-pressed={isActive}
-            className="h-auto min-h-10 min-w-0 justify-between gap-2 whitespace-normal px-2.5 py-2 text-left text-xs"
+            className={`h-auto min-w-0 gap-1.5 px-2.5 py-1.5 text-xs sm:text-sm ${isActive ? "border border-primary" : "hover:bg-muted"}`}
           >
-            <span className="min-w-0 break-words">{o.label}</span>
+            <span className="truncate">{o.label}</span>
             <span className={`shrink-0 text-[11px] tabular-nums ${isActive ? "opacity-80" : "text-muted-foreground"}`}>
               {o.count}
             </span>
           </Button>
         );
       })}
-          </div>
-        </section>
-      ))}
     </div>
   );
 }
@@ -991,13 +984,13 @@ function ResellersPage() {
 
 
       {/* One merged filter set: status + deposit + package + active plan, single selection */}
-      <div className="mb-4 min-w-0 border-b pb-3">
+      <div className="mb-3 min-w-0">
         <Button
           variant="outline"
           onClick={() => setFiltersOpen((open) => !open)}
           aria-expanded={filtersOpen}
           aria-controls="reseller-network-filters"
-          className="grid h-auto min-h-10 w-full grid-cols-[minmax(0,1fr)_auto] gap-3 px-3 py-2 sm:w-auto"
+          className="grid h-auto min-h-10 w-full grid-cols-[minmax(0,1fr)_auto] gap-3 px-3 py-2 sm:hidden"
         >
           <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-left">
             <span>Filters</span>
@@ -1007,7 +1000,7 @@ function ResellersPage() {
           </span>
           <ChevronDown className={`shrink-0 transition-transform ${filtersOpen ? "rotate-180" : ""}`} />
         </Button>
-        <div id="reseller-network-filters" hidden={!filtersOpen} className="pt-4">
+        <div id="reseller-network-filters" className={`${filtersOpen ? "block" : "hidden"} pt-3 sm:block sm:pt-0`}>
         <FilterButtonRow
           active={
             planFilter
@@ -1095,7 +1088,7 @@ function ResellersPage() {
           />
             )}
             {/* Global joined-date scope — every other filter/count works inside it. */}
-            <div className="col-span-2 min-w-0 w-full sm:w-auto">
+            <div className="min-w-0 w-full sm:w-auto sm:shrink-0">
               <DateRangeBar
                 compact
                 label="Joined"
@@ -1115,7 +1108,7 @@ function ResellersPage() {
         }}
         right={
           depositDueTotal > 0 ? (
-            <span className="col-span-2 inline-flex min-w-0 items-center gap-1 rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs font-semibold text-destructive">
+            <span className="col-span-2 inline-flex min-w-0 items-center gap-1 rounded-full border border-destructive/30 bg-destructive/5 px-3 py-1.5 text-xs font-semibold text-destructive sm:shrink-0 sm:whitespace-nowrap">
               <AlertTriangle className="h-3 w-3" />
               Total due ৳{depositDueTotal.toLocaleString()}
             </span>
