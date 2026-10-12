@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Restore original reseller-network desktop filters; mobile-only collapse and two-column toolbar (build OK; signed-in account lacks admin access for browser verification)
+
 - [x] Product-page sold range and hide storefront product codes
 - [x] Single-listing previous price with storefront discounts; preserve bulk behavior
 - [x] Compact theme headers/top strip on scroll, announcement controls and selected mobile cart labels

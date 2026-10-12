@@ -105,9 +105,9 @@ export function DataToolbar({
 
   return (
     <div className="mb-4 space-y-2">
-      <div className={stackedMobile ? "grid min-w-0 grid-cols-1 items-center gap-2 xl:grid-cols-[minmax(0,1fr)_auto]" : "grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2"}>
+      <div className={stackedMobile ? "grid min-w-0 grid-cols-2 items-center gap-2 sm:grid-cols-[minmax(0,1fr)_auto]" : "grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2"}>
         {searchInput}
-        <div className={stackedMobile ? "grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 sm:flex sm:flex-wrap xl:justify-end [&>select]:h-10" : "flex shrink-0 items-center gap-2"}>
+        <div className={stackedMobile ? "contents sm:flex sm:shrink-0 sm:items-center sm:gap-2 [&>select]:min-w-0 [&>select]:max-sm:w-full" : "flex shrink-0 items-center gap-2"}>
           {middle}
           {perPageSelect}
           {right}
