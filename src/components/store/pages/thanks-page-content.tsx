@@ -160,6 +160,16 @@ export function ThanksPageContent({
         }
       } catch (err) {
         console.error("[ThanksPage] Order load error:", err);
+        if (!fired.current && alive) {
+          // Order lookup failed — still report the purchase (server reads the order itself).
+          fired.current = true;
+          const eventId = `pur_${n}`;
+          trackPurchase({ orderNumber: n, total: 0, eventId });
+          const cookies = getTrackingCookies();
+          capi({
+            data: { orderNumber: n, code, eventId, origin: window.location.origin, ...cookies },
+          }).catch(() => {});
+        }
       }
     })();
 
