@@ -17,6 +17,9 @@ import {
   resellerHeldAdvance,
   type ProfitOrder,
 } from "@/lib/finance-report";
+import { withKeptCost } from "@/lib/business-report";
+
+type MoneyItem = { quantity: number | string; returned_qty?: number | string | null; line_total?: number | string | null; sa_price?: number | string | null };
 
 type MoneyOrder = ProfitOrder & {
   subtotal?: number | string | null;
@@ -101,14 +104,27 @@ export function AdvanceChip({ order, className = "" }: { order: MoneyOrder; clas
 }
 
 export function OrderMoneyPanel({
-  order,
+  order: rawOrder,
   role,
+  items,
   className = "",
 }: {
   order: MoneyOrder;
+  /** Order lines — needed so returned items (partial_item) leave the bill and the cost. */
+  items?: MoneyItem[];
   role: "admin" | "reseller";
   className?: string;
 }) {
+  const order: MoneyOrder =
+    items && items.length ? (withKeptCost(rawOrder as any, items as any) as MoneyOrder) : rawOrder;
+  const returnedValue =
+    order.status === "partial_item" && items
+      ? items.reduce((s, it) => {
+          const q = n(it.quantity);
+          const r = Math.min(n(it.returned_qty), q);
+          return s + (q > 0 ? (n(it.line_total) / q) * r : 0);
+        }, 0)
+      : 0;
   const subtotal = n(order.subtotal);
   const discount = n(order.discount);
   const total = n(order.total);
@@ -145,7 +161,13 @@ export function OrderMoneyPanel({
           <Row label="Subtotal" value={bdt(subtotal)} />
           <Row label="Delivery charge" value={bdt(n(order.shipping_cost))} />
           {discount > 0 && <Row label="Discount" value={`− ${bdt(discount)}`} tone="danger" />}
-          <Row label="Order value" value={bdt(total)} tone="primary" strong dashed={false} />
+          <Row label="Order value" value={bdt(total)} tone="primary" strong dashed={returnedValue > 0} />
+          {returnedValue > 0 && (
+            <>
+              <Row label="− Returned items" value={`− ${bdt(returnedValue)}`} tone="danger" hint="Customer ferot diyeche — sell theke baad" />
+              <Row label="Kept items value" value={bdt(Math.max(total - returnedValue, 0))} tone="primary" strong dashed={false} />
+            </>
+          )}
         </Block>
 
         <Block title="Collection">
