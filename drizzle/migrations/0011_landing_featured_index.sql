@@ -1,0 +1,1 @@
+CREATE INDEX IF NOT EXISTS idx_products_active_featured_created ON public.products (is_active, is_featured, created_at DESC);
