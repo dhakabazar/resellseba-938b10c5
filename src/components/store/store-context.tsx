@@ -8,6 +8,7 @@ import {
 } from "@/lib/store-content";
 import { buildMenuTree, type MenuNode } from "@/lib/store-menu";
 import { getStoreBootstrap } from "@/lib/bootstrap";
+import { readBodyCategoryItems, selectBodyCategories } from "@/lib/store-body-categories";
 import { injectTracking, injectTrackingFromRows, getTrackingCookies } from "@/lib/tracking";
 import { useServerFn } from "@tanstack/react-start";
 import { getStoreMarketingPixelsServer, trackPageViewServer } from "@/lib/capi.functions";
@@ -83,6 +84,7 @@ export type StoreData = {
   content: ContentReader;
   listings: StoreListing[];
   categories: StoreCategory[];
+  bodyCategories: StoreCategory[];
   /** reseller-built header menu (empty = fall back to categories) */
   menu: MenuNode[];
   /** manual payment methods usable at checkout (reseller's own wins over platform) */
@@ -253,6 +255,7 @@ export function useStoreLoader(code: string, themeOverride?: string | null, pale
 
         listings,
         categories,
+        bodyCategories: selectBodyCategories(categories, readBodyCategoryItems(s.theme_settings?.__body_categories?.items)),
         menu: buildMenuTree(menuRows),
         paymentMethods: dedupePayment(boot?.payment_methods ?? []),
 
