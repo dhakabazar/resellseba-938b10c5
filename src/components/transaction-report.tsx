@@ -193,23 +193,50 @@ export function TransactionReport({
     void fetchAllSafe(() => supabase.from("resellers").select("id,business_name,code,avatar_url").order("business_name")).then((data) => setResellers(data as any));
   }, [admin]);
 
+  const [complete, setComplete] = useState(false);
+  const perPageRef = useRef(perPage);
+  perPageRef.current = perPage;
+
   useEffect(() => {
     if (!admin && !resellerId) return;
     const { fromTs, toTs } = resolveRange(range);
+    let cancelled = false;
     setLoading(true);
+    setComplete(false);
     setError(null);
+    const rid = (admin ? reseller : resellerId) || null;
+    const args = {
+      _reseller_id: rid,
+      _from: fromTs != null ? new Date(fromTs).toISOString() : null,
+      _to: toTs != null ? new Date(toTs).toISOString() : null,
+    };
+    const pp = perPageRef.current;
+    // Phase 1: first page only (server already computes the true running balance
+    // over the full history, so these rows are correct as-is).
+    if (pp !== "all") {
+      void supabase
+        .rpc("transaction_report", { ...args, _limit: pp } as never)
+        .then(({ data, error }) => {
+          if (cancelled || error) return;
+          setRows((prev) => (prev === fullRef.current && fullRef.current.length && !cancelledRef(cancelled) ? prev : (data ?? []) as TxRow[]));
+          setLoading(false);
+        });
+    }
+    // Phase 2: full set — totals/stat cards only use this.
     void supabase
-      .rpc("transaction_report", {
-        _reseller_id: (admin ? reseller : resellerId) || null,
-        _from: fromTs != null ? new Date(fromTs).toISOString() : null,
-        _to: toTs != null ? new Date(toTs).toISOString() : null,
-        _limit: 0,
-      } as never)
+      .rpc("transaction_report", { ...args, _limit: 0 } as never)
       .then(({ data, error }) => {
+        if (cancelled) return;
         if (error) setError(error.message);
-        setRows(withRunningBalance((data ?? []) as TxRow[], Boolean((admin ? reseller : resellerId) || "")));
+        const full = withRunningBalance((data ?? []) as TxRow[], Boolean(rid));
+        fullRef.current = full;
+        setRows(full);
+        setComplete(true);
         setLoading(false);
       });
+    return () => {
+      cancelled = true;
+    };
   }, [admin, reseller, resellerId, range]);
 
   const filtered = useMemo(() => {
