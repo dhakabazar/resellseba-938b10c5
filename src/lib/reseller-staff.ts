@@ -165,9 +165,9 @@ export const RESELLER_MENU_PERMISSIONS: PermissionGroup[] = [
       },
       {
         key: "menus",
-        label: "Header menu",
-        labelBn: "মেনু নেভিগেশন",
-        description: "স্টোর হেডার ও ক্যাটাগরি মেনু সাজানো",
+        label: "Menu & categories",
+        labelBn: "মেনু ও ক্যাটাগরি",
+        description: "হেডার মেনু ও বডি ক্যাটাগরি সাজানো",
       },
       {
         key: "domain",

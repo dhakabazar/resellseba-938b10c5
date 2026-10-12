@@ -3460,6 +3460,7 @@ export type Database = {
           status: string
         }[]
       }
+      reseller_menu_page: { Args: { _rid: string }; Returns: Json }
       reseller_orders_page: { Args: never; Returns: Json }
       reseller_profit_summary: {
         Args: { _reseller_id: string }
@@ -3536,6 +3537,10 @@ export type Database = {
       restore_rows: { Args: { _rows: Json; _table: string }; Returns: number }
       restore_set_triggers: { Args: { _enabled: boolean }; Returns: undefined }
       restore_wipe: { Args: { _tables: string[] }; Returns: undefined }
+      save_store_body_categories: {
+        Args: { _items: Json; _rid: string }
+        Returns: undefined
+      }
       seed_reseller_store: { Args: { _reseller_id: string }; Returns: number }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }

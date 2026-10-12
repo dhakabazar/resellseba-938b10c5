@@ -268,7 +268,7 @@ export function BenefitStrip() {
 /* -------------------------------------------------------------- categories */
 
 export function CategoryStrip() {
-  const { code, categories, content, theme, url } = useStore();
+  const { code, bodyCategories: categories, content, theme, url } = useStore();
   if (!content.flag("cat_show") || !categories.length) return null;
   const title = content.text("cat_title");
 

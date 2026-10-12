@@ -37,9 +37,22 @@ import {
   type MenuKind,
 } from "@/lib/store-menu";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { BodyCategoryEditor, type CategorySource } from "@/components/store/body-category-editor";
+import { readBodyCategoryItems, type BodyCategoryItem } from "@/lib/store-body-categories";
+import { clearBootstrapCache } from "@/lib/bootstrap";
 
 export const Route = createFileRoute("/_authenticated/reseller/menus")({
   component: MenusPage,
+  head: () => ({ meta: [
+    { title: "Menu & Categories | Ecom Seller BD" },
+    { name: "description", content: "Manage your store header menu and selected active body categories across all themes." },
+    { property: "og:title", content: "Menu & Categories | Ecom Seller BD" },
+    { property: "og:description", content: "Customize header navigation and body category selections for your reseller store." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
 });
 
 const inp = "w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring";
@@ -58,6 +71,10 @@ function MenusPage() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [dirty, setDirty] = useState(false);
+  const [section, setSection] = useState("header");
+  const [bodyItems, setBodyItems] = useState<BodyCategoryItem[]>([]);
+  const [bodySources, setBodySources] = useState<CategorySource[]>([]);
+  const [bodyDirty, setBodyDirty] = useState(false);
 
   const [categories, setCategories] = useState<SourceItem[]>([]);
   const [products, setProducts] = useState<SourceItem[]>([]);
@@ -86,16 +103,24 @@ function MenusPage() {
         if (alive) setStoreUrl(url);
       });
 
-      const [menu, cats, listings] = await Promise.all([
-        fetchMenuRows(r.id, false),
-        supabase.from("categories").select("id,name,slug,image_url,sort_order").eq("is_active", true).order("sort_order"),
-        supabase
-          .from("reseller_listings")
-          .select("id, custom_title, product:products(name,slug,is_active)")
-          .eq("reseller_id", r.id)
-          .eq("is_active", true),
-      ]);
+      const { data, error } = await supabase.rpc("reseller_menu_page", { _rid: r.id });
       if (!alive) return;
+      if (error || !data) {
+        toast.error(error?.message ?? "সেটিং পাওয়া যায়নি");
+        setLoading(false);
+        return;
+      }
+      const page = data as unknown as {
+        menu: Parameters<typeof buildMenuTree>[0];
+        categories: (CategorySource & { slug: string })[];
+        listings: { id: string; custom_title: string | null; product: { name: string; slug: string; is_active: boolean } | null }[];
+        body_items: string | null;
+      };
+      const menu = page.menu ?? [];
+      const cats = { data: page.categories ?? [] };
+      const listings = { data: page.listings ?? [] };
+      setBodySources(cats.data);
+      setBodyItems(readBodyCategoryItems(page.body_items) ?? cats.data.map((c) => ({ id: c.id, is_active: true })));
 
       setItems(flattenMenu(buildMenuTree(menu)));
       setCategories(
@@ -113,13 +138,12 @@ function MenusPage() {
           custom_title: string | null;
           product: { name: string; slug: string; is_active: boolean } | null;
         }[])
-          .filter((l) => l.product?.is_active)
-          .map((l) => ({
-            key: `prod:${l.product!.slug}`,
-            label: l.custom_title || l.product!.name,
+          .flatMap((l) => l.product?.is_active ? [{
+            key: `prod:${l.product.slug}`,
+            label: l.custom_title || l.product.name,
             kind: "product" as MenuKind,
-            ref_slug: l.product!.slug,
-          })),
+            ref_slug: l.product.slug,
+          }] : []),
       );
       setLoading(false);
     })();
@@ -167,11 +191,19 @@ function MenusPage() {
     if (!rid) return;
     setBusy(true);
     try {
-      await saveMenuRows(rid, items);
-      const fresh = await fetchMenuRows(rid, false);
-      setItems(flattenMenu(buildMenuTree(fresh)));
-      setDirty(false);
-      toast.success("Menu save hoyeche");
+      if (section === "body") {
+        const { error } = await supabase.rpc("save_store_body_categories", { _rid: rid, _items: bodyItems });
+        if (error) throw error;
+        setBodyDirty(false);
+      } else {
+        await saveMenuRows(rid, items);
+        const fresh = await fetchMenuRows(rid, false);
+        setItems(flattenMenu(buildMenuTree(fresh)));
+        setDirty(false);
+      }
+      clearBootstrapCache(`store:${code}`);
+      try { sessionStorage.removeItem(`__st_boot_${code}`); } catch { /* storage may be unavailable */ }
+      toast.success(section === "body" ? "বডি ক্যাটাগরি সংরক্ষিত হয়েছে" : "হেডার মেনু সংরক্ষিত হয়েছে");
     } catch (e) {
       toast.error((e as Error).message || "Menu save fail");
     } finally {
@@ -196,8 +228,7 @@ function MenusPage() {
   return (
     <div>
       <PageHeader
-        title="Header menu builder"
-        description="Drag kore menu sajao, sub-menu / child-menu banao ar mega menu on koro — store header ei onujai dekhabe."
+        title="মেনু ও ক্যাটাগরি"
         actions={
           <div className="flex items-center gap-2">
             {(storeUrl || code) && (
@@ -210,18 +241,27 @@ function MenusPage() {
                 Preview store
               </a>
             )}
-            <button
+            <Button
               onClick={save}
-              disabled={busy || !dirty}
+              disabled={busy || !(section === "body" ? bodyDirty : dirty)}
               className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50"
             >
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-              Save menu
-            </button>
+              সংরক্ষণ করুন
+            </Button>
           </div>
         }
       />
 
+      <Tabs value={section} onValueChange={setSection}>
+        <TabsList className="mb-6">
+          <TabsTrigger value="header"><Link2 className="mr-2 h-4 w-4" />হেডার মেনু</TabsTrigger>
+          <TabsTrigger value="body"><Layers className="mr-2 h-4 w-4" />বডি ক্যাটাগরি</TabsTrigger>
+        </TabsList>
+        <TabsContent value="body">
+          <BodyCategoryEditor categories={bodySources} items={bodyItems} onChange={(next) => { setBodyItems(next); setBodyDirty(true); }} />
+        </TabsContent>
+        <TabsContent value="header">
       <div className="grid gap-5 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)]">
         {/* ---------- left: available links ---------- */}
         <div className="surface-card h-fit p-4">
@@ -540,6 +580,8 @@ function MenusPage() {
         </div>
       </div>
 
+        </TabsContent>
+      </Tabs>
       <ConfirmModal
         isOpen={removeId != null}
         title="Menu item remove?"

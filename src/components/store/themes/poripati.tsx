@@ -267,7 +267,7 @@ export function PoripatiChrome({ children }: { children: ReactNode }) {
 }
 
 function CategoryCarousel({ kicker, title }: { kicker?: string; title: string }) {
-  const { categories, code, url } = useStore();
+  const { bodyCategories: categories, code, url } = useStore();
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const t = setInterval(() => {
