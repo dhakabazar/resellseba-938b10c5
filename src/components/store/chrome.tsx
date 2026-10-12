@@ -597,7 +597,6 @@ export function StoreHeader() {
   const [open, setOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const v = theme.layout.header;
-  const scrolled = useHeaderScroll();
 
   const announcement = content.flag("announcement_show") ? content.text("announcement_text") : "";
 
@@ -606,11 +605,11 @@ export function StoreHeader() {
     const phone = settings?.support_phone?.trim();
     return (
       <div className="sticky top-0 z-40">
-        {announcement && !scrolled && (
-          <div className="bg-[var(--st-accent)] px-4 py-1.5 text-center text-[12px] font-medium text-[var(--st-on-accent)]">
-            {announcement}
-          </div>
-        )}
+        <AnnouncementStrip
+          text={announcement}
+          className="bg-[var(--st-accent)] px-4 py-1.5 text-center text-[12px] font-medium text-[var(--st-on-accent)]"
+        />
+
         <header className={cx("border-b bg-[var(--st-surface)]", borderc)}>
           <div className="mx-auto max-w-6xl px-3 py-1.5">
             <div className="flex items-center gap-3">
@@ -662,11 +661,11 @@ export function StoreHeader() {
 
   return (
     <div className="sticky top-0 z-40">
-      {announcement && !scrolled && (
-        <div className="bg-[var(--st-accent)] px-4 py-1.5 text-center text-[12px] font-semibold text-[var(--st-on-accent)] shadow-sm">
-          {announcement}
-        </div>
-      )}
+      <AnnouncementStrip
+        text={announcement}
+        className="bg-[var(--st-accent)] px-4 py-1.5 text-center text-[12px] font-semibold text-[var(--st-on-accent)] shadow-sm"
+      />
+
 
       {v === "bar" ? (
         <div className="bg-[var(--st-surface)]">
