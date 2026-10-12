@@ -3089,6 +3089,18 @@ export type Database = {
         Returns: boolean
       }
       admin_lookups: { Args: never; Returns: Json }
+      admin_order_status_counts: {
+        Args: {
+          _area?: string
+          _courier?: string
+          _from_ts?: number
+          _q?: string
+          _reseller_id?: string
+          _search_mode?: string
+          _to_ts?: number
+        }
+        Returns: Json
+      }
       admin_orders_page: {
         Args: { _from_ts?: number; _statuses?: string[]; _to_ts?: number }
         Returns: Json

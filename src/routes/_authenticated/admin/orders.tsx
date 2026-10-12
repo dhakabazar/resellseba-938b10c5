@@ -244,11 +244,7 @@ function AdminOrdersPage() {
     setOrders((pl.orders ?? []) as OrderRow[]);
     setOrderItems((pl.items ?? []) as OrderItemLite[]);
     setShipments((pl.shipments ?? []) as any[]);
-    setAllOrders(
-      Object.entries((pl.status_counts ?? {}) as Record<string, number>).flatMap(([status, count]) =>
-        Array.from({ length: Number(count) || 0 }, () => ({ status })),
-      ),
-    );
+    void refreshCounts();
     const rs = (pl.resellers ?? []) as any[];
     setResellerOptions(rs.map((r: any) => ({ value: r.id, label: `${r.business_name} (/${r.code})` })));
     setResellers(rs);
@@ -275,10 +271,11 @@ function AdminOrdersPage() {
       supabase.from("orders").select(ORDER_SELECT).in("id", list),
       supabase.from("order_items").select(ITEM_SELECT).in("order_id", list),
       supabase.from("shipments").select(SHIPMENT_SELECT).in("order_id", list),
-      supabase.from("orders").select("status,created_at"),
+      Promise.resolve({ data: null }),
     ]);
+    void allStats; void inRange;
     const fetched = ((rows ?? []) as unknown) as OrderRow[];
-    setAllOrders(((allStats ?? []) as { status: string; created_at: string }[]).filter((o) => inRange(o.created_at)));
+    void refreshCounts();
     setOrders((prev) => {
       let next = prev
         .map((o) => fetched.find((f) => f.id === o.id) ?? o)
@@ -446,7 +443,37 @@ function AdminOrdersPage() {
       }
     });
   }
-  // Reload when the tab or the active date range changes so status counts follow the filter.
+  // Status tab counts follow every active filter (date, reseller, area, courier, search).
+  const countSeq = useRef(0);
+  async function refreshCounts() {
+    const seq = ++countSeq.current;
+    const f = filtersRef.current;
+    const { fromTs, toTs } = resolveDateRange(f);
+    const { data } = await supabase.rpc("admin_order_status_counts", {
+      _from_ts: fromTs ?? undefined,
+      _to_ts: toTs ?? undefined,
+      _reseller_id: f.reseller || undefined,
+      _area: f.area || undefined,
+      _courier: f.courier || undefined,
+      _q: f.q.trim() || undefined,
+      _search_mode: searchModeRef.current,
+    });
+    if (seq !== countSeq.current) return;
+    setAllOrders(
+      Object.entries((data ?? {}) as Record<string, number>).flatMap(([status, count]) =>
+        Array.from({ length: Number(count) || 0 }, () => ({ status })),
+      ),
+    );
+  }
+  const filtersRef = useRef(filters);
+  filtersRef.current = filters;
+  const searchModeRef = useRef(searchMode);
+  searchModeRef.current = searchMode;
+  useEffect(() => {
+    const t = setTimeout(() => void refreshCounts(), filters.q ? 350 : 0);
+    return () => clearTimeout(t);
+  }, [filters.reseller, filters.area, filters.courier, filters.q, filters.datePreset, filters.from, filters.to, searchMode]);
+  // Reload when the tab or the active date range changes.
   useEffect(() => {
     load();
   }, [tab, filters.datePreset, filters.from, filters.to]);
