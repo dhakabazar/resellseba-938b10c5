@@ -3,7 +3,7 @@
  * Replaces the old money timeline / earning report: every order settlement,
  * security deposit and withdraw request in one running-balance table.
  */
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Loader2, Download, Search, X, ArrowDownRight, ArrowUpRight, Wallet, TrendingUp, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -461,18 +461,18 @@ export function TransactionReport({
 
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard loadingFull={!complete} label="Total in" value={bdt(totals.inflow)} icon={<ArrowDownRight className="h-4 w-4" />} />
-        <StatCard loadingFull={!complete} label="Total out" value={bdt(totals.outflow)} icon={<ArrowUpRight className="h-4 w-4" />} />
-        <StatCard loadingFull={!complete} label="Balance" value={bdt(totals.balance)} icon={<Wallet className="h-4 w-4" />} />
+        <StatCard label="Total in" value={complete ? bdt(totals.inflow) : "…"} icon={<ArrowDownRight className="h-4 w-4" />} />
+        <StatCard label="Total out" value={complete ? bdt(totals.outflow) : "…"} icon={<ArrowUpRight className="h-4 w-4" />} />
+        <StatCard label="Balance" value={complete ? bdt(totals.balance) : "…"} icon={<Wallet className="h-4 w-4" />} />
         <StatCard
           label="Order profit / loss"
-          value={`${bdt(totals.profit)} / ${bdt(totals.loss)}`}
+          value={complete ? `${bdt(totals.profit)} / ${bdt(totals.loss)}` : "…"}
           icon={<TrendingUp className="h-4 w-4" />}
         />
-        <StatCard loadingFull={!complete} label="Security deposit" value={bdt(totals.deposit)} icon={<Wallet className="h-4 w-4" />} />
-        <StatCard loadingFull={!complete} label="Withdrawn" value={bdt(totals.withdraw)} icon={<ArrowUpRight className="h-4 w-4" />} />
-        <StatCard loadingFull={!complete} label="Transactions" value={String(filtered.length)} icon={<TrendingUp className="h-4 w-4" />} />
-        <StatCard loadingFull={!complete} label="Loss orders" value={String(filtered.filter((r) => r.kind === "loss").length)} icon={<AlertTriangle className="h-4 w-4" />} />
+        <StatCard label="Security deposit" value={complete ? bdt(totals.deposit) : "…"} icon={<Wallet className="h-4 w-4" />} />
+        <StatCard label="Withdrawn" value={complete ? bdt(totals.withdraw) : "…"} icon={<ArrowUpRight className="h-4 w-4" />} />
+        <StatCard label="Transactions" value={String(filtered.length)} icon={<TrendingUp className="h-4 w-4" />} />
+        <StatCard label="Loss orders" value={String(filtered.filter((r) => r.kind === "loss").length)} icon={<AlertTriangle className="h-4 w-4" />} />
       </div>
 
       <p className="rounded-lg border bg-muted/30 px-3 py-2 text-[11px] text-muted-foreground">{PROFIT_FORMULA_HINT}</p>
