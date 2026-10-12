@@ -18,18 +18,25 @@ export function CustomDomainStoreLayout({
   children: (props: { code: string }) => ReactNode;
   path?: string;
 }) {
-  const host = typeof window !== "undefined" ? window.location.hostname : "";
-  const cached = propCode || getCachedDomainStoreCode(host);
-  const [storeCode, setStoreCode] = useState<string | null>(cached || null);
-  const [loading, setLoading] = useState(!cached);
+  // Initial render must match the server (no window/localStorage), otherwise
+  // repeat visits with a cached domain code hydrate with different HTML (React #418).
+  const [storeCode, setStoreCode] = useState<string | null>(propCode || null);
+  const [loading, setLoading] = useState(!propCode);
   const resolveDomain = useServerFn(resolveDomainToStoreCode);
 
   useEffect(() => {
+    const host = window.location.hostname;
     if (propCode) {
       setStoreCode(propCode);
       setCachedDomainStoreCode(host, propCode);
       setLoading(false);
       return;
+    }
+
+    const cached = getCachedDomainStoreCode(host);
+    if (cached) {
+      setStoreCode(cached);
+      setLoading(false);
     }
 
     let alive = true;
@@ -38,6 +45,7 @@ export function CustomDomainStoreLayout({
         setLoading(false);
         return;
       }
+      if (cached) return;
 
       // Try 1: bootstrap cache/RPC
       try {
