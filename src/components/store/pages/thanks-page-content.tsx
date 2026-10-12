@@ -47,6 +47,15 @@ interface OrderDetail {
   }[];
 }
 
+function payLabel(m: string | null) {
+  if (!m || m === "cod") return "ক্যাশ অন ডেলিভারি";
+  return m.charAt(0).toUpperCase() + m.slice(1);
+}
+
+function areaLabel(a: string) {
+  return a === "inside_dhaka" ? "ঢাকার ভিতরে" : a === "sub_dhaka" ? "ঢাকার আশেপাশে" : "ঢাকার বাইরে";
+}
+
 export function ThanksPageContent({
   code: propCode,
   n,
@@ -304,56 +313,111 @@ export function ThanksPageContent({
 
       {/* Order Summary & Customer Info */}
       {order && (
-        <div className={cx("mt-6 overflow-hidden rounded-[var(--st-radius)] border bg-[var(--st-surface)] shadow-sm", borderc)}>
-          <div className={cx("border-b px-5 py-4", borderc)}>
-            <h2 className="text-sm font-bold uppercase tracking-wider text-[var(--st-fg)]">Order Details</h2>
+        <div className={cx("mt-6 overflow-hidden rounded-[var(--st-radius)] border bg-[var(--st-surface)] shadow-md", borderc)}>
+          {/* Header with total */}
+          <div className="relative overflow-hidden bg-gradient-to-br from-[var(--st-primary)] to-[var(--st-primary)]/75 px-5 py-5 text-white">
+            <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-white/10" />
+            <div className="absolute -bottom-10 right-16 h-20 w-20 rounded-full bg-white/10" />
+            <div className="relative flex items-end justify-between gap-4">
+              <div>
+                <div className="text-[11px] font-semibold uppercase tracking-widest opacity-80">মোট বিল</div>
+                <div className="mt-1 text-3xl font-extrabold tabular-nums">{bdt(Number(order.total))}</div>
+                <div className="mt-1 text-[11px] opacity-85">
+                  {itemCount} টি পণ্য · {payLabel(order.payment_method)}
+                </div>
+              </div>
+              <div className="text-right text-[11px] opacity-90">
+                <Clock className="ml-auto mb-1 h-4 w-4" />
+                {new Date(order.created_at).toLocaleString("bn-BD", { dateStyle: "medium", timeStyle: "short" })}
+              </div>
+            </div>
           </div>
 
           {/* Items List */}
           {order.order_items && order.order_items.length > 0 && (
-            <div className={cx("divide-y px-5 py-2", borderc)}>
-              {order.order_items.map((it) => (
-                <div key={it.id} className="flex items-center justify-between gap-4 py-3 text-sm">
-                  <div className="min-w-0 flex-1">
-                    <div className="font-semibold leading-snug text-[var(--st-fg)]">{it.product_name}</div>
-                    {it.variant_label && (
-                      <div className={cx("text-xs", muted)}>{it.variant_label}</div>
-                    )}
-                    <div className={cx("text-xs", muted)}>
-                      Qty: <span className="font-bold">{it.quantity}</span> × {bdt(Number(it.reseller_price))}
+            <div className="px-5 pt-4">
+              <div className={cx("mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider", muted)}>
+                <Package className="h-3.5 w-3.5" /> অর্ডারকৃত পণ্য
+              </div>
+              <div className="space-y-2">
+                {order.order_items.map((it, i) => (
+                  <div
+                    key={it.id}
+                    className={cx("flex items-center gap-3 rounded-[var(--st-radius-sm)] border bg-[var(--st-bg-alt)]/40 p-3", borderc)}
+                  >
+                    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[var(--st-primary)]/12 text-sm font-extrabold text-[var(--st-primary)]">
+                      {i + 1}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="line-clamp-2 text-sm font-semibold leading-snug text-[var(--st-fg)]">{it.product_name}</div>
+                      <div className={cx("mt-0.5 text-xs", muted)}>
+                        {bdt(Number(it.reseller_price))} × <span className="font-bold">{it.quantity}</span>
+                      </div>
+                    </div>
+                    <div className="text-right text-sm font-bold tabular-nums text-[var(--st-fg)]">
+                      {bdt(Number(it.reseller_price) * it.quantity)}
                     </div>
                   </div>
-                  <div className="text-right font-bold text-[var(--st-fg)]">
-                    {bdt(Number(it.reseller_price) * it.quantity)}
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           )}
 
           {/* Financial Breakdown */}
-          <div className={cx("border-t bg-[var(--st-bg-alt)]/50 px-5 py-4 text-xs space-y-1.5", borderc)}>
+          <div className={cx("mx-5 my-4 space-y-2 rounded-[var(--st-radius-sm)] border border-dashed p-4 text-sm", borderc)}>
             <div className="flex justify-between">
-              <span className={muted}>Subtotal</span>
-              <span className="font-semibold text-[var(--st-fg)]">{bdt(itemsTotal || Number(order.total))}</span>
+              <span className={muted}>পণ্যের দাম</span>
+              <span className="font-semibold tabular-nums text-[var(--st-fg)]">{bdt(itemsTotal || Number(order.total))}</span>
             </div>
             <div className="flex justify-between">
-              <span className={muted}>Delivery Charge</span>
-              <span className="font-semibold text-[var(--st-fg)]">{deliveryFee ? bdt(deliveryFee) : "Free"}</span>
+              <span className={muted}>ডেলিভারি চার্জ</span>
+              <span className="font-semibold tabular-nums text-[var(--st-fg)]">{deliveryFee ? bdt(deliveryFee) : "ফ্রি"}</span>
             </div>
-            <div className={cx("flex justify-between border-t pt-2 text-sm font-bold text-[var(--st-fg)]", borderc)}>
-              <span>Total Payable</span>
-              <span className="text-base text-[var(--st-primary)]">{bdt(Number(order.total))}</span>
+            {discount > 0 && (
+              <div className="flex justify-between text-emerald-600">
+                <span>ছাড়</span>
+                <span className="font-semibold tabular-nums">− {bdt(discount)}</span>
+              </div>
+            )}
+            <div className={cx("flex items-center justify-between border-t pt-3 font-bold text-[var(--st-fg)]", borderc)}>
+              <span>সর্বমোট</span>
+              <span className="text-xl tabular-nums text-[var(--st-primary)]">{bdt(Number(order.total))}</span>
+            </div>
+            <div className="flex justify-between text-xs">
+              <span className={muted}>পেমেন্ট</span>
+              <span
+                className={cx(
+                  "rounded-full px-2 py-0.5 font-bold",
+                  order.payment_status === "paid"
+                    ? "bg-emerald-500/15 text-emerald-700"
+                    : "bg-amber-500/15 text-amber-700",
+                )}
+              >
+                {order.payment_status === "paid"
+                  ? "পরিশোধিত"
+                  : order.payment_status === "partial"
+                    ? "আংশিক পরিশোধিত"
+                    : "ডেলিভারির সময় পরিশোধ"}
+              </span>
             </div>
           </div>
 
           {/* Customer / Delivery Info */}
-          <div className={cx("border-t px-5 py-4 text-xs space-y-2", borderc)}>
+          <div className={cx("grid gap-3 border-t px-5 py-4 text-xs sm:grid-cols-2", borderc)}>
             <div className="flex items-start gap-2">
-              <MapPin className="h-4 w-4 shrink-0 text-[var(--st-primary)]" />
+              <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[var(--st-primary)]" />
               <div>
-                <span className="font-bold text-[var(--st-fg)]">{order.customer_name}</span> · {order.customer_phone}
-                <div className={cx("mt-0.5 text-[11px]", muted)}>{order.address_line}</div>
+                <div className={cx("text-[10px] font-bold uppercase tracking-wider", muted)}>ডেলিভারি ঠিকানা</div>
+                <div className="mt-0.5 font-bold text-[var(--st-fg)]">{order.customer_name}</div>
+                <div className={cx("text-[11px]", muted)}>{order.address_line}</div>
+                {order.area && <div className={cx("text-[11px]", muted)}>{areaLabel(order.area)}</div>}
+              </div>
+            </div>
+            <div className="flex items-start gap-2">
+              <Phone className="mt-0.5 h-4 w-4 shrink-0 text-[var(--st-primary)]" />
+              <div>
+                <div className={cx("text-[10px] font-bold uppercase tracking-wider", muted)}>মোবাইল</div>
+                <div className="mt-0.5 font-bold text-[var(--st-fg)]">{order.customer_phone}</div>
               </div>
             </div>
           </div>
