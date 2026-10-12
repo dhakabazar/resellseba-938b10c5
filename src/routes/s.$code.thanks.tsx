@@ -15,7 +15,7 @@ export const Route = createFileRoute("/s/$code/thanks")({
   validateSearch: (
     s: Record<string, unknown>,
   ): { n: string; pay?: string; txn?: string } => ({
-    n: typeof s.n === "string" ? s.n : "",
+    n: s.n != null ? String(s.n).trim() : "",
     ...(typeof s.pay === "string" ? { pay: s.pay } : {}),
     ...(typeof s.txn === "string" ? { txn: s.txn } : {}),
   }),
