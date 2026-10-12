@@ -3051,7 +3051,7 @@ export type Database = {
           user_id: string
         }[]
       }
-      admin_catalog_page: { Args: never; Returns: Json }
+      admin_catalog_page: { Args: { _limit?: number }; Returns: Json }
       admin_confirm_user_email: {
         Args: { _user_id: string }
         Returns: {
@@ -3461,7 +3461,7 @@ export type Database = {
       reseller_auto_approve: { Args: never; Returns: boolean }
       reseller_auto_assign: { Args: never; Returns: boolean }
       reseller_can_note: { Args: { _order_id: string }; Returns: boolean }
-      reseller_catalog_page: { Args: never; Returns: Json }
+      reseller_catalog_page: { Args: { _limit?: number }; Returns: Json }
       reseller_dashboard: {
         Args: { _from?: string; _to?: string }
         Returns: Json

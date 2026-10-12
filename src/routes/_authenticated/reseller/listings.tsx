@@ -60,29 +60,33 @@ function ListingsPage() {
     setLoading(true);
     const r = await getMyReseller(user.id);
     if (!r) return setLoading(false);
-    const [data, priceMap] = await Promise.all([
-      fetchAllSafe(() =>
-        supabase
-          .from("reseller_listings")
-          .select(
-            "id,selling_price,is_active,products(id,brand_id,category_id,name,slug,product_code,reseller_price,packaging_cost,delivery_inside,delivery_outside,delivery_sub,delivery_mode,delivery_flat,og_image_url)",
-          )
-          .eq("reseller_id", r.id)
-          .order("created_at", { ascending: false }),
-      ),
-      fetchResellerPriceMap(r.id),
-    ]);
+    const COLS =
+      "id,selling_price,is_active,products(id,brand_id,category_id,name,slug,product_code,reseller_price,packaging_cost,delivery_inside,delivery_outside,delivery_sub,delivery_mode,delivery_flat,og_image_url)";
+    const base = () =>
+      supabase.from("reseller_listings").select(COLS).eq("reseller_id", r.id).order("created_at", { ascending: false });
+    const priceP = fetchResellerPriceMap(r.id);
     // Admin may have set a reseller specific admin price — it replaces the master one.
-    const rows = ((data ?? []) as L[]).map((l) =>
-      l.products
-        ? {
-            ...l,
-            custom_price: hasCustomPrice(l.products.id, priceMap),
-            products: { ...l.products, reseller_price: wholesalePrice(l.products, priceMap) },
-          }
-        : l,
-    );
-    setItems(rows);
+    const mapRows = (data: unknown, priceMap: Awaited<typeof priceP>) =>
+      ((data ?? []) as L[]).map((l) =>
+        l.products
+          ? {
+              ...l,
+              custom_price: hasCustomPrice(l.products.id, priceMap),
+              products: { ...l.products, reseller_price: wholesalePrice(l.products, priceMap) },
+            }
+          : l,
+      );
+    // Phase 1: first page only → instant view; phase 2: every listing in the background.
+    let fullDone = false;
+    const full = fetchAllSafe(() => base());
+    Promise.all([base().limit(perPage > 0 ? perPage : 20), priceP]).then(([{ data }, pm]) => {
+      if (fullDone || !data) return;
+      setItems(mapRows(data, pm));
+      setLoading(false);
+    });
+    const [data, priceMap] = await Promise.all([full, priceP]);
+    fullDone = true;
+    setItems(mapRows(data, priceMap));
     setLoading(false);
   }
   const didLoad = useRef(false);
