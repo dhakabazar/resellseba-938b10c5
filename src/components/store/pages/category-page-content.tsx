@@ -39,7 +39,7 @@ export function CategoryPageContent({ slug, code: propCode }: { slug: string; co
 
   if (!category)
     return (
-      <div className="mx-auto max-w-6xl px-4 py-16">
+      <div className="mx-auto max-w-6xl px-2 sm:px-4 py-16">
         <EmptyState title="Collection not found" hint="This collection is no longer available." />
         <div className="mt-6 text-center">
           <Link to={store.url("/")}>
@@ -53,7 +53,7 @@ export function CategoryPageContent({ slug, code: propCode }: { slug: string; co
 
   return (
     <div>
-      <div className="mx-auto max-w-6xl px-4 py-10">
+      <div className="mx-auto max-w-6xl px-2 sm:px-4 py-10">
         <SectionHead
           title={category.name}
           action={

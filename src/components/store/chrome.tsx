@@ -611,7 +611,7 @@ export function StoreHeader() {
         />
 
         <header className={cx("border-b bg-[var(--st-surface)]", borderc)}>
-          <div className="mx-auto max-w-6xl px-3 py-1.5">
+          <div className="mx-auto max-w-6xl px-2 sm:px-4 py-1.5">
             <div className="flex items-center gap-3">
               <button
                 className="md:hidden"
@@ -643,7 +643,7 @@ export function StoreHeader() {
           </div>
 
           <div className="hidden bg-[var(--st-primary)] md:block">
-            <div className="mx-auto max-w-6xl px-3 text-[var(--st-on-primary)] [&_a:hover]:!opacity-80 [&_a]:!border-transparent [&_a]:!font-bold [&_a]:!text-[var(--st-on-primary)]">
+            <div className="mx-auto max-w-6xl px-2 sm:px-4 text-[var(--st-on-primary)] [&_a:hover]:!opacity-80 [&_a]:!border-transparent [&_a]:!font-bold [&_a]:!text-[var(--st-on-primary)]">
               <CategoryNav variant="row" />
             </div>
           </div>
@@ -835,7 +835,7 @@ export function StoreHeader() {
               </button>
             </div>
           </div>
-          <div className={cx("mx-auto hidden max-w-6xl px-4 pb-1 md:block")}>
+          <div className={cx("mx-auto hidden max-w-6xl px-2 sm:px-4 pb-1 md:block")}>
             <CategoryNav variant="row" />
           </div>
           <MobileDrawer open={open} onClose={() => setOpen(false)} />

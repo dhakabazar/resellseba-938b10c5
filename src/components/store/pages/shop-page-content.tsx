@@ -43,7 +43,7 @@ export function ShopPageContent({ query }: { query?: string }) {
   }
 
   return (
-    <section className="mx-auto max-w-6xl px-4 pt-10 pb-4">
+    <section className="mx-auto max-w-6xl px-2 sm:px-4 pt-10 pb-4">
       <div className={cx("mb-8 flex items-center justify-between border-b pb-6", borderc)}>
         <div>
           <Heading className="text-2xl md:text-3xl">

@@ -65,7 +65,7 @@ export function Hero() {
   if (theme.layout.hero === "banner" || theme.layout.hero === "sohoj" || theme.id === "bazaar") {
     if (!media) return null;
     return (
-      <section className="mx-auto max-w-6xl px-3 py-3.5 sm:px-4 sm:py-5">
+      <section className="mx-auto max-w-6xl px-2 sm:px-4 py-3.5 sm:py-5">
         <div className={cx("overflow-hidden rounded-[var(--st-radius)] border bg-[var(--st-surface)]", borderc)}>
           {firstSlug ? (
             <Link to={store.url(`/p/${firstSlug}`)} className="block">
@@ -221,7 +221,7 @@ export function BenefitStrip() {
   /* সহজ শপ — কমলা সার্ভিস বার (সেকশনের সমান প্রস্থ) */
   if (theme.id === "atelier")
     return (
-      <section className="mx-auto max-w-6xl px-4 pt-5">
+      <section className="mx-auto max-w-6xl px-2 sm:px-4 pt-5">
         <div className="grid grid-cols-2 gap-x-4 gap-y-2 rounded-[var(--st-radius)] bg-[var(--st-primary)] px-4 py-3 text-[var(--st-on-primary)] shadow-[var(--st-shadow)] md:grid-cols-4">
           {items.map(({ t, d, Icon }) => (
             <div key={t} className="flex items-center gap-2">
@@ -239,7 +239,7 @@ export function BenefitStrip() {
 
   /* Aurora — glass cards with gradient icon pills */
   return (
-    <section className="mx-auto mt-4 max-w-6xl px-4 sm:-mt-6">
+    <section className="mx-auto mt-4 max-w-6xl px-2 sm:px-4 sm:-mt-6">
       <div
         className={cx(
           "grid grid-cols-2 gap-3 rounded-[var(--st-radius)] border bg-[var(--st-surface)] p-4 shadow-[var(--st-shadow)] md:grid-cols-4",
@@ -275,7 +275,7 @@ export function CategoryStrip() {
   /* Bazaar — round icon rail, scrollable like a marketplace */
   if (theme.id === "bazaar")
     return (
-      <section className="mx-auto max-w-6xl px-4 py-6">
+      <section className="mx-auto max-w-6xl px-2 sm:px-4 py-6">
         <SectionHead title={title} />
         <div className={cx("rounded-[var(--st-radius)] border bg-[var(--st-surface)] p-3", borderc)}>
           <div className="grid grid-cols-4 gap-3 sm:grid-cols-6 lg:grid-cols-8">
@@ -303,7 +303,7 @@ export function CategoryStrip() {
   /* Noir — compact, softly squared category tiles */
   if (theme.id === "noir")
     return (
-      <section className="mx-auto max-w-6xl px-4 py-10">
+      <section className="mx-auto max-w-6xl px-2 sm:px-4 py-10">
         <SectionHead title={title} />
         <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8">
           {categories.map((c) => (
@@ -334,7 +334,7 @@ export function CategoryStrip() {
   /* সহজ শপ — সাদা বর্ডার বক্সে ক্যাটাগরির নাম */
   if (theme.id === "atelier")
     return (
-      <section className="mx-auto max-w-6xl px-3 py-4">
+      <section className="mx-auto max-w-6xl px-2 sm:px-4 py-4">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
           {categories.slice(0, 10).map((c) => (
             <Link
@@ -355,7 +355,7 @@ export function CategoryStrip() {
 
   /* Aurora — compact circular category portraits */
   return (
-    <section className="mx-auto max-w-6xl px-3 py-4 sm:px-4 sm:py-8">
+    <section className="mx-auto max-w-6xl px-2 sm:px-4 py-4 sm:py-8">
       <SectionHead title={title} />
       <div className="grid grid-cols-4 gap-x-2.5 gap-y-3 sm:grid-cols-6 sm:gap-x-4 sm:gap-y-4 lg:grid-cols-8">
         {categories.map((c) => (
@@ -408,7 +408,7 @@ export function PromoBanner() {
   /* Bazaar — loud full-width offer band */
   if (theme.id === "bazaar")
     return (
-      <section className="mx-auto max-w-6xl px-4 py-4">
+      <section className="mx-auto max-w-6xl px-2 sm:px-4 py-4">
         <div className="flex flex-col items-center gap-3 rounded-[var(--st-radius)] bg-[var(--st-accent)] px-5 py-5 text-center text-[var(--st-on-accent)] md:flex-row md:text-left">
           {image && <img src={image} alt={title} loading="lazy" className="h-20 w-20 rounded-lg object-cover" />}
           <div className="flex-1">
@@ -444,7 +444,7 @@ export function PromoBanner() {
   /* সহজ শপ — ছবির অফার ব্যানার / কমলা অফার বার */
   if (theme.id === "atelier")
     return (
-      <section className="mx-auto max-w-6xl px-3 py-4">
+      <section className="mx-auto max-w-6xl px-2 sm:px-4 py-4">
         {image ? (
           <Link to={url("/")} className={cx("block overflow-hidden rounded-[var(--st-radius)] border", borderc)}>
             <img src={image} alt={title} loading="lazy" className="h-auto w-full object-cover" />
@@ -471,7 +471,7 @@ export function PromoBanner() {
 
   /* Aurora — glowing gradient card */
   return (
-    <section className="mx-auto max-w-6xl px-4 py-8">
+    <section className="mx-auto max-w-6xl px-2 sm:px-4 py-8">
       <div
         className={cx(
           "grid overflow-hidden rounded-[var(--st-radius)] bg-[var(--st-surface)] shadow-[var(--st-shadow)] md:grid-cols-[1.2fr_1fr]",
@@ -532,7 +532,7 @@ export function Reviews() {
   /* Bazaar — rating summary + compact review chips */
   if (theme.id === "bazaar")
     return (
-      <section className="mx-auto max-w-6xl px-4 py-10">
+      <section className="mx-auto max-w-6xl px-2 sm:px-4 py-10">
         <SectionHead title={title} />
         <div className="grid gap-3 md:grid-cols-[220px_1fr]">
           <div className={cx("rounded-[var(--st-radius)] border bg-[var(--st-surface)] p-4 text-center", borderc)}>
@@ -557,7 +557,7 @@ export function Reviews() {
   if (theme.id === "noir")
     return (
       <section className={cx("border-y bg-[var(--st-bg-alt)]", borderc)}>
-        <div className="mx-auto max-w-6xl px-4 py-20">
+        <div className="mx-auto max-w-6xl px-2 sm:px-4 py-20">
           <SectionHead title={title} />
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {items.map((i) => (
@@ -581,7 +581,7 @@ export function Reviews() {
   /* সহজ শপ — সাদা রিভিউ কার্ড, তারা সহ */
   if (theme.id === "atelier")
     return (
-      <section className="mx-auto max-w-6xl px-3 py-6">
+      <section className="mx-auto max-w-6xl px-2 sm:px-4 py-6">
         <SectionHead title={title} />
         <div className="grid gap-3 md:grid-cols-3">
           {items.map((i) => (
@@ -598,7 +598,7 @@ export function Reviews() {
 
   /* Aurora — soft shadow cards */
   return (
-    <section className="mx-auto max-w-6xl px-4 py-14">
+    <section className="mx-auto max-w-6xl px-2 sm:px-4 py-14">
       <SectionHead title={title} />
       <div className="grid gap-4 md:grid-cols-3">
         {items.map((i) => (
@@ -638,7 +638,7 @@ export function ThemeSignature({ slot = "mid" }: { slot?: "top" | "mid" }) {
     const phone = settings?.support_phone?.trim();
     if (!phone) return null;
     return (
-      <section className="mx-auto max-w-6xl px-3 py-3">
+      <section className="mx-auto max-w-6xl px-2 sm:px-4 py-3">
         <a
           href={`tel:${phone}`}
           className="flex flex-wrap items-center justify-center gap-2 rounded-[var(--st-radius)] bg-[var(--st-accent)] px-4 py-3 text-center text-sm font-extrabold text-[var(--st-on-accent)]"

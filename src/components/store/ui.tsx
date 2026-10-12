@@ -301,13 +301,13 @@ export function ProductGrid({ listings }: { listings: StoreListing[] }) {
   const { theme } = useStore();
   const cols =
     theme.id === "bazaar"
-      ? "grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5"
+      ? "grid-cols-2 gap-1.5 sm:grid-cols-3 sm:gap-2.5 lg:grid-cols-5"
       : theme.id === "noir"
-        ? "grid-cols-2 gap-5 md:gap-8 lg:grid-cols-4"
+        ? "grid-cols-2 gap-2 sm:gap-5 md:gap-8 lg:grid-cols-4"
         : theme.id === "atelier"
-          ? "grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5"
+          ? "grid-cols-2 gap-1.5 sm:grid-cols-3 sm:gap-3 lg:grid-cols-5"
 
-          : "grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4";
+          : "grid-cols-2 gap-2 sm:gap-4 md:grid-cols-3 lg:grid-cols-4";
   return (
     <div className={cx("grid", cols)}>
       {listings.map((l) => (
