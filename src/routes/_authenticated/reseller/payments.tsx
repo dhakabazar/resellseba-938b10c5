@@ -164,15 +164,20 @@ function ResellerPaymentsPage() {
    * global method is simply an inactive marker row for that method. Showing it
    * again deletes the marker.
    */
-  const hiddenRow = (method: string) =>
-    mine.find((m) => m.method === method && cfgBool(m.config, "hidden_global")) ?? null;
+  /** A hide marker targets ONE global account (config.global_id), so two bKash numbers toggle independently. */
+  const hiddenRow = (g: PaymentConfigRow) =>
+    mine.find(
+      (m) =>
+        cfgBool(m.config, "hidden_global") &&
+        (cfgString(m.config, "global_id") === g.id || (!cfgString(m.config, "global_id") && m.method === g.method)),
+    ) ?? null;
   const ownRow = (method: string) =>
     mine.find((m) => m.method === method && !cfgBool(m.config, "hidden_global")) ?? null;
   const myMethods = mine.filter((m) => !cfgBool(m.config, "hidden_global"));
 
   async function toggleGlobal(row: PaymentConfigRow, show: boolean) {
     if (!resellerId) return;
-    const marker = hiddenRow(row.method);
+    const marker = hiddenRow(row);
     if (show) {
       if (!marker) return;
       const { error } = await supabase.from("payment_configs").delete().eq("id", marker.id);
@@ -185,7 +190,7 @@ function ResellerPaymentsPage() {
         label: row.label,
         mode: "manual",
         is_active: false,
-        config: { hidden_global: true } as never,
+        config: { hidden_global: true, global_id: row.id } as never,
       });
       if (error) return toast.error(error.message);
       toast.success(`${row.label} removed from your store checkout`);
@@ -271,10 +276,10 @@ function ResellerPaymentsPage() {
         ) : (
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {globalManual.map((row) => {
-              const own = ownRow(row.method);
-              const overridden = Boolean(own?.is_active);
-              const hidden = Boolean(hiddenRow(row.method));
-              const shown = !hidden && !overridden;
+              const own = null;
+              const overridden = false;
+              const hidden = Boolean(hiddenRow(row));
+              const shown = !hidden;
               return (
                 <div key={row.id} className="surface-card flex flex-col p-4">
                   <div className="flex items-start gap-3">
