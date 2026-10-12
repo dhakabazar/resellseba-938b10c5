@@ -1,6 +1,6 @@
 # Roadmap
 
-- [ ] Align highlighted sold count with grid prices and after product quantity across themes; verify desktop/mobile
+- [x] Align highlighted sold count with grid prices and after product quantity across all five themes; desktop/mobile badge placement verified
 
 - [x] Restore original reseller-network desktop filters; mobile-only collapse and two-column toolbar (build OK; signed-in account lacks admin access for browser verification)
 
