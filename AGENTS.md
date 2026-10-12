@@ -18,3 +18,4 @@
 - Shared product-presentation helpers resolve discount and sold-range behavior across isolated theme bundles; random sold values are generated after hydration to avoid SSR mismatches.
 - Storefront sold badges share one theme-token presentation, with grid price rows using two-column tracks and product quantity/badge pairs grouped to preserve placement across screen sizes.
 - Theme header scroll state collapses top strips only and retains the sticky main header; announcement controls use theme content with legacy fallback to preserve existing stores.
+- Admin orders, admin resellers and reseller orders lists load in two phases (first page via the RPC _limit argument, then the full list in the background); filtering and paging stay client-side over the full set so they remain instant.

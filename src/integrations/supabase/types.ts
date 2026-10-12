@@ -3105,7 +3105,12 @@ export type Database = {
         Returns: Json
       }
       admin_orders_page: {
-        Args: { _from_ts?: number; _statuses?: string[]; _to_ts?: number }
+        Args: {
+          _from_ts?: number
+          _limit?: number
+          _statuses?: string[]
+          _to_ts?: number
+        }
         Returns: Json
       }
       admin_payout_overview: {
@@ -3132,7 +3137,10 @@ export type Database = {
           reseller_id: string
         }[]
       }
-      admin_resellers_bootstrap: { Args: never; Returns: Json }
+      admin_resellers_bootstrap: {
+        Args: { _limit?: number; _status?: string }
+        Returns: Json
+      }
       admin_set_phone_verified: {
         Args: { _user_id: string; _verified?: boolean }
         Returns: string
@@ -3476,7 +3484,7 @@ export type Database = {
         }[]
       }
       reseller_menu_page: { Args: { _rid: string }; Returns: Json }
-      reseller_orders_page: { Args: never; Returns: Json }
+      reseller_orders_page: { Args: { _limit?: number }; Returns: Json }
       reseller_profit_summary: {
         Args: { _reseller_id: string }
         Returns: {

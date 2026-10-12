@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ResellerAvatar } from "@/components/reseller-avatar";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
@@ -480,14 +480,35 @@ function ResellersPage() {
    * authors, money metrics and agents — a single round trip with no 1000-row
    * Data API cap, instead of six chained requests.
    */
+  const loadSeq = useRef(0);
   async function load() {
     setLoading(true);
-    const { data, error } = await supabase.rpc("admin_resellers_bootstrap");
+    const seq = ++loadSeq.current;
+    let fullDone = false;
+    // Phase 1: just the first page (current status filter) → instant view.
+    // Phase 2: the full list in the background for filters, counters and paging.
+    // Agent-scoped staff skip phase 1 since their rows are filtered client-side.
+    const full = supabase.rpc("admin_resellers_bootstrap", {});
+    if (!scopeOwn) {
+      const statusArg = filter !== "all" && filter !== "email_unverified" ? filter : undefined;
+      supabase.rpc("admin_resellers_bootstrap", { _limit: perPage, _status: statusArg }).then(({ data }) => {
+        if (fullDone || seq !== loadSeq.current || !data) return;
+        applyBoot(data);
+        setLoading(false);
+      });
+    }
+    const { data, error } = await full;
+    fullDone = true;
+    if (seq !== loadSeq.current) return;
     if (error) {
       toast.error(error.message);
       setLoading(false);
       return;
     }
+    applyBoot(data);
+  }
+
+  function applyBoot(data: unknown) {
     const boot = (data ?? {}) as {
       resellers?: any[];
       agents?: Array<{ id: string; display_name: string; user_id: string }>;
