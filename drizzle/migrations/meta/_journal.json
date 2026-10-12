@@ -43,6 +43,13 @@
       "when": 1791810396391,
       "tag": "0005_store_body_category_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791818447444,
+      "tag": "0006_migration",
+      "breakpoints": true
     }
   ]
 }
