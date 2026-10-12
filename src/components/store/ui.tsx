@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight, ShoppingBag, ShoppingBasket } from "lucide-r
 import { addToCart, bdt } from "@/lib/store-cart";
 import { trackAddToCart } from "@/lib/tracking";
 import { useStore, type StoreListing } from "./store-context";
-import { PreviousPrice, SoldCountBadge, useSoldCount } from "./product-presentation";
+import { PreviousPrice, SoldCountBadge, SoldCountOverlay, useSoldCount } from "./product-presentation";
 
 export const cx = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(" ");
 
@@ -197,12 +197,13 @@ export function ProductCard({ listing }: { listing: StoreListing }) {
       >
         <div className="relative aspect-square overflow-hidden bg-[var(--st-bg-alt)]">
           <Img />
+          <SoldCountOverlay count={sold} corner="top-left" />
         </div>
         <div className="flex flex-1 flex-col p-2.5">
           <h3 className="truncate text-[13px] leading-snug text-[var(--st-fg)]" title={title(listing)}>
             {title(listing)}
           </h3>
-          <div className="mt-1.5 flex min-w-0 flex-nowrap items-center gap-1 overflow-hidden"><Price value={price} className="shrink-0 whitespace-nowrap text-sm sm:text-base font-extrabold" /><PreviousPrice compact price={price} previous={listing.compare_at_price} /><span className="ml-auto shrink-0"><SoldCountBadge count={sold} /></span></div>
+          <div className="mt-1.5 flex min-w-0 flex-nowrap items-center gap-1 overflow-hidden"><Price value={price} className="shrink-0 whitespace-nowrap text-sm sm:text-base font-extrabold" /><PreviousPrice compact price={price} previous={listing.compare_at_price} /></div>
           <button
             type="button"
             onClick={handleDirectOrder}
@@ -279,12 +280,13 @@ export function ProductCard({ listing }: { listing: StoreListing }) {
     >
       <div className="relative aspect-square overflow-hidden bg-[var(--st-bg-alt)]">
         <Img />
+        <SoldCountOverlay count={sold} corner="bottom-right" />
       </div>
       <div className="flex flex-1 flex-col justify-between p-2.5 sm:p-3.5">
         <h3 className="truncate text-[13px] sm:text-sm font-semibold leading-snug text-[var(--st-fg)]" title={title(listing)}>
           {title(listing)}
         </h3>
-        <div className="mt-1.5 flex min-w-0 flex-nowrap items-center gap-1 overflow-hidden"><Price value={price} className="shrink-0 whitespace-nowrap text-sm sm:text-base font-extrabold" /><PreviousPrice compact price={price} previous={listing.compare_at_price} /><span className="ml-auto shrink-0"><SoldCountBadge count={sold} /></span></div>
+        <div className="mt-1.5 flex min-w-0 flex-nowrap items-center gap-1 overflow-hidden"><Price value={price} className="shrink-0 whitespace-nowrap text-sm sm:text-base font-extrabold" /><PreviousPrice compact price={price} previous={listing.compare_at_price} /></div>
         <button
           type="button"
           onClick={handleDirectOrder}
