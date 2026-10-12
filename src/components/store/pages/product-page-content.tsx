@@ -210,7 +210,6 @@ export function ProductPageContent({ slug, code: propCode }: { slug: string; cod
               <CopyButton value={title} className="mt-1.5 flex-none opacity-70 group-hover:opacity-100" />
             )}
           </div>
-          <SoldCount id={listing.id} />
           {(listing.custom_description || p.short_description) && (
             <p className={cx("mt-3 text-sm leading-relaxed", muted)}>
               {listing.custom_description || p.short_description}
@@ -219,6 +218,7 @@ export function ProductPageContent({ slug, code: propCode }: { slug: string; cod
 
           <div className="mt-5 flex flex-wrap items-center justify-start gap-5">
             <div className="flex flex-col gap-1"><Price value={price} className="text-3xl md:text-4xl" /><PreviousPrice price={price} previous={listing.compare_at_price} /></div>
+            <div className="flex shrink-0 items-center gap-3">
             <div className={cx("inline-flex items-center rounded-[var(--st-radius-sm)] border bg-[var(--st-surface)]", borderc)}>
               <button
                 onClick={() => setQty((q) => Math.max(1, q - 1))}
@@ -235,6 +235,8 @@ export function ProductPageContent({ slug, code: propCode }: { slug: string; cod
               >
                 <Plus className="h-4 w-4" />
               </button>
+            </div>
+            <SoldCount id={listing.id} />
             </div>
           </div>
 

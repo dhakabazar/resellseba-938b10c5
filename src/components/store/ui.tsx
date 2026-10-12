@@ -1,10 +1,10 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, Flame, ShoppingBag, ShoppingBasket } from "lucide-react";
+import { ChevronLeft, ChevronRight, ShoppingBag, ShoppingBasket } from "lucide-react";
 import { addToCart, bdt } from "@/lib/store-cart";
 import { trackAddToCart } from "@/lib/tracking";
 import { useStore, type StoreListing } from "./store-context";
-import { PreviousPrice, useSoldCount } from "./product-presentation";
+import { PreviousPrice, SoldCountBadge, useSoldCount } from "./product-presentation";
 
 export const cx = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(" ");
 
@@ -202,12 +202,10 @@ export function ProductCard({ listing }: { listing: StoreListing }) {
           <h3 className="truncate text-[13px] leading-snug text-[var(--st-fg)]" title={title(listing)}>
             {title(listing)}
           </h3>
-          <div className="mt-1.5 flex flex-wrap items-baseline gap-2">
-            <Price value={price} className="text-base font-extrabold" /><PreviousPrice price={price} previous={listing.compare_at_price} />
+          <div className="mt-1.5 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-1">
+            <Price value={price} className="min-w-0 break-all text-base font-extrabold" /><SoldCountBadge count={sold} />
           </div>
-          {sold !== null && <div className={cx("mt-1 flex items-center gap-1 text-[10px] font-semibold", muted)}>
-            <Flame className="h-3 w-3 text-[var(--st-primary)]" /> {sold} sold
-          </div>}
+          <div className="mt-1"><PreviousPrice price={price} previous={listing.compare_at_price} /></div>
           <button
             type="button"
             onClick={handleDirectOrder}
@@ -240,10 +238,10 @@ export function ProductCard({ listing }: { listing: StoreListing }) {
         >
           {title(listing)}
         </h3>
-        <div className="mt-1.5 flex flex-wrap items-baseline gap-2">
-          <Price value={price} className="text-sm tracking-widest" /><PreviousPrice price={price} previous={listing.compare_at_price} />
+        <div className="mt-1.5 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-1">
+          <Price value={price} className="min-w-0 break-all text-sm" /><SoldCountBadge count={sold} />
         </div>
-        {sold !== null && <div className={cx("mt-1 text-[10px] uppercase tracking-[0.22em]", muted)}>{sold} sold</div>}
+        <div className="mt-1"><PreviousPrice price={price} previous={listing.compare_at_price} /></div>
       </Link>
     );
 
@@ -265,10 +263,10 @@ export function ProductCard({ listing }: { listing: StoreListing }) {
           <h3 className="truncate text-[13px] font-semibold leading-snug text-[var(--st-fg)]" title={title(listing)}>
             {title(listing)}
           </h3>
-          <div className="mt-1.5 flex flex-wrap items-baseline gap-2">
-            <Price value={price} className="text-[16px] font-extrabold" /><PreviousPrice price={price} previous={listing.compare_at_price} />
+          <div className="mt-1.5 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-1">
+            <Price value={price} className="min-w-0 break-all text-[16px] font-extrabold" /><SoldCountBadge count={sold} />
           </div>
-          {sold !== null && <div className={cx("mt-0.5 text-[11px]", muted)}>{sold} জন কিনেছেন</div>}
+          <div className="mt-1"><PreviousPrice price={price} previous={listing.compare_at_price} /></div>
         </div>
         <button
           type="button"
@@ -290,21 +288,20 @@ export function ProductCard({ listing }: { listing: StoreListing }) {
     >
       <div className="relative aspect-square overflow-hidden bg-[var(--st-bg-alt)]">
         <Img />
-        {sold !== null && <span className="absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-full bg-black/55 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur-sm">
-          <ShoppingBag className="h-2.5 w-2.5" /> {sold} sold
-        </span>}
       </div>
       <div className="flex flex-1 flex-col justify-between p-2.5 sm:p-3.5">
         <h3 className="truncate text-[13px] sm:text-sm font-semibold leading-snug text-[var(--st-fg)]" title={title(listing)}>
           {title(listing)}
         </h3>
-        <div className="mt-1.5"><PreviousPrice price={price} previous={listing.compare_at_price} /></div>
+        <div className="mt-1.5 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-1">
+          <Price value={price} className="min-w-0 break-all text-base font-extrabold" /><SoldCountBadge count={sold} />
+        </div>
+        <div className="mt-1"><PreviousPrice price={price} previous={listing.compare_at_price} /></div>
         <button
           type="button"
           onClick={handleDirectOrder}
-          className="mt-2.5 flex w-full items-center justify-between gap-1 rounded-full bg-[var(--st-primary)] px-3.5 py-2 text-xs sm:text-[13px] font-bold text-[var(--st-on-primary)] shadow-sm transition-all hover:brightness-105 hover:shadow active:scale-[0.98]"
+          className="mt-2.5 flex w-full items-center justify-center gap-1 rounded-full bg-[var(--st-primary)] px-3.5 py-2 text-xs sm:text-[13px] font-bold text-[var(--st-on-primary)] shadow-sm transition-all hover:brightness-105 hover:shadow active:scale-[0.98]"
         >
-          <span className="font-extrabold tracking-tight">{bdt(price)}</span>
           <span>অর্ডার করুন</span>
         </button>
       </div>
