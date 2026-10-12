@@ -97,6 +97,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:description", content: "Bangladesh er first-class reseller platform. Product listing, courier, payment, marketing — ekta panel-e sob." },
     ],
     links: [
+      // Empty placeholder so browsers don't request a missing /favicon.ico on
+      // custom domains; the real store/platform icon is set at runtime.
+      { rel: "icon", href: "data:," },
       {
         rel: "stylesheet",
         href: appCss,
