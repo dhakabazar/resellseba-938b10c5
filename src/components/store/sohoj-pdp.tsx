@@ -1,3 +1,4 @@
+import { useProductDescription } from "@/lib/use-product-description";
 /**
  * সহজ শপ theme — product page layout.
  *
@@ -52,7 +53,7 @@ export function SohojProductPage({
     return () => observer.disconnect();
   }, [listing?.id]);
 
-  const p = listing.product!;
+  const p = listing.product!; const fullDesc = useProductDescription(listing.product as any);
   const title = store.title(listing);
   const price = Number(listing.selling_price);
   const images = p.product_images ?? [];
@@ -178,10 +179,10 @@ export function SohojProductPage({
         </div>
         <div className={cx("rounded-[var(--st-radius)] border bg-[var(--st-surface)] p-4", borderc)}>
           {tab === "desc" ? (
-            p.description ? (
+            fullDesc ? (
               <div
                 className={cx("prose prose-sm max-w-none text-sm leading-relaxed", muted)}
-                dangerouslySetInnerHTML={{ __html: p.description }}
+                dangerouslySetInnerHTML={{ __html: fullDesc }}
               />
             ) : (
               <p className={cx("text-sm", muted)}>{detailsText || "বিবরণ যোগ করা হয়নি।"}</p>
