@@ -1163,11 +1163,12 @@ function ResellersPage() {
                   />
                   <ResellerAvatar url={r.avatar_url} name={r.business_name} size={40} />
 
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="truncate font-medium">{r.business_name}</span>
+                  <div className="contents sm:block sm:min-w-0">
+                    <div className="contents sm:flex sm:flex-wrap sm:items-center sm:gap-1.5">
+                      <span className="col-start-3 row-start-1 min-w-0 self-center break-words font-medium sm:truncate">{r.business_name}</span>
+                      <div className="col-span-4 grid min-w-0 grid-cols-2 items-start gap-2 border-t pt-3 sm:contents [&>span]:min-w-0 [&>span]:max-sm:justify-self-start [&>span]:max-sm:whitespace-normal [&_svg]:shrink-0">
                       <StatusBadge status={r.status} />
-                      <VerifyBadges {...vf} />
+                      <VerifyBadges {...vf} className="max-sm:contents" />
                       {r.deposit_required && Number(r.deposit_required_amount) > 0 && (
                         (s?.deposit_balance ?? 0) >= Number(r.deposit_required_amount) ? (
                           <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-2 py-0.5 text-[10px] font-medium text-success">
@@ -1219,12 +1220,13 @@ function ResellersPage() {
                           <Lock className="h-3 w-3" /> Frozen ৳{Number(r.frozen_amount).toLocaleString()}
                         </span>
                       )}
+                      </div>
                     </div>
-                    <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                      <span className="inline-flex items-center gap-1 rounded-md border border-primary/30 bg-primary/5 px-2 py-0.5">
+                    <div className="col-span-4 grid min-w-0 grid-cols-2 items-start gap-2 sm:mt-1.5 sm:flex sm:flex-wrap sm:items-center sm:gap-1.5 [&>span]:min-w-0 [&>button]:min-w-0 [&_svg]:shrink-0">
+                      <span className="inline-flex min-w-0 flex-wrap items-center gap-1 rounded-md border border-primary/30 bg-primary/5 px-2 py-0.5 sm:flex-nowrap">
                         <IdCard className="h-3 w-3 text-primary" />
                         <span className="text-[10px] uppercase tracking-wide text-muted-foreground">ID</span>
-                        <span className="font-mono text-[11px] font-bold tracking-wider text-primary">{r.code}</span>
+                        <span className="min-w-0 break-all font-mono text-[11px] font-bold tracking-wider text-primary">{r.code}</span>
                         <button
                           type="button"
                           title="Copy reseller ID"
@@ -1238,7 +1240,7 @@ function ResellersPage() {
                         </button>
                       </span>
                       {phone ? (
-                        <span className="inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5">
+                        <span className="inline-flex flex-wrap items-center gap-1.5 rounded-md border px-2 py-0.5 sm:flex-nowrap">
                           <Phone className="h-3 w-3 text-muted-foreground" />
                           <span className="font-mono text-[11px] font-medium">{phone}</span>
                           <button
@@ -1275,12 +1277,12 @@ function ResellersPage() {
                           type="button"
                           onClick={() => setNoteFor(r)}
                           title={`${r.notes}${r.notes_by ? `\n— ${noteAuthors[r.notes_by] ?? "Staff"}` : ""}`}
-                          className="inline-flex max-w-[260px] items-center gap-1 rounded-md border border-warning/40 bg-warning/15 px-2 py-0.5 text-warning transition hover:bg-warning/25"
+                          className="inline-flex max-w-full flex-wrap items-center gap-1 rounded-md border border-warning/40 bg-warning/15 px-2 py-0.5 text-warning transition hover:bg-warning/25 sm:max-w-[260px] sm:flex-nowrap"
                         >
                           <StickyNote className="h-3 w-3 shrink-0" />
-                          <span className="truncate text-[11px] font-medium">{r.notes}</span>
+                          <span className="min-w-0 break-words text-[11px] font-medium sm:truncate">{r.notes}</span>
                           {r.notes_by && (
-                            <span className="shrink-0 text-[10px] opacity-80">
+                            <span className="min-w-0 break-words text-[10px] opacity-80 sm:shrink-0">
                               · {noteAuthors[r.notes_by] ?? "Staff"}
                             </span>
                           )}
@@ -1301,7 +1303,7 @@ function ResellersPage() {
                           title="Assigned agent"
                         >
                           <UserCircle className="h-3 w-3 text-primary" />
-                          <span className="text-[11px] font-medium text-primary">
+                          <span className="min-w-0 break-words text-[11px] font-medium text-primary">
                             {agents.find((a) => a.id === r.agent_id)?.display_name ?? "Unknown"}
                           </span>
                         </span>
@@ -1309,7 +1311,7 @@ function ResellersPage() {
                     </div>
                   </div>
 
-                  <div className="flex shrink-0 items-center gap-1.5">
+                  <div className="col-start-4 row-start-1 grid shrink-0 grid-cols-2 items-center gap-1.5 sm:flex">
                     <Link
                       to="/admin/transactions"
                       search={{ reseller: r.id } as never}
