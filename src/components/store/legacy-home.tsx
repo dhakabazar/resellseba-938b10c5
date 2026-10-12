@@ -33,7 +33,7 @@ export default function LegacyStoreHome({ query }: { query?: string }) {
 
   if (query)
     return (
-      <div className="mx-auto max-w-6xl px-4 py-10">
+      <div className="mx-auto max-w-6xl px-2 sm:px-4 py-10">
         <SectionHead
           title={`Search: “${query}”`}
           subtitle={`${results.length} product${results.length === 1 ? "" : "s"} found`}
@@ -59,14 +59,14 @@ export default function LegacyStoreHome({ query }: { query?: string }) {
       <CategoryStrip />
       {content.flag("featured_show") && featured.length > 0 && (
         <section className={cx("border-y bg-[var(--st-bg-alt)]", borderc)}>
-          <div className="mx-auto max-w-6xl px-4 py-12">
+          <div className="mx-auto max-w-6xl px-2 sm:px-4 py-12">
             <SectionHead title={content.text("featured_title")} />
             <ProductGrid listings={featured} />
           </div>
         </section>
       )}
       <ThemeSignature />
-      <section className="mx-auto max-w-6xl px-4 pt-10 pb-4">
+      <section className="mx-auto max-w-6xl px-2 sm:px-4 pt-10 pb-4">
         <SectionHead title={content.text("latest_title")} />
         {latest.length ? (
           <>

@@ -71,7 +71,7 @@ export function SohojProductPage({
   const recommended = useMemo(() => [...sameCategory, ...otherProducts], [sameCategory, otherProducts]);
 
   return (
-    <div className="mx-auto max-w-6xl px-3 pb-24 pt-3 lg:pb-8">
+    <div className="mx-auto max-w-6xl px-2 sm:px-4 pb-24 pt-3 lg:pb-8">
       <div className="grid gap-3 lg:grid-cols-[minmax(0,420px)_1fr]">
         {/* ছবি */}
         <div className={cx("min-w-0 rounded-[var(--st-radius)] border bg-[var(--st-surface)] p-3", borderc)}>

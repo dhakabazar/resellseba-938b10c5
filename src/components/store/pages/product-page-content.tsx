@@ -170,7 +170,7 @@ export function ProductPageContent({ slug, code: propCode }: { slug: string; cod
     );
 
   return (
-    <div className="mx-auto max-w-6xl px-4 pb-24 pt-8 lg:pb-10">
+    <div className="mx-auto max-w-6xl px-2 sm:px-4 pb-24 pt-8 lg:pb-10">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       <div className="grid gap-8 lg:grid-cols-2 lg:gap-10">
