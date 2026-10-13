@@ -1276,6 +1276,14 @@ function OrdersPage() {
       )}
 
       {editId && (
+        <ExchangeModal
+          open={!!exchangeModal}
+          onClose={() => setExchangeModal(null)}
+          parentId={exchangeModal?.parentId ?? null}
+          review={exchangeModal?.reviewId ? { id: exchangeModal.reviewId } : null}
+          isAdmin={false}
+          onDone={() => void load({ silent: true })}
+        />
         <OrderEditModal
           orderId={editId}
           allProducts={allProducts}
