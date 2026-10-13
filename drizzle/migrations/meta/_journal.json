@@ -134,6 +134,13 @@
       "when": 1791872903848,
       "tag": "0018_retain_cancelled_advance_without_creating_earnings",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1791875711519,
+      "tag": "0019_consistent_retained_cash_report_guards",
+      "breakpoints": true
     }
   ]
 }
