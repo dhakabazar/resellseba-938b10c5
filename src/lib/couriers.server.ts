@@ -76,6 +76,8 @@ export async function getOrderForBooking(supabase: any, orderId: string) {
     .eq("id", orderId)
     .maybeSingle();
   if (error || !order) throw new Response("Order not found", { status: 404 });
+  if (order.is_exchange && order.exchange_state === "requested")
+    throw new Response("Exchange request is waiting for admin approval", { status: 400 });
   return order;
 }
 
