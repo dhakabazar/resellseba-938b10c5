@@ -169,6 +169,13 @@
       "when": 1791892939240,
       "tag": "0023_exchange_orders",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1791894228064,
+      "tag": "0024_exchange_only_delivered",
+      "breakpoints": true
     }
   ]
 }
