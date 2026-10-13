@@ -162,6 +162,13 @@
       "when": 1791892782389,
       "tag": "0022_add_exchanged_status",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1791892939240,
+      "tag": "0023_exchange_orders",
+      "breakpoints": true
     }
   ]
 }
