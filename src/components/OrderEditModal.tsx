@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { AdvanceByToggle, MoneyField, SectionLabel } from "@/components/order-form-fields";
 import { packagingModeHint, packagingTotal } from "@/lib/packaging";
 import { useAdvancedSettings } from "@/lib/advanced-settings";
-import { useResellerPriceMap, wholesalePrice, hasCustomPrice } from "@/lib/reseller-prices";
+import { useResellerPriceMap, wholesalePrice, hasCustomPrice, withResellerRates } from "@/lib/reseller-prices";
 
 
 
@@ -33,7 +33,7 @@ interface Props {
   isAdmin?: boolean;
 }
 
-export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin = false }: Props) {
+export function OrderEditModal({ orderId, allProducts: rawProducts, onClose, onSaved, isAdmin = false }: Props) {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [order, setOrder] = useState<any>(null);
@@ -64,6 +64,7 @@ export function OrderEditModal({ orderId, allProducts, onClose, onSaved, isAdmin
   const packagingSum = advanced.packagingChargeSum;
   /** Reseller specific admin prices — only newly added lines use them. */
   const prices = useResellerPriceMap(order ? ((order as any).reseller_id ?? null) : undefined);
+  const allProducts = useMemo(() => (rawProducts ?? []).map((p: any) => withResellerRates(p, prices)), [rawProducts, prices]);
 
 
   /** Money actually collected by the courier. Empty = full order total received. */

@@ -92,6 +92,13 @@
       "when": 1791828278344,
       "tag": "0012_store_lazy_description",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1791869356084,
+      "tag": "0013_reseller_custom_packaging_delivery",
+      "breakpoints": true
     }
   ]
 }

@@ -14,7 +14,7 @@ import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { ProductCodeChip } from "@/components/product-code";
 import { confirmAction } from "@/lib/confirm";
 import { ListingPricingModal } from "@/components/listing-pricing-modal";
-import { fetchResellerPriceMap, hasCustomPrice, wholesalePrice } from "@/lib/reseller-prices";
+import { fetchResellerPriceMap, hasCustomPrice, wholesalePrice, withResellerRates } from "@/lib/reseller-prices";
 
 type L = {
   id: string;
@@ -72,7 +72,7 @@ function ListingsPage() {
           ? {
               ...l,
               custom_price: hasCustomPrice(l.products.id, priceMap),
-              products: { ...l.products, reseller_price: wholesalePrice(l.products, priceMap) },
+              products: withResellerRates({ ...l.products, reseller_price: wholesalePrice(l.products, priceMap) }, priceMap),
             }
           : l,
       );

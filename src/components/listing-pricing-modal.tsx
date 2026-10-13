@@ -6,7 +6,7 @@ import { ProductCodeChip } from "@/components/product-code";
 import { Button } from "@/components/ui/button";
 import { validPreviousPrice, productDiscount } from "@/lib/store-product-presentation";
 import { getGlobalSettings } from "@/lib/app-data";
-import { fetchResellerPriceMap, hasCustomPrice, wholesalePrice } from "@/lib/reseller-prices";
+import { fetchResellerPriceMap, hasCustomPrice, wholesalePrice, withResellerRates } from "@/lib/reseller-prices";
 import {
   DELIVERY_AREAS,
   areaLabel,
@@ -86,7 +86,7 @@ export function ListingPricingModal({
         const map = await fetchResellerPriceMap();
         if (!alive) return;
         setCustomPrice(hasCustomPrice(l.products.id, map));
-        l = { ...l, products: { ...l.products, reseller_price: wholesalePrice(l.products, map) } };
+        l = { ...l, products: withResellerRates({ ...l.products, reseller_price: wholesalePrice(l.products, map) }, map) };
       }
       setRow(l);
       setPrice(l ? String(l.selling_price) : "");

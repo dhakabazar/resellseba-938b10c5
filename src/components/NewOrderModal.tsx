@@ -8,7 +8,7 @@ import { ProductCodeChip } from "@/components/product-code";
 import { AdvanceByToggle, MoneyField, SectionLabel } from "@/components/order-form-fields";
 import { packagingModeHint, packagingTotal } from "@/lib/packaging";
 import { useAdvancedSettings } from "@/lib/advanced-settings";
-import { useResellerPriceMap, wholesalePrice, hasCustomPrice, type ResellerPriceMap } from "@/lib/reseller-prices";
+import { useResellerPriceMap, wholesalePrice, hasCustomPrice, withResellerRates, type ResellerPriceMap } from "@/lib/reseller-prices";
 import { matchesResellerSearch } from "@/lib/phone-search";
 
 type Line = { listing_id?: string; product_id?: string; qty: number; name?: string; price?: number; cost?: number; image?: string; delivery?: any };
@@ -49,8 +49,8 @@ interface NewOrderModalProps {
 }
 
 export function NewOrderModal({
-  listings,
-  allProducts,
+  listings: rawListings,
+  allProducts: rawProducts,
   resellerId: initialResellerId,
   resellers = [],
   onClose,
@@ -81,6 +81,12 @@ export function NewOrderModal({
   const packagingSum = advanced.packagingChargeSum;
   /** Per-reseller admin price overrides for the selected reseller. */
   const prices = useResellerPriceMap(resellerId);
+  /** Products with this reseller's custom price, packaging and delivery applied. */
+  const allProducts = useMemo(() => (rawProducts ?? []).map((p: any) => withResellerRates(p, prices)), [rawProducts, prices]);
+  const listings = useMemo(
+    () => (rawListings ?? []).map((l: any) => (l?.products ? { ...l, products: withResellerRates(l.products, prices) } : l)),
+    [rawListings, prices],
+  );
 
   const selectedReseller = useMemo(() => {
     if (!resellerId) return null;
