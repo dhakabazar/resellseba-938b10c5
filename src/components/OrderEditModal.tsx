@@ -1,5 +1,5 @@
 import { paymentStatusFor } from "@/lib/order-payment";
-import { orderProfit, orderMargin, orderReceived } from "@/lib/finance-report";
+import { orderProfit, orderMargin, orderReceived, orderCost, orderKeptProductCost, orderDeliveryCost, orderPackaging, isFailedOrder } from "@/lib/finance-report";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { areaOptions, productDeliveryCharge, deliveryMode, type DeliveryArea } from "@/lib/delivery";
@@ -197,15 +197,19 @@ export function OrderEditModal({ orderId, allProducts: rawProducts, onClose, onS
       discount: disc,
       total,
       received: recv,
-      collected,
+      collected: isFailedOrder(moneyOrder) ? 0 : collected,
       advance: adv,
       resellerAdvance,
       codDue,
       shortfall: Math.max(total - recv, 0),
       // Profit always follows the money really collected.
-      grossProfit: orderMargin(moneyOrder),
+      grossProfit: order?.status === "cancelled" ? 0 : orderMargin(moneyOrder),
       // Final amount for the reseller = profit minus any advance they already hold.
       profit: orderProfit(moneyOrder),
+      effectiveProduct: orderKeptProductCost(moneyOrder),
+      effectiveDelivery: orderDeliveryCost(moneyOrder),
+      effectivePackaging: orderPackaging(moneyOrder),
+      effectiveCost: orderCost(moneyOrder),
     };
   }, [
     items,
@@ -733,12 +737,12 @@ export function OrderEditModal({ orderId, allProducts: rawProducts, onClose, onS
                     <p className="mb-1 text-[9px] font-black uppercase tracking-widest text-muted-foreground/60">
                       {isAdmin ? "Cost" : "Your cost"}
                     </p>
-                    <Row label="Product cost" value={totals.productCost} />
-                    <Row label="Delivery charge" value={totals.deliveryCost} />
-                    <Row label="Packaging cost" value={totals.packaging} />
+                    <Row label="Product cost" value={totals.effectiveProduct} />
+                    <Row label="Delivery charge" value={totals.effectiveDelivery} />
+                    <Row label="Packaging cost" value={totals.effectivePackaging} />
                     <div className="mt-1 flex justify-between border-t pt-1 text-[13px] font-bold text-foreground">
                       <span>Total cost</span>
-                      <span>৳{(totals.productCost + totals.deliveryCost + totals.packaging).toFixed(0)}</span>
+                      <span>৳{totals.effectiveCost.toFixed(0)}</span>
                     </div>
                   </div>
 
@@ -761,7 +765,7 @@ export function OrderEditModal({ orderId, allProducts: rawProducts, onClose, onS
                       </span>
                       <span>৳{totals.grossProfit.toFixed(0)}</span>
                     </div>
-                    {totals.resellerAdvance > 0 && (
+                    {totals.resellerAdvance > 0 && order?.status !== "cancelled" && (
                       <>
                         <Row label="Advance already in reseller hand" value={-totals.resellerAdvance} />
                         <div className="mt-1 flex justify-between border-t pt-1 text-[13px] font-black">

@@ -1,6 +1,7 @@
 # Roadmap
 
-- [ ] Audit and align order payment/advance ownership, paid/unpaid/partial, courier COD, add/edit/view and admin/reseller financial reports; regression tests and signed-in checks
+- [x] Align payment/advance ownership, paid/unpaid/partial, courier COD, add/edit/view and financial reports; 26 regressions pass, signed-in temporary order save/readback and transaction-report retained-cash assertions pass; temporary rows removed
+- [ ] Live gateway capture and courier booking confirmation — blocked on real-money/provider operations; not performed during safe audit
 
 - [x] Add selected-reseller Reset for all custom rates; 12 tests pass and signed-in temporary rate save/reset/reload confirms defaults with original custom reseller unchanged
 
@@ -23,8 +24,8 @@
 - [x] Add independent header menu / body category tabs and apply active body categories across all themes
 
 - [x] Storefront cleanup: remove promo/trust copy, paginate products, link all-products page, simplify category header
-- [ ] Catalog redesign (LP /catalog + /catalog/$slug) — gorgeous, PC + mobile, use 4 global brand colors
-- [ ] Reseller staff: reseller can add staff accounts with simple per-menu permissions; reseller panel gates menus/routes
+- [ ] Catalog redesign (LP /catalog + /catalog/$slug) — deferred outside current payment audit
+- [ ] Reseller staff account management — deferred outside current payment audit
 - [x] Add a fifth clean storefront theme with fully distinct pages and load only the active theme bundle; keep tracking global
 - [x] Group reseller apex + www domains into one card and make Cloudflare pair cleanup retryable
 - [x] Clean root-level custom domain routing for all storefront pages and components
