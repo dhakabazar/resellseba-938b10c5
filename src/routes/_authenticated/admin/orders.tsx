@@ -940,7 +940,7 @@ function AdminOrdersPage() {
                         )}
                         {canEdit && ((o as any).is_exchange ? (
                           <DropdownMenuItem onClick={() => setExchangeModal({ reviewId: o.id })}>
-                            <Repeat className="mr-2 h-4 w-4" /> {(o as any).exchange_state === "requested" ? "Review exchange request" : "Exchange split"}
+                            <Repeat className="mr-2 h-4 w-4" /> {(o as any).exchange_state === "requested" ? "Review exchange request" : "Exchange calculation"}
                           </DropdownMenuItem>
                         ) : o.status === "delivered" && (
                           <DropdownMenuItem onClick={() => setExchangeModal({ parentId: o.id })}>
@@ -1141,7 +1141,7 @@ function AdminOrdersPage() {
                            })()}
                            {canEdit && ((o as any).is_exchange || o.status === "delivered") && (
                              <DropdownMenuItem onClick={() => setExchangeModal((o as any).is_exchange ? { reviewId: o.id } : { parentId: o.id })}>
-                               <Repeat className="mr-2 h-4 w-4" /> {(o as any).is_exchange ? ((o as any).exchange_state === "requested" ? "Review exchange request" : "Exchange split") : "Create Exchange"}
+                               <Repeat className="mr-2 h-4 w-4" /> {(o as any).is_exchange ? ((o as any).exchange_state === "requested" ? "Review exchange request" : "Exchange calculation") : "Create Exchange"}
                              </DropdownMenuItem>
                            )}
                            {canDelete && (() => {
