@@ -163,7 +163,7 @@ export function ExchangeModal({
     setLines((prev) =>
       prev.some((l) => l.product_id === p.id)
         ? prev.map((l) => (l.product_id === p.id ? { ...l, qty: l.qty + 1 } : l))
-        : [...prev, { product_id: p.id, name: p.name, qty: 1, price: 0, cost: Number(p.reseller_price) + Number(p.packaging_cost || 0) }],
+        : [...prev, { product_id: p.id, name: p.name, qty: 1, price: 0, cost: Number(p.reseller_price) + Number(p.packaging_cost || 0), image: p.image ?? null }],
     );
     setQ("");
   }
