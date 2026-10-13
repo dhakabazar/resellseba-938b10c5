@@ -1,14 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchAllSafe } from "@/lib/fetch-all";
+import { fetchAll } from "@/lib/fetch-all";
 import { PageHeader, StatCard } from "@/components/ui-kit";
 import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
 import { ProductCodeChip } from "@/components/product-code";
-import { Loader2, Search, Save, Trash2, Tag, Handshake, Package, Users, Truck } from "lucide-react";
+import { Loader2, Trash2, Tag, Handshake, Users, Pencil, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { matchesResellerSearch } from "@/lib/phone-search";
 import { deliveryLabel } from "@/lib/delivery";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SearchableSelect } from "@/components/searchable-select";
+import { DataToolbar, Pagination, usePaginated } from "@/components/data-list";
+import { ResellerRateEditor } from "@/components/reseller-rate-editor";
+import { withResellerRates, type ResellerPriceMap } from "@/lib/reseller-prices";
 
 export const Route = createFileRoute("/_authenticated/admin/reseller-pricing")({
   component: ResellerPricingPage,
@@ -65,8 +71,6 @@ type Draft = {
 type Summary = { reseller_id: string; products: number; last_updated: string | null };
 
 const taka = (n: number) => `৳${Math.round(Number(n || 0))}`;
-const input = "h-9 w-full rounded-md border bg-background px-2 text-sm outline-none focus:ring-2 focus:ring-ring";
-const small = "h-8 w-20 rounded-md border bg-background px-2 text-xs outline-none focus:ring-2 focus:ring-ring";
 const th = "px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-muted-foreground";
 const str = (v: number | null | undefined) => (v == null ? "" : String(Number(v)));
 
@@ -82,412 +86,171 @@ function draftOf(o?: Override): Draft {
   };
 }
 
-const optNum = (s: string) => (s.trim() === "" ? null : Math.max(Number(s) || 0, 0));
+const optNum = (s: string) => (s.trim() === "" ? null : Number(s));
 
 function ResellerPricingPage() {
   const [resellers, setResellers] = useState<Reseller[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [summary, setSummary] = useState<Summary[]>([]);
   const [loading, setLoading] = useState(true);
-  const [resellerId, setResellerId] = useState<string>("");
-  const [resellerSearch, setResellerSearch] = useState("");
-  const [onlyCustomResellers, setOnlyCustomResellers] = useState(false);
+  const [resellerId, setResellerId] = useState("");
+  const [activeTab, setActiveTab] = useState("rates");
   const [overrides, setOverrides] = useState<Override[]>([]);
   const [rowLoading, setRowLoading] = useState(false);
-  const [draft, setDraft] = useState<Record<string, Draft>>({});
-  const [savingId, setSavingId] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState(false);
+  const [editing, setEditing] = useState<Product | null>(null);
+  const [draft, setDraft] = useState<Draft>(draftOf());
+  const [saving, setSaving] = useState(false);
   const [q, setQ] = useState("");
-  const [onlyCustom, setOnlyCustom] = useState(false);
+  const [rateFilter, setRateFilter] = useState("");
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(20);
+  const [resellerSearch, setResellerSearch] = useState("");
+  const [directoryPage, setDirectoryPage] = useState(1);
+  const [directoryPerPage, setDirectoryPerPage] = useState(20);
   const [del, setDel] = useState<{ id: string; name: string } | null>(null);
+  const requestId = useRef(0);
 
   const loadSummary = async () => {
-    const { data } = await supabase.rpc("reseller_custom_rate_summary" as any);
-    setSummary(((data ?? []) as Summary[]) || []);
+    const { data, error } = await supabase.rpc("reseller_custom_rate_summary" as any);
+    if (error) throw error;
+    setSummary((data ?? []) as Summary[]);
   };
-
   useEffect(() => {
-    (async () => {
-      const [rs, ps] = await Promise.all([
-        fetchAllSafe(() =>
-          supabase.from("resellers").select("id,business_name,code,contact_phone").order("business_name", { ascending: true }),
-        ),
-        fetchAllSafe(() =>
-          supabase
-            .from("products")
-            .select(
-              "id,name,product_code,og_image_url,reseller_price,packaging_cost,suggested_price,delivery_mode,delivery_flat,delivery_inside,delivery_outside,delivery_sub",
-            )
-            .eq("is_active", true)
-            .order("created_at", { ascending: false }),
-        ),
-        loadSummary(),
-      ]);
-      setResellers(rs as Reseller[]);
-      setProducts(ps as Product[]);
-      setLoading(false);
-    })();
+    let alive = true;
+    const load = async () => {
+      try {
+        const [rs, ps] = await Promise.all([
+          fetchAll<Reseller>(() => supabase.from("resellers").select("id,business_name,code,contact_phone").order("business_name")),
+          fetchAll<Product>(() => supabase.from("products").select("id,name,product_code,og_image_url,reseller_price,packaging_cost,suggested_price,delivery_mode,delivery_flat,delivery_inside,delivery_outside,delivery_sub").eq("is_active", true).order("created_at", { ascending: false })),
+          loadSummary(),
+        ]);
+        if (alive) { setResellers(rs); setProducts(ps); }
+      } catch { if (alive) { setLoadError(true); toast.error("Could not load reseller rates"); } }
+      finally { if (alive) setLoading(false); }
+    };
+    void load();
+    return () => { alive = false; };
   }, []);
 
   const loadOverrides = async (rid: string) => {
-    if (!rid) return setOverrides([]);
+    const token = ++requestId.current;
+    setOverrides([]);
+    if (!rid) { setRowLoading(false); return; }
     setRowLoading(true);
-    const data = await fetchAllSafe(() =>
-      supabase
-        .from("reseller_product_prices")
-        .select("id,product_id,reseller_price,packaging_cost,delivery_mode,delivery_flat,delivery_inside,delivery_outside,delivery_sub")
-        .eq("reseller_id", rid),
-    );
-    setRowLoading(false);
-    setOverrides(data as Override[]);
-    setDraft({});
+    try {
+      const data = await fetchAll<Override>(() => supabase.from("reseller_product_prices").select("id,product_id,reseller_price,packaging_cost,delivery_mode,delivery_flat,delivery_inside,delivery_outside,delivery_sub").eq("reseller_id", rid));
+      if (token === requestId.current) setOverrides(data);
+    } catch { if (token === requestId.current) toast.error("Could not load custom rates"); }
+    finally { if (token === requestId.current) setRowLoading(false); }
   };
+  useEffect(() => { void loadOverrides(resellerId); return () => { requestId.current += 1; }; }, [resellerId]);
+  useEffect(() => { setPage(1); }, [q, rateFilter, resellerId, perPage]);
+  useEffect(() => { setDirectoryPage(1); }, [resellerSearch, directoryPerPage]);
 
-  useEffect(() => {
-    loadOverrides(resellerId);
-  }, [resellerId]);
-
-  const byProduct = useMemo(() => {
-    const m = new Map<string, Override>();
-    for (const o of overrides) m.set(o.product_id, o);
-    return m;
-  }, [overrides]);
-
+  const byProduct = useMemo(() => new Map(overrides.map((o) => [o.product_id, o])), [overrides]);
+  const rateMap: ResellerPriceMap = useMemo(() => new Map(overrides.map((o) => [o.product_id, o])), [overrides]);
   const summaryMap = useMemo(() => new Map(summary.map((s) => [s.reseller_id, s])), [summary]);
-  const customResellers = useMemo(
-    () =>
-      resellers
-        .filter((r) => summaryMap.has(r.id))
-        .sort((a, b) => (summaryMap.get(b.id)?.products ?? 0) - (summaryMap.get(a.id)?.products ?? 0)),
-    [resellers, summaryMap],
-  );
+  const customResellers = useMemo(() => resellers.filter((r) => summaryMap.has(r.id)).sort((a, b) => Number(summaryMap.get(b.id)?.products ?? 0) - Number(summaryMap.get(a.id)?.products ?? 0)), [resellers, summaryMap]);
+  const directory = customResellers.filter((r) => matchesResellerSearch(r, resellerSearch.trim()));
+  const selected = resellers.find((r) => r.id === resellerId);
+  const rows = useMemo(() => products.filter((p) => {
+    const o = byProduct.get(p.id);
+    if (rateFilter === "custom" && !o) return false;
+    if (rateFilter === "master" && o) return false;
+    if (rateFilter === "packaging" && o?.packaging_cost == null) return false;
+    if (rateFilter === "delivery" && !o?.delivery_mode) return false;
+    const search = q.trim().toLowerCase();
+    return !search || p.name.toLowerCase().includes(search) || (p.product_code ?? "").toLowerCase().includes(search);
+  }), [products, q, rateFilter, byProduct]);
+  const visibleRows = usePaginated(rows, page, perPage);
+  const visibleResellers = usePaginated(directory, directoryPage, directoryPerPage);
 
-  const filteredResellers = useMemo(() => {
-    const s = resellerSearch.trim();
-    const base = onlyCustomResellers ? customResellers : resellers;
-    const list = s ? base.filter((r) => matchesResellerSearch(r, s)) : base;
-    return list.slice(0, 50);
-  }, [resellers, customResellers, resellerSearch, onlyCustomResellers]);
-
-  const rows = useMemo(() => {
-    const s = q.trim().toLowerCase();
-    return products.filter((p) => {
-      if (onlyCustom && !byProduct.has(p.id)) return false;
-      if (!s) return true;
-      return p.name.toLowerCase().includes(s) || (p.product_code ?? "").toLowerCase().includes(s);
-    });
-  }, [products, q, onlyCustom, byProduct]);
-
-  const savedCount = overrides.length;
-  const customPackCount = overrides.filter((o) => o.packaging_cost != null).length;
-  const customDeliveryCount = overrides.filter((o) => o.delivery_mode).length;
-
-  const getDraft = (p: Product) => draft[p.id] ?? draftOf(byProduct.get(p.id));
-  const setField = (p: Product, k: keyof Draft, v: string) =>
-    setDraft((d) => ({ ...d, [p.id]: { ...getDraft(p), [k]: v } }));
-
-  async function save(p: Product) {
-    if (!resellerId) return toast.error("Select a reseller first");
-    const d = getDraft(p);
-    const price = d.price.trim() === "" ? Number(p.reseller_price) : Number(d.price);
-    if (!Number.isFinite(price) || price < 0) return toast.error("Enter a valid price");
-    const pack = optNum(d.pack);
-    const dmode = d.dmode || null;
-    if (d.price.trim() === "" && pack == null && !dmode) return toast.error("Set at least one custom rate");
-    setSavingId(p.id);
-    const { error } = await supabase.from("reseller_product_prices").upsert(
-      {
-        reseller_id: resellerId,
-        product_id: p.id,
-        reseller_price: price,
-        packaging_cost: pack,
-        delivery_mode: dmode,
-        delivery_flat: dmode === "flat" || dmode === "custom" ? optNum(d.flat) ?? 0 : null,
-        delivery_inside: dmode === "area" ? optNum(d.inside) ?? 0 : null,
-        delivery_sub: dmode === "area" ? optNum(d.sub) : null,
-        delivery_outside: dmode === "area" ? optNum(d.outside) ?? 0 : null,
-      } as any,
-      { onConflict: "reseller_id,product_id" },
-    );
-    setSavingId(null);
-    if (error) return toast.error(error.message);
-    toast.success(`${p.name} — custom rate saved`);
-    await Promise.all([loadOverrides(resellerId), loadSummary()]);
+  function selectReseller(id: string) { setEditing(null); setResellerId(id); setPage(1); }
+  function editProduct(product: Product) { setDraft(draftOf(byProduct.get(product.id))); setEditing(product); }
+  async function save() {
+    if (!editing || !resellerId || saving) return;
+    const p = editing;
+    const price = draft.price.trim() === "" ? Number(p.reseller_price) : Number(draft.price);
+    const numeric = [price, ...[draft.pack, draft.flat, draft.inside, draft.sub, draft.outside].map(optNum).filter((v) => v != null)];
+    if (numeric.some((v) => !Number.isFinite(v) || Number(v) < 0)) return toast.error("Enter valid, non-negative rates");
+    const pack = optNum(draft.pack);
+    const mode = draft.dmode || null;
+    if (!draft.price.trim() && pack == null && !mode) return toast.error("Set at least one custom rate");
+    setSaving(true);
+    try {
+      const { error } = await supabase.from("reseller_product_prices").upsert({
+        reseller_id: resellerId, product_id: p.id, reseller_price: price, packaging_cost: pack,
+        delivery_mode: mode, delivery_flat: mode === "flat" || mode === "custom" ? optNum(draft.flat) ?? 0 : null,
+        delivery_inside: mode === "area" ? optNum(draft.inside) ?? 0 : null,
+        delivery_sub: mode === "area" ? optNum(draft.sub) : null,
+        delivery_outside: mode === "area" ? optNum(draft.outside) ?? 0 : null,
+      } as any, { onConflict: "reseller_id,product_id" });
+      if (error) throw error;
+      setEditing(null); toast.success("Custom rates saved");
+      await Promise.all([loadOverrides(resellerId), loadSummary()]);
+    } catch (error) { toast.error(error instanceof Error ? error.message : "Could not save custom rates"); }
+    finally { setSaving(false); }
   }
-
   async function remove(id: string) {
     const { error } = await supabase.from("reseller_product_prices").delete().eq("id", id);
-    if (error) return toast.error(error.message);
-    toast.success("Custom rate removed — master rates apply again");
+    if (error) { toast.error(error.message); return; }
+    setDel(null); toast.success("Master rates restored");
     await Promise.all([loadOverrides(resellerId), loadSummary()]);
   }
 
-  const selected = resellers.find((r) => r.id === resellerId) ?? null;
-
   return (
-    <div className="space-y-5">
-      <PageHeader
-        title="Reseller pricing"
-        description="Set a reseller specific product price, packaging cost and delivery charge. That reseller's catalog, panel orders, order edit and storefront checkout all use these rates."
-      />
-
-      {loading ? (
-        <div className="grid place-items-center py-20">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+    <div className="space-y-6">
+      <PageHeader title="Reseller pricing" />
+      {loading ? <div className="grid place-items-center py-20"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div> : loadError ? <div className="py-12 text-center text-sm text-destructive">Could not load pricing data. Please reload this page.</div> : <>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <StatCard label="Custom-rate resellers" value={customResellers.length} icon={<Users />} />
+          <StatCard label="Custom product rates" value={summary.reduce((sum, r) => sum + Number(r.products), 0)} icon={<Tag />} />
+          <StatCard label="All resellers" value={resellers.length} icon={<Handshake />} />
         </div>
-      ) : (
-        <>
-          <div className="grid gap-3 sm:grid-cols-3">
-            <StatCard label="Resellers with custom rates" value={String(customResellers.length)} icon={<Users className="h-4 w-4" />} />
-            <StatCard
-              label="Total custom product rates"
-              value={String(summary.reduce((s, x) => s + Number(x.products || 0), 0))}
-              icon={<Tag className="h-4 w-4" />}
-            />
-            <StatCard label="Total resellers" value={String(resellers.length)} icon={<Handshake className="h-4 w-4" />} />
-          </div>
-
-          {customResellers.length > 0 && (
-            <div className="rounded-xl border bg-card p-4">
-              <div className="mb-2 text-sm font-semibold">Custom rate resellers ({customResellers.length})</div>
-              <div className="flex flex-wrap gap-2">
-                {customResellers.map((r) => (
-                  <button
-                    key={r.id}
-                    type="button"
-                    onClick={() => setResellerId(r.id)}
-                    className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium ${
-                      r.id === resellerId ? "border-primary bg-primary text-primary-foreground" : "hover:bg-muted"
-                    }`}
-                  >
-                    {r.business_name}
-                    {r.code ? <span className="opacity-70">({r.code})</span> : null}
-                    <span className="rounded-full bg-muted px-1.5 text-[10px] font-semibold text-foreground">
-                      {summaryMap.get(r.id)?.products ?? 0}
-                    </span>
-                  </button>
-                ))}
-              </div>
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="mb-5 grid h-11 w-full grid-cols-2 sm:w-fit">
+            <TabsTrigger value="rates" className="gap-2"><Tag className="h-4 w-4" />Set rates</TabsTrigger>
+            <TabsTrigger value="resellers" className="gap-2"><Users className="h-4 w-4" />Custom resellers <span className="text-xs text-muted-foreground">{customResellers.length}</span></TabsTrigger>
+          </TabsList>
+          <TabsContent value="rates" className="space-y-5">
+            <div className="grid items-end gap-4 border-b pb-5 sm:grid-cols-[minmax(0,1fr)_auto]">
+              <SearchableSelect label="Reseller" placeholder="Select a reseller" searchPlaceholder="Search name, code or phone…" value={resellerId} onChange={selectReseller} options={resellers.map((r) => ({ value: r.id, label: `${r.business_name}${r.code ? ` · ${r.code}` : ""}${r.contact_phone ? ` · ${r.contact_phone}` : ""}` }))} />
+              {selected && <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-muted-foreground sm:pb-3"><span><strong className="text-foreground">{rowLoading ? "…" : overrides.length}</strong> custom products</span><span><strong className="text-foreground">{rowLoading ? "…" : overrides.filter((o) => o.packaging_cost != null).length}</strong> packaging</span><span><strong className="text-foreground">{rowLoading ? "…" : overrides.filter((o) => o.delivery_mode).length}</strong> delivery</span></div>}
             </div>
-          )}
-
-          <div className="rounded-xl border bg-card p-4">
-            <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-sm font-semibold">
-              <span className="flex items-center gap-2">
-                <Handshake className="h-4 w-4 text-muted-foreground" /> Reseller
-              </span>
-              <button
-                type="button"
-                onClick={() => setOnlyCustomResellers((v) => !v)}
-                className={`h-8 rounded-md border px-3 text-xs font-semibold ${
-                  onlyCustomResellers ? "border-primary bg-primary text-primary-foreground" : "hover:bg-muted"
-                }`}
-              >
-                Only custom-rate resellers ({customResellers.length})
-              </button>
-            </div>
-            <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-              <div className="relative">
-                <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-                <input
-                  className={`${input} pl-8`}
-                  placeholder="Search reseller by name, code or phone"
-                  value={resellerSearch}
-                  onChange={(e) => setResellerSearch(e.target.value)}
-                />
-              </div>
-              <select className={input} value={resellerId} onChange={(e) => setResellerId(e.target.value)}>
-                <option value="">Select a reseller…</option>
-                {selected && !filteredResellers.some((r) => r.id === selected.id) && (
-                  <option value={selected.id}>{selected.business_name}</option>
-                )}
-                {filteredResellers.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.business_name} {r.code ? `(${r.code})` : ""}
-                    {summaryMap.has(r.id) ? ` — ${summaryMap.get(r.id)!.products} custom` : ""}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {!resellerId ? (
-            <div className="rounded-xl border bg-card p-10 text-center text-sm text-muted-foreground">
-              Select a reseller to set custom product price, packaging and delivery.
-            </div>
-          ) : (
-            <>
-              <div className="grid gap-3 sm:grid-cols-3">
-                <StatCard label="Custom priced products" value={String(savedCount)} icon={<Tag className="h-4 w-4" />} />
-                <StatCard label="Custom packaging" value={String(customPackCount)} icon={<Package className="h-4 w-4" />} />
-                <StatCard label="Custom delivery" value={String(customDeliveryCount)} icon={<Truck className="h-4 w-4" />} />
-              </div>
-
-              <div className="rounded-xl border bg-card">
-                <div className="flex flex-wrap items-center gap-2 border-b p-3">
-                  <div className="relative min-w-[200px] flex-1">
-                    <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-                    <input
-                      className={`${input} pl-8`}
-                      placeholder="Search product name or product ID"
-                      value={q}
-                      onChange={(e) => setQ(e.target.value)}
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setOnlyCustom((v) => !v)}
-                    className={`h-9 rounded-md border px-3 text-xs font-semibold ${
-                      onlyCustom ? "border-primary bg-primary text-primary-foreground" : "hover:bg-muted"
-                    }`}
-                  >
-                    Custom rated only ({savedCount})
-                  </button>
-                  {rowLoading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
-                </div>
-
+            {!selected ? <div className="grid justify-items-center gap-3 py-16 text-muted-foreground"><Handshake className="h-8 w-8" /><span className="text-sm">No reseller selected</span></div> : <>
+              <DataToolbar search={q} onSearch={setQ} searchPlaceholder="Search product name or ID…" perPage={perPage} onPerPage={setPerPage} filters={[{ key: "rate", label: "Rates", value: rateFilter, onChange: setRateFilter, options: [{ value: "custom", label: "Custom rates" }, { value: "master", label: "Master rates" }, { value: "packaging", label: "Custom packaging" }, { value: "delivery", label: "Custom delivery" }] }]} />
+              {rowLoading ? <div className="grid place-items-center py-16"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div> : <>
                 <div className="overflow-x-auto">
-                  <table className="w-full min-w-[1000px] text-sm">
-                    <thead className="border-b bg-muted/40">
-                      <tr>
-                        <th className={th}>Product</th>
-                        <th className={th}>Product price</th>
-                        <th className={th}>Packaging</th>
-                        <th className={th}>Delivery charge</th>
-                        <th className={th}>Reseller cost</th>
-                        <th className={th}></th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y">
-                      {rows.slice(0, 200).map((p) => {
-                        const o = byProduct.get(p.id);
-                        const d = getDraft(p);
-                        const effPrice = d.price.trim() === "" ? Number(p.reseller_price) : Number(d.price) || 0;
-                        const effPack = d.pack.trim() === "" ? Number(p.packaging_cost) : Number(d.pack) || 0;
-                        return (
-                          <tr key={p.id} className={o ? "bg-primary/5" : ""}>
-                            <td className="px-3 py-2 align-top">
-                              <div className="flex items-center gap-2">
-                                <div className="h-9 w-9 shrink-0 overflow-hidden rounded border bg-muted">
-                                  {p.og_image_url && (
-                                    <img src={p.og_image_url} alt="" className="h-full w-full object-cover" loading="lazy" />
-                                  )}
-                                </div>
-                                <div className="min-w-0">
-                                  <div className="max-w-[220px] truncate font-medium">{p.name}</div>
-                                  <ProductCodeChip code={p.product_code} />
-                                </div>
-                              </div>
-                            </td>
-                            <td className="px-3 py-2 align-top">
-                              <input
-                                type="number"
-                                min={0}
-                                className={small + " w-24"}
-                                placeholder={String(Number(p.reseller_price))}
-                                value={d.price}
-                                onChange={(e) => setField(p, "price", e.target.value)}
-                              />
-                              <div className="mt-1 text-[10px] text-muted-foreground">Master {taka(p.reseller_price)}</div>
-                            </td>
-                            <td className="px-3 py-2 align-top">
-                              <input
-                                type="number"
-                                min={0}
-                                className={small}
-                                placeholder={String(Number(p.packaging_cost))}
-                                value={d.pack}
-                                onChange={(e) => setField(p, "pack", e.target.value)}
-                              />
-                              <div className="mt-1 text-[10px] text-muted-foreground">Master {taka(p.packaging_cost)}</div>
-                            </td>
-                            <td className="px-3 py-2 align-top">
-                              <select
-                                className="h-8 rounded-md border bg-background px-2 text-xs"
-                                value={d.dmode}
-                                onChange={(e) => setField(p, "dmode", e.target.value)}
-                              >
-                                <option value="">Master rule</option>
-                                <option value="area">Area-wise</option>
-                                <option value="flat">Flat</option>
-                                <option value="free">Free</option>
-                                <option value="custom">Custom</option>
-                              </select>
-                              {d.dmode === "area" && (
-                                <div className="mt-1 flex gap-1">
-                                  <input className={small + " w-16"} type="number" min={0} placeholder="Dhaka" value={d.inside} onChange={(e) => setField(p, "inside", e.target.value)} />
-                                  <input className={small + " w-16"} type="number" min={0} placeholder="Sub" value={d.sub} onChange={(e) => setField(p, "sub", e.target.value)} />
-                                  <input className={small + " w-16"} type="number" min={0} placeholder="Outside" value={d.outside} onChange={(e) => setField(p, "outside", e.target.value)} />
-                                </div>
-                              )}
-                              {(d.dmode === "flat" || d.dmode === "custom") && (
-                                <div className="mt-1">
-                                  <input className={small} type="number" min={0} placeholder="Charge" value={d.flat} onChange={(e) => setField(p, "flat", e.target.value)} />
-                                </div>
-                              )}
-                              {!d.dmode && (
-                                <div className="mt-1 max-w-[200px] truncate text-[10px] text-muted-foreground">{deliveryLabel(p as any)}</div>
-                              )}
-                            </td>
-                            <td className="px-3 py-2 align-top whitespace-nowrap font-semibold">
-                              {taka(effPrice + effPack)}
-                              <div className="text-[10px] font-normal text-muted-foreground">price + packaging</div>
-                            </td>
-                            <td className="px-3 py-2 align-top">
-                              <div className="flex items-center justify-end gap-1.5">
-                                <button
-                                  type="button"
-                                  onClick={() => save(p)}
-                                  disabled={savingId === p.id}
-                                  className="inline-flex items-center gap-1 rounded-md bg-primary px-2.5 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
-                                >
-                                  {savingId === p.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-                                  Save
-                                </button>
-                                {o && (
-                                  <button
-                                    type="button"
-                                    onClick={() => setDel({ id: o.id, name: p.name })}
-                                    className="rounded-md border p-1.5 text-destructive hover:bg-destructive/10"
-                                    aria-label="Remove custom rate"
-                                  >
-                                    <Trash2 className="h-3.5 w-3.5" />
-                                  </button>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                      {rows.length === 0 && (
-                        <tr>
-                          <td colSpan={6} className="px-3 py-10 text-center text-sm text-muted-foreground">
-                            No products match this search.
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
+                  <table className="w-full min-w-[740px] text-sm">
+                    <thead className="border-y bg-muted/40"><tr><th className={th}>Product</th><th className={th}>Product price</th><th className={th}>Packaging</th><th className={th}>Delivery</th><th className={th}>Cost</th><th className={th}><span className="sr-only">Actions</span></th></tr></thead>
+                    <tbody className="divide-y">{visibleRows.map((p) => {
+                      const o = byProduct.get(p.id);
+                      const effective = withResellerRates(p, rateMap);
+                      return <tr key={p.id} className="hover:bg-muted/20">
+                        <td className="py-3 pr-3"><div className="flex items-center gap-3"><div className="h-11 w-11 shrink-0 overflow-hidden rounded-md border bg-muted">{p.og_image_url && <img src={p.og_image_url} alt="" loading="lazy" className="h-full w-full object-cover" />}</div><div className="min-w-0"><div className="max-w-64 truncate font-medium" title={p.name}>{p.name}</div><div className="mt-1 flex items-center gap-2"><ProductCodeChip code={p.product_code} />{o && <span className="text-[10px] font-semibold text-primary">Custom</span>}</div></div></div></td>
+                        <td className="px-3 py-3"><div className="font-semibold">{taka(effective.reseller_price)}</div><div className="mt-1 text-[10px] text-muted-foreground">{o ? `Master ${taka(p.reseller_price)}` : "Master rate"}</div></td>
+                        <td className="px-3 py-3"><div className="font-medium">{taka(effective.packaging_cost)}</div><div className="mt-1 text-[10px] text-muted-foreground">{o?.packaging_cost != null ? `Master ${taka(p.packaging_cost)}` : "Master rate"}</div></td>
+                        <td className="px-3 py-3"><div className="max-w-48 text-xs">{deliveryLabel(effective)}</div><div className="mt-1 text-[10px] text-muted-foreground">{o?.delivery_mode ? "Custom rule" : "Master rule"}</div></td>
+                        <td className="whitespace-nowrap px-3 py-3"><div className="font-semibold">{taka(Number(effective.reseller_price) + Number(effective.packaging_cost))}</div><div className="mt-1 text-[10px] text-muted-foreground">price + packaging</div></td>
+                        <td className="py-3 pl-3"><div className="flex items-center justify-end gap-1"><Button variant="outline" size="sm" onClick={() => editProduct(p)} aria-label={`Edit rates for ${p.name}`}><Pencil />Edit</Button>{o && <Button variant="ghost" size="icon" className="text-destructive" title="Remove custom rates" aria-label={`Remove rates for ${p.name}`} onClick={() => setDel({ id: o.id, name: p.name })}><Trash2 /></Button>}</div></td>
+                      </tr>;
+                    })}{rows.length === 0 && <tr><td colSpan={6} className="py-12 text-center text-muted-foreground">No products match this filter.</td></tr>}</tbody>
                   </table>
                 </div>
-              </div>
-            </>
-          )}
-        </>
-      )}
-
-      {del && (
-        <ConfirmModal
-          isOpen
-          title="Remove custom rate"
-          description={`${del.name} will fall back to the master price, packaging and delivery for this reseller.`}
-          confirmText="Remove"
-          variant="danger"
-          onClose={() => setDel(null)}
-          onConfirm={async () => {
-            await remove(del.id);
-            setDel(null);
-          }}
-        />
-      )}
+                <Pagination page={page} perPage={perPage} total={rows.length} onPage={setPage} />
+              </>}
+            </>}
+          </TabsContent>
+          <TabsContent value="resellers" className="space-y-4">
+            <DataToolbar search={resellerSearch} onSearch={setResellerSearch} searchPlaceholder="Search reseller name, code or phone…" perPage={directoryPerPage} onPerPage={setDirectoryPerPage} />
+            <div className="divide-y border-y">{visibleResellers.map((r) => <div key={r.id} className="flex items-center justify-between gap-3 py-4"><div className="min-w-0"><div className="truncate text-sm font-semibold">{r.business_name}</div><div className="mt-1 flex flex-wrap gap-x-3 text-xs text-muted-foreground">{r.code && <span>#{r.code}</span>}{r.contact_phone && <span>{r.contact_phone}</span>}</div></div><div className="flex shrink-0 items-center gap-3"><span className="text-xs text-muted-foreground"><strong className="text-foreground">{summaryMap.get(r.id)?.products ?? 0}</strong> products</span><Button variant="outline" size="sm" onClick={() => { selectReseller(r.id); setActiveTab("rates"); }}>Rates<ArrowRight /></Button></div></div>)}{directory.length === 0 && <div className="py-12 text-center text-sm text-muted-foreground">No custom-rate resellers found.</div>}</div>
+            <Pagination page={directoryPage} perPage={directoryPerPage} total={directory.length} onPage={setDirectoryPage} />
+          </TabsContent>
+        </Tabs>
+      </>}
+      {editing && selected && <ResellerRateEditor product={editing} resellerName={selected.business_name} draft={draft} onField={(key, value) => setDraft((current) => ({ ...current, [key]: value }))} onSave={() => void save()} onClose={() => setEditing(null)} saving={saving} />}
+      {del && <ConfirmModal isOpen title="Remove custom rates" description={`${del.name} will use master price, packaging and delivery for this reseller.`} confirmText="Remove" variant="danger" onClose={() => setDel(null)} onConfirm={() => remove(del.id)} />}
     </div>
   );
 }
