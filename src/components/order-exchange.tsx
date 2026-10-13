@@ -334,15 +334,21 @@ export function ExchangeModal({
               {results.length > 0 && (
                 <div className="mt-1 max-h-40 overflow-y-auto rounded border">
                   {results.map((p) => (
-                    <button key={p.id} type="button" onClick={() => add(p)} className="flex w-full justify-between px-2 py-1 text-left text-xs hover:bg-muted">
-                      <span className="truncate">{p.name} <span className="text-muted-foreground">#{p.product_code}</span></span>
-                      <span className="text-muted-foreground">Stock {p.stock}</span>
+                    <button key={p.id} type="button" onClick={() => add(p)} className="flex w-full items-center gap-2 px-2 py-1.5 text-left text-xs hover:bg-muted">
+                      {p.image ? (
+                        <img src={p.image} alt="" className="h-9 w-9 shrink-0 rounded border object-cover" loading="lazy" />
+                      ) : (
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded border bg-muted text-[9px] text-muted-foreground">No img</span>
+                      )}
+                      <span className="min-w-0 flex-1 truncate">{p.name} <span className="text-muted-foreground">#{p.product_code}</span></span>
+                      <span className="shrink-0 text-muted-foreground">Stock {p.stock}</span>
                     </button>
                   ))}
                 </div>
               )}
               {lines.map((l) => (
                 <div key={l.product_id} className="mt-1 flex items-center gap-2 text-xs">
+                  {l.image && <img src={l.image} alt="" className="h-7 w-7 shrink-0 rounded border object-cover" loading="lazy" />}
                   <span className="flex-1 truncate">{l.name}</span>
                   <Input type="number" min={1} className="h-7 w-14" value={l.qty} onChange={(e) => setLines((p) => p.map((x) => x.product_id === l.product_id ? { ...x, qty: Math.max(1, Number(e.target.value) || 1) } : x))} />
                   <button type="button" className="text-destructive" onClick={() => setLines((p) => p.filter((x) => x.product_id !== l.product_id))}>✕</button>
