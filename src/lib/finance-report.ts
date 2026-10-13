@@ -44,6 +44,7 @@ export type ProfitOrder = {
   /** Exchange orders: amount admin bears for the reseller (credited to reseller, debited from admin). */
   is_exchange?: boolean | null;
   exchange_admin_share?: number | string | null;
+  exchange_admin_buy?: number | string | null;
   total: number | string;
   shipping_cost: number | string;
   sa_cost_total: number | string;

@@ -1195,8 +1195,12 @@ export type Database = {
           damage_note: string | null
           delivery_cost: number
           discount: number
+          exchange_admin_buy: number | null
           exchange_admin_share: number
+          exchange_calc: Json | null
+          exchange_packaging: number | null
           exchange_reason: string | null
+          exchange_reseller_cost: number | null
           exchange_restock: boolean
           exchange_restocked: boolean
           exchange_returned_items: Json
@@ -1252,8 +1256,12 @@ export type Database = {
           damage_note?: string | null
           delivery_cost?: number
           discount?: number
+          exchange_admin_buy?: number | null
           exchange_admin_share?: number
+          exchange_calc?: Json | null
+          exchange_packaging?: number | null
           exchange_reason?: string | null
+          exchange_reseller_cost?: number | null
           exchange_restock?: boolean
           exchange_restocked?: boolean
           exchange_returned_items?: Json
@@ -1309,8 +1317,12 @@ export type Database = {
           damage_note?: string | null
           delivery_cost?: number
           discount?: number
+          exchange_admin_buy?: number | null
           exchange_admin_share?: number
+          exchange_calc?: Json | null
+          exchange_packaging?: number | null
           exchange_reason?: string | null
+          exchange_reseller_cost?: number | null
           exchange_restock?: boolean
           exchange_restocked?: boolean
           exchange_returned_items?: Json
@@ -3462,6 +3474,18 @@ export type Database = {
         }
         Returns: string
       }
+      create_exchange_order_v2: {
+        Args: {
+          _calc: Json
+          _items: Json
+          _note: string
+          _parent: string
+          _reason: string
+          _restock?: boolean
+          _returned: Json
+        }
+        Returns: string
+      }
       create_public_order: {
         Args: {
           _address_line: string
@@ -3702,6 +3726,10 @@ export type Database = {
           _note?: string
           _total?: number
         }
+        Returns: undefined
+      }
+      save_exchange_calc: {
+        Args: { _calc: Json; _id: string }
         Returns: undefined
       }
       save_store_body_categories: {

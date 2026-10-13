@@ -114,7 +114,7 @@ function BusinessReportPage() {
         supabase
           .from("orders")
           .select(
-            "id,order_number,reseller_id,status,created_at,customer_name,customer_phone,address_line,subtotal,shipping_cost,total,sa_cost_total,reseller_profit,received_amount,packaging_total,delivery_cost,advance_amount,advance_by,is_exchange,exchange_admin_share,resellers(business_name,code)",
+            "id,order_number,reseller_id,status,created_at,customer_name,customer_phone,address_line,subtotal,shipping_cost,total,sa_cost_total,reseller_profit,received_amount,packaging_total,delivery_cost,advance_amount,advance_by,is_exchange,exchange_admin_share,exchange_admin_buy,resellers(business_name,code)",
           )
           .order("created_at", { ascending: false }),
         supabase
@@ -197,7 +197,7 @@ function BusinessReportPage() {
             0,
           );
         }
-        adminProfit += orderReceived(ord) - orderMargin(ord) - orderBuyingCost(myItems, o.status, productMap);
+        adminProfit += orderReceived(ord) - orderMargin(ord) - orderBuyingCost(myItems, o.status, productMap, o as any);
       }
       const target = Number(ag.sale_target ?? 0) || 0;
       const rate = Number(ag.commission_rate ?? 0) || 0;
