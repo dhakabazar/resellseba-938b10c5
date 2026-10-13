@@ -93,7 +93,7 @@ export function OrderSettleModal({
         supabase
           .from("orders")
           .select(
-            "id,order_number,customer_name,status,subtotal,discount,shipping_cost,total,sa_cost_total,packaging_total,delivery_cost,received_amount,settlement_note,advance_amount,paid_amount,advance_by",
+            "id,order_number,customer_name,status,subtotal,discount,shipping_cost,total,sa_cost_total,packaging_total,delivery_cost,received_amount,settlement_note,advance_amount,paid_amount,advance_by,is_exchange,exchange_admin_share",
           )
           .eq("id", orderId)
           .maybeSingle(),

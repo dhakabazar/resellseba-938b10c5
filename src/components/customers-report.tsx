@@ -41,7 +41,7 @@ export type Customer = {
   resellerIds: string[];
 };
 
-const DELIVERED = new Set(["delivered", "partial"]);
+const DELIVERED = new Set(["delivered", "exchanged", "partial"]);
 const LOST = new Set(["returned", "cancelled"]);
 
 function normalizePhone(p: string) {

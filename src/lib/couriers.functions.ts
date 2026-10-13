@@ -54,7 +54,7 @@ export const bookSteadfast = createServerFn({ method: "POST" })
         recipient_phone: normalizePhone(order.customer_phone),
         recipient_address: fullAddress(order),
         cod_amount: codAmount,
-        note: (data.note || order.reseller_note || order.notes || "")?.slice(0, 250) || undefined,
+        note: exchangeNote(order, data.note || order.reseller_note || order.notes || "")?.slice(0, 250) || undefined,
         item_description:
           (items ?? []).map((i: any) => `${i.product_name} x${i.quantity}`).join(", ").slice(0, 250) ||
           undefined,
@@ -321,7 +321,7 @@ export const bookPathao = createServerFn({ method: "POST" })
           (items ?? []).map((i: any) => `${i.product_name} x${i.quantity}`).join(", ").slice(0, 250) ||
           `Order ${order.order_number}`,
         special_instruction:
-          (data.note || order.reseller_note || order.notes || "")?.slice(0, 250) || undefined,
+          exchangeNote(order, data.note || order.reseller_note || order.notes || "")?.slice(0, 250) || undefined,
       };
 
       const body = await pathaoRequest(supabase, conf, "/aladdin/api/v1/orders", {
@@ -510,8 +510,8 @@ export const bookCarrybee = createServerFn({ method: "POST" })
         product_description:
           (items ?? []).map((i: any) => `${i.product_name} x${i.quantity}`).join(", ").slice(0, 255) ||
           undefined,
-        special_instruction: (data.note || order.reseller_note || order.notes || "")?.slice(0, 255) || undefined,
-        ...(data.isExchange ? { is_exchange: true } : {}),
+        special_instruction: exchangeNote(order, data.note || order.reseller_note || order.notes || "")?.slice(0, 255) || undefined,
+        ...(data.isExchange || (order as any).is_exchange ? { is_exchange: true } : {}),
       };
 
       const body = await carrybeeRequest(conf, "/api/v2/orders", {
@@ -818,3 +818,10 @@ export const receiveReturn = createServerFn({ method: "POST" })
 
     return { ok: true };
   });
+
+
+/** Exchange orders tell the rider to collect the old parcel (Steadfast/Pathao have no exchange flag). */
+function exchangeNote(order: any, note: string) {
+  if (!order?.is_exchange) return note;
+  return `[EXCHANGE PARCEL - collect old parcel] ${note}`.trim();
+}

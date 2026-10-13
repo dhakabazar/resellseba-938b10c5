@@ -70,12 +70,14 @@ export async function getOrderForBooking(supabase: any, orderId: string) {
   const { data: order, error } = await supabase
     .from("orders")
     .select(
-      "id, order_number, status, customer_name, customer_phone, address_line, city, area, landmark, total, advance_amount, paid_amount, payment_method, notes, reseller_note",
+      "id, order_number, status, customer_name, customer_phone, address_line, city, area, landmark, total, advance_amount, paid_amount, payment_method, notes, reseller_note, is_exchange, exchange_state",
     )
 
     .eq("id", orderId)
     .maybeSingle();
   if (error || !order) throw new Response("Order not found", { status: 404 });
+  if (order.is_exchange && order.exchange_state === "requested")
+    throw new Response("Exchange request is waiting for admin approval", { status: 400 });
   return order;
 }
 

@@ -54,7 +54,7 @@ export type AgentPayout = {
 };
 
 /** Only these settled statuses earn agent commission: full delivery, or partial where items were kept. */
-export const COMMISSION_STATUSES = ["delivered", "partial", "partial_full", "partial_item"] as const;
+export const COMMISSION_STATUSES = ["delivered", "exchanged", "partial", "partial_full", "partial_item"] as const;
 
 /** True when the order earns agent commission (returned / partial_delivery / damaged / cancelled do not). */
 export function isCommissionOrder(status: string | null | undefined) {

@@ -1195,15 +1195,26 @@ export type Database = {
           damage_note: string | null
           delivery_cost: number
           discount: number
+          exchange_admin_share: number
+          exchange_reason: string | null
+          exchange_restock: boolean
+          exchange_restocked: boolean
+          exchange_returned_items: Json
+          exchange_reviewed_at: string | null
+          exchange_reviewed_by: string | null
+          exchange_state: string | null
+          exchange_stock_taken: boolean
           forwarded_at: string | null
           forwarded_to_admin: boolean
           id: string
+          is_exchange: boolean
           landmark: string | null
           notes: string | null
           order_number: string
           packaging_total: number
           paid_amount: number
           paid_at: string | null
+          parent_order_id: string | null
           payment_config_id: string | null
           payment_method: Database["public"]["Enums"]["payment_method"]
           payment_provider: string | null
@@ -1241,15 +1252,26 @@ export type Database = {
           damage_note?: string | null
           delivery_cost?: number
           discount?: number
+          exchange_admin_share?: number
+          exchange_reason?: string | null
+          exchange_restock?: boolean
+          exchange_restocked?: boolean
+          exchange_returned_items?: Json
+          exchange_reviewed_at?: string | null
+          exchange_reviewed_by?: string | null
+          exchange_state?: string | null
+          exchange_stock_taken?: boolean
           forwarded_at?: string | null
           forwarded_to_admin?: boolean
           id?: string
+          is_exchange?: boolean
           landmark?: string | null
           notes?: string | null
           order_number?: string
           packaging_total?: number
           paid_amount?: number
           paid_at?: string | null
+          parent_order_id?: string | null
           payment_config_id?: string | null
           payment_method?: Database["public"]["Enums"]["payment_method"]
           payment_provider?: string | null
@@ -1287,15 +1309,26 @@ export type Database = {
           damage_note?: string | null
           delivery_cost?: number
           discount?: number
+          exchange_admin_share?: number
+          exchange_reason?: string | null
+          exchange_restock?: boolean
+          exchange_restocked?: boolean
+          exchange_returned_items?: Json
+          exchange_reviewed_at?: string | null
+          exchange_reviewed_by?: string | null
+          exchange_state?: string | null
+          exchange_stock_taken?: boolean
           forwarded_at?: string | null
           forwarded_to_admin?: boolean
           id?: string
+          is_exchange?: boolean
           landmark?: string | null
           notes?: string | null
           order_number?: string
           packaging_total?: number
           paid_amount?: number
           paid_at?: string | null
+          parent_order_id?: string | null
           payment_config_id?: string | null
           payment_method?: Database["public"]["Enums"]["payment_method"]
           payment_provider?: string | null
@@ -1320,6 +1353,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "orders_parent_order_id_fkey"
+            columns: ["parent_order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "orders_payment_config_id_fkey"
             columns: ["payment_config_id"]
@@ -3408,6 +3448,20 @@ export type Database = {
         Args: { _patch: Json; _provider: string }
         Returns: undefined
       }
+      create_exchange_order: {
+        Args: {
+          _admin_share: number
+          _delivery_cost: number
+          _items: Json
+          _note: string
+          _parent: string
+          _reason: string
+          _restock?: boolean
+          _returned: Json
+          _total: number
+        }
+        Returns: string
+      }
       create_public_order: {
         Args: {
           _address_line: string
@@ -3465,6 +3519,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      exchange_take_stock: { Args: { _id: string }; Returns: undefined }
       generate_product_code: { Args: never; Returns: string }
       generate_reseller_code: { Args: { _seed: string }; Returns: string }
       get_active_payment_gateways: {
@@ -3638,6 +3693,17 @@ export type Database = {
       restore_rows: { Args: { _rows: Json; _table: string }; Returns: number }
       restore_set_triggers: { Args: { _enabled: boolean }; Returns: undefined }
       restore_wipe: { Args: { _tables: string[] }; Returns: undefined }
+      review_exchange_order: {
+        Args: {
+          _admin_share?: number
+          _approve: boolean
+          _delivery_cost?: number
+          _id: string
+          _note?: string
+          _total?: number
+        }
+        Returns: undefined
+      }
       save_store_body_categories: {
         Args: { _items: Json; _rid: string }
         Returns: undefined
@@ -3816,6 +3882,15 @@ export type Database = {
           status: string
         }[]
       }
+      update_exchange_split: {
+        Args: {
+          _admin_share: number
+          _delivery_cost: number
+          _id: string
+          _total: number
+        }
+        Returns: undefined
+      }
       verify_check: {
         Args: { _channel: string; _code: string }
         Returns: boolean
@@ -3863,6 +3938,7 @@ export type Database = {
         | "partial_item"
         | "partial_delivery"
         | "damaged"
+        | "exchanged"
       payment_method:
         | "cod"
         | "bkash"
@@ -4042,6 +4118,7 @@ export const Constants = {
         "partial_item",
         "partial_delivery",
         "damaged",
+        "exchanged",
       ],
       payment_method: [
         "cod",
