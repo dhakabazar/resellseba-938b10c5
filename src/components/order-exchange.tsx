@@ -117,7 +117,7 @@ export function ExchangeModal({
     if (!term) return setOrderHits([]);
     const t = setTimeout(async () => {
       const { data } = await supabase.from("orders").select("id,order_number,customer_name,customer_phone,status")
-        .eq("is_exchange", false)
+        .eq("is_exchange", false).eq("status", "delivered")
         .or(`order_number.ilike.%${term}%,customer_phone.ilike.%${term}%`).order("created_at", { ascending: false }).limit(8);
       setOrderHits(data ?? []);
     }, 250);
@@ -276,7 +276,7 @@ export function ExchangeModal({
           <div className="space-y-2 text-sm">
             <Label className="text-xs">Original order number or customer phone</Label>
             <Input autoFocus placeholder="e.g. 751032 or 017..." value={orderQ} onChange={(e) => setOrderQ(e.target.value)} />
-            <p className="text-[11px] text-muted-foreground">Any status works — pending, delivered, pending return, partial, returned…</p>
+            <p className="text-[11px] text-muted-foreground">Only delivered orders can be exchanged.</p>
             {orderHits.map((h) => (
               <button key={h.id} type="button" onClick={() => setPicked(h.id)} className="flex w-full items-center justify-between rounded border px-2 py-1.5 text-left text-xs hover:bg-muted">
                 <span>#{h.order_number} · {h.customer_name} · {h.customer_phone}</span>
