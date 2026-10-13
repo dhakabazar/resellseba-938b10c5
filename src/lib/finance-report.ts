@@ -149,6 +149,8 @@ export function orderShortfall(o: ProfitOrder) {
  * advance taken by admin stays with admin, so nothing extra is deducted.
  */
 export function orderProfit(o: ProfitOrder) {
+   // Retained advance on cancellation is held cash, not a new reseller earning.
+   if (o.status === "cancelled") return 0;
   return orderMargin(o) - resellerHeldAdvance(o);
 }
 

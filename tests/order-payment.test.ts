@@ -30,7 +30,7 @@ test("admin-owned vs reseller-owned prepaid money changes payout, not margin", (
 test("cancelled advance stays with its original owner and is never erased or automatically refunded", () => {
   const o = { ...base, status: "cancelled", advance_amount: 500, received_amount: 1000 };
   expect(orderReceived(o)).toBe(500);
-  expect(orderProfit({ ...o, advance_by: "admin" })).toBe(500);
+  expect(orderProfit({ ...o, advance_by: "admin" })).toBe(0);
   expect(orderProfit({ ...o, advance_by: "reseller" })).toBe(0);
   expect(paymentStatusFor(o)).toBe("partial");
 });

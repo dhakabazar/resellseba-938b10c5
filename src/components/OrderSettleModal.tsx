@@ -283,6 +283,9 @@ export function OrderSettleModal({
 
             <CalcPanel title="Reseller calculation" hint="Received − product cost − delivery − packaging">
               <CalcRow label="Received from customer" value={bdt(calc.recv)} />
+              {order.advance_by === "reseller" && prepaidAmount(order) > 0 && (
+                <CalcRow label="− Advance already with reseller" value={bdt(prepaidAmount(order))} muted />
+              )}
               <CalcRow label="− Product cost (kept items)" value={bdt(calc.productCost)} muted />
               <CalcRow label="− Delivery charge" value={bdt(delivery)} muted />
               <CalcRow label="− Packaging" value={bdt(packaging)} muted />
