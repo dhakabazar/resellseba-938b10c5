@@ -1,5 +1,7 @@
 # Roadmap
 
+- [ ] Audit and align order payment/advance ownership, paid/unpaid/partial, courier COD, add/edit/view and admin/reseller financial reports; regression tests and signed-in checks
+
 - [x] Add selected-reseller Reset for all custom rates; 12 tests pass and signed-in temporary rate save/reset/reload confirms defaults with original custom reseller unchanged
 
 - [x] Optimize admin order status switching with account/status/date cache and mutation invalidation; signed-in revisit has zero order requests, 20/50 paging verified, typed status index access and limit-before-joins confirmed, tests/build pass
