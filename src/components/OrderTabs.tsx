@@ -106,9 +106,10 @@ export function OrderTabs({
           aria-expanded={open}
           className={`flex h-10 w-full items-center justify-between gap-2 rounded-md border px-3 text-sm outline-none focus:ring-2 focus:ring-ring ${highlight ? tabTint(tab) : "bg-background"}`}
         >
-          <span className="min-w-0 truncate font-medium">
-            {active?.label ?? "Orders"}
-            <span className="ml-1.5 text-xs opacity-70">{count(tab)}</span>
+          <span className="flex min-w-0 items-center gap-2 font-medium">
+            <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${orderTabDot(tab, false)}`} />
+            <span className="min-w-0 truncate">{active?.label ?? "Orders"}</span>
+            <span className="shrink-0 text-xs opacity-70">{count(tab)}</span>
           </span>
           <ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
         </button>
@@ -136,10 +137,14 @@ export function OrderTabs({
                       onChange(t.key);
                       setOpen(false);
                     }}
-                    className={`min-w-0 rounded-md border px-2 py-1.5 text-center text-xs transition-colors ${orderTabClasses(t.key, isActive)}`}
+                    aria-pressed={isActive}
+                    className={`flex min-w-0 items-center gap-1.5 rounded-md border px-2 py-1.5 text-xs transition-colors ${orderTabClasses(t.key, isActive)}`}
                   >
-                    <span className="block truncate font-medium">{t.label}</span>
-                    <span className="text-[10px] opacity-70">{count(t.key)}</span>
+                    <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${orderTabDot(t.key, isActive)}`} />
+                    <span className="min-w-0 flex-1 truncate text-center font-medium">{t.label}</span>
+                    <span className={`shrink-0 rounded-full px-1.5 text-[10px] font-semibold tabular-nums ${orderTabCountPill(isActive)}`}>
+                      {count(t.key)}
+                    </span>
                   </button>
                 );
               })}
@@ -158,13 +163,15 @@ export function OrderTabs({
               key={t.key}
               type="button"
               onClick={() => onChange(t.key)}
-              className={`min-w-0 rounded-md border px-2.5 py-1.5 text-center text-xs transition-colors sm:px-3 sm:text-sm ${orderTabClasses(
+              aria-pressed={isActive}
+              className={`flex min-w-0 items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs transition-colors sm:px-3 sm:text-sm ${orderTabClasses(
                 t.key,
                 isActive,
               )}`}
             >
-              <span className="truncate font-medium">{t.label}</span>
-              <span className={`ml-1.5 text-[11px] ${isActive ? "opacity-80" : "text-muted-foreground"}`}>
+              <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${orderTabDot(t.key, isActive)}`} />
+              <span className="min-w-0 truncate font-medium">{t.label}</span>
+              <span className={`shrink-0 rounded-full px-1.5 py-px text-[11px] font-semibold tabular-nums ${orderTabCountPill(isActive)}`}>
                 {count(t.key)}
               </span>
             </button>
