@@ -1107,6 +1107,44 @@ export type Database = {
           },
         ]
       }
+      order_payment_receipts: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          order_id: string
+          provider: string
+          receiver: string
+          transaction_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          order_id: string
+          provider: string
+          receiver: string
+          transaction_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          order_id?: string
+          provider?: string
+          receiver?: string
+          transaction_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_payment_receipts_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_status_history: {
         Row: {
           changed_by: string | null
@@ -3468,6 +3506,10 @@ export type Database = {
       my_permissions: { Args: never; Returns: string[] }
       order_has_shipment: { Args: { _order_id: string }; Returns: boolean }
       order_kept_product_cost: { Args: { _order_id: string }; Returns: number }
+      order_prepaid: {
+        Args: { _advance: number; _paid: number }
+        Returns: number
+      }
       order_visible_to_me: { Args: { _order_id: string }; Returns: boolean }
       panel_bootstrap: { Args: never; Returns: Json }
       pick_balanced_agent: { Args: never; Returns: string }
@@ -3475,6 +3517,16 @@ export type Database = {
       recalc_order_packaging: {
         Args: { _order_id: string }
         Returns: undefined
+      }
+      record_verified_order_payment: {
+        Args: {
+          _amount: number
+          _order_id: string
+          _provider: string
+          _receiver: string
+          _transaction_id: string
+        }
+        Returns: string
       }
       reseller_auto_approve: { Args: never; Returns: boolean }
       reseller_auto_assign: { Args: never; Returns: boolean }
