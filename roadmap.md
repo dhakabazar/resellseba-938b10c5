@@ -1,5 +1,7 @@
 # Roadmap
 
+- [ ] Add selected-reseller Reset for all custom rates and verify isolated default restoration
+
 - [x] Optimize admin order status switching with account/status/date cache and mutation invalidation; signed-in revisit has zero order requests, 20/50 paging verified, typed status index access and limit-before-joins confirmed, tests/build pass
 
 - [x] Redesign Reseller Pricing with separate rate editor and custom-reseller directory tabs; signed-in save/read-back verified
