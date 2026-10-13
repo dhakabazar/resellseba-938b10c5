@@ -20,12 +20,12 @@ export const Route = createFileRoute("/_authenticated/admin/reseller-pricing")({
   component: ResellerPricingPage,
   head: () => ({
     meta: [
-      { title: "Reseller pricing — Admin" },
+      { title: "Reseller Pricing — Ecom Seller BD Admin" },
       {
         name: "description",
         content: "Give a reseller their own product price, packaging cost and delivery charge for selected products.",
       },
-      { property: "og:title", content: "Reseller pricing — Admin" },
+      { property: "og:title", content: "Reseller Pricing — Ecom Seller BD Admin" },
       { property: "og:description", content: "Per-reseller product price, packaging and delivery control." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
