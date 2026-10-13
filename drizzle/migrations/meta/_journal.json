@@ -141,6 +141,13 @@
       "when": 1791875711519,
       "tag": "0019_consistent_retained_cash_report_guards",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1791875873075,
+      "tag": "0020_guard_remaining_gateway_capture_and_cancelled_cash",
+      "breakpoints": true
     }
   ]
 }
