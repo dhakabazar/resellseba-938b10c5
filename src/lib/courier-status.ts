@@ -495,15 +495,6 @@ export function orderTabClasses(key: OrderTabKey, active: boolean) {
   return "bg-card text-blue-700 dark:text-blue-300 border-border hover:bg-blue-50 dark:hover:bg-blue-500/10";
 }
 
-/** Small dot on a tab: group colour when inactive, the tab's own text colour on the solid active tab. */
-export function orderTabDot(key: OrderTabKey, active: boolean) {
-  if (active) return "bg-current opacity-80";
-  const group = orderTabGroup(key);
-  if (group === "delivered") return "bg-emerald-500";
-  if (group === "partial") return "bg-amber-500";
-  if (group === "terminal") return "bg-rose-500";
-  return "bg-blue-500";
-}
 
 /** Order-count pill inside a tab: outlined chip on the active tab, muted otherwise. */
 export function orderTabCountPill(active: boolean) {

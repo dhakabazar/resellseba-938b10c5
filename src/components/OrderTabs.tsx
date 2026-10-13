@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { ChevronDown } from "lucide-react";
-import { ORDER_TABS, orderTabClasses, orderTabCountPill, orderTabDot, orderTabGroup, type OrderTabKey } from "@/lib/courier-status";
+import { ORDER_TABS, orderTabClasses, orderTabCountPill, orderTabGroup, type OrderTabKey } from "@/lib/courier-status";
 
 /** Light tint classes for the mobile status dropdown, based on the active tab's group. */
 function tabTint(key: OrderTabKey): string {
@@ -107,7 +107,6 @@ export function OrderTabs({
           className={`flex h-10 w-full items-center justify-between gap-2 rounded-md border px-3 text-sm outline-none focus:ring-2 focus:ring-ring ${highlight ? tabTint(tab) : "bg-background"}`}
         >
           <span className="flex min-w-0 items-center gap-2 font-medium">
-            <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${orderTabDot(tab, false)}`} />
             <span className="min-w-0 truncate">{active?.label ?? "Orders"}</span>
             <span className="shrink-0 text-xs opacity-70">{count(tab)}</span>
           </span>
@@ -140,7 +139,6 @@ export function OrderTabs({
                     aria-pressed={isActive}
                     className={`flex min-w-0 items-center gap-1.5 rounded-md border px-2 py-1.5 text-xs transition-colors ${orderTabClasses(t.key, isActive)}`}
                   >
-                    <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${orderTabDot(t.key, isActive)}`} />
                     <span className="min-w-0 flex-1 truncate text-center font-medium">{t.label}</span>
                     <span className={`shrink-0 rounded-full px-1.5 text-[10px] font-semibold tabular-nums ${orderTabCountPill(isActive)}`}>
                       {count(t.key)}
@@ -169,7 +167,6 @@ export function OrderTabs({
                 isActive,
               )}`}
             >
-              <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${orderTabDot(t.key, isActive)}`} />
               <span className="min-w-0 truncate font-medium">{t.label}</span>
               <span className={`shrink-0 rounded-full px-1.5 py-px text-[11px] font-semibold tabular-nums ${orderTabCountPill(isActive)}`}>
                 {count(t.key)}
