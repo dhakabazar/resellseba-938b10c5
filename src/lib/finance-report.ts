@@ -41,6 +41,9 @@ const n = (v: number | string | null | undefined) => Number(v ?? 0) || 0;
 /** Minimum shape every money helper needs. */
 export type ProfitOrder = {
   status?: string | null;
+  /** Exchange orders: amount admin bears for the reseller (credited to reseller, debited from admin). */
+  is_exchange?: boolean | null;
+  exchange_admin_share?: number | string | null;
   total: number | string;
   shipping_cost: number | string;
   sa_cost_total: number | string;
@@ -163,10 +166,16 @@ export function orderProfit(o: ProfitOrder) {
  * it changes who is holding the money, not how much the order earned. Admin-side
  * figures must use this, otherwise a reseller-held advance inflates admin profit.
  */
+/** Part of an exchange cost that admin carries (0 for normal orders). */
+export function exchangeAdminShare(o: ProfitOrder) {
+  return o.is_exchange ? n(o.exchange_admin_share) : 0;
+}
+
 export function orderMargin(o: ProfitOrder) {
    if (o.status === "cancelled") return orderAdvance(o);
-   if (isFailedOrder(o)) return orderAdvance(o) - (orderDeliveryCost(o) + orderPackaging(o));
-  return orderReceived(o) - orderCost(o);
+   const share = exchangeAdminShare(o);
+   if (isFailedOrder(o)) return orderAdvance(o) - (orderDeliveryCost(o) + orderPackaging(o)) + share;
+  return orderReceived(o) - orderCost(o) + share;
 }
 
 /** Reusable hint shown on every profit report/card so the math is transparent. */
