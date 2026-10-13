@@ -183,6 +183,13 @@
       "when": 1791896522657,
       "tag": "0025_exchange_cost_override",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1791897804493,
+      "tag": "0026_exchange_calc_and_lock",
+      "breakpoints": true
     }
   ]
 }
