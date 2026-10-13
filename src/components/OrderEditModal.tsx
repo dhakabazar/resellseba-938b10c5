@@ -68,7 +68,7 @@ export function OrderEditModal({ orderId, allProducts: rawProducts, onClose, onS
   const allProducts = useMemo(() => (rawProducts ?? []).map((p: any) => withResellerRates(p, prices)), [rawProducts, prices]);
 
 
-  /** Money actually collected by the courier. Empty = full order total received. */
+  /** Money actually collected by the courier, excluding confirmed advance. */
   const [received, setReceived] = useState<string>("");
   const [query, setQuery] = useState("");
 

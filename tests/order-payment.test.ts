@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { orderCodDue, paymentStatusFor, prepaidAmount, fullDeliveryCollection } from "../src/lib/order-payment";
-import { orderReceived, orderProfit, orderMargin } from "../src/lib/finance-report";
+import { orderReceived, orderProfit, orderMargin, orderDeliveryCost, orderPackaging } from "../src/lib/finance-report";
 const base = { total: 1500, shipping_cost: 100, delivery_cost: 100, sa_cost_total: 900, packaging_total: 20 };
 
 test("COD subtracts confirmed advance for every payment method and counts its mirrored paid amount only once", () => {
@@ -33,6 +33,8 @@ test("cancelled advance stays with its original owner and is never erased or aut
   expect(orderProfit({ ...o, advance_by: "admin" })).toBe(0);
   expect(orderProfit({ ...o, advance_by: "reseller" })).toBe(0);
   expect(paymentStatusFor(o)).toBe("partial");
+  expect(orderDeliveryCost(o)).toBe(0);
+  expect(orderPackaging(o)).toBe(0);
 });
 test("returned orders retain advance, with delivery and packaging loss charged once", () => {
   const o = { ...base, status: "returned", advance_amount: 500, received_amount: 0 };
