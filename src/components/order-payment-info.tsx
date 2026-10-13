@@ -1,4 +1,5 @@
 import { prepaidAmount } from "@/lib/order-payment";
+import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -69,14 +70,16 @@ export function OrderPaymentInfo({
       {order.transaction_id && <span className="font-mono text-muted-foreground">TrxID {order.transaction_id}</span>}
       {order.payment_sender && <span className="text-muted-foreground">from {order.payment_sender}</span>}
       {manual && canConfirm && order.payment_status !== "paid" && (
-        <button
+        <Button
+          variant="outline"
+          size="sm"
           type="button"
           disabled={busy}
           onClick={() => void confirm()}
           className="rounded-md border border-primary px-2 py-0.5 font-semibold text-primary hover:bg-primary/10 disabled:opacity-50"
         >
           {busy ? "…" : "Verify payment"}
-        </button>
+        </Button>
       )}
     </div>
   );

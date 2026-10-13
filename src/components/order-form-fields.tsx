@@ -1,4 +1,5 @@
 /** Shared, prettier form primitives used by the add / edit order modals. */
+import { Button } from "@/components/ui/button";
 
 export function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
@@ -76,7 +77,7 @@ export function AdvanceByToggle({
             ["reseller", "Reseller"],
           ] as const
         ).map(([v, label]) => (
-          <button
+          <Button
             key={v}
             type="button"
             disabled={disabled}
@@ -89,7 +90,7 @@ export function AdvanceByToggle({
           >
 
             {label}
-          </button>
+          </Button>
         ))}
       </div>
     </div>
