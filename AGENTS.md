@@ -26,3 +26,4 @@
 
 - Order prepaid money is mirrored in advance_amount/paid_amount, courier received_amount excludes it; shared order-payment helpers and database normalization keep status and COD consistent without rewriting historical orders.
 - Verified gateway captures use a locked database RPC and provider/transaction uniqueness; receiving account ownership is required so webhook retries cannot double-credit money.
+- Payment verification binds provider-confirmed order references or stored checkout intents before capture and records gross customer payment, not gateway fees.

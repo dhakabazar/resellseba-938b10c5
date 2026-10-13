@@ -1,3 +1,4 @@
+import { assertPaymentBinding } from "@/lib/payment-verification";
 // Server-only gateway adapters. One object per provider with the identical
 // contract: create (hosted payment URL), verifyReturn (server-side verification
 // of what actually happened), test (credential check for the admin UI).
@@ -86,6 +87,7 @@ const sslcommerz: Adapter = {
       const url = `${c.base}/validator/api/validationserverAPI.php?val_id=${encodeURIComponent(valId)}&store_id=${encodeURIComponent(c.api_key)}&store_passwd=${encodeURIComponent(c.api_secret)}&format=json`;
       const v = await getJson(url);
       const ok = v.status === "VALID" || v.status === "VALIDATED";
+      if (ok) assertPaymentBinding({ orderNumber: order.order_number, verifiedOrderRef: v.tran_id });
       return { paid: ok, amount: num(v.amount), txnId: String(v.bank_tran_id || v.tran_id || "") };
     }
     return sslQuery(c, order.order_number);
@@ -103,7 +105,8 @@ async function sslQuery(c: GatewayCreds, tranId: string): Promise<VerifyResult> 
   const el = Array.isArray(r.element) ? r.element[0] : null;
   if (!el) return { paid: false, amount: 0, txnId: "" };
   const ok = el.status === "VALID" || el.status === "VALIDATED";
-  return { paid: ok, amount: num(el.store_amount || el.amount), txnId: String(el.bank_tran_id || tranId) };
+  if (ok) assertPaymentBinding({ orderNumber: tranId, verifiedOrderRef: el.tran_id });
+  return { paid: ok, amount: num(el.amount), txnId: String(el.bank_tran_id || tranId) };
 }
 
 /* ------------------------------------------------------------------- bKash */
@@ -155,6 +158,7 @@ const bkash: Adapter = {
       r = await jsonPost(`${c.base}/tokenized/checkout/payment/status`, { paymentID }, headers);
     }
     const paid = String(r.transactionStatus ?? "").toLowerCase() === "completed" && Boolean(r.trxID);
+    if (paid) assertPaymentBinding({ orderNumber: order.order_number, verifiedOrderRef: r.merchantInvoiceNumber, queriedIntent: paymentID, storedIntent: order.transaction_id });
     return { paid, amount: num(r.amount), txnId: String(r.trxID || paymentID), note: r.statusMessage };
   },
   async test(c) {
@@ -254,6 +258,7 @@ const nagad: Adapter = {
     if (!ref) return { paid: false, amount: 0, txnId: "", cancelled: status === "cancelled" };
     const v = await getJson(`${c.base}/verify/payment/${encodeURIComponent(ref)}`, nagadHeaders);
     const paid = String(v.status ?? "").toLowerCase() === "success";
+    if (paid) assertPaymentBinding({ orderNumber: order.order_number, verifiedOrderRef: v.orderId, queriedIntent: ref, storedIntent: order.transaction_id, suffixedOrderRef: true });
     return { paid, amount: num(v.amount), txnId: String(v.issuerPaymentRefNo || ref), note: v.statusCode };
   },
   async test(c) {
@@ -318,9 +323,10 @@ const shurjopay: Adapter = {
     );
     const row = Array.isArray(r) ? r[0] : r;
     const code = String(row?.sp_code ?? "");
+    if (code === "1000") assertPaymentBinding({ orderNumber: order.order_number, verifiedOrderRef: row?.customer_order_id, queriedIntent: spOrderId, storedIntent: order.transaction_id });
     return {
       paid: code === "1000",
-      amount: num(row?.received_amount ?? row?.amount),
+      amount: num(row?.amount ?? row?.received_amount),
       txnId: String(row?.bank_trx_id || spOrderId),
       cancelled: code === "1002",
       note: row?.sp_message,
@@ -379,6 +385,7 @@ const eps: Adapter = {
       { authorization: `Bearer ${token}` },
     );
     const status = String(r.transactionStatus ?? r.TransactionStatus ?? r.status ?? "").toLowerCase();
+    if (status.includes("success") || status === "paid" || status === "completed") assertPaymentBinding({ orderNumber: order.order_number, verifiedOrderRef: r.CustomerOrderId ?? r.customerOrderId, queriedIntent: txn, storedIntent: order.transaction_id });
     return {
       paid: status.includes("success") || status === "paid" || status === "completed",
       amount: num(r.transactionAmount ?? r.TransactionAmount ?? r.amount),
@@ -436,6 +443,7 @@ const aamarpay: Adapter = {
     );
     const row = Array.isArray(r) ? r[0] : r;
     const status = String(row?.pay_status ?? row?.status_code ?? "").toLowerCase();
+    if (status === "successful" || status === "2") assertPaymentBinding({ orderNumber: order.order_number, verifiedOrderRef: row?.mer_txnid });
     return {
       paid: status === "successful" || status === "2",
       amount: num(row?.amount ?? row?.pay_amount),
@@ -556,9 +564,10 @@ const epayseba: Adapter = {
     const row = r.data ?? r;
     const status = String(row?.status ?? "").toLowerCase();
     const returned = String(p.status ?? "").toLowerCase();
+    if (["completed", "success", "paid"].includes(status)) assertPaymentBinding({ orderNumber: order.order_number, verifiedOrderRef: row?.metadata?.order_id ?? row?.meta_data?.order_id, queriedIntent: id, storedIntent: order.transaction_id });
     return {
       paid: status === "completed" || status === "success" || status === "paid",
-      amount: num(row?.amount ?? row?.paymentAmount ?? p.paymentAmount),
+      amount: num(row?.amount ?? row?.paymentAmount),
       txnId: String(row?.transaction_id ?? id),
       cancelled:
         status.includes("cancel") ||
