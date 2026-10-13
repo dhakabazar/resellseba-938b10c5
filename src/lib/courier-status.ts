@@ -507,5 +507,5 @@ export function orderTabDot(key: OrderTabKey, active: boolean) {
 
 /** Order-count pill inside a tab: outlined chip on the active tab, muted otherwise. */
 export function orderTabCountPill(active: boolean) {
-  return active ? "bg-black/15 text-current ring-1 ring-current/30" : "bg-muted text-muted-foreground";
+  return active ? "bg-black/10 text-current border border-current" : "bg-muted text-muted-foreground";
 }
