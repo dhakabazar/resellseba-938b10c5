@@ -1,6 +1,6 @@
 # Roadmap
 
-- [ ] Optimize admin order status switching and first-page queries; verify cache freshness and database indexes
+- [x] Optimize admin order status switching with account/status/date cache and mutation invalidation; signed-in revisit has zero order requests, 20/50 paging verified, typed status index access and limit-before-joins confirmed, tests/build pass
 
 - [x] Redesign Reseller Pricing with separate rate editor and custom-reseller directory tabs; signed-in save/read-back verified
 - [x] Audit custom-rate RPCs and test catalog, reseller/admin order calculations and checkout; 19 tests pass, temporary rates removed, no real orders submitted
