@@ -114,6 +114,7 @@ export function ExchangeModal({
       sell: num(it.reseller_price),
     }));
     setBack(rows);
+    return rows;
     const r: Record<string, number> = {};
     for (const p of preset ?? []) if (p?.product_id) r[p.product_id] = num(p.qty);
     setReturned(r);
@@ -138,7 +139,7 @@ export function ExchangeModal({
             const saved = input?.send?.find((s: any) => s.product_id === i.product_id);
             return {
               product_id: i.product_id, name: i.product_name, image: i.product_image ?? null, qty: num(i.quantity),
-              resellerCost: saved ? num(saved.resellerCost) : num(i.sa_price) - num(i.packaging_cost),
+              resellerCost: saved ? num(saved.resellerCost) : Math.max(0, num(i.sa_price) - num(i.packaging_cost)),
               adminBuy: saved ? num(saved.adminBuy) : num(i.buying_price),
               sell: saved ? num(saved.sell) : num(i.reseller_price),
               pack: num(i.packaging_cost),
@@ -160,7 +161,14 @@ export function ExchangeModal({
           setCOverride(String(ord?.total ?? 0));
           setSOverride(String(ord?.exchange_admin_share ?? 0));
         }
-        if (ord?.parent_order_id) await loadBack(ord.parent_order_id, ord.exchange_returned_items ?? []);
+        if (ord?.parent_order_id) {
+          const rows = await loadBack(ord.parent_order_id, ord.exchange_returned_items ?? []);
+          // Older exchange: same product back means the rate matches the returned credit.
+          if (!input) setLines((ls) => ls.map((l) => {
+            const b = rows.find((r) => r.product_id === l.product_id);
+            return b ? { ...l, resellerCost: b.resellerCost, adminBuy: isAdmin ? b.adminBuy : l.adminBuy } : l;
+          }));
+        }
         return;
       }
       const { data: o } = await supabase.from("orders").select("id,order_number,reseller_id,customer_name,delivery_cost,shipping_cost,status").eq("id", pid!).maybeSingle();
