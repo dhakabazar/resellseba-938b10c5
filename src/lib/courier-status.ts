@@ -23,6 +23,7 @@ export type OrderStatus =
   | "shipped"
   | "packaging"
   | "delivered"
+  | "exchanged"
   | "partial"
   | "pending_partial"
   | "partial_full"
@@ -257,6 +258,7 @@ export type OrderTabKey =
   | "handover"
   | "courier"
   | "delivered"
+  | "exchanged"
   | "pending_partial"
   | "partial_full"
   | "partial_item"
@@ -276,6 +278,7 @@ export const ORDER_TABS: { key: OrderTabKey; label: string; statuses: OrderStatu
   { key: "handover", label: "Courier Handover", statuses: ["ready_to_ship"] },
   { key: "courier", label: "To Courier", statuses: ["shipped", "processing"] },
   { key: "delivered", label: "Delivered", statuses: ["delivered"] },
+  { key: "exchanged", label: "Exchanged", statuses: ["exchanged"] },
   { key: "pending_partial", label: "Pending Partial", statuses: ["pending_partial"] },
   { key: "partial_full", label: "Partial (Full Received)", statuses: ["partial_full", "partial"] },
   { key: "partial_item", label: "Partial (Item Received)", statuses: ["partial_item"] },
@@ -295,6 +298,7 @@ export const ORDER_STATUS_OPTIONS: OrderStatus[] = [
   "ready_to_ship",
   "shipped",
   "delivered",
+  "exchanged",
   "pending_partial",
   "partial_full",
   "partial_item",
@@ -342,6 +346,7 @@ export const RESELLER_LOCKED_STATUSES: OrderStatus[] = [
   "processing",
   "shipped",
   "delivered",
+  "exchanged",
   "pending_partial",
   "partial",
   "partial_full",
@@ -392,12 +397,13 @@ export function nextStatuses(current: string, role: "reseller" | "admin"): Order
       return ["shipped", "cancelled"];
     case "processing":
     case "shipped":
-      return ["delivered", "pending_partial", "pending_return"];
+      return ["delivered", "exchanged", "pending_partial", "pending_return"];
     case "pending_partial":
       return ["partial_full", "partial_item", "partial_delivery", "damaged"];
     case "pending_return":
       return ["returned", "damaged"];
     case "delivered":
+    case "exchanged":
     case "partial":
     case "partial_full":
     case "partial_item":
@@ -420,6 +426,7 @@ const STATUS_LABELS: Record<string, string> = {
   processing: "To Courier",
   shipped: "To Courier",
   delivered: "Delivered",
+  exchanged: "Exchanged",
   pending_partial: "Pending Partial",
   partial: "Partial (Full Received)",
   partial_full: "Partial (Full Received)",
@@ -436,7 +443,7 @@ export function orderStatusLabel(status: string) {
 }
 
 export function orderStatusTone(status: string) {
-  if (status === "delivered") return "bg-success/15 text-success";
+  if (status === "delivered" || status === "exchanged") return "bg-success/15 text-success";
   if (status === "returned" || status === "cancelled" || status === "damaged")
     return "bg-destructive/15 text-destructive";
   if (status === "partial" || status === "partial_full" || status === "partial_item" || status === "partial_delivery")

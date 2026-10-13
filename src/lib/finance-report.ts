@@ -72,6 +72,7 @@ export function resellerHeldAdvance(o: ProfitOrder) {
 export function isRealizedStatus(status?: string | null) {
   return (
     status === "delivered" ||
+    status === "exchanged" ||
     status === "partial" ||
     status === "partial_full" ||
     status === "partial_item" ||
@@ -227,6 +228,7 @@ export function statusTab(status: string): OrderTabKey {
 
 export const REALIZED_STATUSES = [
   "delivered",
+  "exchanged",
   "partial",
   "partial_full",
   "partial_item",
