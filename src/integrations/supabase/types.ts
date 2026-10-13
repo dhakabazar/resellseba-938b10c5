@@ -2078,8 +2078,14 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          delivery_flat: number | null
+          delivery_inside: number | null
+          delivery_mode: string | null
+          delivery_outside: number | null
+          delivery_sub: number | null
           id: string
           note: string | null
+          packaging_cost: number | null
           product_id: string
           reseller_id: string
           reseller_price: number
@@ -2088,8 +2094,14 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by?: string | null
+          delivery_flat?: number | null
+          delivery_inside?: number | null
+          delivery_mode?: string | null
+          delivery_outside?: number | null
+          delivery_sub?: number | null
           id?: string
           note?: string | null
+          packaging_cost?: number | null
           product_id: string
           reseller_id: string
           reseller_price: number
@@ -2098,8 +2110,14 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string | null
+          delivery_flat?: number | null
+          delivery_inside?: number | null
+          delivery_mode?: string | null
+          delivery_outside?: number | null
+          delivery_sub?: number | null
           id?: string
           note?: string | null
+          packaging_cost?: number | null
           product_id?: string
           reseller_id?: string
           reseller_price?: number
@@ -3462,6 +3480,14 @@ export type Database = {
       reseller_auto_assign: { Args: never; Returns: boolean }
       reseller_can_note: { Args: { _order_id: string }; Returns: boolean }
       reseller_catalog_page: { Args: { _limit?: number }; Returns: Json }
+      reseller_custom_rate_summary: {
+        Args: never
+        Returns: {
+          last_updated: string
+          products: number
+          reseller_id: string
+        }[]
+      }
       reseller_dashboard: {
         Args: { _from?: string; _to?: string }
         Returns: Json
