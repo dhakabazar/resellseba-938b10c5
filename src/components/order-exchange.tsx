@@ -101,7 +101,7 @@ export function ExchangeModal({
         return;
       }
       const { data: o } = await supabase.from("orders").select("id,order_number,reseller_id,customer_name,delivery_cost,shipping_cost,status").eq("id", pid!).maybeSingle();
-      const { data: its } = await supabase.from("order_items").select("product_id,product_name,quantity").eq("order_id", pid!);
+      const { data: its } = await supabase.from("order_items").select("product_id,product_name,product_image,quantity").eq("order_id", pid!);
       setParent(o);
       setParentItems(its ?? []);
       setDelivery(String(o?.delivery_cost || o?.shipping_cost || 0));
