@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { exchangeAdminBuy, exchangeCalc } from "./exchange";
+import { exchangeAdminBuy, exchangeCalc } from "@/lib/exchange";
 
 const A = { qty: 1, resellerCost: 90, adminBuy: 60, sell: 300 };
 

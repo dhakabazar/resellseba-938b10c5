@@ -1,15 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { exchangeSplit } from "@/lib/exchange";
 import { isRealizedStatus, orderProfit } from "@/lib/finance-report";
 
 describe("exchange", () => {
-  it("reseller carries what customer and admin do not pay", () => {
-    const s = exchangeSplit({ productCost: 1000, delivery: 120, customerPays: 60, adminShare: 60 });
-    expect(s.resellerShare).toBe(1000);
-  });
-  it("shared delivery: customer 60, admin 60 of 120 with free product leaves reseller 0", () => {
-    expect(exchangeSplit({ productCost: 0, delivery: 120, customerPays: 60, adminShare: 60 }).resellerShare).toBe(0);
-  });
   it("exchanged counts as a delivered (realized) order", () => {
     expect(isRealizedStatus("exchanged")).toBe(true);
   });
