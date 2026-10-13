@@ -496,7 +496,7 @@ export function orderTabClasses(key: OrderTabKey, active: boolean) {
 }
 
 
-/** Order-count pill inside a tab: outlined chip on the active tab, muted otherwise. */
+/** Keep identical border geometry; only its colour changes when selected. */
 export function orderTabCountPill(active: boolean) {
-  return active ? "bg-black/10 text-current border border-current" : "bg-muted text-muted-foreground";
+  return active ? "bg-black/10 text-current border border-current" : "bg-muted text-muted-foreground border border-transparent";
 }
