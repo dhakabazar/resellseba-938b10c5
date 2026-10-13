@@ -1,6 +1,6 @@
 # Roadmap
 
-- [ ] Add selected-reseller Reset for all custom rates and verify isolated default restoration
+- [x] Add selected-reseller Reset for all custom rates; 12 tests pass and signed-in temporary rate save/reset/reload confirms defaults with original custom reseller unchanged
 
 - [x] Optimize admin order status switching with account/status/date cache and mutation invalidation; signed-in revisit has zero order requests, 20/50 paging verified, typed status index access and limit-before-joins confirmed, tests/build pass
 
