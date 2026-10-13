@@ -134,7 +134,19 @@ export function ExchangeModal({
         .or(`name.ilike.%${term.replace(/[%,]/g, "")}%,product_code.ilike.%${term.replace(/[%,]/g, "")}%`)
         .eq("is_active", true)
         .limit(8);
-      setResults(data ?? []);
+      const rows = data ?? [];
+      if (rows.length > 0) {
+        const { data: imgs } = await supabase
+          .from("product_images")
+          .select("product_id,url")
+          .in("product_id", rows.map((r) => r.id))
+          .order("is_primary", { ascending: false })
+          .order("sort_order", { ascending: true });
+        const first = new Map<string, string>();
+        for (const im of imgs ?? []) if (!first.has(im.product_id)) first.set(im.product_id, im.url);
+        for (const r of rows) (r as any).image = first.get(r.id) ?? null;
+      }
+      setResults(rows);
     }, 250);
     return () => clearTimeout(t);
   }, [q]);
