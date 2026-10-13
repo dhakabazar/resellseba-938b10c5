@@ -1,5 +1,8 @@
 # Roadmap
 
+- [ ] Redesign Reseller Pricing with separate rate editor and custom-reseller directory tabs
+- [ ] Audit and test custom rates across catalog, listings, order add/edit and storefront checkout
+
 - [x] Align highlighted sold count with grid prices and after product quantity across all five themes; desktop/mobile badge placement verified
 
 - [x] Restore original reseller-network desktop filters; mobile-only collapse and two-column toolbar (build OK; signed-in account lacks admin access for browser verification)
