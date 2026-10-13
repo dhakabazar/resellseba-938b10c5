@@ -173,7 +173,7 @@ export function ExchangeModal({
     setBusy(true);
     const returnedItems = parentItems
       .filter((it) => (returned[it.product_id] ?? 0) > 0)
-      .map((it) => ({ product_id: it.product_id, name: it.product_name, qty: returned[it.product_id] }));
+      .map((it) => ({ product_id: it.product_id, name: it.product_name, image: it.product_image ?? null, qty: returned[it.product_id] }));
     const { error } = await supabase.rpc("create_exchange_order" as any, {
       _parent: pid,
       _items: lines.map((l) => ({ product_id: l.product_id, qty: l.qty, price: l.price })),
