@@ -476,17 +476,36 @@ export function orderTabGroup(key: OrderTabKey): OrderTabGroup {
   }
 }
 
-/** Tailwind classes for a tab in its group — light tint highlight for active. */
+/**
+ * Tailwind classes for a tab in its group.
+ * Active = solid fill + coloured halo (unmistakable next to the quiet inactive tabs);
+ * inactive = neutral card surface carrying only the group colour in its text.
+ */
 export function orderTabClasses(key: OrderTabKey, active: boolean) {
   const group = orderTabGroup(key);
   if (active) {
-    if (group === "delivered") return "bg-emerald-100 text-emerald-800 border-emerald-300 font-semibold";
-    if (group === "partial") return "bg-amber-100 text-amber-800 border-amber-300 font-semibold";
-    if (group === "terminal") return "bg-rose-100 text-rose-800 border-rose-300 font-semibold";
-    return "bg-primary/15 text-primary border-primary/30 font-semibold";
+    if (group === "delivered") return "bg-emerald-600 text-white border-emerald-600 ring-2 ring-emerald-500/40 shadow-sm font-semibold";
+    if (group === "partial") return "bg-amber-500 text-white border-amber-500 ring-2 ring-amber-400/40 shadow-sm font-semibold";
+    if (group === "terminal") return "bg-rose-600 text-white border-rose-600 ring-2 ring-rose-500/40 shadow-sm font-semibold";
+    return "bg-primary text-primary-foreground border-primary ring-2 ring-primary/40 shadow-sm font-semibold";
   }
-  if (group === "delivered") return "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100";
-  if (group === "partial") return "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100";
-  if (group === "terminal") return "bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100";
-  return "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100";
+  if (group === "delivered") return "bg-card text-emerald-700 dark:text-emerald-300 border-border hover:bg-emerald-50 dark:hover:bg-emerald-500/10";
+  if (group === "partial") return "bg-card text-amber-700 dark:text-amber-300 border-border hover:bg-amber-50 dark:hover:bg-amber-500/10";
+  if (group === "terminal") return "bg-card text-rose-700 dark:text-rose-300 border-border hover:bg-rose-50 dark:hover:bg-rose-500/10";
+  return "bg-card text-blue-700 dark:text-blue-300 border-border hover:bg-blue-50 dark:hover:bg-blue-500/10";
+}
+
+/** Small dot on a tab: group colour when inactive, white on the solid active tab. */
+export function orderTabDot(key: OrderTabKey, active: boolean) {
+  if (active) return "bg-white/85";
+  const group = orderTabGroup(key);
+  if (group === "delivered") return "bg-emerald-500";
+  if (group === "partial") return "bg-amber-500";
+  if (group === "terminal") return "bg-rose-500";
+  return "bg-blue-500";
+}
+
+/** Order-count pill inside a tab: translucent white on the active tab, muted otherwise. */
+export function orderTabCountPill(active: boolean) {
+  return active ? "bg-white/25 text-white" : "bg-muted text-muted-foreground";
 }

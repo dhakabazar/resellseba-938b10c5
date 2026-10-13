@@ -1,15 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { ChevronDown } from "lucide-react";
-import { ORDER_TABS, orderTabClasses, orderTabGroup, type OrderTabKey } from "@/lib/courier-status";
+import { ORDER_TABS, orderTabClasses, orderTabCountPill, orderTabDot, orderTabGroup, type OrderTabKey } from "@/lib/courier-status";
 
 /** Light tint classes for the mobile status dropdown, based on the active tab's group. */
 function tabTint(key: OrderTabKey): string {
   const group = orderTabGroup(key);
-  if (group === "delivered") return "bg-emerald-50 border-emerald-200 text-emerald-700";
-  if (group === "partial") return "bg-amber-50 border-amber-200 text-amber-700";
-  if (group === "terminal") return "bg-rose-50 border-rose-200 text-rose-700";
-  return "bg-blue-50 border-blue-200 text-blue-700";
+  if (group === "delivered") return "bg-emerald-50 border-emerald-400 text-emerald-800";
+  if (group === "partial") return "bg-amber-50 border-amber-400 text-amber-800";
+  if (group === "terminal") return "bg-rose-50 border-rose-400 text-rose-800";
+  return "bg-blue-50 border-blue-400 text-blue-800";
 }
 
 /**
