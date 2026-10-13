@@ -316,7 +316,10 @@ export function ExchangeModal({
                 <div className="mb-1 text-xs font-semibold">Product coming back from customer</div>
                 {parentItems.map((it) => (
                   <div key={it.product_id} className="flex items-center justify-between gap-2 py-0.5 text-xs">
-                    <span className="truncate">{it.product_name}</span>
+                    <span className="flex min-w-0 items-center gap-2">
+                      {it.product_image && <img src={it.product_image} alt="" className="h-7 w-7 shrink-0 rounded border object-cover" loading="lazy" />}
+                      <span className="truncate">{it.product_name}</span>
+                    </span>
                     <Input
                       type="number" min={0} max={it.quantity} className="h-7 w-16"
                       value={returned[it.product_id] ?? 0}
