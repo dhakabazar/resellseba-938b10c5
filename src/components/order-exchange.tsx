@@ -440,32 +440,31 @@ export function ExchangeModal({
   );
 
   const story = (
-    <div className="space-y-1.5 rounded-lg border-2 border-primary/30 bg-primary/5 p-3 text-xs">
-      <div className="text-sm font-bold">যা ঘটবে (Summary)</div>
-      <div>
-        <b>কাস্টমার:</b> {backLines.length ? `${backLines.map((b) => `${b.name} ×${b.qty}`).join(", ")} ফেরত দেবে, ` : ""}
-        {lines.length ? `${lines.map((l) => `${l.name} ×${l.qty}`).join(", ")} পাবে` : "পাঠানোর পণ্য বাছাই করুন"}; ডেলিভারিতে দেবে <b>{tk(calc.customerPays)}</b>
-      </div>
-      <div>
-        <b>Reseller:</b> পণ্যের রেট {tk(calc.sendR)} − ফেরত পণ্যের ক্রেডিট {tk(calc.backR)} = <b>{tk(calc.resellerCost)}</b>
-        {" · "}ডেলিভারি {tk(calc.delivery)} · প্যাকেজিং {tk(calc.packaging)}{calc.adminShare > 0 ? ` · Admin দেবে ${tk(calc.adminShare)}` : ""}
-        {" → "}<b className={tone(calc.reseller)}>{res(calc.reseller)}</b>
-      </div>
-      {isAdmin && (
-        <div>
-          <b>Admin:</b> reseller-এর পণ্য খরচ {tk(calc.resellerCost)} − কেনা দাম ({tk(calc.sendB)} − ফেরত {restock ? tk(calc.backB) : "৳0 (damage)"}) = {tk(calc.resellerCost - calc.adminBuy)}
-          {calc.adminShare > 0 ? ` − বহন ${tk(calc.adminShare)}` : ""}{" → "}<b className={tone(calc.admin)}>{res(calc.admin)}</b>
+    <section aria-label="Exchange summary" className="border-t pt-4">
+      <h3 className="mb-2 text-sm font-semibold">চূড়ান্ত সামারি</h3>
+      <dl className="divide-y text-sm">
+        {[
+          { label: "কাস্টমার দেবেন (মোট)", value: tk(calc.customerPays), color: "text-primary" },
+          { label: "Reseller", value: res(calc.reseller), color: tone(calc.reseller) },
+          ...(isAdmin ? [{ label: "Admin", value: res(calc.admin), color: tone(calc.admin) }] : []),
+        ].map(({ label, value, color }) => (
+          <div key={label} className="flex items-center justify-between gap-3 py-2.5">
+            <dt className="text-muted-foreground">{label}</dt>
+            <dd className={`text-right font-semibold tabular-nums ${color}`}>{value}</dd>
+          </div>
+        ))}
+        <div className="flex items-start justify-between gap-3 py-2.5 text-xs">
+          <dt className="shrink-0 text-muted-foreground">স্টক</dt>
+          <dd className="text-right leading-relaxed">
+            পাঠানো {lines.reduce((total, l) => total + l.qty, 0)}টি কমবে
+            {backLines.length > 0 && (restock
+              ? ` · সম্পূর্ণ হলে ফেরত ${backLines.reduce((total, b) => total + b.qty, 0)}টি যোগ হবে`
+              : " · ফেরত পণ্য যোগ হবে না")}
+          </dd>
         </div>
-      )}
-      <div>
-        <b>স্টক:</b> {lines.map((l) => `${l.name} −${l.qty}`).join(", ") || "—"}
-        {backLines.length > 0 && (restock ? ` · exchange সম্পূর্ণ হলে ${backLines.map((b) => `${b.name} +${b.qty}`).join(", ")}` : " · ফেরত পণ্য damage, স্টকে যোগ হবে না")}
-      </div>
-      <div className="text-muted-foreground">
-        মূল অর্ডারের হিসাব বদলাবে না। exchange অর্ডার Delivered হলে "Exchanged" হবে; return হলে reseller-এর ক্ষতি = ডেলিভারি + প্যাকেজিং − Admin-এর অংশ।
-      </div>
-      {!isAdmin && <div className="text-muted-foreground">Admin অনুমোদনের সময় চূড়ান্ত হিসাব ঠিক করবে।</div>}
-    </div>
+      </dl>
+      {!isAdmin && <p className="mt-1 text-xs text-muted-foreground">Admin অনুমোদন সাপেক্ষে</p>}
+    </section>
   );
 
   return (
