@@ -1,5 +1,7 @@
+import { Repeat } from "lucide-react";
 import { fullDeliveryCollection } from "@/lib/order-payment";
 import { OrderPaymentInfo, PaymentStateBadge } from "@/components/order-payment-info";
+import { ExchangeBadge, ExchangeModal } from "@/components/order-exchange";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Pagination, usePaginated, type FilterOption } from "@/components/data-list";
@@ -194,6 +196,7 @@ function AdminOrdersPage() {
   );
   const [bookingModal, setBookingModal] = useState<{ open: boolean; orderIds: string[] }>({ open: false, orderIds: [] });
   const [zoomImage, setZoomImage] = useState<string | null>(null);
+  const [exchangeModal, setExchangeModal] = useState<{ parentId?: string; reviewId?: string } | null>(null);
   const [notesModal, setNotesModal] = useState<{ orderId: string; orderNumber?: string | null } | null>(null);
   
   const fetchActive = useServerFn(getActiveCouriers);
@@ -872,7 +875,7 @@ function AdminOrdersPage() {
                       onChange={(e) => setMarked(prev => e.target.checked ? [...prev, o.id] : prev.filter(x => x !== o.id))}
                     />
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5"><div className="truncate text-sm font-bold tracking-tight">#{o.order_number}</div><PaymentStateBadge order={o as never} /></div>
+                      <div className="flex items-center gap-1.5"><div className="truncate text-sm font-bold tracking-tight">#{o.order_number}</div><PaymentStateBadge order={o as never} /><ExchangeBadge order={o as never} /></div>
                       <div className="text-[10px] uppercase tracking-wide text-muted-foreground tabular-nums">
                         {new Date(o.created_at).toLocaleString([], { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
                       </div>
@@ -924,6 +927,15 @@ function AdminOrdersPage() {
                             <Truck className="mr-2 h-4 w-4" /> {activeProviderLabel ? `Book ${activeProviderLabel}` : "Book Courier"}
                           </DropdownMenuItem>
                         )}
+                        {canEdit && ((o as any).is_exchange ? (
+                          <DropdownMenuItem onClick={() => setExchangeModal({ reviewId: o.id })}>
+                            <Repeat className="mr-2 h-4 w-4" /> {(o as any).exchange_state === "requested" ? "Review exchange request" : "Exchange split"}
+                          </DropdownMenuItem>
+                        ) : o.status !== "cancelled" && (
+                          <DropdownMenuItem onClick={() => setExchangeModal({ parentId: o.id })}>
+                            <Repeat className="mr-2 h-4 w-4" /> Create Exchange
+                          </DropdownMenuItem>
+                        ))}
                         {canDelete && (
                           <DropdownMenuItem
                             onClick={() => removeOrder(o.id)}
@@ -1139,6 +1151,7 @@ function AdminOrdersPage() {
                   <div className="min-w-0 text-center">
                     <div className="font-medium truncate">{o.order_number}</div>
                     <PaymentStateBadge order={o as never} className="mt-0.5" />
+                    <ExchangeBadge order={o as never} className="mt-0.5" />
                     <div className="text-[11px] text-muted-foreground">
                       {new Date(o.created_at).toLocaleDateString()}
                     </div>
