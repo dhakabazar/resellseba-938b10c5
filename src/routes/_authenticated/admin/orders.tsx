@@ -1451,6 +1451,14 @@ function AdminOrdersPage() {
             if (id) void syncOrders([id]);
           }}
         />
+        <ExchangeModal
+          open={!!exchangeModal}
+          onClose={() => setExchangeModal(null)}
+          parentId={exchangeModal?.parentId ?? null}
+          review={exchangeModal?.reviewId ? { id: exchangeModal.reviewId } : null}
+          isAdmin
+          onDone={() => { invalidateOrderPages(); void load({ silent: true }); }}
+        />
         <ShipmentBookingModal
           isOpen={bookingModal.open}
           onClose={() => setBookingModal({ open: false, orderIds: [] })}
