@@ -3863,6 +3863,7 @@ export type Database = {
         | "partial_item"
         | "partial_delivery"
         | "damaged"
+        | "exchanged"
       payment_method:
         | "cod"
         | "bkash"
@@ -4042,6 +4043,7 @@ export const Constants = {
         "partial_item",
         "partial_delivery",
         "damaged",
+        "exchanged",
       ],
       payment_method: [
         "cod",

@@ -155,6 +155,13 @@
       "when": 1791891036659,
       "tag": "0021_manual_payment_verify_any_online",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1791892782389,
+      "tag": "0022_add_exchanged_status",
+      "breakpoints": true
     }
   ]
 }
