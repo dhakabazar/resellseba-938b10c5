@@ -140,7 +140,7 @@ export function OrderTabs({
                     className={`flex min-w-0 items-center gap-1.5 rounded-md border px-2 py-1.5 text-xs transition-colors ${orderTabClasses(t.key, isActive)}`}
                   >
                     <span className="min-w-0 flex-1 truncate text-center font-medium">{t.label}</span>
-                    <span className={`shrink-0 rounded-full px-1.5 text-[10px] font-semibold tabular-nums ${orderTabCountPill(isActive)}`}>
+                    <span className={`inline-flex min-w-[5ch] shrink-0 items-center justify-center rounded-full px-1.5 text-[10px] font-semibold tabular-nums ${orderTabCountPill(isActive)}`}>
                       {count(t.key)}
                     </span>
                   </button>
@@ -168,7 +168,7 @@ export function OrderTabs({
               )}`}
             >
               <span className="min-w-0 truncate font-medium">{t.label}</span>
-              <span className={`shrink-0 rounded-full px-1.5 py-px text-[11px] font-semibold tabular-nums ${orderTabCountPill(isActive)}`}>
+              <span className={`inline-flex min-w-[5ch] shrink-0 items-center justify-center rounded-full px-1.5 py-px text-[11px] font-semibold tabular-nums ${orderTabCountPill(isActive)}`}>
                 {count(t.key)}
               </span>
             </button>
