@@ -206,7 +206,7 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
                 <div class="thank-you">Thank you for shopping with us</div>
                 <div class="cod-badge">
                   <span class="cod-label">COD</span>
-                  <span class="cod-value">৳${Number(o.total).toFixed(0)}</span>
+                  <span class="cod-value">৳${orderCodDue(o).toFixed(0)}</span>
                 </div>
               </div>
             </div>

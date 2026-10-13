@@ -23,3 +23,6 @@
 - Reseller Pricing separates the directory from the product table and uses a tabbed modal for rate edits; drafts stay isolated until saved to avoid accidental changes.
 - Reseller-wide rate reset deletes overrides through a reseller-scoped helper under existing RLS, never copying defaults into overrides or modifying saved orders; this preserves future master-rate inheritance.
 - Reseller rate maps use explicit reseller scope (null means master-only), and existing order edits preserve saved cost snapshots and delivery charges so later rate changes cannot silently reprice them.
+
+- Order prepaid money is mirrored in advance_amount/paid_amount, courier received_amount excludes it; shared order-payment helpers and database normalization keep status and COD consistent without rewriting historical orders.
+- Verified gateway captures use a locked database RPC and provider/transaction uniqueness; receiving account ownership is required so webhook retries cannot double-credit money.

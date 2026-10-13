@@ -399,7 +399,7 @@ function AdminOrdersPage() {
         const targetIds = [...marked];
         let error: { message: string } | null = null;
         if (newStatus === "delivered") {
-          // Full delivery = full order total collected.
+          // Full delivery collects outstanding COD, excluding advance.
           for (const id of marked) {
             const o = orders.find((x) => x.id === id);
             const res = await supabase
@@ -1387,7 +1387,7 @@ function AdminOrdersPage() {
                         const targetId = statusModal.orderId;
                         const curr = orders.find((o) => o.id === targetId);
                         const patch: Record<string, unknown> = { status: s as any };
-                        if (s === "delivered") patch.received_amount = Number(curr?.total ?? 0);
+                        if (s === "delivered") patch.received_amount = curr ? fullDeliveryCollection(curr) : 0;
                         const { error } = await supabase
                           .from("orders")
                           .update(patch as any)
