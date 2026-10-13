@@ -5,7 +5,7 @@ import { fetchAll } from "@/lib/fetch-all";
 import { PageHeader, StatCard } from "@/components/ui-kit";
 import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
 import { ProductCodeChip } from "@/components/product-code";
-import { Loader2, Trash2, Tag, Handshake, Users, Pencil, ArrowRight } from "lucide-react";
+import { Loader2, Trash2, Tag, Handshake, Users, Pencil, ArrowRight, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { matchesResellerSearch } from "@/lib/phone-search";
 import { deliveryLabel } from "@/lib/delivery";
@@ -15,6 +15,7 @@ import { SearchableSelect } from "@/components/searchable-select";
 import { DataToolbar, Pagination, usePaginated } from "@/components/data-list";
 import { ResellerRateEditor } from "@/components/reseller-rate-editor";
 import { withResellerRates, type ResellerPriceMap } from "@/lib/reseller-prices";
+import { resetResellerRates } from "@/lib/reset-reseller-rates";
 
 export const Route = createFileRoute("/_authenticated/admin/reseller-pricing")({
   component: ResellerPricingPage,
@@ -101,6 +102,7 @@ function ResellerPricingPage() {
   const [editing, setEditing] = useState<Product | null>(null);
   const [draft, setDraft] = useState<Draft>(draftOf());
   const [saving, setSaving] = useState(false);
+  const [resetting, setResetting] = useState(false);
   const [q, setQ] = useState("");
   const [rateFilter, setRateFilter] = useState("");
   const [page, setPage] = useState(1);
@@ -199,6 +201,24 @@ function ResellerPricingPage() {
     await Promise.all([loadOverrides(resellerId), loadSummary()]);
   }
 
+  async function resetAll() {
+    if (!resellerId || resetting || saving || rowLoading) return;
+    const rid = resellerId;
+    setResetting(true);
+    try {
+      await resetResellerRates(supabase, rid);
+      setEditing(null);
+      setDraft(draftOf());
+      setOverrides([]);
+      setSummary((current) => current.filter((item) => item.reseller_id !== rid));
+      setRateFilter("");
+      toast.success("All custom rates reset to master defaults");
+      await Promise.all([loadOverrides(rid), loadSummary()]);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not reset rates");
+    } finally { setResetting(false); }
+  }
+
   return (
     <div className="space-y-6">
       <PageHeader title="Reseller pricing" />
@@ -215,10 +235,11 @@ function ResellerPricingPage() {
           </TabsList>
           <TabsContent value="rates" className="space-y-5">
             <div className="grid items-end gap-4 border-b pb-5 sm:grid-cols-[minmax(0,1fr)_auto]">
-              <SearchableSelect label="Reseller" placeholder="Select a reseller" searchPlaceholder="Search name, code or phone…" value={resellerId} onChange={selectReseller} options={resellers.map((r) => ({ value: r.id, label: `${r.business_name}${r.code ? ` · ${r.code}` : ""}${r.contact_phone ? ` · ${r.contact_phone}` : ""}` }))} />
+              <SearchableSelect label="Reseller" placeholder="Select a reseller" searchPlaceholder="Search name, code or phone…" value={resellerId} onChange={(id) => { if (!resetting) selectReseller(id); }} options={resellers.map((r) => ({ value: r.id, label: `${r.business_name}${r.code ? ` · ${r.code}` : ""}${r.contact_phone ? ` · ${r.contact_phone}` : ""}` }))} />
               {selected && <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-muted-foreground sm:pb-3"><span><strong className="text-foreground">{rowLoading ? "…" : overrides.length}</strong> custom products</span><span><strong className="text-foreground">{rowLoading ? "…" : overrides.filter((o) => o.packaging_cost != null).length}</strong> packaging</span><span><strong className="text-foreground">{rowLoading ? "…" : overrides.filter((o) => o.delivery_mode).length}</strong> delivery</span></div>}
             </div>
             {!selected ? <div className="grid justify-items-center gap-3 py-16 text-muted-foreground"><Handshake className="h-8 w-8" /><span className="text-sm">No reseller selected</span></div> : <>
+              <div className="flex items-center justify-between gap-3"><h2 className="min-w-0 truncate text-sm font-semibold">{selected.business_name}</h2><Button variant="outline" size="sm" disabled={resetting || saving || rowLoading} onClick={() => void resetAll()} title="Reset all custom product, packaging and delivery rates to master defaults">{resetting ? <Loader2 className="animate-spin" /> : <RotateCcw />}Reset all rates</Button></div>
               <DataToolbar search={q} onSearch={setQ} searchPlaceholder="Search product name or ID…" perPage={perPage} onPerPage={setPerPage} filters={[{ key: "rate", label: "Rates", value: rateFilter, onChange: setRateFilter, options: [{ value: "custom", label: "Custom rates" }, { value: "master", label: "Master rates" }, { value: "packaging", label: "Custom packaging" }, { value: "delivery", label: "Custom delivery" }] }]} />
               {rowLoading ? <div className="grid place-items-center py-16"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div> : <>
                 <div className="overflow-x-auto">
@@ -233,7 +254,7 @@ function ResellerPricingPage() {
                         <td className="px-3 py-3"><div className="font-medium">{taka(effective.packaging_cost)}</div><div className="mt-1 text-[10px] text-muted-foreground">{o?.packaging_cost != null ? `Master ${taka(p.packaging_cost)}` : "Master rate"}</div></td>
                         <td className="px-3 py-3"><div className="max-w-48 text-xs">{deliveryLabel(effective)}</div><div className="mt-1 text-[10px] text-muted-foreground">{o?.delivery_mode ? "Custom rule" : "Master rule"}</div></td>
                         <td className="whitespace-nowrap px-3 py-3"><div className="font-semibold">{taka(Number(effective.reseller_price) + Number(effective.packaging_cost))}</div><div className="mt-1 text-[10px] text-muted-foreground">price + packaging</div></td>
-                        <td className="py-3 pl-3"><div className="flex items-center justify-end gap-1"><Button variant="outline" size="sm" onClick={() => editProduct(p)} aria-label={`Edit rates for ${p.name}`}><Pencil />Edit</Button>{o && <Button variant="ghost" size="icon" className="text-destructive" title="Remove custom rates" aria-label={`Remove rates for ${p.name}`} onClick={() => setDel({ id: o.id, name: p.name })}><Trash2 /></Button>}</div></td>
+                        <td className="py-3 pl-3"><div className="flex items-center justify-end gap-1"><Button variant="outline" size="sm" disabled={resetting} onClick={() => editProduct(p)} aria-label={`Edit rates for ${p.name}`}><Pencil />Edit</Button>{o && <Button variant="ghost" size="icon" disabled={resetting} className="text-destructive" title="Remove custom rates" aria-label={`Remove rates for ${p.name}`} onClick={() => setDel({ id: o.id, name: p.name })}><Trash2 /></Button>}</div></td>
                       </tr>;
                     })}{rows.length === 0 && <tr><td colSpan={6} className="py-12 text-center text-muted-foreground">No products match this filter.</td></tr>}</tbody>
                   </table>
