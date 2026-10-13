@@ -608,6 +608,14 @@ function AdminOrdersPage() {
                   {!isPartialStatus(tab) && canStatus && (
                     <BulkScanButton mode={tab === "pending_return" ? "return" : "handover"} onDone={() => void load({ silent: true })} />
                   )}
+                  {canEdit && (
+                    <button
+                      onClick={() => setExchangeModal({})}
+                      className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium hover:bg-accent"
+                    >
+                      <Repeat className="h-4 w-4" /> Exchange
+                    </button>
+                  )}
                   {canCreate && (
                   <button
                       onClick={() => setOpen(true)}
@@ -931,7 +939,7 @@ function AdminOrdersPage() {
                           <DropdownMenuItem onClick={() => setExchangeModal({ reviewId: o.id })}>
                             <Repeat className="mr-2 h-4 w-4" /> {(o as any).exchange_state === "requested" ? "Review exchange request" : "Exchange split"}
                           </DropdownMenuItem>
-                        ) : o.status !== "cancelled" && (
+                        ) : (
                           <DropdownMenuItem onClick={() => setExchangeModal({ parentId: o.id })}>
                             <Repeat className="mr-2 h-4 w-4" /> Create Exchange
                           </DropdownMenuItem>
@@ -1128,6 +1136,11 @@ function AdminOrdersPage() {
                              }
                              return null;
                            })()}
+                           {canEdit && (
+                             <DropdownMenuItem onClick={() => setExchangeModal((o as any).is_exchange ? { reviewId: o.id } : { parentId: o.id })}>
+                               <Repeat className="mr-2 h-4 w-4" /> {(o as any).is_exchange ? ((o as any).exchange_state === "requested" ? "Review exchange request" : "Exchange split") : "Create Exchange"}
+                             </DropdownMenuItem>
+                           )}
                            {canDelete && (() => {
                              const isBooked = shipments.some(s => s.order_id === o.id && (s.consignment_id || s.tracking_id));
                              return (

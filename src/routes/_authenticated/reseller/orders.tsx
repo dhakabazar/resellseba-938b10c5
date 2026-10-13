@@ -590,6 +590,12 @@ function OrdersPage() {
             >
               <Download className="h-4 w-4" /> <span className="hidden xs:inline">Export</span>
             </button>
+            <button
+              onClick={() => setExchangeModal({})}
+              className="inline-flex items-center gap-2 whitespace-nowrap rounded-md border px-3 py-2 text-sm font-medium hover:bg-accent"
+            >
+              <Repeat className="h-4 w-4" /> Exchange
+            </button>
             {canCreateOrder && (
               <button
                 onClick={() => setOpen(true)}
@@ -854,7 +860,7 @@ function OrdersPage() {
                           <DropdownMenuItem onClick={() => setExchangeModal({ reviewId: o.id })}>
                             <Repeat className="mr-2 h-4 w-4" /> Exchange details
                           </DropdownMenuItem>
-                        ) : o.status !== "cancelled" && (
+                        ) : (
                           <DropdownMenuItem onClick={() => setExchangeModal({ parentId: o.id })}>
                             <Repeat className="mr-2 h-4 w-4" /> Request Exchange
                           </DropdownMenuItem>
