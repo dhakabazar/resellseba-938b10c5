@@ -36,6 +36,7 @@ type PricingProduct = {
 
 type PricingListing = {
   id: string;
+  reseller_id: string;
   selling_price: number;
   compare_at_price: number | null;
   is_active: boolean;
@@ -72,7 +73,7 @@ export function ListingPricingModal({
         supabase
           .from("reseller_listings")
           .select(
-            "id,selling_price,compare_at_price,is_active,products(id,name,product_code,og_image_url,reseller_price,packaging_cost,suggested_price,stock,brand_id,category_id,delivery_mode,delivery_flat,delivery_inside,delivery_outside,delivery_sub)",
+            "id,reseller_id,selling_price,compare_at_price,is_active,products(id,name,product_code,og_image_url,reseller_price,packaging_cost,suggested_price,stock,brand_id,category_id,delivery_mode,delivery_flat,delivery_inside,delivery_outside,delivery_sub)",
           )
           .eq("id", id)
           .maybeSingle(),
@@ -83,7 +84,7 @@ export function ListingPricingModal({
       let l = (data ?? null) as PricingListing | null;
       // Admin can set a reseller specific admin price — RLS only exposes our own row.
       if (l?.products?.id) {
-        const map = await fetchResellerPriceMap();
+        const map = await fetchResellerPriceMap(l.reseller_id);
         if (!alive) return;
         setCustomPrice(hasCustomPrice(l.products.id, map));
         l = { ...l, products: withResellerRates({ ...l.products, reseller_price: wholesalePrice(l.products, map) }, map) };
