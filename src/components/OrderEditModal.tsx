@@ -445,7 +445,7 @@ export function OrderEditModal({ orderId, allProducts: rawProducts, onClose, onS
                         <option value="refunded">Refunded</option>
                       </select>
                       <span className="block text-[11px] text-muted-foreground">অটো হিসাব হয় — অগ্রিম/Received টাকা বা নিচের "Verify payment" দিয়ে বদলান।</span>
-                      {order && <OrderPaymentInfo order={order as never} canConfirm onChanged={() => window.dispatchEvent(new Event("order-payment-changed"))} />}
+                      {order && <OrderPaymentInfo order={order as never} canConfirm onChanged={onSaved} />}
                     </label>
                   )}
                 </div>

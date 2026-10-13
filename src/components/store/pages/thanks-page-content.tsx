@@ -36,6 +36,8 @@ interface OrderDetail {
   area: string | null;
   payment_method: string | null;
   payment_status: string | null;
+  payment_manual?: boolean;
+  paid_amount?: number;
   created_at: string;
   order_items?: {
     id: string;
@@ -80,6 +82,7 @@ export function ThanksPageContent({
   );
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [copied, setCopied] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   const phone = settings?.support_phone?.trim();
   const rawWa = settings?.whatsapp?.replace(/[^\d]/g, "");
@@ -97,7 +100,8 @@ export function ThanksPageContent({
     setPayState("checking");
     verifyPayment({ data: { orderNumber: n } })
       .then((r) => setPayState(r.status === "paid" ? "paid" : r.status === "partial" ? "partial" : "failed"))
-      .catch(() => setPayState("failed"));
+      .catch(() => setPayState("failed"))
+      .finally(() => setReloadKey((k) => k + 1));
   }, [pay, n, verifyPayment]);
 
   useEffect(() => {
@@ -185,7 +189,7 @@ export function ThanksPageContent({
     return () => {
       alive = false;
     };
-  }, [n, code, capi, getOrderDetails]);
+  }, [n, code, capi, getOrderDetails, reloadKey]);
 
   function copyOrderNumber() {
     if (!n) return;
@@ -397,11 +401,18 @@ export function ThanksPageContent({
               >
                 {order.payment_status === "paid"
                   ? "পরিশোধিত"
-                  : order.payment_status === "partial"
-                    ? "আংশিক পরিশোধিত"
-                    : "ডেলিভারির সময় পরিশোধ"}
+                  : order.payment_manual || (pay && payState === "checking")
+                    ? "পেমেন্ট যাচাই চলছে"
+                    : order.payment_status === "partial"
+                      ? "আংশিক পরিশোধিত"
+                      : "ডেলিভারির সময় পরিশোধ"}
               </span>
             </div>
+            {order.payment_manual && order.payment_status !== "paid" && (
+              <p className={cx("text-[11px] leading-snug", muted)}>
+                আপনার পাঠানো পেমেন্ট যাচাই করে নিশ্চিত করা হবে।{Number(order.paid_amount) > 0 ? ` নিশ্চিত হয়েছে ${bdt(Number(order.paid_amount))}।` : ""}
+              </p>
+            )}
           </div>
 
           {/* Customer / Delivery Info */}
