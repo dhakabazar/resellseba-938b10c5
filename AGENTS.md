@@ -19,5 +19,6 @@
 - Storefront sold badges share one theme-token presentation, with grid price rows using two-column tracks and product quantity/badge pairs grouped to preserve placement across screen sizes.
 - Theme header scroll state collapses top strips only and retains the sticky main header; announcement controls use theme content with legacy fallback to preserve existing stores.
 - Admin orders, resellers, products and customers plus reseller orders, catalog, listings and customers load in two phases (first page via the RPC _limit argument, then the full list in the background); filtering and paging stay client-side over the full set so they remain instant.
+- Admin order pages use user/tab/date-scoped Query caches with stale-while-revalidate; mutations invalidate every affected page and count cache, and the limited request finishes before full loading starts to avoid competing first-page work.
 - Reseller Pricing separates the directory from the product table and uses a tabbed modal for rate edits; drafts stay isolated until saved to avoid accidental changes.
 - Reseller rate maps use explicit reseller scope (null means master-only), and existing order edits preserve saved cost snapshots and delivery charges so later rate changes cannot silently reprice them.

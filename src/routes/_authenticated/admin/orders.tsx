@@ -45,7 +45,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useCan } from "@/lib/use-auth";
+import { useAuth, useCan } from "@/lib/use-auth";
+import { adminOrderKey, ADMIN_ORDERS_STALE_MS, statusCount } from "@/lib/admin-order-cache";
 import { NewOrderModal } from "@/components/NewOrderModal";
 import { OrderEditModal } from "@/components/OrderEditModal";
 import { type StripItem, ImageLightbox, OrderItemsList, OrderProductCell } from "@/components/order-items-strip";
@@ -121,6 +122,14 @@ type OrderItemLite = {
 };
 
 export const Route = createFileRoute("/_authenticated/admin/orders")({
+  head: () => ({ meta: [
+    { title: "Orders — Ecom Seller BD Admin" },
+    { name: "description", content: "Manage reseller orders, delivery statuses and payments in Ecom Seller BD." },
+    { property: "og:title", content: "Orders — Ecom Seller BD Admin" },
+    { property: "og:description", content: "Manage reseller orders, delivery statuses and payments in Ecom Seller BD." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   validateSearch: (s: Record<string, unknown>): { tab?: OrderTabKey; reseller?: string; q?: string } => ({
     tab: ORDER_TABS.some((t) => t.key === s.tab) ? (s.tab as OrderTabKey) : undefined,
     reseller: typeof s.reseller === "string" && s.reseller ? s.reseller : undefined,
@@ -131,6 +140,8 @@ export const Route = createFileRoute("/_authenticated/admin/orders")({
 
 function AdminOrdersPage() {
   const can = useCan();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const canCreate = can("orders.create");
   const canEdit = can("orders.edit");
   const canDelete = can("orders.delete");
@@ -139,7 +150,7 @@ function AdminOrdersPage() {
   const { tab: tabParam, reseller: resellerParam, q: qParam } = Route.useSearch();
   const navigate = Route.useNavigate();
   const [orders, setOrders] = useState<OrderRow[]>([]);
-  const [allOrders, setAllOrders] = useState<{ status: string }[]>([]);
+  const [statusCounts, setStatusCounts] = useState<Record<string, number>>({});
   const [orderItems, setOrderItems] = useState<OrderItemLite[]>([]);
   const [shipments, setShipments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -218,18 +229,20 @@ function AdminOrdersPage() {
     "order_id,product_id,product_name,product_image,quantity,returned_qty,reseller_price,line_total,sa_price,buying_price,packaging_cost";
   const SHIPMENT_SELECT = "id,order_id,provider,tracking_id,consignment_id";
 
-  // A remount with the same tab/range within a moment must not refetch the same payload.
-  const lastLoad = useRef<{ key: string; at: number } | null>(null);
+  const loadSeq = useRef(0);
+  const countsDirty = useRef(false);
+  function invalidateOrderPages() {
+    countsDirty.current = true;
+    void queryClient.cancelQueries({ queryKey: ["admin-order-pages", user?.id] });
+    void queryClient.invalidateQueries({ queryKey: ["admin-order-pages", user?.id], refetchType: "none" });
+    void queryClient.invalidateQueries({ queryKey: ["admin-order-counts", user?.id], refetchType: "none" });
+  }
   async function load(opts?: { silent?: boolean }) {
+    if (!user) return;
     const { fromTs, toTs } = resolveDateRange(filters);
-    const loadKey = `${tab}|${fromTs ?? ""}|${toTs ?? ""}`;
-    if (!opts?.silent) {
-      const prev = lastLoad.current;
-      if (prev && prev.key === loadKey && Date.now() - prev.at < 1500) return;
-      lastLoad.current = { key: loadKey, at: Date.now() };
-    }
-    if (!opts?.silent) setLoading(true);
     const seq = ++loadSeq.current;
+    if (opts?.silent) invalidateOrderPages();
+    const queryKey = adminOrderKey(user.id, tab, fromTs, toTs);
     const statuses = (ORDER_TABS.find((t) => t.key === tab)?.statuses ?? []) as string[];
     const args = {
       _statuses: statuses.length > 0 ? statuses : undefined,
@@ -246,32 +259,53 @@ function AdminOrdersPage() {
       setResellerOptions(rs.map((r: any) => ({ value: r.id, label: `${r.business_name} (/${r.code})` })));
       setResellers(rs);
     };
-    // Phase 1: only the first page's rows → instant view. Phase 2: full list in the
-    // background so filters, search and later pages stay instant afterwards.
-    const full = supabase.rpc("admin_orders_page", args);
-    const lookups = getAdminLookups();
-    if (!opts?.silent) {
-      const { data: first } = await supabase.rpc("admin_orders_page", { ...args, _limit: filtersRef.current.perPage });
-      if (seq === loadSeq.current && !fullDone.current.has(seq)) {
-        apply(first);
-        setLoading(false);
-      }
+    const cached = queryClient.getQueryData(queryKey);
+    if (cached) {
+      apply(cached);
+      setLoading(false);
+    } else if (!opts?.silent) {
+      setLoading(true);
     }
-    void refreshCounts();
-    const [{ data: page }, lk] = await Promise.all([full, lookups]);
-    fullDone.current.add(seq);
-    apply(page);
-    if (seq === loadSeq.current) setAllProducts((lk?.products ?? []) as any[]);
-    if (!opts?.silent && seq === loadSeq.current) setLoading(false);
+    void getAdminLookups().then((lk) => {
+      if (seq === loadSeq.current) setAllProducts((lk?.products ?? []) as any[]);
+    });
+    try {
+      // Prioritize the limited query; do not compete with the full payload.
+      if (!cached && !opts?.silent) {
+        const first = await queryClient.fetchQuery({
+          queryKey: [...queryKey, "first", filtersRef.current.perPage],
+          staleTime: ADMIN_ORDERS_STALE_MS,
+          queryFn: async ({ signal }) => {
+            const { data, error } = await supabase.rpc("admin_orders_page", { ...args, _limit: filtersRef.current.perPage }).abortSignal(signal);
+            if (error) throw error;
+            return data;
+          },
+        });
+        if (seq === loadSeq.current) { apply(first); setLoading(false); }
+      }
+      const full = await queryClient.fetchQuery({
+        queryKey,
+        staleTime: ADMIN_ORDERS_STALE_MS,
+        queryFn: async ({ signal }) => {
+          const { data, error } = await supabase.rpc("admin_orders_page", args).abortSignal(signal);
+          if (error) throw error;
+          return data;
+        },
+      });
+      apply(full);
+    } catch (error) {
+      if (seq === loadSeq.current && (error as Error)?.name !== "CancelledError") toast.error("Orders could not be refreshed. Please try again.");
+    } finally {
+      if (seq === loadSeq.current) setLoading(false);
+    }
   }
-  const loadSeq = useRef(0);
-  const fullDone = useRef(new Set<number>());
 
 
   // Refresh only the touched order rows — keeps scroll position, page and filters intact.
   async function syncOrders(ids: string[]) {
     const list = ids.filter(Boolean);
     if (list.length === 0) return;
+    invalidateOrderPages();
     const statuses = (ORDER_TABS.find((t) => t.key === tab)?.statuses ?? []) as string[];
     const inTab = (s: string) => statuses.length === 0 || statuses.includes(s);
     const { fromTs, toTs } = resolveDateRange(filters);
@@ -282,21 +316,19 @@ function AdminOrdersPage() {
       if (toTs != null && ts > toTs) return false;
       return true;
     };
-    const [{ data: rows }, { data: its }, { data: sh }, { data: allStats }] = await Promise.all([
+    const [{ data: rows }, { data: its }, { data: sh }] = await Promise.all([
       supabase.from("orders").select(ORDER_SELECT).in("id", list),
       supabase.from("order_items").select(ITEM_SELECT).in("order_id", list),
       supabase.from("shipments").select(SHIPMENT_SELECT).in("order_id", list),
-      Promise.resolve({ data: null }),
     ]);
-    void allStats; void inRange;
     const fetched = ((rows ?? []) as unknown) as OrderRow[];
     void refreshCounts();
     setOrders((prev) => {
       let next = prev
         .map((o) => fetched.find((f) => f.id === o.id) ?? o)
-        .filter((o) => !list.includes(o.id) || inTab(o.status));
+        .filter((o) => !list.includes(o.id) || (inTab(o.status) && inRange(o.created_at)));
       for (const f of fetched) {
-        if (!next.some((o) => o.id === f.id) && inTab(f.status)) next = [f, ...next];
+        if (!next.some((o) => o.id === f.id) && inTab(f.status) && inRange(f.created_at)) next = [f, ...next];
       }
       return next;
     });
@@ -305,6 +337,7 @@ function AdminOrdersPage() {
   }
 
   async function dropOrders(ids: string[]) {
+    invalidateOrderPages();
     setOrders((prev) => prev.filter((o) => !ids.includes(o.id)));
     setOrderItems((prev) => prev.filter((i) => !ids.includes(i.order_id)));
     setShipments((prev) => prev.filter((s) => !ids.includes(s.order_id)));
@@ -453,10 +486,11 @@ function AdminOrdersPage() {
   // Status tab counts follow every active filter (date, reseller, area, courier, search).
   const countSeq = useRef(0);
   async function refreshCounts() {
+    if (!user) return;
     const seq = ++countSeq.current;
     const f = filtersRef.current;
     const { fromTs, toTs } = resolveDateRange(f);
-    const { data } = await supabase.rpc("admin_order_status_counts", {
+    const args = {
       _from_ts: fromTs ?? undefined,
       _to_ts: toTs ?? undefined,
       _reseller_id: f.reseller || undefined,
@@ -464,13 +498,20 @@ function AdminOrdersPage() {
       _courier: f.courier || undefined,
       _q: f.q.trim() || undefined,
       _search_mode: searchModeRef.current,
-    });
-    if (seq !== countSeq.current) return;
-    setAllOrders(
-      Object.entries((data ?? {}) as Record<string, number>).flatMap(([status, count]) =>
-        Array.from({ length: Number(count) || 0 }, () => ({ status })),
-      ),
-    );
+    };
+    const queryKey = ["admin-order-counts", user.id, args];
+    if (countsDirty.current) {
+      countsDirty.current = false;
+      await queryClient.invalidateQueries({ queryKey, refetchType: "none" });
+    }
+    try {
+      const data = await queryClient.fetchQuery({ queryKey, staleTime: ADMIN_ORDERS_STALE_MS, queryFn: async () => {
+        const { data, error } = await supabase.rpc("admin_order_status_counts", args);
+        if (error) throw error;
+        return data;
+      } });
+      if (seq === countSeq.current) setStatusCounts((data ?? {}) as Record<string, number>);
+    } catch { /* Keep the last verified counts when a refresh fails. */ }
   }
   const filtersRef = useRef(filters);
   filtersRef.current = filters;
@@ -483,7 +524,7 @@ function AdminOrdersPage() {
   // Reload when the tab or the active date range changes.
   useEffect(() => {
     load();
-  }, [tab, filters.datePreset, filters.from, filters.to]);
+  }, [tab, filters.datePreset, filters.from, filters.to, user?.id]);
 
   const itemsByOrder = useMemo(() => {
     const m = new Map<string, OrderItemLite[]>();
@@ -662,7 +703,7 @@ function AdminOrdersPage() {
                 highlight
                 count={(key) => {
                   const sts = ORDER_TABS.find((t) => t.key === key)?.statuses ?? [];
-                  return sts.length === 0 ? allOrders.length : allOrders.filter((o) => (sts as string[]).includes(o.status)).length;
+                  return statusCount(statusCounts, sts);
                 }}
                 className="w-full min-w-0"
               />
@@ -794,7 +835,7 @@ function AdminOrdersPage() {
             onChange={setTab}
             count={(key) => {
               const sts = ORDER_TABS.find((t) => t.key === key)?.statuses ?? [];
-              return sts.length === 0 ? allOrders.length : allOrders.filter((o) => (sts as string[]).includes(o.status)).length;
+              return statusCount(statusCounts, sts);
             }}
           />
         </div>
