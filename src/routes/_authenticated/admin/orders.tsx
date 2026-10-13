@@ -243,7 +243,7 @@ function AdminOrdersPage() {
     const { fromTs, toTs } = resolveDateRange(filters);
     if (opts?.silent) invalidateOrderPages();
     const seq = ++loadSeq.current;
-    if (opts?.silent) void refreshCounts();
+    void refreshCounts();
     const queryKey = adminOrderKey(user.id, tab, fromTs, toTs);
     const statuses = (ORDER_TABS.find((t) => t.key === tab)?.statuses ?? []) as string[];
     const args = {
