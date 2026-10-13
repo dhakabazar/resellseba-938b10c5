@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { exchangeSplit } from "@/lib/exchange";
+import { orderStatusLabel } from "@/lib/courier-status";
 
 export const EXCHANGE_REASONS = [
   "Size / color change",
@@ -80,11 +81,16 @@ export function ExchangeModal({
   const [restock, setRestock] = useState(true);
   const [busy, setBusy] = useState(false);
   const [rev, setRev] = useState<any>(null);
+  const [picked, setPicked] = useState<string | null>(null);
+  const [orderQ, setOrderQ] = useState("");
+  const [orderHits, setOrderHits] = useState<any[]>([]);
+  const pid = parentId ?? picked;
 
   useEffect(() => {
     if (!open) return;
     setLines([]); setReturned({}); setQ(""); setNote(""); setRev(null);
     (async () => {
+      if (!review && !pid) { setParent(null); setParentItems([]); return; }
       if (review) {
         const { data: o } = await supabase.from("orders").select("*").eq("id", review.id).maybeSingle();
         const { data: its } = await supabase.from("order_items").select("product_id,product_name,quantity,sa_price,reseller_price").eq("order_id", review.id);
@@ -94,16 +100,29 @@ export function ExchangeModal({
         setAdminShare(String((o as any)?.exchange_admin_share ?? 0));
         return;
       }
-      if (!parentId) return;
-      const { data: o } = await supabase.from("orders").select("id,order_number,reseller_id,customer_name,delivery_cost,shipping_cost").eq("id", parentId).maybeSingle();
-      const { data: its } = await supabase.from("order_items").select("product_id,product_name,quantity").eq("order_id", parentId);
+      const { data: o } = await supabase.from("orders").select("id,order_number,reseller_id,customer_name,delivery_cost,shipping_cost,status").eq("id", pid!).maybeSingle();
+      const { data: its } = await supabase.from("order_items").select("product_id,product_name,quantity").eq("order_id", pid!);
       setParent(o);
       setParentItems(its ?? []);
       setDelivery(String(o?.delivery_cost || o?.shipping_cost || 0));
       setCustomerPays("0");
       setAdminShare("0");
     })();
-  }, [open, parentId, review?.id]);
+  }, [open, pid, review?.id]);
+
+  useEffect(() => { if (!open) { setPicked(null); setOrderQ(""); setOrderHits([]); } }, [open]);
+
+  useEffect(() => {
+    const term = orderQ.trim().replace(/[#%,]/g, "");
+    if (!term) return setOrderHits([]);
+    const t = setTimeout(async () => {
+      const { data } = await supabase.from("orders").select("id,order_number,customer_name,customer_phone,status")
+        .eq("is_exchange", false)
+        .or(`order_number.ilike.%${term}%,customer_phone.ilike.%${term}%`).order("created_at", { ascending: false }).limit(8);
+      setOrderHits(data ?? []);
+    }, 250);
+    return () => clearTimeout(t);
+  }, [orderQ]);
 
   useEffect(() => {
     const term = q.trim();
@@ -144,7 +163,7 @@ export function ExchangeModal({
       .filter((it) => (returned[it.product_id] ?? 0) > 0)
       .map((it) => ({ product_id: it.product_id, name: it.product_name, qty: returned[it.product_id] }));
     const { error } = await supabase.rpc("create_exchange_order" as any, {
-      _parent: parentId,
+      _parent: pid,
       _items: lines.map((l) => ({ product_id: l.product_id, qty: l.qty, price: l.price })),
       _returned: returnedItems,
       _total: Number(customerPays) || 0,
@@ -216,7 +235,7 @@ export function ExchangeModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Repeat className="h-4 w-4" />
-            {review ? `Exchange #${rev?.order_number ?? ""}` : `Exchange for #${parent?.order_number ?? ""}`}
+            {review ? `Exchange #${rev?.order_number ?? ""}` : (pid ? `Exchange for #${parent?.order_number ?? ""}` : "Create exchange")}
           </DialogTitle>
         </DialogHeader>
 
@@ -253,8 +272,21 @@ export function ExchangeModal({
               </>
             )}
           </div>
+        ) : !pid ? (
+          <div className="space-y-2 text-sm">
+            <Label className="text-xs">Original order number or customer phone</Label>
+            <Input autoFocus placeholder="e.g. 751032 or 017..." value={orderQ} onChange={(e) => setOrderQ(e.target.value)} />
+            <p className="text-[11px] text-muted-foreground">Any status works — pending, delivered, pending return, partial, returned…</p>
+            {orderHits.map((h) => (
+              <button key={h.id} type="button" onClick={() => setPicked(h.id)} className="flex w-full items-center justify-between rounded border px-2 py-1.5 text-left text-xs hover:bg-muted">
+                <span>#{h.order_number} · {h.customer_name} · {h.customer_phone}</span>
+                <span className="text-muted-foreground">{orderStatusLabel(h.status)}</span>
+              </button>
+            ))}
+          </div>
         ) : (
           <div className="space-y-3 text-sm">
+            {parent?.status && <div className="text-xs text-muted-foreground">Original status: <b className="text-foreground">{orderStatusLabel(parent.status)}</b></div>}
             <div>
               <Label className="text-xs">Reason</Label>
               <select className="mt-1 h-9 w-full rounded-md border bg-background px-2" value={reason} onChange={(e) => setReason(e.target.value)}>
