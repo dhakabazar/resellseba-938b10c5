@@ -320,7 +320,7 @@ export function ExchangeModal({
 
   const sel = "h-8 w-full rounded-md border bg-background px-2 text-xs";
   const tone = (v: number) => (v > 0 ? "text-success" : v < 0 ? "text-destructive" : "text-foreground");
-  const res = (v: number) => (v > 0 ? `লাভ ${tk(v)}` : v < 0 ? `লস ${tk(-v)}` : "লাভ-লস নেই (৳0)");
+  const res = (v: number) => (v > 0 ? `Profit ${tk(v)}` : v < 0 ? `Loss ${tk(-v)}` : "No profit or loss (৳0)");
 
   const products = (
     <>
@@ -441,10 +441,10 @@ export function ExchangeModal({
 
   const story = (
     <section aria-label="Exchange summary" className="border-t pt-4">
-      <h3 className="mb-2 text-sm font-semibold">চূড়ান্ত সামারি</h3>
+      <h3 className="mb-2 text-sm font-semibold">Final summary</h3>
       <dl className="divide-y text-sm">
         {[
-          { label: "কাস্টমার দেবেন (মোট)", value: tk(calc.customerPays), color: "text-primary" },
+          { label: "Customer pays (total)", value: tk(calc.customerPays), color: "text-primary" },
           { label: "Reseller", value: res(calc.reseller), color: tone(calc.reseller) },
           ...(isAdmin ? [{ label: "Admin", value: res(calc.admin), color: tone(calc.admin) }] : []),
         ].map(({ label, value, color }) => (
@@ -454,16 +454,16 @@ export function ExchangeModal({
           </div>
         ))}
         <div className="flex items-start justify-between gap-3 py-2.5 text-xs">
-          <dt className="shrink-0 text-muted-foreground">স্টক</dt>
+          <dt className="shrink-0 text-muted-foreground">Stock</dt>
           <dd className="text-right leading-relaxed">
-            পাঠানো {lines.reduce((total, l) => total + l.qty, 0)}টি কমবে
+            Sending {lines.reduce((total, l) => total + l.qty, 0)} — stock will go down
             {backLines.length > 0 && (restock
-              ? ` · সম্পূর্ণ হলে ফেরত ${backLines.reduce((total, b) => total + b.qty, 0)}টি যোগ হবে`
-              : " · ফেরত পণ্য যোগ হবে না")}
+              ? ` · returning ${backLines.reduce((total, b) => total + b.qty, 0)} will be added back once complete`
+              : " · returned items will not be restocked")}
           </dd>
         </div>
       </dl>
-      {!isAdmin && <p className="mt-1 text-xs text-muted-foreground">Admin অনুমোদন সাপেক্ষে</p>}
+      {!isAdmin && <p className="mt-1 text-xs text-muted-foreground">Awaiting admin approval</p>}
     </section>
   );
 
