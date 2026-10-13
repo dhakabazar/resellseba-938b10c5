@@ -860,7 +860,7 @@ function OrdersPage() {
                           <DropdownMenuItem onClick={() => setExchangeModal({ reviewId: o.id })}>
                             <Repeat className="mr-2 h-4 w-4" /> Exchange details
                           </DropdownMenuItem>
-                        ) : (
+                        ) : o.status === "delivered" && (
                           <DropdownMenuItem onClick={() => setExchangeModal({ parentId: o.id })}>
                             <Repeat className="mr-2 h-4 w-4" /> Request Exchange
                           </DropdownMenuItem>
