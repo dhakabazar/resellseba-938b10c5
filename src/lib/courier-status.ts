@@ -505,7 +505,7 @@ export function orderTabDot(key: OrderTabKey, active: boolean) {
   return "bg-blue-500";
 }
 
-/** Order-count pill inside a tab: dark tinted chip on the active tab, muted otherwise. */
+/** Order-count pill inside a tab: outlined chip on the active tab, muted otherwise. */
 export function orderTabCountPill(active: boolean) {
-  return active ? "bg-black/15 text-current" : "bg-muted text-muted-foreground";
+  return active ? "bg-black/15 text-current ring-1 ring-current/30" : "bg-muted text-muted-foreground";
 }
