@@ -46,7 +46,7 @@ export function ExchangeBadge({ order, className = "" }: { order: ExOrder; class
   );
 }
 
-type Line = { product_id: string; name: string; qty: number; price: number; cost: number };
+type Line = { product_id: string; name: string; qty: number; price: number; cost: number; image?: string | null };
 
 /**
  * Create an exchange order (admin: approved at once, reseller: request for admin)
@@ -93,7 +93,7 @@ export function ExchangeModal({
       if (!review && !pid) { setParent(null); setParentItems([]); return; }
       if (review) {
         const { data: o } = await supabase.from("orders").select("*").eq("id", review.id).maybeSingle();
-        const { data: its } = await supabase.from("order_items").select("product_id,product_name,quantity,sa_price,reseller_price").eq("order_id", review.id);
+        const { data: its } = await supabase.from("order_items").select("product_id,product_name,product_image,quantity,sa_price,reseller_price").eq("order_id", review.id);
         setRev({ ...o, items: its ?? [] });
         setCustomerPays(String(o?.total ?? 0));
         setDelivery(String(o?.delivery_cost ?? 0));
@@ -101,7 +101,7 @@ export function ExchangeModal({
         return;
       }
       const { data: o } = await supabase.from("orders").select("id,order_number,reseller_id,customer_name,delivery_cost,shipping_cost,status").eq("id", pid!).maybeSingle();
-      const { data: its } = await supabase.from("order_items").select("product_id,product_name,quantity").eq("order_id", pid!);
+      const { data: its } = await supabase.from("order_items").select("product_id,product_name,product_image,quantity").eq("order_id", pid!);
       setParent(o);
       setParentItems(its ?? []);
       setDelivery(String(o?.delivery_cost || o?.shipping_cost || 0));
@@ -134,7 +134,19 @@ export function ExchangeModal({
         .or(`name.ilike.%${term.replace(/[%,]/g, "")}%,product_code.ilike.%${term.replace(/[%,]/g, "")}%`)
         .eq("is_active", true)
         .limit(8);
-      setResults(data ?? []);
+      const rows = data ?? [];
+      if (rows.length > 0) {
+        const { data: imgs } = await supabase
+          .from("product_images")
+          .select("product_id,url")
+          .in("product_id", rows.map((r) => r.id))
+          .order("is_primary", { ascending: false })
+          .order("sort_order", { ascending: true });
+        const first = new Map<string, string>();
+        for (const im of imgs ?? []) if (!first.has(im.product_id)) first.set(im.product_id, im.url);
+        for (const r of rows) (r as any).image = first.get(r.id) ?? null;
+      }
+      setResults(rows);
     }, 250);
     return () => clearTimeout(t);
   }, [q]);
@@ -151,7 +163,7 @@ export function ExchangeModal({
     setLines((prev) =>
       prev.some((l) => l.product_id === p.id)
         ? prev.map((l) => (l.product_id === p.id ? { ...l, qty: l.qty + 1 } : l))
-        : [...prev, { product_id: p.id, name: p.name, qty: 1, price: 0, cost: Number(p.reseller_price) + Number(p.packaging_cost || 0) }],
+        : [...prev, { product_id: p.id, name: p.name, qty: 1, price: 0, cost: Number(p.reseller_price) + Number(p.packaging_cost || 0), image: p.image ?? null }],
     );
     setQ("");
   }
@@ -161,7 +173,7 @@ export function ExchangeModal({
     setBusy(true);
     const returnedItems = parentItems
       .filter((it) => (returned[it.product_id] ?? 0) > 0)
-      .map((it) => ({ product_id: it.product_id, name: it.product_name, qty: returned[it.product_id] }));
+      .map((it) => ({ product_id: it.product_id, name: it.product_name, image: it.product_image ?? null, qty: returned[it.product_id] }));
     const { error } = await supabase.rpc("create_exchange_order" as any, {
       _parent: pid,
       _items: lines.map((l) => ({ product_id: l.product_id, qty: l.qty, price: l.price })),
@@ -246,11 +258,21 @@ export function ExchangeModal({
             </div>
             <div className="rounded-lg border p-2 text-xs">
               <div className="font-semibold">Sending</div>
-              {(rev?.items ?? []).map((i: any) => <div key={i.product_id}>{i.product_name} × {i.quantity}</div>)}
+              {(rev?.items ?? []).map((i: any) => (
+                <div key={i.product_id} className="flex items-center gap-2 py-0.5">
+                  {i.product_image && <img src={i.product_image} alt="" className="h-7 w-7 shrink-0 rounded border object-cover" loading="lazy" />}
+                  <span>{i.product_name} × {i.quantity}</span>
+                </div>
+              ))}
               {(rev?.exchange_returned_items ?? []).length > 0 && (
                 <>
                   <div className="mt-1 font-semibold">Coming back</div>
-                  {rev.exchange_returned_items.map((i: any, k: number) => <div key={k}>{i.name} × {i.qty}</div>)}
+                  {rev.exchange_returned_items.map((i: any, k: number) => (
+                    <div key={k} className="flex items-center gap-2 py-0.5">
+                      {i.image && <img src={i.image} alt="" className="h-7 w-7 shrink-0 rounded border object-cover" loading="lazy" />}
+                      <span>{i.name} × {i.qty}</span>
+                    </div>
+                  ))}
                 </>
               )}
               {(rev?.reseller_note || rev?.admin_note) && <div className="mt-1 text-muted-foreground">Note: {rev.reseller_note || rev.admin_note}</div>}
@@ -299,7 +321,10 @@ export function ExchangeModal({
                 <div className="mb-1 text-xs font-semibold">Product coming back from customer</div>
                 {parentItems.map((it) => (
                   <div key={it.product_id} className="flex items-center justify-between gap-2 py-0.5 text-xs">
-                    <span className="truncate">{it.product_name}</span>
+                    <span className="flex min-w-0 items-center gap-2">
+                      {it.product_image && <img src={it.product_image} alt="" className="h-7 w-7 shrink-0 rounded border object-cover" loading="lazy" />}
+                      <span className="truncate">{it.product_name}</span>
+                    </span>
                     <Input
                       type="number" min={0} max={it.quantity} className="h-7 w-16"
                       value={returned[it.product_id] ?? 0}
@@ -322,15 +347,21 @@ export function ExchangeModal({
               {results.length > 0 && (
                 <div className="mt-1 max-h-40 overflow-y-auto rounded border">
                   {results.map((p) => (
-                    <button key={p.id} type="button" onClick={() => add(p)} className="flex w-full justify-between px-2 py-1 text-left text-xs hover:bg-muted">
-                      <span className="truncate">{p.name} <span className="text-muted-foreground">#{p.product_code}</span></span>
-                      <span className="text-muted-foreground">Stock {p.stock}</span>
+                    <button key={p.id} type="button" onClick={() => add(p)} className="flex w-full items-center gap-2 px-2 py-1.5 text-left text-xs hover:bg-muted">
+                      {p.image ? (
+                        <img src={p.image} alt="" className="h-9 w-9 shrink-0 rounded border object-cover" loading="lazy" />
+                      ) : (
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded border bg-muted text-[9px] text-muted-foreground">No img</span>
+                      )}
+                      <span className="min-w-0 flex-1 truncate">{p.name} <span className="text-muted-foreground">#{p.product_code}</span></span>
+                      <span className="shrink-0 text-muted-foreground">Stock {p.stock}</span>
                     </button>
                   ))}
                 </div>
               )}
               {lines.map((l) => (
                 <div key={l.product_id} className="mt-1 flex items-center gap-2 text-xs">
+                  {l.image && <img src={l.image} alt="" className="h-7 w-7 shrink-0 rounded border object-cover" loading="lazy" />}
                   <span className="flex-1 truncate">{l.name}</span>
                   <Input type="number" min={1} className="h-7 w-14" value={l.qty} onChange={(e) => setLines((p) => p.map((x) => x.product_id === l.product_id ? { ...x, qty: Math.max(1, Number(e.target.value) || 1) } : x))} />
                   <button type="button" className="text-destructive" onClick={() => setLines((p) => p.filter((x) => x.product_id !== l.product_id))}>✕</button>
