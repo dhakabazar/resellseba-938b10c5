@@ -1,4 +1,5 @@
 import { paymentStatusFor } from "@/lib/order-payment";
+import { orderProfit, orderMargin, orderReceived, orderDeliveryCost, orderPackaging } from "@/lib/finance-report";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { areaOptions, productDeliveryCharge, deliveryMode, type DeliveryArea } from "@/lib/delivery";
@@ -172,13 +173,16 @@ export function OrderEditModal({ orderId, allProducts: rawProducts, onClose, onS
     const disc = Math.min(Math.max(Number(discount) || 0, 0), subtotal + shipping);
     const total = subtotal + shipping - disc;
     const deliveryCost = deliveryCostInput.trim() === "" ? autoShipping : Math.max(Number(deliveryCostInput) || 0, 0);
-    const adv = Math.min(Math.max(Number(advance) || 0, 0), total);
+    const adv = Math.max(Number(advance) || 0, 0);
     const resellerAdvance = advanceBy === "reseller" ? adv : 0;
     const codDue = Math.max(total - adv, 0);
     /** Courier collected part only — advance is already in hand. */
     const collected = received.trim() === "" ? codDue : Math.max(Number(received) || 0, 0);
     /** Total money received for this order = courier collected + advance already paid. */
-    const recv = collected + adv;
+    const moneyOrder = { status: order?.status, total, shipping_cost: shipping, delivery_cost: deliveryCost,
+      sa_cost_total: saCost, packaging_total: packaging, advance_amount: adv, advance_by: advanceBy,
+      received_amount: received.trim() === "" ? null : collected, kept_product_cost: order?.kept_product_cost };
+    const recv = orderReceived(moneyOrder);
     return {
       subtotal,
       saCost,
@@ -196,9 +200,11 @@ export function OrderEditModal({ orderId, allProducts: rawProducts, onClose, onS
       codDue,
       shortfall: Math.max(total - recv, 0),
       // Profit always follows the money really collected.
-      grossProfit: recv - deliveryCost - saCost,
+      grossProfit: orderMargin(moneyOrder),
       // Final amount for the reseller = profit minus any advance they already hold.
-      profit: recv - deliveryCost - saCost - resellerAdvance,
+      profit: orderProfit(moneyOrder),
+      effectiveDelivery: orderDeliveryCost(moneyOrder),
+      effectivePackaging: orderPackaging(moneyOrder),
     };
   }, [
     items,
@@ -212,6 +218,7 @@ export function OrderEditModal({ orderId, allProducts: rawProducts, onClose, onS
     advance,
     advanceBy,
     packagingSum,
+    order,
   ]);
 
 
@@ -270,6 +277,9 @@ export function OrderEditModal({ orderId, allProducts: rawProducts, onClose, onS
     if (items.length === 0) return toast.error("Order needs at least one product.");
     const first = errors.name || errors.phone || errors.address;
     if (first) return toast.error(first);
+    if (!Number.isFinite(Number(advance)) || Number(advance) < 0 ||
+        (received.trim() !== "" && (!Number.isFinite(Number(received)) || Number(received) < 0)))
+      return toast.error("Enter valid non-negative payment amounts");
     const low = items.find((it) => it.reseller_price < minFor(it));
     if (low)
       return toast.error(`${low.product_name}: minimum selling price is ৳${minFor(low)} — cannot save below this`);
