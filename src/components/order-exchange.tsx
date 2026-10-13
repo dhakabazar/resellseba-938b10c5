@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Lock, Repeat } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -98,11 +98,13 @@ export function ExchangeModal({
   const [orderHits, setOrderHits] = useState<any[]>([]);
   const [hitLocks, setHitLocks] = useState<Record<string, string>>({});
   const pid = parentId ?? picked;
+  const loadToken = useRef(0);
   const editable = !review || isAdmin;
 
-  async function loadBack(parentOrderId: string, preset?: any[]) {
+  async function loadBack(parentOrderId: string, preset: any[] | undefined, token: number) {
     const cols = `product_id,product_name,product_image,quantity,sa_price,packaging_cost,reseller_price${isAdmin ? ",buying_price" : ""}`;
     const { data: its } = await supabase.from("order_items").select(cols).eq("order_id", parentOrderId);
+    if (token !== loadToken.current) return [];
     const rows = ((its ?? []) as any[]).map((it) => ({
       product_id: it.product_id,
       name: it.product_name,
@@ -122,6 +124,7 @@ export function ExchangeModal({
 
   useEffect(() => {
     if (!open) return;
+    const token = ++loadToken.current;
     setLines([]); setReturned({}); setBack([]); setQ(""); setNote(""); setRev(null); setLockedBy(null);
     setCustomerDiff(""); setCOverride(""); setSOverride(""); setPackaging(null);
     setDeliveryBy("customer"); setPackagingBy("reseller"); setRestock(true);
@@ -132,6 +135,7 @@ export function ExchangeModal({
         const ord: any = o;
         const cols = `product_id,product_name,product_image,quantity,sa_price,packaging_cost,reseller_price${isAdmin ? ",buying_price" : ""}`;
         const { data: its } = await supabase.from("order_items").select(cols).eq("order_id", review.id);
+        if (token !== loadToken.current) return;
         setRev(ord);
         const input = ord?.exchange_calc?.input;
         setLines(
@@ -162,7 +166,7 @@ export function ExchangeModal({
           setSOverride(String(ord?.exchange_admin_share ?? 0));
         }
         if (ord?.parent_order_id) {
-          const rows = await loadBack(ord.parent_order_id, ord.exchange_returned_items ?? []);
+          const rows = await loadBack(ord.parent_order_id, ord.exchange_returned_items ?? [], token);
           // Older exchange: same product back means the rate matches the returned credit.
           if (!input) setLines((ls) => ls.map((l) => {
             const b = rows.find((r) => r.product_id === l.product_id);
@@ -178,7 +182,7 @@ export function ExchangeModal({
         .eq("parent_order_id", pid!).eq("is_exchange", true);
       const active = (kids ?? []).find((k: any) => k.exchange_state !== "rejected" && k.status !== "cancelled");
       setLockedBy(active ? active.order_number : null);
-      await loadBack(pid!);
+      await loadBack(pid!, undefined, token);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, pid, review?.id]);
