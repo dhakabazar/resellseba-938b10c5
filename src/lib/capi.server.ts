@@ -704,6 +704,8 @@ export async function getPublicOrderDetailsServerImpl(data: { orderNumber: strin
     area: order.area,
     payment_method: order.payment_method,
     payment_status: order.payment_status,
+    payment_manual: Boolean(order.payment_manual),
+    paid_amount: Number(order.paid_amount ?? 0),
     created_at: order.created_at,
     reseller_id: order.reseller_id,
     order_items: (order.order_items || []).map((i: any) => ({

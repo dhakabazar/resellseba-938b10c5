@@ -1,4 +1,4 @@
-import { OrderPaymentInfo } from "@/components/order-payment-info";
+import { OrderPaymentInfo, PaymentStateBadge } from "@/components/order-payment-info";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -959,6 +959,7 @@ function OrdersPage() {
                       <div className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70">Payment</div>
                       <div className="flex flex-wrap items-center gap-1 text-[11px]">
                         <span className="rounded border px-1.5 py-0.5 uppercase text-muted-foreground">{o.payment_method}</span>
+                        <PaymentStateBadge order={o as never} />
                         {o.status === "forwarded" && o.forwarded_to_admin && (
                           <span className="rounded bg-success/10 px-1.5 py-0.5 text-success">Sent to admin</span>
                         )}
@@ -1196,9 +1197,7 @@ function OrdersPage() {
                             <div className="font-medium">{o.customer_name}</div>
                             <div className="text-muted-foreground mt-1">{o.address_line}</div>
                             <div className="text-muted-foreground">{o.area}, {o.city}</div>
-                            <div className="mt-2 text-xs font-medium inline-block rounded bg-primary/10 px-2 py-1 text-primary uppercase">
-                              Payment: {o.payment_method}
-                            </div>
+                            <div className="mt-2"><OrderPaymentInfo order={o as never} canConfirm={!(o.advance_by === "admin" && Number(o.advance_amount || 0) > 0) && !((o as any).payment_config_id && o.advance_by === "admin")} onChanged={() => void load({ silent: true })} /></div>
                           </div>
                         </div>
                         
@@ -1587,7 +1586,7 @@ function OrderDrawer({
                 </div>
                 <div className="flex justify-between items-center text-sm">
                    <span className="text-muted-foreground">Payment Status</span>
-                   <span className={`font-bold uppercase text-[10px] px-2 py-0.5 rounded ${order.payment_status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>{order.payment_status}</span>
+                   <PaymentStateBadge order={order as never} />
                 </div>
                 {order.forwarded_at && (
                   <div className="flex justify-between items-center text-sm">
@@ -1610,7 +1609,7 @@ function OrderDrawer({
             <div className="space-y-3 p-4">
               <div className="flex flex-wrap items-center gap-2">
                 <AdvanceChip order={order} />
-                <OrderPaymentInfo order={order as never} canConfirm={order.advance_by === "reseller"} />
+                <OrderPaymentInfo order={order as never} canConfirm={order.advance_by !== "admin"} />
               </div>
               <OrderMoneyPanel order={order} items={items} role="reseller" />
             </div>
