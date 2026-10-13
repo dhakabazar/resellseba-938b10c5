@@ -116,10 +116,10 @@ export function ExchangeModal({
       sell: num(it.reseller_price),
     }));
     setBack(rows);
-    return rows;
     const r: Record<string, number> = {};
     for (const p of preset ?? []) if (p?.product_id) r[p.product_id] = num(p.qty);
     setReturned(r);
+    return rows;
   }
 
   useEffect(() => {
