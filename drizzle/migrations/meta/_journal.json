@@ -148,6 +148,13 @@
       "when": 1791875873075,
       "tag": "0020_guard_remaining_gateway_capture_and_cancelled_cash",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1791891036659,
+      "tag": "0021_manual_payment_verify_any_online",
+      "breakpoints": true
     }
   ]
 }
