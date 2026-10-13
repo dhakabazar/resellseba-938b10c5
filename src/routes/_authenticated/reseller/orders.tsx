@@ -1,4 +1,6 @@
 import { OrderPaymentInfo, PaymentStateBadge } from "@/components/order-payment-info";
+import { ExchangeBadge, ExchangeModal } from "@/components/order-exchange";
+import { Repeat } from "lucide-react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -234,6 +236,7 @@ function OrdersPage() {
 
   // A remount with the same tab within a moment must not refetch the same payload.
   const lastLoad = useRef<{ key: string; at: number } | null>(null);
+  const [exchangeModal, setExchangeModal] = useState<{ parentId?: string; reviewId?: string } | null>(null);
   async function load(opts?: { silent?: boolean }) {
     const loadKey = `${tab}`;
     if (!opts?.silent) {
@@ -847,6 +850,15 @@ function OrdersPage() {
                           }
                           return null;
                         })()}
+                        {(o as any).is_exchange ? (
+                          <DropdownMenuItem onClick={() => setExchangeModal({ reviewId: o.id })}>
+                            <Repeat className="mr-2 h-4 w-4" /> Exchange details
+                          </DropdownMenuItem>
+                        ) : o.status !== "cancelled" && (
+                          <DropdownMenuItem onClick={() => setExchangeModal({ parentId: o.id })}>
+                            <Repeat className="mr-2 h-4 w-4" /> Request Exchange
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuSeparator />
                         <DropdownMenuItem asChild>
                           <Link
@@ -960,6 +972,7 @@ function OrdersPage() {
                       <div className="flex flex-wrap items-center gap-1 text-[11px]">
                         <span className="rounded border px-1.5 py-0.5 uppercase text-muted-foreground">{o.payment_method}</span>
                         <PaymentStateBadge order={o as never} />
+                        <ExchangeBadge order={o as never} />
                         {o.status === "forwarded" && o.forwarded_to_admin && (
                           <span className="rounded bg-success/10 px-1.5 py-0.5 text-success">Sent to admin</span>
                         )}
@@ -1587,6 +1600,7 @@ function OrderDrawer({
                 <div className="flex justify-between items-center text-sm">
                    <span className="text-muted-foreground">Payment Status</span>
                    <PaymentStateBadge order={order as never} />
+                   <ExchangeBadge order={order as never} />
                 </div>
                 {order.forwarded_at && (
                   <div className="flex justify-between items-center text-sm">
