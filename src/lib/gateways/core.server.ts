@@ -37,6 +37,7 @@ export type GatewayOrder = {
   transaction_id: string | null;
   advance_amount: number | null;
   advance_by: string | null;
+  received_amount?: number | null;
 };
 
 export async function admin() {
