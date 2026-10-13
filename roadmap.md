@@ -1,5 +1,7 @@
 # Roadmap
 
+- [ ] Optimize admin order status switching and first-page queries; verify cache freshness and database indexes
+
 - [x] Redesign Reseller Pricing with separate rate editor and custom-reseller directory tabs; signed-in save/read-back verified
 - [x] Audit custom-rate RPCs and test catalog, reseller/admin order calculations and checkout; 19 tests pass, temporary rates removed, no real orders submitted
 
