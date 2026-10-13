@@ -1,4 +1,5 @@
 /** Shared, prettier form primitives used by the add / edit order modals. */
+import { Button } from "@/components/ui/button";
 
 export function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
@@ -60,9 +61,11 @@ export function MoneyField({
 export function AdvanceByToggle({
   value,
   onChange,
+  disabled = false,
 }: {
   value: "admin" | "reseller";
   onChange: (v: "admin" | "reseller") => void;
+  disabled?: boolean;
 }) {
   return (
     <div>
@@ -74,9 +77,10 @@ export function AdvanceByToggle({
             ["reseller", "Reseller"],
           ] as const
         ).map(([v, label]) => (
-          <button
+          <Button
             key={v}
             type="button"
+            disabled={disabled}
             onClick={() => onChange(v)}
             className={`rounded-xl border-2 px-3 py-2.5 text-[13px] font-bold transition-all ${
               value === v
@@ -86,7 +90,7 @@ export function AdvanceByToggle({
           >
 
             {label}
-          </button>
+          </Button>
         ))}
       </div>
     </div>

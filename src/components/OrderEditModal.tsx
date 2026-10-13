@@ -1,4 +1,5 @@
 import { paymentStatusFor } from "@/lib/order-payment";
+import { orderProfit, orderMargin, orderReceived, orderCost, orderKeptProductCost, orderDeliveryCost, orderPackaging, isFailedOrder } from "@/lib/finance-report";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { areaOptions, productDeliveryCharge, deliveryMode, type DeliveryArea } from "@/lib/delivery";
@@ -23,6 +24,7 @@ type EditItem = {
   reseller_price: number;
   /** Packaging cost frozen when this line was created — never re-read from the product. */
   packaging_cost: number;
+  returned_qty?: number;
 };
 
 interface Props {
@@ -68,7 +70,7 @@ export function OrderEditModal({ orderId, allProducts: rawProducts, onClose, onS
   const allProducts = useMemo(() => (rawProducts ?? []).map((p: any) => withResellerRates(p, prices)), [rawProducts, prices]);
 
 
-  /** Money actually collected by the courier. Empty = full order total received. */
+  /** Money actually collected by the courier, excluding confirmed advance. */
   const [received, setReceived] = useState<string>("");
   const [query, setQuery] = useState("");
 
@@ -115,6 +117,7 @@ export function OrderEditModal({ orderId, allProducts: rawProducts, onClose, onS
           product_name: it.product_name,
           product_image: it.product_image,
           quantity: Number(it.quantity ?? 1),
+          returned_qty: Number(it.returned_qty ?? 0),
           sa_price: Number(it.sa_price ?? 0),
           reseller_price: Number(it.reseller_price ?? 0),
           packaging_cost: Number(
@@ -172,13 +175,17 @@ export function OrderEditModal({ orderId, allProducts: rawProducts, onClose, onS
     const disc = Math.min(Math.max(Number(discount) || 0, 0), subtotal + shipping);
     const total = subtotal + shipping - disc;
     const deliveryCost = deliveryCostInput.trim() === "" ? autoShipping : Math.max(Number(deliveryCostInput) || 0, 0);
-    const adv = Math.min(Math.max(Number(advance) || 0, 0), total);
+    const adv = Math.max(Number(advance) || 0, 0);
     const resellerAdvance = advanceBy === "reseller" ? adv : 0;
     const codDue = Math.max(total - adv, 0);
     /** Courier collected part only — advance is already in hand. */
     const collected = received.trim() === "" ? codDue : Math.max(Number(received) || 0, 0);
     /** Total money received for this order = courier collected + advance already paid. */
-    const recv = collected + adv;
+    const moneyOrder = { status: order?.status, total, shipping_cost: shipping, delivery_cost: deliveryCost,
+      sa_cost_total: saCost, packaging_total: packaging, advance_amount: adv, advance_by: advanceBy,
+      received_amount: received.trim() === "" ? null : collected,
+      kept_product_cost: itemCost > 0 ? productCost * items.reduce((sum, it) => sum + it.sa_price * Math.max(it.quantity - (it.returned_qty ?? 0), 0), 0) / itemCost : productCost };
+    const recv = orderReceived(moneyOrder);
     return {
       subtotal,
       saCost,
@@ -190,15 +197,19 @@ export function OrderEditModal({ orderId, allProducts: rawProducts, onClose, onS
       discount: disc,
       total,
       received: recv,
-      collected,
+      collected: isFailedOrder(moneyOrder) ? 0 : collected,
       advance: adv,
       resellerAdvance,
       codDue,
       shortfall: Math.max(total - recv, 0),
       // Profit always follows the money really collected.
-      grossProfit: recv - deliveryCost - saCost,
+      grossProfit: order?.status === "cancelled" ? 0 : orderMargin(moneyOrder),
       // Final amount for the reseller = profit minus any advance they already hold.
-      profit: recv - deliveryCost - saCost - resellerAdvance,
+      profit: orderProfit(moneyOrder),
+      effectiveProduct: orderKeptProductCost(moneyOrder),
+      effectiveDelivery: orderDeliveryCost(moneyOrder),
+      effectivePackaging: orderPackaging(moneyOrder),
+      effectiveCost: orderCost(moneyOrder),
     };
   }, [
     items,
@@ -212,6 +223,7 @@ export function OrderEditModal({ orderId, allProducts: rawProducts, onClose, onS
     advance,
     advanceBy,
     packagingSum,
+    order,
   ]);
 
 
@@ -270,6 +282,9 @@ export function OrderEditModal({ orderId, allProducts: rawProducts, onClose, onS
     if (items.length === 0) return toast.error("Order needs at least one product.");
     const first = errors.name || errors.phone || errors.address;
     if (first) return toast.error(first);
+    if (!Number.isFinite(Number(advance)) || Number(advance) < 0 ||
+        (received.trim() !== "" && (!Number.isFinite(Number(received)) || Number(received) < 0)))
+      return toast.error("Enter valid non-negative payment amounts");
     const low = items.find((it) => it.reseller_price < minFor(it));
     if (low)
       return toast.error(`${low.product_name}: minimum selling price is ৳${minFor(low)} — cannot save below this`);
@@ -629,9 +644,10 @@ export function OrderEditModal({ orderId, allProducts: rawProducts, onClose, onS
                       hint="If already received"
                       value={advance}
                       onChange={setAdvance}
+                      disabled={order?.status === "cancelled"}
                       placeholder="0"
                     />
-                    <AdvanceByToggle value={advanceBy} onChange={setAdvanceBy} />
+                    <AdvanceByToggle value={advanceBy} onChange={setAdvanceBy} disabled={Number(order?.advance_amount ?? 0) > 0 || order?.status === "cancelled"} />
                   </div>
                   <p className="text-[12px] leading-relaxed text-muted-foreground">
                     অ্যাডমিন নিলে রিসেলারের হিসাব থেকে কাটে না, রিসেলার নিলে ফাইনাল অ্যামাউন্ট থেকে বাদ যাবে।
@@ -721,12 +737,12 @@ export function OrderEditModal({ orderId, allProducts: rawProducts, onClose, onS
                     <p className="mb-1 text-[9px] font-black uppercase tracking-widest text-muted-foreground/60">
                       {isAdmin ? "Cost" : "Your cost"}
                     </p>
-                    <Row label="Product cost" value={totals.productCost} />
-                    <Row label="Delivery charge" value={totals.deliveryCost} />
-                    <Row label="Packaging cost" value={totals.packaging} />
+                    <Row label="Product cost" value={totals.effectiveProduct} />
+                    <Row label="Delivery charge" value={totals.effectiveDelivery} />
+                    <Row label="Packaging cost" value={totals.effectivePackaging} />
                     <div className="mt-1 flex justify-between border-t pt-1 text-[13px] font-bold text-foreground">
                       <span>Total cost</span>
-                      <span>৳{(totals.productCost + totals.deliveryCost + totals.packaging).toFixed(0)}</span>
+                      <span>৳{totals.effectiveCost.toFixed(0)}</span>
                     </div>
                   </div>
 
@@ -749,7 +765,7 @@ export function OrderEditModal({ orderId, allProducts: rawProducts, onClose, onS
                       </span>
                       <span>৳{totals.grossProfit.toFixed(0)}</span>
                     </div>
-                    {totals.resellerAdvance > 0 && (
+                    {totals.resellerAdvance > 0 && order?.status !== "cancelled" && (
                       <>
                         <Row label="Advance already in reseller hand" value={-totals.resellerAdvance} />
                         <div className="mt-1 flex justify-between border-t pt-1 text-[13px] font-black">

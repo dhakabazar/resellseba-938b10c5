@@ -24,6 +24,6 @@
 - Reseller-wide rate reset deletes overrides through a reseller-scoped helper under existing RLS, never copying defaults into overrides or modifying saved orders; this preserves future master-rate inheritance.
 - Reseller rate maps use explicit reseller scope (null means master-only), and existing order edits preserve saved cost snapshots and delivery charges so later rate changes cannot silently reprice them.
 
-- Order prepaid money is mirrored in advance_amount/paid_amount, courier received_amount excludes it; shared order-payment helpers and database normalization keep status and COD consistent without rewriting historical orders.
+- Order prepaid money is mirrored in advance_amount/paid_amount, courier received_amount excludes it; shared helpers and normalization keep status and COD consistent without rewriting historical orders, while remaining online payments subtract both confirmed sources to prevent overcollection.
 - Verified gateway captures use a locked database RPC and provider/transaction uniqueness; receiving account ownership is required so webhook retries cannot double-credit money.
 - Payment verification binds provider-confirmed order references or stored checkout intents before capture and records gross customer payment, not gateway fees.

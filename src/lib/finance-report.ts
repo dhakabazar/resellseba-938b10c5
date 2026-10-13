@@ -87,11 +87,13 @@ export function isFailedOrder(o: ProfitOrder) {
 
 /** Packaging cost of the order (already inside sa_cost_total). */
 export function orderPackaging(o: ProfitOrder) {
+  if (o.status === "cancelled") return 0;
   return n(o.packaging_total);
 }
 
 /** Admin delivery cost used in every cost calculation. */
 export function orderDeliveryCost(o: ProfitOrder) {
+  if (o.status === "cancelled") return 0;
   return n(o.delivery_cost) || n(o.shipping_cost);
 }
 
