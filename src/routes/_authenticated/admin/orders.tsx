@@ -225,7 +225,7 @@ function AdminOrdersPage() {
   const [resellerOptions, setResellerOptions] = useState<FilterOption[]>([]);
 
   const ORDER_SELECT =
-    "id,reseller_id,order_number,customer_name,customer_phone,address_line,area,city,subtotal,discount,shipping_cost,sa_cost_total,packaging_total,delivery_cost,received_amount,advance_amount,advance_by,payment_provider,transaction_id,payment_sender,payment_config_id,paid_amount,total,status,payment_status,payment_method,forwarded_to_admin,created_at,updated_at,reseller_note,admin_note,resellers(business_name,code,contact_phone,agents(display_name))";
+    "id,reseller_id,order_number,customer_name,customer_phone,address_line,area,city,subtotal,discount,shipping_cost,sa_cost_total,packaging_total,delivery_cost,received_amount,advance_amount,advance_by,payment_provider,transaction_id,payment_sender,payment_config_id,paid_amount,total,status,payment_status,payment_method,forwarded_to_admin,created_at,updated_at,reseller_note,admin_note,is_exchange,parent_order_id,exchange_state,exchange_reason,exchange_admin_share,resellers(business_name,code,contact_phone,agents(display_name))";
   const ITEM_SELECT =
     "order_id,product_id,product_name,product_image,quantity,returned_qty,reseller_price,line_total,sa_price,buying_price,packaging_cost";
   const SHIPMENT_SELECT = "id,order_id,provider,tracking_id,consignment_id";

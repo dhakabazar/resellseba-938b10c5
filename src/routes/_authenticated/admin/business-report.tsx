@@ -114,7 +114,7 @@ function BusinessReportPage() {
         supabase
           .from("orders")
           .select(
-            "id,order_number,reseller_id,status,created_at,customer_name,customer_phone,address_line,subtotal,shipping_cost,total,sa_cost_total,reseller_profit,received_amount,packaging_total,delivery_cost,advance_amount,advance_by,resellers(business_name,code)",
+            "id,order_number,reseller_id,status,created_at,customer_name,customer_phone,address_line,subtotal,shipping_cost,total,sa_cost_total,reseller_profit,received_amount,packaging_total,delivery_cost,advance_amount,advance_by,is_exchange,exchange_admin_share,resellers(business_name,code)",
           )
           .order("created_at", { ascending: false }),
         supabase

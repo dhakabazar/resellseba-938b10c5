@@ -146,7 +146,7 @@ export const Route = createFileRoute("/_authenticated/reseller/orders")({
 });
 
 const ORDER_COLUMNS =
-  "id,order_number,customer_name,customer_phone,address_line,city,area,subtotal,shipping_cost,discount,total,sa_cost_total,reseller_profit,received_amount,packaging_total,delivery_cost,advance_amount,advance_by,payment_method,payment_provider,transaction_id,payment_sender,payment_config_id,paid_amount,status,payment_status,forwarded_to_admin,notes,reseller_note,created_at,updated_at";
+  "id,order_number,customer_name,customer_phone,address_line,city,area,subtotal,shipping_cost,discount,total,sa_cost_total,reseller_profit,received_amount,packaging_total,delivery_cost,advance_amount,advance_by,payment_method,payment_provider,transaction_id,payment_sender,payment_config_id,paid_amount,status,payment_status,forwarded_to_admin,notes,reseller_note,created_at,updated_at,is_exchange,parent_order_id,exchange_state,exchange_reason,exchange_admin_share";
 
 type OrderItemLite = {
   order_id: string;
