@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAll } from "@/lib/fetch-all";
 
 /**
  * Per-reseller rate overrides (admin price, packaging cost, delivery charge).
@@ -23,12 +24,16 @@ export type ResellerPriceMap = Map<string, ResellerRate>;
 const num = (v: unknown) => (v == null ? null : Number(v));
 
 export async function fetchResellerPriceMap(resellerId?: string | null): Promise<ResellerPriceMap> {
-  let q = supabase
+  const map: ResellerPriceMap = new Map();
+  // null means no reseller (an admin's direct order), not all resellers.
+  if (resellerId === null) return map;
+  const data = await fetchAll(() => {
+    let q = supabase
     .from("reseller_product_prices")
     .select("product_id,reseller_price,packaging_cost,delivery_mode,delivery_flat,delivery_inside,delivery_outside,delivery_sub");
-  if (resellerId) q = q.eq("reseller_id", resellerId);
-  const { data } = await q;
-  const map: ResellerPriceMap = new Map();
+    if (resellerId) q = q.eq("reseller_id", resellerId);
+    return q;
+  });
   for (const r of (data ?? []) as any[]) {
     map.set(r.product_id, {
       reseller_price: Number(r.reseller_price),
@@ -78,17 +83,22 @@ export function withResellerRates<T extends Record<string, any>>(p: T, map?: Res
 
 /** Reactive price map — refetches whenever the reseller changes. */
 export function useResellerPriceMap(resellerId?: string | null) {
-  const [map, setMap] = useState<ResellerPriceMap>(new Map());
+  const [state, setState] = useState<{ resellerId: string | null | undefined; map: ResellerPriceMap }>({ resellerId: undefined, map: new Map() });
   useEffect(() => {
     let alive = true;
     if (resellerId === undefined) return;
     (async () => {
-      const next = await fetchResellerPriceMap(resellerId);
-      if (alive) setMap(next);
+      try {
+        const next = await fetchResellerPriceMap(resellerId);
+        if (alive) setState({ resellerId, map: next });
+      } catch {
+        if (alive) setState({ resellerId, map: new Map() });
+      }
     })();
     return () => {
       alive = false;
     };
   }, [resellerId]);
-  return map;
+  // Never apply the previous reseller's rates while a new selection loads.
+  return state.resellerId === resellerId ? state.map : new Map<string, ResellerRate>();
 }
