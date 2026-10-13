@@ -311,7 +311,6 @@ export function OrderEditModal({ orderId, allProducts: rawProducts, onClose, onS
           address_line: address.trim(),
           area: area as any,
           payment_method: paymentMethod as any,
-          ...(isAdmin ? { payment_status: paymentStatus as any } : {}),
           ...(isAdmin ? { admin_note: note || null } : { reseller_note: note || null }),
           subtotal: totals.subtotal,
           shipping_cost: totals.shipping,
@@ -422,7 +421,7 @@ export function OrderEditModal({ orderId, allProducts: rawProducts, onClose, onS
                   {isAdmin && (
                     <label className="space-y-1">
                       <span className="text-[13px] font-semibold text-foreground/80">Payment status</span>
-                      <select className={inp} value={paymentStatus} onChange={(e) => setPaymentStatus(e.target.value)}>
+                      <select className={inp} value={paymentStatus} disabled>
                         <option value="unpaid">Unpaid</option>
                         <option value="partial">Partial</option>
                         <option value="paid">Paid</option>

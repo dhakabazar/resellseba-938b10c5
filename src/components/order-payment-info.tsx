@@ -1,3 +1,4 @@
+import { prepaidAmount } from "@/lib/order-payment";
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,15 +39,17 @@ export function OrderPaymentInfo({
   const provider = order.payment_provider?.replace(/^manual:/, "") || null;
   const manual = Boolean(order.payment_config_id);
   const receiver = order.advance_by === "admin" ? "Admin" : order.advance_by === "reseller" ? "Reseller" : null;
-  const paid = Number(order.paid_amount ?? 0);
+  const paid = prepaidAmount(order);
 
   async function confirm() {
-    const v = window.prompt("কত টাকা পেয়েছেন? (0 = পাওয়া যায়নি)", String(order.total));
+    const v = window.prompt("এই অর্ডারে মোট কত টাকা নিশ্চিতভাবে পেয়েছেন?", String(order.total));
     if (v === null) return;
+    const amount = Number(v);
+    if (!v.trim() || !Number.isFinite(amount) || amount < paid) return toast.error("সঠিক মোট টাকা দিন; নিশ্চিত পেমেন্ট কমানো যাবে না");
     setBusy(true);
     const { error } = await supabase.rpc("confirm_manual_payment" as never, {
       _order_id: order.id,
-      _amount: Number(v) || 0,
+      _amount: amount,
     } as never);
     setBusy(false);
     if (error) return toast.error(error.message);

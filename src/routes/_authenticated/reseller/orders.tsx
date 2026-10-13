@@ -129,6 +129,14 @@ type OrderRow = {
 type Line = { listing_id?: string; product_id?: string; qty: number; name?: string; price?: number; cost?: number; image?: string; delivery?: any };
 
 export const Route = createFileRoute("/_authenticated/reseller/orders")({
+  head: () => ({ meta: [
+    { title: "My Orders — Ecom Seller BD" },
+    { name: "description", content: "Manage your store orders, confirmed payments, advances and delivery in Ecom Seller BD." },
+    { property: "og:title", content: "My Orders — Ecom Seller BD" },
+    { property: "og:description", content: "Manage your store orders, confirmed payments, advances and delivery in Ecom Seller BD." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   validateSearch: (s: Record<string, unknown>): { tab?: OrderTabKey; q?: string } => ({
     tab: ORDER_TABS.some((t) => t.key === s.tab) ? (s.tab as OrderTabKey) : undefined,
     q: typeof s.q === "string" && s.q ? s.q : undefined,

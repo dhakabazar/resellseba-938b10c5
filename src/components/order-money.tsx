@@ -1,3 +1,4 @@
+import { confirmedCustomerPayment, orderCodDue } from "@/lib/order-payment";
 /**
  * Shared order money panel — the exact same math as the Transaction report.
  * Used by the admin + reseller order list collapse and both order detail drawers.
@@ -130,16 +131,16 @@ export function OrderMoneyPanel({
   const total = n(order.total);
   const advance = orderAdvance(order);
   const heldByReseller = resellerHeldAdvance(order);
-  const received = orderReceived(order);
+  const received = confirmedCustomerPayment(order);
   const collected = Math.max(received - advance, 0);
-  const codDue = Math.max(total - advance, 0);
+  const codDue = orderCodDue(order);
   const failed = isFailedOrder(order);
   const packaging = orderPackaging(order);
   const delivery = orderDeliveryCost(order);
   const productCost = failed ? 0 : orderKeptProductCost(order);
   const cost = orderCost(order);
   const profit = orderProfit(order);
-  const shortfall = orderShortfall(order);
+  const shortfall = Math.max(total - received, 0);
   const pct = total > 0 ? Math.min(100, Math.round((received / total) * 100)) : 0;
 
   return (

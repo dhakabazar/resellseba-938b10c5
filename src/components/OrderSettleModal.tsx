@@ -1,3 +1,4 @@
+import { orderCodDue, prepaidAmount } from "@/lib/order-payment";
 /**
  * Admin settlement modal — final money decision of an order.
  * Used for delivered / partial (3 kinds) / return received / damaged.
@@ -35,6 +36,9 @@ type OrderRow = {
   delivery_cost: number | null;
   received_amount: number | null;
   settlement_note: string | null;
+  advance_amount: number;
+  paid_amount: number;
+  advance_by: string | null;
 };
 
 const num = (v: unknown) => Number(v ?? 0) || 0;
@@ -89,7 +93,7 @@ export function OrderSettleModal({
         supabase
           .from("orders")
           .select(
-            "id,order_number,customer_name,status,subtotal,discount,shipping_cost,total,sa_cost_total,packaging_total,delivery_cost,received_amount,settlement_note",
+            "id,order_number,customer_name,status,subtotal,discount,shipping_cost,total,sa_cost_total,packaging_total,delivery_cost,received_amount,settlement_note,advance_amount,paid_amount,advance_by",
           )
           .eq("id", orderId)
           .maybeSingle(),
@@ -112,8 +116,8 @@ export function OrderSettleModal({
             : row.received_amount != null
               ? num(row.received_amount)
               : target === "partial_delivery"
-                ? num(row.shipping_cost)
-                : num(row.total),
+                ? Math.max(num(row.shipping_cost) - prepaidAmount(row), 0)
+                : orderCodDue(row),
         );
       }
       setLoading(false);
@@ -130,9 +134,11 @@ export function OrderSettleModal({
         : itemPartial && fullItemCost > 0
           ? Math.round(fullProduct * (keptItemCost / fullItemCost) * 100) / 100
           : fullProduct;
-    const recv = failed ? 0 : received;
+    const advance = order ? prepaidAmount(order) : 0;
+    const recv = (failed ? 0 : received) + advance;
+    const resellerAdvance = order?.advance_by === "reseller" ? advance : 0;
     const cost = productCost + delivery + packaging;
-    return { productCost, cost, recv, profit: Math.round((recv - cost) * 100) / 100 };
+    return { productCost, cost, recv, profit: Math.round((recv - cost - resellerAdvance) * 100) / 100 };
   }, [order, items, itemPartial, failed, deliveryOnly, received, delivery, packaging]);
 
   if (!open || typeof document === "undefined") return null;
@@ -225,11 +231,11 @@ export function OrderSettleModal({
 
             <div className="grid gap-3 sm:grid-cols-3">
               <Field
-                label={failed ? "Received (return = 0)" : "Received amount"}
+                label={failed ? "Courier collected (return = 0)" : "Courier collected (excluding advance)"}
                 value={failed ? 0 : received}
                 onChange={setReceived}
                 disabled={failed}
-                hint={`Customer total ${bdt(num(order.total))}`}
+                hint={`Total ${bdt(num(order.total))} · Advance ${bdt(prepaidAmount(order))} (${order.advance_by ?? "reseller"}) · COD ${bdt(orderCodDue(order))}`}
               />
               <Field label="Delivery charge (cost)" value={delivery} onChange={setDelivery} hint="Admin cost" />
               <Field label="Packaging cost" value={packaging} onChange={setPackaging} hint="Admin cost" />
@@ -277,6 +283,9 @@ export function OrderSettleModal({
 
             <CalcPanel title="Reseller calculation" hint="Received − product cost − delivery − packaging">
               <CalcRow label="Received from customer" value={bdt(calc.recv)} />
+              {order.advance_by === "reseller" && prepaidAmount(order) > 0 && (
+                <CalcRow label="− Advance already with reseller" value={bdt(prepaidAmount(order))} muted />
+              )}
               <CalcRow label="− Product cost (kept items)" value={bdt(calc.productCost)} muted />
               <CalcRow label="− Delivery charge" value={bdt(delivery)} muted />
               <CalcRow label="− Packaging" value={bdt(packaging)} muted />

@@ -30,6 +30,7 @@ export type GatewayOrder = {
   address_line: string;
   city: string | null;
   reseller_id: string | null;
+  status?: string;
   payment_status: string;
   payment_provider: string | null;
   paid_amount: number | null;
@@ -121,7 +122,7 @@ export async function loadOrder(orderNumber: string): Promise<GatewayOrder> {
   const { data } = await db
     .from("orders")
     .select(
-      "id,order_number,total,customer_name,customer_phone,customer_email,address_line,city,reseller_id,payment_status,payment_provider,paid_amount,transaction_id,advance_amount,advance_by",
+      "id,order_number,total,customer_name,customer_phone,customer_email,address_line,city,reseller_id,status,payment_status,payment_provider,paid_amount,transaction_id,advance_amount,advance_by",
     )
     .eq("order_number", orderNumber)
     .maybeSingle();
@@ -400,45 +401,19 @@ export async function settlePayment(opts: {
   txnId: string;
   owner?: "platform" | "reseller";
 }): Promise<"paid" | "partial" | "unpaid" | "already"> {
+  if (!opts.paid || !Number.isFinite(opts.amount) || opts.amount <= 0) return "unpaid";
+  if (!opts.owner) throw new Error("Receiving gateway account is required");
   const db = await admin();
-  if (opts.order.payment_status === "paid") return "already";
-  if (!opts.paid || !(opts.amount > 0)) {
-    await db
-      .from("orders")
-      .update({ payment_provider: opts.provider, transaction_id: opts.txnId || null })
-      .eq("id", opts.order.id);
-    return "unpaid";
-  }
-
-  const expected = Number(opts.order.total || 0);
-  const already = Math.max(Number(opts.order.paid_amount ?? 0), 0);
-  const totalPaid = Math.round((already + opts.amount) * 100) / 100;
-  const full = totalPaid >= expected - 0.5;
-
-  const prevAdvance = Math.max(Number(opts.order.advance_amount ?? 0), 0);
-  const holder = opts.owner === "reseller" ? "reseller" : "admin";
-  const advanceBy = prevAdvance > 0 ? (opts.order.advance_by ?? holder) : holder;
-  const advanceAmount = Math.round((prevAdvance + opts.amount) * 100) / 100;
-
-  const overpaid = totalPaid > expected + 1;
-  await db
-    .from("orders")
-    .update({
-      payment_status: full ? "paid" : "partial",
-      payment_provider: opts.provider,
-      transaction_id: opts.txnId || null,
-      paid_amount: totalPaid,
-      paid_at: full ? new Date().toISOString() : null,
-      advance_amount: advanceAmount,
-      advance_by: advanceBy,
-      ...(overpaid
-        ? {
-            admin_note: `OVERPAID: gateway ${opts.provider} reported ${totalPaid}, order total ${expected} (txn ${opts.txnId || "-"})`,
-          }
-        : {}),
-    })
-    .eq("id", opts.order.id);
-  return full ? "paid" : "partial";
+  const { data, error } = await db.rpc("record_verified_order_payment", {
+    _order_id: opts.order.id,
+    _provider: opts.provider,
+    _transaction_id: opts.txnId,
+    _amount: opts.amount,
+    _receiver: opts.owner === "reseller" ? "reseller" : "admin",
+  });
+  if (error) throw new Error(error.message);
+  if (data !== "paid" && data !== "partial" && data !== "unpaid") throw new Error("Unexpected payment state");
+  return data;
 }
 
 /* ------------------------------------------------------------ security deposit */

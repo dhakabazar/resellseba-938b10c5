@@ -1,4 +1,5 @@
 import { ORDER_TABS, type OrderTabKey } from "@/lib/courier-status";
+import { prepaidAmount } from "@/lib/order-payment";
 
 /** Minimal order shape needed by every finance report (admin + reseller). */
 export type ReportOrder = {
@@ -20,6 +21,7 @@ export type ReportOrder = {
   /** Advance collected before delivery + who holds it. */
   advance_amount?: number | string | null;
   advance_by?: string | null;
+  paid_amount?: number | string | null;
 };
 
 
@@ -52,11 +54,12 @@ export type ProfitOrder = {
   advance_amount?: number | string | null;
   /** Who is holding the advance: "admin" or "reseller". */
   advance_by?: string | null;
+  paid_amount?: number | string | null;
 };
 
 /** Advance money already collected for this order. */
 export function orderAdvance(o: ProfitOrder) {
-  return Math.max(n(o.advance_amount), 0);
+  return prepaidAmount(o);
 }
 
 /** Advance that sits in the reseller's own hand — deducted from their final amount. */
@@ -117,7 +120,7 @@ export function orderCost(o: ProfitOrder) {
  * still running = expected customer total.
  */
 export function orderReceived(o: ProfitOrder) {
-  if (isFailedOrder(o)) return 0;
+  if (isFailedOrder(o)) return orderAdvance(o);
   if (o.received_amount != null && o.received_amount !== "") return n(o.received_amount) + orderAdvance(o);
   return n(o.total);
 }
@@ -146,6 +149,8 @@ export function orderShortfall(o: ProfitOrder) {
  * advance taken by admin stays with admin, so nothing extra is deducted.
  */
 export function orderProfit(o: ProfitOrder) {
+   // Retained advance on cancellation is held cash, not a new reseller earning.
+   if (o.status === "cancelled") return 0;
   return orderMargin(o) - resellerHeldAdvance(o);
 }
 
@@ -156,8 +161,8 @@ export function orderProfit(o: ProfitOrder) {
  * figures must use this, otherwise a reseller-held advance inflates admin profit.
  */
 export function orderMargin(o: ProfitOrder) {
-  if (o.status === "cancelled") return 0;
-  if (isFailedOrder(o)) return -(orderDeliveryCost(o) + orderPackaging(o));
+   if (o.status === "cancelled") return orderAdvance(o);
+   if (isFailedOrder(o)) return orderAdvance(o) - (orderDeliveryCost(o) + orderPackaging(o));
   return orderReceived(o) - orderCost(o);
 }
 

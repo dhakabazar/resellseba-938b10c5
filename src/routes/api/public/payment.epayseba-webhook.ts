@@ -42,10 +42,10 @@ export const Route = createFileRoute("/api/public/payment/epayseba-webhook")({
           const params: Record<string, string> = {};
           for (const [k, v] of Object.entries(payload)) params[k] = String(v ?? "");
           const v = await adapterFor("epayseba").verifyReturn(creds, order, params);
-          await core.settlePayment({ order, provider: "epayseba", paid: v.paid, amount: v.amount, txnId: v.txnId });
+          await core.settlePayment({ order, provider: "epayseba", paid: v.paid, amount: v.amount, txnId: v.txnId, owner: creds.owner });
           return new Response("ok");
         } catch {
-          return new Response("error", { status: 200 });
+          return new Response("Payment confirmation failed; retry", { status: 503 });
         }
       },
     },

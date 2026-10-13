@@ -1,3 +1,4 @@
+import { orderCodDue, prepaidAmount } from "@/lib/order-payment";
 // The privileged half of the automatic payment gateways.
 //
 // Everything here needs the privileged backend key, so it only ever runs on the
@@ -46,12 +47,16 @@ export async function startOrderPaymentFlow(input: {
   // never start (or capture the return of) another store's payment.
   {
     const db = await core.admin();
-    const { data: store } = await db.from("resellers").select("id").eq("code", input.code).maybeSingle();
+    const { data: store } = await db.from("resellers").select("id").eq("code", input.code).eq("status", "active").maybeSingle();
     const storeId = (store?.id as string | undefined) ?? null;
     if ((order.reseller_id ?? null) !== storeId) throw new Response("Order not found", { status: 404 });
   }
   const creds = await core.getCredentials(input.provider, order.reseller_id);
   if (!creds) throw new Response("This payment gateway is not available", { status: 400 });
+  if (["cancelled", "returned"].includes(order.status ?? "")) throw new Response("This order cannot receive payment", { status: 400 });
+  if (prepaidAmount(order) > 0 && order.advance_by !== (creds.owner === "reseller" ? "reseller" : "admin")) throw new Response("Use the original receiving account", { status: 400 });
+  const outstanding = orderCodDue(order);
+  if (outstanding <= 0) throw new Response("This order has no outstanding payment", { status: 400 });
 
 
   const store = await shopperOrigin(input.storeOrigin);
@@ -72,7 +77,7 @@ export async function startOrderPaymentFlow(input: {
   };
 
   try {
-    const res = await adapterFor(input.provider).create(creds, order, urls);
+    const res = await adapterFor(input.provider).create(creds, { ...order, total: outstanding }, urls);
     const db = await core.admin();
     await db
       .from("orders")
