@@ -1,6 +1,6 @@
 # Roadmap
 
-- [x] Align payment/advance ownership, paid/unpaid/partial, courier COD, add/edit/view and financial reports; 26 regressions pass, signed-in temporary order save/readback and transaction-report retained-cash assertions pass; temporary rows removed
+- [x] Align payment/advance ownership, paid/unpaid/partial, courier COD, add/edit/view and financial reports; 26 regressions plus rolled-back capture/retry/overcollection SQL checks pass, signed-in temporary order save/readback and transaction-report retained-cash assertions pass; temporary rows removed
 - [ ] Live gateway capture and courier booking confirmation — blocked on real-money/provider operations; not performed during safe audit
 
 - [x] Add selected-reseller Reset for all custom rates; 12 tests pass and signed-in temporary rate save/reset/reload confirms defaults with original custom reseller unchanged
