@@ -523,7 +523,7 @@ export function ExchangeModal({
           </div>
         ) : lockedBy ? (
           <div className="flex items-center gap-2 rounded-lg border border-warning/40 bg-warning/10 p-3 text-sm">
-            <Lock className="h-4 w-4" /> এই অর্ডারটি আগেই exchange করা হয়েছে (#{lockedBy})। একটি অর্ডারে একবারই exchange করা যায়।
+            <Lock className="h-4 w-4" /> This order was already exchanged (#{lockedBy}). One order can be exchanged only once.
           </div>
         ) : (
           <div className="space-y-3 text-sm">
