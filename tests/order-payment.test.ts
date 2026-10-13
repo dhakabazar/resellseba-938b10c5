@@ -51,3 +51,14 @@ test("partial delivery adds courier money to advance once and uses only kept cos
   expect(orderProfit({ ...base, status: "partial_item", kept_product_cost: 440, received_amount: 600, advance_amount: 500, advance_by: "admin" })).toBe(540);
   expect(orderProfit({ ...base, status: "partial_delivery", received_amount: 50, advance_amount: 50, advance_by: "admin" })).toBe(-20);
 });
+import { paymentDisplayState } from "../src/lib/order-payment";
+test("manual bKash order without confirmed money shows payment pending", () => {
+  expect(paymentDisplayState({ total: 1000, payment_method: "bkash", payment_status: "unpaid" })).toBe("pending");
+});
+test("paid online order shows paid", () => {
+  expect(paymentDisplayState({ total: 1000, payment_method: "bkash", payment_status: "paid" })).toBe("paid");
+});
+test("COD order with advance shows partial, without shows COD", () => {
+  expect(paymentDisplayState({ total: 1000, payment_method: "cod", payment_status: "partial" })).toBe("partial");
+  expect(paymentDisplayState({ total: 1000, payment_method: "cod", payment_status: "unpaid" })).toBe("cod");
+});

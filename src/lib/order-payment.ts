@@ -39,3 +39,13 @@ export function paymentStatusFor(order: PaymentOrder): "paid" | "partial" | "unp
 export function fullDeliveryCollection(order: PaymentOrder) {
   return order.received_amount == null ? orderCodDue(order) : roundMoney(money(order.received_amount));
 }
+export type PaymentDisplay = "paid" | "partial" | "unpaid" | "refunded" | "pending" | "cod";
+/** What the order list shows: online-method orders that are not fully paid wait for verification. */
+export function paymentDisplayState(order: PaymentOrder & { payment_method?: string | null }): PaymentDisplay {
+  const s = order.payment_status ?? "unpaid";
+  if (s === "paid" || s === "refunded") return s;
+  const online = !!order.payment_method && order.payment_method !== "cod";
+  if (online && order.status !== "cancelled") return "pending";
+  if (s === "partial") return "partial";
+  return online ? "unpaid" : "cod";
+}

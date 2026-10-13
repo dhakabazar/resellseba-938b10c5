@@ -1,5 +1,5 @@
 import { fullDeliveryCollection } from "@/lib/order-payment";
-import { OrderPaymentInfo } from "@/components/order-payment-info";
+import { OrderPaymentInfo, PaymentStateBadge } from "@/components/order-payment-info";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Pagination, usePaginated, type FilterOption } from "@/components/data-list";
@@ -225,7 +225,7 @@ function AdminOrdersPage() {
   const [resellerOptions, setResellerOptions] = useState<FilterOption[]>([]);
 
   const ORDER_SELECT =
-    "id,reseller_id,order_number,customer_name,customer_phone,address_line,area,city,subtotal,discount,shipping_cost,sa_cost_total,packaging_total,delivery_cost,received_amount,advance_amount,advance_by,total,status,payment_status,payment_method,forwarded_to_admin,created_at,updated_at,reseller_note,admin_note,resellers(business_name,code,contact_phone,agents(display_name))";
+    "id,reseller_id,order_number,customer_name,customer_phone,address_line,area,city,subtotal,discount,shipping_cost,sa_cost_total,packaging_total,delivery_cost,received_amount,advance_amount,advance_by,payment_provider,transaction_id,payment_sender,payment_config_id,paid_amount,total,status,payment_status,payment_method,forwarded_to_admin,created_at,updated_at,reseller_note,admin_note,resellers(business_name,code,contact_phone,agents(display_name))";
   const ITEM_SELECT =
     "order_id,product_id,product_name,product_image,quantity,returned_qty,reseller_price,line_total,sa_price,buying_price,packaging_cost";
   const SHIPMENT_SELECT = "id,order_id,provider,tracking_id,consignment_id";
@@ -872,7 +872,7 @@ function AdminOrdersPage() {
                       onChange={(e) => setMarked(prev => e.target.checked ? [...prev, o.id] : prev.filter(x => x !== o.id))}
                     />
                     <div className="min-w-0 flex-1">
-                      <div className="truncate text-sm font-bold tracking-tight">#{o.order_number}</div>
+                      <div className="flex items-center gap-1.5"><div className="truncate text-sm font-bold tracking-tight">#{o.order_number}</div><PaymentStateBadge order={o as never} /></div>
                       <div className="text-[10px] uppercase tracking-wide text-muted-foreground tabular-nums">
                         {new Date(o.created_at).toLocaleString([], { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
                       </div>
@@ -1138,6 +1138,7 @@ function AdminOrdersPage() {
                   </div>
                   <div className="min-w-0 text-center">
                     <div className="font-medium truncate">{o.order_number}</div>
+                    <PaymentStateBadge order={o as never} className="mt-0.5" />
                     <div className="text-[11px] text-muted-foreground">
                       {new Date(o.created_at).toLocaleDateString()}
                     </div>
