@@ -1275,7 +1275,6 @@ function OrdersPage() {
         />
       )}
 
-      {editId && (
         <ExchangeModal
           open={!!exchangeModal}
           onClose={() => setExchangeModal(null)}
@@ -1284,6 +1283,7 @@ function OrdersPage() {
           isAdmin={false}
           onDone={() => void load({ silent: true })}
         />
+      {editId && (
         <OrderEditModal
           orderId={editId}
           allProducts={allProducts}
