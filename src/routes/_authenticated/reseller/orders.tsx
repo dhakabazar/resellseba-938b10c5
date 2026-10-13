@@ -1197,7 +1197,7 @@ function OrdersPage() {
                             <div className="font-medium">{o.customer_name}</div>
                             <div className="text-muted-foreground mt-1">{o.address_line}</div>
                             <div className="text-muted-foreground">{o.area}, {o.city}</div>
-                            <div className="mt-2"><OrderPaymentInfo order={o as never} canConfirm={!(o.advance_by === "admin" && Number(o.advance_amount || 0) > 0) && !(o.payment_config_id && o.advance_by === "admin")} onChanged={() => void load({ silent: true })} /></div>
+                            <div className="mt-2"><OrderPaymentInfo order={o as never} canConfirm={!(o.advance_by === "admin" && Number(o.advance_amount || 0) > 0) && !((o as any).payment_config_id && o.advance_by === "admin")} onChanged={() => void load({ silent: true })} /></div>
                           </div>
                         </div>
                         
