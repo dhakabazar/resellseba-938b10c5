@@ -232,6 +232,7 @@ function AdminOrdersPage() {
   const loadSeq = useRef(0);
   const countsDirty = useRef(false);
   function invalidateOrderPages() {
+    ++loadSeq.current;
     countsDirty.current = true;
     void queryClient.cancelQueries({ queryKey: ["admin-order-pages", user?.id] });
     void queryClient.invalidateQueries({ queryKey: ["admin-order-pages", user?.id], refetchType: "none" });
@@ -240,8 +241,9 @@ function AdminOrdersPage() {
   async function load(opts?: { silent?: boolean }) {
     if (!user) return;
     const { fromTs, toTs } = resolveDateRange(filters);
-    const seq = ++loadSeq.current;
     if (opts?.silent) invalidateOrderPages();
+    const seq = ++loadSeq.current;
+    void refreshCounts();
     const queryKey = adminOrderKey(user.id, tab, fromTs, toTs);
     const statuses = (ORDER_TABS.find((t) => t.key === tab)?.statuses ?? []) as string[];
     const args = {
@@ -520,7 +522,7 @@ function AdminOrdersPage() {
   useEffect(() => {
     const t = setTimeout(() => void refreshCounts(), filters.q ? 350 : 0);
     return () => clearTimeout(t);
-  }, [filters.reseller, filters.area, filters.courier, filters.q, filters.datePreset, filters.from, filters.to, searchMode]);
+  }, [filters.reseller, filters.area, filters.courier, filters.q, filters.datePreset, filters.from, filters.to, searchMode, user?.id]);
   // Reload when the tab or the active date range changes.
   useEffect(() => {
     load();
