@@ -1,3 +1,4 @@
+import { orderCodDue } from "@/lib/order-payment";
 import { supabase } from "@/integrations/supabase/client";
 import { getGlobalSettings } from "@/lib/app-data";
 import { courierLabel, courierBrand } from "@/components/courier-brand";
@@ -8,7 +9,7 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
 
   const [settings, { data: orders }, { data: items }, { data: shipments }] = await Promise.all([
     getGlobalSettings(),
-    supabase.from("orders").select("id,order_number,customer_name,customer_phone,address_line,area,total,reseller_id").in("id", orderIds),
+    supabase.from("orders").select("id,order_number,customer_name,customer_phone,address_line,area,total,advance_amount,paid_amount,reseller_id").in("id", orderIds),
     supabase.from("order_items").select("order_id,product_name,product_image,quantity").in("order_id", orderIds),
     supabase.from("shipments").select("order_id,provider,tracking_id,consignment_id").in("order_id", orderIds)
   ]);

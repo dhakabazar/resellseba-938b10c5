@@ -24,10 +24,10 @@ async function handle(request: Request): Promise<Response> {
     const creds = await core.getCredentials("sslcommerz", order.reseller_id);
     if (!creds) return new Response("not configured", { status: 400 });
     const v = await adapterFor("sslcommerz").verifyReturn(creds, order, params);
-    await core.settlePayment({ order, provider: "sslcommerz", paid: v.paid, amount: v.amount, txnId: v.txnId });
+    await core.settlePayment({ order, provider: "sslcommerz", paid: v.paid, amount: v.amount, txnId: v.txnId, owner: creds.owner });
     return new Response("ok");
   } catch {
-    return new Response("error", { status: 200 });
+    return new Response("Payment confirmation failed; retry", { status: 503 });
   }
 }
 

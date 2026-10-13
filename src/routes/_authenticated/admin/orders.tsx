@@ -1,3 +1,4 @@
+import { fullDeliveryCollection } from "@/lib/order-payment";
 import { OrderPaymentInfo } from "@/components/order-payment-info";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -403,7 +404,7 @@ function AdminOrdersPage() {
             const o = orders.find((x) => x.id === id);
             const res = await supabase
               .from("orders")
-              .update({ status: newStatus as any, received_amount: Number(o?.total ?? 0) })
+              .update({ status: newStatus as any, received_amount: o ? fullDeliveryCollection(o) : 0 })
               .eq("id", id);
             if (res.error) {
               error = res.error;

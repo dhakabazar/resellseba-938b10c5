@@ -1,3 +1,4 @@
+import { orderCodDue } from "@/lib/order-payment";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import type { Database } from "@/integrations/supabase/types";
@@ -46,7 +47,7 @@ export const bookSteadfast = createServerFn({ method: "POST" })
         .select("product_name, quantity")
         .eq("order_id", order.id);
 
-      const codAmount = order.payment_method === "cod" ? Number(order.total) : 0;
+      const codAmount = orderCodDue(order);
       const payload = {
         invoice: order.order_number,
         recipient_name: String(order.customer_name).slice(0, 100),
@@ -302,7 +303,7 @@ export const bookPathao = createServerFn({ method: "POST" })
         .eq("order_id", order.id);
       const quantity = (items ?? []).reduce((s: number, i: any) => s + Number(i.quantity || 0), 0) || 1;
 
-      const codAmount = order.payment_method === "cod" ? Math.round(Number(order.total)) : 0;
+      const codAmount = Math.round(orderCodDue(order));
       // recipient_city/zone/area are intentionally omitted — Pathao resolves them
       // from the address, and sending nulls is rejected by the API.
       const payload: Record<string, unknown> = {
@@ -490,7 +491,8 @@ export const bookCarrybee = createServerFn({ method: "POST" })
         area: order.area,
       });
 
-      const codAmount = order.payment_method === "cod" ? Math.round(Number(order.total)) : 0;
+      const codAmount = Math.round(orderCodDue(order));
+      if (codAmount > 100000) throw new Response("Carrybee COD limit is 100,000; use another courier", { status: 400 });
       const payload: Record<string, unknown> = {
         store_id: conf.store_id,
         merchant_order_id: order.order_number,
@@ -504,7 +506,7 @@ export const bookCarrybee = createServerFn({ method: "POST" })
         ...(loc.areaId ? { area_id: loc.areaId } : {}),
         item_weight: data.itemWeight ?? Math.min(25000, Math.max(500, quantity * 500)),
         item_quantity: Math.min(200, quantity),
-        collectable_amount: Math.min(100000, codAmount),
+        collectable_amount: codAmount,
         product_description:
           (items ?? []).map((i: any) => `${i.product_name} x${i.quantity}`).join(", ").slice(0, 255) ||
           undefined,
