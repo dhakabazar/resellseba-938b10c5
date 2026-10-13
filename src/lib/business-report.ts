@@ -1,3 +1,4 @@
+import { exchangeAdminBuy } from "@/lib/exchange";
 import {
   isFailedOrder,
   isRealizedStatus,
@@ -114,7 +115,9 @@ export function lineBuyingPrice(it: BizItem, products: Map<string, BizProduct>) 
 }
 
 /** Admin buying cost of the kept items of one order. */
-export function orderBuyingCost(items: BizItem[], status: string, products: Map<string, BizProduct>) {
+export function orderBuyingCost(items: BizItem[], status: string, products: Map<string, BizProduct>, order?: Parameters<typeof exchangeAdminBuy>[0]) {
+  const ex = order ? exchangeAdminBuy({ ...order, status }) : null;
+  if (ex != null) return ex;
   let cost = 0;
   for (const it of items) cost += lineBuyingPrice(it, products) * keptQty(it, status);
   return cost;
@@ -241,7 +244,7 @@ export function buildResellerRows(
       } as ResellerRow);
     const myItems = itemsByOrder.get(o.id) ?? [];
     const ord = withKeptCost(o, myItems);
-    const buy = orderBuyingCost(myItems, o.status, products);
+    const buy = orderBuyingCost(myItems, o.status, products, o as any);
     row.orders += 1;
     if (isRealizedStatus(o.status)) row.delivered += 1;
     if (isFailedOrder(o)) row.failed += 1;
@@ -311,7 +314,7 @@ export function buildCourierRows(
       } as CourierRow);
     const myItems = itemsByOrder.get(o.id) ?? [];
     const ord = withKeptCost(o, myItems);
-    const buy = orderBuyingCost(myItems, o.status, products);
+    const buy = orderBuyingCost(myItems, o.status, products, o as any);
     row.parcels += 1;
     if (isRealizedStatus(o.status)) row.delivered += 1;
     if (isFailedOrder(o)) row.returned += 1;
@@ -366,7 +369,7 @@ export function buildPnL(
   for (const o of orders) {
     const myItems = itemsByOrder.get(o.id) ?? [];
     const ord = withKeptCost(o, myItems);
-    const buy = orderBuyingCost(myItems, o.status, products);
+    const buy = orderBuyingCost(myItems, o.status, products, o as any);
     value += n(o.total);
     received += orderReceived(ord);
     advance += Math.max(n(o.advance_amount), 0);
