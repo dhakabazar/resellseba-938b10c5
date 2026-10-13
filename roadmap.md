@@ -1,7 +1,7 @@
 # Roadmap
 
-- [ ] Redesign Reseller Pricing with separate rate editor and custom-reseller directory tabs
-- [ ] Audit and test custom rates across catalog, listings, order add/edit and storefront checkout
+- [x] Redesign Reseller Pricing with separate rate editor and custom-reseller directory tabs; signed-in save/read-back verified
+- [x] Audit custom-rate RPCs and test catalog, reseller/admin order calculations and checkout; 19 tests pass, temporary rates removed, no real orders submitted
 
 - [x] Align highlighted sold count with grid prices and after product quantity across all five themes; desktop/mobile badge placement verified
 
