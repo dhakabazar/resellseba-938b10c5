@@ -46,7 +46,7 @@ export function ExchangeBadge({ order, className = "" }: { order: ExOrder; class
   );
 }
 
-type Line = { product_id: string; name: string; qty: number; price: number; cost: number };
+type Line = { product_id: string; name: string; qty: number; price: number; cost: number; image?: string | null };
 
 /**
  * Create an exchange order (admin: approved at once, reseller: request for admin)
