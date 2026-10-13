@@ -1,4 +1,4 @@
-import { orderCodDue, prepaidAmount } from "@/lib/order-payment";
+import { outstandingCustomerPayment, prepaidAmount } from "@/lib/order-payment";
 // The privileged half of the automatic payment gateways.
 //
 // Everything here needs the privileged backend key, so it only ever runs on the
@@ -53,9 +53,9 @@ export async function startOrderPaymentFlow(input: {
   }
   const creds = await core.getCredentials(input.provider, order.reseller_id);
   if (!creds) throw new Response("This payment gateway is not available", { status: 400 });
-  if (["cancelled", "returned"].includes(order.status ?? "")) throw new Response("This order cannot receive payment", { status: 400 });
+  if (["cancelled", "returned", "pending_return"].includes(order.status ?? "") || order.payment_status === "refunded") throw new Response("This order cannot receive payment", { status: 400 });
   if (prepaidAmount(order) > 0 && order.advance_by !== (creds.owner === "reseller" ? "reseller" : "admin")) throw new Response("Use the original receiving account", { status: 400 });
-  const outstanding = orderCodDue(order);
+  const outstanding = outstandingCustomerPayment(order);
   if (outstanding <= 0) throw new Response("This order has no outstanding payment", { status: 400 });
 
 
@@ -79,10 +79,11 @@ export async function startOrderPaymentFlow(input: {
   try {
     const res = await adapterFor(input.provider).create(creds, { ...order, total: outstanding }, urls);
     const db = await core.admin();
-    await db
+    const { error } = await db
       .from("orders")
-      .update({ payment_provider: input.provider, transaction_id: res.ref || order.transaction_id || null })
+      .update({ payment_provider: input.provider, transaction_id: res.ref || null })
       .eq("id", order.id);
+    if (error) throw new Error("Could not save payment reference; please retry");
     return { redirectUrl: res.paymentUrl };
   } catch (err) {
     throw new Response(extractGatewayError(err), { status: 502 });

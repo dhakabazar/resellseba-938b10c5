@@ -1,7 +1,11 @@
 import { expect, test } from "bun:test";
-import { orderCodDue, paymentStatusFor, prepaidAmount, fullDeliveryCollection } from "../src/lib/order-payment";
+import { orderCodDue, paymentStatusFor, prepaidAmount, fullDeliveryCollection, outstandingCustomerPayment } from "../src/lib/order-payment";
 import { orderReceived, orderProfit, orderMargin, orderDeliveryCost, orderPackaging } from "../src/lib/finance-report";
 const base = { total: 1500, shipping_cost: 100, delivery_cost: 100, sa_cost_total: 900, packaging_total: 20 };
+test("remaining gateway payment excludes already confirmed courier money as well as advance", () => {
+  expect(outstandingCustomerPayment({ total: 1500, advance_amount: 500, received_amount: 600, status: "partial_full" })).toBe(400);
+  expect(outstandingCustomerPayment({ total: 1500, advance_amount: 500, received_amount: 1000, status: "delivered" })).toBe(0);
+});
 
 test("COD subtracts confirmed advance for every payment method and counts its mirrored paid amount only once", () => {
   expect(orderCodDue({ total: 1500, advance_amount: 500, paid_amount: 500 })).toBe(1000);

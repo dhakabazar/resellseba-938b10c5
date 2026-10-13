@@ -24,6 +24,10 @@ export function confirmedCustomerPayment(order: PaymentOrder) {
     ? 0 : money(order.received_amount);
   return roundMoney(prepaidAmount(order) + collected);
 }
+/** Gateway payment is only the balance still owed, including any courier collection. */
+export function outstandingCustomerPayment(order: PaymentOrder) {
+  return roundMoney(Math.max(money(order.total) - confirmedCustomerPayment(order), 0));
+}
 export function paymentStatusFor(order: PaymentOrder): "paid" | "partial" | "unpaid" | "refunded" {
   if (order.payment_status === "refunded") return "refunded";
   const amount = confirmedCustomerPayment(order);

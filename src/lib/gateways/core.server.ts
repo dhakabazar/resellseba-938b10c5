@@ -122,7 +122,7 @@ export async function loadOrder(orderNumber: string): Promise<GatewayOrder> {
   const { data } = await db
     .from("orders")
     .select(
-      "id,order_number,total,customer_name,customer_phone,customer_email,address_line,city,reseller_id,status,payment_status,payment_provider,paid_amount,transaction_id,advance_amount,advance_by",
+      "id,order_number,total,customer_name,customer_phone,customer_email,address_line,city,reseller_id,status,payment_status,payment_provider,paid_amount,transaction_id,advance_amount,advance_by,received_amount",
     )
     .eq("order_number", orderNumber)
     .maybeSingle();
