@@ -1,3 +1,4 @@
+import { OrderPaymentInfo } from "@/components/order-payment-info";
 import { paymentStatusFor } from "@/lib/order-payment";
 import { orderProfit, orderMargin, orderReceived, orderCost, orderKeptProductCost, orderDeliveryCost, orderPackaging, isFailedOrder } from "@/lib/finance-report";
 import { useEffect, useMemo, useState } from "react";
@@ -443,6 +444,8 @@ export function OrderEditModal({ orderId, allProducts: rawProducts, onClose, onS
                         <option value="paid">Paid</option>
                         <option value="refunded">Refunded</option>
                       </select>
+                      <span className="block text-[11px] text-muted-foreground">অটো হিসাব হয় — অগ্রিম/Received টাকা বা নিচের "Verify payment" দিয়ে বদলান।</span>
+                      {order && <OrderPaymentInfo order={order as never} canConfirm onChanged={() => window.dispatchEvent(new Event("order-payment-changed"))} />}
                     </label>
                   )}
                 </div>
