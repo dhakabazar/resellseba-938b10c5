@@ -1,5 +1,5 @@
 import { paymentStatusFor } from "@/lib/order-payment";
-import { orderProfit, orderMargin, orderReceived, orderDeliveryCost, orderPackaging } from "@/lib/finance-report";
+import { orderProfit, orderMargin, orderReceived } from "@/lib/finance-report";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { areaOptions, productDeliveryCharge, deliveryMode, type DeliveryArea } from "@/lib/delivery";
@@ -24,6 +24,7 @@ type EditItem = {
   reseller_price: number;
   /** Packaging cost frozen when this line was created — never re-read from the product. */
   packaging_cost: number;
+  returned_qty?: number;
 };
 
 interface Props {
@@ -116,6 +117,7 @@ export function OrderEditModal({ orderId, allProducts: rawProducts, onClose, onS
           product_name: it.product_name,
           product_image: it.product_image,
           quantity: Number(it.quantity ?? 1),
+          returned_qty: Number(it.returned_qty ?? 0),
           sa_price: Number(it.sa_price ?? 0),
           reseller_price: Number(it.reseller_price ?? 0),
           packaging_cost: Number(
@@ -181,7 +183,8 @@ export function OrderEditModal({ orderId, allProducts: rawProducts, onClose, onS
     /** Total money received for this order = courier collected + advance already paid. */
     const moneyOrder = { status: order?.status, total, shipping_cost: shipping, delivery_cost: deliveryCost,
       sa_cost_total: saCost, packaging_total: packaging, advance_amount: adv, advance_by: advanceBy,
-      received_amount: received.trim() === "" ? null : collected, kept_product_cost: order?.kept_product_cost };
+      received_amount: received.trim() === "" ? null : collected,
+      kept_product_cost: itemCost > 0 ? productCost * items.reduce((sum, it) => sum + it.sa_price * Math.max(it.quantity - (it.returned_qty ?? 0), 0), 0) / itemCost : productCost };
     const recv = orderReceived(moneyOrder);
     return {
       subtotal,
@@ -203,8 +206,6 @@ export function OrderEditModal({ orderId, allProducts: rawProducts, onClose, onS
       grossProfit: orderMargin(moneyOrder),
       // Final amount for the reseller = profit minus any advance they already hold.
       profit: orderProfit(moneyOrder),
-      effectiveDelivery: orderDeliveryCost(moneyOrder),
-      effectivePackaging: orderPackaging(moneyOrder),
     };
   }, [
     items,
@@ -639,9 +640,10 @@ export function OrderEditModal({ orderId, allProducts: rawProducts, onClose, onS
                       hint="If already received"
                       value={advance}
                       onChange={setAdvance}
+                      disabled={order?.status === "cancelled"}
                       placeholder="0"
                     />
-                    <AdvanceByToggle value={advanceBy} onChange={setAdvanceBy} />
+                    <AdvanceByToggle value={advanceBy} onChange={setAdvanceBy} disabled={Number(order?.advance_amount ?? 0) > 0 || order?.status === "cancelled"} />
                   </div>
                   <p className="text-[12px] leading-relaxed text-muted-foreground">
                     অ্যাডমিন নিলে রিসেলারের হিসাব থেকে কাটে না, রিসেলার নিলে ফাইনাল অ্যামাউন্ট থেকে বাদ যাবে।
