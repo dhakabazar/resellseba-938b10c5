@@ -21,4 +21,5 @@
 - Admin orders, resellers, products and customers plus reseller orders, catalog, listings and customers load in two phases (first page via the RPC _limit argument, then the full list in the background); filtering and paging stay client-side over the full set so they remain instant.
 - Admin order pages use user/tab/date-scoped Query caches with stale-while-revalidate; mutations invalidate every affected page and count cache, and the limited request finishes before full loading starts to avoid competing first-page work.
 - Reseller Pricing separates the directory from the product table and uses a tabbed modal for rate edits; drafts stay isolated until saved to avoid accidental changes.
+- Reseller-wide rate reset deletes overrides through a reseller-scoped helper under existing RLS, never copying defaults into overrides or modifying saved orders; this preserves future master-rate inheritance.
 - Reseller rate maps use explicit reseller scope (null means master-only), and existing order edits preserve saved cost snapshots and delivery charges so later rate changes cannot silently reprice them.
