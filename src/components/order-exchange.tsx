@@ -258,7 +258,12 @@ export function ExchangeModal({
             </div>
             <div className="rounded-lg border p-2 text-xs">
               <div className="font-semibold">Sending</div>
-              {(rev?.items ?? []).map((i: any) => <div key={i.product_id}>{i.product_name} × {i.quantity}</div>)}
+              {(rev?.items ?? []).map((i: any) => (
+                <div key={i.product_id} className="flex items-center gap-2 py-0.5">
+                  {i.product_image && <img src={i.product_image} alt="" className="h-7 w-7 shrink-0 rounded border object-cover" loading="lazy" />}
+                  <span>{i.product_name} × {i.quantity}</span>
+                </div>
+              ))}
               {(rev?.exchange_returned_items ?? []).length > 0 && (
                 <>
                   <div className="mt-1 font-semibold">Coming back</div>
