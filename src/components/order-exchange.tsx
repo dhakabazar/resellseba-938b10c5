@@ -174,9 +174,9 @@ export function ExchangeModal({
     const returnedItems = parentItems
       .filter((it) => (returned[it.product_id] ?? 0) > 0)
       .map((it) => ({ product_id: it.product_id, name: it.product_name, image: it.product_image ?? null, qty: returned[it.product_id] }));
-    const { error } = await supabase.rpc("create_exchange_order" as any, {
+    const { data: newId, error } = await supabase.rpc("create_exchange_order" as any, {
       _parent: pid,
-      _items: lines.map((l) => ({ product_id: l.product_id, qty: l.qty, price: l.price })),
+      _items: lines.map((l) => (isAdmin ? { product_id: l.product_id, qty: l.qty, price: l.price, cost: l.cost } : { product_id: l.product_id, qty: l.qty, price: l.price })),
       _returned: returnedItems,
       _total: Number(customerPays) || 0,
       _delivery_cost: Number(delivery) || 0,
@@ -187,7 +187,15 @@ export function ExchangeModal({
     });
     setBusy(false);
     if (error) return toast.error(error.message);
-    toast.success(isAdmin ? "Exchange order created" : "Exchange request sent to admin");
+    let num = "";
+    if (newId) {
+      const { data: o } = await supabase.from("orders").select("order_number").eq("id", newId as any).maybeSingle();
+      num = o?.order_number ? `#${o.order_number} ` : "";
+    }
+    toast.success(
+      isAdmin ? `Exchange order ${num}created` : `Exchange request ${num}sent to admin`,
+      { description: isAdmin ? `Find it in the "Confirmed" tab (search ${num.trim() || "-EX"}).` : `Find it in the "Pending" tab until admin approves.`, duration: 10000 },
+    );
     onDone();
     onClose();
   }
@@ -359,14 +367,29 @@ export function ExchangeModal({
                   ))}
                 </div>
               )}
+              {lines.length > 0 && (
+                <div className="mt-2 flex items-center gap-2 text-[10px] text-muted-foreground">
+                  <span className="flex-1">Product</span>
+                  <span className="w-14 text-center">Qty</span>
+                  {isAdmin && <span className="w-20 text-center">Cost / pc ৳</span>}
+                  <span className="w-3" />
+                </div>
+              )}
               {lines.map((l) => (
                 <div key={l.product_id} className="mt-1 flex items-center gap-2 text-xs">
                   {l.image && <img src={l.image} alt="" className="h-7 w-7 shrink-0 rounded border object-cover" loading="lazy" />}
-                  <span className="flex-1 truncate">{l.name}</span>
+                  <span className="flex-1 truncate">{l.name}{!isAdmin && <span className="text-muted-foreground"> · ৳{l.cost}</span>}</span>
                   <Input type="number" min={1} className="h-7 w-14" value={l.qty} onChange={(e) => setLines((p) => p.map((x) => x.product_id === l.product_id ? { ...x, qty: Math.max(1, Number(e.target.value) || 1) } : x))} />
+                  {isAdmin && (
+                    <Input type="number" min={0} className="h-7 w-20" value={l.cost} title="Product cost incl. packaging (set 0 if the same product just swaps)"
+                      onChange={(e) => setLines((p) => p.map((x) => x.product_id === l.product_id ? { ...x, cost: Math.max(0, Number(e.target.value) || 0) } : x))} />
+                  )}
                   <button type="button" className="text-destructive" onClick={() => setLines((p) => p.filter((x) => x.product_id !== l.product_id))}>✕</button>
                 </div>
               ))}
+              {isAdmin && lines.length > 0 && (
+                <p className="mt-1 text-[10px] text-muted-foreground">Cost is pre-filled from the rate; change it if needed (e.g. 0 when the same product comes back).</p>
+              )}
             </div>
 
             {money}
