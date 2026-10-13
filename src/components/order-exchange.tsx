@@ -93,7 +93,7 @@ export function ExchangeModal({
       if (!review && !pid) { setParent(null); setParentItems([]); return; }
       if (review) {
         const { data: o } = await supabase.from("orders").select("*").eq("id", review.id).maybeSingle();
-        const { data: its } = await supabase.from("order_items").select("product_id,product_name,quantity,sa_price,reseller_price").eq("order_id", review.id);
+        const { data: its } = await supabase.from("order_items").select("product_id,product_name,product_image,quantity,sa_price,reseller_price").eq("order_id", review.id);
         setRev({ ...o, items: its ?? [] });
         setCustomerPays(String(o?.total ?? 0));
         setDelivery(String(o?.delivery_cost ?? 0));
