@@ -116,7 +116,7 @@ export function orderCost(o: ProfitOrder) {
 
 /**
  * Money actually received for this order.
- * Return / cancel = 0, otherwise courier collected amount + advance already taken,
+ * Return / cancel retain advance; otherwise courier collection plus advance.
  * still running = expected customer total.
  */
 export function orderReceived(o: ProfitOrder) {

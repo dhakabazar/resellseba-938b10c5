@@ -42,6 +42,7 @@ export function MoneyField({
           ৳
         </span>
         <input
+          aria-label={label}
           inputMode="numeric"
           disabled={disabled}
           value={value}

@@ -1,3 +1,4 @@
+import { paymentStatusFor } from "@/lib/order-payment";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { areaOptions, productDeliveryCharge, deliveryMode, type DeliveryArea } from "@/lib/delivery";
@@ -421,7 +422,7 @@ export function OrderEditModal({ orderId, allProducts: rawProducts, onClose, onS
                   {isAdmin && (
                     <label className="space-y-1">
                       <span className="text-[13px] font-semibold text-foreground/80">Payment status</span>
-                      <select className={inp} value={paymentStatus} disabled>
+                      <select className={inp} value={paymentStatusFor({ total: totals.total, advance_amount: totals.advance, received_amount: received.trim() === "" ? null : Number(received), status: order?.status, payment_status: paymentStatus })} disabled>
                         <option value="unpaid">Unpaid</option>
                         <option value="partial">Partial</option>
                         <option value="paid">Paid</option>
