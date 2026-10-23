@@ -64,71 +64,99 @@ async function toPhotocopyDataUrl(imageUrl?: string | null): Promise<string> {
           src[i / 4] = 0.299 * r + 0.587 * g + 0.114 * b;
         }
 
-        // 1. Unsharp mask: Box blur for edge & texture contrast enhancement
+        // 1. Box blur for unsharp masking (crisp edges, text & textures)
         const blur = new Float32Array(w * h);
         const radius = 1;
         for (let y = 0; y < h; y++) {
+          const yOffset = y * w;
           for (let x = 0; x < w; x++) {
             let sum = 0, count = 0;
             for (let dy = -radius; dy <= radius; dy++) {
-              for (let dx = -radius; dx <= radius; dx++) {
-                const nx = x + dx, ny = y + dy;
-                if (nx >= 0 && nx < w && ny >= 0 && ny < h) {
-                  sum += src[ny * w + nx];
-                  count++;
+              const ny = y + dy;
+              if (ny >= 0 && ny < h) {
+                const nyOffset = ny * w;
+                for (let dx = -radius; dx <= radius; dx++) {
+                  const nx = x + dx;
+                  if (nx >= 0 && nx < w) {
+                    sum += src[nyOffset + nx];
+                    count++;
+                  }
                 }
               }
             }
-            blur[y * w + x] = sum / count;
+            blur[yOffset + x] = sum / count;
           }
         }
 
-        // 2. Auto-Levels: Calculate min and max luminance of actual product content
-        let minLum = 255, maxLum = 0;
+        // 2. Minimum luminance of actual content (excluding pure white background)
+        let minLum = 255;
         for (let i = 0; i < w * h; i++) {
-          if (src[i] < 220) {
-            if (src[i] < minLum) minLum = src[i];
-            if (src[i] > maxLum) maxLum = src[i];
+          if (src[i] < 250 && src[i] < minLum) {
+            minLum = src[i];
           }
         }
-        if (minLum >= maxLum) { minLum = 0; maxLum = 255; }
+        // Cap minLum at 35 so low-contrast images get rich darks without crushing
+        minLum = Math.min(minLum, 35);
 
-        // 3. Contrast stretch & gamma lifting for rich, legible photographic tone
+        // 3. Balanced tone mapping: natural contrast, zero white blowout, distinct details
         const tone = new Float32Array(w * h);
         for (let i = 0; i < w * h; i++) {
-          if (src[i] >= 220) {
-            tone[i] = 255; // Crisp pure white background
+          if (src[i] >= 250) {
+            tone[i] = 255; // Clean pure white background
           } else {
-            // Enhanced sharpness
-            const sharp = src[i] + (src[i] - blur[i]) * 0.65;
-            let norm = (sharp - minLum) / (maxLum - minLum);
+            // Unsharp mask: enhances borders, stitches, patterns, and text
+            const sharp = src[i] + (src[i] - blur[i]) * 0.75;
+
+            // Normalize between minLum and 250 (preserves light product details without blowing out to white)
+            let norm = (sharp - minLum) / (250 - minLum);
             if (norm < 0) norm = 0;
             if (norm > 1) norm = 1;
-            // Gamma curve: lifts shadows slightly so dark fabrics don't turn into a black blob
-            norm = Math.pow(norm, 0.72);
-            norm = 0.08 + norm * 0.92;
+
+            // Natural gamma (0.95): keeps midtones solid and clear
+            norm = Math.pow(norm, 0.95);
+
+            // Subtle contrast boost for distinct, clear edges ("isposto")
+            norm = (norm - 0.5) * 1.12 + 0.5;
+
+            // Prevent extreme crushing:
+            // - Keep 4% micro-dots in deepest blacks so thermal head doesn't burn into a solid block
+            // - Keep 2% subtle stipples in light highlights so products never disappear into white paper
+            if (norm < 0.04) norm = 0.04;
+            if (norm > 0.98) norm = 0.98;
+
             tone[i] = norm * 255;
           }
         }
 
-        // 4. Atkinson Dithering: crisp contours, sharp text, and natural photographic gradients
+        // 4. Serpentine Floyd-Steinberg Error Diffusion: 100% error conservation, smooth photographic stippling
         for (let y = 0; y < h; y++) {
-          for (let x = 0; x < w; x++) {
+          const ltr = y % 2 === 0;
+          const startX = ltr ? 0 : w - 1;
+          const endX = ltr ? w : -1;
+          const stepX = ltr ? 1 : -1;
+
+          for (let x = startX; x !== endX; x += stepX) {
             const idx = y * w + x;
             const oldVal = tone[idx];
             const newVal = oldVal > 128 ? 255 : 0;
             tone[idx] = newVal;
-            const err = (oldVal - newVal) / 8;
+            const err = oldVal - newVal;
             if (err === 0) continue;
-            if (x + 1 < w) tone[idx + 1] += err;
-            if (x + 2 < w) tone[idx + 2] += err;
-            if (y + 1 < h) {
-              if (x > 0) tone[idx + w - 1] += err;
-              tone[idx + w] += err;
-              if (x + 1 < w) tone[idx + w + 1] += err;
-            }
-            if (y + 2 < h) {
-              tone[idx + 2 * w] += err;
+
+            if (ltr) {
+              if (x + 1 < w) tone[idx + 1] += err * (7 / 16);
+              if (y + 1 < h) {
+                if (x > 0) tone[idx + w - 1] += err * (3 / 16);
+                tone[idx + w] += err * (5 / 16);
+                if (x + 1 < w) tone[idx + w + 1] += err * (1 / 16);
+              }
+            } else {
+              if (x - 1 >= 0) tone[idx - 1] += err * (7 / 16);
+              if (y + 1 < h) {
+                if (x + 1 < w) tone[idx + w + 1] += err * (3 / 16);
+                tone[idx + w] += err * (5 / 16);
+                if (x - 1 >= 0) tone[idx + w - 1] += err * (1 / 16);
+              }
             }
           }
         }
@@ -248,6 +276,7 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
             background: #fff;
             image-rendering: -webkit-optimize-contrast;
             image-rendering: crisp-edges;
+            image-rendering: pixelated;
           }
           .label { 
             width: ${width}; 
@@ -323,7 +352,7 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
           }
           .item-row { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; border-bottom: 1px dashed #777; padding-bottom: 3px; }
           .item-row:last-child { border-bottom: none; }
-          .item-img { width: 38px; height: 38px; object-fit: contain; border: 1.5px solid #000; border-radius: 2px; background: #fff; flex-shrink: 0; }
+          .item-img { width: 40px; height: 40px; object-fit: contain; border: 1.5px solid #000; border-radius: 2px; background: #fff; flex-shrink: 0; }
           .item-name { flex: 1; min-width: 0; line-height: 1.2; font-weight: 600; color: #000; }
 
           .footer { 
