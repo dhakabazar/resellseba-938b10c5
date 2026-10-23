@@ -4,6 +4,123 @@ import { getGlobalSettings } from "@/lib/app-data";
 import { courierLabel, courierBrand } from "@/components/courier-brand";
 import { code128Svg } from "@/lib/barcode";
 
+/**
+ * Converts any image (logo, product photo) into a 1-bit high-contrast photocopy line art
+ * suitable for thermal label printers.
+ * Eliminates transparent black backgrounds, detects object contours, and uses
+ * coarse 2x2 clustered dot shading so Windows print drivers never blur it into solid black or solid white.
+ */
+async function toPhotocopyDataUrl(imageUrl?: string | null): Promise<string> {
+  if (!imageUrl) return "";
+  if (imageUrl.startsWith("data:image/svg+xml")) return imageUrl;
+
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    let done = false;
+    const finish = (res: string) => {
+      if (!done) {
+        done = true;
+        resolve(res);
+      }
+    };
+
+    img.onload = () => {
+      try {
+        const maxDim = 84;
+        let w = img.naturalWidth || 84;
+        let h = img.naturalHeight || 84;
+        if (w > maxDim || h > maxDim) {
+          if (w >= h) {
+            h = Math.max(1, Math.round((h * maxDim) / w));
+            w = maxDim;
+          } else {
+            w = Math.max(1, Math.round((w * maxDim) / h));
+            h = maxDim;
+          }
+        }
+        const cvs = document.createElement("canvas");
+        cvs.width = w;
+        cvs.height = h;
+        const ctx = cvs.getContext("2d", { willReadFrequently: true });
+        if (!ctx) return finish(imageUrl);
+
+        // Fill pure white to eradicate dark transparency
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, w, h);
+        ctx.drawImage(img, 0, 0, w, h);
+
+        const imgData = ctx.getImageData(0, 0, w, h);
+        const d = imgData.data;
+        const src = new Float32Array(w * h);
+
+        for (let i = 0; i < d.length; i += 4) {
+          const a = d[i + 3] / 255;
+          const r = d[i] * a + 255 * (1 - a);
+          const g = d[i + 1] * a + 255 * (1 - a);
+          const b = d[i + 2] * a + 255 * (1 - a);
+          src[i / 4] = 0.299 * r + 0.587 * g + 0.114 * b;
+        }
+
+        // Local blur for adaptive high-pass photocopy edge filter
+        const blur = new Float32Array(w * h);
+        const radius = 2;
+        for (let y = 0; y < h; y++) {
+          for (let x = 0; x < w; x++) {
+            let sum = 0, count = 0;
+            for (let dy = -radius; dy <= radius; dy++) {
+              for (let dx = -radius; dx <= radius; dx++) {
+                const nx = x + dx, ny = y + dy;
+                if (nx >= 0 && nx < w && ny >= 0 && ny < h) {
+                  sum += src[ny * w + nx];
+                  count++;
+                }
+              }
+            }
+            blur[y * w + x] = sum / count;
+          }
+        }
+
+        // High-pass adaptive photocopy filter + coarse Bayer cluster shading
+        for (let y = 0; y < h; y++) {
+          for (let x = 0; x < w; x++) {
+            const idx = y * w + x;
+            const val = src[idx];
+            const localAvg = blur[idx];
+
+            let outVal = 255;
+            if (val < 210) {
+              const diff = localAvg - val;
+              if (diff > 5) {
+                outVal = 0; // Solid black contour edge
+              } else if (val < 80) {
+                // Coarse 2x2 dot cluster shading: never blurs to gray
+                const bayer = ((x % 2) === (y % 2)) ? 1 : 0;
+                if (val < 45 || bayer === 1) {
+                  outVal = 0;
+                }
+              }
+            }
+            const p = idx * 4;
+            d[p] = outVal;
+            d[p + 1] = outVal;
+            d[p + 2] = outVal;
+            d[p + 3] = 255;
+          }
+        }
+
+        ctx.putImageData(imgData, 0, 0);
+        finish(cvs.toDataURL("image/png"));
+      } catch {
+        finish(imageUrl);
+      }
+    };
+    img.onerror = () => finish(imageUrl);
+    setTimeout(() => finish(imageUrl), 800);
+    img.src = imageUrl;
+  });
+}
+
 export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" | "3x4") {
   if (!orderIds || !orderIds.length) return;
 
@@ -17,7 +134,7 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
         <body style="margin:0;display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;color:#333;font-size:13px;background:#fff;">
           <div style="text-align:center;">
             <div style="font-weight:bold;margin-bottom:4px;">Preparing ${orderIds.length} Label${orderIds.length > 1 ? "s" : ""}...</div>
-            <div style="color:#777;font-size:11px;">Fast loading invoices...</div>
+            <div style="color:#777;font-size:11px;">Generating photocopy labels...</div>
           </div>
         </body>
       </html>
@@ -54,6 +171,28 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
     }
     return;
   }
+
+  // Pre-process all unique images to photocopy B&W in parallel in the main window
+  const uniqueUrls = new Set<string>();
+  orders.forEach((o) => {
+    const r = Array.isArray(o.resellers) ? o.resellers[0] : o.resellers;
+    const sSettings = Array.isArray(r?.reseller_settings) ? r?.reseller_settings[0] : r?.reseller_settings;
+    if (sSettings?.logo_url) uniqueUrls.add(sSettings.logo_url);
+
+    const s = Array.isArray(o.shipments) ? o.shipments[0] : o.shipments;
+    const brand = courierBrand(s?.provider);
+    if (brand) uniqueUrls.add(new URL(brand.wordmark, window.location.origin).href);
+
+    const oItems = ((o as any).order_items || []) as Array<{ product_image?: string | null }>;
+    oItems.forEach((it) => {
+      if (it.product_image) uniqueUrls.add(it.product_image);
+    });
+  });
+
+  const urlEntries = Array.from(uniqueUrls);
+  const dataUrls = await Promise.all(urlEntries.map((u) => toPhotocopyDataUrl(u)));
+  const imageMap = new Map<string, string>();
+  urlEntries.forEach((u, i) => imageMap.set(u, dataUrls[i]));
 
   const size = forceSize || (settings as any)?.label_size || "3x4";
   const siteName = settings?.site_name || "ResellHub";
@@ -178,8 +317,8 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
           .thank-you { font-size: 6pt; color: #000; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; }
 
           @media print {
-            img.dither-fallback {
-              filter: grayscale(100%) brightness(1.3) contrast(1.7);
+            img:not([src^="data:"]) {
+              filter: grayscale(100%) brightness(1.2) contrast(1.5);
             }
           }
         </style>
@@ -188,23 +327,23 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
         ${orders.map(o => {
           const r = Array.isArray(o.resellers) ? o.resellers[0] : o.resellers;
           const sSettings = Array.isArray(r?.reseller_settings) ? r?.reseller_settings[0] : r?.reseller_settings;
-          const reseller = r ? {
-            name: sSettings?.store_name || r.business_name,
-            logo: sSettings?.logo_url || null
-          } : null;
+          const originalLogo = sSettings?.logo_url || null;
+          const logoSrc = originalLogo ? (imageMap.get(originalLogo) || originalLogo) : null;
+          const resellerName = sSettings?.store_name || r?.business_name;
 
           const s = Array.isArray(o.shipments) ? o.shipments[0] : o.shipments;
           const oItems = ((o as any).order_items || []) as Array<{ product_name: string; product_image?: string | null; quantity: number }>;
           const brand = courierBrand(s?.provider);
-          const brandLogo = brand ? new URL(brand.wordmark, window.location.origin).href : "";
+          const originalBrandLogo = brand ? new URL(brand.wordmark, window.location.origin).href : "";
+          const brandLogoSrc = originalBrandLogo ? (imageMap.get(originalBrandLogo) || originalBrandLogo) : "";
           const booking = s?.tracking_id || s?.consignment_id || "";
 
           return `
             <div class="label">
               <div class="header">
                 <div class="reseller-info">
-                  ${reseller?.logo ? `<img src="${reseller.logo}" class="reseller-logo" crossorigin="anonymous" />` : ""}
-                  <div class="site-name">${reseller?.name || siteName}</div>
+                  ${logoSrc ? `<img src="${logoSrc}" class="reseller-logo" />` : ""}
+                  <div class="site-name">${resellerName || siteName}</div>
                 </div>
                 <div class="order-block">
                   <div class="barcode">${code128Svg(String(o.order_number), { height: 30 })}</div>
@@ -212,9 +351,9 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
                 </div>
               </div>
               <div class="courier-bar">
-                ${brandLogo ? `<div class="courier-brand"><img src="${brandLogo}" class="courier-logo" crossorigin="anonymous" /><div class="courier-brand-name">${courierLabel(s?.provider)}</div></div>` : ""}
+                ${brandLogoSrc ? `<div class="courier-brand"><img src="${brandLogoSrc}" class="courier-logo" /><div class="courier-brand-name">${courierLabel(s?.provider)}</div></div>` : ""}
                 <div class="courier-meta">
-                  ${brandLogo ? "" : `<div class="courier-name">${courierLabel(s?.provider) === "—" ? "Manual" : courierLabel(s?.provider)}</div>`}
+                  ${brandLogoSrc ? "" : `<div class="courier-name">${courierLabel(s?.provider) === "—" ? "Manual" : courierLabel(s?.provider)}</div>`}
                   ${booking ? `<div class="barcode">${code128Svg(booking, { height: 36 })}</div>` : ""}
                   <div class="booking-id">${booking || "PENDING"}</div>
                 </div>
@@ -227,7 +366,10 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
               </div>
               <div class="items-box">
                 <div class="section-title">Order Items</div>
-                ${oItems.map(it => `<div class="item-row">${it.product_image ? `<img src="${it.product_image}" class="item-img" crossorigin="anonymous" />` : ""}<span class="item-name">${it.product_name} <strong>x ${it.quantity}</strong></span></div>`).join("")}
+                ${oItems.map(it => {
+                  const itemImgSrc = it.product_image ? (imageMap.get(it.product_image) || it.product_image) : null;
+                  return `<div class="item-row">${itemImgSrc ? `<img src="${itemImgSrc}" class="item-img" />` : ""}<span class="item-name">${it.product_name} <strong>x ${it.quantity}</strong></span></div>`;
+                }).join("")}
               </div>
               <div class="footer">
                 <div class="thank-you">Thank you for shopping with us</div>
@@ -240,146 +382,14 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
           `;
         }).join("")}
         <script>
-          var ditherCache = {};
-
-          function processImage(img) {
-            return new Promise(function(resolve) {
-              var src = img.getAttribute('src');
-              if (!src) return resolve();
-              if (ditherCache[src]) {
-                img.src = ditherCache[src];
-                return resolve();
-              }
-              function run() {
-                try {
-                  if (!img.complete || img.naturalWidth === 0) {
-                    img.onload = run;
-                    img.onerror = function() { resolve(); };
-                    return;
-                  }
-                  if (ditherCache[src]) {
-                    img.src = ditherCache[src];
-                    return resolve();
-                  }
-                  var maxDim = 72;
-                  var w = img.naturalWidth;
-                  var h = img.naturalHeight;
-                  if (!w || !h) return resolve();
-                  if (w > maxDim || h > maxDim) {
-                    if (w >= h) {
-                      h = Math.round((h * maxDim) / w);
-                      w = maxDim;
-                    } else {
-                      w = Math.round((w * maxDim) / h);
-                      h = maxDim;
-                    }
-                  }
-                  var cvs = document.createElement('canvas');
-                  cvs.width = w;
-                  cvs.height = h;
-                  var ctx = cvs.getContext('2d', { willReadFrequently: true });
-                  if (!ctx) return resolve();
-
-                  // Fill white background to eliminate black transparency issues
-                  ctx.fillStyle = '#ffffff';
-                  ctx.fillRect(0, 0, w, h);
-                  ctx.drawImage(img, 0, 0, w, h);
-
-                  var imgData = ctx.getImageData(0, 0, w, h);
-                  var d = imgData.data;
-                  var gray = new Float32Array(w * h);
-
-                  for (var i = 0; i < d.length; i += 4) {
-                    var a = d[i + 3] / 255;
-                    var r = d[i] * a + 255 * (1 - a);
-                    var g = d[i + 1] * a + 255 * (1 - a);
-                    var b = d[i + 2] * a + 255 * (1 - a);
-                    var lum = 0.299 * r + 0.587 * g + 0.114 * b;
-
-                    // Clean white background & lift dark tones for photocopy/laser readability
-                    if (lum >= 215 || a < 0.1) {
-                      gray[i / 4] = 255;
-                    } else {
-                      lum = Math.pow(lum / 255, 0.65) * 255;
-                      lum = (lum - 128) * 1.3 + 128;
-                      gray[i / 4] = Math.max(0, Math.min(255, lum));
-                    }
-                  }
-
-                  // Atkinson Dithering (75% error diffusion for crisp 1-bit thermal print)
-                  for (var y = 0; y < h; y++) {
-                    for (var x = 0; x < w; x++) {
-                      var idx = y * w + x;
-                      var oldVal = gray[idx];
-                      var newVal = oldVal > 128 ? 255 : 0;
-                      gray[idx] = newVal;
-                      var err = (oldVal - newVal) / 8;
-                      if (err === 0) continue;
-                      if (x + 1 < w) gray[idx + 1] += err;
-                      if (x + 2 < w) gray[idx + 2] += err;
-                      if (y + 1 < h) {
-                        if (x > 0) gray[idx + w - 1] += err;
-                        gray[idx + w] += err;
-                        if (x + 1 < w) gray[idx + w + 1] += err;
-                      }
-                      if (y + 2 < h) {
-                        gray[idx + 2 * w] += err;
-                      }
-                    }
-                  }
-
-                  for (var j = 0; j < gray.length; j++) {
-                    var v = gray[j] > 128 ? 255 : 0;
-                    var p = j * 4;
-                    d[p] = v;
-                    d[p + 1] = v;
-                    d[p + 2] = v;
-                    d[p + 3] = 255;
-                  }
-                  ctx.putImageData(imgData, 0, 0);
-                  var resultDataUrl = cvs.toDataURL('image/png');
-                  ditherCache[src] = resultDataUrl;
-                  img.src = resultDataUrl;
-                  resolve();
-                } catch (e) {
-                  img.classList.add('dither-fallback');
-                  resolve();
-                }
-              }
-              run();
-            });
-          }
-
-          function processAll() {
-            var imgs = Array.from(document.querySelectorAll('img'));
-            if (imgs.length === 0) {
+          window.onafterprint = function() {
+            window.close();
+          };
+          window.onload = function() {
+            setTimeout(function() {
               window.print();
-              setTimeout(function() { window.close(); }, 300);
-              return;
-            }
-            var timeout = new Promise(function(res) { setTimeout(res, 1200); });
-            Promise.race([Promise.all(imgs.map(processImage)), timeout]).then(function() {
-              requestAnimationFrame(function() {
-                setTimeout(function() {
-                  window.print();
-                  setTimeout(function() { window.close(); }, 500);
-                }, 50);
-              });
-            });
-          }
-
-          var started = false;
-          function runOnce() {
-            if (started) return;
-            started = true;
-            processAll();
-          }
-
-          if (document.readyState === 'complete') {
-            runOnce();
-          } else {
-            window.addEventListener('load', runOnce);
-          }
+            }, 150);
+          };
         </script>
       </body>
     </html>
