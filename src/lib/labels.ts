@@ -5,52 +5,65 @@ import { courierLabel, courierBrand } from "@/components/courier-brand";
 import { code128Svg } from "@/lib/barcode";
 
 export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" | "3x4") {
-  if (!orderIds.length) return;
+  if (!orderIds || !orderIds.length) return;
 
-  const [settings, { data: orders }, { data: items }, { data: shipments }] = await Promise.all([
+  // Open window synchronously on user click to prevent popup blockers and give instant feedback
+  const win = window.open("", "_blank");
+  if (win) {
+    win.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head><title>Loading Labels...</title></head>
+        <body style="margin:0;display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;color:#333;font-size:13px;background:#fff;">
+          <div style="text-align:center;">
+            <div style="font-weight:bold;margin-bottom:4px;">Preparing ${orderIds.length} Label${orderIds.length > 1 ? "s" : ""}...</div>
+            <div style="color:#777;font-size:11px;">Fast loading invoices...</div>
+          </div>
+        </body>
+      </html>
+    `);
+    win.document.close();
+  }
+
+  // Single unified database call: fetch orders with items, shipments, and reseller in 1 query
+  const [settings, { data: orders, error }] = await Promise.all([
     getGlobalSettings(),
-    supabase.from("orders").select("id,order_number,customer_name,customer_phone,address_line,area,total,advance_amount,paid_amount,reseller_id").in("id", orderIds),
-    supabase.from("order_items").select("order_id,product_name,product_image,quantity").in("order_id", orderIds),
-    supabase.from("shipments").select("order_id,provider,tracking_id,consignment_id").in("order_id", orderIds)
+    supabase
+      .from("orders")
+      .select(`
+        id,
+        order_number,
+        customer_name,
+        customer_phone,
+        address_line,
+        area,
+        total,
+        advance_amount,
+        paid_amount,
+        reseller_id,
+        order_items (product_name, product_image, quantity),
+        shipments (provider, tracking_id, consignment_id),
+        resellers!orders_reseller_id_fkey (id, business_name, reseller_settings (logo_url, store_name))
+      `)
+      .in("id", orderIds)
   ]);
 
-
-  if (!orders || orders.length === 0) return;
-
-  const resellerIds = [...new Set(orders.map((o) => o.reseller_id).filter((x): x is string => Boolean(x)))];
-  const { data: resellers } = await supabase
-    .from("resellers")
-    .select("id,business_name,reseller_settings(logo_url,store_name)")
-    .in("id", resellerIds);
-
-  const resellerMap = new Map();
-  resellers?.forEach(r => {
-    const s = Array.isArray(r.reseller_settings) ? r.reseller_settings[0] : r.reseller_settings;
-    resellerMap.set(r.id, {
-      name: s?.store_name || r.business_name,
-      logo: s?.logo_url
-    });
-  });
+  if (error || !orders || orders.length === 0) {
+    if (win) {
+      win.document.body.innerHTML = "<div style='color:red;padding:20px;font-family:sans-serif;text-align:center;'>No orders found or error loading orders.</div>";
+    }
+    return;
+  }
 
   const size = forceSize || (settings as any)?.label_size || "3x4";
   const siteName = settings?.site_name || "ResellHub";
-  
-  const itemsByOrder = new Map<string, any[]>();
-  items?.forEach(it => {
-    const arr = itemsByOrder.get(it.order_id) || [];
-    arr.push(it);
-    itemsByOrder.set(it.order_id, arr);
-  });
-
-  const shipmentsByOrder = new Map<string, any>();
-  shipments?.forEach(s => shipmentsByOrder.set(s.order_id, s));
 
   const width = size === "3x3" ? "3in" : "3in";
   const height = size === "3x3" ? "3in" : "4in";
 
-  const win = window.open("", "_blank");
   if (!win) return;
 
+  win.document.open();
   win.document.write(`
     <html>
       <head>
@@ -173,9 +186,15 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
       </head>
       <body>
         ${orders.map(o => {
-          const reseller = resellerMap.get(o.reseller_id);
-          const s = shipmentsByOrder.get(o.id);
-          const oItems = itemsByOrder.get(o.id) || [];
+          const r = Array.isArray(o.resellers) ? o.resellers[0] : o.resellers;
+          const sSettings = Array.isArray(r?.reseller_settings) ? r?.reseller_settings[0] : r?.reseller_settings;
+          const reseller = r ? {
+            name: sSettings?.store_name || r.business_name,
+            logo: sSettings?.logo_url || null
+          } : null;
+
+          const s = Array.isArray(o.shipments) ? o.shipments[0] : o.shipments;
+          const oItems = ((o as any).order_items || []) as Array<{ product_name: string; product_image?: string | null; quantity: number }>;
           const brand = courierBrand(s?.provider);
           const brandLogo = brand ? new URL(brand.wordmark, window.location.origin).href : "";
           const booking = s?.tracking_id || s?.consignment_id || "";
@@ -221,8 +240,16 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
           `;
         }).join("")}
         <script>
+          var ditherCache = {};
+
           function processImage(img) {
             return new Promise(function(resolve) {
+              var src = img.getAttribute('src');
+              if (!src) return resolve();
+              if (ditherCache[src]) {
+                img.src = ditherCache[src];
+                return resolve();
+              }
               function run() {
                 try {
                   if (!img.complete || img.naturalWidth === 0) {
@@ -230,7 +257,11 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
                     img.onerror = function() { resolve(); };
                     return;
                   }
-                  var maxDim = 160;
+                  if (ditherCache[src]) {
+                    img.src = ditherCache[src];
+                    return resolve();
+                  }
+                  var maxDim = 72;
                   var w = img.naturalWidth;
                   var h = img.naturalHeight;
                   if (!w || !h) return resolve();
@@ -269,7 +300,6 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
                     if (lum >= 215 || a < 0.1) {
                       gray[i / 4] = 255;
                     } else {
-                      // Gamma lift (~0.65) so dark products (e.g. mattress) don't turn pitch black
                       lum = Math.pow(lum / 255, 0.65) * 255;
                       lum = (lum - 128) * 1.3 + 128;
                       gray[i / 4] = Math.max(0, Math.min(255, lum));
@@ -307,7 +337,9 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
                     d[p + 3] = 255;
                   }
                   ctx.putImageData(imgData, 0, 0);
-                  img.src = cvs.toDataURL('image/png');
+                  var resultDataUrl = cvs.toDataURL('image/png');
+                  ditherCache[src] = resultDataUrl;
+                  img.src = resultDataUrl;
                   resolve();
                 } catch (e) {
                   img.classList.add('dither-fallback');
@@ -320,12 +352,19 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
 
           function processAll() {
             var imgs = Array.from(document.querySelectorAll('img'));
-            var timeout = new Promise(function(res) { setTimeout(res, 2000); });
+            if (imgs.length === 0) {
+              window.print();
+              setTimeout(function() { window.close(); }, 300);
+              return;
+            }
+            var timeout = new Promise(function(res) { setTimeout(res, 1200); });
             Promise.race([Promise.all(imgs.map(processImage)), timeout]).then(function() {
-              setTimeout(function() {
-                window.print();
-                setTimeout(function() { window.close(); }, 600);
-              }, 250);
+              requestAnimationFrame(function() {
+                setTimeout(function() {
+                  window.print();
+                  setTimeout(function() { window.close(); }, 500);
+                }, 50);
+              });
             });
           }
 
