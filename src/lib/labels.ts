@@ -29,9 +29,9 @@ async function toPhotocopyDataUrl(imageUrl?: string | null): Promise<string> {
 
     img.onload = () => {
       try {
-        const maxDim = 96;
-        let w = img.naturalWidth || 96;
-        let h = img.naturalHeight || 96;
+        const maxDim = 112;
+        let w = img.naturalWidth || 112;
+        let h = img.naturalHeight || 112;
         if (w > maxDim || h > maxDim) {
           if (w >= h) {
             h = Math.max(1, Math.round((h * maxDim) / w));
@@ -98,31 +98,29 @@ async function toPhotocopyDataUrl(imageUrl?: string | null): Promise<string> {
         // Cap minLum at 35 so low-contrast images get rich darks without crushing
         minLum = Math.min(minLum, 35);
 
-        // 3. Balanced tone mapping: natural contrast, zero white blowout, distinct details
+        // 3. Balanced tone mapping: clean solid blacks (NO noisy white dots), natural midtones, clean background
         const tone = new Float32Array(w * h);
         for (let i = 0; i < w * h; i++) {
           if (src[i] >= 250) {
             tone[i] = 255; // Clean pure white background
           } else {
-            // Unsharp mask: enhances borders, stitches, patterns, and text
-            const sharp = src[i] + (src[i] - blur[i]) * 0.75;
+            // Unsharp mask with coring: only sharpen strong contours/text, don't amplify noise in flat dark areas
+            const diff = src[i] - blur[i];
+            const edgeBoost = Math.abs(diff) > 4 ? diff * 0.65 : 0;
+            const sharp = src[i] + edgeBoost;
 
-            // Normalize between minLum and 250 (preserves light product details without blowing out to white)
+            // Normalize between minLum and 250
             let norm = (sharp - minLum) / (250 - minLum);
             if (norm < 0) norm = 0;
             if (norm > 1) norm = 1;
 
-            // Natural gamma (0.95): keeps midtones solid and clear
-            norm = Math.pow(norm, 0.95);
-
-            // Subtle contrast boost for distinct, clear edges ("isposto")
-            norm = (norm - 0.5) * 1.12 + 0.5;
-
-            // Prevent extreme crushing:
-            // - Keep 4% micro-dots in deepest blacks so thermal head doesn't burn into a solid block
-            // - Keep 2% subtle stipples in light highlights so products never disappear into white paper
-            if (norm < 0.04) norm = 0.04;
-            if (norm > 0.98) norm = 0.98;
+            // Clean shadow threshold: dark surfaces stay rich and solid black with ZERO noisy white dots
+            if (norm < 0.12) {
+              norm = 0;
+            } else {
+              norm = (norm - 0.12) / (1 - 0.12);
+              norm = Math.pow(norm, 1.05);
+            }
 
             tone[i] = norm * 255;
           }
