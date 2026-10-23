@@ -4,23 +4,13 @@ import { getGlobalSettings } from "@/lib/app-data";
 import { courierLabel, courierBrand } from "@/components/courier-brand";
 import { code128Svg } from "@/lib/barcode";
 
-// 8x8 Bayer Matrix for 64 continuous photographic grayscale levels on thermal printers
-const BAYER_8X8 = [
-   0, 32,  8, 40,  2, 34, 10, 42,
-  48, 16, 56, 24, 50, 18, 58, 26,
-  12, 44,  4, 36, 14, 46,  6, 38,
-  60, 28, 52, 20, 62, 30, 54, 22,
-   3, 35, 11, 43,  1, 33,  9, 41,
-  51, 19, 59, 27, 49, 17, 57, 25,
-  15, 47,  7, 39, 13, 45,  5, 37,
-  63, 31, 55, 23, 61, 29, 53, 21
-];
-
 /**
- * Converts any product image or logo into a realistic 64-level photographic halftone
+ * Converts any product image or logo into a high-contrast, crystal-clear 1-bit photograph
  * optimized for thermal label printers.
- * Eliminates transparent black backgrounds, applies dot-gain compensation so dark shadows
- * never fuse into black blobs, and preserves authentic 3D shading, depth, and textures without looking like a cartoon.
+ * - Auto-levels normalize contrast so products pop with high clarity.
+ * - Edge sharpening ensures contours, seams, and shapes are immediately recognizable.
+ * - Atkinson error diffusion renders natural photographic shading without checkerboard noise.
+ * - Pure white background ensures no dark transparency or background speckles.
  */
 async function toPhotocopyDataUrl(imageUrl?: string | null): Promise<string> {
   if (!imageUrl) return "";
@@ -39,9 +29,9 @@ async function toPhotocopyDataUrl(imageUrl?: string | null): Promise<string> {
 
     img.onload = () => {
       try {
-        const maxDim = 110;
-        let w = img.naturalWidth || 110;
-        let h = img.naturalHeight || 110;
+        const maxDim = 96;
+        let w = img.naturalWidth || 96;
+        let h = img.naturalHeight || 96;
         if (w > maxDim || h > maxDim) {
           if (w >= h) {
             h = Math.max(1, Math.round((h * maxDim) / w));
@@ -74,7 +64,7 @@ async function toPhotocopyDataUrl(imageUrl?: string | null): Promise<string> {
           src[i / 4] = 0.299 * r + 0.587 * g + 0.114 * b;
         }
 
-        // 1. Box blur for subtle photographic detail enhancement (unsharp mask)
+        // 1. Unsharp mask: Box blur for edge & texture contrast enhancement
         const blur = new Float32Array(w * h);
         const radius = 1;
         for (let y = 0; y < h; y++) {
@@ -93,45 +83,63 @@ async function toPhotocopyDataUrl(imageUrl?: string | null): Promise<string> {
           }
         }
 
-        // 2. Realistic 64-level Photographic Halftone with Dot-Gain Compensation
+        // 2. Auto-Levels: Calculate min and max luminance of actual product content
+        let minLum = 255, maxLum = 0;
+        for (let i = 0; i < w * h; i++) {
+          if (src[i] < 220) {
+            if (src[i] < minLum) minLum = src[i];
+            if (src[i] > maxLum) maxLum = src[i];
+          }
+        }
+        if (minLum >= maxLum) { minLum = 0; maxLum = 255; }
+
+        // 3. Contrast stretch & gamma lifting for rich, legible photographic tone
+        const tone = new Float32Array(w * h);
+        for (let i = 0; i < w * h; i++) {
+          if (src[i] >= 220) {
+            tone[i] = 255; // Crisp pure white background
+          } else {
+            // Enhanced sharpness
+            const sharp = src[i] + (src[i] - blur[i]) * 0.65;
+            let norm = (sharp - minLum) / (maxLum - minLum);
+            if (norm < 0) norm = 0;
+            if (norm > 1) norm = 1;
+            // Gamma curve: lifts shadows slightly so dark fabrics don't turn into a black blob
+            norm = Math.pow(norm, 0.72);
+            norm = 0.08 + norm * 0.92;
+            tone[i] = norm * 255;
+          }
+        }
+
+        // 4. Atkinson Dithering: crisp contours, sharp text, and natural photographic gradients
         for (let y = 0; y < h; y++) {
           for (let x = 0; x < w; x++) {
             const idx = y * w + x;
-            const originalVal = src[idx];
-            const localAvg = blur[idx];
-
-            // Clean white background
-            if (originalVal >= 222) {
-              const p = idx * 4;
-              d[p] = 255;
-              d[p + 1] = 255;
-              d[p + 2] = 255;
-              d[p + 3] = 255;
-              continue;
+            const oldVal = tone[idx];
+            const newVal = oldVal > 128 ? 255 : 0;
+            tone[idx] = newVal;
+            const err = (oldVal - newVal) / 8;
+            if (err === 0) continue;
+            if (x + 1 < w) tone[idx + 1] += err;
+            if (x + 2 < w) tone[idx + 2] += err;
+            if (y + 1 < h) {
+              if (x > 0) tone[idx + w - 1] += err;
+              tone[idx + w] += err;
+              if (x + 1 < w) tone[idx + w + 1] += err;
             }
-
-            // Subtle unsharp mask to keep product texture sharp (authentic photo, not cartoon)
-            let sharpVal = originalVal + (originalVal - localAvg) * 0.45;
-            if (sharpVal < 0) sharpVal = 0;
-            if (sharpVal > 255) sharpVal = 255;
-
-            // Thermal Dot-Gain Compensation:
-            // Lift midtones and keep 14% breathing floor so dark shadows never fuse into black blobs
-            let norm = sharpVal / 255;
-            norm = Math.pow(norm, 0.68);
-            norm = 0.14 + norm * 0.86;
-            const tone = norm * 255;
-
-            // 8x8 Bayer photographic halftone matrix (64 gray levels)
-            const threshold = (BAYER_8X8[(y % 8) * 8 + (x % 8)] + 0.5) * (255 / 64);
-            const outVal = tone > threshold ? 255 : 0;
-
-            const p = idx * 4;
-            d[p] = outVal;
-            d[p + 1] = outVal;
-            d[p + 2] = outVal;
-            d[p + 3] = 255;
+            if (y + 2 < h) {
+              tone[idx + 2 * w] += err;
+            }
           }
+        }
+
+        for (let j = 0; j < tone.length; j++) {
+          const v = tone[j] > 128 ? 255 : 0;
+          const p = j * 4;
+          d[p] = v;
+          d[p + 1] = v;
+          d[p + 2] = v;
+          d[p + 3] = 255;
         }
 
         ctx.putImageData(imgData, 0, 0);
