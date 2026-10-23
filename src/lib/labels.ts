@@ -95,20 +95,18 @@ async function toPhotocopyDataUrl(imageUrl?: string | null): Promise<string> {
             minLum = src[i];
           }
         }
-        // Cap minLum at 45 so camera images get deep rich darks
-        minLum = Math.min(minLum, 45);
+        // Cap minLum at 35 so low-contrast images get rich darks without crushing
+        minLum = Math.min(minLum, 35);
 
         // 3. Balanced tone mapping: clean solid blacks (NO noisy white dots), natural midtones, clean background
         const tone = new Float32Array(w * h);
-        const isPureBlack = new Uint8Array(w * h);
-
         for (let i = 0; i < w * h; i++) {
           if (src[i] >= 250) {
             tone[i] = 255; // Clean pure white background
           } else {
             // Unsharp mask with coring: only sharpen strong contours/text, don't amplify noise in flat dark areas
             const diff = src[i] - blur[i];
-            const edgeBoost = Math.abs(diff) > 4 ? diff * 0.7 : 0;
+            const edgeBoost = Math.abs(diff) > 4 ? diff * 0.65 : 0;
             const sharp = src[i] + edgeBoost;
 
             // Normalize between minLum and 250
@@ -117,12 +115,11 @@ async function toPhotocopyDataUrl(imageUrl?: string | null): Promise<string> {
             if (norm > 1) norm = 1;
 
             // Clean shadow threshold: dark surfaces stay rich and solid black with ZERO noisy white dots
-            if (norm < 0.25) {
+            if (norm < 0.12) {
               norm = 0;
-              isPureBlack[i] = 1;
             } else {
-              norm = (norm - 0.25) / (1 - 0.25);
-              norm = Math.pow(norm, 1.25);
+              norm = (norm - 0.12) / (1 - 0.12);
+              norm = Math.pow(norm, 1.05);
             }
 
             tone[i] = norm * 255;
@@ -139,19 +136,9 @@ async function toPhotocopyDataUrl(imageUrl?: string | null): Promise<string> {
           for (let x = startX; x !== endX; x += stepX) {
             const idx = y * w + x;
             const oldVal = tone[idx];
-            let newVal = 0;
-            let err = 0;
-
-            if (isPureBlack[idx]) {
-              // Guaranteed 100% clean solid black! Zero white dots!
-              newVal = 0;
-              err = 0;
-            } else {
-              newVal = oldVal > 128 ? 255 : 0;
-              err = oldVal - newVal;
-            }
-
+            const newVal = oldVal > 128 ? 255 : 0;
             tone[idx] = newVal;
+            const err = oldVal - newVal;
             if (err === 0) continue;
 
             if (ltr) {
