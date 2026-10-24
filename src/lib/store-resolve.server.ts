@@ -72,8 +72,8 @@ export async function resolveStoreCodeServerImpl(rawCode: string): Promise<strin
         if (r.code.toLowerCase() === targetSlug) return true;
         const slug = getStoreSlug(r.business_name, r.code).toLowerCase();
         if (slug === targetSlug) return true;
-        const nameClean = (r.business_name ?? "").toLowerCase().replace(/[^a-z0-9]+/g, "");
-        const targetClean = targetSlug.replace(/[^a-z0-9]+/g, "");
+        const nameClean = (r.business_name ?? "").toLowerCase().normalize("NFC").replace(/[^\p{L}\p{N}\p{M}]+/gu, "");
+        const targetClean = targetSlug.normalize("NFC").replace(/[^\p{L}\p{N}\p{M}]+/gu, "");
         return nameClean && nameClean === targetClean;
       });
 
@@ -90,8 +90,8 @@ export async function resolveStoreCodeServerImpl(rawCode: string): Promise<strin
         if (!s.store_name) return false;
         const slug = getStoreSlug(s.store_name, null).toLowerCase();
         if (slug === targetSlug) return true;
-        const nameClean = s.store_name.toLowerCase().replace(/[^a-z0-9]+/g, "");
-        const targetClean = targetSlug.replace(/[^a-z0-9]+/g, "");
+        const nameClean = s.store_name.toLowerCase().normalize("NFC").replace(/[^\p{L}\p{N}\p{M}]+/gu, "");
+        const targetClean = targetSlug.normalize("NFC").replace(/[^\p{L}\p{N}\p{M}]+/gu, "");
         return nameClean && nameClean === targetClean;
       });
 
