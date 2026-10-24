@@ -239,6 +239,13 @@
       "when": 1792865360664,
       "tag": "0033_capi_resolve_once",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1792865931308,
+      "tag": "0034_resolve_store_code_unicode",
+      "breakpoints": true
     }
   ]
 }

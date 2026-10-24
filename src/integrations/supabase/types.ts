@@ -3744,6 +3744,7 @@ export type Database = {
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
       store_bootstrap: { Args: { _code: string }; Returns: Json }
+      store_name_key: { Args: { _s: string }; Returns: string }
       store_payment_methods: { Args: { _rid: string }; Returns: Json }
       store_product_description: {
         Args: { _product_id: string }
