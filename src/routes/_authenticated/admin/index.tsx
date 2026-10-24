@@ -8,7 +8,6 @@ import { ORDER_TABS } from "@/lib/courier-status";
 import { Package, Users, ShoppingCart, Tag, TrendingUp, Wallet, Loader2, RefreshCw, Award, Clock, Plus } from "lucide-react";
 import { NewOrderModal } from "@/components/NewOrderModal";
 import { ConfirmedProcurementAlert } from "@/components/procurement/ConfirmedProcurementAlert";
-import { ConfirmedProcurementReport } from "@/components/procurement/ConfirmedProcurementReport";
 import {
   ResponsiveContainer,
   AreaChart,
@@ -329,10 +328,6 @@ function AdminDashboard() {
         </div>
       </section>
 
-      {/* Confirmed Orders Procurement & Picking Report */}
-      <section className="mb-8">
-        <ConfirmedProcurementReport isAdmin={true} />
-      </section>
 
 
 
