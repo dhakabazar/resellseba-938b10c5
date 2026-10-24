@@ -82,7 +82,7 @@ export async function resolveStoreCodeServerImpl(rawCode: string): Promise<strin
 
     // 4. Scan store_settings store_name
     const { data: allStores } = await db
-      .from("store_settings")
+      .from("reseller_settings")
       .select("reseller_id, store_name");
 
     if (allStores && allStores.length > 0) {
