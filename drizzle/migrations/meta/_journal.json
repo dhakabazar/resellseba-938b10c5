@@ -190,6 +190,13 @@
       "when": 1791897804493,
       "tag": "0026_exchange_calc_and_lock",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1792842856271,
+      "tag": "0027_fix_create_public_order_v_pc",
+      "breakpoints": true
     }
   ]
 }
