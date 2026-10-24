@@ -12,6 +12,7 @@ const Body = z.object({
     "trackPurchaseServer",
     "getStoreMarketingPixelsServer",
     "getPublicOrderDetailsServer",
+    "resolveStoreCodeServer",
   ]),
   data: z.record(z.string(), z.unknown()),
 });

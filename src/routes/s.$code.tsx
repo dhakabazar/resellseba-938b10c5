@@ -44,7 +44,7 @@ function StoreLayout() {
   }, [code, pathname, previewTheme, previewPalette, nav]);
 
   /** Panel previews (?theme / ?palette) are not counted as customer visits. */
-  useStoreVisitLog(code, pathname.replace(`/s/${code}`, "") || "/", Boolean(previewTheme || previewPalette));
+  useStoreVisitLog(store?.resellerCode || code, pathname.replace(`/s/${code}`, "") || "/", Boolean(previewTheme || previewPalette));
 
   if (state === "loading")
     return (

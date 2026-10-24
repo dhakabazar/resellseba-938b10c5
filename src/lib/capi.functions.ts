@@ -26,6 +26,10 @@ export const getPublicOrderDetailsServer = createServerFn({ method: "GET" })
   .inputValidator((d) => z.object({ orderNumber: z.string().min(1) }).parse(d))
   .handler(async ({ data }) => runCapi("getPublicOrderDetailsServer", data) as ReturnType<typeof import("./capi.server").getPublicOrderDetailsServerImpl>);
 
+export const resolveStoreCodeServer = createServerFn({ method: "POST" })
+  .inputValidator((d) => z.object({ code: z.string().min(1) }).parse(d))
+  .handler(async ({ data }) => runCapi("resolveStoreCodeServer", data) as Promise<string | null>);
+
 async function runCapi(name: string, data: any): Promise<any> {
   const { runCapiLocal } = await import("./capi.server");
   try { return await runCapiLocal(name, data); } catch (e) { console.error("[capi]", e); return null; }

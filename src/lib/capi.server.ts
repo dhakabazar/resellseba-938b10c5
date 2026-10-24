@@ -730,6 +730,10 @@ const CAPI_IMPLS = {
   trackPurchaseServer: trackPurchaseServerImpl,
   getStoreMarketingPixelsServer: getStoreMarketingPixelsServerImpl,
   getPublicOrderDetailsServer: getPublicOrderDetailsServerImpl,
+  resolveStoreCodeServer: async (d: any) => {
+    const { resolveStoreCodeServerImpl } = await import("./store-resolve.server");
+    return resolveStoreCodeServerImpl(d.code);
+  },
 };
 
 export async function runCapiLocal(name: string, data: any): Promise<any> {

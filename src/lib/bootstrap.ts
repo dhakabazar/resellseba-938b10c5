@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { mergeDeliverySettings, setGlobalDelivery } from "@/lib/delivery";
 import { applyPlatformBranding } from "@/lib/platform-branding";
 import { primeGlobalSettings, primeMyReseller } from "@/lib/app-data";
+import { resolveStoreCodeServer } from "@/lib/capi.functions";
 
 const cache = new Map<string, Promise<unknown>>();
 /** When a fresh load was started moments ago, a second mount reuses it instead of refetching. */
@@ -135,7 +136,17 @@ export function getStoreBootstrap(code: string, force = false) {
   return once(
     `store:${code}`,
     async () => {
-      const data = await rpc<StoreBootstrap>("store_bootstrap", { _code: code });
+      let data = await rpc<StoreBootstrap>("store_bootstrap", { _code: code });
+      if (!data?.store) {
+        try {
+          const canonical = await resolveStoreCodeServer({ data: { code } });
+          if (canonical && canonical.toLowerCase() !== code.toLowerCase()) {
+            data = await rpc<StoreBootstrap>("store_bootstrap", { _code: canonical });
+          }
+        } catch (e) {
+          console.warn("[bootstrap] slug resolution fallback:", e);
+        }
+      }
       // storefront pages price with the platform delivery rule — seed it here so
       // no page has to fetch global_settings separately.
       if (data) {

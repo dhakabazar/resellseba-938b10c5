@@ -206,13 +206,15 @@ export function useStoreLoader(code: string, themeOverride?: string | null, pale
       const categories = (boot?.categories ?? []) as StoreCategory[];
       const menuRows = (boot?.menu ?? []) as never;
       
+      const canonicalCode = (r as any).reseller_code || (r as any).code || code;
+
       // Inject tracking from bootstrap rows first
       if (first && boot?.pixels) {
         injectTrackingFromRows(boot.pixels as never);
       }
 
       // Also ensure live pixels are loaded from server (handles custom domain & instant cache busting)
-      if (first) fetchLivePixels({ data: { code } })
+      if (first) fetchLivePixels({ data: { code: canonicalCode } })
         .then((live) => {
           if (!alive || !live) return;
           if (live.fb_pixel || live.tiktok_pixel || live.ga4_id) {
@@ -226,7 +228,7 @@ export function useStoreLoader(code: string, themeOverride?: string | null, pale
       const cookies = getTrackingCookies();
       if (first) fetchPageViewServer({
         data: {
-          code,
+          code: canonicalCode,
           eventId: pageViewEventId,
           url: typeof window !== "undefined" ? window.location.href : undefined,
           origin: typeof window !== "undefined" ? window.location.origin : undefined,
@@ -245,8 +247,6 @@ export function useStoreLoader(code: string, themeOverride?: string | null, pale
       const palette = getPalette(theme, paletteOverride || savedPalette);
 
       if (!alive) return;
-
-      const canonicalCode = (r as any).reseller_code || (r as any).code || code;
 
       setData({
         code,
