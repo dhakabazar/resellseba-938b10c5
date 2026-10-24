@@ -1,0 +1,2 @@
+ALTER TABLE public.order_notes ADD COLUMN IF NOT EXISTS note_type text NOT NULL DEFAULT 'process';
+COMMENT ON COLUMN public.order_notes.note_type IS 'process = internal process note, invoice = printed on invoice/label';

@@ -1074,6 +1074,7 @@ export type Database = {
           body: string
           created_at: string
           id: string
+          note_type: string
           order_id: string
           updated_at: string
         }
@@ -1084,6 +1085,7 @@ export type Database = {
           body: string
           created_at?: string
           id?: string
+          note_type?: string
           order_id: string
           updated_at?: string
         }
@@ -1094,6 +1096,7 @@ export type Database = {
           body?: string
           created_at?: string
           id?: string
+          note_type?: string
           order_id?: string
           updated_at?: string
         }
