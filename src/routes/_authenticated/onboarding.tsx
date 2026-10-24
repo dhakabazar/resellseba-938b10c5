@@ -26,6 +26,7 @@ function Onboarding() {
   const nav = useNavigate();
   const [businessName, setBusinessName] = useState("");
   const [code, setCode] = useState("");
+  const [codeEdited, setCodeEdited] = useState(false);
   const [phone, setPhone] = useState("");
   const [payoutMethod, setPayoutMethod] = useState<"bkash" | "nagad" | "rocket" | "bank">("bkash");
   const [payoutAccountName, setPayoutAccountName] = useState("");
@@ -274,7 +275,19 @@ function ContactButton({ variant }: { variant: "whatsapp" | "email" }) {
                 required
                 className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
                 value={businessName}
-                onChange={(e) => setBusinessName(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setBusinessName(val);
+                  if (!codeEdited) {
+                    setCode(
+                      val
+                        .toLowerCase()
+                        .trim()
+                        .replace(/[^a-z0-9]+/g, "-")
+                        .replace(/^-+|-+$/g, ""),
+                    );
+                  }
+                }}
                 placeholder="My Fashion Store"
               />
             </div>
@@ -288,7 +301,10 @@ function ContactButton({ variant }: { variant: "whatsapp" | "email" }) {
                   required
                   className="flex-1 bg-transparent px-3 py-2 text-sm outline-none"
                   value={code}
-                  onChange={(e) => setCode(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-"))}
+                  onChange={(e) => {
+                    setCodeEdited(true);
+                    setCode(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-"));
+                  }}
                   placeholder="my-store"
                   pattern="[a-z0-9-]+"
                 />

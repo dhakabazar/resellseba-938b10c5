@@ -1,9 +1,11 @@
+import { useEffect, useState } from "react";
 import { ResellerAvatar } from "@/components/reseller-avatar";
 import { Copy, ExternalLink, Phone, Mail, MapPin, IdCard, Lock, ShieldCheck, AlertTriangle, ArrowUpRight } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { resellerStatusClass, resellerStatusLabel } from "@/lib/reseller-status";
 import { VerifyBadges } from "@/components/verify-badges";
+import { buildResellerStoreAbsoluteUrl, getResellerStoreUrl } from "@/lib/app-data";
 
 
 export type ResellerProfileData = {
@@ -147,7 +149,26 @@ export function ResellerProfile({
   const payoutsLink = (status?: string) =>
     admin ? { to: "/admin/payouts", search: { reseller: r.id, ...(status ? { status } : {}) } } : {};
   const earningLink = () => (admin ? { to: "/admin/transactions", search: { reseller: r.id } } : {});
-  const storeUrl = typeof window !== "undefined" ? `${window.location.origin}/s/${r.code}` : `/s/${r.code}`;
+  const [storeUrl, setStoreUrl] = useState<string>(() =>
+    buildResellerStoreAbsoluteUrl(r.business_name, r.code),
+  );
+
+  useEffect(() => {
+    let alive = true;
+    void getResellerStoreUrl(r.id, r.code, r.business_name).then((url) => {
+      if (!alive) return;
+      const full = url.startsWith("http")
+        ? url
+        : typeof window !== "undefined"
+        ? `${window.location.origin}${url}`
+        : url;
+      setStoreUrl(full);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [r.id, r.code, r.business_name]);
+
   /** A deposit only exists when it is switched on AND an amount is set. */
   const depositAmount = Number(r.deposit_required_amount ?? 0);
   const depositActive = Boolean(r.deposit_required) && depositAmount > 0;
@@ -187,7 +208,7 @@ export function ResellerProfile({
                 </IconBtn>
               </div>
               <a
-                href={`/s/${r.code}`}
+                href={storeUrl}
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition hover:bg-muted"

@@ -145,9 +145,57 @@ export function getMyReseller(userId?: string | null, force = false): Promise<My
   return p;
 }
 
-/** Resolves the live store URL (custom domain if connected/verified, otherwise /s/code). */
-export async function getResellerStoreUrl(resellerId: string, resellerCode: string): Promise<string> {
-  let activeUrl = `/s/${resellerCode}`;
+/**
+ * Generates a clean URL slug for a reseller's store from their business name / name.
+ * If no business name is available, falls back to the reseller code.
+ */
+export function getStoreSlug(businessName?: string | null, fallbackCode?: string | null): string {
+  const raw = (businessName ?? "").trim();
+  if (!raw) return (fallbackCode ?? "").trim();
+
+  // Convert spaces and special characters into hyphens, lowercase
+  // Keeps alphanumeric, Unicode letters and vowel marks (e.g. Bengali), converts spaces/symbols to hyphen
+  const slug = raw
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^\p{L}\p{M}\p{N}-]+/gu, "")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+  return slug || (fallbackCode ?? "").trim();
+}
+
+/** Builds the relative storefront path, e.g. /s/dhaka-bazar */
+export function buildResellerStorePath(businessName?: string | null, fallbackCode?: string | null): string {
+  const slug = getStoreSlug(businessName, fallbackCode);
+  return slug ? `/s/${slug}` : "/s/";
+}
+
+/** Builds the full absolute storefront URL (or custom domain if provided) */
+export function buildResellerStoreAbsoluteUrl(
+  businessName?: string | null,
+  fallbackCode?: string | null,
+  customHost?: string | null,
+): string {
+  if (customHost) {
+    const cleanHost = customHost.replace(/^https?:\/\//, "").trim();
+    if (cleanHost) return `https://${cleanHost}`;
+  }
+  const path = buildResellerStorePath(businessName, fallbackCode);
+  if (typeof window !== "undefined") {
+    return `${window.location.origin}${path}`;
+  }
+  return path;
+}
+
+/** Resolves the live store URL (custom domain if connected/verified, otherwise /s/(business-name)). */
+export async function getResellerStoreUrl(
+  resellerId: string,
+  resellerCode: string,
+  businessName?: string | null,
+): Promise<string> {
+  const slug = getStoreSlug(businessName, resellerCode);
+  let activeUrl = `/s/${slug}`;
 
   try {
     const { data: dRows } = await supabase

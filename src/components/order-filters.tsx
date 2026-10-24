@@ -105,7 +105,7 @@ export function resolveDateRange(f: OrderFilterState): { fromTs: number | null; 
     case "this_month":
       return {
         fromTs: new Date(now.getFullYear(), now.getMonth(), 1).getTime(),
-        toTs: endOfDay(now),
+        toTs: new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999).getTime(),
       };
     case "last_month":
       return {
@@ -229,13 +229,16 @@ export function filterByCourier<T extends { id: string }>(
 }
 
 /** How many filters (excluding search & per-page) differ from the defaults. */
-export function activeFilterCount(f: OrderFilterState): number {
+export function activeFilterCount(
+  f: OrderFilterState,
+  defaults: OrderFilterState = DEFAULT_ORDER_FILTERS,
+): number {
   let n = 0;
-  if (f.reseller) n += 1;
-  if (f.area) n += 1;
-  if (f.courier) n += 1;
-  if (f.datePreset !== "lifetime") n += 1;
-  if (f.sort !== "newest") n += 1;
+  if (f.reseller !== defaults.reseller) n += 1;
+  if (f.area !== defaults.area) n += 1;
+  if (f.courier !== defaults.courier) n += 1;
+  if (f.datePreset !== defaults.datePreset) n += 1;
+  if (f.sort !== defaults.sort) n += 1;
   return n;
 }
 
@@ -281,6 +284,7 @@ export function OrderFilterBar({
   hideSearch = false,
   variant = "default",
   trailing,
+  defaultFilters,
 }: {
   value: OrderFilterState;
   onChange: (next: OrderFilterState) => void;
@@ -297,11 +301,13 @@ export function OrderFilterBar({
   variant?: "default" | "report";
   /** Extra node rendered as the last filter cell (after Sort) — e.g. the mobile status dropdown. */
   trailing?: React.ReactNode;
+  defaultFilters?: OrderFilterState;
 }) {
+  const baseDefaults = defaultFilters ?? DEFAULT_ORDER_FILTERS;
   const set = (patch: Partial<OrderFilterState>) => onChange({ ...value, ...patch });
   const dirty = useMemo(
-    () => activeFilterCount(value) > 0 || (!hideSearch && value.q !== ""),
-    [value, hideSearch],
+    () => activeFilterCount(value, baseDefaults) > 0 || (!hideSearch && value.q !== baseDefaults.q),
+    [value, hideSearch, baseDefaults],
   );
 
   const isReport = variant === "report";
@@ -457,7 +463,7 @@ export function OrderFilterBar({
             type="button"
             onClick={() =>
               onChange({
-                ...DEFAULT_ORDER_FILTERS,
+                ...baseDefaults,
                 perPage: value.perPage,
                 q: hideSearch ? value.q : "",
               })

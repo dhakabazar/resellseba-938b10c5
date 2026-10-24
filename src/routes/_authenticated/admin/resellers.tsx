@@ -91,6 +91,7 @@ import {
   type ResellerStatus,
 } from "@/lib/reseller-status";
 import { matchesResellerSearch } from "@/lib/phone-search";
+import { buildResellerStorePath, getResellerStoreUrl } from "@/lib/app-data";
 
 type Status = ResellerStatus;
 
@@ -988,9 +989,12 @@ function ResellersPage() {
     await load();
   }
 
-  function copyStoreLink(r: Reseller) {
-    const url = `${window.location.origin}/s/${r.code}`;
-    navigator.clipboard.writeText(url);
+  async function copyStoreLink(r: Reseller) {
+    const url = await getResellerStoreUrl(r.id, r.code, r.business_name);
+    const fullUrl = url.startsWith("http")
+      ? url
+      : `${window.location.origin}${url}`;
+    navigator.clipboard.writeText(fullUrl);
     toast.success("Store link copied");
   }
 
@@ -1442,7 +1446,7 @@ function ResellersPage() {
                         <Copy className="mr-2 h-4 w-4" /> Copy store link
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
-                        <a href={`/s/${r.code}`} target="_blank" rel="noreferrer">
+                        <a href={buildResellerStorePath(r.business_name, r.code)} target="_blank" rel="noreferrer">
                           <ExternalLink className="mr-2 h-4 w-4" /> Visit storefront
                         </a>
                       </DropdownMenuItem>

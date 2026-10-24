@@ -18,7 +18,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { getMyReseller, getResellerStoreUrl } from "@/lib/app-data";
+import { buildResellerStorePath, getMyReseller, getResellerStoreUrl } from "@/lib/app-data";
 import { useAuth } from "@/lib/use-auth";
 import { PageHeader } from "@/components/ui-kit";
 import { ImageUploader, type UploadedImage } from "@/components/ImageUploader";
@@ -99,7 +99,7 @@ function MenusPage() {
       if (!r) return setLoading(false);
       setRid(r.id);
       setCode(r.code);
-      void getResellerStoreUrl(r.id, r.code).then((url) => {
+      void getResellerStoreUrl(r.id, r.code, r.business_name).then((url) => {
         if (alive) setStoreUrl(url);
       });
 
@@ -233,7 +233,7 @@ function MenusPage() {
           <div className="flex items-center gap-2">
             {(storeUrl || code) && (
               <a
-                href={storeUrl || `/s/${code}`}
+                href={storeUrl || buildResellerStorePath(null, code)}
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted"

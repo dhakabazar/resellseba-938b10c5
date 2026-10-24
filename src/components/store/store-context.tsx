@@ -75,6 +75,7 @@ export type StoreCategory = { id: string; name: string; slug: string; image_url:
 
 export type StoreData = {
   code: string;
+  resellerCode?: string;
   resellerId: string;
   name: string;
   settings: StoreSettings | null;
@@ -245,8 +246,11 @@ export function useStoreLoader(code: string, themeOverride?: string | null, pale
 
       if (!alive) return;
 
+      const canonicalCode = (r as any).reseller_code || (r as any).code || code;
+
       setData({
         code,
+        resellerCode: canonicalCode,
         resellerId: rid,
         name: storeName,
         settings: s,

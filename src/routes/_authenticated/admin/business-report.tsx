@@ -112,6 +112,11 @@ type AgentRow = {
   netAdminProfit: number;
 };
 
+const DEFAULT_REPORT_FILTERS: OrderFilterState = {
+  ...DEFAULT_ORDER_FILTERS,
+  datePreset: "this_month",
+};
+
 const th = "px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground";
 
 function BusinessReportPage() {
@@ -125,7 +130,7 @@ function BusinessReportPage() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
 
-  const [filters, setFilters] = useState<OrderFilterState>(DEFAULT_ORDER_FILTERS);
+  const [filters, setFilters] = useState<OrderFilterState>(DEFAULT_REPORT_FILTERS);
   const [tab, setTab] = useState<Tab>("products");
   const [page, setPage] = useState(1);
 
@@ -139,27 +144,21 @@ function BusinessReportPage() {
     else setLoading(true);
 
     try {
-      // Use fetchAllSafe to eliminate the 1000-row limit on PostgREST API
-      const [oData, itData, pData, sData, rData, aData, eData] = await Promise.all([
+      // Embed order_items and shipments directly inside orders query and fetch
+      // metadata (products, resellers, agents, expenses) in parallel.
+      // This loads all data in 1-2 rapid network rounds without 1000-row limit.
+      const [oData, pData, rData, aData, eData] = await Promise.all([
         fetchAllSafe<BizOrder>(() =>
           supabase
             .from("orders")
             .select(
-              "id,order_number,reseller_id,status,created_at,customer_name,customer_phone,address_line,area,subtotal,shipping_cost,total,sa_cost_total,reseller_profit,received_amount,packaging_total,delivery_cost,advance_amount,advance_by,is_exchange,exchange_admin_share,exchange_admin_buy,rider_status,resellers(business_name,code),shipments(id,order_id,provider,cost,tracking_id,consignment_id,status)",
+              "id,order_number,reseller_id,status,created_at,customer_name,customer_phone,address_line,area,subtotal,shipping_cost,total,sa_cost_total,reseller_profit,received_amount,packaging_total,delivery_cost,advance_amount,advance_by,is_exchange,exchange_admin_share,exchange_admin_buy,rider_status,resellers(business_name,code),shipments(id,order_id,provider,cost,tracking_id,consignment_id,status),order_items(id,order_id,product_id,product_name,quantity,returned_qty,sa_price,line_total,profit,buying_price,packaging_cost)",
             )
             .order("created_at", { ascending: false })
-        ),
-        fetchAllSafe<BizItem>(() =>
-          supabase
-            .from("order_items")
-            .select("id,order_id,product_id,product_name,quantity,returned_qty,sa_price,line_total,profit,buying_price,packaging_cost")
             .order("id")
         ),
         fetchAllSafe<BizProduct>(() =>
           supabase.from("products").select("id,name,product_code,buying_price,packaging_cost,og_image_url").order("id")
-        ),
-        fetchAllSafe<{ order_id: string; provider: string; cost: number | null }>(() =>
-          supabase.from("shipments").select("id,order_id,provider,cost,tracking_id,consignment_id,status").order("id")
         ),
         fetchAllSafe<ResellerLite>(() =>
           supabase.from("resellers").select("id,business_name,code,agent_id,avatar_url,status").order("id")
@@ -174,6 +173,21 @@ function BusinessReportPage() {
           supabase.from("expenses").select("*").order("spent_on", { ascending: false }).order("id")
         ),
       ]);
+
+      const itData: BizItem[] = [];
+      const sData: { id?: string; order_id: string; provider: string; cost: number | null; tracking_id?: string | null; consignment_id?: string | null; status?: string | null }[] = [];
+      for (const o of oData) {
+        if (Array.isArray((o as any).order_items)) {
+          for (const it of (o as any).order_items) {
+            itData.push({ ...it, order_id: it.order_id || o.id });
+          }
+        }
+        if (Array.isArray((o as any).shipments)) {
+          for (const s of (o as any).shipments) {
+            sData.push({ ...s, order_id: s.order_id || o.id });
+          }
+        }
+      }
 
       setOrders(oData);
       setItems(itData);
@@ -570,6 +584,7 @@ function BusinessReportPage() {
         shown={scoped.length}
         showPerPage
         variant="report"
+        defaultFilters={DEFAULT_REPORT_FILTERS}
       />
 
       {/* Executive KPI Summary Cards */}

@@ -40,7 +40,7 @@ export function CheckoutPageContent({
 }) {
   const AREAS = useAreas();
   const store = useStore();
-  const code = propCode || store.code;
+  const code = propCode || store.resellerCode || store.code;
   const nav = useNavigate();
   const poripati = store.theme.id === "poripati";
   const [recVisible, setRecVisible] = useState(16);

@@ -36,7 +36,7 @@ import { ImpersonationBanner } from "@/components/impersonation-banner";
 import { useAuth } from "@/lib/use-auth";
 import { useVerification } from "@/lib/use-verification";
 import { useBrandingTheme } from "@/lib/branding";
-import { getGlobalSettings, getMyReseller, getResellerStoreUrl } from "@/lib/app-data";
+import { buildResellerStorePath, getGlobalSettings, getMyReseller, getResellerStoreUrl } from "@/lib/app-data";
 import { getPanelBootstrapPayload } from "@/lib/panel-bootstrap";
 import { consumeImpersonationReturnTarget } from "@/lib/impersonation";
 import { SubscriptionGate } from "@/components/subscription-lock";
@@ -195,7 +195,7 @@ function ResellerLayout() {
         setStoreCode(r.code);
         setAvatarUrl(r.avatar_url ?? null);
 
-        const activeUrl = await getResellerStoreUrl(r.id, r.code);
+        const activeUrl = await getResellerStoreUrl(r.id, r.code, r.business_name);
         setStoreUrl(activeUrl);
 
         // Store branding rides along with the panel bootstrap.
@@ -256,7 +256,7 @@ function ResellerLayout() {
       headerRight={
         storeUrl || storeCode ? (
           <a
-            href={storeUrl || `/s/${storeCode}`}
+            href={storeUrl || buildResellerStorePath(storeName, storeCode)}
             target="_blank"
             rel="noreferrer"
             className="inline-flex items-center gap-2 rounded-md border bg-background px-3 py-1.5 text-sm font-medium transition hover:bg-muted"

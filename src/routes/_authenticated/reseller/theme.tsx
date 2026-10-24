@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { getMyReseller, getResellerStoreUrl } from "@/lib/app-data";
+import { buildResellerStorePath, getMyReseller, getResellerStoreUrl } from "@/lib/app-data";
 import { useAuth } from "@/lib/use-auth";
 import { PageHeader } from "@/components/ui-kit";
 import { Check, ChevronDown, ChevronUp, ExternalLink, Loader2, Save } from "lucide-react";
@@ -57,7 +57,7 @@ function ThemePage() {
       setRid(r.id);
       setCode(r.code);
 
-      const activeUrl = await getResellerStoreUrl(r.id, r.code);
+      const activeUrl = await getResellerStoreUrl(r.id, r.code, r.business_name);
       if (!alive) return;
       setStoreUrl(activeUrl);
 
@@ -117,7 +117,7 @@ function ThemePage() {
           <div className="flex flex-wrap gap-2">
             {(storeUrl || code) && (
               <a
-                href={storeUrl || `/s/${code}`}
+                href={storeUrl || buildResellerStorePath(null, code)}
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted transition-colors"
@@ -371,7 +371,7 @@ function ThemePage() {
         <div className="flex items-center gap-2">
           {(storeUrl || code) && (
             <a
-              href={storeUrl || `/s/${code}`}
+              href={storeUrl || buildResellerStorePath(null, code)}
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center gap-1.5 rounded-md border px-3 py-2 text-xs font-medium hover:bg-muted"
