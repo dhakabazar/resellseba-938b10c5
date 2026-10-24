@@ -23,9 +23,10 @@ export type ConfirmedProcurementData = {
   orderNumbers: string[];
 };
 
-export function useConfirmedProcurement(resellerId?: string | null) {
+export function useConfirmedProcurement(resellerId?: string | null, enabled = true) {
   return useQuery({
     queryKey: ["confirmed-procurement", resellerId ?? "admin"],
+    enabled,
     queryFn: async (): Promise<ConfirmedProcurementData> => {
       let query = supabase
         .from("orders")

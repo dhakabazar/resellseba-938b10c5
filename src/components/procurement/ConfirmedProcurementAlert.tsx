@@ -13,6 +13,7 @@ import {
   useConfirmedProcurement,
   printProcurementList,
 } from "@/lib/useConfirmedProcurement";
+import { usePermissions } from "@/lib/permissions";
 import { ConfirmedProcurementModal } from "./ConfirmedProcurementModal";
 
 interface ConfirmedProcurementAlertProps {
@@ -24,8 +25,25 @@ export function ConfirmedProcurementAlert({
   resellerId,
   isAdmin = true,
 }: ConfirmedProcurementAlertProps) {
+  const { canAny, isSuperAdmin } = usePermissions();
+  const canManageOrders =
+    isSuperAdmin ||
+    canAny([
+      "orders.view",
+      "orders.manage",
+      "orders.edit",
+      "orders.status",
+      "orders.ship",
+      "orders.create",
+    ]);
+
   const [modalOpen, setModalOpen] = useState(false);
-  const { data, isLoading, refetch } = useConfirmedProcurement(resellerId);
+  const { data, isLoading, refetch } = useConfirmedProcurement(resellerId, canManageOrders);
+
+  // If user does not have order permission, hide alert completely
+  if (!canManageOrders) {
+    return null;
+  }
 
   const totalOrders = data?.totalConfirmedOrders ?? 0;
   const totalQty = data?.totalQuantityToPick ?? 0;

@@ -14,6 +14,7 @@ import {
   useConfirmedProcurement,
   printProcurementList,
 } from "@/lib/useConfirmedProcurement";
+import { usePermissions } from "@/lib/permissions";
 import { ConfirmedProcurementModal } from "./ConfirmedProcurementModal";
 
 interface ConfirmedProcurementReportProps {
@@ -25,8 +26,24 @@ export function ConfirmedProcurementReport({
   resellerId,
   isAdmin = true,
 }: ConfirmedProcurementReportProps) {
+  const { canAny, isSuperAdmin } = usePermissions();
+  const canManageOrders =
+    isSuperAdmin ||
+    canAny([
+      "orders.view",
+      "orders.manage",
+      "orders.edit",
+      "orders.status",
+      "orders.ship",
+      "orders.create",
+    ]);
+
   const [modalOpen, setModalOpen] = useState(false);
-  const { data, isLoading, refetch } = useConfirmedProcurement(resellerId);
+  const { data, isLoading, refetch } = useConfirmedProcurement(resellerId, canManageOrders);
+
+  if (!canManageOrders) {
+    return null;
+  }
 
   const totalOrders = data?.totalConfirmedOrders ?? 0;
   const totalQty = data?.totalQuantityToPick ?? 0;
