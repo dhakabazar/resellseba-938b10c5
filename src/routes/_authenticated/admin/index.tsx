@@ -7,6 +7,8 @@ import { bdt, buildFinanceReport, isRealizedStatus, orderProfit, PROFIT_FORMULA_
 import { ORDER_TABS } from "@/lib/courier-status";
 import { Package, Users, ShoppingCart, Tag, TrendingUp, Wallet, Loader2, RefreshCw, Award, Clock, Plus } from "lucide-react";
 import { NewOrderModal } from "@/components/NewOrderModal";
+import { ConfirmedProcurementAlert } from "@/components/procurement/ConfirmedProcurementAlert";
+import { ConfirmedProcurementReport } from "@/components/procurement/ConfirmedProcurementReport";
 import {
   ResponsiveContainer,
   AreaChart,
@@ -214,6 +216,9 @@ function AdminDashboard() {
         }
       />
 
+      {/* Confirmed Orders Procurement & Picking Alert */}
+      <ConfirmedProcurementAlert isAdmin={true} />
+
       <section className="mb-6">
         <div className="grid grid-cols-2 gap-3 md:grid-cols-2 lg:grid-cols-4">
           <StatCard
@@ -322,6 +327,11 @@ function AdminDashboard() {
           <MiniCard to="/admin/brands" label="Brands" value={counts.brands} />
           <MiniCard to="/admin/brands" label="Active brands" value={catalog.activeBrands} tone="emerald" />
         </div>
+      </section>
+
+      {/* Confirmed Orders Procurement & Picking Report */}
+      <section className="mb-8">
+        <ConfirmedProcurementReport isAdmin={true} />
       </section>
 
 

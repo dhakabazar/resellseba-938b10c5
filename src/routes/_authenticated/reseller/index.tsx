@@ -16,6 +16,8 @@ import {
 } from "@/components/report-blocks";
 import { buildFinanceReport, bdt, type ReportItem, type ReportOrder } from "@/lib/finance-report";
 import { NewOrderModal } from "@/components/NewOrderModal";
+import { ConfirmedProcurementAlert } from "@/components/procurement/ConfirmedProcurementAlert";
+import { ConfirmedProcurementReport } from "@/components/procurement/ConfirmedProcurementReport";
 import {
   ShoppingBag,
   TrendingUp,
@@ -190,6 +192,9 @@ function ResellerDashboard() {
 
       <AdminNoticePopup notices={adminNotices} onDismiss={dismissNotice} />
 
+      {/* Confirmed Orders Procurement & Picking Alert */}
+      <ConfirmedProcurementAlert resellerId={rid} isAdmin={false} />
+
       <section className="mb-6">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
           <StatCard
@@ -354,6 +359,10 @@ function ResellerDashboard() {
           </div>
 
           <div className="mt-6">
+            <div className="mb-6">
+              <ConfirmedProcurementReport resellerId={rid} isAdmin={false} />
+            </div>
+
             <ReportCard title="Status wise money">
               <StatusReportTable report={report} showAdminCost />
             </ReportCard>
