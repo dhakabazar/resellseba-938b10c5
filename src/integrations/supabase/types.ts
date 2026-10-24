@@ -3716,6 +3716,7 @@ export type Database = {
         }
         Returns: number
       }
+      resolve_store_code: { Args: { _input: string }; Returns: string }
       restore_auth_users: { Args: { _rows: Json }; Returns: number }
       restore_rows: { Args: { _rows: Json; _table: string }; Returns: number }
       restore_set_triggers: { Args: { _enabled: boolean }; Returns: undefined }

@@ -218,6 +218,13 @@
       "when": 1792858200000,
       "tag": "0030_reseller_store_slug_resolution",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1792864016897,
+      "tag": "0031_store_slug_resolution",
+      "breakpoints": true
     }
   ]
 }
