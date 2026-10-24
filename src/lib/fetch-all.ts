@@ -26,7 +26,8 @@ export async function fetchAll<T = any>(make: () => any, chunk = CHUNK): Promise
 export async function fetchAllSafe<T = any>(make: () => any, chunk = CHUNK): Promise<T[]> {
   try {
     return await fetchAll<T>(make, chunk);
-  } catch {
+  } catch (err) {
+    console.warn("[fetchAllSafe] failed, returning empty array:", err);
     return [];
   }
 }

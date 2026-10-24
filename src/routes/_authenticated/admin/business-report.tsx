@@ -71,11 +71,11 @@ export const Route = createFileRoute("/_authenticated/admin/business-report")({
 type Tab = "products" | "resellers" | "couriers" | "agents" | "pnl";
 
 const TABS: { key: Tab; label: string; hint?: string }[] = [
-  { key: "products", label: "Product Sale Report" },
-  { key: "resellers", label: "Reseller Sales Report" },
-  { key: "couriers", label: "Courier Performance Report" },
-  { key: "agents", label: "Agent Sales Report" },
-  { key: "pnl", label: "Profit & Loss (P&L)" },
+  { key: "products", label: "Most selling products" },
+  { key: "resellers", label: "Reseller report" },
+  { key: "couriers", label: "Courier report" },
+  { key: "agents", label: "Agent report" },
+  { key: "pnl", label: "Profit & loss" },
 ];
 
 type Agent = {
@@ -94,6 +94,7 @@ type ResellerLite = {
   code: string;
   agent_id: string | null;
   avatar_url?: string | null;
+  status?: string | null;
 };
 
 type AgentRow = {
@@ -144,31 +145,33 @@ function BusinessReportPage() {
           supabase
             .from("orders")
             .select(
-              "id,order_number,reseller_id,status,created_at,customer_name,customer_phone,address_line,area,subtotal,shipping_cost,total,sa_cost_total,reseller_profit,received_amount,packaging_total,delivery_cost,advance_amount,advance_by,is_exchange,exchange_admin_share,exchange_admin_buy,resellers(business_name,code)",
+              "id,order_number,reseller_id,status,created_at,customer_name,customer_phone,address_line,area,subtotal,shipping_cost,total,sa_cost_total,reseller_profit,received_amount,packaging_total,delivery_cost,advance_amount,advance_by,is_exchange,exchange_admin_share,exchange_admin_buy,rider_status,resellers(business_name,code),shipments(id,order_id,provider,cost,tracking_id,consignment_id,status)",
             )
             .order("created_at", { ascending: false })
         ),
         fetchAllSafe<BizItem>(() =>
           supabase
             .from("order_items")
-            .select("order_id,product_id,product_name,quantity,returned_qty,sa_price,line_total,profit,buying_price,packaging_cost")
+            .select("id,order_id,product_id,product_name,quantity,returned_qty,sa_price,line_total,profit,buying_price,packaging_cost")
+            .order("id")
         ),
         fetchAllSafe<BizProduct>(() =>
-          supabase.from("products").select("id,name,product_code,buying_price,packaging_cost,og_image_url")
+          supabase.from("products").select("id,name,product_code,buying_price,packaging_cost,og_image_url").order("id")
         ),
         fetchAllSafe<{ order_id: string; provider: string; cost: number | null }>(() =>
-          supabase.from("shipments").select("order_id,provider,cost")
+          supabase.from("shipments").select("id,order_id,provider,cost,tracking_id,consignment_id,status").order("id")
         ),
         fetchAllSafe<ResellerLite>(() =>
-          supabase.from("resellers").select("id,business_name,code,agent_id,avatar_url")
+          supabase.from("resellers").select("id,business_name,code,agent_id,avatar_url,status").order("id")
         ),
         fetchAllSafe<Agent>(() =>
           supabase
             .from("agents")
             .select("id,display_name,sale_target,commission_rate,commission_mode,commission_per_unit,is_active")
+            .order("id")
         ),
         fetchAllSafe<Expense>(() =>
-          supabase.from("expenses").select("*").order("spent_on", { ascending: false })
+          supabase.from("expenses").select("*").order("spent_on", { ascending: false }).order("id")
         ),
       ]);
 
@@ -292,17 +295,32 @@ function BusinessReportPage() {
     return sortRows(rows, prodSort.key, prodSort.dir);
   }, [scoped, scopedItems, productMap, prodSort, filters.q]);
 
-  // Reseller Rows
-  const resellerRows = useMemo(
-    () => sortRows(buildResellerRows(scoped, scopedItems, productMap), resSort.key, resSort.dir),
-    [scoped, scopedItems, productMap, resSort],
+  const resellerMap = useMemo(
+    () => new Map(resellers.map((r) => [r.id, { business_name: r.business_name, code: r.code, status: r.status }])),
+    [resellers],
   );
 
+  // Reseller Rows
+  const resellerRows = useMemo(() => {
+    let rows = buildResellerRows(scoped, scopedItems, productMap, resellerMap, resellers);
+    if (filters.q) {
+      const q = filters.q.toLowerCase().trim();
+      const direct = rows.filter((r) => r.name.toLowerCase().includes(q) || r.code.toLowerCase().includes(q));
+      if (direct.length > 0) rows = direct;
+    }
+    return sortRows(rows, resSort.key, resSort.dir);
+  }, [scoped, scopedItems, productMap, resellerMap, resellers, resSort, filters.q]);
+
   // Courier Rows
-  const courierRows = useMemo(
-    () => sortRows(buildCourierRows(scoped, scopedItems, productMap, shipments), couSort.key, couSort.dir),
-    [scoped, scopedItems, productMap, shipments, couSort],
-  );
+  const courierRows = useMemo(() => {
+    let rows = buildCourierRows(scoped, scopedItems, productMap, shipments);
+    if (filters.q) {
+      const q = filters.q.toLowerCase().trim();
+      const direct = rows.filter((r) => r.name.toLowerCase().includes(q) || r.key.toLowerCase().includes(q));
+      if (direct.length > 0) rows = direct;
+    }
+    return sortRows(rows, couSort.key, couSort.dir);
+  }, [scoped, scopedItems, productMap, shipments, couSort, filters.q]);
 
   // Agent Rows
   const agentRows = useMemo(() => {
@@ -312,7 +330,7 @@ function BusinessReportPage() {
       arr.push(i);
       itemsByOrder.set(i.order_id, arr);
     }
-    const rows: AgentRow[] = agents.map((ag) => {
+    let rows: AgentRow[] = agents.map((ag) => {
       const mine = new Set(resellers.filter((r) => r.agent_id === ag.id).map((r) => r.id));
       const mineOrders = scoped.filter((o) => o.reseller_id && mine.has(o.reseller_id));
       let sales = 0;
@@ -352,8 +370,13 @@ function BusinessReportPage() {
         netAdminProfit: adminProfit - commission,
       };
     });
+    if (filters.q) {
+      const q = filters.q.toLowerCase().trim();
+      const direct = rows.filter((r) => r.name.toLowerCase().includes(q));
+      if (direct.length > 0) rows = direct;
+    }
     return sortRows(rows, agtSort.key, agtSort.dir);
-  }, [agents, resellers, scoped, scopedItems, productMap, agtSort]);
+  }, [agents, resellers, scoped, scopedItems, productMap, agtSort, filters.q]);
 
   const agentCommissionTotal = useMemo(() => agentRows.reduce((t, a) => t + a.commission, 0), [agentRows]);
   const pnl = useMemo(
@@ -446,7 +469,7 @@ function BusinessReportPage() {
   const exportCurrent = () => {
     if (tab === "products")
       return downloadCsv(
-        "product-sale-report.csv",
+        "most-selling-products.csv",
         toCsv(
           ["Product", "Code", "Orders", "Sold Qty", "Returned Qty", "Sell Value", "Admin Revenue", "Buying Cost", "Admin Profit"],
           productRows.map((r) => [r.name, r.code, r.orders, r.saleQty, r.returnedQty, r.sellValue, r.adminRevenue, r.buyCost, r.adminProfit]),
@@ -454,7 +477,7 @@ function BusinessReportPage() {
       );
     if (tab === "resellers")
       return downloadCsv(
-        "reseller-sales-report.csv",
+        "reseller-report.csv",
         toCsv(
           ["Reseller", "Code", "Orders", "Delivered", "Failed", "Order Value", "Received", "Reseller Profit", "Admin Profit"],
           resellerRows.map((r) => [r.name, r.code, r.orders, r.delivered, r.failed, r.value, r.received, r.resellerProfit, r.adminProfit]),
@@ -462,7 +485,7 @@ function BusinessReportPage() {
       );
     if (tab === "couriers")
       return downloadCsv(
-        "courier-performance-report.csv",
+        "courier-report.csv",
         toCsv(
           ["Courier", "Parcels", "Delivered", "Returned", "Parcel Value", "Received", "Courier Bill", "Admin Profit"],
           courierRows.map((r) => [r.name, r.parcels, r.delivered, r.returned, r.value, r.received, r.courierBill, r.adminProfit]),
@@ -470,14 +493,14 @@ function BusinessReportPage() {
       );
     if (tab === "agents")
       return downloadCsv(
-        "agent-sales-report.csv",
+        "agent-report.csv",
         toCsv(
           ["Agent", "Resellers", "Orders", "Sales", "Target", "Achieved %", "Commission", "Admin Profit", "Net Profit"],
           agentRows.map((r) => [r.name, r.resellers, r.orders, r.sales, r.target, r.achieved.toFixed(1), r.commission, r.adminProfit, r.netAdminProfit]),
         ),
       );
     return downloadCsv(
-      "business-profit-loss.csv",
+      "profit-loss.csv",
       toCsv(
         ["Line", "Amount"],
         [
@@ -508,8 +531,8 @@ function BusinessReportPage() {
   return (
     <div className="space-y-4">
       <PageHeader
-        title="Business Report"
-        description="Comprehensive business analytics — product sales, reseller performance, courier metrics, agent targets, and net profit & loss."
+        title="Business report"
+        description="Most selling products, reseller report, courier report, agent report, and profit & loss."
         actions={
           <div className="flex items-center gap-2">
             <button
@@ -586,7 +609,7 @@ function BusinessReportPage() {
       {tab === "products" && (
         <div className="space-y-3">
           <ReportCard
-            title="Product Sale Report (Most Selling)"
+            title="Most Selling Products"
             hint="Showing sales volume, orders, returned units and net profit per product. Default: highest sold quantity first. Click column header to sort."
           >
             <div className="overflow-x-auto">
@@ -666,7 +689,7 @@ function BusinessReportPage() {
       {/* TAB 2: RESELLER SALES REPORT */}
       {tab === "resellers" && (
         <div className="space-y-3">
-          <ReportCard title="Reseller Sales & Performance Report" hint={ADMIN_PROFIT_HINT}>
+          <ReportCard title="Reseller Report" hint={ADMIN_PROFIT_HINT}>
             <div className="overflow-x-auto">
               <table className="w-full min-w-[920px] text-sm">
                 <thead className="bg-muted/20">
@@ -741,7 +764,7 @@ function BusinessReportPage() {
       {/* TAB 3: COURIER PERFORMANCE REPORT */}
       {tab === "couriers" && (
         <div className="space-y-3">
-          <ReportCard title="Courier Delivery & Performance Report" hint="Parcel count, parcel value, delivery completion, and admin profit per courier.">
+          <ReportCard title="Courier Report" hint="Parcel count, parcel value, delivery completion, and admin profit per courier.">
             <div className="overflow-x-auto">
               <table className="w-full min-w-[850px] text-sm">
                 <thead className="bg-muted/20">
@@ -803,7 +826,7 @@ function BusinessReportPage() {
       {/* TAB 4: AGENT SALES REPORT */}
       {tab === "agents" && (
         <div className="space-y-3">
-          <ReportCard title="Agent Sales & Commission Report" hint={AGENT_COMMISSION_HINT}>
+          <ReportCard title="Agent Report" hint={AGENT_COMMISSION_HINT}>
             <div className="overflow-x-auto">
               <table className="w-full min-w-[940px] text-sm">
                 <thead className="bg-muted/20">
@@ -892,7 +915,7 @@ function BusinessReportPage() {
       {tab === "pnl" && (
         <div className="space-y-4">
           <ReportCard
-            title="Business Profit & Loss (P&L) Statement"
+            title="Profit & Loss (P&L)"
             hint={ADMIN_PROFIT_HINT}
             right={
               <Link

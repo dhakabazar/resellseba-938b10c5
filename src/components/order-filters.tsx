@@ -52,6 +52,7 @@ export const COURIER_FILTER_OPTIONS: { value: string; label: string }[] = [
   { value: "steadfast", label: "Steadfast" },
   { value: "pathao", label: "Pathao" },
   { value: "carrybee", label: "Carrybee" },
+  { value: "manual", label: "Manual / Self" },
   { value: "none", label: "Not booked" },
 ];
 
@@ -190,6 +191,7 @@ export function filterByCourier<T extends { id: string }>(
   shipments: { order_id: string; provider?: string | null }[],
 ): T[] {
   if (!courier) return rows;
+  const target = courier.toLowerCase().trim();
   const byOrder = new Map<string, Set<string>>();
   for (const s of shipments) {
     if (!s.provider) continue;
@@ -198,11 +200,31 @@ export function filterByCourier<T extends { id: string }>(
       set = new Set();
       byOrder.set(s.order_id, set);
     }
-    set.add(s.provider);
+    set.add(s.provider.toLowerCase().trim());
   }
   return rows.filter((o) => {
-    if (courier === "none") return !byOrder.has(o.id);
-    return byOrder.get(o.id)?.has(courier) ?? false;
+    let providers = byOrder.get(o.id);
+    if (!providers && (o as any).shipments) {
+      const nested = Array.isArray((o as any).shipments) ? (o as any).shipments : [(o as any).shipments];
+      for (const ns of nested) {
+        if (ns?.provider) {
+          if (!providers) {
+            providers = new Set();
+            byOrder.set(o.id, providers);
+          }
+          providers.add(String(ns.provider).toLowerCase().trim());
+        }
+      }
+    }
+    if ((!providers || providers.size === 0) && (o as any).rider_status) {
+      if (!providers) {
+        providers = new Set();
+        byOrder.set(o.id, providers);
+      }
+      providers.add("manual");
+    }
+    if (target === "none") return !providers || providers.size === 0;
+    return providers?.has(target) ?? false;
   });
 }
 

@@ -77,7 +77,7 @@ export const ADMIN_PROFIT_HINT =
  * quantity, otherwise a pending order would look like it had zero product cost.
  */
 export function keptQty(item: BizItem, status: string) {
-  if (status === "cancelled" || status === "returned" || status === "pending_return" || status === "partial_delivery")
+  if (status === "cancelled" || status === "returned" || status === "pending_return" || status === "damaged")
     return 0;
   return Math.max(Number(item.quantity) - Number(item.returned_qty ?? 0), 0);
 }
@@ -217,6 +217,8 @@ export function buildResellerRows(
   orders: BizOrder[],
   items: BizItem[],
   products: Map<string, BizProduct>,
+  resellersMap?: Map<string, { business_name: string; code: string; status?: string | null }>,
+  allActiveResellers?: { id: string; business_name: string; code: string; status?: string | null }[],
 ): ResellerRow[] {
   const itemsByOrder = new Map<string, BizItem[]>();
   for (const it of items) {
@@ -225,14 +227,37 @@ export function buildResellerRows(
     itemsByOrder.set(it.order_id, arr);
   }
   const map = new Map<string, ResellerRow>();
+
+  // If allActiveResellers provided, pre-populate active resellers so every active reseller is visible
+  if (allActiveResellers) {
+    for (const r of allActiveResellers) {
+      if (r.status === "active" || !r.status) {
+        map.set(r.id, {
+          key: r.id,
+          name: r.business_name || "Reseller",
+          code: r.code || "—",
+          orders: 0,
+          delivered: 0,
+          failed: 0,
+          value: 0,
+          received: 0,
+          advance: 0,
+          resellerProfit: 0,
+          adminProfit: 0,
+        });
+      }
+    }
+  }
+
   for (const o of orders) {
     const key = o.reseller_id ?? "none";
+    const meta = resellersMap?.get(key);
     const row =
       map.get(key) ??
       ({
         key,
-        name: o.resellers?.business_name ?? "Unassigned",
-        code: o.resellers?.code ?? "—",
+        name: o.resellers?.business_name ?? meta?.business_name ?? (key === "none" ? "Direct Storefront" : "Unassigned"),
+        code: o.resellers?.code ?? meta?.code ?? "—",
         orders: 0,
         delivered: 0,
         failed: 0,
@@ -276,6 +301,7 @@ export const COURIER_LABEL: Record<string, string> = {
   steadfast: "Steadfast",
   pathao: "Pathao",
   carrybee: "Carrybee",
+  manual: "Manual / Self Delivery",
   none: "Not booked yet",
 };
 
@@ -293,17 +319,37 @@ export function buildCourierRows(
   }
   const shipByOrder = new Map<string, { provider: string; cost: number }>();
   for (const s of shipments) {
-    if (!shipByOrder.has(s.order_id)) shipByOrder.set(s.order_id, { provider: s.provider, cost: n(s.cost) });
+    if (!shipByOrder.has(s.order_id) && s.provider) {
+      shipByOrder.set(s.order_id, { provider: s.provider, cost: n(s.cost) });
+    }
   }
   const map = new Map<string, CourierRow>();
   for (const o of orders) {
-    const sh = shipByOrder.get(o.id);
-    const key = sh?.provider ?? "none";
+    // 1. Check nested shipments on the order first, then fallback to shipByOrder
+    let sh = shipByOrder.get(o.id);
+    const nestedShip = (o as any).shipments;
+    if (nestedShip) {
+      const arr = Array.isArray(nestedShip) ? nestedShip : [nestedShip];
+      const valid = arr.find((s: any) => s?.provider && String(s.provider).toLowerCase() !== "none") || arr[0];
+      if (valid?.provider && (!sh || !sh.provider || sh.provider === "none")) {
+        sh = { provider: valid.provider, cost: n(valid.cost) };
+      }
+    }
+    // Check if order was assigned to internal/manual rider
+    if ((!sh || !sh.provider || sh.provider === "none") && (o as any).rider_status) {
+      sh = { provider: "manual", cost: n(o.delivery_cost) };
+    }
+
+    const rawKey = sh?.provider ? String(sh.provider).toLowerCase().trim() : "none";
+    const key = rawKey === "" ? "none" : rawKey;
+    const displayName =
+      COURIER_LABEL[key] || (key !== "none" ? key.charAt(0).toUpperCase() + key.slice(1) : "Not booked yet");
+
     const row =
       map.get(key) ??
       ({
         key,
-        name: COURIER_LABEL[key] ?? key,
+        name: displayName,
         parcels: 0,
         delivered: 0,
         returned: 0,
