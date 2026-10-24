@@ -40,6 +40,7 @@ function InvoicePage() {
   const [order, setOrder] = useState<Order | null>(null);
   const [items, setItems] = useState<Item[]>([]);
   const [store, setStore] = useState<{ business_name: string; settings: Settings | null } | null>(null);
+  const [invoiceNote, setInvoiceNote] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -49,14 +50,27 @@ function InvoicePage() {
         .eq("id", id)
         .maybeSingle();
       if (!o) return;
-      const [{ data: it }, { data: r }] = await Promise.all([
+      const [{ data: it }, { data: r }, { data: oNotes }] = await Promise.all([
         supabase.from("order_items").select("id,product_name,quantity,reseller_price,line_total").eq("order_id", id),
         supabase.from("resellers").select("business_name, reseller_settings(*)").eq("id", (o as { reseller_id: string }).reseller_id).maybeSingle(),
+        supabase.from("order_notes").select("*").eq("order_id", id).order("created_at", { ascending: false }),
       ]);
       setOrder(o as Order);
       setItems((it ?? []) as Item[]);
       const s = r?.reseller_settings ? (Array.isArray(r.reseller_settings) ? r.reseller_settings[0] : r.reseller_settings) : null;
       setStore(r ? { business_name: r.business_name, settings: s as Settings | null } : null);
+
+      let latestNote = (o as Order).notes || null;
+      if (oNotes && oNotes.length > 0) {
+        for (const n of oNotes as any[]) {
+          const raw = n.body || "";
+          if (n.note_type === "invoice" || raw.startsWith("[Invoice Note]") || raw.startsWith("[invoice]")) {
+            latestNote = raw.replace(/^\[Invoice Note\]\s*/i, "").replace(/^\[invoice\]\s*/i, "").trim();
+            break;
+          }
+        }
+      }
+      setInvoiceNote(latestNote);
     })();
   }, [id]);
 
@@ -128,7 +142,11 @@ function InvoicePage() {
         </tfoot>
       </table>
 
-      {order.notes && <div className="mt-4 rounded border p-3 text-xs text-slate-600"><strong>Notes:</strong> {order.notes}</div>}
+      {invoiceNote && (
+        <div className="mt-4 rounded border border-slate-300 p-3 text-xs text-slate-700 bg-slate-50/50 print:border-slate-400 print:bg-transparent">
+          <strong className="uppercase tracking-wider text-slate-900 font-bold">Invoice Note:</strong> {invoiceNote}
+        </div>
+      )}
 
       <div className="mt-8 border-t pt-4 text-center text-xs text-slate-500">
         {store.settings?.footer_text || `Thank you for shopping with ${name}!`}

@@ -180,6 +180,43 @@ async function toPhotocopyDataUrl(imageUrl?: string | null): Promise<string> {
   });
 }
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function getLatestInvoiceNote(
+  orderId: string,
+  customerNotes?: string | null,
+  orderNotes?: Array<{ order_id: string; body: string; note_type?: string | null }> | null
+): string | null {
+  if (orderNotes && orderNotes.length > 0) {
+    const matching = orderNotes.filter((n) => n.order_id === orderId);
+    for (const n of matching) {
+      const raw = n.body || "";
+      const isInvoice =
+        n.note_type === "invoice" ||
+        raw.startsWith("[Invoice Note]") ||
+        raw.startsWith("[invoice]");
+      if (isInvoice) {
+        const clean = raw
+          .replace(/^\[Invoice Note\]\s*/i, "")
+          .replace(/^\[invoice\]\s*/i, "")
+          .trim();
+        if (clean) return clean;
+      }
+    }
+  }
+  if (customerNotes && customerNotes.trim()) {
+    return customerNotes.trim();
+  }
+  return null;
+}
+
 export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" | "3x4") {
   if (!orderIds || !orderIds.length) return;
 
@@ -202,7 +239,7 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
   }
 
   // Single unified database call: fetch orders with items, shipments, and reseller in 1 query
-  const [settings, { data: orders, error }] = await Promise.all([
+  const [settings, { data: orders, error }, { data: orderNotes }] = await Promise.all([
     getGlobalSettings(),
     supabase
       .from("orders")
@@ -213,6 +250,7 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
         customer_phone,
         address_line,
         area,
+        notes,
         total,
         advance_amount,
         paid_amount,
@@ -221,7 +259,12 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
         shipments (provider, tracking_id, consignment_id),
         resellers!orders_reseller_id_fkey (id, business_name, reseller_settings (logo_url, store_name))
       `)
-      .in("id", orderIds)
+      .in("id", orderIds),
+    supabase
+      .from("order_notes")
+      .select("*")
+      .in("order_id", orderIds)
+      .order("created_at", { ascending: false })
   ]);
 
   if (error || !orders || orders.length === 0) {
@@ -353,6 +396,37 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
           .item-img { width: 40px; height: 40px; object-fit: contain; border: 1.5px solid #000; border-radius: 2px; background: #fff; flex-shrink: 0; }
           .item-name { flex: 1; min-width: 0; line-height: 1.2; font-weight: 600; color: #000; }
 
+          .invoice-note-box {
+            border: 1.5px solid #000;
+            border-radius: 4px;
+            padding: 3px 5px;
+            margin-bottom: 4px;
+            background: #fff;
+            font-size: 7.5pt;
+            line-height: 1.25;
+            color: #000;
+            display: flex;
+            gap: 4px;
+            align-items: flex-start;
+          }
+          .invoice-note-tag {
+            font-size: 6.5pt;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            background: #000;
+            color: #fff;
+            padding: 1px 4px;
+            border-radius: 2px;
+            flex-shrink: 0;
+            line-height: 1.2;
+          }
+          .invoice-note-text {
+            font-weight: 700;
+            word-break: break-word;
+            flex: 1;
+          }
+
           .footer { 
             border-top: 2px solid #000; 
             padding-top: 2px; 
@@ -397,6 +471,7 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
           const originalBrandLogo = brand ? new URL(brand.wordmark, window.location.origin).href : "";
           const brandLogoSrc = originalBrandLogo ? (imageMap.get(originalBrandLogo) || originalBrandLogo) : "";
           const booking = s?.tracking_id || s?.consignment_id || "";
+          const invoiceNote = getLatestInvoiceNote(o.id, o.notes, (orderNotes as any[]) ?? []);
 
           return `
             <div class="label">
@@ -431,6 +506,12 @@ export async function printShippingLabels(orderIds: string[], forceSize?: "3x3" 
                   return `<div class="item-row">${itemImgSrc ? `<img src="${itemImgSrc}" class="item-img" />` : ""}<span class="item-name">${it.product_name} <strong>x ${it.quantity}</strong></span></div>`;
                 }).join("")}
               </div>
+              ${invoiceNote ? `
+              <div class="invoice-note-box">
+                <span class="invoice-note-tag">NOTE:</span>
+                <span class="invoice-note-text">${escapeHtml(invoiceNote)}</span>
+              </div>
+              ` : ""}
               <div class="footer">
                 <div class="thank-you">Thank you for shopping with us</div>
                 <div class="cod-badge">

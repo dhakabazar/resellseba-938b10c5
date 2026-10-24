@@ -10,6 +10,7 @@ export type OrderMeta = {
   noteName: string | null;
   noteAt: string | null;
   noteCount: number;
+  noteType?: "process" | "invoice" | null;
 };
 
 const empty = (): OrderMeta => ({
@@ -19,6 +20,7 @@ const empty = (): OrderMeta => ({
   noteName: null,
   noteAt: null,
   noteCount: 0,
+  noteType: null,
 });
 
 /** Latest status-change time + latest note for a batch of orders (2 queries total). */
@@ -52,24 +54,28 @@ export async function fetchOrderMeta(ids: string[]): Promise<Record<string, Orde
     if (!m) continue;
     m.noteCount += 1;
     if (!m.noteBody) {
-      m.noteBody = n.body;
+      const raw = String(n.body || "");
+      const isInvoice = raw.startsWith("[Invoice Note]") || raw.startsWith("[invoice]") || (n as any).note_type === "invoice";
+      m.noteBody = raw.replace(/^\[Invoice Note\]\s*/i, "").replace(/^\[invoice\]\s*/i, "").trim();
       m.noteRole = n.author_role;
       m.noteName = n.author_name ?? null;
       m.noteAt = n.created_at;
+      m.noteType = isInvoice ? "invoice" : "process";
     }
   }
   for (const o of (ords ?? []) as any[]) {
     const m = out[o.id];
     if (!m) continue;
-    const form: { role: string; body: string }[] = [];
-    if (o.reseller_note) form.push({ role: "reseller", body: o.reseller_note });
-    if (o.admin_note) form.push({ role: "admin", body: o.admin_note });
-    if (o.notes) form.push({ role: "staff", body: o.notes });
+    const form: { role: string; body: string; type: "process" | "invoice" }[] = [];
+    if (o.notes) form.push({ role: "customer", body: o.notes, type: "invoice" });
+    if (o.reseller_note) form.push({ role: "reseller", body: o.reseller_note, type: "process" });
+    if (o.admin_note) form.push({ role: "admin", body: o.admin_note, type: "process" });
     m.noteCount += form.length;
     if (!m.noteBody && form[0]) {
       m.noteBody = form[0].body;
       m.noteRole = form[0].role;
       m.noteAt = o.updated_at ?? o.created_at;
+      m.noteType = form[0].type;
     }
   }
   return out;
@@ -78,6 +84,7 @@ export async function fetchOrderMeta(ids: string[]): Promise<Record<string, Orde
 function roleTag(role: string | null) {
   if (role === "reseller") return "Reseller";
   if (role === "admin" || role === "super_admin") return "Admin";
+  if (role === "customer") return "Customer";
   if (role) return "Staff";
   return "";
 }
@@ -102,7 +109,18 @@ export function OrderNotePreview({
     >
       {meta?.noteBody ? (
         <>
-          <span className="mt-0.5 block line-clamp-4 text-[10px] leading-snug text-foreground/80">
+          <div className="flex items-center gap-1 mb-0.5">
+            <span
+              className={`rounded px-1.5 py-0.2 text-[9px] font-black uppercase tracking-wider ${
+                meta.noteType === "invoice"
+                  ? "bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-500/40"
+                  : "bg-sky-500/15 text-sky-700 dark:text-sky-300 border border-sky-500/30"
+              }`}
+            >
+              {meta.noteType === "invoice" ? "Invoice" : "Process"}
+            </span>
+          </div>
+          <span className="block line-clamp-4 text-[10px] leading-snug text-foreground/80">
             {meta.noteBody}
           </span>
           <span className="mt-0.5 flex flex-wrap items-center gap-x-1 text-[9px] text-muted-foreground/80">

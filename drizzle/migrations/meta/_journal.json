@@ -197,6 +197,13 @@
       "when": 1792842856271,
       "tag": "0027_fix_create_public_order_v_pc",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1792844603093,
+      "tag": "0028_order_notes_type",
+      "breakpoints": true
     }
   ]
 }
