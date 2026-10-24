@@ -47,7 +47,7 @@ export async function startOrderPaymentFlow(input: {
   // never start (or capture the return of) another store's payment.
   {
     const db = await core.admin();
-    const { data: store } = await db.from("resellers").select("id").eq("code", input.code).eq("status", "active").maybeSingle();
+    const { data: store } = await db.from("resellers").select("id").eq("code", ((await db.rpc("resolve_store_code" as any, { _input: input.code } as any)).data as string) || input.code).eq("status", "active").maybeSingle();
     const storeId = (store?.id as string | undefined) ?? null;
     if ((order.reseller_id ?? null) !== storeId) throw new Response("Order not found", { status: 404 });
   }
@@ -119,7 +119,7 @@ export async function verifyOrderPaymentFlow(input: { orderNumber: string }): Pr
 
 export async function listStoreGatewaysFlow(input: { code: string }) {
   const db = await core.admin();
-  const { data: reseller } = await db.from("resellers").select("id").eq("code", input.code).maybeSingle();
+  const { data: reseller } = await db.from("resellers").select("id").eq("code", ((await db.rpc("resolve_store_code" as any, { _input: input.code } as any)).data as string) || input.code).maybeSingle();
   const resellerId = (reseller?.id as string | undefined) ?? null;
   const { data: rows } = await db
     .from("payment_gateway_configs")
