@@ -154,7 +154,7 @@ export function getStoreBootstrap(code: string, force = false) {
         // checkout reads platform/advanced settings — seed them from this payload
         primeGlobalSettings(data.settings);
 
-        if (typeof window !== "undefined") {
+        if (typeof window !== "undefined" && data.store) {
           try {
             sessionStorage.setItem(
               `${STORE_BOOT_CACHE_KEY}${code}`,

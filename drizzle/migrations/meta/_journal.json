@@ -225,6 +225,20 @@
       "when": 1792864016897,
       "tag": "0031_store_slug_resolution",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1792865302138,
+      "tag": "0032_restore_store_functions",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1792865360664,
+      "tag": "0033_capi_resolve_once",
+      "breakpoints": true
     }
   ]
 }
