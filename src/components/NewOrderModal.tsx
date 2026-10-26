@@ -327,7 +327,7 @@ export function NewOrderModal({
         const { error: ne } = await supabase.from("order_notes").insert({
           order_id: order.id,
           author_id: authData.user?.id ?? null,
-          author_name: isAdmin ? "Admin" : reseller?.business_name ?? null,
+          author_name: isAdmin ? "Admin" : selectedReseller?.business_name ?? null,
           author_role: isAdmin ? "admin" : "reseller",
           body: `[Invoice Note] ${trimmedNote}`,
           ...({ note_type: "invoice" } as any),
