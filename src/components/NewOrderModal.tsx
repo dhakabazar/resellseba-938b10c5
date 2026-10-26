@@ -320,6 +320,20 @@ export function NewOrderModal({
         .eq("id", order.id);
       if (me) throw me;
 
+      // Save the add-order note as an invoice note so it prints on the invoice/label.
+      const trimmedNote = note.trim();
+      if (trimmedNote) {
+        const { data: authData } = await supabase.auth.getUser();
+        const { error: ne } = await supabase.from("order_notes").insert({
+          order_id: order.id,
+          author_id: authData.user?.id ?? null,
+          author_name: isAdmin ? "Admin" : reseller?.business_name ?? null,
+          author_role: isAdmin ? "admin" : "reseller",
+          body: `[Invoice Note] ${trimmedNote}`,
+          ...({ note_type: "invoice" } as any),
+        });
+        if (ne) console.error("[order_notes]", ne);
+      }
 
       toast.success(isAdmin ? "Order created successfully" : "Order created and sent to admin");
       onCreated();
