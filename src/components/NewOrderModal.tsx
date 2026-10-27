@@ -8,6 +8,7 @@ import { ProductCodeChip } from "@/components/product-code";
 import { AdvanceByToggle, MoneyField, SectionLabel } from "@/components/order-form-fields";
 import { packagingModeHint, packagingTotal } from "@/lib/packaging";
 import { useAdvancedSettings } from "@/lib/advanced-settings";
+import { productStockVisible } from "@/lib/product-stock-visibility";
 import { useResellerPriceMap, wholesalePrice, hasCustomPrice, withResellerRates, type ResellerPriceMap } from "@/lib/reseller-prices";
 import { matchesResellerSearch } from "@/lib/phone-search";
 
@@ -77,7 +78,8 @@ export function NewOrderModal({
   const [advance, setAdvance] = useState("");
   const [advanceBy, setAdvanceBy] = useState<"admin" | "reseller">("reseller");
   /** Packaging charge rule from Admin → System → Advanced settings. */
-  const { settings: advanced } = useAdvancedSettings();
+  const { settings: advanced, loading: advancedLoading } = useAdvancedSettings();
+  const showStock = productStockVisible(advanced.resellerCatalogShowStock, isAdmin, advancedLoading);
   const packagingSum = advanced.packagingChargeSum;
   /** Per-reseller admin price overrides for the selected reseller. */
   const prices = useResellerPriceMap(resellerId);
@@ -629,7 +631,7 @@ export function NewOrderModal({
                                     <span className="text-[10px] text-muted-foreground">
                                       ৳{Number(price).toFixed(0)} · Delivery: ৳{dc.toFixed(0)}
                                     </span>
-                                    <StockChip stock={p.stock} />
+                                    {showStock && <StockChip stock={p.stock} />}
                                   </div>
 
                                 </div>
@@ -667,7 +669,7 @@ export function NewOrderModal({
                               <div className="truncate text-xs font-black text-foreground">{p.name}</div>
                               <div className="mt-1 flex flex-wrap items-center gap-2">
                                 <ProductCodeChip code={p.product_code} />
-                                <StockChip stock={p.stock} />
+                                {showStock && <StockChip stock={p.stock} />}
                               </div>
                               <div className="mt-1.5 flex items-center gap-2">
 

@@ -6,6 +6,7 @@ import { ProductCodeChip } from "@/components/product-code";
 import { Button } from "@/components/ui/button";
 import { validPreviousPrice, productDiscount } from "@/lib/store-product-presentation";
 import { getGlobalSettings } from "@/lib/app-data";
+import { useProductStockVisibility } from "@/lib/advanced-settings";
 import { fetchResellerPriceMap, hasCustomPrice, wholesalePrice, withResellerRates } from "@/lib/reseller-prices";
 import {
   DELIVERY_AREAS,
@@ -54,6 +55,7 @@ export function ListingPricingModal({
   onClose: () => void;
   onSaved?: () => void;
 }) {
+  const showStock = useProductStockVisibility();
   const [row, setRow] = useState<PricingListing | null>(null);
   const [loading, setLoading] = useState(true);
   const [price, setPrice] = useState("");
@@ -242,7 +244,7 @@ export function ListingPricingModal({
                     Use suggested {taka(Number(p.suggested_price))}
                   </button>
                 )}
-                {p.stock != null && <span>Stock {p.stock}</span>}
+                {showStock && p.stock != null && <span>Stock {p.stock}</span>}
               </div>
               {calc.valid && calc.sell < calc.cost && (
                 <p className="mt-2 text-xs font-medium text-destructive">

@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState , useRef} from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchAllSafe } from "@/lib/fetch-all";
 import { getMyReseller } from "@/lib/app-data";
+import { useProductStockVisibility } from "@/lib/advanced-settings";
 import { deliveryLabel } from "@/lib/delivery";
 import { useAuth } from "@/lib/use-auth";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
@@ -39,6 +40,14 @@ type L = {
 };
 
 export const Route = createFileRoute("/_authenticated/reseller/listings")({
+  head: () => ({ meta: [
+    { title: "My Product Listings — Ecom Seller BD" },
+    { name: "description", content: "Manage your store product listings, prices and product details." },
+    { property: "og:title", content: "My Product Listings — Ecom Seller BD" },
+    { property: "og:description", content: "Manage your store product listings, prices and product details." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: ListingsPage,
 });
 
@@ -270,6 +279,7 @@ function ListingsPage() {
 }
 
 function ListingDetailModal({ id, onClose }: { id: string; onClose: () => void }) {
+  const showStock = useProductStockVisibility();
   const [l, setL] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [active, setActive] = useState(0);
@@ -383,10 +393,10 @@ function ListingDetailModal({ id, onClose }: { id: string; onClose: () => void }
                   <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Base Cost</div>
                   <div className="text-sm font-medium">৳{myCost}</div>
                 </div>
-                <div>
+                {showStock && <div>
                   <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Stock</div>
                   <div className={`text-sm font-medium ${p.stock <= 5 ? "text-destructive" : ""}`}>{p.stock} in stock</div>
-                </div>
+                </div>}
               </div>
 
               <div>

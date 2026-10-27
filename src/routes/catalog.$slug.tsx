@@ -6,7 +6,7 @@ import { CopyBtn } from "@/components/catalog/shell";
 import { ImagePickerButton } from "@/components/catalog/image-picker";
 import { ProductCodeChip } from "@/components/product-code";
 import { bdt } from "@/lib/finance-report";
-import { useAdvancedSettings } from "@/lib/advanced-settings";
+import { useProductStockVisibility } from "@/lib/advanced-settings";
 import { ArrowLeft, Loader2, Package, Sparkles, Truck } from "lucide-react";
 
 export const Route = createFileRoute("/catalog/$slug")({
@@ -31,8 +31,7 @@ function CatalogDetails() {
   const [state, setState] = useState<"loading" | "done">("loading");
   const [p, setP] = useState<P>(null);
   const [idx, setIdx] = useState(0);
-  const { settings } = useAdvancedSettings();
-  const showStock = settings.resellerCatalogShowStock;
+  const showStock = useProductStockVisibility();
 
   useEffect(() => {
     setState("loading");
