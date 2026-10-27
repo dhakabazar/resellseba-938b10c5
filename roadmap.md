@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Apply the admin stock-visibility toggle across reseller catalog, listing/pricing/details and order/exchange pickers; 20 tests pass and signed-in catalog/listing details verified with both response-level toggle states, without changing saved settings or inventory rules
+
 - [x] Align payment/advance ownership, paid/unpaid/partial, courier COD, add/edit/view and financial reports; 26 regressions plus rolled-back capture/retry/overcollection SQL checks pass, signed-in temporary order save/readback and transaction-report retained-cash assertions pass; temporary rows removed
 - [ ] Live gateway capture and courier booking confirmation — blocked on real-money/provider operations; not performed during safe audit
 

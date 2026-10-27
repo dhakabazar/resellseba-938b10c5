@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyReseller } from "@/lib/app-data";
-import { useAdvancedSettings } from "@/lib/advanced-settings";
+import { useProductStockVisibility } from "@/lib/advanced-settings";
 import { deliveryLabel, deliveryMode } from "@/lib/delivery";
 import { useAuth } from "@/lib/use-auth";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
@@ -71,7 +71,7 @@ function CatalogPage() {
   const [perPage, setPerPage] = useState(20);
   const [page, setPage] = useState(1);
   const [detailId, setDetailId] = useState<string | null>(null);
-  const { settings: adv } = useAdvancedSettings();
+  const showStock = useProductStockVisibility();
 
   const didLoad = useRef(false);
   useEffect(() => {
@@ -118,10 +118,10 @@ function CatalogPage() {
         if (category && !inCategory(i, category)) return false;
         if (avail === "listed" && !listed.has(i.id)) return false;
         if (avail === "unlisted" && listed.has(i.id)) return false;
-        if (avail === "instock" && i.stock <= 0) return false;
+        if (showStock && avail === "instock" && i.stock <= 0) return false;
         return true;
       }),
-    [items, q, brand, category, avail, listed],
+    [items, q, brand, category, avail, listed, showStock],
   );
   const paged = usePaginated(filtered, page, perPage);
 
@@ -136,7 +136,7 @@ function CatalogPage() {
       options: [
         { value: "unlisted", label: "Not listed yet" },
         { value: "listed", label: "Already listed" },
-        { value: "instock", label: "In stock" },
+        ...(showStock ? [{ value: "instock", label: "In stock" }] : []),
       ],
     },
   ];
@@ -395,7 +395,7 @@ function CatalogPage() {
                     Delivery: {deliveryLabel(p)} · customer pays
                   </div>
                   <div className="mt-1 text-xs text-muted-foreground">
-                    Suggested ৳{p.suggested_price}{adv.resellerCatalogShowStock ? ` · Stock ${p.stock}` : ""}
+                    Suggested ৳{p.suggested_price}{showStock ? ` · Stock ${p.stock}` : ""}
                   </div>
                   {isListed ? (
                     <button
@@ -506,7 +506,7 @@ function CatalogPage() {
 }
 
 function ProductDetailModal({ id, onClose, brands, categories }: { id: string; onClose: () => void; brands: Opt[]; categories: Opt[] }) {
-  const { settings: adv } = useAdvancedSettings();
+  const showStock = useProductStockVisibility();
   const [p, setP] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -593,7 +593,7 @@ function ProductDetailModal({ id, onClose, brands, categories }: { id: string; o
                   <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Delivery</div>
                   <div className="text-sm font-medium">{deliveryLabel(p)}</div>
                 </div>
-                {adv.resellerCatalogShowStock && (
+                {showStock && (
                   <div>
                     <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Stock</div>
                     <div className={`text-sm font-medium ${p.stock <= 5 ? "text-destructive" : ""}`}>{p.stock} units</div>

@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { exchangeCalc, type CalcLine, type PackPayer, type Payer } from "@/lib/exchange";
 import { orderStatusLabel } from "@/lib/courier-status";
+import { useProductStockVisibility } from "@/lib/advanced-settings";
 
 export const EXCHANGE_REASONS = [
   "Size / color change",
@@ -74,6 +75,7 @@ export function ExchangeModal({
   isAdmin: boolean;
   onDone: () => void;
 }) {
+  const showStock = useProductStockVisibility(isAdmin);
   const [parent, setParent] = useState<any>(null);
   const [back, setBack] = useState<BackItem[]>([]);
   const [returned, setReturned] = useState<Record<string, number>>({});
@@ -360,7 +362,7 @@ export function ExchangeModal({
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded border bg-muted text-[9px] text-muted-foreground">No img</span>
                 )}
                 <span className="min-w-0 flex-1 truncate">{p.name} <span className="text-muted-foreground">#{p.product_code}</span></span>
-                <span className="shrink-0 text-muted-foreground">Stock {p.stock}</span>
+                {showStock && <span className="shrink-0 text-muted-foreground">Stock {p.stock}</span>}
               </button>
             ))}
           </div>

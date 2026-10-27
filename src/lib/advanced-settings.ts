@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getGlobalSettings, clearAppDataCache } from "@/lib/app-data";
+import { productStockVisible } from "@/lib/product-stock-visibility";
 import {
   DEFAULT_DELIVERY_SETTINGS,
   mergeDeliverySettings,
@@ -13,7 +14,7 @@ import {
  * added later without a migration.
  */
 export type AdvancedSettings = {
-  /** Show the product stock number on the reseller catalog grid. */
+  /** Show product stock throughout reseller product views. */
   resellerCatalogShowStock: boolean;
   /** ON = add up every product's packaging cost. OFF = charge only the highest one. */
   packagingChargeSum: boolean;
@@ -162,4 +163,9 @@ export function useAdvancedSettings() {
 export function clearAdvancedSettingsCache() {
   cache = null;
   clearAppDataCache("settings");
+}
+
+export function useProductStockVisibility(isAdmin = false) {
+  const { settings, loading } = useAdvancedSettings();
+  return productStockVisible(settings.resellerCatalogShowStock, isAdmin, loading);
 }
