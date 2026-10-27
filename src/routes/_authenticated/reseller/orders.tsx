@@ -263,16 +263,10 @@ function OrdersPage() {
       setEvents((pl.events ?? []) as any[]);
       return true;
     };
-    // Phase 1: first page only → instant view. Phase 2: everything in the background
-    // so filters, search and other pages are instant afterwards.
-    const full = supabase.rpc("reseller_orders_page", {});
-    if (!opts?.silent) {
-      supabase.rpc("reseller_orders_page", { _limit: filters.perPage }).then(({ data }) => {
-        if (!fullDone && apply(data, true)) setLoading(false);
-      });
-    }
-    const { data } = await full;
+    // Single full load (like admin) so status counts appear once and never jump.
+    const { data } = await supabase.rpc("reseller_orders_page", {});
     fullDone = true;
+    void fullDone;
     apply(data, false);
     if (!opts?.silent && seq === loadSeq.current) setLoading(false);
   }
