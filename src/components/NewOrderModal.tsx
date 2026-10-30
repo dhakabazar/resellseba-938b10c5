@@ -691,9 +691,9 @@ export function NewOrderModal({
                                     sellPrice < minPrice ? "border-destructive text-destructive" : ""
                                   }`}
                                 />
-                                <span className="text-[9px] text-muted-foreground/70">
+                                <span className="text-[9px] font-medium text-foreground/80">
                                   min ৳{minPrice}{" "}
-                                  <span className="tabular-nums">
+                                  <span className="tabular-nums text-foreground">
                                     ({minPrice - Number(p.packaging_cost ?? 0)} + {Number(p.packaging_cost ?? 0)} pac)
                                   </span>
                                 </span>
