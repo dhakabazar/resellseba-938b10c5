@@ -246,6 +246,13 @@
       "when": 1792865931308,
       "tag": "0034_resolve_store_code_unicode",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1793370485378,
+      "tag": "0035_migration",
+      "breakpoints": true
     }
   ]
 }

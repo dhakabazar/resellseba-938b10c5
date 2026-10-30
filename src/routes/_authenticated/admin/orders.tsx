@@ -69,6 +69,7 @@ import { courierTrackingUrl } from "@/lib/courier-tracking";
 import { PickListModal } from "@/components/pick-list-modal";
 import { OrderSearch, type OrderSearchMode } from "@/components/order-search";
 import { printShippingLabels } from "@/lib/labels";
+import { usePhoneCounts, DupPhoneBadge } from "@/components/dup-phone-badge";
 import {
   ORDER_TABS,
   ORDER_STATUS_OPTIONS,
@@ -600,6 +601,7 @@ function AdminOrdersPage() {
 
   const paged = usePaginated(filtered, page, filters.perPage);
   const { meta: orderMeta, refresh: refreshMeta } = useOrderMeta(paged.map((o) => o.id));
+  const phoneCounts = usePhoneCounts(paged.map((o: any) => o.customer_phone));
 
   return (
     <div>
@@ -981,7 +983,7 @@ function AdminOrdersPage() {
                           <Copy className="h-3 w-3" />
                         </button>
                       </div>
-                      <div className="text-[11px] tabular-nums text-muted-foreground">{o.customer_phone}</div>
+                      <div className="flex items-center gap-1 text-[11px] tabular-nums text-muted-foreground">{o.customer_phone}<DupPhoneBadge count={phoneCounts.get(o.customer_phone)} /></div>
                       <div className="text-[11px] leading-snug text-muted-foreground break-words">
                         {o.address_line}
                         {o.area ? `, ${o.area.replace("_", " ")}` : ""}
@@ -1220,6 +1222,7 @@ function AdminOrdersPage() {
                       <div className="font-medium truncate">{o.customer_name}</div>
                       <div className="flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground">
                         {o.customer_phone}
+                        <DupPhoneBadge count={phoneCounts.get(o.customer_phone)} />
                         <a href={`tel:${o.customer_phone}`} className="text-primary hover:text-primary/80">
                           <Phone className="h-3 w-3" />
                         </a>
