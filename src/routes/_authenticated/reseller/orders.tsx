@@ -70,6 +70,7 @@ import { Check, Ban, Search, ListChecks, SlidersHorizontal, ChevronDown, Printer
 import { CourierLogo, courierLabel } from "@/components/courier-brand";
 import { CourierRecheckButton } from "@/components/courier-recheck-button";
 import { printShippingLabels } from "@/lib/labels";
+import { usePhoneCounts, DupPhoneBadge } from "@/components/dup-phone-badge";
 
 
 import {
@@ -413,6 +414,7 @@ function OrdersPage() {
   // (The previous AI message mentioned reconstructing the grid)
   const paged = usePaginated(visible, page, filters.perPage);
   const { meta: orderMeta, refresh: refreshMeta } = useOrderMeta(paged.map((o: any) => o.id));
+  const phoneCounts = usePhoneCounts(paged.map((o: any) => o.customer_phone));
   const [notesModal, setNotesModal] = useState<{ orderId: string; orderNumber?: string | null; canWrite: boolean } | null>(null);
   const stats = useMemo(
     () =>
@@ -960,7 +962,7 @@ function OrdersPage() {
                           <Copy className="h-3 w-3" />
                         </button>
                       </div>
-                      <div className="text-[11px] tabular-nums text-muted-foreground">{o.customer_phone}</div>
+                      <div className="flex items-center gap-1 text-[11px] tabular-nums text-muted-foreground">{o.customer_phone}<DupPhoneBadge count={phoneCounts.get(o.customer_phone)} /></div>
                       <div className="text-[11px] leading-snug text-muted-foreground break-words">
                         {o.address_line}
                         {o.area ? `, ${o.area.replace("_", " ")}` : ""}
@@ -1105,6 +1107,7 @@ function OrdersPage() {
                     <div className="font-medium text-foreground truncate">{o.customer_name}</div>
                     <div className="flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground">
                       {o.customer_phone}
+                      <DupPhoneBadge count={phoneCounts.get(o.customer_phone)} />
                       <a href={`tel:${o.customer_phone}`} className="text-primary hover:text-primary/80 transition-colors">
                         <Phone className="h-3 w-3" />
                       </a>
