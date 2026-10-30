@@ -3588,6 +3588,13 @@ export type Database = {
       my_permissions: { Args: never; Returns: string[] }
       order_has_shipment: { Args: { _order_id: string }; Returns: boolean }
       order_kept_product_cost: { Args: { _order_id: string }; Returns: number }
+      order_phone_counts: {
+        Args: { _phones: string[] }
+        Returns: {
+          cnt: number
+          phone: string
+        }[]
+      }
       order_prepaid: {
         Args: { _advance: number; _paid: number }
         Returns: number
