@@ -639,6 +639,7 @@ function AdminOrdersPage() {
               onMode={setSearchMode}
               value={filters.q}
               onChange={(v) => setFilters({ ...filters, q: v })}
+            products={orderItems as any}
               className="min-w-0 flex-1"
             />
             <select
