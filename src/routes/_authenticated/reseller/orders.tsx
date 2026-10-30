@@ -613,6 +613,7 @@ function OrdersPage() {
             onMode={setSearchMode}
             value={filters.q}
             onChange={(v) => setFilters({ ...filters, q: v })}
+            products={orderItems as any}
           />
         </div>
 
