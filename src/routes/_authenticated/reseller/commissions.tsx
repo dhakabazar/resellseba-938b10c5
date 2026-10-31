@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAllSafe } from "@/lib/fetch-all";
 import { PageHeader, EmptyState, StatCard } from "@/components/ui-kit";
 import { Loader2, Users, Wallet } from "lucide-react";
 
@@ -25,10 +26,13 @@ function LeaderCommissionsPage() {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase
-        .from("leader_commissions")
-        .select("id,amount,base_profit,rate,status,created_at,reseller:resellers!leader_commissions_reseller_id_fkey(business_name,code),order:orders(order_number)")
-        .order("created_at", { ascending: false });
+      const data = await fetchAllSafe(() =>
+        supabase
+          .from("leader_commissions")
+          .select("id,amount,base_profit,rate,status,created_at,reseller:resellers!leader_commissions_reseller_id_fkey(business_name,code),order:orders(order_number)")
+          .order("created_at", { ascending: false })
+          .order("id"),
+      );
       setRows((data ?? []) as unknown as Row[]);
       setLoading(false);
     })();

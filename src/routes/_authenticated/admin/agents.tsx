@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getResellerDirectory } from "@/lib/reseller-directory";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
 import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
 import { useServerFn } from "@tanstack/react-start";
@@ -52,10 +53,7 @@ function AgentsPage() {
     setLoading(true);
     const [agentsRes, resellerRes] = await Promise.all([
       supabase.from("agents").select("*").order("display_name"),
-      supabase
-        .from("resellers")
-        .select("id,business_name,code,status,contact_phone,agent_id")
-        .order("business_name"),
+      getResellerDirectory(true).then((data) => ({ data })).catch(() => ({ data: [] })),
     ]);
     if (agentsRes.error) toast.error(agentsRes.error.message);
     setAgents((agentsRes.data ?? []) as Agent[]);

@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { SearchableSelect } from "@/components/searchable-select";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAll } from "@/lib/fetch-all";
 import { PageHeader } from "@/components/ui-kit";
 import { Loader2, Check, X, Wallet, Copy, Phone, Landmark, ChevronDown, Search, Trash2 } from "lucide-react";
 import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
@@ -121,13 +122,20 @@ function AdminPayouts() {
 
   async function load() {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("payouts")
-      .select(
-        "*, reseller:resellers(code, business_name, payout_method, payout_account_name, payout_account_number, payout_bank_name, payout_branch, payout_routing)",
-      )
-      .order("created_at", { ascending: false });
-    if (error) toast.error(error.message);
+    let error: { message: string } | null = null;
+    const data = await fetchAll(() =>
+      supabase
+        .from("payouts")
+        .select(
+          "*, reseller:resellers(code, business_name, payout_method, payout_account_name, payout_account_number, payout_bank_name, payout_branch, payout_routing)",
+        )
+        .order("created_at", { ascending: false })
+        .order("id"),
+    ).catch((e) => {
+      error = e;
+      return [];
+    });
+    if (error) toast.error((error as { message: string }).message);
     setAllRows((data ?? []) as any);
     setLoading(false);
   }

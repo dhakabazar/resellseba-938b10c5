@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Loader2, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { getResellerDirectory } from "@/lib/reseller-directory";
 import { PageHeader } from "@/components/ui-kit";
 import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
 import { RangeTabs, StoreVisitsReport, useLeaderboard } from "@/components/store-visits-report";
@@ -26,10 +27,7 @@ function AdminVisitorsPage() {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase
-        .from("resellers")
-        .select("id, code, business_name")
-        .order("business_name", { ascending: true });
+      const data = await getResellerDirectory().catch(() => []);
       setResellers((data ?? []) as ResellerOpt[]);
     })();
   }, []);

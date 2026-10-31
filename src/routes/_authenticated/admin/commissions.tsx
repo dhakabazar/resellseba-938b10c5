@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAllSafe } from "@/lib/fetch-all";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -28,10 +29,13 @@ function CommissionsPage() {
 
   async function load() {
     setLoading(true);
-    const { data } = await supabase
-      .from("leader_commissions")
-      .select("id,amount,base_profit,rate,status,created_at,paid_at,leader:resellers!leader_commissions_leader_id_fkey(business_name,code),reseller:resellers!leader_commissions_reseller_id_fkey(business_name,code),order:orders(order_number)")
-      .order("created_at", { ascending: false });
+    const data = await fetchAllSafe(() =>
+      supabase
+        .from("leader_commissions")
+        .select("id,amount,base_profit,rate,status,created_at,paid_at,leader:resellers!leader_commissions_leader_id_fkey(business_name,code),reseller:resellers!leader_commissions_reseller_id_fkey(business_name,code),order:orders(order_number)")
+        .order("created_at", { ascending: false })
+        .order("id"),
+    );
     setRows((data ?? []) as unknown as Row[]);
     setLoading(false);
   }
