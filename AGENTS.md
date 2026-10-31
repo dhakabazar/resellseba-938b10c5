@@ -29,3 +29,4 @@
 - Verified gateway captures use a locked database RPC and provider/transaction uniqueness; receiving account ownership is required so webhook retries cannot double-credit money.
 - Payment verification binds provider-confirmed order references or stored checkout intents before capture and records gross customer payment, not gateway fees.
 - Exchanges are separate linked orders (parent_order_id, is_exchange); DB trigger turns delivered into 'exchanged', admin share is credited in sync_order_profit/orderMargin, and every report status list that includes 'delivered' must also include 'exchanged'; this keeps original orders untouched and reports consistent.
+- Admin business report loads through the single admin_business_report RPC keyed only by date range (permission checked once, no per-row RLS on nested items); all other filters, sorts and paging run client-side over that range.
