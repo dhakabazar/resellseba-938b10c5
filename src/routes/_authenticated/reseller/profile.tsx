@@ -2,6 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { getMyReseller } from "@/lib/app-data";
+import { getPanelBootstrapPayload } from "@/lib/panel-bootstrap";
 import { useAuth } from "@/lib/use-auth";
 import { clearAppDataCache } from "@/lib/app-data";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
@@ -36,29 +38,20 @@ function ResellerProfilePage() {
     if (!user) return;
     (async () => {
       setLoading(true);
-      const { data: r } = await supabase
-        .from("resellers")
-        .select(
-          "id,code,avatar_url,business_name,status,contact_phone,address,nid_number,commission_rate,leader_id,notes,created_at,approved_at,payout_method,payout_account_name,payout_account_number,payout_bank_name,payout_branch,payout_routing,deposit_required,deposit_required_amount,frozen_amount",
-        )
-        .eq("user_id", user.id)
-        .maybeSingle();
+      // One call: reseller row + leader name + money summary + order count.
+      // Verification state is already carried by the panel bootstrap.
+      const mine = await getMyReseller(user.id);
+      const { data: ov } = mine
+        ? await supabase.rpc("reseller_account_overview" as never, { _reseller_id: mine.id, _with_history: false } as never)
+        : { data: null };
+      const o = (ov ?? null) as any;
+      const r = o?.reseller;
       if (!r) {
         setLoading(false);
         return;
       }
-
-      let leaderName: string | null = null;
-      if (r.leader_id) {
-        const { data: l } = await supabase
-          .from("resellers")
-          .select("business_name,code")
-          .eq("id", r.leader_id)
-          .maybeSingle();
-        if (l) leaderName = `${l.business_name} (#${l.code})`;
-      }
-
-      const { data: vs } = await supabase.rpc("verify_state");
+      const primedVerify = getPanelBootstrapPayload()?.verify as any;
+      const vs = primedVerify ?? (await supabase.rpc("verify_state")).data;
       const v = Array.isArray(vs) ? (vs as any[])[0] : (vs as any);
 
       setData({
@@ -66,17 +59,13 @@ function ResellerProfilePage() {
         commission_rate: Number(r.commission_rate),
         deposit_required_amount: Number(r.deposit_required_amount),
         frozen_amount: Number(r.frozen_amount),
-        leader_name: leaderName,
+        leader_name: o.leader_name ?? null,
         email: user.email ?? null,
         email_verified: Boolean(v?.email_verified_at),
         phone_verified: Boolean(v?.phone_verified_at),
       });
 
-      const [sumRes, countRes] = await Promise.all([
-        supabase.rpc("reseller_profit_summary", { _reseller_id: r.id }),
-        supabase.from("orders").select("id", { count: "exact", head: true }).eq("reseller_id", r.id),
-      ]);
-      const row = Array.isArray(sumRes.data) ? sumRes.data[0] : sumRes.data;
+      const row = o.summary;
       if (row) {
         setSummary({
           delivered_profit: Number(row.delivered_profit),
@@ -87,6 +76,7 @@ function ResellerProfilePage() {
           frozen_amount: Number(row.frozen_amount),
         });
       }
+      const countRes = { count: Number(o.orders ?? 0) };
       setOrders(countRes.count ?? 0);
       setLoading(false);
     })();

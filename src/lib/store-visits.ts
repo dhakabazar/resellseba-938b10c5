@@ -84,18 +84,24 @@ export function visitRangeBounds(range: VisitRange) {
 }
 
 /** Live refresh cadence — only while the tab is visible and only on visitor pages. */
-export const LIVE_REFRESH_MS = 15_000;
+export const LIVE_REFRESH_MS = 60_000;
 
 export function useLiveRefresh(onTick: () => void, enabled = true, intervalMs = LIVE_REFRESH_MS) {
   useEffect(() => {
     if (!enabled) return;
     let timer = 0;
+    let last = Date.now();
+    const run = () => {
+      last = Date.now();
+      onTick();
+    };
     const tick = () => {
-      if (document.visibilityState === "visible") onTick();
+      if (document.visibilityState === "visible") run();
     };
     timer = window.setInterval(tick, intervalMs);
+    // Coming back to the tab refreshes only if the data is older than one interval.
     const onVis = () => {
-      if (document.visibilityState === "visible") onTick();
+      if (document.visibilityState === "visible" && Date.now() - last >= intervalMs) run();
     };
     document.addEventListener("visibilitychange", onVis);
     return () => {

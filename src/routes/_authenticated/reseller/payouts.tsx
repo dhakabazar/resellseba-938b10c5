@@ -62,13 +62,12 @@ function PayoutsPage() {
     // Store staff accounts have no `resellers.user_id` row of their own — the
     // shared lookup resolves the store they belong to.
     const mine = await getMyReseller(user!.id);
-    const { data: r } = mine
-      ? await supabase
-          .from("resellers")
-          .select("id,payout_method,payout_account_name,payout_account_number,payout_bank_name,payout_branch,payout_routing")
-          .eq("id", mine.id)
-          .maybeSingle()
+    // One call: payout details + money summary + payout history + ledger.
+    const { data: ov } = mine
+      ? await supabase.rpc("reseller_account_overview" as never, { _reseller_id: mine.id, _with_history: true } as never)
       : { data: null };
+    const o = (ov ?? null) as any;
+    const r = o?.reseller;
     if (!r) return setLoading(false);
     setRid(r.id);
     setProfile({
@@ -80,18 +79,15 @@ function PayoutsPage() {
       payout_routing: r.payout_routing,
     });
     if (!r.payout_method) setEditing(true);
-    const { data: s } = await supabase.rpc("reseller_profit_summary", { _reseller_id: r.id });
-    const row = Array.isArray(s) ? s[0] : s;
+    const row = o.summary;
     if (row) setSum({
       delivered_profit: Number(row.delivered_profit), pending_payout: Number(row.pending_payout),
       paid_out: Number(row.paid_out), available: Number(row.available),
-      deposit_balance: Number((row as any).deposit_balance ?? 0),
-      frozen_amount: Number((row as any).frozen_amount ?? 0),
+      deposit_balance: Number(row.deposit_balance ?? 0),
+      frozen_amount: Number(row.frozen_amount ?? 0),
     });
-    const { data: p } = await fetchAllSafe(() => supabase.from("payouts").select("*").eq("reseller_id", r.id).order("created_at", { ascending: false }).order("id")).then((data) => ({ data }));
-    setRows((p ?? []) as Payout[]);
-    const { data: lg } = await supabase.rpc("reseller_ledger_all" as never, { _reseller_id: r.id, _limit: 0 } as never);
-    setLedger(((lg ?? []) as any[]).map((x) => ({ ...x, amount: Number(x.amount), running: Number(x.running) })) as LedgerRow[]);
+    setRows((o.payouts ?? []) as Payout[]);
+    setLedger(((o.ledger ?? []) as any[]).map((x) => ({ ...x, amount: Number(x.amount), running: Number(x.running) })) as LedgerRow[]);
     setLoading(false);
   }
 
