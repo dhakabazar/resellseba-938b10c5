@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { invalidateResellerDirectory } from "@/lib/reseller-directory";
 import { ResellerAvatar } from "@/components/reseller-avatar";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
 import { DataToolbar, Pagination, usePaginated } from "@/components/data-list";
@@ -483,6 +484,7 @@ function ResellersPage() {
    */
   const loadSeq = useRef(0);
   async function load() {
+    invalidateResellerDirectory();
     setLoading(true);
     const seq = ++loadSeq.current;
     let fullDone = false;
