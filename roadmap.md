@@ -5,4 +5,4 @@
 - [x] Admin: agent report / agent payouts load orders + units in one call
 - [x] Admin: sidebar badge counts poll less and pause in background tabs
 - [x] Reseller panel: audit + reduce calls
-- [ ] Backup & restore fixes (account restore, admin access during restore, duplicate store rows) — waiting for user approval
+- [x] Backup & restore fixes (account restore, admin access during restore, duplicate store rows)

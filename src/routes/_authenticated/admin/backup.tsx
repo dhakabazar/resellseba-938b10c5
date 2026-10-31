@@ -206,28 +206,60 @@ function BackupPage() {
       let done = 0;
       const tick = (label: string) => setProgress({ label, done: ++done, total });
 
+      let restoreFailures: string[] = [];
+      let restoredAccounts = 0;
       setProgress({ label: "Preparing", done: 0, total });
       await setTriggers({ data: { enabled: false } });
       try {
         await wipe({ data: { tables: null } });
         tick("Clearing old data");
 
+        // Once old data is cleared, never stop half-way: a failing chunk is
+        // retried once, then recorded, and the rest of the backup keeps going.
+        const failed: string[] = [];
+        const attempt = async (label: string, run: () => Promise<unknown>) => {
+          try {
+            await run();
+          } catch {
+            try {
+              await run();
+            } catch (err: any) {
+              failed.push(`${label}: ${err?.message ?? "failed"}`);
+            }
+          }
+        };
+        let accounts = 0;
         for (let i = 0; i < (data.users?.length ?? 0); i += 200) {
-          await putUsers({ data: { rows: data.users.slice(i, i + 200) } });
+          await attempt("accounts", async () => {
+            const res = await putUsers({ data: { rows: data.users.slice(i, i + 200) } });
+            accounts += res.written;
+          });
           tick("Restoring accounts");
         }
 
         for (const name of names) {
           const rows = data.tables?.[name] ?? [];
           for (let i = 0; i < rows.length; i += RESTORE_CHUNK) {
-            await putRows({ data: { table: name, rows: rows.slice(i, i + RESTORE_CHUNK) } });
+            await attempt(name, () => putRows({ data: { table: name, rows: rows.slice(i, i + RESTORE_CHUNK) } }));
             tick(`Restoring ${name}`);
           }
         }
+        restoreFailures = failed;
+        restoredAccounts = accounts;
       } finally {
         await setTriggers({ data: { enabled: true } });
       }
-      toast.success("Restore finished — everyone signs in with their existing password");
+      const skipped = (data.users?.length ?? 0) - restoredAccounts;
+      if (restoreFailures.length) {
+        console.error("[restore] some parts failed", restoreFailures);
+        toast.error(`Restore finished with ${restoreFailures.length} problem(s): ${restoreFailures.slice(0, 3).join(" · ")}`, { duration: 20000 });
+      } else {
+        toast.success(
+          `Restore finished — ${restoredAccounts.toLocaleString()} accounts keep their existing password` +
+            (skipped > 0 ? ` (${skipped} skipped: email already used by another account here)` : ""),
+          { duration: 12000 },
+        );
+      }
       await load();
     } catch (e: any) {
       toast.error(e?.message ?? "Restore failed");
