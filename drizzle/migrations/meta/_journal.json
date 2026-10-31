@@ -260,6 +260,13 @@
       "when": 1793462815274,
       "tag": "0036_admin_business_report_rpc",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1793463599632,
+      "tag": "0037_single_call_directories",
+      "breakpoints": true
     }
   ]
 }
