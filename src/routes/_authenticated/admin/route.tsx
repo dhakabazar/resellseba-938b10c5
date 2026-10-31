@@ -208,7 +208,11 @@ function useNavCounts(enabled: boolean): NavCounts {
       });
     };
     void load();
-    const timer = setInterval(() => void load(), 60000);
+    // Badges refresh every 2 minutes, only while the tab is visible.
+    const timer = setInterval(() => {
+      if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
+      void load();
+    }, 120000);
     return () => {
       alive = false;
       clearInterval(timer);
