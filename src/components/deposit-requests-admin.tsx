@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAllSafe } from "@/lib/fetch-all";
 import { toast } from "sonner";
 import { Check, Loader2, X } from "lucide-react";
 import { methodLabel } from "@/lib/payment-methods";
@@ -40,8 +41,7 @@ export function DepositRequestsAdmin({ onChanged }: { onChanged?: () => void }) 
       .order("created_at", { ascending: false })
       ;
     if (tab === "pending") q = q.eq("status", "pending");
-    const { data, error } = await q;
-    if (error) toast.error(error.message);
+    const data = await fetchAllSafe(() => q);
     setRows((data ?? []) as unknown as Row[]);
     setLoading(false);
   }
