@@ -3162,6 +3162,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      admin_auth_users_all: { Args: never; Returns: Json }
       admin_business_report: {
         Args: { _from_ts?: number; _to_ts?: number }
         Returns: Json
@@ -3252,6 +3253,7 @@ export type Database = {
           reseller_id: string
         }[]
       }
+      admin_reseller_metrics_all: { Args: never; Returns: Json }
       admin_resellers_bootstrap: {
         Args: { _limit?: number; _status?: string }
         Returns: Json
@@ -3635,6 +3637,7 @@ export type Database = {
           reseller_id: string
         }[]
       }
+      reseller_custom_rate_summary_all: { Args: never; Returns: Json }
       reseller_dashboard: {
         Args: { _from?: string; _to?: string }
         Returns: Json
@@ -3656,6 +3659,10 @@ export type Database = {
           running: number
           status: string
         }[]
+      }
+      reseller_ledger_all: {
+        Args: { _limit?: number; _reseller_id: string }
+        Returns: Json
       }
       reseller_menu_page: { Args: { _rid: string }; Returns: Json }
       reseller_orders_page: { Args: { _limit?: number }; Returns: Json }
@@ -3928,6 +3935,15 @@ export type Database = {
           sell_total: number
           status: string
         }[]
+      }
+      transaction_report_all: {
+        Args: {
+          _from: string
+          _limit?: number
+          _reseller_id: string
+          _to: string
+        }
+        Returns: Json
       }
       update_exchange_split: {
         Args: {
