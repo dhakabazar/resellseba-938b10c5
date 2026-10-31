@@ -3792,6 +3792,10 @@ export type Database = {
           visits: number
         }[]
       }
+      store_visit_leaderboard_all: {
+        Args: { _from: string; _limit?: number; _to: string }
+        Returns: Json
+      }
       store_visit_pages: {
         Args: {
           _from: string
@@ -3804,6 +3808,15 @@ export type Database = {
           visitors: number
           visits: number
         }[]
+      }
+      store_visit_pages_all: {
+        Args: {
+          _from: string
+          _limit?: number
+          _reseller_id: string
+          _to: string
+        }
+        Returns: Json
       }
       store_visit_summary: {
         Args: { _from: string; _reseller_id: string; _to: string }
