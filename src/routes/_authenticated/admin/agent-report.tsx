@@ -59,19 +59,11 @@ function AgentReportPage() {
     const [a, r, o] = await Promise.all([
       supabase.from("agents").select("*").order("display_name"),
       getResellerDirectory().then((data) => ({ data, error: null })).catch(() => ({ data: [], error: null })),
-      fetchAllSafe(() =>
-        supabase
-          .from("orders")
-          .select("id,reseller_id,status,created_at,total,shipping_cost,sa_cost_total,received_amount,packaging_total")
-          .order("created_at", { ascending: false }),
-      ).then((data) => ({ data, error: null as any })),
+      supabase.rpc("agent_orders_with_units" as never).then(({ data, error }) => ({ data: (data ?? []) as unknown as AgentOrder[], error: error as any })),
     ]);
     if (o.error) toast.error(o.error.message);
-    const { data: unitRows } = await supabase.rpc("agent_order_units");
-    const unitMap = new Map<string, number>(
-      ((unitRows ?? []) as Array<{ order_id: string; units: number }>).map((u) => [u.order_id, Number(u.units) || 0]),
-    );
-    const withUnits = ((o.data ?? []) as AgentOrder[]).map((row) => ({ ...row, units: unitMap.get(row.id) ?? 0 }));
+    // Orders arrive with their delivered unit counts in the same call.
+    const withUnits = ((o.data ?? []) as AgentOrder[]).map((row) => ({ ...row, units: Number(row.units) || 0 }));
     setAgents((a.data ?? []) as Agent[]);
     setResellers((r.data ?? []) as ResellerLite[]);
     setOrders(withUnits);
