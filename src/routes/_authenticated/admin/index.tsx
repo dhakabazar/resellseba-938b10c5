@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getAdminDashboard, getAdminLookups, clearBootstrapCache } from "@/lib/bootstrap";
 import { PageHeader, StatCard } from "@/components/ui-kit";
-import { DateRangeBar, DEFAULT_DATE_RANGE, resolveRange, type DateRangeState } from "@/components/date-range-filter";
+import { DateRangeBar, resolveRange, type DateRangeState } from "@/components/date-range-filter";
 import { bdt, buildFinanceReport, isRealizedStatus, orderProfit, PROFIT_FORMULA_HINT, type FinanceReport, type ReportOrder } from "@/lib/finance-report";
 import { ORDER_TABS } from "@/lib/courier-status";
 import { Package, Users, ShoppingCart, Tag, TrendingUp, Wallet, Loader2, RefreshCw, Award, Clock, Plus } from "lucide-react";
@@ -49,7 +49,7 @@ type OrderRow = {
 };
 
 function AdminDashboard() {
-  const [range, setRange] = useState<DateRangeState>(DEFAULT_DATE_RANGE);
+  const [range, setRange] = useState<DateRangeState>({ preset: "today", from: "", to: "" });
   const [orderOpen, setOrderOpen] = useState(false);
   const [allProducts, setAllProducts] = useState<any[]>([]);
   const [resellers, setResellers] = useState<any[]>([]);
