@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { getGlobalSettings } from "@/lib/app-data";
+import { getGlobalSettings, getMyReseller } from "@/lib/app-data";
 import { PageHeader } from "@/components/ui-kit";
 import { Phone, MessageCircle, Mail, Copy, Loader2, Headphones, UserCheck } from "lucide-react";
 import type { Agent } from "@/lib/agents";
@@ -53,27 +53,18 @@ function SupportPage() {
 
   useEffect(() => {
     (async () => {
-      const data = await getGlobalSettings();
+      // Settings come from the panel cache; the store row is cached too, so
+      // only one request remains: my reseller row with its assigned agent.
+      const [data, me] = await Promise.all([getGlobalSettings(), getMyReseller()]);
       setS((data ?? null) as Settings | null);
-
-      // My agent: the follow-up contact assigned to this reseller (if any).
-      const { data: rid } = await supabase.rpc("current_reseller_id");
-      if (rid) {
+      if (me?.id) {
         const { data: row } = await supabase
           .from("resellers")
-          .select("agent_id")
-          .eq("id", rid as string)
+          .select("agent_id, agents(*)")
+          .eq("id", me.id)
           .maybeSingle();
-        const agentId = (row as any)?.agent_id as string | null | undefined;
-        if (agentId) {
-          const { data: a } = await supabase
-            .from("agents")
-            .select("*")
-            .eq("id", agentId)
-            .eq("is_active", true)
-            .maybeSingle();
-          setAgent((a ?? null) as Agent | null);
-        }
+        const a = (row as any)?.agents as Agent | null | undefined;
+        if (a && (a as any).is_active) setAgent(a);
       }
       setLoading(false);
     })();

@@ -118,16 +118,16 @@ function ResellerPaymentsPage() {
     (async () => {
       const me = await getMyReseller();
       setResellerId(me?.id ?? null);
-      const [{ data: globals }] = await Promise.all([
-        supabase
-          .from("payment_configs")
-          .select("id,method,label,mode,is_active,instructions,config")
-          .is("reseller_id", null)
-          .eq("is_active", true)
-          .order("created_at"),
-        me?.id ? loadMine(me.id) : Promise.resolve(),
-      ]);
-      const list = ((globals ?? []) as unknown as PaymentConfigRow[]).filter((r) => r.mode === "manual");
+      // One request: platform methods (active) + this store's own methods.
+      const { data: allRows, error: cfgErr } = await supabase
+        .from("payment_configs")
+        .select("id,method,label,mode,is_active,instructions,config,reseller_id")
+        .or(me?.id ? `reseller_id.is.null,reseller_id.eq.${me.id}` : "reseller_id.is.null")
+        .order("created_at");
+      if (cfgErr) toast.error(cfgErr.message);
+      const rowsAll = (allRows ?? []) as unknown as (PaymentConfigRow & { reseller_id: string | null })[];
+      if (me?.id) setMine(rowsAll.filter((r) => r.reseller_id === me.id));
+      const list = rowsAll.filter((r) => r.reseller_id == null && r.is_active && r.mode === "manual");
       setGlobalManual(list);
       if (me?.code) {
         try {
