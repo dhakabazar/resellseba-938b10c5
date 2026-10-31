@@ -20,7 +20,7 @@ export const getRouter = () => {
     scrollRestoration: true,
     defaultPreload: "intent",
     defaultPreloadStaleTime: 0,
-    defaultViewTransition: false,
+    defaultViewTransition: true,
   });
 
   // TanStack Router v1 has an internal onFocus handler that re-evaluates beforeLoad.
