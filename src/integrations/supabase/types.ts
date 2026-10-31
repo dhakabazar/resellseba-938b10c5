@@ -3162,6 +3162,10 @@ export type Database = {
           user_id: string
         }[]
       }
+      admin_business_report: {
+        Args: { _from_ts?: number; _to_ts?: number }
+        Returns: Json
+      }
       admin_catalog_page: { Args: { _limit?: number }; Returns: Json }
       admin_confirm_user_email: {
         Args: { _user_id: string }
