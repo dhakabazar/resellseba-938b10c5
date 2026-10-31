@@ -288,6 +288,13 @@
       "when": 1793468106338,
       "tag": "0040_fix_backup_restore_accounts",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1793469651282,
+      "tag": "0041_panel_overview_rpcs",
+      "breakpoints": true
     }
   ]
 }

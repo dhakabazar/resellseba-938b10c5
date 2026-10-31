@@ -3208,6 +3208,7 @@ export type Database = {
         Returns: boolean
       }
       admin_lookups: { Args: never; Returns: Json }
+      admin_nav_counts: { Args: never; Returns: Json }
       admin_order_status_counts: {
         Args: {
           _area?: string
@@ -3624,6 +3625,10 @@ export type Database = {
           _transaction_id: string
         }
         Returns: string
+      }
+      reseller_account_overview: {
+        Args: { _reseller_id: string; _with_history?: boolean }
+        Returns: Json
       }
       reseller_auto_approve: { Args: never; Returns: boolean }
       reseller_auto_assign: { Args: never; Returns: boolean }

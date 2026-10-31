@@ -195,16 +195,14 @@ function useNavCounts(enabled: boolean): NavCounts {
     if (!enabled) return;
     let alive = true;
     const load = async () => {
-      const [payouts, forwarded, rider] = await Promise.all([
-        supabase.from("payouts").select("id", { count: "exact", head: true }).eq("status", "pending"),
-        supabase.from("orders").select("id", { count: "exact", head: true }).eq("status", "forwarded"),
-        supabase.from("orders").select("id", { count: "exact", head: true }).not("rider_assigned_at", "is", null),
-      ]);
-      if (!alive) return;
+      // One call returns all three badge counts.
+      const { data, error } = await supabase.rpc("admin_nav_counts" as never);
+      if (!alive || error) return;
+      const c = (data ?? {}) as Partial<NavCounts>;
       setCounts({
-        payouts: payouts.count ?? 0,
-        forwarded: forwarded.count ?? 0,
-        rider: rider.count ?? 0,
+        payouts: Number(c.payouts ?? 0),
+        forwarded: Number(c.forwarded ?? 0),
+        rider: Number(c.rider ?? 0),
       });
     };
     void load();
