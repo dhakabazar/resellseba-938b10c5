@@ -119,17 +119,53 @@ const DEFAULT_REPORT_FILTERS: OrderFilterState = {
 
 const th = "px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground";
 
-function BusinessReportPage() {
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [orders, setOrders] = useState<BizOrder[]>([]);
-  const [items, setItems] = useState<BizItem[]>([]);
-  const [products, setProducts] = useState<BizProduct[]>([]);
-  const [shipments, setShipments] = useState<{ order_id: string; provider: string; cost: number | null }[]>([]);
-  const [resellers, setResellers] = useState<ResellerLite[]>([]);
-  const [agents, setAgents] = useState<Agent[]>([]);
-  const [expenses, setExpenses] = useState<Expense[]>([]);
+type ReportPayload = {
+  orders: BizOrder[];
+  items: BizItem[];
+  shipments: { order_id: string; provider: string; cost: number | null }[];
+  products: BizProduct[];
+  resellers: ResellerLite[];
+  agents: Agent[];
+  expenses: Expense[];
+};
 
+const EMPTY_REPORT: ReportPayload = {
+  orders: [],
+  items: [],
+  shipments: [],
+  products: [],
+  resellers: [],
+  agents: [],
+  expenses: [],
+};
+
+/** One RPC call per date range: orders (with items + shipments) + lookups. */
+async function fetchBusinessReport(fromTs: number | null, toTs: number | null): Promise<ReportPayload> {
+  const { data, error } = await (supabase.rpc as any)("admin_business_report", {
+    _from_ts: fromTs,
+    _to_ts: toTs,
+  });
+  if (error) throw error;
+  const d = (data ?? {}) as any;
+  const orders = (d.orders ?? []) as any[];
+  const items: BizItem[] = [];
+  const shipments: ReportPayload["shipments"] = [];
+  for (const o of orders) {
+    for (const it of o.order_items ?? []) items.push({ ...it, order_id: it.order_id || o.id });
+    for (const s of o.shipments ?? []) shipments.push({ ...s, order_id: s.order_id || o.id });
+  }
+  return {
+    orders: orders as BizOrder[],
+    items,
+    shipments,
+    products: d.products ?? [],
+    resellers: d.resellers ?? [],
+    agents: d.agents ?? [],
+    expenses: d.expenses ?? [],
+  };
+}
+
+function BusinessReportPage() {
   const [filters, setFilters] = useState<OrderFilterState>(DEFAULT_REPORT_FILTERS);
   const [tab, setTab] = useState<Tab>("products");
   const [page, setPage] = useState(1);
@@ -139,79 +175,30 @@ function BusinessReportPage() {
   const [couSort, setCouSort] = useState<{ key: keyof CourierRow; dir: SortDir }>({ key: "parcels", dir: "desc" });
   const [agtSort, setAgtSort] = useState<{ key: keyof AgentRow; dir: SortDir }>({ key: "sales", dir: "desc" });
 
-  const loadData = useCallback(async (isRefresh = false) => {
-    if (isRefresh) setRefreshing(true);
-    else setLoading(true);
-
-    try {
-      // Embed order_items and shipments directly inside orders query and fetch
-      // metadata (products, resellers, agents, expenses) in parallel.
-      // This loads all data in 1-2 rapid network rounds without 1000-row limit.
-      const [oData, pData, rData, aData, eData] = await Promise.all([
-        fetchAllSafe<BizOrder>(() =>
-          supabase
-            .from("orders")
-            .select(
-              "id,order_number,reseller_id,status,created_at,customer_name,customer_phone,address_line,area,subtotal,shipping_cost,total,sa_cost_total,reseller_profit,received_amount,packaging_total,delivery_cost,advance_amount,advance_by,is_exchange,exchange_admin_share,exchange_admin_buy,rider_status,resellers(business_name,code),shipments(id,order_id,provider,cost,tracking_id,consignment_id,status),order_items(id,order_id,product_id,product_name,quantity,returned_qty,sa_price,line_total,profit,buying_price,packaging_cost)",
-            )
-            .order("created_at", { ascending: false })
-            .order("id")
-        ),
-        fetchAllSafe<BizProduct>(() =>
-          supabase.from("products").select("id,name,product_code,buying_price,packaging_cost,og_image_url").order("id")
-        ),
-        fetchAllSafe<ResellerLite>(() =>
-          supabase.from("resellers").select("id,business_name,code,agent_id,avatar_url,status").order("id")
-        ),
-        fetchAllSafe<Agent>(() =>
-          supabase
-            .from("agents")
-            .select("id,display_name,sale_target,commission_rate,commission_mode,commission_per_unit,is_active")
-            .order("id")
-        ),
-        fetchAllSafe<Expense>(() =>
-          supabase.from("expenses").select("*").order("spent_on", { ascending: false }).order("id")
-        ),
-      ]);
-
-      const itData: BizItem[] = [];
-      const sData: { id?: string; order_id: string; provider: string; cost: number | null; tracking_id?: string | null; consignment_id?: string | null; status?: string | null }[] = [];
-      for (const o of oData) {
-        if (Array.isArray((o as any).order_items)) {
-          for (const it of (o as any).order_items) {
-            itData.push({ ...it, order_id: it.order_id || o.id });
-          }
-        }
-        if (Array.isArray((o as any).shipments)) {
-          for (const s of (o as any).shipments) {
-            sData.push({ ...s, order_id: s.order_id || o.id });
-          }
-        }
-      }
-
-      setOrders(oData);
-      setItems(itData);
-      setProducts(pData);
-      setShipments(sData);
-      setResellers(rData);
-      setAgents(aData);
-      setExpenses(eData);
-
-      if (isRefresh) {
-        toast.success(`Business report refreshed (${oData.length} orders loaded)`);
-      }
-    } catch (err: any) {
-      console.error("[business-report] load error:", err);
-      toast.error("Failed to load business report data.");
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, []);
+  // Only the date range goes to the server; every other filter, sort and
+  // page change runs instantly on the loaded rows.
+  const range = useMemo(() => resolveDateRange(filters), [filters]);
+  const reportQuery = useQuery({
+    queryKey: ["admin-business-report", range.fromTs, range.toTs],
+    queryFn: () => fetchBusinessReport(range.fromTs, range.toTs),
+    staleTime: 3 * 60_000,
+    placeholderData: keepPreviousData,
+  });
+  const { orders, items, products, shipments, resellers, agents, expenses } = reportQuery.data ?? EMPTY_REPORT;
+  const loading = reportQuery.isPending;
+  const refreshing = reportQuery.isFetching && !reportQuery.isPending;
 
   useEffect(() => {
-    void loadData();
-  }, [loadData]);
+    if (reportQuery.error) {
+      console.error("[business-report] load error:", reportQuery.error);
+      toast.error("Failed to load business report data.");
+    }
+  }, [reportQuery.error]);
+
+  const loadData = async (_isRefresh = true) => {
+    const res = await reportQuery.refetch();
+    if (res.data) toast.success(`Business report refreshed (${res.data.orders.length} orders loaded)`);
+  };
 
   useEffect(() => setPage(1), [tab, filters]);
 
