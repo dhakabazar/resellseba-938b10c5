@@ -49,7 +49,7 @@ type OrderRow = {
 };
 
 function AdminDashboard() {
-  const [range, setRange] = useState<DateRangeState>(DEFAULT_DATE_RANGE);
+  const [range, setRange] = useState<DateRangeState>({ preset: "today", from: "", to: "" });
   const [orderOpen, setOrderOpen] = useState(false);
   const [allProducts, setAllProducts] = useState<any[]>([]);
   const [resellers, setResellers] = useState<any[]>([]);

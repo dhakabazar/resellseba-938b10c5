@@ -59,7 +59,7 @@ type CommissionRow = { amount: number | string; status: string; created_at: stri
 
 function ResellerDashboard() {
   const { user } = useAuth();
-  const [range, setRange] = useState<DateRangeState>(DEFAULT_DATE_RANGE);
+  const [range, setRange] = useState<DateRangeState>({ preset: "today", from: "", to: "" });
   const [loading, setLoading] = useState(true);
   const [rid, setRid] = useState<string | null>(null);
   const [listings, setListings] = useState<Listing[]>([]);
