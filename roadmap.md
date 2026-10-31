@@ -1,8 +1,9 @@
 # Roadmap — fewer database calls
 
-- [x] Admin: shared reseller directory (one cached call) for every page that lists resellers
-- [x] Admin: customers page loads all orders in one call
-- [x] Admin: agent report / agent payouts load orders + units in one call
-- [x] Admin: sidebar badge counts poll less and pause in background tabs
-- [x] Reseller panel: audit + reduce calls
-- [x] Backup & restore fixes (account restore, admin access during restore, duplicate store rows)
+- [x] Admin: shared reseller directory, customers/agent single calls, badge polling
+- [x] Uncapped (no 1000-row limit) lists and reports
+- [x] Backup & restore fixes
+- [ ] Admin dashboard: fold settings + extra orders call into the dashboard call
+- [ ] Sidebar badge counts: one call instead of three
+- [ ] Reseller Profile / Payouts / Payment methods: fewer calls
+- [ ] Open (idle) pages: measure background calls, stop polling in hidden tabs, reduce frequency
