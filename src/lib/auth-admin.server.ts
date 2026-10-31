@@ -11,7 +11,7 @@ export type AuthUserRow = {
 
 /** All accounts with email + confirmation status (permission checked in SQL). */
 export async function loadAuthUsers(supabase: any): Promise<AuthUserRow[]> {
-  const { data, error } = await supabase.rpc("admin_auth_users");
+  const { data, error } = await supabase.rpc("admin_auth_users_all");
   if (error) {
     console.error("[auth-admin] admin_auth_users failed", error.message);
     return [];

@@ -217,7 +217,7 @@ export function TransactionReport({
     // over the full history, so these rows are correct as-is).
     if (pp !== "all") {
       void supabase
-        .rpc("transaction_report", { ...args, _limit: pp } as never)
+        .rpc("transaction_report_all" as never, { ...args, _limit: pp } as never)
         .then(({ data, error }) => {
           if (cancelled || error || fullDone) return;
           setRows((data ?? []) as TxRow[]);
@@ -226,7 +226,7 @@ export function TransactionReport({
     }
     // Phase 2: full set — totals/stat cards only use this.
     void supabase
-      .rpc("transaction_report", { ...args, _limit: 0 } as never)
+      .rpc("transaction_report_all" as never, { ...args, _limit: 0 } as never)
       .then(({ data, error }) => {
         if (cancelled) return;
         if (error) setError(error.message);

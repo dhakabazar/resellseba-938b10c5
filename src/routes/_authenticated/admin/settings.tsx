@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getResellerDirectory } from "@/lib/reseller-directory";
 import { clearAppDataCache } from "@/lib/app-data";
 import { PageHeader } from "@/components/ui-kit";
 import { Loader2 } from "lucide-react";
@@ -51,8 +52,8 @@ function SettingsPage() {
         if ((data as any).favicon_url) setFavicon([{ path: "", url: (data as any).favicon_url, bytes: 0 }]);
         if (data.og_image_url) setOg([{ path: "", url: data.og_image_url, bytes: 0 }]);
       }
-      const { data: rs } = await supabase.from("resellers").select("code,business_name").eq("status", "active").order("business_name");
-      setResellers(rs ?? []);
+      const rs = await getResellerDirectory().catch(() => []);
+      setResellers(rs.filter((r) => r.status === "active").map((r) => ({ code: r.code, business_name: r.business_name })));
       setLoading(false);
     })();
   }, []);

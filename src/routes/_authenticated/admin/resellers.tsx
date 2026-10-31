@@ -587,7 +587,7 @@ function ResellersPage() {
     }
 
     if (opts.metrics) {
-      const { data: metricRows } = await supabase.rpc("admin_reseller_metrics");
+      const { data: metricRows } = await supabase.rpc("admin_reseller_metrics_all" as never);
       const m = ((metricRows ?? []) as any[]).find((x) => x.reseller_id === id);
       if (m) {
         setSummaries((prev) => ({

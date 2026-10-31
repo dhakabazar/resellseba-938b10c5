@@ -115,7 +115,7 @@ function ResellerPricingPage() {
   const requestId = useRef(0);
 
   const loadSummary = async () => {
-    const { data, error } = await supabase.rpc("reseller_custom_rate_summary" as any);
+    const { data, error } = await supabase.rpc("reseller_custom_rate_summary_all" as never);
     if (error) throw error;
     setSummary((data ?? []) as Summary[]);
   };

@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAll } from "@/lib/fetch-all";
 import { PageHeader, StatCard } from "@/components/ui-kit";
 import { ReportCard } from "@/components/report-blocks";
 import { DataToolbar, Pagination, usePaginated } from "@/components/data-list";
@@ -66,7 +67,9 @@ function ExpensesPage() {
 
   const load = async () => {
     setLoading(true);
-    const { data, error } = await supabase.from("expenses").select("*").order("spent_on", { ascending: false });
+    const { data, error } = await fetchAll(() => supabase.from("expenses").select("*").order("spent_on", { ascending: false }).order("id"))
+      .then((rows) => ({ data: rows, error: null as { message: string } | null }))
+      .catch((e) => ({ data: [] as any[], error: e as { message: string } }));
     if (error) toast.error(error.message);
     setRows((data ?? []) as unknown as Expense[]);
     setLoading(false);
