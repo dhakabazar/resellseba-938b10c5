@@ -253,6 +253,13 @@
       "when": 1793370485378,
       "tag": "0035_migration",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1793462815274,
+      "tag": "0036_admin_business_report_rpc",
+      "breakpoints": true
     }
   ]
 }
