@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getResellerDirectory } from "@/lib/reseller-directory";
 import { fetchAll } from "@/lib/fetch-all";
 import { PageHeader, StatCard } from "@/components/ui-kit";
 import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
@@ -123,7 +124,7 @@ function ResellerPricingPage() {
     const load = async () => {
       try {
         const [rs, ps] = await Promise.all([
-          fetchAll<Reseller>(() => supabase.from("resellers").select("id,business_name,code,contact_phone").order("business_name")),
+          getResellerDirectory() as unknown as Promise<Reseller[]>,
           fetchAll<Product>(() => supabase.from("products").select("id,name,product_code,og_image_url,reseller_price,packaging_cost,suggested_price,delivery_mode,delivery_flat,delivery_inside,delivery_outside,delivery_sub").eq("is_active", true).order("created_at", { ascending: false })),
           loadSummary(),
         ]);

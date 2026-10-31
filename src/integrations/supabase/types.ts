@@ -3298,6 +3298,7 @@ export type Database = {
           units: number
         }[]
       }
+      agent_orders_with_units: { Args: never; Returns: Json }
       agent_owns_reseller: { Args: { _reseller_id: string }; Returns: boolean }
       assert_admin_permission: {
         Args: { _permissions: string[] }
@@ -3517,6 +3518,7 @@ export type Database = {
       }
       current_agent_id: { Args: never; Returns: string }
       current_reseller_id: { Args: never; Returns: string }
+      customer_orders: { Args: { _reseller_id?: string }; Returns: Json }
       delivery_rule_charge: {
         Args: { _area: string; _product_id: string }
         Returns: number
@@ -3641,6 +3643,7 @@ export type Database = {
         Args: { _reseller_id: string }
         Returns: number
       }
+      reseller_directory: { Args: never; Returns: Json }
       reseller_ledger: {
         Args: { _limit?: number; _reseller_id: string }
         Returns: {

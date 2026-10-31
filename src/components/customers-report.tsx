@@ -55,32 +55,13 @@ export function useCustomers(resellerId?: string | null) {
   useEffect(() => {
     let cancelled = false;
     let fullDone = false;
-    const base = () => {
-      let q = supabase
-        .from("orders")
-        .select(
-          "id, reseller_id, customer_name, customer_phone, customer_email, address_line, city, area, status, total, received_amount, created_at",
-        )
-        .order("created_at", { ascending: false });
-      if (resellerId) q = q.eq("reseller_id", resellerId);
-      return q;
-    };
     (async () => {
       setLoading(true);
-      // Phase 1: latest orders only → the first page of customers appears instantly.
-      base()
-        .limit(300)
-        .then(({ data }) => {
-          if (cancelled || fullDone || !data) return;
-          setRows(data as OrderRow[]);
-          setLoading(false);
-        });
-      // Phase 2: every order (Data API caps 1000 rows per response — page through all).
-      const load = () =>
-        fetchAll<OrderRow>(() => base())
-          .then((data) => ({ data, error: null as any }))
-          .catch((error) => ({ data: null as OrderRow[] | null, error }));
-      // Shared across remounts so a double mount costs one request.
+      // One call returns every order (no 1000-row paging); shared across remounts.
+      const load = async () => {
+        const { data, error } = await supabase.rpc("customer_orders" as never, { _reseller_id: resellerId ?? null } as never);
+        return { data: (data ?? null) as unknown as OrderRow[] | null, error: error as any };
+      };
       const { data, error } = await sharedLoad(`customers:${resellerId ?? "all"}`, load);
       fullDone = true;
       if (cancelled) return;

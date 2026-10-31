@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getResellerDirectory } from "@/lib/reseller-directory";
 import { PageHeader, EmptyState } from "@/components/ui-kit";
 import { AdminNoticePopup } from "@/components/admin-notice-popup";
 import { NOTICE_LEVELS, type AdminNotice, type NoticeLevel } from "@/lib/admin-notices";
@@ -74,7 +75,7 @@ function AdminNoticesPage() {
     setLoading(true);
     const [n, r] = await Promise.all([
       supabase.from("admin_notices").select("*").order("created_at", { ascending: false }),
-      supabase.from("resellers").select("id,business_name,code").order("business_name"),
+      getResellerDirectory().then((data) => ({ data })).catch(() => ({ data: [] })),
     ]);
     setRows((n.data ?? []) as unknown as AdminNotice[]);
     setResellers((r.data ?? []) as any[]);
