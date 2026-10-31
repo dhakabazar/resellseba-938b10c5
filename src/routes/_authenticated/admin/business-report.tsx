@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, StatCard } from "@/components/ui-kit";
 import {
@@ -32,7 +33,6 @@ import {
   type ResellerRow,
   type SortDir,
 } from "@/lib/business-report";
-import { fetchAllSafe } from "@/lib/fetch-all";
 import {
   Loader2,
   Download,
@@ -523,7 +523,7 @@ function BusinessReportPage() {
       <div className="flex flex-col h-72 items-center justify-center gap-3">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
         <p className="text-sm font-medium text-muted-foreground animate-pulse">
-          Loading complete business report data without limits…
+          Loading business report…
         </p>
       </div>
     );
