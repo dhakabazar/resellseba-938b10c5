@@ -23,7 +23,7 @@ export function getResellerDirectory(force = false): Promise<ResellerDirEntry[]>
   const promise = (async () => {
     const { data, error } = await supabase.rpc("reseller_directory" as never);
     if (error) throw error;
-    return ((data ?? []) as unknown as ResellerDirEntry[]) ?? [];
+    return (data ?? []) as unknown as ResellerDirEntry[];
   })();
   cached = { at: Date.now(), promise };
   promise.catch(() => {
