@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getResellerDirectory } from "@/lib/reseller-directory";
 import { toast } from "sonner";
 import { Loader2, Pencil, Trash2, Search, X, Wallet } from "lucide-react";
 import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
@@ -62,7 +63,7 @@ export function DepositLedger({
 
   useEffect(() => {
     if (resellerId) return;
-    void fetchAllSafe(() => supabase.from("resellers").select("id,business_name,code").order("business_name")).then((data) => {
+    void getResellerDirectory().catch(() => []).then((data) => {
         const map: Record<string, string> = {};
         const list = (data ?? []).map((r: any) => {
           map[r.id] = `${r.business_name} · ${r.code}`;

@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getResellerDirectory } from "@/lib/reseller-directory";
 import { PageHeader, EmptyState, StatCard } from "@/components/ui-kit";
 import { ConfirmModal } from "@/components/ui-kit/ConfirmModal";
 import { SearchableSelect } from "@/components/searchable-select";
@@ -70,7 +71,7 @@ function AgentPayoutsPage() {
     setLoading(true);
     const [a, r, o, p] = await Promise.all([
       supabase.from("agents").select("*").order("display_name"),
-      fetchAllSafe(() => supabase.from("resellers").select("id,business_name,code,status,contact_phone,agent_id")).then((data) => ({ data, error: null })),
+      getResellerDirectory().then((data) => ({ data, error: null })).catch(() => ({ data: [], error: null })),
       fetchAllSafe(() =>
         supabase
           .from("orders")

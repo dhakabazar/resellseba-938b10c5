@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getResellerDirectory } from "@/lib/reseller-directory";
 import { PageHeader } from "@/components/ui-kit";
 import { CustomersReport } from "@/components/customers-report";
 import { fetchAllSafe } from "@/lib/fetch-all";
@@ -14,7 +15,7 @@ function AdminCustomersPage() {
 
   useEffect(() => {
     (async () => {
-      const data = await fetchAllSafe(() => supabase.from("resellers").select("id, code, business_name").order("business_name"));
+      const data = await getResellerDirectory().catch(() => []);
       const m = new Map<string, string>();
       for (const r of data as { id: string; code: string; business_name: string }[]) {
         m.set(r.id, `${r.business_name} (${r.code})`);

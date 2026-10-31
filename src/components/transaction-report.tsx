@@ -7,6 +7,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Loader2, Download, Search, X, ArrowDownRight, ArrowUpRight, Wallet, TrendingUp, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { getResellerDirectory } from "@/lib/reseller-directory";
 import { StatCard } from "@/components/ui-kit";
 import { SearchableSelect } from "@/components/searchable-select";
 import { Pagination } from "@/components/data-list";
@@ -190,7 +191,7 @@ export function TransactionReport({
 
   useEffect(() => {
     if (!admin) return;
-    void fetchAllSafe(() => supabase.from("resellers").select("id,business_name,code,avatar_url").order("business_name")).then((data) => setResellers(data as any));
+    void getResellerDirectory().then((data) => setResellers(data as any)).catch(() => {});
   }, [admin]);
 
   const [complete, setComplete] = useState(false);
