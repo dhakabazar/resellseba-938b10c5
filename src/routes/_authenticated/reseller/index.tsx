@@ -7,7 +7,7 @@ import { AdminNoticePopup } from "@/components/admin-notice-popup";
 import { useLiveNotices } from "@/lib/admin-notices";
 import { useAuth } from "@/lib/use-auth";
 import { PageHeader, StatCard } from "@/components/ui-kit";
-import { DateRangeBar, DEFAULT_DATE_RANGE, resolveRange, type DateRangeState } from "@/components/date-range-filter";
+import { DateRangeBar, resolveRange, type DateRangeState } from "@/components/date-range-filter";
 import {
   ReportCard,
   StatusReportTable,

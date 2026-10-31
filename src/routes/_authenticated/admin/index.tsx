@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getAdminDashboard, getAdminLookups, clearBootstrapCache } from "@/lib/bootstrap";
 import { PageHeader, StatCard } from "@/components/ui-kit";
-import { DateRangeBar, DEFAULT_DATE_RANGE, resolveRange, type DateRangeState } from "@/components/date-range-filter";
+import { DateRangeBar, resolveRange, type DateRangeState } from "@/components/date-range-filter";
 import { bdt, buildFinanceReport, isRealizedStatus, orderProfit, PROFIT_FORMULA_HINT, type FinanceReport, type ReportOrder } from "@/lib/finance-report";
 import { ORDER_TABS } from "@/lib/courier-status";
 import { Package, Users, ShoppingCart, Tag, TrendingUp, Wallet, Loader2, RefreshCw, Award, Clock, Plus } from "lucide-react";
